@@ -172,7 +172,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<ViewsDatabase>()
             .AddSingleton<IViewStore, SqliteViewStore>()
             .AddSingleton<IViewReader, SqliteViewReader>()
-            .AddSingleton<IHomeViewReader, SqliteHomeView>()
+            .AddSingleton<IHomeViewReader, SqliteHomeView>().AddSingleton<IDoctorStores, SqliteDoctorStores>()   // the Home views' reader; first-run spec §3.4: doctor's older-store rows and SQLite guard
             .AddSingleton<IModelHistory, SqliteModelHistory>().AddSingleton<IModelPickSettings, ProfileModelPickSettings>().AddSingleton<IModelPickHistory, ModelPickHistoryAdapter>()   // the pick's ports read the approved profile and the model-history view
             .AddSingleton<IJobViews, SqliteJobViews>().AddSingleton<IServicePauses, ViewServicePauses>()
             .AddSingleton<IProfileSource>(sp => new YamlProfileSource(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory)))
@@ -189,6 +189,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IPreCommitGit, GitPreCommit>()   // cutover §6.2: the scrub verb, the onboarding hook slot and the doctor read the hook through it
             .AddSingleton<IBuildStamps>(static _ => new InstalledBuildStamps(AppContext.BaseDirectory))   // #1032: status and doctor compare the running build with bin/cs/current
             .AddSingleton<IProcessAncestry, PosixProcessAncestry>()
+            .AddSingleton<IRepoScanTree>(static _ => new FileRepoScanTree(RealPath.Of(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)) ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)))   // first-run §3.3: the repo scan's file system
             .AddSingleton<IRepoLocator, GitRepoLocator>().AddSingleton<IRepoInspector, GitRepoInspector>().AddSingleton<IRepoCheckouts, FileRepoCheckouts>().AddSingleton<IProfileRepoWriter, YamlProfileRepoWriter>().AddSingleton<IProfileIndexWriter>(sp => new YamlProfileIndexWriter(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), sp.GetRequiredService<IProfileCache>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))).AddSingleton<IProfileSandboxWriter, YamlProfileSandboxWriter>().AddSingleton<IProfileInitializer, FileProfileInitializer>()   // setup-once §5.1: AddRepo's folder checks and the profile's repos[] appender
             .AddSingleton<ICommandOrigins, LedgerCommandOrigins>()   // engine P4 unit (d): the bridge's causation route
             .AddRecipeAdapters(environment)
@@ -248,6 +249,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IConnectionToolPort>(static sp => new ConnectionToolAdapter(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<IMcpConnectionClient>(), NoRedirectClient(), sp.GetRequiredService<ITextScrubber>()))
             .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener())
             .AddSingleton<IConnectionCredentials>(static sp => new ConnectionCredentials(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<ISecretPointers>()))   // #2508: the one token order (connection first, profile pointer second) for the github, slack and linear feeds
+            .AddSingleton<IKnownRepos>(static sp => new Connections.GitHub.GitHubKnownRepos(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), NoRedirectClient()))   // first-run gap 7: the scan's 'known'
             .AddSingleton<IGitHubAccount>(static sp => new Connections.GitHub.GitHubConnectionAccount(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<IConnectionPresetCatalog>(), NoRedirectClient(), sp.GetRequiredService<TimeProvider>()))   // #2499: the Reviews tab's GitHub account, from the Connections page
             .AddSingleton<IPollCursors, SqlitePollCursors>()   // PR 11: poll cursors in ledger.db
             .AddSingleton<IEventPoller>(static sp => new GitHubEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))

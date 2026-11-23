@@ -14,6 +14,9 @@ public static class DoctorRules
     /// <summary>The fix a context row carries when its check could not run; the index status's store row says the same.</summary>
     public const string ContextFix = "check $AW_SINDRI_HOME/context";
 
+    /// <summary>The fix for a store an older build wrote.</summary>
+    private const string RestartFix = "sindri stop && sindri";
+
     /// <summary>The lease: free, held by a live process, held by a dead one, or held from another machine.</summary>
     /// <param name="row">The stored lease.</param>
     /// <param name="now">The current time.</param>
@@ -40,7 +43,20 @@ public static class DoctorRules
         { IsError: true } => new("ledger", CheckState.Fail, schema.Error.Message, "check the file's permissions and disk, then run sindri doctor again"),
         { Value.Applied: 0 } => new("ledger", CheckState.Warn, "no ledger yet", "sindri"),
         { Value.IsCurrent: true } => new("ledger", CheckState.Ok, Text($"schema {schema.Value.Applied}/{schema.Value.Expected}"), Fix: null),
+        { Value: var s } when s.Applied < s.Expected => Older("ledger", s),
         _ => new("ledger", CheckState.Fail, Text($"schema {schema.Value.Applied}/{schema.Value.Expected}: written by another build"), "use the build that wrote it, or move the ledger aside"),
+    };
+
+    /// <summary>The views, first against this build's migrations: a views store an older build wrote is one fail row with the restart fix (first-run spec §3.4, #2954).</summary>
+    /// <param name="schema">The views store's migration status, or why it can't be read.</param>
+    /// <param name="state">The projector_state row (null when the views store doesn't exist), or why it can't be read.</param>
+    /// <param name="head">The ledger's head, or why it can't be read.</param>
+    /// <returns>The check.</returns>
+    public static DoctorCheck Views(Result<SchemaStatus> schema, Result<ProjectorState?> state, Result<long> head) => schema switch
+    {
+        { IsError: true } => new("views", CheckState.Fail, schema.Error.Message, "check the file's permissions and disk, then run sindri doctor again"),
+        { Value: var s } when s.Applied > 0 && s.Applied < s.Expected => Older("views", s),
+        _ => Views(state, head),
     };
 
     /// <summary>The views: caught up, rebuilding, stalled on an event, or not built yet.</summary>
@@ -129,6 +145,10 @@ public static class DoctorRules
         var states = checks.Select(c => c.State).ToList();
         return states.Contains(CheckState.Fail) ? 2 : states.Contains(CheckState.Warn) ? 1 : 0;
     }
+
+    /// <summary>A store an older build wrote: serve migrates it on start, so the fix is a restart on this build.</summary>
+    private static DoctorCheck Older(string store, SchemaStatus schema) =>
+        new(store, CheckState.Fail, Text($"{store}.db is older than this build (schema {schema.Applied}, this build needs {schema.Expected})"), RestartFix);
 
     private static string Text(FormattableString text) => text.ToString(CultureInfo.InvariantCulture);
 }
