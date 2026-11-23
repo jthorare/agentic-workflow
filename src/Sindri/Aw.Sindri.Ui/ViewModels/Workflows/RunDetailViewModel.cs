@@ -116,16 +116,7 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
     {
         var read = ++_reads;
         _url = url;
-        if (!string.Equals(Id, runId, StringComparison.Ordinal))
-        {
-            if (!string.Equals(_toMarkSeen, runId, StringComparison.Ordinal))
-            {
-                _toMarkSeen = null;   // another run: the old open's mark is not wanted
-            }
-
-            Empty(runId);
-        }
-
+        SwitchTo(runId);
         IsReading = Groups.Count == 0;
         if (IsReading)
         {
@@ -155,6 +146,22 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
         (IsFailed, FailedText) = (false, string.Empty);
         Show(run.Value);
         await MarkSeen(url, run.Value, cancellationToken).ConfigureAwait(true);
+    }
+
+    // A read of another run empties the page first; the old open's mark is not wanted then.
+    private void SwitchTo(string runId)
+    {
+        if (string.Equals(Id, runId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (!string.Equals(_toMarkSeen, runId, StringComparison.Ordinal))
+        {
+            _toMarkSeen = null;
+        }
+
+        Empty(runId);
     }
 
     // Another run: nothing of the old one stays.
