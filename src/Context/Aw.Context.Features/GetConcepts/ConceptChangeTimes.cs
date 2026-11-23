@@ -8,7 +8,7 @@ namespace Aw.Context.Features.GetConcepts;
 /// The newest change time of code files, per repo and keyed by the repo's HEAD sha (#3760). A read only looks in the cache: git takes seconds over a few hundred files, so a miss
 /// answers with what it has and starts one fill per repo in the background. The fill asks git for the paths the cache has not asked about yet and merges the answer in, so the next
 /// page needs git only for its own new paths. A new HEAD drops the repo's times and starts again. HEAD itself is read at most once per <see cref="HeadFor"/> per repo (#3837),
-/// and a shallow clone gives no times at all: its oldest fetched commit stands in for every older change, so files would look newer than they are.
+/// a failed read once per <see cref="FailedHeadFor"/> (#4144), and a shallow clone gives no times at all: its oldest fetched commit stands in for every older change, so files would look newer than they are.
 /// </summary>
 /// <param name="history">Reads the git log of the paths.</param>
 /// <param name="repos">Reads a repo's HEAD.</param>
@@ -25,7 +25,7 @@ internal sealed class ConceptChangeTimes(IFileHistory history, IRepoReader repos
     internal static readonly TimeSpan FailedHeadFor = TimeSpan.FromSeconds(5);
 
     private readonly TimeProvider _clock = clock ?? TimeProvider.System;
-    private readonly Dictionary<string, (string Head, DateTimeOffset At)> _heads = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, (string? Head, DateTimeOffset At)> _heads = new(StringComparer.Ordinal);   // a null head is a failed read
 
     private readonly Lock _gate = new();
     private readonly Dictionary<string, RepoTimes> _byRepo = new(StringComparer.Ordinal);
@@ -84,31 +84,27 @@ internal sealed class ConceptChangeTimes(IFileHistory history, IRepoReader repos
         }
     }
 
-    // The repo's HEAD, cached for HeadFor; null when git can't read it (not cached, so a fixed repo answers on the next read).
+    // The repo's HEAD, cached for HeadFor; null when git can't read it, cached for the shorter FailedHeadFor (#4144) so a fresh clone answers soon. Any new read replaces the entry.
     private async ValueTask<string?> Head(ContextRepo repo, CancellationToken cancellationToken)
     {
         var key = Key(repo);
         var now = _clock.GetUtcNow();
         lock (_gate)
         {
-            if (_heads.TryGetValue(key, out var cached) && now - cached.At < HeadFor)
+            if (_heads.TryGetValue(key, out var cached) && now - cached.At < (cached.Head is null ? FailedHeadFor : HeadFor))
             {
                 return cached.Head;
             }
         }
 
         var head = await repos.Head(repo, cancellationToken).ConfigureAwait(false);
-        if (head.IsError)
-        {
-            return null;
-        }
-
+        var read = head.IsError ? null : head.Value;
         lock (_gate)
         {
-            _heads[key] = (head.Value, now);
+            _heads[key] = (read, now);
         }
 
-        return head.Value;
+        return read;
     }
 
     private static string Key(ContextRepo repo) => repo.Name.Value + "\0" + repo.Path;
