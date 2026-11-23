@@ -38,11 +38,18 @@ internal sealed class TerminalPainter(DrawingContext context, Size cell, Typefac
             PaintText(grid, top + y, y, run);
         }
 
-        if (back == 0 && !grid.Dead)
+        if (DrawsCursor(grid, scrollOffset))
         {
             PaintCursor(grid, top, focused);
         }
     }
+
+    /// <summary>True when the cursor is drawn: the view is on the live screen, both its own scrollback and Serve's (a frame drawn for `back` above 0 holds history rows with the live cursor, #3829), and the pane is alive.</summary>
+    /// <param name="grid">The frame.</param>
+    /// <param name="scrollOffset">Rows back from the live screen in the grid's own scrollback.</param>
+    /// <returns>True to draw it.</returns>
+    internal static bool DrawsCursor(TerminalGrid grid, int scrollOffset) =>
+        Math.Clamp(scrollOffset, 0, grid.History) == 0 && grid.Back == 0 && !grid.Dead;
 
     // The background brush of a cell, null for the default background.
     private IBrush? Background(TerminalCell c) => c.Inverse ? brushes.Get(c.Fg) ?? ink : brushes.Get(c.Bg);

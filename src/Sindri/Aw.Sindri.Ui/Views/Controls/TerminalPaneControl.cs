@@ -77,16 +77,6 @@ internal sealed class TerminalPaneControl : Control, ITerminalPane
         set => SetValue(ScrollOffsetProperty, value);
     }
 
-    /// <summary>Gets the rows of scrollback above the live screen in the grid last drawn.</summary>
-    internal int History => _grid?.History ?? 0;
-
-    /// <summary>Gets the rows of the live screen: one page of scrolling.</summary>
-    internal int PageRows => _grid?.Height ?? 0;
-
-    /// <summary>Scrolls the pane's own scrollback, clamped to the history drawn: a positive number reads further back.</summary>
-    /// <param name="rows">Rows to move: positive back, negative towards the live screen.</param>
-    internal void ScrollBy(int rows) => ScrollOffset = Math.Clamp(ScrollOffset + rows, 0, History);
-
     /// <summary>Gets how many colour brushes this control has made (a test seam: painting the same frame again must make none).</summary>
     internal int BrushesCreated => _brushes.Created;
 

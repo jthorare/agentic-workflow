@@ -128,6 +128,30 @@ internal sealed partial class TerminalViewViewModel
         Refresh();
     }
 
+    /// <summary>The rows above the live screen's top the pane shows (#3730); 0 is live.</summary>
+    public int ScrollBack { get; private set; }
+
+    /// <summary>True while the pane shows history: the header shows <see cref="ScrollBackText"/>.</summary>
+    public bool IsScrolledBack => ScrollBack > 0;
+
+    /// <summary>"Scrolled back 35 rows · any key returns to live", or empty on the live screen.</summary>
+    public string ScrollBackText => ScrollBack > 0 ? Labels.TerminalScrolledBack(ScrollBack) : string.Empty;
+
+    /// <summary>The pane's offset changed: a scroll went out, a key put it back on live, or a frame named the offset it was drawn for.</summary>
+    /// <param name="back">Rows above the live screen's top; 0 is live.</param>
+    internal void ScrolledBack(int back)
+    {
+        if (back == ScrollBack)
+        {
+            return;
+        }
+
+        ScrollBack = back;
+        OnChanged(nameof(ScrollBack));
+        OnChanged(nameof(IsScrolledBack));
+        OnChanged(nameof(ScrollBackText));
+    }
+
     /// <summary>The session ended while the view shows it (the row moved to Recently ended).</summary>
     public void SessionEnded() => Freeze();
 
