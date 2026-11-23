@@ -48,7 +48,11 @@ internal static class GraphCardLine
     /// <param name="type">The block type.</param>
     /// <param name="kindTitle">The served kind title, or null.</param>
     /// <returns>The line.</returns>
-    internal static string Title(string title, string type, string? kindTitle) => title.Trim().Length > 0 ? title.Trim() : KindName(type, kindTitle);
+    internal static string Title(string title, string type, string? kindTitle) =>
+        title.Trim().Length > 0 ? title.Trim() : KindName(type, kindTitle) is { Length: > 0 } name ? name : NoKind;
+
+    /// <summary>Line 1 of an untitled step whose type is empty too: the card never shows an empty first line (#4032).</summary>
+    internal const string NoKind = "Step";
 
     /// <summary>Card line 2: one settings line for the block kind. The schedule's line is the server's (it knows the time zone rules); the other kinds read their config.
     /// When a kind's settings are missing the line is the block's name.</summary>
@@ -135,11 +139,16 @@ internal static class GraphCardLine
         return unit is null ? t : string.Create(CultureInfo.InvariantCulture, $"{n} {unit}{(n == 1 ? string.Empty : "s")}");
     }
 
-    // The URL without its scheme: "https://status.example.com/api" reads "status.example.com/api".
+    // The host and path only: no scheme, no user or password before an @, no query, no fragment. "https://status.example.com/api?key=1#top" reads "status.example.com/api".
     private static string Host(string url)
     {
         var at = url.IndexOf("://", StringComparison.Ordinal);
-        return at < 0 ? url : url[(at + 3)..];
+        var rest = at < 0 ? url : url[(at + 3)..];
+        var end = rest.IndexOfAny(['?', '#']);   // the query and the fragment never show: a key can sit in either (#4032)
+        rest = end < 0 ? rest : rest[..end];
+        var slash = rest.IndexOf('/', StringComparison.Ordinal);
+        var user = (slash < 0 ? rest : rest[..slash]).LastIndexOf('@');   // user:password@ before the host, never an @ in the path
+        return user < 0 ? rest : rest[(user + 1)..];
     }
 
     private static string? Str(JsonElement config, string name) =>
