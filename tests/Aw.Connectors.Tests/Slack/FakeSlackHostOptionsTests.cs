@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json.Nodes;
 using Aw.Connectors.Testing.Server;
 using Aw.Connectors.Testing.Slack;
@@ -9,6 +10,8 @@ namespace Aw.Connectors.Tests.Slack;
 /// <summary>The host's command line (messages spec §8.1): the fixture's "a gap and a 429 storm at start" as --gap and --rate-limit.</summary>
 public sealed class FakeSlackHostOptionsTests
 {
+    private const string Token = "xo" + "xp-fixture-" + "0011223344556677";
+
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private static FakeSlackHostOptions Parsed(params string[] args)
@@ -69,6 +72,7 @@ public sealed class FakeSlackHostOptionsTests
         var options = Parsed("--rate-limit", "conversations.history=2:7", "--gap", General + "=12");
         using var server = options.Apply(new FakeSlackServer());
         using var client = new HttpClient(server, disposeHandler: false);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 
         using var first = await History(client, General);
         using var info = await client.GetAsync(new Uri("https://slack.com/api/users.info?user=" + Pat), Ct);
@@ -92,6 +96,7 @@ public sealed class FakeSlackHostOptionsTests
         var options = Parsed("--rate-limit", "auth.test=1:3");
         await using var host = await FakeSlackHost.Start(options.Apply(new FakeSlackServer()), options.Port, Ct);
         using var client = new HttpClient { BaseAddress = host.BaseUrl };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 
         using var limited = await client.GetAsync(new Uri("api/auth.test", UriKind.Relative), Ct);
         using var served = await client.GetAsync(new Uri("api/auth.test", UriKind.Relative), Ct);
