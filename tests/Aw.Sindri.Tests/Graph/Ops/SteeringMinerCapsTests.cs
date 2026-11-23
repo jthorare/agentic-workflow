@@ -85,6 +85,30 @@ public sealed class SteeringMinerCapsTests : IClassFixture<RoslynWarmup>
         Assert.True(stored < NodeRunLimits.PayloadBytes, "label's input is " + stored.ToString(CultureInfo.InvariantCulture) + " bytes");
     }
 
+    // why: an 80-character ref of non-ASCII text costs 6 bytes a character in label's input, and shape kept it whole (#4003 item 3); with every turn's text at
+    // the most of '"' shape keeps, 20 such refs used to push label's stored input over the cap while the batch itself stayed under shape's 60,000 bytes
+    [Fact]
+    public void A_batch_of_long_non_ascii_refs_keeps_label_s_input_under_the_cap_by_dropping_those_turns()
+    {
+        var (textKept, beforeKept) = (MostThatFit('"', 2_000), MostThatFit('"', 500));
+        var batch = new JsonArray();
+        for (var line = 1; line <= 20; line++)
+        {
+            var reference = "transcript:" + new string('€', 80 - 11 - 3) + "#" + line.ToString("00", CultureInfo.InvariantCulture);
+            batch.Add((JsonNode)new JsonObject { ["ref"] = reference, ["text"] = new string('"', textKept), ["before"] = new string('"', beforeKept) });
+        }
+
+        var shaped = Run("shape", new JsonObject { ["item"] = batch });
+
+        Assert.True(shaped.IsSuccess, shaped.IsError ? shaped.Error.Message : null);
+        Assert.True(batch.ToJsonString().Length < 60_000, "the batch itself is under shape's cap");
+        Assert.Equal(20, JsonNode.Parse(shaped.Value)!["dropped"]!.GetValue<int>());   // a ref past shape's byte budget drops its turn, as a ref past 80 characters always did
+        var label = (JsonObject)Spec.Nodes.Single(static n => string.Equals(n.Id.Value, "label", StringComparison.Ordinal)).Config.DeepClone();
+        label["prompt"] = Template.Render(label["prompt"]!.GetValue<string>(), reference => Lookup(new JsonObject { ["shape"] = new JsonObject { ["result"] = JsonNode.Parse(shaped.Value) } }, reference));
+        var stored = Encoding.UTF8.GetByteCount(label.ToJsonString());
+        Assert.True(stored < NodeRunLimits.PayloadBytes, "label's input is " + stored.ToString(CultureInfo.InvariantCulture) + " bytes");
+    }
+
     [Fact]
     public void Group_fails_a_run_whose_corrections_pass_45000_bytes_before_the_merge_question_and_names_the_cap()
     {
