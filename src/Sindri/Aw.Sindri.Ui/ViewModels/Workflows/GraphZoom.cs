@@ -19,6 +19,9 @@ internal static class GraphZoom
     /// <summary>How many times the canvas the content must be, on width or on height, before the minimap shows (#4055): a map for a graph that scrolls a few hundred pixels helps nobody and only covers cards.</summary>
     internal const double MapShowsPast = 2;
 
+    /// <summary>The right gutter kept free of cards while the map shows (#4149): the map's width and its margin on both sides.</summary>
+    internal const double MapGutter = MapWidth + (2 * MapMargin);
+
     /// <summary>The zoom steps of + and -, in percent.</summary>
     internal static IReadOnlyList<int> Ladder { get; } = [25, 33, 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200];
 
@@ -58,6 +61,16 @@ internal static class GraphZoom
     internal static double ExtentHeight(double worldHeight, double zoom, bool mapShown) =>
         (worldHeight * zoom) + (mapShown ? MapHeight + MapMargin : 0);
 
+    /// <summary>The width of the scrolling area: the world at this zoom, plus the map's gutter on the right while the map shows (#4149), so a card under the map
+    /// can be scrolled clear of it. The gutter is at most half the canvas: then a zoom step about the centre from the right limit stays inside the new range.</summary>
+    /// <param name="worldWidth">The world's width.</param>
+    /// <param name="zoom">The zoom as a factor.</param>
+    /// <param name="mapShown">Whether the minimap shows.</param>
+    /// <param name="clipWidth">The canvas clip's width.</param>
+    /// <returns>The scroll extent's width.</returns>
+    internal static double ExtentWidth(double worldWidth, double zoom, bool mapShown, double clipWidth) =>
+        (worldWidth * zoom) + (mapShown ? Math.Min(MapGutter, clipWidth / 2) : 0);
+
     /// <summary>Holds a pan inside the scroll extent: the world at this zoom, plus the map's height and margin at the bottom while the map shows; no pan past it, and none at all along an axis that fits.</summary>
     /// <param name="pan">Where the world's origin sits in the canvas.</param>
     /// <param name="world">The world's size.</param>
@@ -67,7 +80,7 @@ internal static class GraphZoom
     internal static (double X, double Y) ClampPan((double X, double Y) pan, (double Width, double Height) world, double zoom, (double Width, double Height) clip)
     {
         var mapShown = MapShown(world.Width, world.Height, zoom, clip);   // the map's room exists only while the map shows
-        var (extentWidth, extentHeight) = (world.Width * zoom, ExtentHeight(world.Height, zoom, mapShown));
+        var (extentWidth, extentHeight) = (ExtentWidth(world.Width, zoom, mapShown, clip.Width), ExtentHeight(world.Height, zoom, mapShown));
         static double Axis(double value, double extent, double clip) => extent <= clip + 0.5 ? 0 : Math.Clamp(value, clip - extent, 0);
         return (Axis(pan.X, extentWidth, clip.Width), Axis(pan.Y, extentHeight, clip.Height));
     }
