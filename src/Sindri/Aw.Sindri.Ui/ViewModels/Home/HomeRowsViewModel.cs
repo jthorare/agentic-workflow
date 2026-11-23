@@ -1,17 +1,18 @@
-using System.Diagnostics.CodeAnalysis;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.ViewModels.Rows;
 
 namespace Aw.Sindri.Ui.ViewModels.Home;
 
 /// <summary>The Home page as rows (home spec §7.1, U1): the tabs with their counts, and the groups of the selected split in the order the API ranked them.</summary>
-[SuppressMessage("Design", "MA0182", Justification = "The page commit of this PR binds it (#3733, U1).")]
 internal sealed class HomeRowsViewModel : ObservableObject
 {
     private readonly List<HomeRowItem> _rows = [];
 
     /// <summary>The fact columns every row shows.</summary>
     public static IReadOnlyList<RowColumn> Columns { get; } = [new(HomeRowItem.Why, string.Empty), new(HomeRowItem.Object, string.Empty), new(HomeRowItem.From, string.Empty, Wide: true)];
+
+    /// <summary>What a screen reader says for the tabs as a whole.</summary>
+    public static string TabsName => Labels.HomeTabsName;
 
     /// <summary>The header's tabs, each with its open count.</summary>
     public IReadOnlyList<HomeTab> Tabs

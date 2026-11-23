@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:hvm="using:Aw.Sindri.Ui.ViewModels.Home"
+             xmlns:rows="using:Aw.Sindri.Ui.Views.Controls.Rows"
+             x:Class="Aw.Sindri.Ui.Views.Home.HomeRowsPage"
+             x:DataType="hvm:HomeRowsViewModel">
+  <!-- Home as rows (home spec §7.1, U1): a 48 px header with the five tabs and their open counts, then the selected tab's rows in the API's ranked
+       order, grouped Needs you and Moving. A tab with no rows shows its one plain line (§7.3). The list scrolls itself. Tokens only. -->
+  <Grid x:Name="HomeRows" RowDefinitions="48,*" Background="{DynamicResource Brush.Canvas}">
+    <Border x:Name="HomeRowsHeader" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Brush.Hairline}" Padding="24,0">
+      <ItemsControl x:Name="HomeTabs" ItemsSource="{Binding Tabs}" VerticalAlignment="Bottom" AutomationProperties.Name="{x:Static hvm:HomeRowsViewModel.TabsName}"
+                    AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Tab">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="16" /></ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="hvm:HomeTab">
+            <Border Classes="add-tab" Classes.on="{Binding IsSelected}">
+              <ToggleButton Classes="add-tab-button" IsChecked="{Binding IsSelected, Mode=OneWay}" Click="OnTab" AutomationProperties.Name="{Binding Name}"
+                            AutomationProperties.ControlTypeOverride="TabItem">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <TextBlock Classes="body" Text="{Binding Label}" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBlock Classes="caption" Text="{Binding CountText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                </StackPanel>
+              </ToggleButton>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </Border>
+
+    <rows:RowList x:Name="HomeRowList" Grid.Row="1" ItemsSource="{Binding Groups}" Columns="{x:Static hvm:HomeRowsViewModel.Columns}"
+                  IsVisible="{Binding EmptyLine, Converter={x:Static ObjectConverters.IsNull}}" />
+    <TextBlock x:Name="HomeEmptyLine" Grid.Row="1" Classes="body subtle" Margin="24,16" Text="{Binding EmptyLine}"
+               IsVisible="{Binding EmptyLine, Converter={x:Static ObjectConverters.IsNotNull}}" AutomationProperties.Name="{Binding EmptyLine}" />
+  </Grid>
+</UserControl>

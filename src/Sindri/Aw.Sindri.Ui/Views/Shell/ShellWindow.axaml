@@ -22,6 +22,7 @@
         xmlns:ctxv="using:Aw.Sindri.Ui.Views.Context"
         xmlns:item="using:Aw.Sindri.Ui.Views.Item"
         xmlns:ny="using:Aw.Sindri.Ui.Views.NeedsYou"
+        xmlns:hv="using:Aw.Sindri.Ui.Views.Home"
         xmlns:tdv="using:Aw.Sindri.Ui.Views.Todo"
         x:Class="Aw.Sindri.Ui.Views.Shell.ShellWindow"
         x:DataType="shell:ShellViewModel"
@@ -301,6 +302,14 @@
               </Panel>
             </ScrollViewer>
             <!-- The Needs-you inbox (F3 needs-you spec §2): over Home's panels while Home stays the page; it scrolls its own list and card, so it sits beside the pages' scroller. -->
+            <!-- Home as rows (home spec §7.1, U1): one ranked list in place of Home's panels while Settings' switch asks for it; the list scrolls itself, so it sits beside the pages' scroller. -->
+            <Panel x:Name="HomeRowsLayer" IsVisible="{Binding IsHomeRowsShown}">
+              <controls:Deferred DataContext="{Binding HomeRows}">
+                <controls:Deferred.Template>
+                  <DataTemplate><hv:HomeRowsPage x:Name="HomeRowsPage" /></DataTemplate>
+                </controls:Deferred.Template>
+              </controls:Deferred>
+            </Panel>
             <Panel x:Name="NeedsYouInboxLayer" IsVisible="{Binding IsInboxShown}">
               <controls:Deferred DataContext="{Binding Inbox}">
                 <controls:Deferred.Template>

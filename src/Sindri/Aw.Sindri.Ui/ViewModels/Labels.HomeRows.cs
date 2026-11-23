@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Aw.Sindri.Ui.ViewModels;
 
 /// <summary>The app's own copy (<see cref="Labels"/>, continued): the Home page as rows (home spec §7.1, §7.3).</summary>
@@ -26,6 +28,21 @@ internal static partial class Labels
 
     /// <summary>The one line the empty Messages tab shows while there is no Messages page (home spec §7.3).</summary>
     internal const string HomeMessagesLater = "Slack messages arrive in a later release.";
+
+    /// <summary>Settings' switch that shows Home as rows.</summary>
+    internal const string HomeAsRows = "Home as rows";
+
+    /// <summary>The line under Settings' Home switch.</summary>
+    internal const string HomeAsRowsNote = "New. One ranked list in place of the panels.";
+
+    /// <summary>What a screen reader says for the tabs as a whole.</summary>
+    internal const string HomeTabsName = "Home tabs";
+
+    /// <summary>What a screen reader says for one tab: its word and its open count.</summary>
+    /// <param name="tab">The tab's word.</param>
+    /// <param name="count">Its open rows.</param>
+    /// <returns>The name.</returns>
+    internal static string HomeTabName(string tab, int count) => string.Create(CultureInfo.InvariantCulture, $"{tab}, {count}");
 
     /// <summary>The one plain line a tab with no rows shows (home spec §7.3).</summary>
     /// <param name="tab">The tab's word.</param>
