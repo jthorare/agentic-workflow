@@ -37,6 +37,7 @@ internal sealed partial class OpsEditor
         }
 
         NodeHeading = Labels.WfEditorNewStep(block.Title);
+        NodeIdLine = string.Empty;   // a new step has no id until it is saved
 
         OnChanged(nameof(HasPendingStep));
     }
@@ -64,6 +65,7 @@ internal sealed partial class OpsEditor
         _pending = null;
         Fields.Clear();
         NodeHeading = string.Empty;
+        NodeIdLine = string.Empty;
         OnChanged(nameof(HasPendingStep));
     }
 
