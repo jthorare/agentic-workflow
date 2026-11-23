@@ -574,6 +574,55 @@
           }
         },
         {
+          "type": "rule_catalog",
+          "title": "Rule catalog",
+          "isTrigger": false,
+          "config": [],
+          "outputs": {
+            "rules": "array",
+            "count": "number",
+            "skipped": "number",
+            "sections": "array"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {},
+          "exampleSpec": {
+            "version": 1,
+            "name": "List the rules",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "rules",
+                "type": "rule_catalog",
+                "config": {}
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "{{rules.count}} rules"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "rules"
+              },
+              {
+                "from": "rules",
+                "to": "tell"
+              }
+            ]
+          }
+        },
+        {
           "type": "skill_catalog",
           "title": "Skill catalog",
           "isTrigger": false,

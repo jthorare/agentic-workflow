@@ -29,7 +29,8 @@ public sealed class WorkflowDocsTests
             .. GraphBlockRegistry.MemoryBlocks(new BlockFakes.RecordingMemoryPort()),
             new CallToolBlock(new FakeRunningToolkits([]), new NoConnections()),
             .. GraphBlockRegistry.CodeBlocks(new FlowFakes.ScriptedCodePort()),
-            .. GraphBlockRegistry.SkillBlocks(new FakeSkillCatalog([]))]);
+            .. GraphBlockRegistry.SkillBlocks(new FakeSkillCatalog([])),
+            .. GraphBlockRegistry.RuleBlocks(new FakeRuleCatalog([]))]);
 
     // why: the docs only need 'call_tool' registered; no example reaches a connection, so every call is refused
     private sealed class NoConnections : IConnectionToolPort

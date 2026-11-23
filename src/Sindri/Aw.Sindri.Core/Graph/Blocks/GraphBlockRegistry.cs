@@ -74,6 +74,11 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     /// <returns>The block.</returns>
     public static IReadOnlyList<IGraphBlock> SkillBlocks(ISkillCatalogPort catalog) => [new SkillCatalogBlock(catalog)];
 
+    /// <summary>The 'rule_catalog' block of issue 3787: the repo's rule records with their checks.</summary>
+    /// <param name="catalog">Where the rules are read.</param>
+    /// <returns>The block.</returns>
+    public static IReadOnlyList<IGraphBlock> RuleBlocks(IRuleCatalogPort catalog) => [new RuleCatalogBlock(catalog)];
+
     /// <summary>Finds the block of a type.</summary>
     /// <param name="type">The type name, such as 'condition'.</param>
     /// <returns>The block, or null when this build has no such block.</returns>

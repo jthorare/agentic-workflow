@@ -24889,3 +24889,68 @@ const Aw.Sindri.Core.Setup.RepoScanRules.MaxDepth = 6 -> int
 static Aw.Sindri.Core.Setup.RepoScanRules.InsideHome(string! path, string! home) -> bool
 static Aw.Sindri.Core.Setup.RepoScanRules.Origin(string? url) -> (string! Host, string! Slug)?
 static Aw.Sindri.Core.Setup.RepoScanRules.Skips(string! name) -> bool
+Aw.Sindri.Core.Graph.Blocks.IRuleCatalogPort
+Aw.Sindri.Core.Graph.Blocks.IRuleCatalogPort.List(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing!>!>
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogBlock
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogBlock.RuleCatalogBlock(Aw.Sindri.Core.Graph.Blocks.IRuleCatalogPort! catalog) -> void
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogBlock.Type.get -> string!
+const Aw.Sindri.Core.Graph.Blocks.RuleCatalogBlock.MaxRules = 500 -> int
+const Aw.Sindri.Core.Graph.Blocks.RuleCatalogBlock.TextChars = 600 -> int
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.RuleBlocks(Aw.Sindri.Core.Graph.Blocks.IRuleCatalogPort! catalog) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>!
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing!
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.RuleListing!>! Rules, out int Skipped) -> void
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing.Rules.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.RuleListing!>!
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing.Rules.init -> void
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing.Skipped.get -> int
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing.Skipped.init -> void
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing.Equals(Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing.RuleCatalogListing(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.RuleListing!>! Rules, int Skipped) -> void
+override Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing.operator !=(Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing? left, Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing.operator ==(Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing? left, Aw.Sindri.Core.Graph.Blocks.RuleCatalogListing? right) -> bool
+Aw.Sindri.Core.Graph.Blocks.RuleCheckListing
+Aw.Sindri.Core.Graph.Blocks.RuleCheckListing.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.RuleCheckListing!
+Aw.Sindri.Core.Graph.Blocks.RuleCheckListing.Deconstruct(out string! Type, out string! Id) -> void
+Aw.Sindri.Core.Graph.Blocks.RuleCheckListing.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RuleCheckListing.Type.init -> void
+Aw.Sindri.Core.Graph.Blocks.RuleCheckListing.Id.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RuleCheckListing.Id.init -> void
+Aw.Sindri.Core.Graph.Blocks.RuleCheckListing.Equals(Aw.Sindri.Core.Graph.Blocks.RuleCheckListing? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.RuleCheckListing.RuleCheckListing(string! Type, string! Id) -> void
+override Aw.Sindri.Core.Graph.Blocks.RuleCheckListing.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.RuleCheckListing.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.RuleCheckListing.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.RuleCheckListing.operator !=(Aw.Sindri.Core.Graph.Blocks.RuleCheckListing? left, Aw.Sindri.Core.Graph.Blocks.RuleCheckListing? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.RuleCheckListing.operator ==(Aw.Sindri.Core.Graph.Blocks.RuleCheckListing? left, Aw.Sindri.Core.Graph.Blocks.RuleCheckListing? right) -> bool
+Aw.Sindri.Core.Graph.Blocks.RuleListing
+Aw.Sindri.Core.Graph.Blocks.RuleListing.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.RuleListing!
+Aw.Sindri.Core.Graph.Blocks.RuleListing.Deconstruct(out string! Id, out string! Kind, out string! Section, out string! Text, out string! Status, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.RuleCheckListing!>! Checks) -> void
+Aw.Sindri.Core.Graph.Blocks.RuleListing.Id.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RuleListing.Id.init -> void
+Aw.Sindri.Core.Graph.Blocks.RuleListing.Kind.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RuleListing.Kind.init -> void
+Aw.Sindri.Core.Graph.Blocks.RuleListing.Section.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RuleListing.Section.init -> void
+Aw.Sindri.Core.Graph.Blocks.RuleListing.Text.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RuleListing.Text.init -> void
+Aw.Sindri.Core.Graph.Blocks.RuleListing.Status.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RuleListing.Status.init -> void
+Aw.Sindri.Core.Graph.Blocks.RuleListing.Checks.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.RuleCheckListing!>!
+Aw.Sindri.Core.Graph.Blocks.RuleListing.Checks.init -> void
+Aw.Sindri.Core.Graph.Blocks.RuleListing.Equals(Aw.Sindri.Core.Graph.Blocks.RuleListing? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.RuleListing.RuleListing(string! Id, string! Kind, string! Section, string! Text, string! Status, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.RuleCheckListing!>! Checks) -> void
+override Aw.Sindri.Core.Graph.Blocks.RuleListing.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.RuleListing.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.RuleListing.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.RuleListing.operator !=(Aw.Sindri.Core.Graph.Blocks.RuleListing? left, Aw.Sindri.Core.Graph.Blocks.RuleListing? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.RuleListing.operator ==(Aw.Sindri.Core.Graph.Blocks.RuleListing? left, Aw.Sindri.Core.Graph.Blocks.RuleListing? right) -> bool
