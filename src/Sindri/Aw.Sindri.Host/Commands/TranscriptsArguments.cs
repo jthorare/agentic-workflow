@@ -98,7 +98,7 @@ internal static partial class TranscriptsArguments
                 case "--provider" when TranscriptProviderNames.TryParse(value, out var provider):
                     Provider = provider;
                     return Taken.FlagAndValue;
-                case "--repo" when value is { Length: > 1 } path && path.StartsWith('/'):
+                case "--repo" when value is { Length: > 1 } path && path.StartsWith('/') && path.TrimEnd('/').Length > 0:
                     Repo = path.TrimEnd('/');
                     return Taken.FlagAndValue;
                 default:
