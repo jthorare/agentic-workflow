@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using Aw.Context.Core.Linking;
@@ -74,7 +75,7 @@ public sealed partial class RulesLinkerPathScanTests
         var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
 
         Assert.Empty(found);
-        Assert.True(allocated < 1024, $"{allocated} bytes for {prose.Length} chars of prose");
+        Assert.True(allocated < 1024, string.Create(CultureInfo.InvariantCulture, $"{allocated} bytes for {prose.Length} chars of prose"));
     }
 
     private static List<string> Scan(string text) => [.. RulesLinker.RepoPaths(text).Select(p => text.Substring(p.Index, p.Length))];
