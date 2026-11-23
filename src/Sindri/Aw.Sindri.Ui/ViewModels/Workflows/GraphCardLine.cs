@@ -151,16 +151,24 @@ internal static class GraphCardLine
         return user < 0 ? rest : rest[(user + 1)..];
     }
 
-    // A password with a raw ?, / or # (#4063): when the text before the first of those holds a ':' that no digit follows (a user and password, not a port),
-    // the host starts after the last @ of the whole url, so no piece of the password is left before the query and the fragment are cut.
+    // A password with a raw ?, / or # (#4063, #4156). The host is the text before the first of those, after a leading [...] (an IPv6 host, whose ':' are its
+    // own). It is host:port, and stays, only when what follows its ':' is all digits and no '@' comes later in the url. Any other ':' there is a
+    // user:password, so the host starts after the last @ of the whole url. A port followed by a later @ (host:8080/@name) reads as a password too:
+    // an all-digit password looks the same, and a wrong host on an odd url is better than a password on screen.
     private static string PastPassword(string rest)
     {
-        var end = rest.IndexOfAny(['/', '?', '#']);
-        var authority = end < 0 ? rest : rest[..end];
-        var colon = authority.IndexOf(':', StringComparison.Ordinal);
-        var isPassword = colon >= 0 && (colon + 1 == authority.Length || !char.IsAsciiDigit(authority[colon + 1]));
+        var start = rest.StartsWith('[') && rest.IndexOf(']', StringComparison.Ordinal) is var close and > 0 ? close + 1 : 0;
+        var end = rest.IndexOfAny(['/', '?', '#'], start);
+        var host = end < 0 ? rest[start..] : rest[start..end];
+        var colon = host.IndexOf(':', StringComparison.Ordinal);
         var lastAt = rest.LastIndexOf('@');
-        return isPassword && lastAt >= 0 ? rest[(lastAt + 1)..] : rest;
+        if (colon < 0 || lastAt < 0)
+        {
+            return rest;
+        }
+
+        var isPort = host[(colon + 1)..].All(char.IsAsciiDigit) && (end < 0 || rest.IndexOf('@', end) < 0);
+        return isPort ? rest : rest[(lastAt + 1)..];
     }
 
     private static string? Str(JsonElement config, string name) =>
