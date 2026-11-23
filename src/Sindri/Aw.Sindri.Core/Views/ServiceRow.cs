@@ -10,4 +10,6 @@ namespace Aw.Sindri.Core.Views;
 /// <param name="ScheduledSlot">The slot of the last scheduled run (a manual run moves <paramref name="LastRun"/> but not this, so the next slot stays the scheduler's), or null before one.</param>
 /// <param name="PausedBy">The actor of the pause while paused, or null (the pause records no reason).</param>
 /// <param name="PausedAt">When it was paused while paused, or null.</param>
-public sealed record ServiceRow(ServiceName Name, LastRun? LastRun, bool Paused, long Sequence, DateTimeOffset? ScheduledSlot = null, string? PausedBy = null, DateTimeOffset? PausedAt = null);
+/// <param name="ResumedAt">When a human last resumed it, or null before a resume (#3909: the source look's first-pass limit counts from it).</param>
+public sealed record ServiceRow(ServiceName Name, LastRun? LastRun, bool Paused, long Sequence, DateTimeOffset? ScheduledSlot = null, string? PausedBy = null, DateTimeOffset? PausedAt = null,
+    DateTimeOffset? ResumedAt = null);
