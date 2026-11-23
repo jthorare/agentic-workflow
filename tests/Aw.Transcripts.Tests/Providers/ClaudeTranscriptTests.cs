@@ -33,7 +33,7 @@ public sealed class ClaudeTranscriptTests : IDisposable
             ClaudeLines.User("<ide_opened_file>The user opened a.cs</ide_opened_file> fix the null check", _t.AddSeconds(13)),
             ClaudeLines.User("<ide_selection>lines 1-4</ide_selection>", _t.AddSeconds(14)));
 
-        Assert.Equal<string>(["the one real prompt", "a typed prompt with an origin", "a prompt in\ntext blocks", "fix the null check"], read.Turns.Where(t => t.Role == TurnRole.Human).Select(t => t.Text), StringComparer.Ordinal);
+        Assert.Equal(["the one real prompt", "a typed prompt with an origin", "a prompt in\ntext blocks", "fix the null check"], read.Turns.Where(t => t.Role == TurnRole.Human).Select(t => t.Text), StringComparer.Ordinal);
         Assert.Equal(4, read.Session.HumanTurns);
     }
 
@@ -63,7 +63,7 @@ public sealed class ClaudeTranscriptTests : IDisposable
             "",
             ClaudeLines.User("after", _t.AddSeconds(5)));
 
-        Assert.Equal<string>(["before", "after"], read.Turns.Select(t => t.Text), StringComparer.Ordinal);
+        Assert.Equal(["before", "after"], read.Turns.Select(t => t.Text), StringComparer.Ordinal);
         Assert.Equal(2, read.SkippedLines);
         Assert.Equal(5, read.Turns[1].Ref.Line);
     }

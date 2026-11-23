@@ -5,6 +5,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Host.Commands.Probe;
 
@@ -106,7 +107,7 @@ internal static partial class CommandTable
             ["status", .. var rest] when Follow(rest) is { } json => await new FollowVerbs(client, probe, output, services.GetRequiredService<TimeProvider>()).Run(json, ct).ConfigureAwait(false),
             ["status", .. var rest] when Json(rest) is { } json => await verbs.Status(json, ct).ConfigureAwait(false),
             ["scrub", .. var rest] => await new ScrubCommand(services, output, Console.In).Run(rest, ct).ConfigureAwait(false),
-            ["stop"] => await verbs.Stop(ct).ConfigureAwait(false),
+            ["stop"] or ["restart", ..] => await StopOrRestart(args, verbs, (client, probe, output), (services, start), ct).ConfigureAwait(false),
             ["profile", ..] => await Profile(args, verbs, a => new Verbs(client, probe, output, services, c => start.EnsureRunning(!a.NoStart, c)), (output, Headers(session, services)), ct).ConfigureAwait(false),
             ["views", "rebuild", .. var rest] when NoStart(rest) is { } noStart => await new Verbs(client, probe, output, services, c => start.EnsureRunning(!noStart, c))
                 .RebuildViews(ct).ConfigureAwait(false),
@@ -130,6 +131,11 @@ internal static partial class CommandTable
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
     }
+
+    /// <summary>'sindri stop' and 'sindri restart [--wait] [--timeout D]'.</summary>
+    private static Task<int> StopOrRestart(string[] args, Verbs verbs, (ControlPlaneClient Client, IControlPlaneProbe Probe, Output Output) cli, (IServiceProvider Services, StartCommand Start) host, CancellationToken ct) => args is ["stop"]
+        ? verbs.Stop(ct)
+        : new RestartCommand(cli.Client, cli.Probe, host.Services.GetRequiredService<IProcessProbe>(), host.Start, cli.Output, host.Services.GetRequiredService<TimeProvider>()).Run(args[1..], ct);
 
     /// <summary>'sindri workflow|wf|outbox|takeover|handback|answer …'.</summary>
     private static async Task<int> Workflows(string[] args, IServiceProvider services, Output output, RecipeDesk desk, CancellationToken ct) => args switch
