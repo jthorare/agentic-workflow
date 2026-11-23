@@ -23232,7 +23232,7 @@ Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.RejectLike.get -> bool
 Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.RejectLike.init -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Decision.get -> Aw.Sindri.Core.NeedsYou.NeedsYouDecision?
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Decision.init -> void
-const Aw.Sindri.Core.Views.ViewSchema.Version = 38 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 39 -> int
 override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Equals(object? obj) -> bool
 override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.GetHashCode() -> int
 override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.ToString() -> string!
@@ -23882,6 +23882,534 @@ static Aw.Sindri.Core.Graph.Blocks.GraphFence.Calls(Aw.Sindri.Core.Graph.Blocks.
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.ConnectionTools(Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort! live) -> Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort!
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.Toolkits(Aw.Sindri.Core.Toolkits.IRunningToolkits! live) -> Aw.Sindri.Core.Toolkits.IRunningToolkits!
 static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
+Aw.Sindri.Core.Home.HomeGroup
+Aw.Sindri.Core.Home.HomeGroup.NeedsYou = 0 -> Aw.Sindri.Core.Home.HomeGroup
+Aw.Sindri.Core.Home.HomeGroup.Moving = 1 -> Aw.Sindri.Core.Home.HomeGroup
+Aw.Sindri.Core.Home.HomeState
+Aw.Sindri.Core.Home.HomeState.Open = 0 -> Aw.Sindri.Core.Home.HomeState
+Aw.Sindri.Core.Home.HomeState.Snoozed = 1 -> Aw.Sindri.Core.Home.HomeState
+Aw.Sindri.Core.Home.HomeState.Done = 2 -> Aw.Sindri.Core.Home.HomeState
+Aw.Sindri.Core.Home.HomeState.Muted = 3 -> Aw.Sindri.Core.Home.HomeState
+Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.Decision = 0 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.Question = 1 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.RunFailed = 2 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.System = 3 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.AgentAsking = 4 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.AgentLimited = 5 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.LaneRecycle = 6 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.PrReadyMerge = 7 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.ReviewRequested = 8 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.ReviewNewCommits = 9 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.Mention = 10 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.Dm = 11 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.ThreadReply = 12 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.Keyword = 13 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.IssueAssigned = 14 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeKind.TodoDue = 15 -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeFactKind
+Aw.Sindri.Core.Home.HomeFactKind.Why = 0 -> Aw.Sindri.Core.Home.HomeFactKind
+Aw.Sindri.Core.Home.HomeFactKind.Ref = 1 -> Aw.Sindri.Core.Home.HomeFactKind
+Aw.Sindri.Core.Home.HomeFactKind.From = 2 -> Aw.Sindri.Core.Home.HomeFactKind
+Aw.Sindri.Core.Home.HomeEdgeKind
+Aw.Sindri.Core.Home.HomeEdgeKind.ItemOf = 0 -> Aw.Sindri.Core.Home.HomeEdgeKind
+Aw.Sindri.Core.Home.HomeEdgeKind.Closes = 1 -> Aw.Sindri.Core.Home.HomeEdgeKind
+Aw.Sindri.Core.Home.HomeEdgeKind.Stacked = 2 -> Aw.Sindri.Core.Home.HomeEdgeKind
+Aw.Sindri.Core.Home.HomeEdgeKind.MergeOrder = 3 -> Aw.Sindri.Core.Home.HomeEdgeKind
+Aw.Sindri.Core.Home.HomeEdgeKind.ChildRun = 4 -> Aw.Sindri.Core.Home.HomeEdgeKind
+Aw.Sindri.Core.Home.HomeEdgeKind.Blocks = 5 -> Aw.Sindri.Core.Home.HomeEdgeKind
+Aw.Sindri.Core.Home.HomeEdgeKind.ThreadAbout = 6 -> Aw.Sindri.Core.Home.HomeEdgeKind
+Aw.Sindri.Core.Home.HomeFact
+Aw.Sindri.Core.Home.HomeFact.<Clone>$() -> Aw.Sindri.Core.Home.HomeFact!
+Aw.Sindri.Core.Home.HomeFact.Deconstruct(out Aw.Sindri.Core.Home.HomeFactKind Kind, out string! Text) -> void
+Aw.Sindri.Core.Home.HomeFact.Equals(Aw.Sindri.Core.Home.HomeFact? other) -> bool
+Aw.Sindri.Core.Home.HomeFact.Kind.get -> Aw.Sindri.Core.Home.HomeFactKind
+Aw.Sindri.Core.Home.HomeFact.Kind.init -> void
+Aw.Sindri.Core.Home.HomeFact.Text.get -> string!
+Aw.Sindri.Core.Home.HomeFact.Text.init -> void
+Aw.Sindri.Core.Home.HomeFact.HomeFact(Aw.Sindri.Core.Home.HomeFactKind Kind, string! Text) -> void
+override Aw.Sindri.Core.Home.HomeFact.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Home.HomeFact.GetHashCode() -> int
+override Aw.Sindri.Core.Home.HomeFact.ToString() -> string!
+static Aw.Sindri.Core.Home.HomeFact.operator !=(Aw.Sindri.Core.Home.HomeFact? left, Aw.Sindri.Core.Home.HomeFact? right) -> bool
+static Aw.Sindri.Core.Home.HomeFact.operator ==(Aw.Sindri.Core.Home.HomeFact? left, Aw.Sindri.Core.Home.HomeFact? right) -> bool
+Aw.Sindri.Core.Home.HomeRank
+Aw.Sindri.Core.Home.HomeRank.<Clone>$() -> Aw.Sindri.Core.Home.HomeRank!
+Aw.Sindri.Core.Home.HomeRank.Deconstruct(out int Blocks, out int Weight, out int SinceRank, out int Position) -> void
+Aw.Sindri.Core.Home.HomeRank.Equals(Aw.Sindri.Core.Home.HomeRank? other) -> bool
+Aw.Sindri.Core.Home.HomeRank.Blocks.get -> int
+Aw.Sindri.Core.Home.HomeRank.Blocks.init -> void
+Aw.Sindri.Core.Home.HomeRank.Weight.get -> int
+Aw.Sindri.Core.Home.HomeRank.Weight.init -> void
+Aw.Sindri.Core.Home.HomeRank.SinceRank.get -> int
+Aw.Sindri.Core.Home.HomeRank.SinceRank.init -> void
+Aw.Sindri.Core.Home.HomeRank.Position.get -> int
+Aw.Sindri.Core.Home.HomeRank.Position.init -> void
+Aw.Sindri.Core.Home.HomeRank.HomeRank(int Blocks, int Weight, int SinceRank, int Position) -> void
+override Aw.Sindri.Core.Home.HomeRank.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Home.HomeRank.GetHashCode() -> int
+override Aw.Sindri.Core.Home.HomeRank.ToString() -> string!
+static Aw.Sindri.Core.Home.HomeRank.operator !=(Aw.Sindri.Core.Home.HomeRank? left, Aw.Sindri.Core.Home.HomeRank? right) -> bool
+static Aw.Sindri.Core.Home.HomeRank.operator ==(Aw.Sindri.Core.Home.HomeRank? left, Aw.Sindri.Core.Home.HomeRank? right) -> bool
+Aw.Sindri.Core.Home.HomeBlocked
+Aw.Sindri.Core.Home.HomeBlocked.<Clone>$() -> Aw.Sindri.Core.Home.HomeBlocked!
+Aw.Sindri.Core.Home.HomeBlocked.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId Id, out string! Title, out string! Via) -> void
+Aw.Sindri.Core.Home.HomeBlocked.Equals(Aw.Sindri.Core.Home.HomeBlocked? other) -> bool
+Aw.Sindri.Core.Home.HomeBlocked.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Core.Home.HomeBlocked.Id.init -> void
+Aw.Sindri.Core.Home.HomeBlocked.Title.get -> string!
+Aw.Sindri.Core.Home.HomeBlocked.Title.init -> void
+Aw.Sindri.Core.Home.HomeBlocked.Via.get -> string!
+Aw.Sindri.Core.Home.HomeBlocked.Via.init -> void
+Aw.Sindri.Core.Home.HomeBlocked.HomeBlocked(Aw.Sindri.Core.Ids.HomeRowId Id, string! Title, string! Via) -> void
+override Aw.Sindri.Core.Home.HomeBlocked.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Home.HomeBlocked.GetHashCode() -> int
+override Aw.Sindri.Core.Home.HomeBlocked.ToString() -> string!
+static Aw.Sindri.Core.Home.HomeBlocked.operator !=(Aw.Sindri.Core.Home.HomeBlocked? left, Aw.Sindri.Core.Home.HomeBlocked? right) -> bool
+static Aw.Sindri.Core.Home.HomeBlocked.operator ==(Aw.Sindri.Core.Home.HomeBlocked? left, Aw.Sindri.Core.Home.HomeBlocked? right) -> bool
+Aw.Sindri.Core.Home.HomeLink
+Aw.Sindri.Core.Home.HomeLink.<Clone>$() -> Aw.Sindri.Core.Home.HomeLink!
+Aw.Sindri.Core.Home.HomeLink.Deconstruct(out string! Kind, out Aw.Sindri.Core.Ids.HomeRowId Id, out string? Title) -> void
+Aw.Sindri.Core.Home.HomeLink.Equals(Aw.Sindri.Core.Home.HomeLink? other) -> bool
+Aw.Sindri.Core.Home.HomeLink.Kind.get -> string!
+Aw.Sindri.Core.Home.HomeLink.Kind.init -> void
+Aw.Sindri.Core.Home.HomeLink.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Core.Home.HomeLink.Id.init -> void
+Aw.Sindri.Core.Home.HomeLink.Title.get -> string?
+Aw.Sindri.Core.Home.HomeLink.Title.init -> void
+Aw.Sindri.Core.Home.HomeLink.HomeLink(string! Kind, Aw.Sindri.Core.Ids.HomeRowId Id, string? Title) -> void
+override Aw.Sindri.Core.Home.HomeLink.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Home.HomeLink.GetHashCode() -> int
+override Aw.Sindri.Core.Home.HomeLink.ToString() -> string!
+static Aw.Sindri.Core.Home.HomeLink.operator !=(Aw.Sindri.Core.Home.HomeLink? left, Aw.Sindri.Core.Home.HomeLink? right) -> bool
+static Aw.Sindri.Core.Home.HomeLink.operator ==(Aw.Sindri.Core.Home.HomeLink? left, Aw.Sindri.Core.Home.HomeLink? right) -> bool
+Aw.Sindri.Core.Home.HomeSource
+Aw.Sindri.Core.Home.HomeSource.<Clone>$() -> Aw.Sindri.Core.Home.HomeSource!
+Aw.Sindri.Core.Home.HomeSource.Deconstruct(out string! Name, out System.DateTimeOffset ReadAt, out string? Connection) -> void
+Aw.Sindri.Core.Home.HomeSource.Equals(Aw.Sindri.Core.Home.HomeSource? other) -> bool
+Aw.Sindri.Core.Home.HomeSource.Name.get -> string!
+Aw.Sindri.Core.Home.HomeSource.Name.init -> void
+Aw.Sindri.Core.Home.HomeSource.ReadAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Home.HomeSource.ReadAt.init -> void
+Aw.Sindri.Core.Home.HomeSource.Connection.get -> string?
+Aw.Sindri.Core.Home.HomeSource.Connection.init -> void
+Aw.Sindri.Core.Home.HomeSource.HomeSource(string! Name, System.DateTimeOffset ReadAt, string? Connection) -> void
+override Aw.Sindri.Core.Home.HomeSource.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Home.HomeSource.GetHashCode() -> int
+override Aw.Sindri.Core.Home.HomeSource.ToString() -> string!
+static Aw.Sindri.Core.Home.HomeSource.operator !=(Aw.Sindri.Core.Home.HomeSource? left, Aw.Sindri.Core.Home.HomeSource? right) -> bool
+static Aw.Sindri.Core.Home.HomeSource.operator ==(Aw.Sindri.Core.Home.HomeSource? left, Aw.Sindri.Core.Home.HomeSource? right) -> bool
+Aw.Sindri.Core.Home.HomeEdge
+Aw.Sindri.Core.Home.HomeEdge.<Clone>$() -> Aw.Sindri.Core.Home.HomeEdge!
+Aw.Sindri.Core.Home.HomeEdge.Deconstruct(out string! From, out string! To, out Aw.Sindri.Core.Home.HomeEdgeKind Edge) -> void
+Aw.Sindri.Core.Home.HomeEdge.Equals(Aw.Sindri.Core.Home.HomeEdge? other) -> bool
+Aw.Sindri.Core.Home.HomeEdge.From.get -> string!
+Aw.Sindri.Core.Home.HomeEdge.From.init -> void
+Aw.Sindri.Core.Home.HomeEdge.To.get -> string!
+Aw.Sindri.Core.Home.HomeEdge.To.init -> void
+Aw.Sindri.Core.Home.HomeEdge.Edge.get -> Aw.Sindri.Core.Home.HomeEdgeKind
+Aw.Sindri.Core.Home.HomeEdge.Edge.init -> void
+Aw.Sindri.Core.Home.HomeEdge.HomeEdge(string! From, string! To, Aw.Sindri.Core.Home.HomeEdgeKind Edge) -> void
+override Aw.Sindri.Core.Home.HomeEdge.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Home.HomeEdge.GetHashCode() -> int
+override Aw.Sindri.Core.Home.HomeEdge.ToString() -> string!
+static Aw.Sindri.Core.Home.HomeEdge.operator !=(Aw.Sindri.Core.Home.HomeEdge? left, Aw.Sindri.Core.Home.HomeEdge? right) -> bool
+static Aw.Sindri.Core.Home.HomeEdge.operator ==(Aw.Sindri.Core.Home.HomeEdge? left, Aw.Sindri.Core.Home.HomeEdge? right) -> bool
+Aw.Sindri.Core.Home.HomeRow
+Aw.Sindri.Core.Home.HomeRow.<Clone>$() -> Aw.Sindri.Core.Home.HomeRow!
+Aw.Sindri.Core.Home.HomeRow.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId Id, out long Version, out Aw.Sindri.Core.Home.HomeKind Kind, out Aw.Sindri.Core.Home.HomeGroup Group, out string! Title, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeFact!>! Facts, out string! WaitsOn, out System.DateTimeOffset Since, out Aw.Sindri.Core.Home.HomeRank! Rank, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeBlocked!>! BlocksList, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeLink!>! Links, out Aw.Sindri.Core.Home.HomeState State, out System.DateTimeOffset? SnoozeUntil, out System.DateTimeOffset? DoneAt, out System.Collections.Generic.IReadOnlyList<string!>! Actions, out Aw.Sindri.Core.Home.HomeSource! Source, out Aw.Sindri.Core.Ids.RepoName? Repo) -> void
+Aw.Sindri.Core.Home.HomeRow.Equals(Aw.Sindri.Core.Home.HomeRow? other) -> bool
+Aw.Sindri.Core.Home.HomeRow.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Core.Home.HomeRow.Id.init -> void
+Aw.Sindri.Core.Home.HomeRow.Version.get -> long
+Aw.Sindri.Core.Home.HomeRow.Version.init -> void
+Aw.Sindri.Core.Home.HomeRow.Kind.get -> Aw.Sindri.Core.Home.HomeKind
+Aw.Sindri.Core.Home.HomeRow.Kind.init -> void
+Aw.Sindri.Core.Home.HomeRow.Group.get -> Aw.Sindri.Core.Home.HomeGroup
+Aw.Sindri.Core.Home.HomeRow.Group.init -> void
+Aw.Sindri.Core.Home.HomeRow.Title.get -> string!
+Aw.Sindri.Core.Home.HomeRow.Title.init -> void
+Aw.Sindri.Core.Home.HomeRow.Facts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeFact!>!
+Aw.Sindri.Core.Home.HomeRow.Facts.init -> void
+Aw.Sindri.Core.Home.HomeRow.WaitsOn.get -> string!
+Aw.Sindri.Core.Home.HomeRow.WaitsOn.init -> void
+Aw.Sindri.Core.Home.HomeRow.Since.get -> System.DateTimeOffset
+Aw.Sindri.Core.Home.HomeRow.Since.init -> void
+Aw.Sindri.Core.Home.HomeRow.Rank.get -> Aw.Sindri.Core.Home.HomeRank!
+Aw.Sindri.Core.Home.HomeRow.Rank.init -> void
+Aw.Sindri.Core.Home.HomeRow.BlocksList.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeBlocked!>!
+Aw.Sindri.Core.Home.HomeRow.BlocksList.init -> void
+Aw.Sindri.Core.Home.HomeRow.Links.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeLink!>!
+Aw.Sindri.Core.Home.HomeRow.Links.init -> void
+Aw.Sindri.Core.Home.HomeRow.State.get -> Aw.Sindri.Core.Home.HomeState
+Aw.Sindri.Core.Home.HomeRow.State.init -> void
+Aw.Sindri.Core.Home.HomeRow.SnoozeUntil.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Home.HomeRow.SnoozeUntil.init -> void
+Aw.Sindri.Core.Home.HomeRow.DoneAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Home.HomeRow.DoneAt.init -> void
+Aw.Sindri.Core.Home.HomeRow.Actions.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Home.HomeRow.Actions.init -> void
+Aw.Sindri.Core.Home.HomeRow.Source.get -> Aw.Sindri.Core.Home.HomeSource!
+Aw.Sindri.Core.Home.HomeRow.Source.init -> void
+Aw.Sindri.Core.Home.HomeRow.Repo.get -> Aw.Sindri.Core.Ids.RepoName?
+Aw.Sindri.Core.Home.HomeRow.Repo.init -> void
+Aw.Sindri.Core.Home.HomeRow.HomeRow(Aw.Sindri.Core.Ids.HomeRowId Id, long Version, Aw.Sindri.Core.Home.HomeKind Kind, Aw.Sindri.Core.Home.HomeGroup Group, string! Title, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeFact!>! Facts, string! WaitsOn, System.DateTimeOffset Since, Aw.Sindri.Core.Home.HomeRank! Rank, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeBlocked!>! BlocksList, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeLink!>! Links, Aw.Sindri.Core.Home.HomeState State, System.DateTimeOffset? SnoozeUntil, System.DateTimeOffset? DoneAt, System.Collections.Generic.IReadOnlyList<string!>! Actions, Aw.Sindri.Core.Home.HomeSource! Source, Aw.Sindri.Core.Ids.RepoName? Repo = null) -> void
+override Aw.Sindri.Core.Home.HomeRow.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Home.HomeRow.GetHashCode() -> int
+override Aw.Sindri.Core.Home.HomeRow.ToString() -> string!
+static Aw.Sindri.Core.Home.HomeRow.operator !=(Aw.Sindri.Core.Home.HomeRow? left, Aw.Sindri.Core.Home.HomeRow? right) -> bool
+static Aw.Sindri.Core.Home.HomeRow.operator ==(Aw.Sindri.Core.Home.HomeRow? left, Aw.Sindri.Core.Home.HomeRow? right) -> bool
+Aw.Sindri.Core.Home.HomeQuery
+Aw.Sindri.Core.Home.HomeQuery.<Clone>$() -> Aw.Sindri.Core.Home.HomeQuery!
+Aw.Sindri.Core.Home.HomeQuery.Deconstruct(out Aw.Sindri.Core.Home.HomeGroup? Group, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeState>! States, out string? After, out int Limit, out Aw.Sindri.Core.Home.HomeScope? Scope) -> void
+Aw.Sindri.Core.Home.HomeQuery.Equals(Aw.Sindri.Core.Home.HomeQuery? other) -> bool
+Aw.Sindri.Core.Home.HomeQuery.Group.get -> Aw.Sindri.Core.Home.HomeGroup?
+Aw.Sindri.Core.Home.HomeQuery.Group.init -> void
+Aw.Sindri.Core.Home.HomeQuery.States.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeState>!
+Aw.Sindri.Core.Home.HomeQuery.States.init -> void
+Aw.Sindri.Core.Home.HomeQuery.After.get -> string?
+Aw.Sindri.Core.Home.HomeQuery.After.init -> void
+Aw.Sindri.Core.Home.HomeQuery.Limit.get -> int
+Aw.Sindri.Core.Home.HomeQuery.Limit.init -> void
+Aw.Sindri.Core.Home.HomeQuery.Scope.get -> Aw.Sindri.Core.Home.HomeScope?
+Aw.Sindri.Core.Home.HomeQuery.Scope.init -> void
+Aw.Sindri.Core.Home.HomeQuery.HomeQuery(Aw.Sindri.Core.Home.HomeGroup? Group, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeState>! States, string? After, int Limit, Aw.Sindri.Core.Home.HomeScope? Scope = null) -> void
+override Aw.Sindri.Core.Home.HomeQuery.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Home.HomeQuery.GetHashCode() -> int
+override Aw.Sindri.Core.Home.HomeQuery.ToString() -> string!
+static Aw.Sindri.Core.Home.HomeQuery.operator !=(Aw.Sindri.Core.Home.HomeQuery? left, Aw.Sindri.Core.Home.HomeQuery? right) -> bool
+static Aw.Sindri.Core.Home.HomeQuery.operator ==(Aw.Sindri.Core.Home.HomeQuery? left, Aw.Sindri.Core.Home.HomeQuery? right) -> bool
+Aw.Sindri.Core.Home.HomeCounts
+Aw.Sindri.Core.Home.HomeCounts.<Clone>$() -> Aw.Sindri.Core.Home.HomeCounts!
+Aw.Sindri.Core.Home.HomeCounts.Deconstruct(out int NeedsYou, out int Moving, out int Snoozed, out int Done) -> void
+Aw.Sindri.Core.Home.HomeCounts.Equals(Aw.Sindri.Core.Home.HomeCounts? other) -> bool
+Aw.Sindri.Core.Home.HomeCounts.NeedsYou.get -> int
+Aw.Sindri.Core.Home.HomeCounts.NeedsYou.init -> void
+Aw.Sindri.Core.Home.HomeCounts.Moving.get -> int
+Aw.Sindri.Core.Home.HomeCounts.Moving.init -> void
+Aw.Sindri.Core.Home.HomeCounts.Snoozed.get -> int
+Aw.Sindri.Core.Home.HomeCounts.Snoozed.init -> void
+Aw.Sindri.Core.Home.HomeCounts.Done.get -> int
+Aw.Sindri.Core.Home.HomeCounts.Done.init -> void
+Aw.Sindri.Core.Home.HomeCounts.HomeCounts(int NeedsYou, int Moving, int Snoozed, int Done) -> void
+override Aw.Sindri.Core.Home.HomeCounts.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Home.HomeCounts.GetHashCode() -> int
+override Aw.Sindri.Core.Home.HomeCounts.ToString() -> string!
+static Aw.Sindri.Core.Home.HomeCounts.operator !=(Aw.Sindri.Core.Home.HomeCounts? left, Aw.Sindri.Core.Home.HomeCounts? right) -> bool
+static Aw.Sindri.Core.Home.HomeCounts.operator ==(Aw.Sindri.Core.Home.HomeCounts? left, Aw.Sindri.Core.Home.HomeCounts? right) -> bool
+Aw.Sindri.Core.Home.HomePage
+Aw.Sindri.Core.Home.HomePage.<Clone>$() -> Aw.Sindri.Core.Home.HomePage!
+Aw.Sindri.Core.Home.HomePage.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeRow!>! Rows, out Aw.Sindri.Core.Home.HomeCounts! Counts, out string? Cursor) -> void
+Aw.Sindri.Core.Home.HomePage.Equals(Aw.Sindri.Core.Home.HomePage? other) -> bool
+Aw.Sindri.Core.Home.HomePage.Rows.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeRow!>!
+Aw.Sindri.Core.Home.HomePage.Rows.init -> void
+Aw.Sindri.Core.Home.HomePage.Counts.get -> Aw.Sindri.Core.Home.HomeCounts!
+Aw.Sindri.Core.Home.HomePage.Counts.init -> void
+Aw.Sindri.Core.Home.HomePage.Cursor.get -> string?
+Aw.Sindri.Core.Home.HomePage.Cursor.init -> void
+Aw.Sindri.Core.Home.HomePage.HomePage(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeRow!>! Rows, Aw.Sindri.Core.Home.HomeCounts! Counts, string? Cursor) -> void
+override Aw.Sindri.Core.Home.HomePage.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Home.HomePage.GetHashCode() -> int
+override Aw.Sindri.Core.Home.HomePage.ToString() -> string!
+static Aw.Sindri.Core.Home.HomePage.operator !=(Aw.Sindri.Core.Home.HomePage? left, Aw.Sindri.Core.Home.HomePage? right) -> bool
+static Aw.Sindri.Core.Home.HomePage.operator ==(Aw.Sindri.Core.Home.HomePage? left, Aw.Sindri.Core.Home.HomePage? right) -> bool
+Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Core.Ids.HomeRowId.Equals(Aw.Sindri.Core.Ids.HomeRowId other) -> bool
+Aw.Sindri.Core.Ids.HomeRowId.Equals(Aw.Sindri.Core.Ids.HomeRowId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Ids.HomeRowId>! comparer) -> bool
+Aw.Sindri.Core.Ids.HomeRowId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Ids.HomeRowId.IsInitialized() -> bool
+Aw.Sindri.Core.Ids.HomeRowId.HomeRowId() -> void
+Aw.Sindri.Core.Ids.HomeRowId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Ids.HomeRowId.Value.get -> string!
+override Aw.Sindri.Core.Ids.HomeRowId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Ids.HomeRowId.GetHashCode() -> int
+override Aw.Sindri.Core.Ids.HomeRowId.ToString() -> string!
+static Aw.Sindri.Core.Ids.HomeRowId.From(string! value) -> Aw.Sindri.Core.Ids.HomeRowId
+static Aw.Sindri.Core.Ids.HomeRowId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.HomeRowId
+static Aw.Sindri.Core.Ids.HomeRowId.TryFrom(string? value, out Aw.Sindri.Core.Ids.HomeRowId vo) -> bool
+static Aw.Sindri.Core.Ids.HomeRowId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.HomeRowId result) -> bool
+static Aw.Sindri.Core.Ids.HomeRowId.operator !=(Aw.Sindri.Core.Ids.HomeRowId left, Aw.Sindri.Core.Ids.HomeRowId right) -> bool
+static Aw.Sindri.Core.Ids.HomeRowId.operator ==(Aw.Sindri.Core.Ids.HomeRowId left, Aw.Sindri.Core.Ids.HomeRowId right) -> bool
+Aw.Sindri.Core.Ids.HomeRowId.PathSegment() -> string!
+Aw.Sindri.Core.Home.IHomeViewReader
+Aw.Sindri.Core.Home.IHomeViewReader.Get(Aw.Sindri.Core.Ids.HomeRowId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Home.HomeRow?>!>
+Aw.Sindri.Core.Home.IHomeViewReader.List(Aw.Sindri.Core.Home.HomeQuery! query, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Home.HomePage!>!>
+Aw.Sindri.Core.Home.HomeScope
+Aw.Sindri.Core.Home.HomeScope.<Clone>$() -> Aw.Sindri.Core.Home.HomeScope!
+Aw.Sindri.Core.Home.HomeScope.Deconstruct(out Aw.Sindri.Core.Ids.RepoName? Repo) -> void
+Aw.Sindri.Core.Home.HomeScope.Equals(Aw.Sindri.Core.Home.HomeScope? other) -> bool
+Aw.Sindri.Core.Home.HomeScope.Repo.get -> Aw.Sindri.Core.Ids.RepoName?
+Aw.Sindri.Core.Home.HomeScope.Repo.init -> void
+Aw.Sindri.Core.Home.HomeScope.HomeScope(Aw.Sindri.Core.Ids.RepoName? Repo) -> void
+Aw.Sindri.Core.Home.HomeScope.Sees(Aw.Sindri.Core.Home.HomeRow! row) -> bool
+override Aw.Sindri.Core.Home.HomeScope.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Home.HomeScope.GetHashCode() -> int
+override Aw.Sindri.Core.Home.HomeScope.ToString() -> string!
+static Aw.Sindri.Core.Home.HomeScope.operator !=(Aw.Sindri.Core.Home.HomeScope? left, Aw.Sindri.Core.Home.HomeScope? right) -> bool
+static Aw.Sindri.Core.Home.HomeScope.operator ==(Aw.Sindri.Core.Home.HomeScope? left, Aw.Sindri.Core.Home.HomeScope? right) -> bool
+static Aw.Sindri.Core.Home.HomeScope.RepoLess(Aw.Sindri.Core.Home.HomeKind kind) -> bool
+Aw.Sindri.Core.Home.HomePaging
+const Aw.Sindri.Core.Home.HomePaging.DefaultLimit = 60 -> int
+const Aw.Sindri.Core.Home.HomePaging.MaxLimit = 200 -> int
+static Aw.Sindri.Core.Home.HomePaging.Page(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeRow!>! rows, Aw.Sindri.Core.Home.HomeQuery! query) -> Aw.Sindri.Core.Home.HomePage!
+Aw.Sindri.Core.Events.HomeRowRaised
+Aw.Sindri.Core.Events.HomeRowRaised.<Clone>$() -> Aw.Sindri.Core.Events.HomeRowRaised!
+Aw.Sindri.Core.Events.HomeRowRaised.Deconstruct(out Aw.Sindri.Core.Home.HomeRow! Row, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeEdge!>! Edges) -> void
+Aw.Sindri.Core.Events.HomeRowRaised.Equals(Aw.Sindri.Core.Events.HomeRowRaised? other) -> bool
+Aw.Sindri.Core.Events.HomeRowRaised.Row.get -> Aw.Sindri.Core.Home.HomeRow!
+Aw.Sindri.Core.Events.HomeRowRaised.Row.init -> void
+Aw.Sindri.Core.Events.HomeRowRaised.Edges.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeEdge!>!
+Aw.Sindri.Core.Events.HomeRowRaised.Edges.init -> void
+Aw.Sindri.Core.Events.HomeRowRaised.HomeRowRaised(Aw.Sindri.Core.Home.HomeRow! Row, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeEdge!>! Edges) -> void
+override Aw.Sindri.Core.Events.HomeRowRaised.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeRowRaised.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeRowRaised.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeRowRaised.operator !=(Aw.Sindri.Core.Events.HomeRowRaised? left, Aw.Sindri.Core.Events.HomeRowRaised? right) -> bool
+static Aw.Sindri.Core.Events.HomeRowRaised.operator ==(Aw.Sindri.Core.Events.HomeRowRaised? left, Aw.Sindri.Core.Events.HomeRowRaised? right) -> bool
+Aw.Sindri.Core.Events.HomeRowChanged
+Aw.Sindri.Core.Events.HomeRowChanged.<Clone>$() -> Aw.Sindri.Core.Events.HomeRowChanged!
+Aw.Sindri.Core.Events.HomeRowChanged.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId Id, out long Version, out string? Title, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeFact!>? Facts, out string? WaitsOn, out Aw.Sindri.Core.Home.HomeRank? Rank, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeBlocked!>? BlocksList, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeLink!>? Links, out System.Collections.Generic.IReadOnlyList<string!>? Actions, out Aw.Sindri.Core.Home.HomeSource? Source, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeEdge!>? Edges) -> void
+Aw.Sindri.Core.Events.HomeRowChanged.Equals(Aw.Sindri.Core.Events.HomeRowChanged? other) -> bool
+Aw.Sindri.Core.Events.HomeRowChanged.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Core.Events.HomeRowChanged.Id.init -> void
+Aw.Sindri.Core.Events.HomeRowChanged.Version.get -> long
+Aw.Sindri.Core.Events.HomeRowChanged.Version.init -> void
+Aw.Sindri.Core.Events.HomeRowChanged.Title.get -> string?
+Aw.Sindri.Core.Events.HomeRowChanged.Title.init -> void
+Aw.Sindri.Core.Events.HomeRowChanged.Facts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeFact!>?
+Aw.Sindri.Core.Events.HomeRowChanged.Facts.init -> void
+Aw.Sindri.Core.Events.HomeRowChanged.WaitsOn.get -> string?
+Aw.Sindri.Core.Events.HomeRowChanged.WaitsOn.init -> void
+Aw.Sindri.Core.Events.HomeRowChanged.Rank.get -> Aw.Sindri.Core.Home.HomeRank?
+Aw.Sindri.Core.Events.HomeRowChanged.Rank.init -> void
+Aw.Sindri.Core.Events.HomeRowChanged.BlocksList.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeBlocked!>?
+Aw.Sindri.Core.Events.HomeRowChanged.BlocksList.init -> void
+Aw.Sindri.Core.Events.HomeRowChanged.Links.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeLink!>?
+Aw.Sindri.Core.Events.HomeRowChanged.Links.init -> void
+Aw.Sindri.Core.Events.HomeRowChanged.Actions.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Events.HomeRowChanged.Actions.init -> void
+Aw.Sindri.Core.Events.HomeRowChanged.Source.get -> Aw.Sindri.Core.Home.HomeSource?
+Aw.Sindri.Core.Events.HomeRowChanged.Source.init -> void
+Aw.Sindri.Core.Events.HomeRowChanged.Edges.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeEdge!>?
+Aw.Sindri.Core.Events.HomeRowChanged.Edges.init -> void
+Aw.Sindri.Core.Events.HomeRowChanged.HomeRowChanged(Aw.Sindri.Core.Ids.HomeRowId Id, long Version, string? Title, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeFact!>? Facts, string? WaitsOn, Aw.Sindri.Core.Home.HomeRank? Rank, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeBlocked!>? BlocksList, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeLink!>? Links, System.Collections.Generic.IReadOnlyList<string!>? Actions, Aw.Sindri.Core.Home.HomeSource? Source, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Home.HomeEdge!>? Edges) -> void
+override Aw.Sindri.Core.Events.HomeRowChanged.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeRowChanged.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeRowChanged.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeRowChanged.operator !=(Aw.Sindri.Core.Events.HomeRowChanged? left, Aw.Sindri.Core.Events.HomeRowChanged? right) -> bool
+static Aw.Sindri.Core.Events.HomeRowChanged.operator ==(Aw.Sindri.Core.Events.HomeRowChanged? left, Aw.Sindri.Core.Events.HomeRowChanged? right) -> bool
+Aw.Sindri.Core.Events.HomeRowCleared
+Aw.Sindri.Core.Events.HomeRowCleared.<Clone>$() -> Aw.Sindri.Core.Events.HomeRowCleared!
+Aw.Sindri.Core.Events.HomeRowCleared.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId Id) -> void
+Aw.Sindri.Core.Events.HomeRowCleared.Equals(Aw.Sindri.Core.Events.HomeRowCleared? other) -> bool
+Aw.Sindri.Core.Events.HomeRowCleared.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Core.Events.HomeRowCleared.Id.init -> void
+Aw.Sindri.Core.Events.HomeRowCleared.HomeRowCleared(Aw.Sindri.Core.Ids.HomeRowId Id) -> void
+override Aw.Sindri.Core.Events.HomeRowCleared.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeRowCleared.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeRowCleared.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeRowCleared.operator !=(Aw.Sindri.Core.Events.HomeRowCleared? left, Aw.Sindri.Core.Events.HomeRowCleared? right) -> bool
+static Aw.Sindri.Core.Events.HomeRowCleared.operator ==(Aw.Sindri.Core.Events.HomeRowCleared? left, Aw.Sindri.Core.Events.HomeRowCleared? right) -> bool
+Aw.Sindri.Core.Events.HomeRowSeen
+Aw.Sindri.Core.Events.HomeRowSeen.<Clone>$() -> Aw.Sindri.Core.Events.HomeRowSeen!
+Aw.Sindri.Core.Events.HomeRowSeen.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId Id, out long Version) -> void
+Aw.Sindri.Core.Events.HomeRowSeen.Equals(Aw.Sindri.Core.Events.HomeRowSeen? other) -> bool
+Aw.Sindri.Core.Events.HomeRowSeen.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Core.Events.HomeRowSeen.Id.init -> void
+Aw.Sindri.Core.Events.HomeRowSeen.Version.get -> long
+Aw.Sindri.Core.Events.HomeRowSeen.Version.init -> void
+Aw.Sindri.Core.Events.HomeRowSeen.HomeRowSeen(Aw.Sindri.Core.Ids.HomeRowId Id, long Version) -> void
+override Aw.Sindri.Core.Events.HomeRowSeen.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeRowSeen.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeRowSeen.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeRowSeen.operator !=(Aw.Sindri.Core.Events.HomeRowSeen? left, Aw.Sindri.Core.Events.HomeRowSeen? right) -> bool
+static Aw.Sindri.Core.Events.HomeRowSeen.operator ==(Aw.Sindri.Core.Events.HomeRowSeen? left, Aw.Sindri.Core.Events.HomeRowSeen? right) -> bool
+Aw.Sindri.Core.Events.HomeRowSnoozed
+Aw.Sindri.Core.Events.HomeRowSnoozed.<Clone>$() -> Aw.Sindri.Core.Events.HomeRowSnoozed!
+Aw.Sindri.Core.Events.HomeRowSnoozed.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId Id, out long Version, out System.DateTimeOffset Until, out bool UnlessReplied) -> void
+Aw.Sindri.Core.Events.HomeRowSnoozed.Equals(Aw.Sindri.Core.Events.HomeRowSnoozed? other) -> bool
+Aw.Sindri.Core.Events.HomeRowSnoozed.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Core.Events.HomeRowSnoozed.Id.init -> void
+Aw.Sindri.Core.Events.HomeRowSnoozed.Version.get -> long
+Aw.Sindri.Core.Events.HomeRowSnoozed.Version.init -> void
+Aw.Sindri.Core.Events.HomeRowSnoozed.Until.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.HomeRowSnoozed.Until.init -> void
+Aw.Sindri.Core.Events.HomeRowSnoozed.UnlessReplied.get -> bool
+Aw.Sindri.Core.Events.HomeRowSnoozed.UnlessReplied.init -> void
+Aw.Sindri.Core.Events.HomeRowSnoozed.HomeRowSnoozed(Aw.Sindri.Core.Ids.HomeRowId Id, long Version, System.DateTimeOffset Until, bool UnlessReplied) -> void
+override Aw.Sindri.Core.Events.HomeRowSnoozed.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeRowSnoozed.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeRowSnoozed.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeRowSnoozed.operator !=(Aw.Sindri.Core.Events.HomeRowSnoozed? left, Aw.Sindri.Core.Events.HomeRowSnoozed? right) -> bool
+static Aw.Sindri.Core.Events.HomeRowSnoozed.operator ==(Aw.Sindri.Core.Events.HomeRowSnoozed? left, Aw.Sindri.Core.Events.HomeRowSnoozed? right) -> bool
+Aw.Sindri.Core.Events.HomeRowWoke
+Aw.Sindri.Core.Events.HomeRowWoke.<Clone>$() -> Aw.Sindri.Core.Events.HomeRowWoke!
+Aw.Sindri.Core.Events.HomeRowWoke.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId Id, out long Version) -> void
+Aw.Sindri.Core.Events.HomeRowWoke.Equals(Aw.Sindri.Core.Events.HomeRowWoke? other) -> bool
+Aw.Sindri.Core.Events.HomeRowWoke.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Core.Events.HomeRowWoke.Id.init -> void
+Aw.Sindri.Core.Events.HomeRowWoke.Version.get -> long
+Aw.Sindri.Core.Events.HomeRowWoke.Version.init -> void
+Aw.Sindri.Core.Events.HomeRowWoke.HomeRowWoke(Aw.Sindri.Core.Ids.HomeRowId Id, long Version) -> void
+override Aw.Sindri.Core.Events.HomeRowWoke.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeRowWoke.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeRowWoke.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeRowWoke.operator !=(Aw.Sindri.Core.Events.HomeRowWoke? left, Aw.Sindri.Core.Events.HomeRowWoke? right) -> bool
+static Aw.Sindri.Core.Events.HomeRowWoke.operator ==(Aw.Sindri.Core.Events.HomeRowWoke? left, Aw.Sindri.Core.Events.HomeRowWoke? right) -> bool
+Aw.Sindri.Core.Events.HomeRowDone
+Aw.Sindri.Core.Events.HomeRowDone.<Clone>$() -> Aw.Sindri.Core.Events.HomeRowDone!
+Aw.Sindri.Core.Events.HomeRowDone.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId Id, out long Version, out System.DateTimeOffset? At) -> void
+Aw.Sindri.Core.Events.HomeRowDone.Equals(Aw.Sindri.Core.Events.HomeRowDone? other) -> bool
+Aw.Sindri.Core.Events.HomeRowDone.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Core.Events.HomeRowDone.Id.init -> void
+Aw.Sindri.Core.Events.HomeRowDone.Version.get -> long
+Aw.Sindri.Core.Events.HomeRowDone.Version.init -> void
+Aw.Sindri.Core.Events.HomeRowDone.At.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Events.HomeRowDone.At.init -> void
+Aw.Sindri.Core.Events.HomeRowDone.HomeRowDone(Aw.Sindri.Core.Ids.HomeRowId Id, long Version, System.DateTimeOffset? At) -> void
+override Aw.Sindri.Core.Events.HomeRowDone.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeRowDone.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeRowDone.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeRowDone.operator !=(Aw.Sindri.Core.Events.HomeRowDone? left, Aw.Sindri.Core.Events.HomeRowDone? right) -> bool
+static Aw.Sindri.Core.Events.HomeRowDone.operator ==(Aw.Sindri.Core.Events.HomeRowDone? left, Aw.Sindri.Core.Events.HomeRowDone? right) -> bool
+Aw.Sindri.Core.Events.HomeRowRevived
+Aw.Sindri.Core.Events.HomeRowRevived.<Clone>$() -> Aw.Sindri.Core.Events.HomeRowRevived!
+Aw.Sindri.Core.Events.HomeRowRevived.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId Id, out long Version) -> void
+Aw.Sindri.Core.Events.HomeRowRevived.Equals(Aw.Sindri.Core.Events.HomeRowRevived? other) -> bool
+Aw.Sindri.Core.Events.HomeRowRevived.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Core.Events.HomeRowRevived.Id.init -> void
+Aw.Sindri.Core.Events.HomeRowRevived.Version.get -> long
+Aw.Sindri.Core.Events.HomeRowRevived.Version.init -> void
+Aw.Sindri.Core.Events.HomeRowRevived.HomeRowRevived(Aw.Sindri.Core.Ids.HomeRowId Id, long Version) -> void
+override Aw.Sindri.Core.Events.HomeRowRevived.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeRowRevived.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeRowRevived.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeRowRevived.operator !=(Aw.Sindri.Core.Events.HomeRowRevived? left, Aw.Sindri.Core.Events.HomeRowRevived? right) -> bool
+static Aw.Sindri.Core.Events.HomeRowRevived.operator ==(Aw.Sindri.Core.Events.HomeRowRevived? left, Aw.Sindri.Core.Events.HomeRowRevived? right) -> bool
+Aw.Sindri.Core.Events.HomeRowMuted
+Aw.Sindri.Core.Events.HomeRowMuted.<Clone>$() -> Aw.Sindri.Core.Events.HomeRowMuted!
+Aw.Sindri.Core.Events.HomeRowMuted.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId Id, out long Version) -> void
+Aw.Sindri.Core.Events.HomeRowMuted.Equals(Aw.Sindri.Core.Events.HomeRowMuted? other) -> bool
+Aw.Sindri.Core.Events.HomeRowMuted.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Core.Events.HomeRowMuted.Id.init -> void
+Aw.Sindri.Core.Events.HomeRowMuted.Version.get -> long
+Aw.Sindri.Core.Events.HomeRowMuted.Version.init -> void
+Aw.Sindri.Core.Events.HomeRowMuted.HomeRowMuted(Aw.Sindri.Core.Ids.HomeRowId Id, long Version) -> void
+override Aw.Sindri.Core.Events.HomeRowMuted.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeRowMuted.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeRowMuted.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeRowMuted.operator !=(Aw.Sindri.Core.Events.HomeRowMuted? left, Aw.Sindri.Core.Events.HomeRowMuted? right) -> bool
+static Aw.Sindri.Core.Events.HomeRowMuted.operator ==(Aw.Sindri.Core.Events.HomeRowMuted? left, Aw.Sindri.Core.Events.HomeRowMuted? right) -> bool
+Aw.Sindri.Core.Events.HomeActSent
+Aw.Sindri.Core.Events.HomeActSent.<Clone>$() -> Aw.Sindri.Core.Events.HomeActSent!
+Aw.Sindri.Core.Events.HomeActSent.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId Id, out Aw.Sindri.Core.Ids.ActId ActId, out string! Action, out string! BodyHash) -> void
+Aw.Sindri.Core.Events.HomeActSent.Equals(Aw.Sindri.Core.Events.HomeActSent? other) -> bool
+Aw.Sindri.Core.Events.HomeActSent.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Core.Events.HomeActSent.Id.init -> void
+Aw.Sindri.Core.Events.HomeActSent.ActId.get -> Aw.Sindri.Core.Ids.ActId
+Aw.Sindri.Core.Events.HomeActSent.ActId.init -> void
+Aw.Sindri.Core.Events.HomeActSent.Action.get -> string!
+Aw.Sindri.Core.Events.HomeActSent.Action.init -> void
+Aw.Sindri.Core.Events.HomeActSent.BodyHash.get -> string!
+Aw.Sindri.Core.Events.HomeActSent.BodyHash.init -> void
+Aw.Sindri.Core.Events.HomeActSent.HomeActSent(Aw.Sindri.Core.Ids.HomeRowId Id, Aw.Sindri.Core.Ids.ActId ActId, string! Action, string! BodyHash) -> void
+override Aw.Sindri.Core.Events.HomeActSent.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeActSent.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeActSent.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeActSent.operator !=(Aw.Sindri.Core.Events.HomeActSent? left, Aw.Sindri.Core.Events.HomeActSent? right) -> bool
+static Aw.Sindri.Core.Events.HomeActSent.operator ==(Aw.Sindri.Core.Events.HomeActSent? left, Aw.Sindri.Core.Events.HomeActSent? right) -> bool
+Aw.Sindri.Core.Events.HomeActLanded
+Aw.Sindri.Core.Events.HomeActLanded.<Clone>$() -> Aw.Sindri.Core.Events.HomeActLanded!
+Aw.Sindri.Core.Events.HomeActLanded.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId Id, out Aw.Sindri.Core.Ids.ActId ActId) -> void
+Aw.Sindri.Core.Events.HomeActLanded.Equals(Aw.Sindri.Core.Events.HomeActLanded? other) -> bool
+Aw.Sindri.Core.Events.HomeActLanded.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Core.Events.HomeActLanded.Id.init -> void
+Aw.Sindri.Core.Events.HomeActLanded.ActId.get -> Aw.Sindri.Core.Ids.ActId
+Aw.Sindri.Core.Events.HomeActLanded.ActId.init -> void
+Aw.Sindri.Core.Events.HomeActLanded.HomeActLanded(Aw.Sindri.Core.Ids.HomeRowId Id, Aw.Sindri.Core.Ids.ActId ActId) -> void
+override Aw.Sindri.Core.Events.HomeActLanded.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeActLanded.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeActLanded.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeActLanded.operator !=(Aw.Sindri.Core.Events.HomeActLanded? left, Aw.Sindri.Core.Events.HomeActLanded? right) -> bool
+static Aw.Sindri.Core.Events.HomeActLanded.operator ==(Aw.Sindri.Core.Events.HomeActLanded? left, Aw.Sindri.Core.Events.HomeActLanded? right) -> bool
+Aw.Sindri.Core.Events.HomeActFailed
+Aw.Sindri.Core.Events.HomeActFailed.<Clone>$() -> Aw.Sindri.Core.Events.HomeActFailed!
+Aw.Sindri.Core.Events.HomeActFailed.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId Id, out Aw.Sindri.Core.Ids.ActId ActId, out string! Reason) -> void
+Aw.Sindri.Core.Events.HomeActFailed.Equals(Aw.Sindri.Core.Events.HomeActFailed? other) -> bool
+Aw.Sindri.Core.Events.HomeActFailed.Id.get -> Aw.Sindri.Core.Ids.HomeRowId
+Aw.Sindri.Core.Events.HomeActFailed.Id.init -> void
+Aw.Sindri.Core.Events.HomeActFailed.ActId.get -> Aw.Sindri.Core.Ids.ActId
+Aw.Sindri.Core.Events.HomeActFailed.ActId.init -> void
+Aw.Sindri.Core.Events.HomeActFailed.Reason.get -> string!
+Aw.Sindri.Core.Events.HomeActFailed.Reason.init -> void
+Aw.Sindri.Core.Events.HomeActFailed.HomeActFailed(Aw.Sindri.Core.Ids.HomeRowId Id, Aw.Sindri.Core.Ids.ActId ActId, string! Reason) -> void
+override Aw.Sindri.Core.Events.HomeActFailed.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeActFailed.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeActFailed.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeActFailed.operator !=(Aw.Sindri.Core.Events.HomeActFailed? left, Aw.Sindri.Core.Events.HomeActFailed? right) -> bool
+static Aw.Sindri.Core.Events.HomeActFailed.operator ==(Aw.Sindri.Core.Events.HomeActFailed? left, Aw.Sindri.Core.Events.HomeActFailed? right) -> bool
+Aw.Sindri.Core.Events.HomeBriefWritten
+Aw.Sindri.Core.Events.HomeBriefWritten.<Clone>$() -> Aw.Sindri.Core.Events.HomeBriefWritten!
+Aw.Sindri.Core.Events.HomeBriefWritten.Deconstruct(out System.DateTimeOffset At, out string! Mode, out System.Collections.Generic.IReadOnlyList<string!>! Lines) -> void
+Aw.Sindri.Core.Events.HomeBriefWritten.Equals(Aw.Sindri.Core.Events.HomeBriefWritten? other) -> bool
+Aw.Sindri.Core.Events.HomeBriefWritten.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.HomeBriefWritten.At.init -> void
+Aw.Sindri.Core.Events.HomeBriefWritten.Mode.get -> string!
+Aw.Sindri.Core.Events.HomeBriefWritten.Mode.init -> void
+Aw.Sindri.Core.Events.HomeBriefWritten.Lines.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Events.HomeBriefWritten.Lines.init -> void
+Aw.Sindri.Core.Events.HomeBriefWritten.HomeBriefWritten(System.DateTimeOffset At, string! Mode, System.Collections.Generic.IReadOnlyList<string!>! Lines) -> void
+override Aw.Sindri.Core.Events.HomeBriefWritten.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeBriefWritten.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeBriefWritten.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeBriefWritten.operator !=(Aw.Sindri.Core.Events.HomeBriefWritten? left, Aw.Sindri.Core.Events.HomeBriefWritten? right) -> bool
+static Aw.Sindri.Core.Events.HomeBriefWritten.operator ==(Aw.Sindri.Core.Events.HomeBriefWritten? left, Aw.Sindri.Core.Events.HomeBriefWritten? right) -> bool
+Aw.Sindri.Core.Events.HomeCursorMoved
+Aw.Sindri.Core.Events.HomeCursorMoved.<Clone>$() -> Aw.Sindri.Core.Events.HomeCursorMoved!
+Aw.Sindri.Core.Events.HomeCursorMoved.Deconstruct(out System.DateTimeOffset LookedAt) -> void
+Aw.Sindri.Core.Events.HomeCursorMoved.Equals(Aw.Sindri.Core.Events.HomeCursorMoved? other) -> bool
+Aw.Sindri.Core.Events.HomeCursorMoved.LookedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.HomeCursorMoved.LookedAt.init -> void
+Aw.Sindri.Core.Events.HomeCursorMoved.HomeCursorMoved(System.DateTimeOffset LookedAt) -> void
+override Aw.Sindri.Core.Events.HomeCursorMoved.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeCursorMoved.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeCursorMoved.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeCursorMoved.operator !=(Aw.Sindri.Core.Events.HomeCursorMoved? left, Aw.Sindri.Core.Events.HomeCursorMoved? right) -> bool
+static Aw.Sindri.Core.Events.HomeCursorMoved.operator ==(Aw.Sindri.Core.Events.HomeCursorMoved? left, Aw.Sindri.Core.Events.HomeCursorMoved? right) -> bool
+Aw.Sindri.Core.Events.HomeEventPublic
+Aw.Sindri.Core.Events.HomeEventPublic.<Clone>$() -> Aw.Sindri.Core.Events.HomeEventPublic!
+Aw.Sindri.Core.Events.HomeEventPublic.Deconstruct(out Aw.Sindri.Core.Ids.HomeRowId? Id) -> void
+Aw.Sindri.Core.Events.HomeEventPublic.Equals(Aw.Sindri.Core.Events.HomeEventPublic? other) -> bool
+Aw.Sindri.Core.Events.HomeEventPublic.Id.get -> Aw.Sindri.Core.Ids.HomeRowId?
+Aw.Sindri.Core.Events.HomeEventPublic.Id.init -> void
+Aw.Sindri.Core.Events.HomeEventPublic.HomeEventPublic(Aw.Sindri.Core.Ids.HomeRowId? Id) -> void
+override Aw.Sindri.Core.Events.HomeEventPublic.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.HomeEventPublic.GetHashCode() -> int
+override Aw.Sindri.Core.Events.HomeEventPublic.ToString() -> string!
+static Aw.Sindri.Core.Events.HomeEventPublic.operator !=(Aw.Sindri.Core.Events.HomeEventPublic? left, Aw.Sindri.Core.Events.HomeEventPublic? right) -> bool
+static Aw.Sindri.Core.Events.HomeEventPublic.operator ==(Aw.Sindri.Core.Events.HomeEventPublic? left, Aw.Sindri.Core.Events.HomeEventPublic? right) -> bool
+const Aw.Sindri.Core.Events.EventTypes.HomeRowRaised = "home.row.raised" -> string!
+const Aw.Sindri.Core.Events.EventTypes.HomeRowChanged = "home.row.changed" -> string!
+const Aw.Sindri.Core.Events.EventTypes.HomeRowCleared = "home.row.cleared" -> string!
+const Aw.Sindri.Core.Events.EventTypes.HomeRowSeen = "home.row.seen" -> string!
+const Aw.Sindri.Core.Events.EventTypes.HomeRowSnoozed = "home.row.snoozed" -> string!
+const Aw.Sindri.Core.Events.EventTypes.HomeRowWoke = "home.row.woke" -> string!
+const Aw.Sindri.Core.Events.EventTypes.HomeRowDone = "home.row.done" -> string!
+const Aw.Sindri.Core.Events.EventTypes.HomeRowRevived = "home.row.revived" -> string!
+const Aw.Sindri.Core.Events.EventTypes.HomeRowMuted = "home.row.muted" -> string!
+const Aw.Sindri.Core.Events.EventTypes.HomeActSent = "home.act.sent" -> string!
+const Aw.Sindri.Core.Events.EventTypes.HomeActLanded = "home.act.landed" -> string!
+const Aw.Sindri.Core.Events.EventTypes.HomeActFailed = "home.act.failed" -> string!
+const Aw.Sindri.Core.Events.EventTypes.HomeBriefWritten = "home.brief.written" -> string!
+const Aw.Sindri.Core.Events.EventTypes.HomeCursorMoved = "home.cursor.moved" -> string!
+const Aw.Sindri.Core.Events.ApiViews.Home = "home" -> string!
+const Aw.Sindri.Core.Views.ViewNames.HomeRows = "home-rows" -> string!
+const Aw.Sindri.Core.Views.ViewNames.HomeLinks = "home-links" -> string!
+static readonly Aw.Sindri.Core.SindriErrors.HomeNotFound -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.HomeReads.HomeSessionCut
+static Aw.Sindri.Core.HomeReads.HomeSessionCut.For(Aw.Sindri.Core.Commands.CallerContext! caller, Aw.Sindri.Core.Home.HomeRow! row) -> Aw.Sindri.Core.Home.HomeRow!
+static Aw.Sindri.Core.HomeReads.HomeSessionCut.ScopeOf(Aw.Sindri.Core.Commands.CallerContext! caller) -> Aw.Sindri.Core.Home.HomeScope?
+static Aw.Sindri.Core.HomeReads.HomeSessionCut.Sees(Aw.Sindri.Core.Commands.CallerContext! caller, Aw.Sindri.Core.Home.HomeRow! row) -> bool
 static Aw.Sindri.Core.Graph.Ids.WorkflowRunId.StandIn(Aw.Sindri.Core.Graph.Ids.WorkflowSlug slug) -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
 Aw.Sindri.Core.Graph.Ids.WorkflowRunId.IsStandIn.get -> bool
 Aw.Sindri.Core.Messages.ConversationKind
