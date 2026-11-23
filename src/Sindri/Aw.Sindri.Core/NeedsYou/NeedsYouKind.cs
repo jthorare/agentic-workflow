@@ -42,4 +42,8 @@ public enum NeedsYouKind
     /// <summary>A question a graph 'ask_owner' node asked; it clears when it is answered or its run ends.</summary>
     [JsonStringEnumMemberName("question")]
     Question,
+
+    /// <summary>A live workflow run that ended failed and the owner has not opened yet; it clears when the run is seen.</summary>
+    [JsonStringEnumMemberName("run-failed")]
+    RunFailed,
 }
