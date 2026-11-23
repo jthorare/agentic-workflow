@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Aw.Sindri.Ui.ViewModels;
 
 /// <summary>The app's own copy (<see cref="Labels"/>, continued): the read-only workflow graph (#2258 PR 17 part 2). Never a served sentence.</summary>
