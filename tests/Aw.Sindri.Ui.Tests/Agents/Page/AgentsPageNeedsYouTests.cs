@@ -317,6 +317,25 @@ public sealed class AgentsPageNeedsYouTests
         Assert.Equal(picked, page.SelectedKey);
     }
 
+    [Fact]
+    public async Task Setting_the_search_text_to_what_it_already_is_changes_and_draws_nothing_3913()
+    {
+        var page = await _f.Shown(Token);
+        page.SearchText = "private";
+        var changed = new List<string?>();
+        page.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+        page.SearchText = "private";
+        var same = changed.Count;
+        page.SearchText = string.Empty;
+        changed.Clear();
+        page.SearchText = string.Empty;
+        page.SearchText = null!;
+
+        Assert.Equal(0, same);
+        Assert.Empty(changed);
+    }
+
     private static SessionRowViewModel Row(AgentsPageViewModel page, string prefix) => page.Groups.SelectMany(g => g.Rows).Single(r => r.Ref.StartsWith(prefix, StringComparison.Ordinal));
 
     private static void Set(JsonNode list, string prefix, string state, bool estimated)
