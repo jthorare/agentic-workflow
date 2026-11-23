@@ -141,7 +141,7 @@ internal sealed class WfReadVerbs(ControlPlaneClient client, Output output)
     }
 
     /// <summary>Takes '--revision &lt;value&gt;' out of the arguments (#3693).</summary>
-    private static (string[] Rest, string? Revision, string? Bad) RevisionOption(string[] args)
+    private static (string[] Remaining, string? Revision, string? Bad) RevisionOption(string[] args)
     {
         var at = Array.IndexOf(args, "--revision");
         if (at < 0)

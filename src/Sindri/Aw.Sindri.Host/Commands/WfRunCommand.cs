@@ -78,7 +78,7 @@ internal static class WfRunCommand
     }
 
     // '--revision <n>' (#3691): a saved revision to run once instead of the active one. Whether the workflow has it is the server's to say (SND-GRAPH-008).
-    private static (string[] Rest, int? Revision, string? Bad) Revision(string[] args)
+    private static (string[] Remaining, int? Revision, string? Bad) Revision(string[] args)
     {
         var at = Array.IndexOf(args, "--revision");
         if (at < 0)

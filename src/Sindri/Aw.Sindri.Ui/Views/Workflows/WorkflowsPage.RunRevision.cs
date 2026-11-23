@@ -7,6 +7,7 @@ namespace Aw.Sindri.Ui.Views.Workflows;
 /// <summary>The Workflows page, continued (#3691): "Run revision N once" next to Make live.</summary>
 internal sealed partial class WorkflowsPage
 {
+#pragma warning disable MA0155 // why: an Avalonia RoutedEvent handler returns void, so it can only be async void
     private async void OnRunRevisionOnce(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)
@@ -14,4 +15,5 @@ internal sealed partial class WorkflowsPage
             await page.RunRevisionOnce(CancellationToken.None).ConfigureAwait(true);
         }
     }
+#pragma warning restore MA0155
 }
