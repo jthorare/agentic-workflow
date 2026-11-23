@@ -27,6 +27,13 @@ public sealed class ConnectionCredentials(IConnectionStore? connections, IConnec
             : null;
     }
 
+    /// <inheritdoc />
+    public string? TokenOf(Connection connection)
+    {
+        GC.KeepAlive(connection);
+        return null;   // not built yet (Part of #3321): the readers' red
+    }
+
     private string? FromConnection(string preset)
     {
         if (connections is null)

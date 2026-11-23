@@ -79,6 +79,25 @@ public sealed class ConnectionCredentialsTests
         Assert.Equal(preset + "-connection-token-alpha", Credentials().TokenFor(preset, profilePointer: null));
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_gh_login_connection_gives_the_gh_token_with_no_secret_stored()
+    {
+        _ = (await _connections.Insert(GhRows.Row(), CancellationToken.None)).Value;
+
+        Assert.Equal(GhRows.Token, new ConnectionCredentials(_connections, _connectionSecrets, _pointers, new GhRows.Commands()).TokenFor("github", profilePointer: null));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_most_recently_added_connected_row_wins_over_an_older_oauth_one()
+    {
+        await Connect("github", ConnectionStatus.Connected, "default");   // added at the samples' epoch, and sorts before github:gh by name
+        _ = (await _connections.Insert(GhRows.Row(Aw.Kernel.Testing.KnownInstants.Epoch.AddHours(1)), CancellationToken.None)).Value;
+        var credentials = new ConnectionCredentials(_connections, _connectionSecrets, _pointers, new GhRows.Commands());
+
+        Assert.Equal(GhRows.Token, credentials.TokenFor("github", profilePointer: null));
+        Assert.Equal(GhRows.Token, credentials.TokenOf(GhRows.Row()));
+    }
+
     // ideas on #2590: a pointer that doesn't resolve gives null alone, and never hides a connected connection
     [Theory, MemberData(nameof(Presets)), Trait("Lane", "unit")]
     public async Task A_pointer_that_does_not_resolve_gives_null_alone_and_the_connection_with_one(string preset)

@@ -16,8 +16,10 @@ namespace Aw.Sindri.Infrastructure.Connections.GitHub;
 /// <param name="store">The Connections page's rows.</param>
 /// <param name="secrets">Reads a connection's tokens.</param>
 /// <param name="http">The HTTP client; it must not follow redirects on its own.</param>
-internal sealed class GitHubKnownRepos(IConnectionStore store, IConnectionSecrets secrets, HttpClient http) : IKnownRepos
+/// <param name="credentials">Reads the picked connection's token: a gh login's `command:` credential or the secret pointer (first-run spec decision 14).</param>
+internal sealed class GitHubKnownRepos(IConnectionStore store, IConnectionSecrets secrets, HttpClient http, IConnectionCredentials credentials) : IKnownRepos
 {
+
     private const string Preset = "github";
     private static readonly Uri _recent = new("https://api.github.com/user/repos?sort=pushed&per_page=100&affiliation=owner,collaborator,organization_member");
 
@@ -29,6 +31,7 @@ internal sealed class GitHubKnownRepos(IConnectionStore store, IConnectionSecret
             return listed.Error;
         }
 
+        GC.KeepAlive(credentials);   // not read yet (Part of #3321): the readers' red
         var connected = listed.Value.Where(static c => string.Equals(c.Preset, Preset, StringComparison.Ordinal) && c.Status == ConnectionStatus.Connected)
             .OrderBy(static c => c.Name.ToString(), StringComparer.Ordinal).FirstOrDefault();
         return connected?.SecretPointer is { } pointer && secrets.Read(pointer) is { IsSuccess: true } tokens && tokens.Value.AccessToken is { Length: > 0 } token

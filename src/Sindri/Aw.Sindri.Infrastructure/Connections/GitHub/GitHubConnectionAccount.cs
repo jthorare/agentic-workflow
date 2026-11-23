@@ -17,8 +17,10 @@ namespace Aw.Sindri.Infrastructure.Connections.GitHub;
 /// <param name="presets">The presets (the GitHub probe URL).</param>
 /// <param name="http">The HTTP client; it must not follow redirects on its own.</param>
 /// <param name="clock">The clock.</param>
-internal sealed class GitHubConnectionAccount(IConnectionStore store, IConnectionSecrets secrets, IConnectionPresetCatalog presets, HttpClient http, TimeProvider clock) : IGitHubAccount
+/// <param name="credentials">Reads the picked connection's token: a gh login's `command:` credential or the secret pointer (first-run spec decision 14).</param>
+internal sealed class GitHubConnectionAccount(IConnectionStore store, IConnectionSecrets secrets, IConnectionPresetCatalog presets, HttpClient http, TimeProvider clock, IConnectionCredentials credentials) : IGitHubAccount
 {
+
     private const string Host = "api.github.com";
     private const string Preset = "github";
     private static readonly TimeSpan _retryAfter = TimeSpan.FromMinutes(1);
@@ -74,8 +76,11 @@ internal sealed class GitHubConnectionAccount(IConnectionStore store, IConnectio
             : (null, GitHubLoginMiss.SignIn);
     }
 
-    private string? Token(Connection connection) =>
-        connection.SecretPointer is { } pointer && secrets.Read(pointer) is { IsSuccess: true } tokens ? tokens.Value.AccessToken : null;
+    private string? Token(Connection connection)
+    {
+        GC.KeepAlive(credentials);   // not read yet (Part of #3321): the readers' red
+        return connection.SecretPointer is { } pointer && secrets.Read(pointer) is { IsSuccess: true } tokens ? tokens.Value.AccessToken : null;
+    }
 
     private async ValueTask<(string? Login, GitHubLoginMiss Miss)> Send(Uri uri, string accessToken, CancellationToken cancellationToken)
     {
