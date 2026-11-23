@@ -40,7 +40,7 @@ The model only labels and merges. Code applies the caps, the threshold of 2 and 
 ]}
 ```
 
-Keep each batch's JSON under 60,000 bytes, counted as the engine writes it: a non-ASCII character or a quote takes 6 bytes. Cut long `text` (a pasted log) before the run, or split the batch. A bigger batch fails `shape` with that cap in its message.
+Keep each batch's JSON under 60,000 bytes, counted as the engine writes it: a non-ASCII character takes 6 bytes, and so does each of `"`, `'`, `<`, `>`, `&`, `+` and the backtick. Cut long `text` (a pasted log) before the run, or split the batch. A bigger batch fails `shape` with that cap in its message.
 
 `load` hands on the same shape for one batch, so `shape` and every step after it are the same in both templates.
 
@@ -63,12 +63,12 @@ Keep each batch's JSON under 60,000 bytes, counted as the engine writes it: a no
 | Cap | Value | Why |
 |---|---|---|
 | Batches per run | 20 (`maxItems`) | A longer list fails `each` before any batch runs |
-| One batch's JSON | 60,000 bytes, counted as the engine writes JSON: a non-ASCII character or a quote is 6 bytes | A bigger batch fails `shape` with this cap in its message. Split it or cut its text before the run |
+| One batch's JSON | 60,000 bytes, counted as the engine writes JSON: a non-ASCII character and each of `"`, `'`, `<`, `>`, `&`, `+` and the backtick are 6 bytes | A bigger batch fails `shape` with this cap in its message. Split it or cut its text before the run |
 | Turns per batch | 20 | Extra turns are dropped and counted in `shape`'s `dropped` |
 | Turns per run | 400 | 20 batches of 20 |
 | `text` | first 1,500 characters, at most 2,000 bytes as JSON written twice | 20 turns stay under the 64 KB cap of `shape`'s output and of `label`'s input, where the turns sit inside the question text |
 | `before` | last 400 characters, at most 500 bytes the same way | Same |
-| `ref` | 80 characters, no spaces, once per batch | Other turns are dropped |
+| `ref` | 80 characters and 100 bytes as JSON written twice (a plain 80-character ref fits), no spaces, once per batch | Other turns are dropped and counted in `shape`'s `dropped` |
 | Mistake phrase | 60 characters | Keeps the gathered corrections small |
 | Phrases sent to `merge` | 200, most turns first | Keeps the merge question small. A merge that names a phrase past `p200` is dropped |
 | Corrections per run | 45,000 bytes in `rank`'s input | A bigger run fails `group` with this cap in its message, before the merge question is asked |
@@ -100,6 +100,7 @@ To feed it by hand, create it from `--template steering-miner-payload` and run i
 
 - One `label` or `merge` step that fails stops the whole run. The model fails a step when its answer is not JSON twice.
 - Nothing caps the tokens of a run. Each label step takes at most 4,096 answer tokens.
+- A batch that `shape` refuses fails the whole run, not just that batch: no later batch runs, and the run gives no findings.
 - The engine cuts a step's input or output at 64 KB, and a later step can't read a cut step. So `shape` fails a batch whose JSON passes 60,000 bytes, and `group` fails a run whose corrections pass 45,000 bytes. Each says the cap in its message.
 - `group`'s cap is reached only when most turns are corrections with long phrases.
 - The redactor can block a turn's text in `shape`'s output when it looks like a secret. `label` then fails on that batch, and so does the run.
