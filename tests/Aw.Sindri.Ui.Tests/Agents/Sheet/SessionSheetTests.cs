@@ -144,7 +144,7 @@ public sealed class SessionSheetTests : FrameHost
     {
         var (window, shell) = await Opened(Claude, details: false);
 
-        var row = InSheet<StackPanel>(window, "SessionCopyChips");
+        var row = InSheet<WrapPanel>(window, "SessionCopyChips");   // #4001: a WrapPanel, so the chips drop to a second line at a narrow width
         Assert.Equal(Orientation.Horizontal, row.Orientation);
         Assert.Equal("SessionRefCopy,SessionAttachCopy", string.Join(',', row.Children.Select(c => c.Name)));
         var shown = InSheet<Border>(window, "SessionAttachText");
