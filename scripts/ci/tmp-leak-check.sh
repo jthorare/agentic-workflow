@@ -26,7 +26,7 @@ list() {
   find "$dir" -mindepth 1 -maxdepth 1 \( -name 'aw-*' -o -name 'tmp.*' \) 2>/dev/null | LC_ALL=C sort
 }
 
-# The two bookkeeping files live outside the watched names' reach: they are removed on exit and filtered from the result.
+# The two bookkeeping files are named aw-leak-*, so the listing sees them: they are filtered from the result and removed on exit.
 before="$(mktemp "$dir/aw-leak-before.XXXXXX")" || exit 2
 after="$(mktemp "$dir/aw-leak-after.XXXXXX")" || exit 2
 trap 'rm -f "$before" "$after"' EXIT
