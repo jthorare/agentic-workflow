@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Aw.Sindri.Ui.Terminal;
 using Aw.Sindri.Ui.ViewModels.Agents;
 
 namespace Aw.Sindri.Ui.Views.Agents;
@@ -26,6 +27,8 @@ internal sealed partial class AgentsPage : UserControl
         TerminalPanel.PaneKeyPressed += (_, e) => _ = Page?.SendPaneKey(e.Name, e.Text);
         TerminalPanel.PanePasted += (_, e) => _ = Page?.SendPanePaste(e.Text);
         TerminalPanel.PaneScrollRequested += (_, e) => _ = Page?.ScrollPane(e.Pages);
+        TerminalPanel.PaneFitChanged += OnPaneFit;
+        _fitDebounce.Tick += OnFitDebounced;
         _tick.Tick += (_, _) => Page?.Terminal.Tick();
         TerminalPanel.TranscriptRequested += (_, _) => Page?.OpenTranscript();
         AddHandler(KeyDownEvent, OnEscape, RoutingStrategies.Bubble);
@@ -36,6 +39,23 @@ internal sealed partial class AgentsPage : UserControl
     private const double NarrowBelow = 1100;
 
     private AgentsPageViewModel? _followed;
+
+    // A window drag fires FitChanged for every step; only the size it settles on goes to Serve (#3860).
+    private readonly DispatcherTimer _fitDebounce = new() { Interval = TimeSpan.FromMilliseconds(150) };
+    private (int Cols, int Rows) _fitting;
+
+    private void OnPaneFit(object? sender, TerminalSizeEventArgs e)
+    {
+        _fitting = (e.Columns, e.Rows);
+        _fitDebounce.Stop();
+        _fitDebounce.Start();
+    }
+
+    private void OnFitDebounced(object? sender, EventArgs e)
+    {
+        _fitDebounce.Stop();
+        _ = Page?.FitPane(_fitting.Cols, _fitting.Rows);
+    }
 
     // The terminal view's clock rules (retries, the 30 s rule, a key's wait) move while the view is open.
     private readonly DispatcherTimer _tick = new() { Interval = TimeSpan.FromMilliseconds(500) };
