@@ -33,6 +33,30 @@ public sealed class ContextEmptyStateWordsTests
         Assert.Equal(("No map yet for aw-split-panes", "Build one to see what your repo is made of and how its parts connect."), (page.EmptyTitle, page.EmptyBody));
     }
 
+    // The no-map refusal as serve sends it for a profile of several repositories: one build maps them all.
+    private static RouteAnswer NoMapFor(params string[] repos) => new(HttpStatusCode.NotFound,
+        "{\"type\":\"about:blank\",\"title\":\"SND-CONTEXT-030\",\"status\":404,\"detail\":\"there is no map yet\",\"noMap\":{\"repos\":["
+        + string.Join(',', repos.Select(r => "\"" + r + "\"")) + "]},\"traceId\":\"<trace>\"}");
+
+    [Fact]
+    public async Task No_map_for_two_repositories_says_the_one_build_maps_both_by_name()
+    {
+        var page = await Page(new FakeSindriApi { WholeMapAnswer = _ => NoMapFor("aw-split-panes", "tabsrepo") });
+
+        Assert.Equal(
+            ("No map yet for 2 repositories", "Build map makes one map of both, aw-split-panes and tabsrepo: what they are made of and how their parts connect."),
+            (page.EmptyTitle, page.EmptyBody));
+        Assert.NotNull(page.BuildControl);
+    }
+
+    [Fact]
+    public async Task No_map_for_three_repositories_counts_them_in_the_sentence()
+    {
+        var page = await Page(new FakeSindriApi { WholeMapAnswer = _ => NoMapFor("a", "b", "c") });
+
+        Assert.Equal("Build map makes one map of all 3 repositories: what they are made of and how their parts connect.", page.EmptyBody);
+    }
+
     [Fact]
     public async Task A_refused_area_read_says_what_is_missing_without_the_command_line()
     {

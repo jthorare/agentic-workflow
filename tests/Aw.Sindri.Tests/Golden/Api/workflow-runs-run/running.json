@@ -13,20 +13,6 @@
   "endedAt": null,
   "nodes": [
     {
-      "node": "agent",
-      "itemIndex": 0,
-      "status": "running",
-      "input": {
-        "prompt": "Look for drift"
-      },
-      "output": null,
-      "truncated": false,
-      "error": null,
-      "agent": "waiting",
-      "raw": null,
-      "seconds": null
-    },
-    {
       "node": "start",
       "itemIndex": 0,
       "status": "succeeded",
@@ -37,6 +23,20 @@
       "truncated": false,
       "error": null,
       "agent": null,
+      "raw": null,
+      "seconds": null
+    },
+    {
+      "node": "agent",
+      "itemIndex": 0,
+      "status": "running",
+      "input": {
+        "prompt": "Look for drift"
+      },
+      "output": null,
+      "truncated": false,
+      "error": null,
+      "agent": "waiting",
       "raw": null,
       "seconds": null
     }
