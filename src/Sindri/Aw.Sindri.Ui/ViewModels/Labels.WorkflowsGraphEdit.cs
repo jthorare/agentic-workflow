@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Aw.Sindri.Ui.ViewModels;
 
 /// <summary>The app's own copy (<see cref="Labels"/>, continued): the graph edits of the Workflows page, Add step, Remove and Connect (#2258 PR 17 part 3b). Never a served sentence.</summary>
@@ -33,8 +35,14 @@ internal static partial class Labels
     internal static string WfEditConfirmRemove(string title) => $"Remove the step \"{title}\" and the connections it has?";
 
     /// <summary>One line of the target list.</summary>
-    /// <param name="title">The step's title.</param>
-    /// <param name="id">The step's id.</param>
+    /// <param name="title">The step's card line 1.</param>
+    /// <param name="line">The step's card line 2, added when two steps share line 1.</param>
     /// <returns>The words.</returns>
-    internal static string WfEditTarget(string title, string id) => string.Equals(title, id, StringComparison.Ordinal) ? id : $"{title} ({id})";
+    internal static string WfEditTarget(string title, string line) => $"{title} \u00b7 {line}";
+
+    /// <summary>A target line that still reads like another, with its place among them.</summary>
+    /// <param name="text">The line.</param>
+    /// <param name="n">Its place, from 1.</param>
+    /// <returns>The words, "Code (2)".</returns>
+    internal static string WfEditTargetNth(string text, int n) => text + " (" + n.ToString(CultureInfo.InvariantCulture) + ")";
 }
