@@ -47,7 +47,7 @@ internal sealed class CorpusTranscriptPort(ITranscriptCorpus corpus) : IGraphTra
             turns.AddRange(read.Value.Turns.Where(t => t.Role == TurnRole.Human && t.At >= query.Since).Select(t => new HumanTurnRef(t.Ref.Value, session.Ref.Value, t.At)));
         }
 
-        return Aw.Kernel.Results.Success<IReadOnlyList<HumanTurnRef>>([.. turns.OrderByDescending(static t => t.At).ThenBy(static t => t.Ref, StringComparer.Ordinal)]);
+        return Kernel.Results.Success<IReadOnlyList<HumanTurnRef>>([.. turns.OrderByDescending(static t => t.At).ThenBy(static t => t.Ref, StringComparer.Ordinal)]);
     }
 
     /// <inheritdoc />
@@ -77,7 +77,7 @@ internal sealed class CorpusTranscriptPort(ITranscriptCorpus corpus) : IGraphTra
             }
         }
 
-        return Aw.Kernel.Results.Success<IReadOnlyList<TranscriptTurnText>>(found);
+        return Kernel.Results.Success<IReadOnlyList<TranscriptTurnText>>(found);
     }
 
     private static TranscriptTurnText? Text(SessionTranscript transcript, TurnRef turn, bool withBefore)
