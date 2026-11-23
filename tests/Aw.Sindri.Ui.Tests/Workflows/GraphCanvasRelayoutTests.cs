@@ -91,9 +91,9 @@ public sealed class GraphCanvasRelayoutTests
         var r = await OnUi(() => WheelSteps(graph));
 
         Assert.False(r.AtFit, "the canvas took the wheel while the whole graph fits");
-        Assert.Equal(-100, r.Mid, 3);
+        Assert.Equal(-50, r.Mid, 3);
         Assert.True(r.TookDown, $"the canvas left a wheel down to the page while it can scroll down (pan y after each zoom step: {r.Path})");
-        Assert.Equal(-148, r.AfterDown, 3);   // one 48 px step down
+        Assert.Equal(-98, r.AfterDown, 3);   // one 48 px step down
         Assert.Equal(0, r.AtTop, 3);
         Assert.False(r.TookAtTop, "the canvas took a wheel up at its top edge instead of leaving it to the page");
     }
@@ -130,7 +130,7 @@ public sealed class GraphCanvasRelayoutTests
         Assert.False(scrolls, "after Fit the graph does not fit the shorter canvas");
     }
 
-    // At Fit, then at 200 % from pan y -100: one wheel down, wheel up to the top edge, one more wheel up. Also the pan y after each zoom step, for the failure message.
+    // At Fit, then at 200 % from pan y -50: one wheel down, wheel up to the top edge, one more wheel up. Also the pan y after each zoom step, for the failure message.
     private static (bool AtFit, double Mid, bool TookDown, double AfterDown, double AtTop, bool TookAtTop, string Path) WheelSteps(WorkflowGraphViewModel graph)
     {
         var canvas = new GraphCanvas { Graph = graph };
@@ -145,12 +145,12 @@ public sealed class GraphCanvasRelayoutTests
             var path = new List<double>();
             for (var i = 0; i < 8; i++)
             {
-                canvas.ZoomIn();   // to 200 %: the chain is 432 px tall, 864 at 200 % plus the map's 144, over a 728 px canvas
+                canvas.ZoomIn();   // to 200 %: the chain is 432 px tall, 864 at 200 %, over a 728 px canvas (under twice, so no map and no map room: #4055)
                 path.Add(canvas.Pan.Y);
             }
 
             Settle(window);
-            canvas.Pan = new Point(canvas.Pan.X, -100);   // inside [-280, 0]
+            canvas.Pan = new Point(canvas.Pan.X, -50);   // inside [-136, 0] (and inside the old [-280, 0])
             var mid = canvas.Pan.Y;
             var tookDown = canvas.Wheel(down, KeyModifiers.None, new Point(200, 200));
             var afterDown = canvas.Pan.Y;

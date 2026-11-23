@@ -38,6 +38,14 @@ internal static class GraphZoom
     internal static bool Scrolls(double worldWidth, double worldHeight, double zoom, (double Width, double Height) clip) =>
         (worldWidth * zoom) > clip.Width + 0.5 || (worldHeight * zoom) > clip.Height + 0.5;
 
+    /// <summary>True when the minimap shows (#4055).</summary>
+    /// <param name="worldWidth">The world's width.</param>
+    /// <param name="worldHeight">The world's height.</param>
+    /// <param name="zoom">The zoom as a factor.</param>
+    /// <param name="clip">The canvas clip's size.</param>
+    /// <returns>True when the map shows.</returns>
+    internal static bool MapShown(double worldWidth, double worldHeight, double zoom, (double Width, double Height) clip) => Scrolls(worldWidth, worldHeight, zoom, clip);
+
     /// <summary>The height of the scrolling area: the world at this zoom, plus the map's height and margin at the bottom while the map shows (never on the right).</summary>
     /// <param name="worldHeight">The world's height.</param>
     /// <param name="zoom">The zoom as a factor.</param>
