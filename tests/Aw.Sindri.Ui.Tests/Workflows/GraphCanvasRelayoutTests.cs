@@ -169,6 +169,47 @@ public sealed class GraphCanvasRelayoutTests
         Assert.Equal(0, zoomedOut, 3);
     }
 
+    // #4033 (qa on #4061): at 125 % with the view at the bottom right limit, one step in and one step out must return to the start pan. StepTo set the
+    // zoom first, so the zoom handler clamped the pan to the smaller extent and the centre formula read the clamped pan. Out from 150 % to 125 %, with the
+    // limit start p0 = (cw - 1.25 R, ch - 1.25 H - 144): in gives c - (c - p0) * 1.2, still inside the 150 % extent (0.1 cw and 0.1 ch - 28.8 to spare),
+    // but outside the 125 % extent, so the old order clamped it back to p0 and then moved again. Worked at 600 x 400 with a world 432 px tall: p0.y = -284,
+    // in -380.8, old out -203.3 (80 px off), new out -284. The limit itself can return: the 150 % extent is wider on both axes, so the step in never clamps.
+    [Fact]
+    public async Task One_zoom_step_in_and_one_out_at_125_percent_return_to_the_start_pan_at_the_bottom_right_limit()
+    {
+        var graph = await Release();
+
+        var (start, back, scrolls) = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = graph };
+            var window = new Window { Content = canvas, Width = 600, Height = 400 };
+            window.Show();
+            Settle(window);
+            try
+            {
+                canvas.Zoom = 1.25;
+                Settle(window);
+                var world = canvas.World;
+                var limit = GraphZoom.ClampPan((-1e6, -1e6), (world.Right, world.Bottom), 1.25, (canvas.Bounds.Width, canvas.Bounds.Height));
+                canvas.Pan = new Point(limit.X, limit.Y);
+                var from = canvas.Pan;
+                canvas.ZoomIn();
+                canvas.ZoomOut();
+                return (from, canvas.Pan, from.X < -1 && from.Y < -1);
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.True(scrolls, "the test needs a graph that scrolls on both axes at 125 % in 600 x 400");
+        Assert.True(
+            Math.Abs(back.X - start.X) <= 0.5 && Math.Abs(back.Y - start.Y) <= 0.5,
+            "the pan started at " + start.X.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + ", " + start.Y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)
+            + " and came back at " + back.X.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + ", " + back.Y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture));
+    }
+
     // At Fit, then at 200 % from pan y -100: one wheel down, wheel up to the top edge, one more wheel up. Also the pan y after each zoom step, for the failure message.
     private static (bool AtFit, double Mid, bool TookDown, double AfterDown, double AtTop, bool TookAtTop, string Path) WheelSteps(WorkflowGraphViewModel graph)
     {
