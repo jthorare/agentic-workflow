@@ -82,6 +82,7 @@ public sealed class GoldenContractTests
         ["workflows-slug-runs"] = As<WorkflowRunList>,   // GET /workflows/{slug}/runs: a workflow's runs
         ["workflow-runs-run"] = As<WorkflowRunView>,   // GET /workflow-runs/{run}: a run's detail
         ["workflow-runs-run-cancel"] = As<WorkflowRunCancelled>,   // POST /workflow-runs/{run}/cancel's cancelled body (the API golden cancels a queued run)
+        ["workflow-runs-run-seen"] = As<WorkflowRunSeen>,   // POST /workflow-runs/{run}/seen: the run page marks a failed live run seen when it opens (#3753; spec-shaped until the route's golden is recorded)
         ["workflow-runs-run-nodes-node-takeover"] = As<AgentNodeControlled>,   // POST /workflow-runs/{run}/nodes/{node}/takeover's taken-over body; the refusals are ProblemDetails
         ["workflow-runs-run-nodes-node-handback"] = As<AgentNodeControlled>,   // POST .../handback's handed-back body; the refusals are ProblemDetails
         ["jobs-id-cancel"] = As<CommandAcceptedView>,   // POST /jobs/{id}/cancel's accepted answer; the refusals are ProblemDetails
