@@ -7,7 +7,7 @@ namespace Aw.Sindri.Infrastructure.Launch;
 /// <summary>
 /// Reads launcher.json one section at a time (launcher spec §4): a mistake in one section costs that section only. 'meta' is ignored whatever it holds;
 /// 'viewer' and 'host' problems are recorded for attended opens and never reach the collector; a bad 'agents.&lt;id&gt;' entry drops itself; a bad
-/// 'sessions' section falls back to the defaults, except that an explicit "enabled": false still holds, so a typo never turns the collector on. A file
+/// 'sessions' section falls back to the defaults, except that an explicit "enabled": false still holds, so a typo never turns the collector on, and a 'scope' that is not "all" holds as "own", so a typo never widens a scratch home's view. A file
 /// that isn't a JSON object, or whose schema isn't 1, gives the built-ins and the defaults.
 /// </summary>
 internal static class IsolatedLauncherRead
@@ -97,9 +97,14 @@ internal static class IsolatedLauncherRead
             return section;
         }
 
-        problems.Add("sessions isn't valid; the defaults are used");
-        var stayOff = element.ValueKind == JsonValueKind.Object && element.TryGetProperty("enabled", out var enabled) && enabled.ValueKind == JsonValueKind.False;
-        return stayOff ? new SessionsSection { Enabled = false } : null;
+        var isObject = element.ValueKind == JsonValueKind.Object;
+        var scope = isObject && element.TryGetProperty("scope", out var written) ? written : (JsonElement?)null;
+        var scopeText = scope is { ValueKind: JsonValueKind.String } text ? text.GetString() : null;
+        var unknownScope = scope is not null && (scopeText is null || LauncherConfigFile.ScopeOf(scopeText) is null);
+        problems.Add(unknownScope ? "sessions.scope is 'all' or 'own' (SND-LAUNCH-011); 'own' is used" : "sessions isn't valid; the defaults are used");
+        var stayOff = isObject && element.TryGetProperty("enabled", out var enabled) && enabled.ValueKind == JsonValueKind.False;
+        var stayOwn = scope is not null && !string.Equals(scopeText, "all", StringComparison.Ordinal);   // a typo never widens the scope: anything but an explicit "all" holds as "own"
+        return stayOff || stayOwn ? new SessionsSection { Enabled = stayOff ? false : null, Scope = stayOwn ? "own" : null } : null;
     }
 
     private static List<AgentEntry> Agents(byte[] builtins, byte[] user, JsonElement root, List<string> problems, List<DroppedEntry> dropped)

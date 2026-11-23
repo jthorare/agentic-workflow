@@ -91,7 +91,26 @@ internal sealed class SessionDiscovery(IProcessTable processes, IClaudeSessionRe
         candidates.AddRange(found.Where(f => !live.ContainsKey(f.Process.Pid)).Select(f => FromProcess(f, hooks, pass)));
         var sources = hosts.ForPass(pass);
         var detected = candidates.Select(c => c with { Host = SessionHosts.Detect(sources, byPid, c) });
-        return new Discovered([.. detected.Where(c => SessionScopeRules.Lists(settings.Scope, c.Host, c.Environment))], problems, Good: true) { Unknown = unknown };
+        var ownLaunches = OwnLaunches();
+        return new Discovered([.. detected.Where(c => SessionScopeRules.Lists(settings.Scope, c.Host, c.Environment, settings.OwnTmuxDirectory, ownLaunches))], problems, Good: true) { Unknown = unknown };
+    }
+
+    /// <summary>This home's launch records, read once per pass and only under scope 'own'; an unreadable folder is none, so a scratch home shows less, never more.</summary>
+    private HashSet<LaunchId> OwnLaunches()
+    {
+        if (settings.Scope == SessionScope.All || Launches is null)
+        {
+            return [];
+        }
+
+        try
+        {
+            return [.. Launches.Launches()];
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return [];
+        }
     }
 
     /// <summary>A process whose environment can't be read is unknown, never "not a judge child": it is left out of this pass and its previous state is kept.</summary>
