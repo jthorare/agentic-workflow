@@ -24,6 +24,7 @@ public sealed class ProjectNotesViewTests : FrameHost
     private async Task<(Window Window, ShellViewModel Shell, ProjectCardViewModel Row, ProjectNotesEditor Notes)> SheetNotes()
     {
         var (window, shell) = await Connected();
+        shell.Projects.SetView(ProjectView.All);
         shell.GoTo(PageId.Projects);
         await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
         var row = shell.Projects.Groups.SelectMany(g => g.Cards).First(c => c.Name == "Checkout rewrite");

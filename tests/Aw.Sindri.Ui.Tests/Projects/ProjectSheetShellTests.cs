@@ -61,6 +61,7 @@ public sealed class ProjectSheetShellTests
     public Task A_cards_open_request_opens_the_sheet_and_remembers_the_card_for_Esc() => UiThread.Run(async () =>
     {
         var shell = await Shell();
+        shell.Projects.SetView(ProjectView.All);
         shell.GoTo(PageId.Projects);
         await Until(() => !shell.Projects.IsLoading);
 
@@ -110,6 +111,7 @@ public sealed class ProjectSheetShellTests
     {
         ServeLed();
         var shell = await Shell();
+        shell.Projects.SetView(ProjectView.All);
         shell.GoTo(PageId.Projects);
         await Until(() => !shell.Projects.IsLoading);
         var asked = new List<ProjectFocusEventArgs>();
@@ -172,6 +174,7 @@ public sealed class ProjectSheetShellTests
     public Task A_rows_sheet_edits_its_notes_through_that_row() => UiThread.Run(async () =>
     {
         var shell = await Shell();
+        shell.Projects.SetView(ProjectView.All);
         shell.GoTo(PageId.Projects);
         await Until(() => !shell.Projects.IsLoading);
         var row = shell.Projects.Groups.SelectMany(g => g.Cards).First(c => c.Id == "prj_00000000000000000000000008");

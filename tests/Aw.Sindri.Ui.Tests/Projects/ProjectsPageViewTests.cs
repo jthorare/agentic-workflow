@@ -32,6 +32,7 @@ public sealed class ProjectsPageViewTests : FrameHost
         }
 
         var (window, shell) = await Connected();
+        shell.Projects.SetView(ViewModels.Projects.ProjectView.All);
         shell.GoTo(PageId.Projects);
         await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
         return (window, shell);
@@ -46,7 +47,7 @@ public sealed class ProjectsPageViewTests : FrameHost
         var (window, _) = await OnProjects();
 
         var headings = window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "ProjectsGroupHeading" && t.IsEffectivelyVisible).Select(t => t.Text);
-        Assert.Equal(["No open PRs"], headings, StringComparer.Ordinal);   // the golden serves no truth, so no project has an open PR
+        Assert.Equal(["No open PRs"], headings, StringComparer.Ordinal);   // the golden's truth has no health level and no open PRs
         Assert.Equal(["Kitchen", "Checkout rewrite", "Mobile app"], Frames(window).Select(f => ((ViewModels.Projects.ProjectCardViewModel)f.DataContext!).Name), StringComparer.Ordinal);   // newest activity first
     });
 

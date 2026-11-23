@@ -27,12 +27,17 @@ public sealed class ProjectsPageRowsTests
         ["blockedOnYou"] = blockedOnYou,
     };
 
-    // The mixed golden with truth on its three open projects: Checkout rewrite, Kitchen, Mobile app.
+    // The mixed golden with truth on its three open projects: Checkout rewrite, Kitchen, Mobile app. The finished and hidden cards carry none.
     private JsonNode Mixed(JsonObject? checkout, JsonObject? kitchen, JsonObject? mobile)
     {
         var list = Golden("mixed");
         var projects = list["projects"]!.AsArray();
         (projects[0]!["truth"], projects[1]!["truth"], projects[2]!["truth"]) = (checkout, kitchen, mobile);
+        foreach (var card in list["finished"]!.AsArray().Concat(list["hidden"]!.AsArray()))
+        {
+            card!["truth"] = null;   // the golden's finished and hidden cards serve blockedOnYou: false, which would move the default view to Needs me
+        }
+
         _f.Serve(list);
         return list;
     }
@@ -55,7 +60,7 @@ public sealed class ProjectsPageRowsTests
     {
         _ = Mixed(Truth("offTrack", blockedOnYou: false), Truth("atRisk", blockedOnYou: true), mobile: null);
 
-        var page = await _f.Shown(Token);
+        var page = await _f.Shown(Token, defaultView: true);
 
         Assert.Equal((ProjectView.NeedsMe, true), (page.View, page.Tabs[0].IsOn));
         Assert.Equal(["Kitchen"], Rows(page), StringComparer.Ordinal);
@@ -66,7 +71,7 @@ public sealed class ProjectsPageRowsTests
     {
         _ = Mixed(Truth("offTrack"), Truth("atRisk"), mobile: null);
 
-        var page = await _f.Shown(Token);
+        var page = await _f.Shown(Token, defaultView: true);
 
         Assert.Equal(ProjectView.All, page.View);
     }
@@ -75,7 +80,7 @@ public sealed class ProjectsPageRowsTests
     public async Task A_view_the_owner_picked_stays_when_the_flag_arrives()
     {
         _ = Mixed(checkout: null, kitchen: null, mobile: null);
-        var page = await _f.Shown(Token);
+        var page = await _f.Shown(Token, defaultView: true);
         page.SetView(ProjectView.All);
         _ = Mixed(Truth("offTrack", blockedOnYou: true), kitchen: null, mobile: null);
 
@@ -130,7 +135,7 @@ public sealed class ProjectsPageRowsTests
     public async Task My_work_leaves_attached_projects_and_the_folds_out()
     {
         _ = Mixed(checkout: null, kitchen: null, mobile: null);
-        var page = await _f.Shown(Token);
+        var page = await _f.Shown(Token, ProjectGrouping.None);
 
         page.SetView(ProjectView.MyWork);
 

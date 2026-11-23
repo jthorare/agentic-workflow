@@ -41,6 +41,7 @@ public sealed class ShellProjectsTests
     {
         var shell = await Shell();
 
+        shell.Projects.SetView(ViewModels.Projects.ProjectView.All);
         shell.GoTo(PageId.Projects);
         await Until(() => !shell.Projects.IsLoading);
 

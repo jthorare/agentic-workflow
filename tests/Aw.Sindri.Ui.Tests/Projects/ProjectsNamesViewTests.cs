@@ -19,6 +19,7 @@ public sealed class ProjectsNamesViewTests : FrameHost
     {
         Server.ProjectsAnswer = RouteAnswer.Api("projects", "mixed");
         var (window, shell) = await Connected();
+        shell.Projects.SetView(ViewModels.Projects.ProjectView.All);
         shell.GoTo(PageId.Projects);
         await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
 
@@ -39,6 +40,7 @@ public sealed class ProjectsNamesViewTests : FrameHost
     {
         Server.ProjectsAnswer = RouteAnswer.Api("projects", "mixed");
         var (window, shell) = await Connected(width: 1280, height: 900);
+        shell.Projects.SetView(ViewModels.Projects.ProjectView.All);
         shell.GoTo(PageId.Projects);
         await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
 
