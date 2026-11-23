@@ -9,7 +9,7 @@
   "createdBy": "owner",
   "changedBy": "owner",
   "changedAt": "2026-01-01T00:00:00.0000000Z",
-  "specHash": "sha256:REGENERATE-WITH-AW_GOLDEN_UPDATE",
+  "specHash": "sha256:bc17176032e30206a2e369276737582c357b3d938f6bf55b8772123c178255cb",
   "spec": {
     "version": 1,
     "name": "Morning check",
