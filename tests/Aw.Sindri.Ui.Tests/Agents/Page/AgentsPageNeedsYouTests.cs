@@ -260,6 +260,25 @@ public sealed class AgentsPageNeedsYouTests
         Assert.Equal([asking, asking], asked.Select(e => e.Key));
     }
 
+    [Fact]
+    public async Task Leaving_the_search_box_asks_for_focus_on_the_selected_row_or_else_the_first_one_3913()
+    {
+        var page = await _f.Shown(Token);
+        var asked = new List<AgentFocusEventArgs>();
+        page.FocusRequested += (_, e) => asked.Add(e);
+        var first = page.Groups[0].Rows[0].Ref;
+        var other = page.Groups.SelectMany(g => g.Rows).Select(r => r.Ref).Last();
+
+        var fromNone = page.LeaveSearch();
+        _ = page.Select(other);
+        asked.Clear();
+        var fromSelected = page.LeaveSearch();
+
+        Assert.Equal((true, true), (fromNone, fromSelected));
+        Assert.Equal([other], asked.Select(e => e.Key));
+        Assert.NotEqual(first, other);
+    }
+
     private static SessionRowViewModel Row(AgentsPageViewModel page, string prefix) => page.Groups.SelectMany(g => g.Rows).Single(r => r.Ref.StartsWith(prefix, StringComparison.Ordinal));
 
     private static void Set(JsonNode list, string prefix, string state, bool estimated)

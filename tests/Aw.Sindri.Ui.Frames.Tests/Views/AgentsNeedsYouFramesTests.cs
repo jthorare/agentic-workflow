@@ -52,4 +52,24 @@ public sealed class AgentsNeedsYouFramesTests : FrameHost
         Assert.Equal(string.Empty, search.Text ?? string.Empty);
         Assert.Equal(string.Empty, shell.Agents.SearchText);
     });
+
+    [Fact]
+    public Task Esc_in_an_empty_search_box_moves_focus_back_to_the_list_3913() => OnUi(async () =>
+    {
+        Server.SessionAnswer = RouteAnswer.Api("sessions", "fixture-three-providers");
+        var (window, shell) = await Connected(width: 1280, height: 900);
+        shell.GoTo(PageId.Agents);
+        await Until(window, () => shell.Agents.Groups.Count > 0);
+        Settle(window);
+        var search = Named<TextBox>(window, "AgentsSearch");
+        _ = shell.Agents.Press("/");
+        await Until(window, () => search.IsFocused, "the / key never put focus in the Agents search box");
+
+        window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, keySymbol: null);
+        await Until(window, () => !search.IsFocused, "Esc in the empty search box left focus there");
+        Settle(window);
+
+        Assert.NotNull(shell.Agents.SelectedKey);
+        Assert.False(search.IsFocused);
+    });
 }

@@ -83,6 +83,10 @@ internal sealed partial class AgentsPageViewModel
         return true;
     }
 
+    /// <summary>Esc in an empty search box: puts focus back on the list, on the selected row or the first one.</summary>
+    /// <returns>True when a row took the request.</returns>
+    internal bool LeaveSearch() => false;
+
     // Walk skips a collapsed group, so a jump to one of its rows opens it first.
     private void ExpandNeedsYou()
     {
