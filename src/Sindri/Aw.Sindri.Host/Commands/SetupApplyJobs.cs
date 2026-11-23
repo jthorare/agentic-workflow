@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Text;
 using Aw.Sindri.Features.AddRepo;
 using Aw.Sindri.Features.GetJob;
 using Aw.Sindri.Features.RunService;
+using Aw.Sindri.Host.Commands.SetupApply;
 
 namespace Aw.Sindri.Host.Commands;
 

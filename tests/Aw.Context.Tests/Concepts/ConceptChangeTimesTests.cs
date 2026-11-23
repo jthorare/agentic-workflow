@@ -22,6 +22,7 @@ public sealed class ConceptChangeTimesTests : IDisposable
     private readonly ScriptedHistory _history;
     private readonly MapWorld _world;
     private int _answers;
+    private bool _shallow;
 
     public ConceptChangeTimesTests()
     {
@@ -36,7 +37,7 @@ public sealed class ConceptChangeTimesTests : IDisposable
     {
         var at = Interlocked.Increment(ref _answers) == 1 ? _first : _second;
         string[] files = [.. query.Paths.Where(p => p == "src/shifts.ts")];
-        return new FileHistory(query.UpTo ?? MapWorld.Head, Shallow: false, [new FileChange(query.UpTo ?? MapWorld.Head, at, "Touch shifts", 1, files)], Truncated: false);
+        return new FileHistory(query.UpTo ?? MapWorld.Head, Shallow: _shallow, [new FileChange(query.UpTo ?? MapWorld.Head, at, "Touch shifts", 1, files)], Truncated: false);
     }
 
     private static string Yaml() => MapWorld.Yaml(
@@ -97,6 +98,7 @@ public sealed class ConceptChangeTimesTests : IDisposable
     {
         await Filled();
         _reader.Current = NewHead;
+        _world.Clock.Advance(ConceptChangeTimes.HeadFor + TimeSpan.FromSeconds(1));   // #3837: HEAD is read again only once the cached one is this old
 
         var stale = await Scheduling();
         await _world.Service<ConceptChangeTimes>().WhenIdle();
@@ -108,6 +110,29 @@ public sealed class ConceptChangeTimesTests : IDisposable
         Assert.Equal(NewHead, _history.Calls[1].Query.UpTo);
     }
 
+    // #3837: in a shallow clone the oldest fetched commit stands in for every older change, so its times would make files look newer than they are.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_shallow_clone_leaves_lastChanged_out()
+    {
+        _shallow = true;
+        await Filled();
+
+        Assert.Null(await Scheduling());
+    }
+
+    // #3837: HEAD costs a git process start; a read within HeadFor of the last one uses the cached HEAD.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Reads_close_together_read_head_once()
+    {
+        await Filled();
+        var heads = _reader.HeadReads;
+
+        _ = await Scheduling();
+        _ = await Scheduling();
+
+        Assert.Equal(heads, _reader.HeadReads);
+    }
+
     /// <summary>The fixture repo reader with a HEAD a test moves.</summary>
     private sealed class MovableHead : IRepoReader
     {
@@ -115,10 +140,19 @@ public sealed class ConceptChangeTimesTests : IDisposable
 
         public string Current { get; set; } = MapWorld.Head;
 
+        /// <summary>HEAD reads of the fixture repo. The scope's second repo has no checkout: its failed read is never cached, so it is left out of the count.</summary>
+        public int HeadReads { get; private set; }
+
         public async ValueTask<Result<string>> Head(ContextRepo repo, CancellationToken cancellationToken)
         {
             var known = await _inner.Head(repo, cancellationToken);
-            return known.IsError ? known : Current;
+            if (known.IsError)
+            {
+                return known;
+            }
+
+            HeadReads++;
+            return Current;
         }
 
         public ValueTask<Result<IReadOnlyList<string>>> ListFiles(ContextRepo repo, string commit, CancellationToken cancellationToken) => _inner.ListFiles(repo, MapWorld.Head, cancellationToken);
