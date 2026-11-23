@@ -79,10 +79,10 @@ public sealed class RepoHealthTests
         Assert.Equal(("queued", null), (health.State, health.Waiting));
     }
 
-    // #3181: off its default branch no build ever starts, so the repo must stay missing ("needs a look"), never queued.
+    // #3181, #3187: off its default branch with no default tip no build ever starts, so the repo is unbuildable (a look with its own words), never queued or plain missing.
     [Fact, Trait("Lane", "unit")]
-    public void A_repo_with_no_index_off_its_default_branch_stays_missing()
-        => Assert.Equal("missing", Of(Missing(), new IndexRepoHead(_repo, _new, OnDefaultBranch: false)).State);
+    public void A_repo_with_no_index_off_its_default_branch_and_no_default_tip_is_unbuildable()
+        => Assert.Equal("unbuildable", Of(Missing(), new IndexRepoHead(_repo, _new, OnDefaultBranch: false)).State);
 
     // #3181: off its default branch the first build runs at the default branch's tip, so a repo that has one is queued like a repo on main.
     [Fact, Trait("Lane", "unit")]
