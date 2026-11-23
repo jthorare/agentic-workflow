@@ -182,6 +182,41 @@ public sealed class TopBarTests : IDisposable
         Assert.True(bar.MeasurePasses <= 3, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the bar measured {bar.MeasurePasses} times for one change of width"));
     });
 
+    // #4008: at 1000 px and scale 1.3 the problem text got a one-word-less room and showed a stub ("Degraded y..."). Under about one word
+    // of room it gives way entirely: the pill's state word is whole, and the problem text is either gone (0 wide) or at least 60 px.
+    [Theory]
+    [InlineData(1000, 1.0)]
+    [InlineData(1000, 1.3)]
+    [InlineData(1280, 1.0)]
+    [InlineData(1280, 1.3)]
+    public Task The_pill_keeps_its_state_word_whole_and_shows_no_stub_of_the_problem_text(int width, double scale) => OnUi(async () =>
+    {
+        _records.Write(A.Record());
+        _server.Current = A.Status() with { Health = LongProblems() };
+        var (window, _) = await Show(s => s.State == ShellState.Normal && s.Pill.HasProblems);
+        var resources = Application.Current!.Resources;
+        TextScale.Apply(resources, scale);
+        try
+        {
+            window.Width = width;
+            Settle(window);
+            var word = Named<TextBlock>(window, "HealthPillText");
+            var problems = Named<TextBlock>(window, "PillProblems");
+            var pill = Named<Button>(window, "HealthPill");
+            var wordRight = word.TranslatePoint(new Point(word.Bounds.Width, 0), window)!.Value.X;
+            var pillRight = pill.TranslatePoint(new Point(pill.Bounds.Width, 0), window)!.Value.X;
+            var where = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"at {width} px, scale {scale:0.0}");
+
+            Assert.True(word.Bounds.Width >= Natural(word) - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the state word got {word.Bounds.Width} of its {Natural(word)}"));
+            Assert.True(wordRight <= pillRight + 0.5 && pillRight <= window.Bounds.Width + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the word ends at {wordRight}, the pill at {pillRight}, the window is {window.Bounds.Width}"));
+            Assert.True(problems.Bounds.Width < 0.5 || problems.Bounds.Width >= TopBar.MinProblems - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the problem text is a {problems.Bounds.Width} px stub"));
+        }
+        finally
+        {
+            TextScale.Apply(resources, 1.0);
+        }
+    });
+
     // #2547: a window that grows from 1000 to 1280 px gives the problem text back its full width; the cap lowered at 1000 doesn't stay.
     [Fact]
     public Task A_short_problem_reads_in_full_after_the_window_grows_from_1000_to_1280() => OnUi(async () =>

@@ -11,6 +11,9 @@ internal sealed partial class TopBar
 {
     private const double ProblemsMax = 220;
 
+    /// <summary>The least room the pill's problem text is shown in, about one word; under it the text gives way entirely (#4008).</summary>
+    internal const double MinProblems = 60;
+
     // The placeholder's target width is its text plus this: an exact fit trims on font rounding, and the pill's problem
     // text gives way instead. 4 px, not 12 (QA #2547): at 1280 px a short problem ("service broken failed") was 8 px short.
     internal const double PlaceholderSlack = 4;
