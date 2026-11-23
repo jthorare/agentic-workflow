@@ -38,7 +38,7 @@ public sealed class ConceptAnswerFills(Func<ContextScope, CancellationToken, Tas
     /// <summary>Cancels the fills without waiting (a container disposed synchronously calls this).</summary>
     public void Dispose()
     {
-        if (Stop() is not null)
+        if (Stop(out _))
         {
             _stopping.Cancel();
         }
@@ -48,7 +48,7 @@ public sealed class ConceptAnswerFills(Func<ContextScope, CancellationToken, Tas
     /// <returns>A task that completes then.</returns>
     public async ValueTask DisposeAsync()
     {
-        if (Stop() is not { } last)
+        if (!Stop(out var last))
         {
             return;   // registered once, but a second dispose must not wait or cancel again
         }
@@ -58,18 +58,19 @@ public sealed class ConceptAnswerFills(Func<ContextScope, CancellationToken, Tas
         _stopping.Dispose();
     }
 
-    /// <summary>Marks the fills stopped; the chain to wait for, or null when they already were.</summary>
-    private Task? Stop()
+    /// <summary>Marks the fills stopped and hands out the chain to wait for; false when they already were.</summary>
+    private bool Stop(out Task last)
     {
         lock (_gate)
         {
+            last = _last;
             if (_disposed)
             {
-                return null;
+                return false;
             }
 
             _disposed = true;
-            return _last;
+            return true;
         }
     }
 
