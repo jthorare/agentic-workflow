@@ -39,7 +39,14 @@ internal sealed class SourceLinks(ContextScope scope, VisibleMap map, IEgressScr
     /// <param name="scope">The caller's scope.</param>
     /// <param name="target">The node's source target.</param>
     /// <returns>The absolute path, or null.</returns>
-    public static string? LocalPath(ContextScope scope, SourceTarget? target)
+    public static string? LocalPath(ContextScope scope, SourceTarget? target) => LocalPath(scope, target, OperatingSystem.IsMacOS());
+
+    /// <summary><see cref="LocalPath(ContextScope, SourceTarget?)"/> with the checkout prefix compared by case (macOS ignores it, #3715).</summary>
+    /// <param name="scope">The caller's scope.</param>
+    /// <param name="target">The node's source target.</param>
+    /// <param name="ignoreCase">True to compare the prefix without regard to case.</param>
+    /// <returns>The absolute path, or null.</returns>
+    public static string? LocalPath(ContextScope scope, SourceTarget? target, bool ignoreCase)
     {
         if (scope.Caller.Kind == ContextCallerKind.Session || target?.Record is not null || target?.Path is not { Length: > 0 } path)
         {
@@ -47,10 +54,10 @@ internal sealed class SourceLinks(ContextScope scope, VisibleMap map, IEgressScr
         }
 
         var repo = scope.Repos.FirstOrDefault(r => string.Equals(r.Name.Value, target.Repo, StringComparison.Ordinal));
-        return repo is null ? null : Inside(repo.Path, path);
+        return repo is null ? null : Inside(repo.Path, path, ignoreCase);
     }
 
-    private static string? Inside(string checkout, string path)
+    private static string? Inside(string checkout, string path, bool ignoreCase)
     {
         if (!Path.IsPathRooted(checkout) || Path.IsPathRooted(path))
         {
@@ -59,7 +66,7 @@ internal sealed class SourceLinks(ContextScope scope, VisibleMap map, IEgressScr
 
         var root = Path.GetFullPath(checkout).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
         var full = Path.GetFullPath(Path.Combine(root, path));
-        return full.StartsWith(root, StringComparison.Ordinal) && full.Length > root.Length ? full : null;
+        return full.StartsWith(root, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal) && full.Length > root.Length ? full : null;
     }
 
     private async ValueTask<Uri?> ForRecord(RecordKey key, CancellationToken cancellationToken)
