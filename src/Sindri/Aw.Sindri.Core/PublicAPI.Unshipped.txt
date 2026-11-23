@@ -24866,3 +24866,20 @@ static Aw.Sindri.Core.Connections.GitHubCliCredential.Of(Aw.Sindri.Core.Connecti
 Aw.Sindri.Core.Connections.ConnectionCredentials.TokenOf(Aw.Sindri.Core.Connections.Connection! connection) -> string?
 Aw.Sindri.Core.Connections.IConnectionCredentials.TokenOf(Aw.Sindri.Core.Connections.Connection! connection) -> string?
 static Aw.Sindri.Core.Connections.ConnectionCredentials.Newest(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Connections.Connection!>! rows) -> System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Connections.Connection!>!
+Aw.Sindri.Core.Connections.ConnectionPreset.ShippedClient.get -> string?
+Aw.Sindri.Core.Connections.ConnectionPreset.ShippedClient.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.DeviceCodeUrl.get -> string?
+Aw.Sindri.Core.Connections.ConnectionPreset.DeviceCodeUrl.init -> void
+Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization
+Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization.DeviceAuthorization(string! deviceCode, string! userCode, System.Uri! verificationUri, System.DateTimeOffset expiresAt, System.TimeSpan interval) -> void
+Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization.DeviceCode.get -> string!
+Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization.ExpiresAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization.Interval.get -> System.TimeSpan
+Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization.UserCode.get -> string!
+Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization.VerificationUri.get -> System.Uri!
+override Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization.ToString() -> string!
+Aw.Sindri.Core.Connections.OAuth.IDeviceSignIn
+Aw.Sindri.Core.Connections.OAuth.IDeviceSignIn.Complete(Aw.Sindri.Core.Connections.ConnectionPreset! preset, string! client, Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization! authorization, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.TokenSet!>!>
+Aw.Sindri.Core.Connections.OAuth.IDeviceSignIn.Start(Aw.Sindri.Core.Connections.ConnectionPreset! preset, string! client, System.Collections.Generic.IReadOnlyList<string!>! scopes, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization!>!>
+Aw.Sindri.Core.Connections.OAuthClientIds
+static Aw.Sindri.Core.Connections.OAuthClientIds.For(Aw.Sindri.Core.Connections.ConnectionPreset! preset, Aw.Sindri.Core.Profile.SetupOauthSettings? oauth) -> Aw.Kernel.Result<string!>!
