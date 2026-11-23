@@ -42,5 +42,5 @@ internal static partial class Labels
     /// <param name="soon">True when it is within the next 24 hours.</param>
     /// <returns>The chip's words.</returns>
     internal static string WfNextRun(DateTimeOffset local, bool soon) =>
-        "next " + local.ToString(soon ? "H:mm" : "ddd H:mm", System.Globalization.CultureInfo.InvariantCulture);
+        "next " + local.ToString(soon ? "H:mm" : "ddd H:mm", CultureInfo.InvariantCulture);
 }
