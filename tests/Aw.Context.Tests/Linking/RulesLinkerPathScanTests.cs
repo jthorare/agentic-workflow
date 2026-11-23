@@ -25,6 +25,9 @@ public sealed partial class RulesLinkerPathScanTests
         "/",
         "a/.b",
         "a/b..ts a/b.ts.. a/-b.ts a/b-.ts-",
+        "src/\U0001F600/x.ts src/x\U0001F600.ts \U0001D49C/b.ts src/x.t\U0001F600",   // #3864: a surrogate pair is two non-word chars, for the regex and the scan
+        "see https://github.com/a/b.ts and http://x.io/y.md or file:///etc/z.conf",   // #3864: a URL's '//' and its host
+        "src/a.ts\nsrc/b.ts\r\nlib/c/d.md\n\nsrc/e.ts",   // #3864: newlines end a run
     ];
 
     [Theory, Trait("Lane", "unit")]
@@ -57,6 +60,21 @@ public sealed partial class RulesLinkerPathScanTests
             one[0] = (char)c;
             Assert.True(WordChar.IsMatch(one) == RulesLinker.IsWordChar((char)c), $"U+{c:X4}");
         }
+    }
+
+    // #3864: a run of path chars with no '/' holds no path, so prose costs the scan nothing but its answer list.
+    [Fact, Trait("Lane", "unit")]
+    public void A_text_with_no_slash_allocates_only_the_answer()
+    {
+        var prose = string.Join(' ', Enumerable.Repeat("plain words with dots like v1.2 and names-like-this", 200));
+        _ = RulesLinker.RepoPaths(prose);   // warm: the first call may compile
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var found = RulesLinker.RepoPaths(prose);
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.Empty(found);
+        Assert.True(allocated < 1024, $"{allocated} bytes for {prose.Length} chars of prose");
     }
 
     private static List<string> Scan(string text) => [.. RulesLinker.RepoPaths(text).Select(p => text.Substring(p.Index, p.Length))];
