@@ -92,8 +92,8 @@ public sealed class ConceptAnswerRoundTripTests : IDisposable
     public async Task A_kept_answer_reads_back_its_repos()
     {
         var graph = ConceptGraph.Product().Build();
-        var view = ConceptBuilder.Build(ConceptGraph.Basis, new ConceptsQuery(MapRead.Current, new ConceptPage()), graph, ConceptGraph.Text).Value
-            with { Repos = [new WholeMapRepo("aw-split-panes", 4), new WholeMapRepo("other", 1)] };
+        var bare = ConceptBuilder.Build(ConceptGraph.Basis, new ConceptsQuery(MapRead.Current, new ConceptPage()), graph, ConceptGraph.Text).Value;
+        var view = bare with { Repos = [new WholeMapRepo("aw-split-panes", 4), new WholeMapRepo("other", 1)] };
         var built = new KeptConcepts(view, ConceptBuilder.CodePathsOf(view.Concepts.Select(c => c.Id), graph));
 
         _ = await _answers.Keep("repos", await Basis(), built, MapWorld.None);
