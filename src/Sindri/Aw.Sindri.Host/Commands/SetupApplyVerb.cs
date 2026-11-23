@@ -4,6 +4,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Features.GetSetup;
 using Aw.Sindri.Features.ScanRepos;
+using Aw.Sindri.Host.Commands.SetupApply;
 
 namespace Aw.Sindri.Host.Commands;
 
