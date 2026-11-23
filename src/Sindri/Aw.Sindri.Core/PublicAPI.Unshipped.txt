@@ -24546,6 +24546,8 @@ Aw.Sindri.Core.HomeReads.HomeSessionCut
 static Aw.Sindri.Core.HomeReads.HomeSessionCut.For(Aw.Sindri.Core.Commands.CallerContext! caller, Aw.Sindri.Core.Home.HomeRow! row) -> Aw.Sindri.Core.Home.HomeRow!
 static Aw.Sindri.Core.HomeReads.HomeSessionCut.ScopeOf(Aw.Sindri.Core.Commands.CallerContext! caller) -> Aw.Sindri.Core.Home.HomeScope?
 static Aw.Sindri.Core.HomeReads.HomeSessionCut.Sees(Aw.Sindri.Core.Commands.CallerContext! caller, Aw.Sindri.Core.Home.HomeRow! row) -> bool
+static Aw.Sindri.Core.Graph.Ids.WorkflowRunId.StandIn(Aw.Sindri.Core.Graph.Ids.WorkflowSlug slug) -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Graph.Ids.WorkflowRunId.IsStandIn.get -> bool
 Aw.Sindri.Core.Messages.ConversationKind
 Aw.Sindri.Core.Messages.ConversationKind.Channel = 0 -> Aw.Sindri.Core.Messages.ConversationKind
 Aw.Sindri.Core.Messages.ConversationKind.Dm = 2 -> Aw.Sindri.Core.Messages.ConversationKind

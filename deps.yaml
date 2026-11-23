@@ -708,6 +708,16 @@ edges:
     kind: compose
     status: current
     note: "Host calls AddConnectorsFeatures and AddConnectorsInfrastructure and nothing else from them"
+  - from: Sindri
+    to: Transcripts
+    kind: project
+    status: current
+    note: "Sindri's Host reads the local agent transcripts through ITranscriptCorpus in Aw.Transcripts.Core ('sindri transcripts list|show', issue 3787)"
+  - from: Sindri
+    to: Transcripts
+    kind: compose
+    status: current
+    note: "Sindri's Host calls AddTranscriptsInfrastructure (and nothing else from that project) in Composition"
   - from: Transcripts
     to: Kernel
     kind: project

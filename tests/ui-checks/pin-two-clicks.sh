@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # tests/ui-checks/pin-two-clicks.sh — proof check for Q7b of #1667 (concept pins spec, owner steps): pinning a suggested concept is two
-# clicks. Pin this on the Self scheduling card opens the Pin sheet prefilled (name, definition, its words, its features); Pin and
-# approve writes the pin and approves it, the sheet closes, and the card turns into the person's pin.
-# Expected: step 1 the card is Suggested and carries Pin this; step 2 the sheet shows "Pin this", the name and the Pin and approve
+# clicks. Pin this on the Self scheduling card opens the Pin sheet prefilled (name, definition, its words, its features);
+# Pin writes the pin (no approval: edits apply on save), the sheet closes, and the card turns into the person's pin.
+# Expected: step 1 the card carries Pin this; step 2 the sheet shows "Pin this", the name and the Pin
 # button; step 3 after one click the sheet is gone, the card carries Edit pin and the live profile holds the pin. On main (no Pin
 # this) it FAILs at step 1; on the branch it passes. Frames land in $OUT (frame-1-card, -2-sheet, -3-pinned, -4-word-refused, -5-unpin-confirm .png).
 # Step 4 reopens the pin with Edit pin, types 'the' (refused: only small words) and presses Unpin (asks, naming the pin).
@@ -54,11 +54,18 @@ d wait-for --type TextBlock --contains "Self scheduling" --state visible --wait-
   || setup_fail "the Context page did not open on the concept list (no 'Self scheduling' card)"
 # The pin buttons show only while the row has the pointer or focus: focus the first row's open button (its name holds the concept name).
 # The open button has the automation id ConceptOpen.<concept id>; its name starts with the concept name (the id is read from the tree, not guessed).
-OPEN_ID="$(d search --type Button --limit 200 2>/dev/null | jq -r 'first(.matches[] | select((.automationId // "") | startswith("ConceptOpen.")) | select((.name // "") | startswith("Self scheduling,")) | .automationId)')"
-[ -n "$OPEN_ID" ] || setup_fail "no ConceptOpen.* button named Self scheduling"
-CONCEPT_ID="${OPEN_ID#ConceptOpen.}"   # the pin-slot buttons carry ConceptPin.<id> and ConceptEditPin.<id>; Billing's hidden Pin this comes first by index
-focus_row() { d action --automation-id "$OPEN_ID" --do focus >/dev/null 2>&1; }
-focus_row || setup_fail "could not focus the Self scheduling row"
+# Finds the row again each time: after a pin the row can carry a different concept id (a pin the map has no node for yet is a card of its own), so the id is read from the tree, never kept.
+find_row() {
+  local i
+  for i in $(seq 1 60); do
+    OPEN_ID="$(d search --type Button --limit 200 2>/dev/null | jq -r 'first(.matches[] | select((.automationId // "") | startswith("ConceptOpen.")) | select((.name // "") | startswith("Self scheduling,")) | .automationId)')"
+    [ -n "$OPEN_ID" ] && { CONCEPT_ID="${OPEN_ID#ConceptOpen.}"; return 0; }   # the pin-slot buttons carry ConceptPin.<id> and ConceptEditPin.<id>
+    sleep 0.5
+  done
+  return 1
+}
+focus_row() { find_row && d action --automation-id "$OPEN_ID" --do focus >/dev/null 2>&1; }
+focus_row || setup_fail "could not find and focus the Self scheduling row"
 wait_visible 30 --type Button --automation-id "ConceptPin.$CONCEPT_ID" || fail "step 1: no card carries Pin this"
 # No "Suggested" mark here: it shows only when pinned and unpinned concepts are mixed, and nothing is pinned yet.
 sleep 1
@@ -69,7 +76,7 @@ texts >"$OUT/frame-1-texts.txt"
 focus_row
 d click --automation-id "ConceptPin.$CONCEPT_ID" >/dev/null 2>&1 || fail "step 2: could not click Pin this"
 CLICKS=$((CLICKS + 1))
-d wait-for --type Button --name "Pin and approve" --state enabled --wait-ms 30000 >/dev/null 2>&1 || fail "step 2: the sheet has no enabled 'Pin and approve'"
+d wait-for --type Button --name "Pin" --state enabled --wait-ms 30000 >/dev/null 2>&1 || fail "step 2: the sheet has no enabled Pin"
 d wait-for --type TextBlock --text "Pin this" --state visible --wait-ms 10000 >/dev/null 2>&1 || fail "step 2: the sheet's heading is not 'Pin this'"
 name="$(d search --type TextBox --limit 20 2>/dev/null | jq -r 'first(.matches[] | select(.visible) | .text // empty)')"
 [ "$name" = "Self scheduling" ] || fail "step 2: the sheet's name is '$name', not the card's 'Self scheduling'"
@@ -77,18 +84,18 @@ sleep 1
 frame frame-2-sheet
 texts >"$OUT/frame-2-texts.txt"
 
-# Step 3: click 2, Pin and approve writes and approves the pin; the sheet closes.
-d click --type Button --name "Pin and approve" >/dev/null 2>&1 || fail "step 3: could not click Pin and approve"
+# Step 3: click 2, Pin writes the pin (edits apply on save, there is no approval); the sheet closes.
+d click --type Button --name "Pin" >/dev/null 2>&1 || fail "step 3: could not click Pin"
 CLICKS=$((CLICKS + 1))
-d wait-for --type Button --name "Pin and approve" --state gone --wait-ms 90000 >/dev/null 2>&1 \
-  || d wait-for --type Button --name "Pin and approve" --state notVisible --wait-ms 1000 >/dev/null 2>&1 \
-  || { texts >"$OUT/frame-3-texts.txt"; fail "step 3: the sheet did not close after Pin and approve (texts in $OUT/frame-3-texts.txt)"; }
+d wait-for --type Button --name "Pin" --state gone --wait-ms 90000 >/dev/null 2>&1 \
+  || d wait-for --type Button --name "Pin" --state notVisible --wait-ms 1000 >/dev/null 2>&1 \
+  || { texts >"$OUT/frame-3-texts.txt"; fail "step 3: the sheet did not close after Pin (texts in $OUT/frame-3-texts.txt)"; }
 sleep 2
 frame frame-3-pinned
 texts >"$OUT/frame-3-texts.txt"
 # The card now reads as the person's pin: Edit pin replaces Pin this, and the live profile holds the pin with no approval waiting.
 focus_row || fail "step 3: could not focus the Self scheduling row again"   # the pin slot is hidden without pointer or focus, and the sheet's close left focus on a button that is gone
-wait_visible 30 --type Button --automation-id "ConceptEditPin.$CONCEPT_ID" || fail "step 3: no card carries Edit pin after Pin and approve"
+wait_visible 30 --type Button --automation-id "ConceptEditPin.$CONCEPT_ID" || fail "step 3: no card carries Edit pin after Pin"
 grep -q "Self scheduling" "$AW_SINDRI_HOME/profile/profile.yaml" || fail "step 3: the live profile has no Self scheduling pin"
 "$PROVE" human profile validate >"$OUT/profile-validate.txt" 2>&1 || true
 [ "$CLICKS" -eq 2 ] || fail "the path took $CLICKS clicks"
@@ -109,4 +116,4 @@ d wait-for --type TextBlock --contains "Unpin Self scheduling?" --state visible 
 sleep 1
 frame frame-5-unpin-confirm
 texts >"$OUT/frame-5-texts.txt"
-echo "PASS: Pin this -> sheet prefilled -> Pin and approve = $CLICKS clicks; Edit pin refuses a small word and Unpin asks first (frames in $OUT)"
+echo "PASS: Pin this -> sheet prefilled -> Pin = $CLICKS clicks; Edit pin refuses a small word and Unpin asks first (frames in $OUT)"
