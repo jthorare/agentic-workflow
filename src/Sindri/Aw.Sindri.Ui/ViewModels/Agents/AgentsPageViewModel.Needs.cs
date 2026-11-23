@@ -76,10 +76,20 @@ internal sealed partial class AgentsPageViewModel
             return false;
         }
 
+        ExpandNeedsYou();
         var key = Groups[0].Rows[0].Ref;
         _ = Select(key);
         RequestFocus(new AgentFocusEventArgs(key, toFocusLine: false, onlyIfLost: false));
         return true;
+    }
+
+    // Walk skips a collapsed group, so a jump to one of its rows opens it first.
+    private void ExpandNeedsYou()
+    {
+        foreach (var group in Groups.Where(g => !g.IsExpanded && string.Equals(g.Name, Labels.NeedsYouGroup, StringComparison.Ordinal)))
+        {
+            group.Toggle();
+        }
     }
 
     private bool _picked;
@@ -212,6 +222,7 @@ internal sealed partial class AgentsPageViewModel
             return false;
         }
 
+        ExpandNeedsYou();
         var at = asking.FindIndex(r => string.Equals(r, SelectedKey, StringComparison.Ordinal));
         var next = at < 0 ? (forward ? 0 : asking.Count - 1) : (at + (forward ? 1 : asking.Count - 1)) % asking.Count;
         if (!Select(asking[next]))
