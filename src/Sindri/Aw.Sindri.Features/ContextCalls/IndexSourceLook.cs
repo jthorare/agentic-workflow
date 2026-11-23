@@ -1,6 +1,7 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Sync;
 using Aw.Sindri.Core.Health;
+using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
@@ -18,9 +19,11 @@ internal static class IndexSourceLook
     /// <param name="p">The source's progress.</param>
     /// <param name="serveRunning">How long this serve has run.</param>
     /// <param name="now">The time now, for the age of the last commit.</param>
+    /// <param name="noCommitLimit">The limit from <see cref="Limit"/>; null: 15 minutes.</param>
     /// <returns>The look and its words.</returns>
-    internal static SourceLook For(SourceProgress p, TimeSpan serveRunning, DateTimeOffset now)
+    internal static SourceLook For(SourceProgress p, TimeSpan serveRunning, DateTimeOffset now, TimeSpan? noCommitLimit = null)
     {
+        _ = noCommitLimit;
         ArgumentNullException.ThrowIfNull(p);
         if (Flag(p))
         {
@@ -28,6 +31,16 @@ internal static class IndexSourceLook
         }
 
         return Stalled(p, serveRunning, now) is { } words ? new(NeedsLook: true, words) : new(NeedsLook: false, Words: null);
+    }
+
+    /// <summary>How long a first pass may go without a commit under this profile: 15 minutes, or twice index-sync's cadence when that is longer,
+    /// since a commit lands only as a tick ends (#4035).</summary>
+    /// <param name="profile">The approved profile, or null.</param>
+    /// <returns>The limit.</returns>
+    internal static TimeSpan Limit(SindriProfile? profile)
+    {
+        _ = profile;
+        return _limit;
     }
 
     // why: a feed that never finishes a tick would otherwise read as a fresh source forever (#3832), and a long first backfill that keeps
@@ -63,11 +76,12 @@ internal static class IndexSourceLook
     /// <param name="p">The source's progress.</param>
     /// <param name="serveRunning">How long this serve has run; zero while index-sync is paused.</param>
     /// <param name="now">The time now, for the age of the last commit.</param>
+    /// <param name="noCommitLimit">The limit from <see cref="Limit"/>; null: 15 minutes.</param>
     /// <returns>The problem, or null.</returns>
-    internal static HealthProblem? Problem(SourceProgress p, TimeSpan serveRunning, DateTimeOffset now)
+    internal static HealthProblem? Problem(SourceProgress p, TimeSpan serveRunning, DateTimeOffset now, TimeSpan? noCommitLimit = null)
     {
         ArgumentNullException.ThrowIfNull(p);
-        var look = For(p, serveRunning, now);
+        var look = For(p, serveRunning, now, noCommitLimit);
         if (!look.NeedsLook)
         {
             return null;

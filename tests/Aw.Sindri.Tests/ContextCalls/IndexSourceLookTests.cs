@@ -111,6 +111,26 @@ public sealed class IndexSourceLookTests
             new HealthProblem("SND-CONTEXT-010", "linear hasn't committed a record in 15 minutes", "the linear source needs a look"),
             IndexSourceLook.Problem(FirstPass(_now.AddMinutes(-20), _now.AddMinutes(-20)), TimeSpan.FromMinutes(20), _now));
 
+    [Fact, Trait("Lane", "unit")]
+    public void The_limit_is_twice_a_slow_index_sync_cadence_and_15_minutes_otherwise_4035()
+    {
+        Assert.Equal(TimeSpan.FromMinutes(60), IndexSourceLook.Limit(SliceHarness.ProfileOf("thor", ("index-sync", "30m")).Profile));
+        Assert.Equal(TimeSpan.FromMinutes(15), IndexSourceLook.Limit(SliceHarness.ProfileOf("thor", ("index-sync", "5m")).Profile));
+        Assert.Equal(TimeSpan.FromMinutes(15), IndexSourceLook.Limit(SliceHarness.Profile("5s").Profile));
+        Assert.Equal(TimeSpan.FromMinutes(15), IndexSourceLook.Limit(profile: null));
+    }
+
+    public static TheoryData<int, bool> SlowCadence => new()
+    {
+        { -20, false },   // index-sync every 30m: a commit 20 min ago is normal
+        { -61, true },    // none for over twice the cadence
+    };
+
+    [Theory, Trait("Lane", "unit")]
+    [MemberData(nameof(SlowCadence))]
+    public void Under_a_30_minute_index_sync_a_first_pass_needs_a_look_only_after_60_minutes_without_a_commit_4035(int commitMinutes, bool look) =>
+        Assert.Equal(look, IndexSourceLook.For(FirstPass(_now.AddMinutes(commitMinutes), _now.AddMinutes(commitMinutes)), TimeSpan.FromHours(2), _now, TimeSpan.FromMinutes(60)).NeedsLook);
+
     private static SourceProgress FirstPass(DateTimeOffset? lastSync, DateTimeOffset lastCommit) =>
         new(SourceId.From("linear"), SyncPhase.Backfill, lastSync, LastCode: null, Usable: true, Complete: false) { Pull = "running", Records = 12_400, LastCommit = lastCommit };
 
