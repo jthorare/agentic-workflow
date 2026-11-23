@@ -35,7 +35,7 @@ public sealed class RefTests
         var turn = TranscriptRefs.ForTurn(session, 42);
 
         Assert.Equal("transcript:0a1b2c3d#42", turn.Value);
-        Assert.Equal(session, turn.Session);
+        Assert.Equal(session, turn.SessionOf());
         Assert.Equal(42, turn.Line);
     }
 

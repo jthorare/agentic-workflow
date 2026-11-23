@@ -82,6 +82,7 @@ public sealed class GoldenContractTests
         ["workflows-slug-runs"] = As<WorkflowRunList>,   // GET /workflows/{slug}/runs: a workflow's runs
         ["workflow-runs-run"] = As<WorkflowRunView>,   // GET /workflow-runs/{run}: a run's detail
         ["workflow-runs-run-cancel"] = As<WorkflowRunCancelled>,   // POST /workflow-runs/{run}/cancel's cancelled body (the API golden cancels a queued run)
+        ["workflow-runs-run-seen"] = As<WorkflowRunSeen>,   // POST /workflow-runs/{run}/seen: the run page marks a failed live run seen when it opens (#3753; spec-shaped until the route's golden is recorded)
         ["workflow-runs-run-nodes-node-takeover"] = As<AgentNodeControlled>,   // POST /workflow-runs/{run}/nodes/{node}/takeover's taken-over body; the refusals are ProblemDetails
         ["workflow-runs-run-nodes-node-handback"] = As<AgentNodeControlled>,   // POST .../handback's handed-back body; the refusals are ProblemDetails
         ["jobs-id-cancel"] = As<CommandAcceptedView>,   // POST /jobs/{id}/cancel's accepted answer; the refusals are ProblemDetails
@@ -172,6 +173,7 @@ public sealed class GoldenContractTests
     {
         "stop",
         "toolkits", "toolkits-build", "toolkits-name-start", "toolkits-name-stop", "toolkits-name-pause", "toolkits-name-resume", "toolkits-name-calls",   // agent-first PR 16c: the app has no Toolkits page; the CLI's `toolkit` verbs and the toolkit_* MCP tools call these
+        "workflow-runs-run-seen",   // Home spec E1: POST /workflow-runs/{run}/seen ({run, marked}); the CLI's `wf seen` for now, #3753 moves it to the read list when the app marks a run seen
         "workflow-runs-run-nodes-node-answer",   // #2425: POST .../nodes/{node}/answer, the engine's answer to an ask_owner question; the app calls it once the Needs-you question row has its answer form (UI lane)
         "todos-id",   // the app never calls GET /sindri/todos/{id}; the CLI's `todo show` does
         "todos-keep", "todos-keep-undo", "todos-hold-apply", "todos-hold-undo",   // the picks (todo Ph3b): the conflict and hold rows that call them are ui's Ph4

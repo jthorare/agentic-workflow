@@ -45,7 +45,7 @@ internal sealed class FileTranscriptCorpus(TranscriptsSettings settings, Transcr
     public async ValueTask<Result<SessionTranscript>> ReadSession(SessionRef session, CancellationToken cancellationToken)
     {
         var all = TranscriptFileFinder.Find(settings.Roots);
-        var matches = all.Where(f => f.Ref == session).Take(2).ToList();
+        var matches = all.Where(f => f.SessionOf() == session).Take(2).ToList();
         if (matches.Count == 0)
         {
             return TranscriptsErrors.SessionNotFound.With($"no transcript under the roots has the ref {session.Value}");
@@ -65,13 +65,13 @@ internal sealed class FileTranscriptCorpus(TranscriptsSettings settings, Transcr
     {
         var parent = ParentOf(file, parsed, all);
         return new TranscriptSession(
-            file.Ref,
+            file.SessionOf(),
             file.Provider,
             parsed.First ?? file.ModifiedAt,
             file.ModifiedAt,
             parsed.Cwd is { } cwd ? _repos.Resolve(cwd) : null,
             file.IsSubagentByPlace || parsed.IsSubagent,
-            parent?.Ref,
+            parent?.SessionOf(),
             humanTurns);
     }
 

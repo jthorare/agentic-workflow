@@ -174,6 +174,8 @@ public sealed class PromptAnswerJsonTests
                 {
                     "boolean" => false,
                     "number" or "integer" => 0,
+                    "array" => new JsonArray(),   // why: the steering-miner prompts answer with a list
+                    "object" => new JsonObject(),
                     _ => "x",
                 };
             }
