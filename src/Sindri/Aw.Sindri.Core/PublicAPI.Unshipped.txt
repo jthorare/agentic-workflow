@@ -24954,3 +24954,4 @@ override Aw.Sindri.Core.Graph.Blocks.RuleListing.GetHashCode() -> int
 override Aw.Sindri.Core.Graph.Blocks.RuleListing.ToString() -> string!
 static Aw.Sindri.Core.Graph.Blocks.RuleListing.operator !=(Aw.Sindri.Core.Graph.Blocks.RuleListing? left, Aw.Sindri.Core.Graph.Blocks.RuleListing? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.RuleListing.operator ==(Aw.Sindri.Core.Graph.Blocks.RuleListing? left, Aw.Sindri.Core.Graph.Blocks.RuleListing? right) -> bool
+const Aw.Sindri.Core.Graph.Blocks.RuleCatalogBlock.OutputBudgetBytes = 60000 -> int

@@ -13,6 +13,9 @@ public sealed class RuleCatalogBlock(IRuleCatalogPort catalog) : IGraphBlock
     /// <summary>The most characters of a rule's text handed on; the longest record today has 473.</summary>
     public const int TextChars = 600;
 
+    /// <summary>The most UTF-8 bytes the whole output may take as the engine stores it (JSON); the engine cuts a node's output at 64 KB, so this leaves 4 KB of room.</summary>
+    public const int OutputBudgetBytes = 60_000;
+
     private static readonly BlockOutputs _outputs = new(new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["rules"] = "array",
