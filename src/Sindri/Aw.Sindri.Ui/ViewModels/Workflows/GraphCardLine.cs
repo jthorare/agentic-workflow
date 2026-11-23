@@ -143,8 +143,7 @@ internal static class GraphCardLine
     // The host and path only: no scheme, no user or password before an @, no query, no fragment. "https://status.example.com/api?key=1#top" reads "status.example.com/api".
     private static string Host(string url)
     {
-        var at = url.IndexOf("://", StringComparison.Ordinal);
-        var rest = PastPassword(at < 0 ? url : url[(at + 3)..]);
+        var rest = PastToken(PastPassword(url[SchemeEnd(url)..]));
         var end = rest.IndexOfAny(['?', '#']);   // the query and the fragment never show: a key can sit in either (#4032)
         rest = end < 0 ? rest : rest[..end];
         var slash = rest.IndexOf('/', StringComparison.Ordinal);
@@ -163,7 +162,40 @@ internal static class GraphCardLine
         return colon < 0 || colon > lastAt ? rest : rest[(lastAt + 1)..];
     }
 
-    // The index after a leading [IPv6 address], or 0. Only hex digits, ':' and '.' with two or more ':' count as an address, so "[a:secret]" hides no ':'.
+    // The index after "scheme://", or 0 (#4168): a "://" ends a scheme only after one or more letters, digits, '+', '-' or '.'; one inside a password does not.
+    private static int SchemeEnd(string url)
+    {
+        var at = url.IndexOf("://", StringComparison.Ordinal);
+        return at > 0 && !url.AsSpan(0, at).ContainsAnyExcept(_schemeChars) ? at + 3 : 0;
+    }
+
+    // A token as the user name, with no ':' and a raw /, ? or # in it (#4168): when an @ comes after the first separator and the text before that separator
+    // is no host (no '.', not localhost, no [address], each with an optional :port), only what follows the last @ is kept. The cost, on purpose: a bare
+    // one-word host with an @ later in its path (host/x@y) shows the text after the @, because a one-word first segment can't be told from a token.
+    private static string PastToken(string rest)
+    {
+        var first = rest.IndexOfAny(['/', '?', '#']);
+        var lastAt = rest.LastIndexOf('@');
+        return first < 0 || lastAt < first || LooksLikeHost(rest[..first]) ? rest : rest[(lastAt + 1)..];
+    }
+
+    // A host as the card may show one: a dotted name, localhost (any case) or a [IPv6 address], with an optional :digits port.
+    private static bool LooksLikeHost(string head)
+    {
+        var address = AfterAddress(head);
+        var colon = address > 0 ? address : head.IndexOf(':');
+        var name = colon < 0 ? head : head[..colon];
+        var port = colon < 0 ? string.Empty : head[colon..];
+        var portOk = port.Length == 0 || (port.Length > 1 && port[0] == ':' && !port.AsSpan(1).ContainsAnyExcept(_digits));
+        return portOk && (address > 0 || name.Contains('.', StringComparison.Ordinal) || string.Equals(name, "localhost", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static readonly SearchValues<char> _schemeChars = SearchValues.Create("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-.");
+
+    private static readonly SearchValues<char> _digits = SearchValues.Create("0123456789");
+
+    // The index after a leading [IPv6 address], or 0. Only hex digits, ':' and '.' with two or more ':' count as an address, so "[a:secret]" hides no ':', and the
+    // ']' must end the text or come before ':', '/', '?' or '#', so "[a::1]p/w" (a user name and password) is no address.
     private static int AfterAddress(string rest)
     {
         var close = rest.StartsWith('[') ? rest.IndexOf(']', StringComparison.Ordinal) : -1;
@@ -173,7 +205,8 @@ internal static class GraphCardLine
         }
 
         var inside = rest.AsSpan(1, close - 1);
-        var isAddress = inside.Count(':') >= 2 && !inside.ContainsAnyExcept(_addressChars);
+        var next = close + 1 < rest.Length ? rest[close + 1] : ':';   // an address ends the host or is followed by its port or a separator (#4168)
+        var isAddress = inside.Count(':') >= 2 && !inside.ContainsAnyExcept(_addressChars) && next is ':' or '/' or '?' or '#';
         return isAddress ? close + 1 : 0;
     }
 
