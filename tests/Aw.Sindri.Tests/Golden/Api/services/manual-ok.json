@@ -103,6 +103,30 @@
       "description": "Records that Sindri is alive."
     },
     {
+      "name": "home-lanes",
+      "every": "1m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Puts lanes at their recycle mark, limited agents and the merge queue on Home, from aw-meta, read-only."
+    },
+    {
+      "name": "home-runs",
+      "every": "1m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Puts each failed workflow run the owner has not seen on Home, and takes it off once it is seen."
+    },
+    {
       "name": "index-decisions",
       "every": "15m",
       "paused": false,

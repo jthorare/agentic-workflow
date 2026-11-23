@@ -140,9 +140,10 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
         }
     }
 
+    // A source the server flags with its own sentence (#3911) reads that sentence in place of its state; any other reads its name and state.
     private string Line(IndexSourceView source)
     {
-        var line = source.Source + ": " + State(source);
+        var line = source is { NeedsLook: true, LookWords: { Length: > 0 } words } ? words : source.Source + ": " + State(source);
         if (source.Records is { } records)
         {
             line += " · " + Labels.ContextRecords(records);

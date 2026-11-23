@@ -37,6 +37,19 @@ public abstract class SessionDirectoryContract
         Expect.That(sessions.IsSuccess && sessions.Value.SequenceEqual([live]), "the live session only, with every field");
     }
 
+    /// <summary>A session's messaging socket is its address, the "from" its peer messages carry (#4103).</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task The_messaging_socket_is_the_sessions_address()
+    {
+        var live = Session("t1-api", "s-1", AlivePid) with { Address = "uds:/run/user/1000/cc-socks/1.sock" };
+        var directory = Create([live], []);
+
+        var sessions = await directory.Live(_none);
+
+        Expect.That(sessions.IsSuccess && sessions.Value.SequenceEqual([live]), "the session with its address");
+    }
+
     /// <summary>With no sessions the list is empty.</summary>
     /// <returns>A task.</returns>
     [Fact]

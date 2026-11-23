@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Aw.Sindri.Ui.Terminal;
 using Aw.Sindri.Ui.ViewModels.Agents;
 
 namespace Aw.Sindri.Ui.Views.Agents;
@@ -20,10 +21,14 @@ internal sealed partial class AgentsPage : UserControl
         AddHandler(EndedSessionRow.SelectEvent, OnSelectEnded);
         AddHandler(SessionGroup.ToggleEvent, OnToggle);
         SizeChanged += OnSized;
+        AddHandler(KeyDownEvent, OnAnyKeyDown, RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(TextInputEvent, OnTextInputTunnel, RoutingStrategies.Tunnel);
         TerminalPanel.ShowsList = false;
         TerminalPanel.PaneKeyPressed += (_, e) => _ = Page?.SendPaneKey(e.Name, e.Text);
         TerminalPanel.PanePasted += (_, e) => _ = Page?.SendPanePaste(e.Text);
         TerminalPanel.PaneScrollRequested += (_, e) => _ = Page?.ScrollPane(e.Pages);
+        TerminalPanel.PaneFitChanged += OnPaneFit;
+        _fitDebounce.Tick += OnFitDebounced;
         _tick.Tick += (_, _) => Page?.Terminal.Tick();
         TerminalPanel.TranscriptRequested += (_, _) => Page?.OpenTranscript();
         AddHandler(KeyDownEvent, OnEscape, RoutingStrategies.Bubble);
@@ -34,6 +39,23 @@ internal sealed partial class AgentsPage : UserControl
     private const double NarrowBelow = 1100;
 
     private AgentsPageViewModel? _followed;
+
+    // A window drag fires FitChanged for every step; only the size it settles on goes to Serve (#3860).
+    private readonly DispatcherTimer _fitDebounce = new() { Interval = TimeSpan.FromMilliseconds(150) };
+    private (int Cols, int Rows) _fitting;
+
+    private void OnPaneFit(object? sender, TerminalSizeEventArgs e)
+    {
+        _fitting = (e.Columns, e.Rows);
+        _fitDebounce.Stop();
+        _fitDebounce.Start();
+    }
+
+    private void OnFitDebounced(object? sender, EventArgs e)
+    {
+        _fitDebounce.Stop();
+        _ = Page?.FitPane(_fitting.Cols, _fitting.Rows);
+    }
 
     // The terminal view's clock rules (retries, the 30 s rule, a key's wait) move while the view is open.
     private readonly DispatcherTimer _tick = new() { Interval = TimeSpan.FromMilliseconds(500) };
@@ -93,6 +115,21 @@ internal sealed partial class AgentsPage : UserControl
 
     private bool _focusWasHere;
 
+    // Set when "/" asked for the search box: the key's own "/" text input may reach the box once it has focus, and that one is dropped.
+    private bool _dropSlashText;
+
+    // The next key press means the "/" text (if any) is already gone, so a "/" typed later on purpose is kept.
+    private void OnAnyKeyDown(object? sender, KeyEventArgs e) => _dropSlashText = false;
+
+    private void OnTextInputTunnel(object? sender, TextInputEventArgs e)
+    {
+        if (_dropSlashText && string.Equals(e.Text, "/", StringComparison.Ordinal))
+        {
+            _dropSlashText = false;
+            e.Handled = true;
+        }
+    }
+
     // Under 640 px only Status, Agent and For stay: the page tells the rows, and the head's columns follow.
     private void OnSized(object? sender, SizeChangedEventArgs e) => Split();
 
@@ -104,6 +141,33 @@ internal sealed partial class AgentsPage : UserControl
         Page?.ClearFilters();
     }
 
+
+    private void OnHeadLink(object? sender, RoutedEventArgs e) => Page?.FocusNeedsYou();
+
+    private void OnSortHeader(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string tag } && Enum.TryParse<AgentSort>(tag, out var sort))
+        {
+            Page?.SortBy(sort);
+        }
+    }
+
+    // Posted, like the Queue filter's focus: focused inside KeyDown, the box would also get the key's "/" text input.
+    private void OnSearchRequested(object? sender, EventArgs e)
+    {
+        _dropSlashText = true;
+        Dispatcher.UIThread.Post(() => _ = this.FindControl<TextBox>("AgentsSearch")?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
+    }
+
+    // Esc in the box clears it.
+    private void OnSearchKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && Page is { } page)
+        {
+            page.SearchText = string.Empty;
+            e.Handled = true;
+        }
+    }
 
     private AgentsPageViewModel? Page => DataContext as AgentsPageViewModel;
 
@@ -156,8 +220,10 @@ internal sealed partial class AgentsPage : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         Page?.FocusRequested -= OnFocusRequested;
+        Page?.SearchRequested -= OnSearchRequested;
         base.OnDataContextChanged(e);
         Page?.FocusRequested += OnFocusRequested;
+        Page?.SearchRequested += OnSearchRequested;
     }
 
     private void OnFocusRequested(object? sender, AgentFocusEventArgs request) =>
