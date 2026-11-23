@@ -55,7 +55,7 @@ public sealed class ProjectsPageTests
     }
 
     [Fact]
-    public async Task The_cards_stay_in_the_order_the_server_serves()
+    public async Task Rows_with_the_same_last_activity_go_by_name()
     {
         var list = Golden("mixed");
         var second = list["projects"]![0]!.DeepClone();
@@ -154,8 +154,10 @@ public sealed class ProjectsPageTests
 
         var page = await _f.Shown(Token);
 
-        Assert.True(page.FreshnessFailing);
-        Assert.Contains("GitHub synced 14 min ago · PRs, checks and agents couldn't be read just now · Linear says you're Jo Smith", page.Freshness, StringComparison.Ordinal);
+        Assert.False(page.FreshnessFailing);   // the freshness line leaves Sindri's row out: the line above the rows says it, once (frames round 13, truth-failed)
+        Assert.Contains("GitHub synced 14 min ago · Linear says you're Jo Smith", page.Freshness, StringComparison.Ordinal);
+        Assert.DoesNotContain("couldn't be read", page.Freshness, StringComparison.Ordinal);
+        Assert.Equal((true, "PRs, checks and agents couldn't be read just now"), (page.ShowsFactsMissing, page.FactsMissingText));   // grouped by state already: no tail
         Assert.DoesNotContain("SND-", page.Freshness, StringComparison.Ordinal);
         Assert.DoesNotContain("sindri", page.Freshness, StringComparison.Ordinal);
     }
@@ -321,19 +323,19 @@ public sealed class ProjectsPageTests
     }
 
     [Theory]
-    [InlineData(0, 1)]
-    [InlineData(559, 1)]
-    [InlineData(560, 2)]
-    [InlineData(1039, 2)]
-    [InlineData(1040, 3)]
-    [InlineData(2000, 3)]
-    public void The_columns_follow_the_page_width(double width, int columns)
+    [InlineData(0, false, false)]
+    [InlineData(807, false, false)]
+    [InlineData(808, false, true)]
+    [InlineData(867, false, true)]
+    [InlineData(868, true, true)]
+    [InlineData(2000, true, true)]
+    public void The_columns_drop_as_the_page_narrows(double width, bool agents, bool wide)
     {
         var page = _f.Page();
 
         page.SetPageWidth(width);
 
-        Assert.Equal(columns, page.Columns);
+        Assert.Equal((agents, wide), (page.ShowsAgents, page.ShowsWide));
     }
 
     [Fact]
