@@ -238,6 +238,28 @@ public sealed class AgentsPageNeedsYouTests
         Assert.All(asked, e => Assert.False(e.ToFocusLine || e.OnlyIfLost));
     }
 
+    [Fact]
+    public async Task The_head_link_and_the_bracket_keys_open_a_collapsed_Needs_you_group_before_they_select_3913()
+    {
+        var page = await _f.Shown(Token);
+        var asked = new List<AgentFocusEventArgs>();
+        page.FocusRequested += (_, e) => asked.Add(e);
+        var asking = page.Groups[0].Rows[0].Ref;
+
+        page.Groups[0].Toggle();
+        var head = page.FocusNeedsYou();
+        var afterHead = (page.Groups[0].IsExpanded, page.SelectedKey);
+        page.ClearSelection();
+        page.Groups[0].Toggle();
+        var jumped = page.Press("]");
+        var afterJump = (page.Groups[0].IsExpanded, page.SelectedKey);
+
+        Assert.Equal((true, true, true), (head, jumped, afterJump.Item1));
+        Assert.Equal((true, asking), afterHead);
+        Assert.Equal(asking, afterJump.Item2);
+        Assert.Equal([asking, asking], asked.Select(e => e.Key));
+    }
+
     private static SessionRowViewModel Row(AgentsPageViewModel page, string prefix) => page.Groups.SelectMany(g => g.Rows).Single(r => r.Ref.StartsWith(prefix, StringComparison.Ordinal));
 
     private static void Set(JsonNode list, string prefix, string state, bool estimated)
