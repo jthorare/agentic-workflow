@@ -44,7 +44,7 @@ public sealed class DelegationLedger(IKeyValueStore values)
                 return removed is null ? null : DelegationBook.Without(stored, issue);
             },
             cancellationToken).ConfigureAwait(false);
-        return written.IsError ? written.Error : Results.Success<Delegation?>(removed);
+        return written.IsError ? written.Error : Results.Success(removed);
     }
 
     // Reads the stored text, computes the new one (null: write nothing) and sets it if nobody wrote in between; retried on a lost race.
