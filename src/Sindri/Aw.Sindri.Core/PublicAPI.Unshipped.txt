@@ -23881,6 +23881,212 @@ static Aw.Sindri.Core.Graph.Blocks.GraphFence.Calls(Aw.Sindri.Core.Graph.Blocks.
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.ConnectionTools(Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort! live) -> Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort!
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.Toolkits(Aw.Sindri.Core.Toolkits.IRunningToolkits! live) -> Aw.Sindri.Core.Toolkits.IRunningToolkits!
 static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
+Aw.Sindri.Core.Messages.ConversationKind
+Aw.Sindri.Core.Messages.ConversationKind.Channel = 0 -> Aw.Sindri.Core.Messages.ConversationKind
+Aw.Sindri.Core.Messages.ConversationKind.Dm = 2 -> Aw.Sindri.Core.Messages.ConversationKind
+Aw.Sindri.Core.Messages.ConversationKind.Mpim = 3 -> Aw.Sindri.Core.Messages.ConversationKind
+Aw.Sindri.Core.Messages.ConversationKind.Private = 1 -> Aw.Sindri.Core.Messages.ConversationKind
+Aw.Sindri.Core.Messages.GapMarker
+Aw.Sindri.Core.Messages.GapMarker.After.get -> Aw.Sindri.Core.Messages.MessageTs
+Aw.Sindri.Core.Messages.GapMarker.After.init -> void
+Aw.Sindri.Core.Messages.GapMarker.Before.get -> Aw.Sindri.Core.Messages.MessageTs
+Aw.Sindri.Core.Messages.GapMarker.Before.init -> void
+Aw.Sindri.Core.Messages.GapMarker.<Clone>$() -> Aw.Sindri.Core.Messages.GapMarker!
+Aw.Sindri.Core.Messages.GapMarker.Conversation.get -> string!
+Aw.Sindri.Core.Messages.GapMarker.Conversation.init -> void
+Aw.Sindri.Core.Messages.GapMarker.Deconstruct(out string! Conversation, out Aw.Sindri.Core.Messages.MessageTs After, out Aw.Sindri.Core.Messages.MessageTs Before, out int Missing) -> void
+Aw.Sindri.Core.Messages.GapMarker.Equals(Aw.Sindri.Core.Messages.GapMarker? other) -> bool
+Aw.Sindri.Core.Messages.GapMarker.GapMarker(string! Conversation, Aw.Sindri.Core.Messages.MessageTs After, Aw.Sindri.Core.Messages.MessageTs Before, int Missing) -> void
+Aw.Sindri.Core.Messages.GapMarker.Line() -> string!
+Aw.Sindri.Core.Messages.GapMarker.Missing.get -> int
+Aw.Sindri.Core.Messages.GapMarker.Missing.init -> void
+Aw.Sindri.Core.Messages.MessageAddress
+Aw.Sindri.Core.Messages.MessageAddress.DirectMessage = 2 -> Aw.Sindri.Core.Messages.MessageAddress
+Aw.Sindri.Core.Messages.MessageAddress.Mention = 1 -> Aw.Sindri.Core.Messages.MessageAddress
+Aw.Sindri.Core.Messages.MessageAddress.Other = 0 -> Aw.Sindri.Core.Messages.MessageAddress
+Aw.Sindri.Core.Messages.MessageAddress.ReactionToMine = 4 -> Aw.Sindri.Core.Messages.MessageAddress
+Aw.Sindri.Core.Messages.MessageAddress.ReplyInMyThread = 3 -> Aw.Sindri.Core.Messages.MessageAddress
+Aw.Sindri.Core.Messages.MessageClass
+Aw.Sindri.Core.Messages.MessageClass.DirectQuestion = 3 -> Aw.Sindri.Core.Messages.MessageClass
+Aw.Sindri.Core.Messages.MessageClass.Fyi = 1 -> Aw.Sindri.Core.Messages.MessageClass
+Aw.Sindri.Core.Messages.MessageClass.None = 0 -> Aw.Sindri.Core.Messages.MessageClass
+Aw.Sindri.Core.Messages.MessageClass.ReviewAsk = 2 -> Aw.Sindri.Core.Messages.MessageClass
+Aw.Sindri.Core.Messages.MessageLine
+Aw.Sindri.Core.Messages.MessageLine.Author.get -> string!
+Aw.Sindri.Core.Messages.MessageLine.Author.init -> void
+Aw.Sindri.Core.Messages.MessageLine.<Clone>$() -> Aw.Sindri.Core.Messages.MessageLine!
+Aw.Sindri.Core.Messages.MessageLine.Deconstruct(out Aw.Sindri.Core.Messages.MessageTs Ts, out string! Author, out string! Text) -> void
+Aw.Sindri.Core.Messages.MessageLine.Equals(Aw.Sindri.Core.Messages.MessageLine? other) -> bool
+Aw.Sindri.Core.Messages.MessageLine.MessageLine(Aw.Sindri.Core.Messages.MessageTs Ts, string! Author, string! Text) -> void
+Aw.Sindri.Core.Messages.MessageLine.Partial.get -> bool
+Aw.Sindri.Core.Messages.MessageLine.Partial.init -> void
+Aw.Sindri.Core.Messages.MessageLine.Replies.get -> int
+Aw.Sindri.Core.Messages.MessageLine.Replies.init -> void
+Aw.Sindri.Core.Messages.MessageLine.Text.get -> string!
+Aw.Sindri.Core.Messages.MessageLine.Text.init -> void
+Aw.Sindri.Core.Messages.MessageLine.Thread.get -> Aw.Sindri.Core.Messages.MessageTs?
+Aw.Sindri.Core.Messages.MessageLine.Thread.init -> void
+Aw.Sindri.Core.Messages.MessageLine.Ts.get -> Aw.Sindri.Core.Messages.MessageTs
+Aw.Sindri.Core.Messages.MessageLine.Ts.init -> void
+Aw.Sindri.Core.Messages.MessageList
+Aw.Sindri.Core.Messages.MessageList.Drafts = 3 -> Aw.Sindri.Core.Messages.MessageList
+Aw.Sindri.Core.Messages.MessageList.Later = 2 -> Aw.Sindri.Core.Messages.MessageList
+Aw.Sindri.Core.Messages.MessageList.NeedsReply = 0 -> Aw.Sindri.Core.Messages.MessageList
+Aw.Sindri.Core.Messages.MessageList.Unread = 1 -> Aw.Sindri.Core.Messages.MessageList
+Aw.Sindri.Core.Messages.MessageRank
+Aw.Sindri.Core.Messages.MessageRank.Blocks.get -> int
+Aw.Sindri.Core.Messages.MessageRank.Blocks.init -> void
+Aw.Sindri.Core.Messages.MessageRank.Class.get -> Aw.Sindri.Core.Messages.MessageClass
+Aw.Sindri.Core.Messages.MessageRank.Class.init -> void
+Aw.Sindri.Core.Messages.MessageRank.Conversation.get -> string!
+Aw.Sindri.Core.Messages.MessageRank.Conversation.init -> void
+Aw.Sindri.Core.Messages.MessageRank.Deconstruct(out Aw.Sindri.Core.Messages.MessageClass Class, out int Blocks, out Aw.Sindri.Core.Messages.MessageTs Newest, out string! Conversation) -> void
+Aw.Sindri.Core.Messages.MessageRank.Equals(Aw.Sindri.Core.Messages.MessageRank other) -> bool
+Aw.Sindri.Core.Messages.MessageRank.MessageRank(Aw.Sindri.Core.Messages.MessageClass Class, int Blocks, Aw.Sindri.Core.Messages.MessageTs Newest, string! Conversation) -> void
+Aw.Sindri.Core.Messages.MessageRank.MessageRank() -> void
+Aw.Sindri.Core.Messages.MessageRank.Newest.get -> Aw.Sindri.Core.Messages.MessageTs
+Aw.Sindri.Core.Messages.MessageRank.Newest.init -> void
+Aw.Sindri.Core.Messages.MessageTriage
+Aw.Sindri.Core.Messages.MessageTs
+Aw.Sindri.Core.Messages.MessageTs.Deconstruct(out string! Value) -> void
+Aw.Sindri.Core.Messages.MessageTs.Equals(Aw.Sindri.Core.Messages.MessageTs other) -> bool
+Aw.Sindri.Core.Messages.MessageTs.MessageTs(string! Value) -> void
+Aw.Sindri.Core.Messages.MessageTs.MessageTs() -> void
+Aw.Sindri.Core.Messages.MessageTs.Value.get -> string!
+Aw.Sindri.Core.Messages.MessageTs.Value.init -> void
+Aw.Sindri.Core.Messages.MineReason
+Aw.Sindri.Core.Messages.MineReason.DirectMessage = 0 -> Aw.Sindri.Core.Messages.MineReason
+Aw.Sindri.Core.Messages.MineReason.Followed = 3 -> Aw.Sindri.Core.Messages.MineReason
+Aw.Sindri.Core.Messages.MineReason.NamedMe = 2 -> Aw.Sindri.Core.Messages.MineReason
+Aw.Sindri.Core.Messages.MineReason.WroteInThread = 1 -> Aw.Sindri.Core.Messages.MineReason
+Aw.Sindri.Core.Messages.Mrkdwn
+Aw.Sindri.Core.Messages.Mrkdwn.<Clone>$() -> Aw.Sindri.Core.Messages.Mrkdwn!
+Aw.Sindri.Core.Messages.Mrkdwn.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MrkdwnSpan!>! Spans) -> void
+Aw.Sindri.Core.Messages.Mrkdwn.Equals(Aw.Sindri.Core.Messages.Mrkdwn? other) -> bool
+Aw.Sindri.Core.Messages.MrkdwnKind
+Aw.Sindri.Core.Messages.MrkdwnKind.Bold = 1 -> Aw.Sindri.Core.Messages.MrkdwnKind
+Aw.Sindri.Core.Messages.MrkdwnKind.Broadcast = 10 -> Aw.Sindri.Core.Messages.MrkdwnKind
+Aw.Sindri.Core.Messages.MrkdwnKind.ChannelMention = 9 -> Aw.Sindri.Core.Messages.MrkdwnKind
+Aw.Sindri.Core.Messages.MrkdwnKind.Code = 4 -> Aw.Sindri.Core.Messages.MrkdwnKind
+Aw.Sindri.Core.Messages.MrkdwnKind.Emoji = 11 -> Aw.Sindri.Core.Messages.MrkdwnKind
+Aw.Sindri.Core.Messages.MrkdwnKind.Italic = 2 -> Aw.Sindri.Core.Messages.MrkdwnKind
+Aw.Sindri.Core.Messages.MrkdwnKind.Link = 7 -> Aw.Sindri.Core.Messages.MrkdwnKind
+Aw.Sindri.Core.Messages.MrkdwnKind.Pre = 5 -> Aw.Sindri.Core.Messages.MrkdwnKind
+Aw.Sindri.Core.Messages.MrkdwnKind.Quote = 6 -> Aw.Sindri.Core.Messages.MrkdwnKind
+Aw.Sindri.Core.Messages.MrkdwnKind.Strike = 3 -> Aw.Sindri.Core.Messages.MrkdwnKind
+Aw.Sindri.Core.Messages.MrkdwnKind.Text = 0 -> Aw.Sindri.Core.Messages.MrkdwnKind
+Aw.Sindri.Core.Messages.MrkdwnKind.UserMention = 8 -> Aw.Sindri.Core.Messages.MrkdwnKind
+Aw.Sindri.Core.Messages.Mrkdwn.Mrkdwn(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MrkdwnSpan!>! Spans) -> void
+Aw.Sindri.Core.Messages.Mrkdwn.Render() -> string!
+Aw.Sindri.Core.Messages.MrkdwnSpan
+Aw.Sindri.Core.Messages.MrkdwnSpan.<Clone>$() -> Aw.Sindri.Core.Messages.MrkdwnSpan!
+Aw.Sindri.Core.Messages.MrkdwnSpan.Deconstruct(out Aw.Sindri.Core.Messages.MrkdwnKind Kind, out string! Text) -> void
+Aw.Sindri.Core.Messages.MrkdwnSpan.Equals(Aw.Sindri.Core.Messages.MrkdwnSpan? other) -> bool
+Aw.Sindri.Core.Messages.MrkdwnSpan.Kind.get -> Aw.Sindri.Core.Messages.MrkdwnKind
+Aw.Sindri.Core.Messages.MrkdwnSpan.Kind.init -> void
+Aw.Sindri.Core.Messages.MrkdwnSpan.MrkdwnSpan(Aw.Sindri.Core.Messages.MrkdwnKind Kind, string! Text) -> void
+Aw.Sindri.Core.Messages.Mrkdwn.Spans.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.MrkdwnSpan!>!
+Aw.Sindri.Core.Messages.Mrkdwn.Spans.init -> void
+Aw.Sindri.Core.Messages.MrkdwnSpan.Text.get -> string!
+Aw.Sindri.Core.Messages.MrkdwnSpan.Text.init -> void
+Aw.Sindri.Core.Messages.ThreadRow
+Aw.Sindri.Core.Messages.ThreadRow.Blocks.get -> int
+Aw.Sindri.Core.Messages.ThreadRow.Blocks.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.Class.get -> Aw.Sindri.Core.Messages.MessageClass
+Aw.Sindri.Core.Messages.ThreadRow.Class.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.<Clone>$() -> Aw.Sindri.Core.Messages.ThreadRow!
+Aw.Sindri.Core.Messages.ThreadRow.Conversation.get -> string!
+Aw.Sindri.Core.Messages.ThreadRow.Conversation.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.Deconstruct(out string! Key, out Aw.Sindri.Core.Messages.ConversationKind Kind, out string! Conversation, out Aw.Sindri.Core.Messages.MessageTs Newest) -> void
+Aw.Sindri.Core.Messages.ThreadRow.Done.get -> bool
+Aw.Sindri.Core.Messages.ThreadRow.Done.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.Equals(Aw.Sindri.Core.Messages.ThreadRow? other) -> bool
+Aw.Sindri.Core.Messages.ThreadRow.Key.get -> string!
+Aw.Sindri.Core.Messages.ThreadRow.Key.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.Kind.get -> Aw.Sindri.Core.Messages.ConversationKind
+Aw.Sindri.Core.Messages.ThreadRow.Kind.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.LinkedToOwnedIssue.get -> bool
+Aw.Sindri.Core.Messages.ThreadRow.LinkedToOwnedIssue.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.LinksWaitingOnMe.get -> bool
+Aw.Sindri.Core.Messages.ThreadRow.LinksWaitingOnMe.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.Members.get -> int
+Aw.Sindri.Core.Messages.ThreadRow.Members.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.Mine.get -> Aw.Sindri.Core.Messages.MineReason?
+Aw.Sindri.Core.Messages.ThreadRow.Mine.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.NamesMe.get -> bool
+Aw.Sindri.Core.Messages.ThreadRow.NamesMe.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.Newest.get -> Aw.Sindri.Core.Messages.MessageTs
+Aw.Sindri.Core.Messages.ThreadRow.Newest.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.NewestIsMine.get -> bool
+Aw.Sindri.Core.Messages.ThreadRow.NewestIsMine.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.NewestText.get -> string!
+Aw.Sindri.Core.Messages.ThreadRow.NewestText.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.RepliedAfterNewest.get -> bool
+Aw.Sindri.Core.Messages.ThreadRow.RepliedAfterNewest.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.Snoozed.get -> bool
+Aw.Sindri.Core.Messages.ThreadRow.Snoozed.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.Thread.get -> Aw.Sindri.Core.Messages.MessageTs?
+Aw.Sindri.Core.Messages.ThreadRow.Thread.init -> void
+Aw.Sindri.Core.Messages.ThreadRow.ThreadRow(string! Key, Aw.Sindri.Core.Messages.ConversationKind Kind, string! Conversation, Aw.Sindri.Core.Messages.MessageTs Newest) -> void
+override Aw.Sindri.Core.Messages.GapMarker.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.GapMarker.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.GapMarker.ToString() -> string!
+override Aw.Sindri.Core.Messages.MessageLine.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.MessageLine.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.MessageLine.ToString() -> string!
+~override Aw.Sindri.Core.Messages.MessageRank.Equals(object obj) -> bool
+override Aw.Sindri.Core.Messages.MessageRank.GetHashCode() -> int
+~override Aw.Sindri.Core.Messages.MessageRank.ToString() -> string
+~override Aw.Sindri.Core.Messages.MessageTs.Equals(object obj) -> bool
+override Aw.Sindri.Core.Messages.MessageTs.GetHashCode() -> int
+~override Aw.Sindri.Core.Messages.MessageTs.ToString() -> string
+override Aw.Sindri.Core.Messages.Mrkdwn.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.Mrkdwn.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.MrkdwnSpan.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.MrkdwnSpan.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.MrkdwnSpan.ToString() -> string!
+override Aw.Sindri.Core.Messages.Mrkdwn.ToString() -> string!
+override Aw.Sindri.Core.Messages.ThreadRow.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Messages.ThreadRow.GetHashCode() -> int
+override Aw.Sindri.Core.Messages.ThreadRow.ToString() -> string!
+static Aw.Sindri.Core.Messages.GapMarker.operator !=(Aw.Sindri.Core.Messages.GapMarker? left, Aw.Sindri.Core.Messages.GapMarker? right) -> bool
+static Aw.Sindri.Core.Messages.GapMarker.operator ==(Aw.Sindri.Core.Messages.GapMarker? left, Aw.Sindri.Core.Messages.GapMarker? right) -> bool
+static Aw.Sindri.Core.Messages.MessageLine.operator !=(Aw.Sindri.Core.Messages.MessageLine? left, Aw.Sindri.Core.Messages.MessageLine? right) -> bool
+static Aw.Sindri.Core.Messages.MessageLine.operator ==(Aw.Sindri.Core.Messages.MessageLine? left, Aw.Sindri.Core.Messages.MessageLine? right) -> bool
+static Aw.Sindri.Core.Messages.MessageRank.Of(Aw.Sindri.Core.Messages.ThreadRow! row) -> Aw.Sindri.Core.Messages.MessageRank
+static Aw.Sindri.Core.Messages.MessageRank.operator !=(Aw.Sindri.Core.Messages.MessageRank left, Aw.Sindri.Core.Messages.MessageRank right) -> bool
+static Aw.Sindri.Core.Messages.MessageRank.operator ==(Aw.Sindri.Core.Messages.MessageRank left, Aw.Sindri.Core.Messages.MessageRank right) -> bool
+static Aw.Sindri.Core.Messages.MessageRank.Order(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Messages.ThreadRow!>! rows) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.ThreadRow!>!
+static Aw.Sindri.Core.Messages.MessageTriage.Classify(Aw.Sindri.Core.Messages.ThreadRow! row, System.Collections.Generic.IReadOnlyList<string!>! requestPhrases) -> Aw.Sindri.Core.Messages.MessageClass
+static Aw.Sindri.Core.Messages.MessageTriage.InRelease1NeedsReply(Aw.Sindri.Core.Messages.ThreadRow! row) -> bool
+static Aw.Sindri.Core.Messages.MessageTriage.NeedsReply(Aw.Sindri.Core.Messages.ThreadRow! row) -> bool
+static Aw.Sindri.Core.Messages.MessageTriage.ReturnsAfterDone(Aw.Sindri.Core.Messages.ThreadRow! row, Aw.Sindri.Core.Messages.MessageAddress address) -> bool
+static Aw.Sindri.Core.Messages.MessageTs.Compare(Aw.Sindri.Core.Messages.MessageTs left, Aw.Sindri.Core.Messages.MessageTs right) -> int
+static Aw.Sindri.Core.Messages.MessageTs.operator !=(Aw.Sindri.Core.Messages.MessageTs left, Aw.Sindri.Core.Messages.MessageTs right) -> bool
+static Aw.Sindri.Core.Messages.MessageTs.operator ==(Aw.Sindri.Core.Messages.MessageTs left, Aw.Sindri.Core.Messages.MessageTs right) -> bool
+static Aw.Sindri.Core.Messages.MessageTs.Parse(string! text) -> Aw.Sindri.Core.Messages.MessageTs
+static Aw.Sindri.Core.Messages.Mrkdwn.operator !=(Aw.Sindri.Core.Messages.Mrkdwn? left, Aw.Sindri.Core.Messages.Mrkdwn? right) -> bool
+static Aw.Sindri.Core.Messages.Mrkdwn.operator ==(Aw.Sindri.Core.Messages.Mrkdwn? left, Aw.Sindri.Core.Messages.Mrkdwn? right) -> bool
+static Aw.Sindri.Core.Messages.Mrkdwn.Parse(string! text) -> Aw.Sindri.Core.Messages.Mrkdwn!
+static Aw.Sindri.Core.Messages.MrkdwnSpan.operator !=(Aw.Sindri.Core.Messages.MrkdwnSpan? left, Aw.Sindri.Core.Messages.MrkdwnSpan? right) -> bool
+static Aw.Sindri.Core.Messages.MrkdwnSpan.operator ==(Aw.Sindri.Core.Messages.MrkdwnSpan? left, Aw.Sindri.Core.Messages.MrkdwnSpan? right) -> bool
+static Aw.Sindri.Core.Messages.ThreadRow.DmKey(string! workspace, string! conversation) -> string!
+static Aw.Sindri.Core.Messages.ThreadRow.operator !=(Aw.Sindri.Core.Messages.ThreadRow? left, Aw.Sindri.Core.Messages.ThreadRow? right) -> bool
+static Aw.Sindri.Core.Messages.ThreadRow.operator ==(Aw.Sindri.Core.Messages.ThreadRow? left, Aw.Sindri.Core.Messages.ThreadRow? right) -> bool
+static Aw.Sindri.Core.Messages.ThreadRow.ThreadKey(string! workspace, string! conversation, Aw.Sindri.Core.Messages.MessageTs thread) -> string!
+Aw.Sindri.Core.Messages.IMessagesStore
+Aw.Sindri.Core.Messages.IMessagesStore.RebuildNeedsReply(string! conversation, Aw.Sindri.Core.Messages.MessageTs thread, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+Aw.Sindri.Core.Messages.MessagesConnection
+Aw.Sindri.Core.Messages.SlackBaseUrlRule
+Aw.Sindri.Core.Messages.SlackRateBudget
+Aw.Sindri.Core.Messages.SlackRateBudget.Hold(string! method, System.DateTimeOffset now, System.TimeSpan retryAfter) -> void
+Aw.Sindri.Core.Messages.SlackRateBudget.MayCall(string! method, System.DateTimeOffset now) -> bool
+Aw.Sindri.Core.Messages.SlackRateBudget.SlackRateBudget() -> void
+const Aw.Sindri.Core.Messages.MessagesConnection.Name = "slack:messages" -> string!
+static Aw.Sindri.Core.Messages.MessagesConnection.Config(string! workspace, string! user) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+static Aw.Sindri.Core.Messages.SlackBaseUrlRule.Resolve(string? overrideUrl, string? marker, string! token) -> System.Uri!
+static Aw.Sindri.Core.Messages.SlackBaseUrlRule.Slack.get -> System.Uri!
+const Aw.Sindri.Core.Events.EventTypes.MessagesSynced = "messages.synced" -> string!
 Aw.Sindri.Core.Setup.GitMarker
 Aw.Sindri.Core.Setup.GitMarker.File = 2 -> Aw.Sindri.Core.Setup.GitMarker
 Aw.Sindri.Core.Setup.GitMarker.Folder = 1 -> Aw.Sindri.Core.Setup.GitMarker
