@@ -39,7 +39,22 @@ internal sealed class TsResolver
             if (specifier.StartsWith(package.Name + "/", StringComparison.Ordinal))
             {
                 var sub = specifier[(package.Name.Length + 1)..];
-                return Under(package.Dir, sub) ?? Under(package.Dir + "/src", sub);
+                return Subpath(package, "./" + sub) ?? Under(package.Dir, sub) ?? Under(package.Dir + "/src", sub);
+            }
+        }
+
+        return null;
+    }
+
+    // the first 'exports' key that matches and has a target in the repo; a target outside it (dist/, a build output) falls back to the folder guesses
+    private string? Subpath(PackageRoot package, string sub)
+    {
+        foreach (var subpath in package.Subpaths.Where(s => Matches(s.Prefix, s.Suffix, s.Wild, sub)))
+        {
+            var middle = subpath.Wild ? sub[subpath.Prefix.Length..^subpath.Suffix.Length] : "";
+            if (subpath.Targets.Select(t => File(subpath.Wild ? t.Replace("*", middle, StringComparison.Ordinal) : t)).FirstOrDefault(r => r is not null) is { } hit)
+            {
+                return hit;
             }
         }
 
@@ -50,7 +65,7 @@ internal sealed class TsResolver
 
     private string? ResolveAlias(string from, string specifier)
     {
-        foreach (var alias in _aliases.Where(a => RepoPath.Within(a.Scope, from) && Matches(a, specifier)))
+        foreach (var alias in _aliases.Where(a => RepoPath.Within(a.Scope, from) && Matches(a.Prefix, a.Suffix, a.Wild, specifier)))
         {
             var middle = alias.Wild ? specifier[alias.Prefix.Length..^alias.Suffix.Length] : "";
             var hit = alias.Targets.Select(t => File(alias.Wild ? t.Replace("*", middle, StringComparison.Ordinal) : t)).FirstOrDefault(r => r is not null);
@@ -63,10 +78,10 @@ internal sealed class TsResolver
         return null;
     }
 
-    private static bool Matches(PathAlias alias, string specifier) =>
-        alias.Wild
-            ? specifier.Length >= alias.Prefix.Length + alias.Suffix.Length && specifier.StartsWith(alias.Prefix, StringComparison.Ordinal) && specifier.EndsWith(alias.Suffix, StringComparison.Ordinal)
-            : specifier == alias.Prefix;
+    private static bool Matches(string prefix, string suffix, bool wild, string specifier) =>
+        wild
+            ? specifier.Length >= prefix.Length + suffix.Length && specifier.StartsWith(prefix, StringComparison.Ordinal) && specifier.EndsWith(suffix, StringComparison.Ordinal)
+            : specifier == prefix;
 
     /// <summary>The file a path names: itself, itself with an extension, a folder's index, or (for a compiled '.js' name) its TS source.</summary>
     private string? File(string path)
