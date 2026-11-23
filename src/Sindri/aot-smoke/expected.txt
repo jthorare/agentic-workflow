@@ -242,7 +242,7 @@ stopped (pid PID, epoch 1 released)
 SND-API-001 not running: no control plane is recorded (fix: sindri)
 exit 1
 ## sindri setup
-SND-API-001 not running: no control plane is recorded (fix: sindri)
+SND-API-001 no control plane is recorded (fix: sindri)
 todo      Sindri is current: Sindri isn't running.
 todo      Connect your accounts: Waits for Sindri to run.
 done      Add your repo: smoke
