@@ -47,6 +47,13 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
+      <!-- The step's id shows only here (#3684): never on the card or in the heading. -->
+      <Expander x:Name="EditorAdvanced" Header="{Binding Editor.AdvancedText}" IsVisible="{Binding Editor.NodeIdLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Editor.AdvancedText}">
+        <Border x:Name="EditorStepIdName" AutomationProperties.Name="{Binding Editor.NodeIdLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption mono" Text="{Binding Editor.NodeIdLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </Expander>
+
       <Border x:Name="EditorFailure" IsVisible="{Binding Editor.FailureText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Editor.FailureText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding Editor.FailureText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>

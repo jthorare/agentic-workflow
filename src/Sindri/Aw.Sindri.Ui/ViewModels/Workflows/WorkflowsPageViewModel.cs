@@ -209,7 +209,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     {
         SetLevel(Level.Run);
         Run.Shape = Runs.Shown;
-        return _url is { } url ? Run.Read(url, runId, cancellationToken) : Task.CompletedTask;
+        return _url is { } url ? Run.Open(url, runId, cancellationToken) : Task.CompletedTask;
     }
 
     /// <summary>Goes up one level: a run to its workflow's runs, runs to the list.</summary>

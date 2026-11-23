@@ -111,7 +111,11 @@ the row the timer waits for is hello-sindri's own item, "Hello from Sindri", whi
 is a real row from a real run, not a seeded one. The first-run spec (issue 3328, phase P12) later swaps the `profile` step
 for `sindri setup --apply`; the flag stays `--time`.
 
-The clock starts after the preflight. Output is one line per step, then the total, and the same numbers in
+Before the clock starts, the script calls `aw-ui-driver ready --wait-ms 1` once and prints `driver ready (not on the clock)`.
+`scripts/aw-ui-driver.sh` runs `dotnet publish` when `src/UiDriver` changed, and this call keeps that build out of the app time
+and the total. Only a failed publish stops the run, before any `first-run` line; a "no app yet" exit does not.
+
+The clock starts after the preflight and that warm-up. Output is one line per step, then the total, and the same numbers in
 `<home>/first-run.json`:
 
 ```

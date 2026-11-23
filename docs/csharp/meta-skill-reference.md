@@ -58,6 +58,17 @@ Teams on the same repo share the default worktree roots (`~/repos/aw-wt`, `<repo
 `worktree-sweep` or merge trigger may remove another team's finished worktrees (the other rules still apply: an ended pull
 request, nothing unpushed, no process inside). Give each team its own `worktrees.roots` in its `team.json` to keep them apart.
 
+## Delegating owner requests
+
+`aw-meta delegate` files the issue in the team repo and records the delegation.
+
+- A non-Claude lane gets the `ACTION: #<n>` message at once. A Claude lane gets it when you send the printed text with SendMessage.
+- Not sure which lane? Run it without `--lane`: it files nothing and lists the lanes, with keyword matches marked.
+- `aw-meta delegated` shows what a lane still owes and what waits for the lane's answer.
+- `aw-meta delegate --drop <n>` forgets a delegation that no lane will take.
+
+The full contract is in `docs/csharp/meta.md`.
+
 ## Worktrees
 
 Nobody removes worktrees by hand. `aw-meta` does it on **triggers**, never on a timer (work builds up over time, and a

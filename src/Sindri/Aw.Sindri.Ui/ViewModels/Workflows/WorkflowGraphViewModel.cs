@@ -42,16 +42,15 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
 
         var nodes = new List<GraphNodeViewModel>();
         var unplaced = new List<string>();
-        foreach (var (id, type, title) in ReadNodes(workflow.Spec))
+        foreach (var node in ReadNodes(workflow.Spec))
         {
-            if (!positions.TryGetValue(id, out var at))
+            if (!positions.TryGetValue(node.Id, out var at))
             {
-                unplaced.Add(id);
+                unplaced.Add(node.Id);
                 continue;
             }
 
-            var status = statuses is not null && statuses.TryGetValue(id, out var word) ? word : null;
-            nodes.Add(new GraphNodeViewModel(id, title.Length > 0 ? title : id, type, at.X, at.Y, status));
+            nodes.Add(NodeOf(node, at, statuses));
         }
 
         _spec = workflow.Spec;
@@ -62,6 +61,17 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
         Edges = BuildEdges(workflow.Spec, nodes);
         Ends = GraphEnds.Build(nodes, Edges, SpecBranches(workflow.Spec));
         Order = [.. nodes.OrderBy(n => n.X).ThenBy(n => n.Y).ThenBy(n => n.Id, StringComparer.Ordinal)];
+    }
+
+    // One card: line 1 and line 2 from GraphCardLine (#3684), the run's status word when a run is shown.
+    private GraphNodeViewModel NodeOf((string Id, string Type, string Title, JsonElement Config) node, GraphPoint at, IReadOnlyDictionary<string, string>? statuses)
+    {
+        var status = statuses is not null && statuses.TryGetValue(node.Id, out var word) ? word : null;
+        var served = _summaries.TryGetValue(node.Id, out var summary) ? summary : null;
+        return new GraphNodeViewModel(node.Id, GraphCardLine.Title(node.Title, node.Type, served?.KindTitle), node.Type, at.X, at.Y, status)
+        {
+            Line = GraphCardLine.Settings(node.Type, node.Config, served?.Summary, served?.KindTitle),
+        };
     }
 
     private readonly Dictionary<string, NodeSummaryView> _summaries;
@@ -207,9 +217,9 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
         return next >= 0 && next < Order.Count && SelectNode(Order[next].Id);
     }
 
-    private static List<(string Id, string Type, string Title)> ReadNodes(JsonElement spec)
+    private static List<(string Id, string Type, string Title, JsonElement Config)> ReadNodes(JsonElement spec)
     {
-        var found = new List<(string, string, string)>();
+        var found = new List<(string, string, string, JsonElement)>();
         if (spec.ValueKind != JsonValueKind.Object || !spec.TryGetProperty("nodes", out var list) || list.ValueKind != JsonValueKind.Array)
         {
             return found;
@@ -219,7 +229,7 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
         {
             if (Text(node, "id") is { Length: > 0 } id)
             {
-                found.Add((id, Text(node, "type"), Text(node, "title")));
+                found.Add((id, Text(node, "type"), Text(node, "title"), node.TryGetProperty("config", out var config) ? config.Clone() : default));
             }
         }
 

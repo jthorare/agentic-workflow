@@ -75,7 +75,8 @@ public static class SindriCoreServiceCollectionExtensions
             .AddSingleton<IProjection, CodeIndexProjection>()
             .AddSingleton<IProjection, ProjectsProjection>()
             .AddSingleton<IProjection, RunsProjection>()
-            .AddSingleton<IProjection, TodosProjection>();
+            .AddSingleton<IProjection, TodosProjection>()
+            .AddSingleton<IProjection, HomeProjection>();
 
     /// <summary>
     /// The sandbox port and the credential registry (sandbox spec SB12, SB18). The product registers only <see cref="UnavailableSandbox"/> until SB-5a; test hosts replace it

@@ -98,4 +98,14 @@ public sealed class EventCatalogTests
         Assert.Equal(keyShape, entry.KeyShape);
         Assert.Contains(type, typeof(EventTypes).GetFields(BindingFlags.Public | BindingFlags.Static).Select(f => (string)f.GetRawConstantValue()!), StringComparer.Ordinal);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Messages_synced_is_catalogued_privately_with_counts_only()
+    {
+        var entry = Assert.Single(EventCatalog.All, e => e.Type == EventTypes.MessagesSynced);
+
+        Assert.False(entry.Public);   // messages spec §2 decision 2: the ledger holds ids and counts, never text; no page reads it yet (M1e)
+        Assert.Null(entry.PublicPayload);
+        Assert.Equal("messages.synced:<epoch>:<slot>", entry.KeyShape);
+    }
 }
