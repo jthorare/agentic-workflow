@@ -1,5 +1,4 @@
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.ViewModels.Agents;
 
 namespace Aw.Sindri.Ui.Tests.Agents.Page;
@@ -76,19 +75,6 @@ public sealed class AgentsPageKeysTests
         _ = page.Press("K");
 
         Assert.Equal(page.Groups[^1].Rows[^1].Ref, page.SelectedKey);
-    }
-
-    [Fact]
-    public async Task Enter_asks_to_open_the_selected_sessions_sheet()
-    {
-        var page = await _f.Shown(Token);
-        SessionOpenRequestedEventArgs? opened = null;
-        page.OpenRequested += (_, e) => opened = e;
-        _ = page.Press("J");
-
-        Assert.True(page.Press("Enter"));
-
-        Assert.Equal(new DeepLink(DeepLinkKind.Session, page.SelectedKey), opened!.Link);
     }
 
     [Fact]

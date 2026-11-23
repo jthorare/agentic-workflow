@@ -41,6 +41,7 @@ internal sealed class ViewsHarness
             new ProjectsProjection(Slice.Events),
             new RunsProjection(Slice.Events),
             new TodosProjection(Slice.Events),
+            new HomeProjection(Slice.Events),
         ];
     }
 
