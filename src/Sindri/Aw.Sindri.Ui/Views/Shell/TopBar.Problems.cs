@@ -62,7 +62,21 @@ internal sealed partial class TopBar
 
         var others = bar.Padding.Left + bar.Padding.Right + Brand.DesiredSize.Width + NavigationWidthAt(_fit) + search + _pillRest;
         var room = width - others - PillProblems.Margin.Left - PillProblems.Margin.Right;
-        SetProblemsCap(WholeWordsOnly(Math.Clamp(YieldAge(room), 0, ProblemsMax)));
+        var cap = WholeWordsOnly(Math.Clamp(YieldAge(room), 0, ProblemsMax));
+        if (cap < 0.5)
+        {
+            KeepAge();
+        }
+
+        SetProblemsCap(cap);
+    }
+
+    // A dropped problem text takes no room, so the age has nothing to give way to (#4070). Whether the age fits is the step's call
+    // (Choose drops it from NoAge on). Stable: the next measure yields it again, drops the text again and lands here again.
+    private void KeepAge()
+    {
+        _ageYields = false;
+        PillAge.IsVisible = _fit < Fit.NoAge;
     }
 
     // Under about one word of room the problem text gives way entirely (#4008): a one-letter stub ("Degraded y...") reads as a bug. A text
