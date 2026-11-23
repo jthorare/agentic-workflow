@@ -4,6 +4,12 @@ namespace Aw.Sindri.Core;
 
 public static partial class SindriErrors
 {
+    /// <summary>SND-MSG-011: the conversation is not in the store (messages spec §10); `sindri messages status`, or open it once to load.</summary>
+    public static readonly ErrorDefinition MessagesConversationUnknown = new("SND-MSG-011", ErrorKind.NotFound, "The conversation is not in the store");
+
+    /// <summary>SND-MSG-025: messages.db is newer than this build, or damaged (messages spec §10); `sindri messages doctor`, and `purge` rebuilds the cache.</summary>
+    public static readonly ErrorDefinition MessagesStoreUnusable = new("SND-MSG-025", ErrorKind.Unavailable, "messages.db is newer than this build, or damaged");
+
     /// <summary>SND-MSG-001: no Slack connection for this workspace (messages spec §10; 409, CLI exit 1). Fix: sindri messages connect.</summary>
     public static readonly ErrorDefinition MessagesNotConnected = new("SND-MSG-001", ErrorKind.Conflict, "Messages has no Slack connection (fix: sindri messages connect)");
 
@@ -33,5 +39,5 @@ public static partial class SindriErrors
 
     /// <summary>The Messages codes (messages spec §10), for <see cref="All"/>.</summary>
     private static ErrorDefinition[] EveryMessages() =>
-        [MessagesNotConnected, MessagesTokenInvalid, MessagesScopeMissing, MessagesRateLimited, MessagesAppBlocked, MessagesWrongWorkspace, MessagesNotUserToken, MessagesSlackUnreachable, MessagesTsInvalid];
+        [MessagesConversationUnknown, MessagesStoreUnusable, MessagesNotConnected, MessagesTokenInvalid, MessagesScopeMissing, MessagesRateLimited, MessagesAppBlocked, MessagesWrongWorkspace, MessagesNotUserToken, MessagesSlackUnreachable, MessagesTsInvalid];
 }
