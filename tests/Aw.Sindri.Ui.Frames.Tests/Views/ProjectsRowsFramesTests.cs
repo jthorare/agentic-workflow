@@ -22,7 +22,7 @@ public sealed class ProjectsRowsFramesTests : FrameHost
 {
     private static readonly string[] _barButtons = ["ProjectsSort", "ProjectsGroup", "ProjectsAdd"];
 
-    private const string LongName = "Enterprise onboarding experience overhaul for every tenant and every region we sell in";
+    private const string LongName = "Enterprise onboarding experience overhaul for every tenant and every region we sell in, with the admin console, the billing hand-off and the support runbooks rewritten to match";
 
     private static JsonObject Truth(string? level) => new()
     {
