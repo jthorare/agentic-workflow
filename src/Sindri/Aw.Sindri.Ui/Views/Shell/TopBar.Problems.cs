@@ -62,7 +62,15 @@ internal sealed partial class TopBar
 
         var others = bar.Padding.Left + bar.Padding.Right + Brand.DesiredSize.Width + NavigationWidthAt(_fit) + search + _pillRest;
         var room = width - others - PillProblems.Margin.Left - PillProblems.Margin.Right;
-        SetProblemsCap(Math.Clamp(YieldAge(room), 0, ProblemsMax));
+        SetProblemsCap(WholeWordsOnly(Math.Clamp(YieldAge(room), 0, ProblemsMax)));
+    }
+
+    // Under about one word of room the problem text gives way entirely (#4008): a one-letter stub ("Degraded y...") reads as a bug. A text
+    // shorter than that still shows. Once hidden it needs Slack more room to come back, so a bar at the edge doesn't flip each measure.
+    private double WholeWordsOnly(double cap)
+    {
+        var least = MinProblems + (PillProblems.MaxWidth < 0.5 ? Slack : 0);
+        return cap < least && cap < NaturalProblems() ? 0 : cap;
     }
 
     // A cap that moves by less than half a pixel stays: every new value measures the bar again.
