@@ -66,7 +66,7 @@ public sealed class MessagesReadRouteTests
         var session = await Read(host, path, session: true);
 
         Assert.Equal((HttpStatusCode.OK, HttpStatusCode.OK), (owner.Status, session.Status));
-        Assert.Contains(_text, t => owner.Body.Contains(t, StringComparison.Ordinal));   // the owner's answer holds text, so the session check is not empty
+        _ = Assert.Contains(_text, t => owner.Body.Contains(t, StringComparison.Ordinal));   // the owner's answer holds text, so the session check is not empty
         Assert.All(_text, t => Assert.DoesNotContain(t, session.Body, StringComparison.Ordinal));
     }
 

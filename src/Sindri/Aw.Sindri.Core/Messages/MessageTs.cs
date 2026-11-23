@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Aw.Kernel;
 
 namespace Aw.Sindri.Core.Messages;
 
@@ -10,17 +11,11 @@ public readonly record struct MessageTs(string Value)
     private const int FractionDigits = 6;
     private const int MaxSecondsDigits = 15;
 
-    /// <summary>Reads a Slack ts: seconds, a dot and six digits; any other text is refused.</summary>
-    /// <param name="text">The text Slack sent.</param>
-    /// <returns>The ts.</returns>
-    /// <exception cref="FormatException">The text is not a Slack ts.</exception>
-    public static MessageTs Parse(string text)
-    {
-        ArgumentNullException.ThrowIfNull(text);
-
-        // the text is not echoed, so a hostile value never reaches a log line through the exception
-        return TryParse(text, out var ts) ? ts : throw new FormatException("A Slack ts is seconds, a dot and six digits.");
-    }
+    /// <summary>Reads a Slack ts: seconds (no leading zero), a dot and six digits; any other text is SND-MSG-034.</summary>
+    /// <param name="text">The text Slack or a caller sent.</param>
+    /// <returns>The ts, or SND-MSG-034 (the error never echoes the text, so a hostile value never reaches a log line through it).</returns>
+    public static Result<MessageTs> Parse(string? text) =>
+        TryParse(text, out var ts) ? ts : SindriErrors.MessagesTsInvalid.With("a Slack ts is seconds, a dot and six digits ('1700000000.000100')");
 
     /// <summary>Reads a Slack ts without throwing.</summary>
     /// <param name="text">The text Slack sent.</param>
@@ -73,7 +68,8 @@ public readonly record struct MessageTs(string Value)
             return false;
         }
 
-        return AllDigits(text.AsSpan(0, dot)) && AllDigits(text.AsSpan(dot + 1));
+        // no leading zero ('0' alone stays legal), so two texts of one time are one text: Compare and Equals agree
+        return (dot == 1 || text[0] != '0') && AllDigits(text.AsSpan(0, dot)) && AllDigits(text.AsSpan(dot + 1));
     }
 
     private static bool AllDigits(ReadOnlySpan<char> text)

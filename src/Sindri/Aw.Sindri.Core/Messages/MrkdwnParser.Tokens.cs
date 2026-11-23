@@ -60,7 +60,7 @@ internal sealed partial class MrkdwnParser
     {
         var mark = _s[i];
         var opens = depth < MaxDepth && (i == 0 || !char.IsLetterOrDigit(_s[i - 1])) && i + 1 < end && !char.IsWhiteSpace(_s[i + 1]) && _s[i + 1] != mark;
-        var close = opens ? NextAt(Closers(mark), i + 2) : -1;
+        var close = opens ? CloserOutsideCode(Closers(mark), i + 2, end) : -1;
         if (close < 0 || close >= end)
         {
             return None(i, out span, out next);
@@ -70,6 +70,26 @@ internal sealed partial class MrkdwnParser
         span = new MrkdwnSpan(kind, _s[(i + 1)..close]) { Children = InlineSpans(i + 1, close, depth + 1) };
         next = close + 1;
         return true;
+    }
+
+    // the first closer at or after 'from' that no `code` span covers: '*a `x*` b*' closes at the last '*', since the one in the code is the code's
+    private int CloserOutsideCode(List<int> closers, int from, int end)
+    {
+        var close = NextAt(closers, from);
+        var tick = NextAt(_ticks, from - 1);
+        while (close >= 0 && tick >= 0 && tick < close)
+        {
+            var tickEnd = NextAt(_ticks, tick + 1);
+            if (tickEnd < 0 || tickEnd >= end)
+            {
+                return close;   // an unclosed backtick opens no span
+            }
+
+            close = tickEnd > close ? NextAt(closers, tickEnd + 1) : close;
+            tick = NextAt(_ticks, tickEnd + 1);
+        }
+
+        return close;
     }
 
     // `code`: literal up to the next backtick on the line
