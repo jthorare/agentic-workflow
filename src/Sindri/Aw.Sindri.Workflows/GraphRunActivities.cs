@@ -77,11 +77,11 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         }
     }
 
-    // why: the scrub can make a text longer, so Fit runs after it; a cut here sets 'Truncated' like the block's own Fit does (#3486)
+    // why: the scrub can make a text longer, so Fit runs after it (#3486); only the input is fitted here, and a cut input never sets 'Truncated', which says the output was cut (#3896)
     private NodeRun Scrubbed(NodeRun nodeRun)
     {
         var input = StoredJson.Fit(StoredJson.Quote(mirror.Clean(nodeRun.Input)));
-        return nodeRun with { Input = input.Text, Truncated = nodeRun.Truncated || input.Cut, Error = mirror.Clean(nodeRun.Error) };
+        return nodeRun with { Input = input.Text, Error = mirror.Clean(nodeRun.Error) };
     }
 
     /// <summary>Mirrors one change of a 'run_agent' node's session into the ledger (#3151). Keyed by the node run and the change's place in its series, so a retry or a replay writes it once.</summary>
@@ -99,7 +99,7 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
     }
 
     /// <summary>
-    /// Writes the 'collect' node's own row once a loop is done: 'items' (each item's value in item order; an item whose branch skipped the collect adds nothing) and 'count'.
+    /// Writes the 'collect' node's own row once a loop is done: 'items' (each item's value in item order; an item whose branch skipped the collect, or that a 'skip-item' node dropped, adds nothing), 'count' and 'skipped'.
     /// The values are read here and written here, so they never pass through the workflow's history.
     /// </summary>
     /// <param name="request">The loop's collect node.</param>
@@ -113,7 +113,7 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
             .Where(r => r.NodeId == request.Collect && r.ItemIndex > 0 && r.Status == NodeRunStatus.Succeeded)
             .OrderBy(static r => r.ItemIndex)
             .ToList();
-        var (output, failure) = Gather(rows);
+        var (output, failure) = Gather(rows, request.Skipped);
         if (failure is not null)
         {
             return failure;
@@ -125,8 +125,9 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
 
     /// <summary>Builds the 'collect' node's output from the item rows, or says why it can't be: a value was cut at 64 KB, or all the values together do not fit in the 64 KB the store keeps.</summary>
     /// <param name="rows">The collect rows of items 1 to N that succeeded, in item order.</param>
+    /// <param name="skipped">How many items a body node with 'onFailure: skip-item' dropped.</param>
     /// <returns>The output text, or the failure.</returns>
-    internal static (string? Output, string? Failure) Gather(IReadOnlyList<NodeRun> rows)
+    internal static (string? Output, string? Failure) Gather(IReadOnlyList<NodeRun> rows, int skipped = 0)
     {
         ArgumentNullException.ThrowIfNull(rows);
         var cut = rows.FirstOrDefault(static r => r.Truncated);
@@ -136,7 +137,7 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         }
 
         var items = new JsonArray([.. rows.Select(static r => (StoredJson.Parse(r.Output) as JsonObject)?["value"]?.DeepClone())]);
-        var text = new JsonObject { ["items"] = items, ["count"] = rows.Count }.ToJsonString();
+        var text = new JsonObject { ["items"] = items, ["count"] = rows.Count, ["skipped"] = skipped }.ToJsonString();
         var bytes = System.Text.Encoding.UTF8.GetByteCount(text);
         return bytes > NodeRunLimits.PayloadBytes
             ? (null, $"the collected values from {rows.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} items are {bytes.ToString(System.Globalization.CultureInfo.InvariantCulture)} bytes, over the {NodeRunLimits.PayloadBytes.ToString(System.Globalization.CultureInfo.InvariantCulture)}-byte (64 KB) cap on a node's output; collect a smaller field or fewer items")
@@ -160,11 +161,11 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
             await mirror.AppendStarted(ended, cancel).ConfigureAwait(false);
             if (finish.Status == WorkflowRunStatus.Cancelled)
             {
-                await mirror.Append(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(finish.Run, mirror.Clean(finish.Error), GraphMirror.By, WorkflowRunMode.Live), $"{EventTypes.WorkflowRunCancelled}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
+                await mirror.Append(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(finish.Run, mirror.Clean(finish.Error), GraphMirror.By, ended.Mode), $"{EventTypes.WorkflowRunCancelled}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
             }
             else
             {
-                await mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(finish.Run, GraphMirror.Name(finish.Status), mirror.Clean(finish.Error), GraphMirror.By, WorkflowRunMode.Live), $"{EventTypes.WorkflowRunFinished}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
+                await mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(finish.Run, GraphMirror.Name(finish.Status), mirror.Clean(finish.Error), GraphMirror.By, ended.Mode), $"{EventTypes.WorkflowRunFinished}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
             }
         }
 

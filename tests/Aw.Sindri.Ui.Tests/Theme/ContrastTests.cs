@@ -39,6 +39,9 @@ public sealed partial class ContrastTests
         ("OnPrimary", "Primary", 4.70, TextAa),
         ("OnPrimary", "PrimaryHoverFill", 5.5, TextAa),
         ("OnPrimary", "PrimaryPressed", 6.2, TextAa),
+        ("OnPrimary", "ErrorFill", 5.0, TextAa),   // the sheet's danger primary button
+        ("OnPrimary", "ErrorFillHover", 5.9, TextAa),
+        ("OnPrimary", "ErrorFillPressed", 6.9, TextAa),
         ("Error", "Canvas", 5.7, TextAa),
         ("Error", "Surface1", 5.3, TextAa),   // the todo row's Overdue due word on the panel (todo spec §3.5)
         ("Success", "Canvas", 7.6, TextAa),

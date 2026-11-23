@@ -56,7 +56,7 @@ test_done_gate_entry_has_an_explicit_timeout_covering_the_10s_budget() {
   bin_dir="$(fake_judge_bin_dir)"
   PATH="$bin_dir:$PATH" CLAUDE_SETTINGS_FILE="$settings" HOME="$home" bash "$ROOT/scripts/install-done-gate.sh" > /dev/null
   timeout_val="$(jq -r '.hooks.Stop[]?.hooks[]? | select(.command | contains("done-gate.sh")) | .timeout' "$settings")"
-  [ "$timeout_val" -ge 12 ] || { echo "FAIL: expected done-gate's hook timeout >= 12s (ask-check's 10s budget + 2s margin), got: $timeout_val"; exit 1; }
+  [ "$timeout_val" -ge 20 ] || { echo "FAIL: expected done-gate's hook timeout >= 20s (2x the 10s wall-clock budget), got: $timeout_val"; exit 1; }
   echo "PASS: test_done_gate_entry_has_an_explicit_timeout_covering_the_10s_budget"
 }
 

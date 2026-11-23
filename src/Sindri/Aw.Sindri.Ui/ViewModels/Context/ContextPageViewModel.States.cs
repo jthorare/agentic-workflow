@@ -36,8 +36,8 @@ internal sealed partial class ContextPageViewModel
     /// <summary>Whether the Building state's body has words.</summary>
     public bool HasBuildingBody => BuildingBody.Length > 0;
 
-    /// <summary>The No map state's title: "No map yet for 2 repositories" when the answer names them.</summary>
-    public string EmptyTitle => _notReady.NoMap?.Repos is { Count: > 0 } repos ? Labels.ContextNoMapRepos(repos.Count) : _itemOpened is null ? Labels.ContextStateEmptyTitle : Labels.ContextStateEmptyItemTitle;
+    /// <summary>The No map state's title: "No map yet for aw" or "No map yet for 2 repositories" when the answer names them.</summary>
+    public string EmptyTitle => _notReady.NoMap?.Repos is { Count: > 0 } repos ? Labels.ContextNoMapRepos(repos) : _itemOpened is null ? Labels.ContextStateEmptyTitle : Labels.ContextStateEmptyItemTitle;
 
     /// <summary>The button's text that opens the build's job.</summary>
     public string BuildJobText { get; } = Labels.ContextBuildingJob;
@@ -84,6 +84,25 @@ internal sealed partial class ContextPageViewModel
     /// <summary>The build button (the catalog's BuildContextMap), or null before the first no-map answer.</summary>
     public ControlViewModel? BuildControl { get; private set; }
 
+    /// <summary>The banner's one button: the build, when the refusal is "no map yet"; none for a refusal the app cannot fix.</summary>
+    public ControlViewModel? ProblemFix => HasProblem && string.Equals(_problemCode, NoMapCode, StringComparison.Ordinal) ? BuildControl ??= MakeBuildControl() : null;
+
+    private string? _problemCode;
+
+    // The sentence and its code change together, so a code never outlives the words it came with.
+    private void SetProblem(string text, string? code = null)
+    {
+        Problem = text;
+        _problemCode = code;
+    }
+
+    // The banner for a refused read: its plain words, and its code so the banner knows which fix to offer.
+    private void ShowProblem(Error error, string? words = null)
+    {
+        SetProblem(words ?? Labels.ContextProblem(error.Code, error.Message), error.Code);
+        OnChanged(nameof(ProblemFix));
+    }
+
     /// <summary>Whether the last read was answered "no map yet".</summary>
     internal bool NoMap { get; private set; }
 
@@ -99,8 +118,11 @@ internal sealed partial class ContextPageViewModel
     /// <summary>Whether the Building overlay shows (the page puts it on the map view only).</summary>
     public bool ShowBuilding => Overlay == ContextOverlay.Building;
 
+    /// <summary>Whether a list is on screen under the key hints: neither the No map nor the Building overlay covers it.</summary>
+    public bool HasKeyHints => !ShowEmpty && !ShowBuilding;
+
     // Registered once: after every event the running build is looked at, so the overlay goes when the map is there.
-    private void InitStates() => Ports.Follow(FollowBuild);
+    private void InitStates() => Follow(FollowBuild);
 
     // A refusal is the No map state when the API says so; a build already running then shows as Building at once.
     private async Task NoteRefusal(Uri api, Error error, CancellationToken cancellationToken)
@@ -112,7 +134,7 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
-        Problem = string.Empty;   // the overlay says it, not the banner
+        SetProblem(string.Empty);   // the overlay says it, not the banner
         BuildControl ??= MakeBuildControl();   // null until the catalog is read; the next no-map answer tries again
         if (!IsBuilding && await BuildRunning(api, cancellationToken).ConfigureAwait(true))
         {
@@ -240,10 +262,12 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(Overlay));
         OnChanged(nameof(ShowEmpty));
         OnChanged(nameof(ShowBuilding));
+        OnChanged(nameof(HasKeyHints));
         OnChanged(nameof(ShowWhole));
         OnChanged(nameof(ShowWholeStatus));
         OnChanged(nameof(BuildControl));
         OnChanged(nameof(HasProblem));
         OnChanged(nameof(Problem));
+        OnChanged(nameof(ProblemFix));
     }
 }

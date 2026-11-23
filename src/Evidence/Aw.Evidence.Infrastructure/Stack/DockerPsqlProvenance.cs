@@ -7,7 +7,7 @@ using Aw.Kernel;
 namespace Aw.Evidence.Infrastructure.Stack;
 
 /// <summary>
-/// Reads user emails from the configured seed table (its email column) with psql inside the configured container. The
+/// Reads seed user emails from the configured seed table (its email column) with psql inside the configured container. The
 /// seed pattern travels as a psql variable (-v pattern=…) and the SQL on standard input, where psql interpolates
 /// :'pattern' as a quoted literal; psql doesn't interpolate variables in a -c command, so the pattern never becomes part
 /// of the SQL text. The table name is spliced in, so DatabaseSettings only ever holds a plain [schema.]table identifier.
@@ -21,11 +21,6 @@ internal sealed class DockerPsqlProvenance(string docker, DatabaseSettings datab
     /// <inheritdoc/>
     public ValueTask<Result<IReadOnlyList<string>>> EmailsLikeAsync(string likePattern, string? database, CancellationToken cancellationToken) =>
         QueryAsync(static table => $"SELECT email FROM {table} WHERE email LIKE :'pattern';\n", database, ["-v", "pattern=" + likePattern], cancellationToken);
-
-    // A NULL email is read as '' (never dropped): it isn't on a seed domain, so the check fails closed.
-    /// <inheritdoc/>
-    public ValueTask<Result<IReadOnlyList<string>>> AllEmailsAsync(string? database, CancellationToken cancellationToken) =>
-        QueryAsync(static table => $"SELECT coalesce(email, '') FROM {table};\n", database, [], cancellationToken);
 
     // docker exec -i (standard input carries the SQL), the slot's database when there is one, unaligned tuples only, stop on the first error.
     private IReadOnlyList<string> Command(string container, string? slotDatabase, IReadOnlyList<string> variables) =>

@@ -3,11 +3,15 @@
              xmlns:ag="using:Aw.Sindri.Ui.ViewModels.Agents"
              x:Class="Aw.Sindri.Ui.Views.Agents.SessionSheetView"
              x:DataType="ag:SessionSheetViewModel">
-  <!-- The session sheet (collector spec CU-3), read-only, inside the shell's sheet: the heading and state, the Open the run action, then a closed Details disclosure
+  <!-- The session sheet (collector spec CU-3), read-only, inside the shell's sheet (its title names the session): the state, the Open the run action, then a closed Details disclosure
        with the fields, where it runs, the history (oldest first) and the pending Watch the agent with its CLI and Copy. A session that has ended says so and the sheet stays open. Every named
        line is a Border the screen reader reads as one text; the TextBlocks inside are Raw (a TextBlock's peer reads its Text and ignores a Name). -->
   <UserControl.Styles>
     <Style Selector="Border.dimmed"><Setter Property="Opacity" Value="0.5" /></Style>
+    <!-- The state's dot takes the Agents row's tones (#3872): green working, amber waiting, subtle otherwise. -->
+    <Style Selector="TextBlock.dot"><Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" /></Style>
+    <Style Selector="TextBlock.dot.working"><Setter Property="Foreground" Value="{DynamicResource Brush.Success}" /></Style>
+    <Style Selector="TextBlock.dot.waiting"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
   </UserControl.Styles>
   <StackPanel x:Name="SessionSheet" Spacing="{StaticResource Space.MD}">
     <TextBlock x:Name="SessionLoading" Classes="body muted" Text="{Binding LoadingText}" IsVisible="{Binding IsLoading}" AutomationProperties.Name="{Binding LoadingText}" />
@@ -27,11 +31,12 @@
 
     <StackPanel x:Name="SessionBody" Spacing="{StaticResource Space.MD}" IsVisible="{Binding IsShown}">
       <StackPanel Spacing="4">
-        <Border x:Name="SessionHeading" AutomationProperties.Name="{Binding Heading}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-          <TextBlock Classes="body-strong" Text="{Binding Heading}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-        </Border>
+        <!-- The shell's sheet title names the session (#3872): the body starts at its state, a toned dot and the word in the UI face. -->
         <Border x:Name="SessionState" AutomationProperties.Name="{Binding StateLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-          <TextBlock Classes="body mono" Text="{Binding StateLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          <StackPanel Orientation="Horizontal" Spacing="6" AutomationProperties.AccessibilityView="Raw">
+            <TextBlock Classes="body dot" Classes.working="{Binding IsStateWorking}" Classes.waiting="{Binding IsStateWaiting}" Text="{Binding StateGlyph}" AutomationProperties.AccessibilityView="Raw" />
+            <TextBlock Classes="body" Text="{Binding StateLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </StackPanel>
         </Border>
         <Border x:Name="SessionInStatus" IsVisible="{Binding InStatusText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding InStatusText}"
                 AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
@@ -49,10 +54,21 @@
                 AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption subtle" Text="{Binding SandboxHeadroom}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <Button x:Name="SessionRefCopy" Classes="copy" Click="OnCopyRef" HorizontalAlignment="Left" IsVisible="{Binding RefCopy, Converter={x:Static ObjectConverters.IsNotNull}}"
-                AutomationProperties.Name="{Binding RefCopy.Announcement}">
-          <TextBlock Classes="caption mono" Text="{Binding RefCopy.Label}" AutomationProperties.AccessibilityView="Raw" />
-        </Button>
+        <!-- The copy chips in one row (#3871), the attach command under them as text, so a person sees what goes into their terminal before copying it. -->
+        <StackPanel x:Name="SessionCopyChips" Orientation="Horizontal" Spacing="8">
+          <Button x:Name="SessionRefCopy" Classes="copy" Click="OnCopyRef" IsVisible="{Binding RefCopy, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  AutomationProperties.Name="{Binding RefCopy.Announcement}">
+            <TextBlock Classes="caption mono" Text="{Binding RefCopy.Label}" AutomationProperties.AccessibilityView="Raw" />
+          </Button>
+          <Button x:Name="SessionAttachCopy" Classes="copy" Click="OnCopyAttach" IsVisible="{Binding AttachCopy, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  ToolTip.Tip="{Binding AttachText}" AutomationProperties.Name="{Binding AttachCopy.Announcement}">
+            <TextBlock Classes="caption mono" Text="{Binding AttachCopy.Label}" AutomationProperties.AccessibilityView="Raw" />
+          </Button>
+        </StackPanel>
+        <Border x:Name="SessionAttachText" IsVisible="{Binding AttachText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding AttachText}"
+                AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption mono subtle" Text="{Binding AttachText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
       </StackPanel>
 
       <Border x:Name="SessionAskingCallout" Classes="callout attn" IsVisible="{Binding IsAsking}" AutomationProperties.Name="{Binding CalloutText}"

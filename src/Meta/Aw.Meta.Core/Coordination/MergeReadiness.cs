@@ -75,7 +75,7 @@ public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCom
         return new MergeAssessment(team, [.. MergeGate.Evaluate(facts), State(view)], view);
     }
 
-    private async ValueTask<MergeAssessment> Gated(TeamConfig team, int pr, IReadOnlyList<GateRecord> history, ReviewFacts? review, (PrDetails View, string Main) current)
+    private async ValueTask<Result<MergeAssessment>> Gated(TeamConfig team, int pr, IReadOnlyList<GateRecord> history, ReviewFacts? review, (PrDetails View, string Main) current)
     {
         var (view, main) = current;
         if (team.Gate.IsCi)
@@ -103,7 +103,36 @@ public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCom
             FailingTests = names,
             FailureCounts = counts,
         };
-        return new MergeAssessment(team, [.. MergeGate.Evaluate(facts with { MergedTree = await MergedTree(team.Repo, gate, main).ConfigureAwait(false) }), State(view)], view);
+        var tree = await MergedTree(team.Repo, gate, main).ConfigureAwait(false);
+        var queue = await BaseMergeQueue(team.Repo, pr, gate, tree, main).ConfigureAwait(false);
+        return queue.IsError
+            ? queue.Error
+            : new MergeAssessment(team, [.. MergeGate.Evaluate(facts with { MergedTree = tree, BaseHasMergeQueue = queue.Value.Queue, MergeConflicts = queue.Value.Conflicts }), State(view)], view);
+    }
+
+    // Asked only when the main check would otherwise refuse (main moved, or a stacked gate's tree differs): the same GraphQL read merge-run
+    // makes before it merges. A failed read refuses the check (AW-META-012) instead of guessing that no queue exists. With a queue it also asks
+    // git whether the head conflicts with main: a conflict still refuses (the queue would drop the pull request), and git failing refuses too.
+    private async ValueTask<Result<(bool Queue, bool Conflicts)>> BaseMergeQueue(string repoDirectory, int pr, GateRecord gate, string? mergedTree, string main)
+    {
+        if ((gate.Stack.Count == 0 && gate.Main == main) || (gate.Tree is not null && mergedTree == gate.Tree))
+        {
+            return Results.Success((Queue: false, Conflicts: false));
+        }
+
+        var view = await repo.QueueView(repoDirectory, pr).ConfigureAwait(false);
+        if (view.IsError)
+        {
+            return view.Error;
+        }
+
+        if (!view.Value.Enabled)
+        {
+            return Results.Success((Queue: false, Conflicts: false));
+        }
+
+        var conflicts = await repo.Conflicts(repoDirectory, main, gate.Head).ConfigureAwait(false);
+        return conflicts.IsError ? conflicts.Error : Results.Success((Queue: true, Conflicts: conflicts.Value));
     }
 
     // gate.mode ci: the newest record is the read of the required checks; the merge state and review decision are read live. The scopes, main, merged-tree and test-log facts are not gathered.
@@ -129,7 +158,7 @@ public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCom
         return new MergeAssessment(team, [.. MergeGate.Evaluate(facts), State(view)], view);
     }
 
-    // Null when the team has no reviewer lane.
+    // Null when the team has no reviewer lane. The review mode rides along, so the merge gate knows whether an OK is needed.
     private async ValueTask<Result<ReviewFacts?>> Review(TeamConfig team, int pr, CancellationToken cancellationToken)
     {
         if (team.Review is not { } review)
@@ -138,7 +167,9 @@ public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCom
         }
 
         var all = await messages.Messages(cancellationToken).ConfigureAwait(false);
-        return all.IsError ? all.Error : Results.Success<ReviewFacts?>(ReviewProof.Collect(all.Value, $"{team.Team}-{review.Lane}", pr));
+        return all.IsError
+            ? all.Error
+            : Results.Success<ReviewFacts?>(ReviewProof.Collect(all.Value, $"{team.Team}-{review.Lane}", pr) with { CountsMode = review.IsCounts });
     }
 
     private static MergeAssessment NeverGated(TeamConfig team, int pr) =>

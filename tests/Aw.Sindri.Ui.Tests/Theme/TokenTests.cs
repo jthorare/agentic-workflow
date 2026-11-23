@@ -29,6 +29,9 @@ public sealed class TokenTests
         ("PrimaryHoverFill", "#535fc6"),
         ("PrimaryPressed", "#4c57be"),
         ("OnPrimary", "#ffffff"),
+        ("ErrorFill", "#c93c3c"),   // the danger primary button's fill (white 5.0:1); Error itself reads 3.5:1 under white
+        ("ErrorFillHover", "#b83232"),
+        ("ErrorFillPressed", "#a82c2c"),
         ("Success", "#2eb75b"),
         ("Overlay", "#000000"),
         ("Attention", "#f2994a"),
@@ -180,7 +183,7 @@ public sealed class TokenTests
     [InlineData("kbd", "Kbd")]
     public void Each_type_class_reads_its_tokens(string name, string step)
     {
-        var style = TypographyStyles().Single(s => s.Attribute("Selector")?.Value == "TextBlock." + name);
+        var style = TypographyStyles().Single(s => Selects(s, "TextBlock." + name));
         string? Setter(string property) => style.Elements().Single(e => Attr(e, "Property") == property).Attribute("Value")?.Value;
 
         Assert.Equal($"{{DynamicResource Type.{step}.Size}}", Setter("FontSize"));
@@ -198,7 +201,7 @@ public sealed class TokenTests
     [InlineData("mono", "0")]
     public void Each_type_class_has_its_tracking(string name, string tracking)
     {
-        var style = TypographyStyles().Single(s => s.Attribute("Selector")?.Value == "TextBlock." + name);
+        var style = TypographyStyles().Single(s => Selects(s, "TextBlock." + name));
 
         Assert.Equal(tracking, style.Elements().Single(e => Attr(e, "Property") == "LetterSpacing").Attribute("Value")?.Value);
     }
@@ -302,13 +305,17 @@ public sealed class TokenTests
     {
         var styles = XDocument.Load(Path.Combine(UiSource.Theme, "Typography.axaml")).Descendants().Where(e => e.Name.LocalName == "Style");
 
-        Assert.Contains(styles, s => s.Attribute("Selector")?.Value == "TextBlock." + name);
+        Assert.Contains(styles, s => Selects(s, "TextBlock." + name));
     }
 
     private static IEnumerable<XElement> TypographyStyles() =>
         XDocument.Load(Path.Combine(UiSource.Theme, "Typography.axaml")).Descendants().Where(e => e.Name.LocalName == "Style");
 
     private static string? Attr(XElement e, string name) => e.Attribute(name)?.Value;
+
+    // A style's selector may be a comma list ("TextBlock.caption, SelectableTextBlock.caption", #3785): it selects one of its parts exactly.
+    private static bool Selects(XElement style, string selector) =>
+        (Attr(style, "Selector") ?? "").Split(',', StringSplitOptions.TrimEntries).Contains(selector, StringComparer.Ordinal);
 
     private static List<string> Names(string prefix) =>
         [.. _tokens.Resources.Keys.Where(k => k.StartsWith(prefix, StringComparison.Ordinal) && !k[prefix.Length..].Contains('.', StringComparison.Ordinal)).Select(k => k[prefix.Length..])];

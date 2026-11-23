@@ -105,7 +105,7 @@ if [ "$SLOT" -ne 0 ] && [ -n "${UI_EVIDENCE_SLOT_DATABASE:-}" ]; then
 fi
 
 LOGIN_HTML="$(curl -s --max-time 5 "http://localhost:${WEB_PORT}/login" 2>/dev/null || true)"
-if ! printf '%s' "$LOGIN_HTML" | grep -q "<title>${UI_EVIDENCE_APP_TITLE}</title>"; then
+if ! grep -q "<title>${UI_EVIDENCE_APP_TITLE}</title>" <<<"$LOGIN_HTML"; then
   FAILS+=(":${WEB_PORT} does not look like this app (foreign process, or stack not up) — refusing to double-drive it")
 fi
 

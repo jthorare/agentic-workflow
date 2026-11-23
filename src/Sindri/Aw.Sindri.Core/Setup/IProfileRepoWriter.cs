@@ -13,6 +13,6 @@ public interface IProfileRepoWriter
     /// <param name="repo">The entry (name and real path).</param>
     /// <param name="defaultEffects">The effect kinds a new file allows (<see cref="IShippedEffects"/>); used only when there is no file.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
-    /// <returns>Created, Appended or AlreadyThere; SND-SETUP-002 when the name or path belongs to another entry; SND-PROFILE-002 when the file has a layout Sindri won't edit or changed twice while writing, or can't be written (with the OS reason); SND-PROFILE-001 when it can't be read.</returns>
+    /// <returns>Created, Appended or AlreadyThere; SND-SETUP-002 when the name or path belongs to another entry; SND-PROFILE-002 when the file has a layout Sindri won't edit or changed twice while writing, or can't be written (with the OS reason); SND-PROFILE-004 when it can't be read.</returns>
     public ValueTask<Result<RepoAppended>> Append(RepoEntry repo, IReadOnlyCollection<string> defaultEffects, CancellationToken cancellationToken);
 }

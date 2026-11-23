@@ -16,7 +16,10 @@ namespace Aw.Sindri.Ui.ViewModels.Agents;
 /// <param name="clipboard">Where Copy puts text.</param>
 /// <param name="clock">The clock the poll and the ages run on.</param>
 /// <param name="catalog">The command catalog, for the Focus row.</param>
-internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard clipboard, TimeProvider clock, CatalogViewModel catalog) : ObservableObject
+/// <param name="connector">Opens the terminal WebSocket; null: the pane never connects.</param>
+/// <param name="stopper">The stop route for the pane header's Stop; null: Stop is refused.</param>
+/// <param name="control">Stop and Interrupt for the terminal view's header; null until Serve's routes are wired (the buttons then answer "Couldn't stop it.").</param>
+internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard clipboard, TimeProvider clock, CatalogViewModel catalog, Aw.Sindri.Ui.Terminal.ISessionControl? control = null, Aw.Sindri.Ui.Terminal.ITerminalConnector? connector = null, Aw.Sindri.Ui.Terminal.ISessionStopper? stopper = null) : ObservableObject
 {
     private readonly Dictionary<string, SessionRowViewModel> _rows = new(StringComparer.Ordinal);
     private readonly Dictionary<string, EndedSessionViewModel> _ended = new(StringComparer.Ordinal);
@@ -32,6 +35,9 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
 
     /// <summary>Raised when the page should put focus on a row or its Focus line.</summary>
     internal event EventHandler<AgentFocusEventArgs>? FocusRequested;
+
+    /// <summary>Raised when N asks for the New agent form.</summary>
+    internal event EventHandler? NewAgentRequested;
 
     /// <summary>The API the page reads.</summary>
     internal ISindriApi Api { get; } = api;
@@ -53,6 +59,9 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
 
     /// <summary>One line per source problem (its text; the code stays out of the line), above the list.</summary>
     public ObservableCollection<string> ProblemLines { get; } = [];
+
+    /// <summary>True when the collector reports a problem line; the empty slot takes no room (#3710).</summary>
+    public bool HasProblems { get; private set => Set(ref field, value); }
 
     /// <summary>"3 live · 1 asking · 2 outside a workflow", as served and whatever the filters; empty until the first list.</summary>
     public string Head { get; private set => Set(ref field, value); } = string.Empty;
@@ -182,8 +191,10 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         OnChanged(nameof(HeadName));
         ObserveCounts(list.Counts.Live, list.Counts.Asking);
         Patch.To(ProblemLines, [.. list.Problems.Select(p => p.Text)]);
+        HasProblems = ProblemLines.Count > 0;
         ReplaceChoices(list);
         Apply(before, list);
+        FollowStarted();
     }
 
     private void Unavailable(string detail)
@@ -196,6 +207,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         OnChanged(nameof(HeadName));
         UnavailableText = Labels.SessionsUnavailable(detail);
         ProblemLines.Clear();
+        HasProblems = false;
         Groups.Clear();
         _groups.Clear();
         _rows.Clear();

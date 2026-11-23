@@ -899,7 +899,7 @@ the Temporal event id on each ledger row it mirrors (WF §5.6, ERD), so a histor
 target (`claude-code`, `codex`, `cursor`); `agents.softLimit` is a fraction in (0, 1] (default `0.8`), and a `dailyBudget` must be above 0; profile validation refuses anything else (provisional owner default, 2026-10-17). The hard limit is 100 %.
 The key is part of the profile, so a change shows in `GET /profile` and needs the `protected` approval like any other
 (the profile schema is S1's; this spec names the keys). `GET /launch/targets` (UI E-3) gains per target
-`budget: {dailyUsd, spentUsd, fraction, state, basis}`, with `state` `none` (no budget set), `ok`, `soft` or `hard`, and
+`budget: {dailyUsd, spentUsd, fraction, state, basis}`, with `state` `none` (no budget set), `ok`, `soft`, `hard`, `no-usage-reader` or `counting` (a budget is set and the agent's first spend read of the day hasn't landed: the list answers at once with no spend and never refuses; `OpenItem` still waits on the real read) and
 `basis` `price-table` or `tokens-only` (Sindri's price table lacks the model: tokens are shown and no limit is
 applied); the response gains `budgetTotal` with the same fields over all targets. Spend is the day's token usage
 (`session.usage` and `session.ended` events, §3.4) priced by Sindri's own price table (`Budgets`: USD per million tokens, matched by model-id prefix; the scorer reports tokens and keeps no prices), for the local calendar day. The

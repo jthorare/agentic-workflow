@@ -115,15 +115,15 @@ case "$KIND" in routing|behaviour|both) ;; *) die 64 "--kind must be routing, be
 case "$GATE" in warn|block) ;; *) die 64 "--gate must be warn or block" ;; esac
 case "$PREAMBLE" in on|off) ;; *) die 64 "--preamble must be on or off" ;; esac
 case "$ABLATION" in ""|none|with-without) ;; *) die 64 "--ablation must be none or with-without" ;; esac
-num() { printf '%s' "$1" | grep -Eq '^[0-9]+(\.[0-9]+)?$'; }
+num() { grep -Eq '^[0-9]+(\.[0-9]+)?$' <<<"$1"; }
 num "$THRESHOLD" || die 64 "--threshold must be a number"
 num "$MAX_COST" || die 64 "--max-cost-usd must be a number"
 num "$FAMILY_MAX" || die 64 "--family-max-cost-usd must be a number"
-[ -z "$RUNS" ] || printf '%s' "$RUNS" | grep -Eq '^[0-9]+$' || die 64 "--runs must be a whole number"
-[ -z "$JOBS" ] || printf '%s' "$JOBS" | grep -Eq '^[1-8]$' || die 64 "--jobs must be 1 to 8"
+[ -z "$RUNS" ] || grep -Eq '^[0-9]+$' <<<"$RUNS" || die 64 "--runs must be a whole number"
+[ -z "$JOBS" ] || grep -Eq '^[1-8]$' <<<"$JOBS" || die 64 "--jobs must be 1 to 8"
 [ -n "$LANE" ] || LANE="${AW_META_LANE:-}"
 [ -n "$LANE" ] || LANE=operator
-printf '%s' "$LANE" | grep -Eq '^[A-Za-z0-9._-]+$' || die 64 "--lane must be letters, digits, . _ -"
+grep -Eq '^[A-Za-z0-9._-]+$' <<<"$LANE" || die 64 "--lane must be letters, digits, . _ -"
 
 EVAL_HOME="${AW_STATE_DIR:-$HOME/.agentic-workflow}/skill-evals"
 TALLY="$EVAL_HOME/spend.jsonl"
@@ -513,7 +513,7 @@ EOF
   if [ "${lint_len_warn:-0}" = 1 ]; then :
   elif [ -f "$baseline" ]; then
     base="$(tr -d '[:space:]' <"$baseline")"
-    if printf '%s' "$base" | grep -Eq '^[0-9]+$'; then
+    if grep -Eq '^[0-9]+$' <<<"$base"; then
       limit=$((base + base / 4))
       if [ "$total" -gt "$limit" ]; then echo "LINT-DESC: all descriptions total $total bytes, over the baseline $base + 25% ($limit)"; bad=1; fi
     else
@@ -584,7 +584,7 @@ do_status() {
     delta="$(awk -F': *' '$1 == "delta" { print $2; exit }' "$f")"
     pr="$(awk -F': *' '$1 == "pr" { print $2; exit }' "$f")"
     stale=stale
-    if printf '%s' "$lr" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+    if grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' <<<"$lr"; then
       age="$(day_epoch "$lr")"
       if [ -n "$age" ] && [ $(( (now - age) / 86400 )) -le 7 ]; then stale=""; fi
     fi
