@@ -30,7 +30,7 @@ public sealed class CodexTranscriptTests : IDisposable
 
         var read = (await _roots.Corpus().ReadSession(TranscriptRefs.ForFile(TranscriptProvider.Codex, path), CancellationToken.None)).Value;
 
-        Assert.Equal<string>(["Human rename the flag", "Assistant Renamed. [exec_command]", "Human thanks"],
+        Assert.Equal(["Human rename the flag", "Assistant Renamed. [exec_command]", "Human thanks"],
             read.Turns.Select(t => $"{t.Role} {t.Text}{(t.Tools.Count > 0 ? $" [{string.Join(',', t.Tools)}]" : "")}"), StringComparer.Ordinal);
         Assert.Equal(5, read.Turns[0].Ref.Line);
         Assert.Equal("/work/beta", read.Session.Repo);

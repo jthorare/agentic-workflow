@@ -457,4 +457,15 @@ public sealed class NewAgentFormTests
 
         Assert.Equal("codex", form.Agent.Id);
     }
+
+    [Fact]
+    public void An_agent_written_as_null_by_a_binding_keeps_the_agent_and_does_not_throw_3888()
+    {
+        var form = Form();
+        form.Agent = AgentChoice.Codex;
+
+        form.Agent = null!;
+
+        Assert.Equal("codex", form.Agent.Id);
+    }
 }

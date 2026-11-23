@@ -81,7 +81,7 @@ internal static class TranscriptsCommand
     }
 
     // An unknown ref, an unreadable file or two files with one ref: attention (exit 1), not a usage error.
-    private static async Task<int> Failed(Aw.Kernel.Error error, Output output)
+    private static async Task<int> Failed(Kernel.Error error, Output output)
     {
         await output.Notice($"{error.Code} {error.Message}").ConfigureAwait(false);
         return error.Code == TranscriptsErrors.Invalid.Code ? 2 : 1;

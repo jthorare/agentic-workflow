@@ -2898,8 +2898,8 @@ static Aw.Meta.Core.Delegations.DelegationText.HasWord(string! text, string! key
 static Aw.Meta.Core.Delegations.DelegationText.Message(int issue, string! title, string! url) -> string!
 static Aw.Meta.Core.Delegations.DelegationText.Names(string! text, int issue) -> bool
 static Aw.Meta.Core.Github.GhIssues.View(string! json) -> Aw.Meta.Core.Github.IssueRef?
-static Aw.Meta.Core.Obligations.DelegationStates.IsSent(Aw.Meta.Core.Delegations.Delegation! delegation, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.Outbound!>! outbound) -> bool
-static Aw.Meta.Core.Obligations.DelegationStates.Of(Aw.Meta.Core.Delegations.Delegation! delegation, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>! inbound, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.Outbound!>! outbound) -> Aw.Meta.Core.Delegations.DelegationState
+static Aw.Meta.Core.Obligations.DelegationStates.IsSent(Aw.Meta.Core.Delegations.Delegation! delegation, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.Outbound!>! outbound, Aw.Meta.Core.Lanes.LaneMapState! lanes) -> bool
+static Aw.Meta.Core.Obligations.DelegationStates.Of(Aw.Meta.Core.Delegations.Delegation! delegation, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>! inbound, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.Outbound!>! outbound, Aw.Meta.Core.Lanes.LaneMapState! lanes) -> Aw.Meta.Core.Delegations.DelegationState
 Aw.Meta.Core.Coordination.LaneDelivered
 Aw.Meta.Core.Coordination.LaneDelivered.Attention.get -> string?
 Aw.Meta.Core.Coordination.LaneDelivered.Attention.init -> void
@@ -2973,3 +2973,7 @@ static Aw.Meta.Core.Delegations.DelegationView.operator !=(Aw.Meta.Core.Delegati
 static Aw.Meta.Core.Delegations.DelegationView.operator ==(Aw.Meta.Core.Delegations.DelegationView? left, Aw.Meta.Core.Delegations.DelegationView? right) -> bool
 Aw.Meta.Core.Delegations.Delegation.Attempt.get -> Aw.Meta.Core.Ids.MessageId?
 Aw.Meta.Core.Delegations.Delegation.Attempt.init -> void
+static Aw.Meta.Core.Delegations.DelegationBook.Add(string? stored, Aw.Meta.Core.Delegations.Delegation! delegation) -> string!
+static Aw.Meta.Core.Delegations.DelegationBook.Without(string? stored, int issue) -> string!
+static Aw.Meta.Core.Delegations.DelegationBook.Find(string? stored, int issue) -> Aw.Meta.Core.Delegations.Delegation?
+Aw.Meta.Core.Coordination.DelegationLedger.Remove(int issue, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Delegations.Delegation?>!>

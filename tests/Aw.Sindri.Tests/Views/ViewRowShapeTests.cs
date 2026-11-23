@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using Aw.Sindri.Core.Home;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.ModelHistory;
@@ -18,14 +19,14 @@ namespace Aw.Sindri.Tests.Views;
 /// </summary>
 public sealed class ViewRowShapeTests
 {
-    private const int PinnedVersion = 38;
-    private const string PinnedShape = "c7b213eb8f2f96f0c6a0b171b7d13384e846596c1820aacf8ce0da1fde8b4e66";
+    private const int PinnedVersion = 39;
+    private const string PinnedShape = "0ca99b21442b18ca5cdc9752153a6243828352ce576f0472b73bb0c5ab6771d1";
 
     private static readonly Type[] _rows =
     [
         typeof(ServiceRow), typeof(ProfileRow), typeof(ItemRow), typeof(AliasRow), typeof(TimelineRow), typeof(RequestRow),
         typeof(HumanDecisionRow), typeof(NeedsYouRowRecord), typeof(JobRow), typeof(LaunchRow), typeof(CodeIndexRow),
-        typeof(ModelHistoryRow), typeof(RunScope), typeof(RunModel), typeof(StateOrder), typeof(ProjectAttachedRow), typeof(ProjectHiddenRow), typeof(WorkflowRunRow), typeof(ItemLinkRow), typeof(TodoRow),
+        typeof(ModelHistoryRow), typeof(RunScope), typeof(RunModel), typeof(StateOrder), typeof(ProjectAttachedRow), typeof(ProjectHiddenRow), typeof(WorkflowRunRow), typeof(ItemLinkRow), typeof(TodoRow), typeof(HomeRow), typeof(HomeEdge),
     ];
 
     [Fact, Trait("Lane", "unit")]
