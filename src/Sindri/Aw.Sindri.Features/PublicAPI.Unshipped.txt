@@ -5719,6 +5719,15 @@ override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.GetHashCode(
 override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.ToString() -> string!
 static Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.operator !=(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? left, Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? right) -> bool
 static Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.operator ==(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? left, Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? right) -> bool
+Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest
+Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.<Clone>$() -> Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest!
+Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.Equals(Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest? other) -> bool
+Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.GetSetupOfflineRequest() -> void
+override Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.ToString() -> string!
+static Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.operator !=(Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest? left, Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest? right) -> bool
+static Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.operator ==(Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest? left, Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest? right) -> bool
 Aw.Sindri.Features.ListHome.ListHomeRequest
 Aw.Sindri.Features.ListHome.ListHomeRequest.<Clone>$() -> Aw.Sindri.Features.ListHome.ListHomeRequest!
 Aw.Sindri.Features.ListHome.ListHomeRequest.Deconstruct(out Aw.Sindri.Core.Home.HomeGroup? Split, out bool Snoozed, out string? After, out int Limit) -> void
