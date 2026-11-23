@@ -21,6 +21,7 @@ internal static class FirstRunServiceCollectionExtensions
         return services
             .AddScoped<IValidator<SkipSetupStepRequest>, AcceptAllValidator<SkipSetupStepRequest>>().AddCommand<SkipSetupStepRequest, SkipSetupStepResponse, SkipSetupStepService>()
             .AddScoped<IValidator<RestartProcessRequest>, AcceptAllValidator<RestartProcessRequest>>().AddCommand<RestartProcessRequest, RestartProcessResponse, RestartProcessService>()
+            .AddScoped<AccountProfileWrites>()
             .AddScoped<IValidator<ConnectAccountRequest>, AcceptAllValidator<ConnectAccountRequest>>().AddCommand<ConnectAccountRequest, ConnectAccountResponse, ConnectAccountService>()
             .AddScoped<IValidator<GetOpenRunsRequest>, AcceptAllValidator<GetOpenRunsRequest>>().AddQuery<GetOpenRunsRequest, GetOpenRunsResponse, GetOpenRunsService>()
             .AddScoped<IValidator<ScanReposRequest>, AcceptAllValidator<ScanReposRequest>>().AddQuery<ScanReposRequest, ScanReposResponse, ScanReposService>();

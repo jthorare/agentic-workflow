@@ -23901,3 +23901,5 @@ const Aw.Sindri.Core.Setup.RepoScanRules.MaxDepth = 6 -> int
 static Aw.Sindri.Core.Setup.RepoScanRules.InsideHome(string! path, string! home) -> bool
 static Aw.Sindri.Core.Setup.RepoScanRules.Origin(string? url) -> (string! Host, string! Slug)?
 static Aw.Sindri.Core.Setup.RepoScanRules.Skips(string! name) -> bool
+Aw.Sindri.Core.Connections.IGitHubCliLogin
+Aw.Sindri.Core.Connections.IGitHubCliLogin.Login(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
