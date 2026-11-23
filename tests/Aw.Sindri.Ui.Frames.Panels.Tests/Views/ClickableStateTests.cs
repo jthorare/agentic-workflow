@@ -132,14 +132,17 @@ public sealed class ClickableStateTests : FrameHost
         Settle(window);
 
         Assert.Contains(":pressed", card.Classes, StringComparer.Ordinal);
+        // A press focuses a row and so selects it (ProjectsPage.OnRowFocused): the fill is the pressed one, and the border keeps the selection's PrimaryHover over
+        // the pressed outline (ClickableStyles "Border.clickable.selected:pressed", #3517).
+        Assert.Contains("selected", card.Classes, StringComparer.Ordinal);
         Assert.Equal(TokenColor("Brush.Clickable.Pressed"), ((ISolidColorBrush)card.Background!).Color);
-        Assert.Equal(TokenColor("Brush.Clickable.PressedBorder"), ((ISolidColorBrush)card.BorderBrush!).Color);
+        Assert.Equal(TokenColor("Brush.PrimaryHover"), ((ISolidColorBrush)card.BorderBrush!).Color);
 
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
         point = await PointAt(window, () => Corner(window, card), card); // the press near the edge left the shrunk card, and its focus scrolled it into view
         Assert.DoesNotContain(":pressed", card.Classes, StringComparer.Ordinal);
         Assert.True(card.IsPointerOver, $"at {point}, hit {Describe(window.InputHitTest(point))}, chain {Chain(card)}, at now {Corner(window, card)}");
-        Assert.Equal(TokenColor("Brush.Clickable.Hover"), ((ISolidColorBrush)card.Background!).Color);
+        Assert.Equal(TokenColor("Brush.Clickable.Lift"), ((ISolidColorBrush)card.Background!).Color);   // the selected row's lift fill, not the plain hover
     });
 
     [Fact]
