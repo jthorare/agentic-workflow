@@ -7,15 +7,22 @@ namespace Aw.Context.Features.GetConcepts;
 /// <summary>
 /// The newest change time of code files, per repo and keyed by the repo's HEAD sha (#3760). A read only looks in the cache: git takes seconds over a few hundred files, so a miss
 /// answers with what it has and starts one fill per repo in the background. The fill asks git for the paths the cache has not asked about yet and merges the answer in, so the next
-/// page needs git only for its own new paths. A new HEAD drops the repo's times and starts again.
+/// page needs git only for its own new paths. A new HEAD drops the repo's times and starts again. HEAD itself is read at most once per <see cref="HeadFor"/> per repo (#3837),
+/// and a shallow clone gives no times at all: its oldest fetched commit stands in for every older change, so files would look newer than they are.
 /// </summary>
-internal sealed class ConceptChangeTimes(IFileHistory history, IRepoReader repos)
+/// <param name="history">Reads the git log of the paths.</param>
+/// <param name="repos">Reads a repo's HEAD.</param>
+/// <param name="clock">When a cached HEAD was read; the system clock when none is registered.</param>
+internal sealed class ConceptChangeTimes(IFileHistory history, IRepoReader repos, TimeProvider? clock = null)
 {
     // Newest first, so a file's first appearance is its last change; files untouched within this many commits stay unknown until HEAD moves.
     internal const int ChangesPerRepo = 500;
 
-    // How long a HEAD read stands for the repo's HEAD (#3837); a stub until the cache uses it.
+    // How long a HEAD read stands for the repo's HEAD (#3837): a commit or checkout shows within this long, and a page of reads costs one git process, not one each.
     internal static readonly TimeSpan HeadFor = TimeSpan.FromSeconds(30);
+
+    private readonly TimeProvider _clock = clock ?? TimeProvider.System;
+    private readonly Dictionary<string, (string Head, DateTimeOffset At)> _heads = new(StringComparer.Ordinal);
 
     private readonly Lock _gate = new();
     private readonly Dictionary<string, RepoTimes> _byRepo = new(StringComparer.Ordinal);
@@ -35,15 +42,15 @@ internal sealed class ConceptChangeTimes(IFileHistory history, IRepoReader repos
 
         foreach (var repo in scopeRepos)
         {
-            var head = await repos.Head(repo, cancellationToken).ConfigureAwait(false);
-            if (head.IsError)
+            var head = await Head(repo, cancellationToken).ConfigureAwait(false);
+            if (head is null)
             {
                 continue;
             }
 
             lock (_gate)
             {
-                var state = StateFor(repo, head.Value);
+                var state = StateFor(repo, head);
                 foreach (var path in paths.Where(state.Times.ContainsKey))
                 {
                     var at = state.Times[path];
@@ -74,10 +81,39 @@ internal sealed class ConceptChangeTimes(IFileHistory history, IRepoReader repos
         }
     }
 
+    // The repo's HEAD, cached for HeadFor; null when git can't read it (not cached, so a fixed repo answers on the next read).
+    private async ValueTask<string?> Head(ContextRepo repo, CancellationToken cancellationToken)
+    {
+        var key = Key(repo);
+        var now = _clock.GetUtcNow();
+        lock (_gate)
+        {
+            if (_heads.TryGetValue(key, out var cached) && now - cached.At < HeadFor)
+            {
+                return cached.Head;
+            }
+        }
+
+        var head = await repos.Head(repo, cancellationToken).ConfigureAwait(false);
+        if (head.IsError)
+        {
+            return null;
+        }
+
+        lock (_gate)
+        {
+            _heads[key] = (head.Value, now);
+        }
+
+        return head.Value;
+    }
+
+    private static string Key(ContextRepo repo) => repo.Name.Value + "\0" + repo.Path;
+
     // Callers hold the gate.
     private RepoTimes StateFor(ContextRepo repo, string head)
     {
-        var key = repo.Name.Value + "\0" + repo.Path;
+        var key = Key(repo);
         if (!_byRepo.TryGetValue(key, out var state) || !string.Equals(state.Head, head, StringComparison.Ordinal))
         {
             _byRepo[key] = state = new RepoTimes(head);
@@ -94,7 +130,7 @@ internal sealed class ConceptChangeTimes(IFileHistory history, IRepoReader repos
             var answer = await history.Changes(repo, new FileHistoryQuery(state.Head, missing, HistoryWindow.Open, ChangesPerRepo), CancellationToken.None).ConfigureAwait(false);
             lock (_gate)
             {
-                if (!answer.IsError)
+                if (answer is { IsError: false, Value.Shallow: false })   // #3837: a shallow clone's times are wrong, so it gives none
                 {
                     foreach (var file in answer.Value.Changes.SelectMany(c => c.Files.Select(f => (File: f, c.At))))
                     {
