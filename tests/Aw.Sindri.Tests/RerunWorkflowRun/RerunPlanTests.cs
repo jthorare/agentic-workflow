@@ -6,21 +6,35 @@ using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Tests.RerunWorkflowRun;
 
-/// <summary>The pure part of 'Re-run from here' (spec §7.3): which steps are after the chosen one, which come before it, and which branches a restored step took.</summary>
+/// <summary>
+/// The pure part of 'Re-run from here' (spec §7.3): which steps are after the chosen one, which come before it, which the re-run takes from the source run,
+/// and which branch a taken step took, read from its own stored row (a condition's result, an ask_owner's answer), never guessed from the steps after it.
+/// </summary>
 [Lane(TestLane.Unit)]
 public sealed class RerunPlanTests
 {
-    private static readonly string[] _ids = ["t", "a", "b", "c", "d"];
+    private const string True = "{\"result\":true}";
 
     private static NodeId N(string id) => NodeId.From(id);
 
-    private static List<NodeRun> Rows(params (string Node, NodeRunStatus Status)[] rows) =>
-        [.. rows.Select(static r => new NodeRun(WorkflowRunId.Of(WorkflowSlug.From("plan"), 1, 1), N(r.Node), 0, r.Status, Input: null, Output: null, Truncated: false, Error: null, Usage: null))];
+    private static NodeRun Row(string node, NodeRunStatus status, string? output = null) =>
+        new(WorkflowRunId.Of(WorkflowSlug.From("plan"), 1, 1), N(node), 0, status, Input: null, output, Truncated: false, Error: null, Usage: null);
 
-    // t -> a -(yes)-> b -> c ; a -(no)-> d
-    private static GraphSpec Spec() => new(Version: 1, Name: "x", Description: null, Concurrency: null, Resources: null,
-        Nodes: [.. _ids.Select(id => new GraphNode(N(id), "http", Title: null, []))],
-        Edges: [new GraphEdge(N("t"), Output: null, N("a")), new GraphEdge(N("a"), "yes", N("b")), new GraphEdge(N("b"), Output: null, N("c")), new GraphEdge(N("a"), "no", N("d"))]);
+    private static GraphNode Node(string id, string type = "http") => new(N(id), type, Title: null, []);
+
+    private static GraphEdge Edge(string from, string to, string? output = null) => new(N(from), output, N(to));
+
+    private static GraphSpec Graph(GraphNode[] nodes, GraphEdge[] edges) => new(Version: 1, Name: "x", Description: null, Concurrency: null, Resources: null, nodes, edges);
+
+    // t -> a -(true)-> b -> c ; a -(false)-> d
+    private static GraphSpec Spec() => Graph([Node("t", "manual"), Node("a", "condition"), Node("b"), Node("c"), Node("d")],
+        [Edge("t", "a"), Edge("a", "b", "true"), Edge("b", "c"), Edge("a", "d", "false")]);
+
+    // t -> check -(true)-> post_ok, check -(false)-> page_oncall, t -> fetch (the review's graph)
+    private static GraphSpec Alert() => Graph([Node("t", "manual"), Node("check", "condition"), Node("fetch"), Node("post_ok"), Node("page_oncall")],
+        [Edge("t", "check"), Edge("check", "post_ok", "true"), Edge("check", "page_oncall", "false"), Edge("t", "fetch")]);
+
+    private static string[] Restored(GraphSpec spec, string from, params NodeRun[] rows) => [.. RerunPlan.Restored(spec, N(from), rows).Select(static i => i.Value)];
 
     [Fact]
     public void FromHere_is_the_node_and_everything_it_reaches_in_spec_order()
@@ -37,40 +51,80 @@ public sealed class RerunPlanTests
     }
 
     [Fact]
-    public void A_restored_step_took_the_branches_into_steps_the_source_did_not_skip()
-    {
-        var taken = RerunPlan.Taken(Spec(), N("a"), new HashSet<NodeId> { N("d") });
-
-        Assert.Equal(["yes"], taken, StringComparer.Ordinal);
-    }
-
-    [Fact]
     public void A_step_skipped_on_the_branch_a_ran_step_did_not_take_is_restored()
     {
-        // b failed on 'yes', so 'no' was never taken and d is dead; c was skipped because the run halted, but it is after b anyway
-        var rows = Rows(("t", NodeRunStatus.Succeeded), ("a", NodeRunStatus.Succeeded), ("b", NodeRunStatus.Failed), ("c", NodeRunStatus.Skipped), ("d", NodeRunStatus.Skipped));
+        // a took 'true' and b failed, so d is dead; c was skipped because the run halted, but it is after b anyway
+        var restored = Restored(Spec(), "b", Row("t", NodeRunStatus.Succeeded), Row("a", NodeRunStatus.Succeeded, True), Row("b", NodeRunStatus.Failed),
+            Row("c", NodeRunStatus.Skipped), Row("d", NodeRunStatus.Skipped));
 
-        Assert.Equal(["t", "a", "d"], RerunPlan.Restored(Spec(), N("b"), rows).Select(static i => i.Value), StringComparer.Ordinal);
+        Assert.Equal(["t", "a", "d"], restored);
+    }
+
+    // why: this fact used to pin "no step after it ran, so every branch counts as taken", which ran d although a said true (#3204 review); the branch now comes from a's own row
+    [Fact]
+    public void A_branching_step_whose_steps_never_ran_takes_the_branch_its_row_says()
+    {
+        var restored = Restored(Spec(), "b", Row("t", NodeRunStatus.Succeeded), Row("a", NodeRunStatus.Succeeded, True), Row("b", NodeRunStatus.Skipped),
+            Row("c", NodeRunStatus.Skipped), Row("d", NodeRunStatus.Skipped));
+
+        Assert.Equal(["t", "a", "d"], restored);
     }
 
     [Fact]
-    public void A_branching_step_none_of_whose_steps_ran_counts_every_branch_as_taken()
+    public void A_branching_step_whose_row_does_not_say_its_branch_runs_again()
     {
-        // the run halted before b or d ran, so a's branch can't be read: d runs again
-        var rows = Rows(("t", NodeRunStatus.Succeeded), ("a", NodeRunStatus.Succeeded), ("b", NodeRunStatus.Skipped), ("c", NodeRunStatus.Skipped), ("d", NodeRunStatus.Skipped));
+        var restored = Restored(Spec(), "b", Row("t", NodeRunStatus.Succeeded), Row("a", NodeRunStatus.Succeeded, "{\"other\":1}"), Row("b", NodeRunStatus.Skipped),
+            Row("c", NodeRunStatus.Skipped), Row("d", NodeRunStatus.Skipped));
 
-        Assert.Equal(["t", "a"], RerunPlan.Restored(Spec(), N("b"), rows).Select(static i => i.Value), StringComparer.Ordinal);
+        Assert.Equal(["t"], restored);
+    }
+
+    // The review's case: check said true, fetch failed first, and the halt skipped post_ok. A re-run from fetch or post_ok runs post_ok and keeps page_oncall skipped.
+    [Theory]
+    [InlineData("fetch")]
+    [InlineData("post_ok")]
+    public void A_halted_branch_step_runs_again_and_the_branch_its_condition_did_not_take_stays_skipped(string from)
+    {
+        var restored = Restored(Alert(), from, Row("t", NodeRunStatus.Succeeded), Row("check", NodeRunStatus.Succeeded, True), Row("fetch", NodeRunStatus.Failed),
+            Row("post_ok", NodeRunStatus.Skipped), Row("page_oncall", NodeRunStatus.Skipped));
+
+        Assert.Equal(["t", "check", "page_oncall"], restored);
     }
 
     [Fact]
     public void A_step_after_a_step_that_runs_again_runs_again_too()
     {
-        var rows = Rows(("t", NodeRunStatus.Succeeded), ("a", NodeRunStatus.Failed), ("b", NodeRunStatus.Succeeded), ("c", NodeRunStatus.Succeeded), ("d", NodeRunStatus.Skipped));
+        var restored = Restored(Spec(), "c", Row("t", NodeRunStatus.Succeeded), Row("a", NodeRunStatus.Failed), Row("b", NodeRunStatus.Succeeded),
+            Row("c", NodeRunStatus.Succeeded), Row("d", NodeRunStatus.Skipped));
 
-        Assert.Equal(["t"], RerunPlan.Restored(Spec(), N("c"), rows).Select(static i => i.Value), StringComparer.Ordinal);
+        Assert.Equal(["t"], restored);
     }
 
+    [Theory]
+    [InlineData("{\"result\":true}", "true")]
+    [InlineData("{\"result\":false}", "false")]
+    public void A_condition_took_the_branch_of_its_stored_result(string output, string branch)
+        => Assert.Equal([branch], RerunPlan.Branches(Node("a", "condition"), [Row("a", NodeRunStatus.Succeeded, output)])!, StringComparer.Ordinal);
+
+    [Theory]
+    [InlineData("{\"answer\":\"yes\",\"answeredBy\":\"human:app\"}", "answered")]
+    [InlineData("{\"answer\":\"\",\"answeredBy\":\"timeout\"}", "timeout")]
+    public void An_ask_owner_took_answered_or_timeout_by_who_answered(string output, string branch)
+        => Assert.Equal([branch], RerunPlan.Branches(Node("ask", "ask_owner"), [Row("ask", NodeRunStatus.Succeeded, output)])!, StringComparer.Ordinal);
+
+    [Theory]
+    [InlineData("condition", null)]
+    [InlineData("condition", "{\"result\":\"yes\"}")]
+    [InlineData("ask_owner", "{\"answer\":\"yes\"}")]
+    [InlineData("condition", "not json")]
+    public void A_branching_step_whose_row_does_not_say_its_branch_has_no_branch(string type, string? output)
+        => Assert.Null(RerunPlan.Branches(Node("a", type), [Row("a", NodeRunStatus.Succeeded, output)]));
+
     [Fact]
-    public void An_edge_with_no_named_output_is_the_out_branch()
-        => Assert.Equal(["out"], RerunPlan.Taken(Spec(), N("t"), new HashSet<NodeId>()), StringComparer.Ordinal);
+    public void Any_other_step_took_out()
+        => Assert.Equal(["out"], RerunPlan.Branches(Node("a"), [Row("a", NodeRunStatus.Succeeded, "{\"status\":200}")])!, StringComparer.Ordinal);
+
+    [Fact]
+    public void A_skipped_step_took_no_branch()
+        => Assert.Empty(RerunPlan.Branches(Node("a", "condition"), [Row("a", NodeRunStatus.Skipped)])!);
 }

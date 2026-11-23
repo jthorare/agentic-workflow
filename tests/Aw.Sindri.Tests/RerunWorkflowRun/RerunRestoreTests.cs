@@ -55,7 +55,7 @@ public sealed class RerunRestoreTests
     [Fact]
     public async Task A_step_on_a_branch_the_source_did_not_take_stays_skipped()
     {
-        // t -> a -(yes)-> b -> c, a -(no)-> d: a took 'yes', so d is dead
+        // t -> a -(true)-> b -> c, a -(false)-> d: a's row says true, so d is dead
         await Source(Branch(), WorkflowRunStatus.Succeeded, ("t", 0, NodeRunStatus.Succeeded), ("a", 0, NodeRunStatus.Succeeded), ("b", 0, NodeRunStatus.Succeeded),
             ("c", 0, NodeRunStatus.Succeeded), ("d", 0, NodeRunStatus.Skipped));
 
@@ -101,7 +101,7 @@ public sealed class RerunRestoreTests
     private static GraphSpec Line() => Spec([Node("t", "manual"), Node("a"), Node("b"), Node("c"), Node("d")], [Edge("t", "a"), Edge("a", "b"), Edge("b", "c"), Edge("a", "d")]);
 
     private static GraphSpec Branch() => Spec([Node("t", "manual"), Node("a", "condition"), Node("b"), Node("c"), Node("d")],
-        [Edge("t", "a"), Edge("a", "b", "yes"), Edge("b", "c"), Edge("a", "d", "no")]);
+        [Edge("t", "a"), Edge("a", "b", "true"), Edge("b", "c"), Edge("a", "d", "false")]);
 
     private static GraphSpec Loop() => Spec([Node("t", "manual"), Node("each", "for_each"), Node("body"), Node("gather", "collect"), Node("after"), Node("side")],
         [Edge("t", "each"), Edge("each", "body"), Edge("body", "gather"), Edge("gather", "after"), Edge("t", "side")]);
@@ -113,7 +113,7 @@ public sealed class RerunRestoreTests
         _ = (await _runs.Insert(new WorkflowRun(_source, _id, 1, "{\"kind\":\"manual\"}", status, Outputs: null, Error: null, ItemId: null, _clock.GetUtcNow(), _clock.GetUtcNow()), Token)).Value;
         foreach (var (node, item, rowStatus) in rows)
         {
-            var output = rowStatus == NodeRunStatus.Succeeded ? "{\"ok\":true}" : null;
+            var output = rowStatus == NodeRunStatus.Succeeded ? "{\"ok\":true,\"result\":true}" : null;   // why: 'result' is what a condition stores; the other steps ignore it
             _ = (await _runs.RecordNodeRun(new NodeRun(_source, N(node), item, rowStatus, Input: null, output, Truncated: false, Error: null, Usage: null), Token)).Value;
         }
     }

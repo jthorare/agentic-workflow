@@ -32,6 +32,20 @@ public static class RerunPlan
         return new RerunRestore(spec, FromHere(spec, from), rows).Steps();
     }
 
+    /// <summary>
+    /// The branches a step took, read from its own rows in the source run: none when no row succeeded, 'true' or 'false' from a condition's stored result,
+    /// 'answered' or 'timeout' from an ask_owner's stored answer, and 'out' for every other step. Null when a branching step's row does not say.
+    /// </summary>
+    /// <param name="node">The step.</param>
+    /// <param name="rows">Its rows.</param>
+    /// <returns>The branch names, or null.</returns>
+    public static IReadOnlyList<string>? Branches(GraphNode node, IReadOnlyList<NodeRun> rows)
+    {
+        ArgumentNullException.ThrowIfNull(node);
+        ArgumentNullException.ThrowIfNull(rows);
+        throw new NotSupportedException("red: Branches reads the step's own row");
+    }
+
     /// <summary>The branches a restored node took: the outputs of its edges into steps that were not skipped in the source run. A step with no row counts as not skipped.</summary>
     /// <param name="spec">The graph.</param>
     /// <param name="node">The restored node.</param>
