@@ -33,6 +33,7 @@ public sealed class ProjectAddShellTests
     private async Task<ShellViewModel> OnProjects()
     {
         var shell = await Shell();
+        shell.Projects.SetView(ProjectView.All);
         shell.GoTo(PageId.Projects);
         await Until(() => !shell.Projects.IsLoading);
         return shell;

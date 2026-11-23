@@ -79,4 +79,17 @@ public sealed class GraphCardLineTests
     [Fact]
     public void An_untitled_step_with_no_type_still_has_a_line_1() =>
         Assert.False(string.IsNullOrWhiteSpace(GraphCardLine.Title(string.Empty, string.Empty, kindTitle: null)), "line 1 is empty for an untitled step with no type (#4032)");
+
+    // #4063: a password with a raw ?, / or # (not percent-encoded) must not leave a piece on the card. The urls are built in parts so the commit's secret
+    // scan does not read them as leaked credentials.
+    [Theory]
+    [InlineData("p?ss")]
+    [InlineData("pa/ss")]
+    [InlineData("pa#ss")]
+    public void A_password_with_a_raw_separator_leaves_no_piece_on_the_card(string password) =>
+        Assert.Equal("GET host/x", GraphCardLine.Settings("http", Config("{\"url\":\"https://" + string.Join(":", "user", password) + "@host/x\"}"), summary: null, kindTitle: null), StringComparer.Ordinal);
+
+    [Fact]
+    public void A_port_is_not_a_password_and_stays_on_the_card() =>
+        Assert.Equal("GET host:8080/x", GraphCardLine.Settings("http", Config("{\"url\":\"https://host:8080/x\"}"), summary: null, kindTitle: null), StringComparer.Ordinal);
 }

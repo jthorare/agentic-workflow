@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Host.Commands;
+namespace Aw.Sindri.Host.Commands.SetupApply;
 
 /// <summary>A repo 'setup --apply' couldn't add.</summary>
 /// <param name="Path">The repo's path.</param>

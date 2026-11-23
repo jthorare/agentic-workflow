@@ -22,6 +22,9 @@ internal sealed partial class GraphCanvas
     /// <summary>True when the world at this zoom is larger than the canvas, so the canvas scrolls.</summary>
     internal bool Scrolls => Graph is { Nodes.Count: > 0 } && GraphZoom.Scrolls(World.Right, World.Bottom, Zoom, (Bounds.Width, Bounds.Height));
 
+    /// <summary>True when the minimap shows: the world at this zoom is over twice the canvas one way (GraphZoom.MapShown, #4055).</summary>
+    internal bool MapShown => Graph is { Nodes.Count: > 0 } && GraphZoom.MapShown(World.Right, World.Bottom, Zoom, (Bounds.Width, Bounds.Height));
+
     /// <summary>Zooms to the next ladder step about the canvas's centre. Cards keep their columns and rows: only open, a size change and a text-size change wrap again.</summary>
     internal void ZoomIn() => StepTo(GraphZoom.Next(ZoomPercent));
 
