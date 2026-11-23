@@ -76,6 +76,11 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     public static IReadOnlyList<IGraphBlock> TranscriptBlocks(IGraphTranscriptPort transcripts, TimeProvider clock) =>
         [new TranscriptTurnsBlock(transcripts, clock), new TranscriptBatchBlock(transcripts)];
 
+    /// <summary>The 'skill_catalog' block of issue 3787 piece 4: the toolkit's skills with their descriptions.</summary>
+    /// <param name="catalog">Where the skills are read.</param>
+    /// <returns>The block.</returns>
+    public static IReadOnlyList<IGraphBlock> SkillBlocks(ISkillCatalogPort catalog) => [new SkillCatalogBlock(catalog)];
+
     /// <summary>Finds the block of a type.</summary>
     /// <param name="type">The type name, such as 'condition'.</param>
     /// <returns>The block, or null when this build has no such block.</returns>

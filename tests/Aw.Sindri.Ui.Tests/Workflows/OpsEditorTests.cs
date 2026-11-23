@@ -64,10 +64,10 @@ public sealed class OpsEditorTests
         await editor.EditField("prompt", "Check again", Token);
         Assert.Equal(2, _f.Server.AppliedWorkflowOps.Count);   // held back until the reload
 
-        var reads = _f.Server.WorkflowCalls;
+        var reads = _f.Server.WorkflowNewestCalls;
         await editor.Reload(Token);
 
-        Assert.Equal(reads + 1, _f.Server.WorkflowCalls);
+        Assert.Equal(reads + 1, _f.Server.WorkflowNewestCalls);   // the editor reads the newest revision (#3303)
         Assert.Equal((false, string.Empty), (editor.NeedsReload, editor.ReloadPromptText));
     }
 

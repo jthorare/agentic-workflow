@@ -241,6 +241,21 @@ public sealed class SetupStepsTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void Serve_names_the_running_and_installed_builds_and_a_pruned_folder_names_no_times()
+    {
+        var running = new BuildInfo("80f69df0123456789", new DateTimeOffset(2026, 11, 21, 22, 10, 0, TimeSpan.Zero));
+        var installed = new BuildInfo("7c81646abcdef0123", new DateTimeOffset(2026, 11, 22, 10, 31, 0, TimeSpan.Zero));
+
+        var stale = SetupSteps.Serve(new ServeFact(Current: false) { Running = running, Installed = installed });
+        var pruned = SetupSteps.Serve(new ServeFact(Current: false) { Installed = installed });
+        var current = SetupSteps.Serve(new ServeFact(Current: true) { Running = installed, Installed = installed });
+
+        Assert.Equal(("A newer Sindri is installed (7c81646, built 2026-11-22 10:31 UTC).", "Running 80f69df, built 2026-11-21 22:10 UTC. Restart Sindri to run the installed one."), (stale.Why, stale.Detail));
+        Assert.Equal(("A different Sindri is installed.", SetupActions.RestartProcess), (pruned.Why, pruned.Action));
+        Assert.Equal("Running 7c81646, built 2026-11-22 10:31 UTC.", current.Detail);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void Agent_waits_for_a_repo_then_picks_on_its_own_and_is_done_once_a_target_is_set()
     {
         var noRepo = SetupSteps.Agent(new AgentFact(Target: null), new RepoFact(0));

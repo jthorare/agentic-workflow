@@ -329,9 +329,13 @@ if [ "$have_meminfo" = 1 ]; then
   kill "$rp" 2> /dev/null; wait "$rp" 2> /dev/null
   AW_HEAVY_MIN_FREE_MB=0 bash "$HEAVY" --expensive echo ran > "$WORK/rs.out" 2> "$WORK/rs.err" &
   rp=$!; bgpids+=("$rp")
-  sleep 1.5; hold "$LOCKS/heavy-job.lock"; sleep 2; unhold "$LOCKS/heavy-job.lock"
-  sleep 1.5
-  check "reserved, then every slot held, then reserved again: a second note at once (#3907)" "$(grep -c 'meta reserves' "$WORK/rs.err")" "2"
+  # polled, not slept (#4054): on a loaded box, or on heavy's path without setsid and timeout, a pass takes longer than 1 s.
+  # The slot is held for 5 s so several passes see it; the next note of an unbroken wait is 300 s away, so 2 means "at once"
+  notes() { grep -c 'meta reserves' "$WORK/rs.err" 2> /dev/null || true; }
+  notes_reach() { local n=$1 i; for ((i = 0; i < 300; i++)); do [ "$(notes)" -ge "$n" ] && return 0; sleep 0.1; done; return 0; }
+  notes_reach 1; hold "$LOCKS/heavy-job.lock"; sleep 5; unhold "$LOCKS/heavy-job.lock"
+  notes_reach 2
+  check "reserved, then every slot held, then reserved again: a second note at once (#3907)" "$(notes)" "2"
   kill "$rp" 2> /dev/null; wait "$rp" 2> /dev/null
   hold "$LOCKS/heavy-job.lock"
   out="$(AW_HEAVY_MIN_FREE_MB=0 bash "$ONE" --expensive echo ran 2>&1)"; rc=$?

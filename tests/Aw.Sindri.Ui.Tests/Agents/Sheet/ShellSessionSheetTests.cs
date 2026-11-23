@@ -74,6 +74,18 @@ public sealed class ShellSessionSheetTests
     }, Token);
 
     [Fact]
+    public Task A_session_sheet_title_is_set_in_the_UI_face_and_an_item_stays_mono_3872() => UiThread.Run(async () =>
+    {
+        var shell = await Shell(connect: false);
+        shell.Navigate(Link("session/" + Ref));
+        var session = shell.SheetTitleIsMono;
+
+        shell.Navigate(Link("item/ITM-1"));
+
+        Assert.Equal((false, true), (session, shell.SheetTitleIsMono));
+    }, Token);
+
+    [Fact]
     public Task A_row_asking_to_open_opens_the_sheet_and_remembers_the_row_for_Esc() => UiThread.Run(async () =>
     {
         var shell = await Shell(connect: true);

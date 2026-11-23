@@ -29,6 +29,10 @@ public static partial class GraphTemplates
             SteeringMiner.PayloadName,
             "The steering miner fed by hand: run it with a payload of batches of human turns, each batch at most 60,000 bytes as JSON, instead of reading the transcripts.",
             SteeringMiner.Json(fromTranscripts: false)),
+        (
+            SkillProposer.Name,
+            "Run it with a payload holding 'findings' (from a steering-miner run) and 'repo' (the toolkit repo's name in your profile): for each of the top 5, a model picks the skill to change and an agent drafts the edit on its own branch.",
+            SkillProposer.Json()),
     ];
 
     /// <summary>Every template, in the order they are listed.</summary>

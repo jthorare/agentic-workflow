@@ -13,7 +13,7 @@ namespace Aw.Sindri.Tests.Graph.Ops;
 public sealed class TemplatesTests
 {
     private static GraphValidator RealValidator() => GraphFixtures.Validator(
-        blocks: GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), more: [new CreateItemBlock(new FlowFakes.RecordingItemPort()), new CodeBlock(runner: null!), .. GraphBlockRegistry.TranscriptBlocks(new FakeGraphTranscripts([]), TimeProvider.System)]).Types,
+        blocks: GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), more: [new CreateItemBlock(new FlowFakes.RecordingItemPort()), new CodeBlock(runner: null!), .. GraphBlockRegistry.TranscriptBlocks(new FakeGraphTranscripts([]), TimeProvider.System), .. GraphBlockRegistry.SkillBlocks(new FakeSkillCatalog([]))]).Types,
         cron: (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem,
         condition: text => ConditionExpression.TryParse(text, out var expression, out var error) ? new ConditionParse(Error: null, expression!.References) : new ConditionParse(error, []));
 
