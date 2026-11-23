@@ -209,7 +209,7 @@ public sealed class TopBarTests : IDisposable
 
             Assert.True(word.Bounds.Width >= Natural(word) - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the state word got {word.Bounds.Width} of its {Natural(word)}"));
             Assert.True(wordRight <= pillRight + 0.5 && pillRight <= window.Bounds.Width + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the word ends at {wordRight}, the pill at {pillRight}, the window is {window.Bounds.Width}"));
-            Assert.True(problems.Bounds.Width < 0.5 || problems.Bounds.Width >= TopBar.MinProblems - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the problem text is a {problems.Bounds.Width} px stub"));
+            Assert.True(problems.Bounds.Width is < 0.5 or >= TopBar.MinProblems - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the problem text is a {problems.Bounds.Width} px stub"));
         }
         finally
         {
