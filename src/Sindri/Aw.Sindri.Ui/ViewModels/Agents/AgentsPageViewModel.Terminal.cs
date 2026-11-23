@@ -8,7 +8,7 @@ internal sealed partial class AgentsPageViewModel
     private bool _terminalWired;
     private TerminalSession? _session;
     private CancellationTokenSource? _sessionEnds;
-    private (int Cols, int Rows) _fit = (DefaultCols, DefaultRows);
+    private (int Cols, int Rows)? _fit;
 
     // What a socket opens with until the pane has fitted its own size.
     private const int DefaultCols = 120;
@@ -177,7 +177,12 @@ internal sealed partial class AgentsPageViewModel
 #pragma warning restore CA2000
         var session = new TerminalSession(connector, Terminal, grid => DrawFrame?.Invoke(grid));
         (_sessionEnds, _session) = (ends, session);
-        _ = Pump(session, new TerminalOpen(api, row.Row.Provider, row.Row.Id, _fit.Cols, _fit.Rows), ends.Token);
+        if (_fit is { } fit)
+        {
+            _ = session.FitSize(fit.Cols, fit.Rows, CancellationToken.None);   // the pane fitted before this socket opened: Serve ignores the hello's size, so it goes out after ready
+        }
+
+        _ = Pump(session, new TerminalOpen(api, row.Row.Provider, row.Row.Id, _fit?.Cols ?? DefaultCols, _fit?.Rows ?? DefaultRows), ends.Token);
     }
 
     private static async Task Pump(TerminalSession session, TerminalOpen open, CancellationToken token)
