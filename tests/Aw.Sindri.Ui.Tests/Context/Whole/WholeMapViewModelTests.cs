@@ -111,7 +111,7 @@ public sealed class WholeMapViewModelTests
         await map.AreaLaidOut;
 
         Assert.Equal((true, "Tab groups", string.Empty), (map.IsAreaOpen, map.AreaTitle, map.ByAreaNote));
-        Assert.Equal((false, 6, 1), (map.ByArea, map.Geometry!.Nodes.Count, map.Geometry.Columns.Count));
+        Assert.Equal((false, 6, 0, true), (map.ByArea, map.Geometry!.Nodes.Count, map.Geometry.Columns.Count, map.Geometry.AreaBands is { Count: > 0 }));   // why: #3674 draws an opened area as its canvas (Entry, Core, Data), not as one column
         map.CloseArea();
         Assert.Equal((false, true), (map.IsAreaOpen, ReferenceEquals(overview, map.Geometry)));
         Assert.Equal(string.Empty, map.ByAreaNote);
