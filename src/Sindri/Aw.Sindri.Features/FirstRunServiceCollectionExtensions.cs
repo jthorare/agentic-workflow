@@ -4,15 +4,16 @@ using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.ConnectAccount;
 using Aw.Sindri.Features.GetOpenRuns;
 using Aw.Sindri.Features.RestartProcess;
+using Aw.Sindri.Features.ScanRepos;
 using Aw.Sindri.Features.SkipSetupStep;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features;
 
-/// <summary>Registers the first-run slices (first-run spec §7, A1, A4, A8): the skip, the restart and its open-set read, and the account connect.</summary>
+/// <summary>Registers the first-run slices (first-run spec §7, A1, A4, A8): the skip, the restart and its open-set read, and the account connect, and the repo scan.</summary>
 internal static class FirstRunServiceCollectionExtensions
 {
-    /// <summary>Adds SkipSetupStep, RestartProcess, ConnectAccount and GetOpenRuns behind their chains, and the open-set read and the stop port the restart takes.</summary>
+    /// <summary>Adds SkipSetupStep, RestartProcess, ConnectAccount, GetOpenRuns and ScanRepos behind their chains, and the open-set read and the stop port the restart takes.</summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddFirstRun(this IServiceCollection services)
@@ -23,6 +24,7 @@ internal static class FirstRunServiceCollectionExtensions
             .AddScoped<IValidator<RestartProcessRequest>, AcceptAllValidator<RestartProcessRequest>>().AddRestartCommand<RestartProcessRequest, RestartProcessResponse, RestartProcessService>()
             .AddScoped<IValidator<ConnectAccountRequest>, AcceptAllValidator<ConnectAccountRequest>>().AddCommand<ConnectAccountRequest, ConnectAccountResponse, ConnectAccountService>()
             .AddScoped<IOpenRuns, OpenRunsRead>().AddScoped<IServeStop, ServeStopPort>()
-            .AddScoped<IValidator<GetOpenRunsRequest>, AcceptAllValidator<GetOpenRunsRequest>>().AddQuery<GetOpenRunsRequest, GetOpenRunsResponse, GetOpenRunsService>();
+            .AddScoped<IValidator<GetOpenRunsRequest>, AcceptAllValidator<GetOpenRunsRequest>>().AddQuery<GetOpenRunsRequest, GetOpenRunsResponse, GetOpenRunsService>()
+            .AddScoped<IValidator<ScanReposRequest>, AcceptAllValidator<ScanReposRequest>>().AddQuery<ScanReposRequest, ScanReposResponse, ScanReposService>();
     }
 }

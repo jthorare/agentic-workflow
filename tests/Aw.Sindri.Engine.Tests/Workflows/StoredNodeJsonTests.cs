@@ -95,6 +95,7 @@ public sealed class StoredNodeJsonTests
     public async Task An_input_the_redactor_makes_longer_than_64_KB_is_stored_as_json_that_parses()
     {
         // why: #3486, the scrub runs after the block's own Fit; a text that grows past the cap in the scrub must still be cut as JSON
+        // why: #3896, a cut input leaves 'Truncated' false: the flag says the output was cut
         var token = TestContext.Current.CancellationToken;
         var clock = new FakeTimeProvider(KnownInstants.Epoch);
         var (runs, workflows, run) = await Seed(clock, token);
@@ -105,7 +106,7 @@ public sealed class StoredNodeJsonTests
         await new ActivityEnvironment().RunAsync(() => activities.RecordNodeAsync(nodeRun));
 
         var stored = (await runs.NodeRuns(run.Id, token)).Value.Single();
-        Assert.True(stored.Truncated);
+        Assert.False(stored.Truncated);
         Assert.True(JsonNode.Parse(stored.Input!)!["truncated"]!.GetValue<bool>());
     }
 
