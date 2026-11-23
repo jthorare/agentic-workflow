@@ -11,6 +11,11 @@ internal sealed class YamlProfileSource(SindriSettings settings, JsonSerializerO
     public async ValueTask<Result<LoadedProfile>> Load(CancellationToken cancellationToken)
     {
         var path = settings.ProfilePath;
+        if (ProfileDirectoryInTheWay.At(path) is { } inTheWay)
+        {
+            return inTheWay;
+        }
+
         if (!File.Exists(path))
         {
             return SindriErrors.ProfileMissing.With(

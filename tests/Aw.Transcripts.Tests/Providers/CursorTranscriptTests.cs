@@ -26,7 +26,7 @@ public sealed class CursorTranscriptTests : IDisposable
         var read = (await _roots.Corpus().ReadSession(TranscriptRefs.ForFile(TranscriptProvider.Cursor, path), CancellationToken.None)).Value;
 
         var at = new DateTimeOffset(2026, 11, 3, 17, 15, 0, TimeSpan.Zero);
-        Assert.Equal<string>([$"Human {at:O} fix it", $"Assistant {at:O} All done. [Shell]", $"Human {at:O} and the docs"],
+        Assert.Equal([$"Human {at:O} fix it", $"Assistant {at:O} All done. [Shell]", $"Human {at:O} and the docs"],
             read.Turns.Select(t => $"{t.Role} {t.At:O} {t.Text}{(t.Tools.Count > 0 ? $" [{string.Join(',', t.Tools)}]" : "")}"), StringComparer.Ordinal);
         Assert.Equal(at, read.Session.StartedAt);
         Assert.Null(read.Session.Repo);

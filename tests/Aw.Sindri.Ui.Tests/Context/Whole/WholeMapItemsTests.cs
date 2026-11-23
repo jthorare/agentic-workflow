@@ -26,7 +26,8 @@ public sealed class WholeMapItemsTests
     {
         var map = Nodes();
 
-        Assert.Equal(map.Geometry!.Nodes.Select(n => n.Key), map.Items.Select(i => i.Key), StringComparer.Ordinal);
+        // The list runs by rank (#3677): confirmed first, then confidence, then path; the same nodes as the map draws.
+        Assert.Equal(map.Geometry!.Nodes.Select(n => n.Key).Order(StringComparer.Ordinal), map.Items.Select(i => i.Key).Order(StringComparer.Ordinal), StringComparer.Ordinal);
         Assert.All(map.Items, i => Assert.Contains(i.Label, i.Name, StringComparison.Ordinal));
     }
 

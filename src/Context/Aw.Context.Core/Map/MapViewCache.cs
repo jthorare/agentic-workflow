@@ -79,7 +79,7 @@ public sealed class MapViewCache
         string.Join('\n', scope.Settings?.GetRawText() ?? string.Empty, string.Join(';', scope.Repos.Select(r => r.Name.Value + "=" + r.Path + ":" + string.Join(',', r.DenyPaths) + ":" + Pages(r))), scope.OmitPages, scope.Caller.Kind, scope.Caller.Repo?.Value ?? string.Empty);
 
     // A digest of a repo's pages, so an approved page edit misses the cache and shows on the next read.
-    private static string Pages(ContextRepo repo) =>
+    internal static string Pages(ContextRepo repo) =>
         repo.Pages.Count == 0 ? "0" : Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(string.Join('\n', repo.Pages.Select(p =>
             string.Join('|', p.Id.Value, p.Name, p.Repo?.Value, p.SurfaceKey, string.Join(';', p.Actions.Select(a => string.Join('|', a.Id.Value, a.Name, a.ActionKey, string.Join(',', a.Concepts))))))))));
 

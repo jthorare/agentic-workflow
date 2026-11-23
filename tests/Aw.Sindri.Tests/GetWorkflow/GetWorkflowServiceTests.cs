@@ -63,6 +63,53 @@ public sealed class GetWorkflowServiceTests
     }
 
     [Fact]
+    public async Task A_newest_read_of_an_active_workflow_shows_the_saved_revision_and_still_says_which_one_runs()
+    {
+        await Create("Morning check");
+        _ = (await _workflows.Activate(_id, 1, Token)).Value;
+        _ = (await _workflows.Save(_id, 1, Spec("Morning check v2"), "session:s1", Token)).Value;
+
+        var result = await _service.Handle(new GetWorkflowRequest(_slug, Revision: null, Newest: true), Token);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal((2, 1, 2), (result.Value.Revision, result.Value.ActiveRevision, result.Value.LatestRevision));
+        Assert.Equal("Morning check v2", result.Value.Spec["name"]!.GetValue<string>());
+        Assert.Equal((await _workflows.GetRevision(_id, 2, Token)).Value.SpecHash, result.Value.SpecHash);
+    }
+
+    [Fact]
+    public async Task A_revision_read_shows_that_revision_of_an_active_or_an_off_workflow()
+    {
+        await Create("Morning check");
+        _ = (await _workflows.Save(_id, 1, Spec("Morning check v2"), "owner", Token)).Value;
+        _ = (await _workflows.Save(_id, 2, Spec("Morning check v3"), "owner", Token)).Value;
+
+        var first = await _service.Handle(new GetWorkflowRequest(_slug, Revision: 1), Token);
+        var second = await _service.Handle(new GetWorkflowRequest(_slug, Revision: 2), Token);
+
+        Assert.Equal((1, "Morning check"), (first.Value.Revision, first.Value.Spec["name"]!.GetValue<string>()));
+        Assert.Equal((2, "Morning check v2"), (second.Value.Revision, second.Value.Spec["name"]!.GetValue<string>()));
+        Assert.Equal(3, second.Value.LatestRevision);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(3)]
+    public async Task A_revision_the_workflow_does_not_have_is_not_found_and_never_the_active_spec(int revision)
+    {
+        await Create("Morning check");
+        _ = (await _workflows.Activate(_id, 1, Token)).Value;
+        _ = (await _workflows.Save(_id, 1, Spec("Morning check v2"), "owner", Token)).Value;
+
+        var result = await _service.Handle(new GetWorkflowRequest(_slug, revision), Token);
+
+        Assert.True(result.IsError);
+        Assert.Equal(SindriErrors.GraphNotFound.Code, result.Error.Code);
+        Assert.Contains("revision " + revision.ToString(System.Globalization.CultureInfo.InvariantCulture), result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task An_unknown_slug_is_not_found()
     {
         var result = await _service.Handle(new GetWorkflowRequest(WorkflowSlug.From("nope")), Token);

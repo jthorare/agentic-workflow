@@ -44,17 +44,24 @@ internal static partial class Labels
     /// <summary>The line when the concepts read failed (the code is in its tooltip); the map itself opens as before.</summary>
     internal const string ContextConceptsReadFailed = "Concepts can't be read right now, showing the whole map.";
 
-    /// <summary>What a concept holds, in people's words.</summary>
-    /// <param name="features">Features.</param>
-    /// <param name="records">Records.</param>
-    /// <param name="decisions">Decisions.</param>
-    /// <param name="code">Code files.</param>
-    /// <returns>"4 features · 3 records · 2 decisions · 40 code files"; a kind with none is left out, and "nothing yet" when all are none.</returns>
-    internal static string ContextConceptSize(int features, int records, int decisions, int code)
+    /// <summary>What a concept row counts: files, the one unit (#3677).</summary>
+    /// <param name="files">How many files the concept holds.</param>
+    /// <returns>"40 files", "1 file", or "no files yet".</returns>
+    internal static string ContextConceptFiles(int files) => files switch
     {
-        var parts = new (string Kind, int Count)[] { ("feature", features), ("record", records), ("decision", decisions), ("code", code) }
-            .Where(p => p.Count > 0).Select(p => ContextWholeKindCount(p.Kind, p.Count)).ToList();
-        return parts.Count == 0 ? "nothing yet" : string.Join(" · ", parts);
+        <= 0 => "no files yet",
+        1 => "1 file",
+        _ => string.Create(CultureInfo.InvariantCulture, $"{files} files"),
+    };
+
+    /// <summary>When a concept's newest file changed.</summary>
+    /// <param name="at">The time.</param>
+    /// <param name="zone">The zone the day is read in.</param>
+    /// <returns>"changed 13 Nov".</returns>
+    internal static string ContextConceptChanged(DateTimeOffset at, TimeZoneInfo zone)
+    {
+        ArgumentNullException.ThrowIfNull(zone);
+        return "changed " + TimeZoneInfo.ConvertTime(at, zone).ToString("d MMM", CultureInfo.InvariantCulture);
     }
 
     /// <summary>The line on a concept card when a rebuild found suggested pages the owner has not opened yet (pages spec §3.5).</summary>
