@@ -122,6 +122,17 @@ public sealed class StatusProblemKindTests
         }
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_directory_at_the_profile_path_says_unreadable_not_missing()
+    {
+        using var files = new ProfileFiles();
+        _ = Directory.CreateDirectory(files.Settings.ProfilePath);
+
+        var status = (await Service(files.Source, new NoApproval(), new FileProbe(File.Exists(files.Settings.ProfilePath))).Handle(new GetStatusRequest(), Token)).Value;
+
+        Assert.Equal("unreadable", status.Profile.ProblemKind);   // #3833
+    }
+
     private sealed class FileProbe(bool exists) : IProfileFile
     {
         public bool Exists() => exists;

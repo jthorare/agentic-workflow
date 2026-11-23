@@ -13,8 +13,8 @@ ctx_start 1280 900
 # A question with spaces whose words name nothing on the map: the text query finds no anchors and no suggestions, so the baseline
 # splits it at its spaces and asks the lenses for the first word alone ("Tab groups" would match a node whole and never take this path).
 q="zzqx wwvk"
-"$DRIVER" type --name "Ask or look up" --value "$q" --replace >/dev/null 2>&1 || setup_fail "could not type into the search box"
-"$DRIVER" key --chord Enter --name "Ask or look up" >/dev/null 2>&1 || setup_fail "Enter in the search box was not accepted"
+"$DRIVER" type --name "Ask a question" --value "$q" --replace >/dev/null 2>&1 || setup_fail "could not type into the search box"
+"$DRIVER" key --chord Enter --name "Ask a question" >/dev/null 2>&1 || setup_fail "Enter in the search box was not accepted"
 sleep 4
 
 cli="$(ctx_text --type TextBlock --contains "(fix:")"

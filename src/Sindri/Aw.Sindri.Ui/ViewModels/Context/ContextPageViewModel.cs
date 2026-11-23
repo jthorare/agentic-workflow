@@ -75,6 +75,12 @@ internal sealed partial class ContextPageViewModel : ObservableObject
     /// <summary>The head line: what map the page shows. Empty until something has been read; "no map" is for the served no-map case (U9a).</summary>
     public string Head { get; private set; } = string.Empty;
 
+    /// <summary>The head without the page's own name: "the whole map · v1" (the title already says Context).</summary>
+    public string HeadDetail => Head.StartsWith(Title + " · ", StringComparison.Ordinal) ? Head[(Title.Length + 3)..] : Head;
+
+    /// <summary>The one line of keys under the list: "↑ ↓ move · Enter open · p pin · / ask · Esc back" (the concepts list); the Files and map lists leave out p.</summary>
+    public string KeyHints => ShowFiles ? Labels.ContextKeysFiles : ShowConcepts ? Labels.ContextKeysConcepts : Labels.ContextKeysMap;
+
     /// <summary>Whether the head has words to show.</summary>
     public bool HasHead => Head.Length > 0;
 
@@ -82,7 +88,7 @@ internal sealed partial class ContextPageViewModel : ObservableObject
     public string AnchorLabel { get; } = Labels.ContextAnchor;
 
     /// <summary>The anchor box's hint.</summary>
-    public string AnchorHint { get; } = Labels.ContextAnchorHint;
+    public string AnchorHint { get; } = Labels.ContextAnchor;
 
     /// <summary>What is typed in the anchor box.</summary>
     public string AnchorText
@@ -90,6 +96,11 @@ internal sealed partial class ContextPageViewModel : ObservableObject
         get;
         set
         {
+            if (!_picking && !string.Equals(field, value, StringComparison.Ordinal))
+            {
+                _picked = null;   // typing is a question again, even when it spells a chip's title
+            }
+
             Set(ref field, value);
             if (string.IsNullOrWhiteSpace(value))
             {

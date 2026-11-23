@@ -106,8 +106,8 @@ public sealed class AgentsPolishFramesTests : FrameHost
         Assert.Equal("Sheet", (window.FocusManager?.GetFocusedElement() as Control)?.Name);
     });
 
-    // #3839: the sheet stays open across pages, so Work -> Enter on a row (its item sheet) -> G A -> Enter on a session row (the session
-    // sheet) -> G W leaves the session sheet beside Work with the row still selected. Enter on that row reopens its item, never moves
+    // #3839: the sheet stays open across pages, so Work -> Enter on a row (its item sheet) -> G A -> a session row's sheet (the terminal's
+    // Transcript button; Enter on the row opens its terminal) -> G W leaves the session sheet beside Work with the row still selected. Enter on that row reopens its item, never moves
     // into the session sheet: the row's sheet is open only while the sheet shows that row's item.
     [Fact]
     public Task Enter_on_the_Work_row_after_a_session_sheet_opened_on_Agents_reopens_its_item_3839() => OnUi(async () =>
@@ -125,7 +125,7 @@ public sealed class AgentsPolishFramesTests : FrameHost
         await Until(window, () => shell.IsSheetShown && shell.Item.HasItem, "the item sheet never showed");
         shell.GoTo(PageId.Agents);
         Settle(window);
-        shell.Agents.RequestOpen(new SessionOpenRequestedEventArgs(new DeepLink(DeepLinkKind.Session, Claude)));   // what Enter on a session row raises
+        shell.Agents.RequestOpen(new SessionOpenRequestedEventArgs(new DeepLink(DeepLinkKind.Session, Claude)));   // what the terminal view's Transcript button raises
         await Until(window, () => shell.IsSessionSheet && shell.AgentSheet.Phase == FramePhase.Shown, "the sheet never showed the session");
         shell.GoTo(PageId.Work);
         Settle(window);

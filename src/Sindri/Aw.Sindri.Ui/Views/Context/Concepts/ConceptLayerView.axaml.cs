@@ -17,6 +17,18 @@ internal sealed partial class ConceptLayerView : UserControl
     {
         InitializeComponent();
         DataContextChanged += (_, _) => Watch();
+        AddHandler(KeyDownEvent, OnKey, RoutingStrategies.Bubble);
+    }
+
+    // p on a focused row opens its pin sheet, as the hover button does (#3677).
+    private void OnKey(object? sender, KeyEventArgs e)
+    {
+        if (!e.Handled && e.Key == Key.P && e.KeyModifiers == KeyModifiers.None
+            && e.Source is Control and not TextBox and { DataContext: ConceptTileViewModel { ShowPinThis: true } tile } && DataContext is ConceptLayerViewModel layer)
+        {
+            e.Handled = true;
+            layer.PinThis(tile);
+        }
     }
 
     private void Watch()
@@ -27,6 +39,7 @@ internal sealed partial class ConceptLayerView : UserControl
     }
 
     // After the sheet closed and the cards were drawn again: the button that opened it, or the card's Edit pin that took the place of Pin this.
+    // The pin slot is hidden while focus is elsewhere (it shows on pointer-over or focus-within), so a hidden pin button falls back to the row's open button; focusing that shows the slot.
     private void OnFocusRequested(object? sender, PinFocusEventArgs e) =>
         Dispatcher.UIThread.Post(() => _ = Target(e)?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
 
@@ -34,13 +47,13 @@ internal sealed partial class ConceptLayerView : UserControl
     {
         PinFocus.AddSeveral => this.FindControl<Button>("AddSeveralButton"),
         PinFocus.NewPin => this.FindControl<Button>("NewPinButton"),
-        PinFocus.PinThis => CardButton(e.CardId, "PinThis"),
-        PinFocus.EditPin => CardButton(e.CardId, "EditPin"),
+        PinFocus.PinThis => CardButton(e.CardId, "ConceptPin.") ?? CardButton(e.CardId, "ConceptOpen."),
+        PinFocus.EditPin => CardButton(e.CardId, "ConceptEditPin.") ?? CardButton(e.CardId, "ConceptOpen."),
         _ => null,
     };
 
-    private Button? CardButton(string? cardId, string automationId) => this.GetVisualDescendants().OfType<Button>()
-        .FirstOrDefault(b => b.IsEffectivelyVisible && string.Equals(AutomationProperties.GetAutomationId(b), automationId, StringComparison.Ordinal)
+    private Button? CardButton(string? cardId, string idPrefix) => this.GetVisualDescendants().OfType<Button>()
+        .FirstOrDefault(b => b.IsEffectivelyVisible && string.Equals(AutomationProperties.GetAutomationId(b), idPrefix + cardId, StringComparison.Ordinal)
             && b.DataContext is ConceptTileViewModel tile && string.Equals(tile.Id, cardId, StringComparison.Ordinal));
 
     private void OnPinThis(object? sender, RoutedEventArgs e)

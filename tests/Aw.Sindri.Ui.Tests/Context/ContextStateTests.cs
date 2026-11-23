@@ -76,6 +76,21 @@ public sealed class ContextStateTests
     }
 
     [Fact]
+    public async Task The_key_hints_show_with_a_list_and_hide_under_the_empty_and_building_states()
+    {
+        var server = new FakeSindriApi { LensesAnswer = _ => NoMap };
+        var (page, _) = await Page(server);
+        Assert.True(page.HasKeyHints);
+        page.AnchorText = Anchor;
+        await page.Submit(Token);
+        Assert.Equal((true, false), (page.ShowEmpty, page.HasKeyHints));
+
+        await page.BuildControl!.Press(Token);
+
+        Assert.Equal((true, false), (page.ShowBuilding, page.HasKeyHints));
+    }
+
+    [Fact]
     public async Task Pressing_build_starts_the_job_once_and_shows_the_building_state()
     {
         var server = new FakeSindriApi { LensesAnswer = _ => NoMap };
