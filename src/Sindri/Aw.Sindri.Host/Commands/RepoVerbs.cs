@@ -132,7 +132,7 @@ internal sealed class RepoVerbs(ControlPlaneClient client, Output output, JobFol
     private static bool Known(string flag) => string.Equals(flag, "--detach", StringComparison.Ordinal) || string.Equals(flag, "--json", StringComparison.Ordinal);
 
     // The route takes absolute paths only; '~' is the user's home, a relative path is from the working directory.
-    private static string Absolute(string path) =>
+    internal static string Absolute(string path) =>
         path == "~" || path.StartsWith("~/", StringComparison.Ordinal)
             ? Path.GetFullPath(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + path[1..])
             : Path.GetFullPath(path);

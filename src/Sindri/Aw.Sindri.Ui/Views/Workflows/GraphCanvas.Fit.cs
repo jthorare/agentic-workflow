@@ -46,7 +46,7 @@ internal sealed partial class GraphCanvas
     private void ShowFit(WorkflowGraphViewModel graph, double zoom)
     {
         Zoom = zoom;
-        Pan = default;
+        PanTo(default);
         _fitPending = true;
         if (graph.SelectedId is { } selected)
         {
@@ -66,6 +66,6 @@ internal sealed partial class GraphCanvas
         static double Shift(double near, double far, double size) =>
             near < 0 || far - near > size ? ViewMargin - near : far > size ? size - ViewMargin - far : 0;
 
-        Pan = new Point(Pan.X + Shift(card.Left, card.Right, Bounds.Width), Pan.Y + Shift(card.Top, card.Bottom, Bounds.Height));
+        PanTo(new Point(Pan.X + Shift(card.Left, card.Right, Bounds.Width), Pan.Y + Shift(card.Top, card.Bottom, Bounds.Height)));
     }
 }
