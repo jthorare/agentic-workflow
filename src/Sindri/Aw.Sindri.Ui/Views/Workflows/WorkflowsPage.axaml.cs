@@ -255,14 +255,6 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
-    private async void OnCopyRunFix(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is WorkflowsPageViewModel { Run.Failure: { } failure })
-        {
-            await failure.CopyFix(CancellationToken.None).ConfigureAwait(true);
-        }
-    }
-
     private async void OnCancelRun(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)
