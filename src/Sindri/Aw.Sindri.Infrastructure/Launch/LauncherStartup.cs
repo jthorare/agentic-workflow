@@ -37,7 +37,7 @@ internal static class LauncherStartup
         NonEmpty(environment("AW_SESSIONS_PROC_ROOT")) is not null || NonEmpty(environment("AW_SESSIONS_CLAUDE_DIR")) is not null;
 
     private static SessionSettings Sessions(SessionsSection? section, string? problem, bool overridden) =>
-        new(section?.Enabled ?? true, section?.PollSeconds ?? 2, Providers(section), overridden) { ConfigProblem = problem };
+        new(section?.Enabled ?? true, section?.PollSeconds ?? 2, Providers(section), overridden) { ConfigProblem = problem, Scope = section?.Scope is { } scope ? LauncherConfigFile.ScopeOf(scope) ?? SessionScope.All : SessionScope.All };
 
     private static IReadOnlyList<AgentId>? Providers(SessionsSection? section) =>
         section?.Providers is { } named ? [.. named.Select(AgentId.From)] : null;
