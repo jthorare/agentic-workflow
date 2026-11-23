@@ -16,9 +16,24 @@ public sealed class LaneAddress(ILaneFiles files, ILaneSessions sessions, ISessi
     /// <param name="lane">The lane name.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The address; null when the lane has no running session with a socket, or a source can't be read.</returns>
-    public ValueTask<string?> Find(string team, string lane, CancellationToken cancellationToken)
+    public async ValueTask<string?> Find(string team, string lane, CancellationToken cancellationToken)
     {
-        _ = (files, sessions, live, team, lane, cancellationToken);
-        return ValueTask.FromResult<string?>(null);
+        // The context reader's order: Claude changes the id on /clear, so the id under the lane's tmux session comes first, then the
+        // id lane-sessions recorded. A source that can't be read finds nothing, and the caller still matches by name.
+        var current = await sessions.Current(team + "-" + lane, cancellationToken).ConfigureAwait(false);
+        var id = current.IsSuccess ? current.Value : null;
+        if (id is null)
+        {
+            var record = await files.Record(lane, cancellationToken).ConfigureAwait(false);
+            id = record.IsSuccess ? record.Value?.Session : null;
+        }
+
+        if (id is not { } session)
+        {
+            return null;
+        }
+
+        var running = await live.Live(cancellationToken).ConfigureAwait(false);
+        return running.IsSuccess ? running.Value.FirstOrDefault(s => s.Session == session)?.Address : null;
     }
 }
