@@ -22,14 +22,14 @@ internal sealed class SymbolsColumnViewModel
             Caption = Labels.ContextSymbolsFrom(commit);
         }
 
-        var graphOff = string.Equals(symbols.Reason, "graph-off", StringComparison.Ordinal);
+        var graphWhy = GraphWhy(symbols.Reason);
         if (string.Equals(symbols.State, "ok", StringComparison.Ordinal) && symbols.Files is { Count: 0 })
         {
-            // An index that answers with no rows: say why, on the note line under the table, where a sentence has room (#3996). Graph off = only C# files get names (the real app's .ts names come from the graph layer); graph on = the files have no functions.
-            EmptyReason = graphOff ? Labels.ContextSymbolsGraphOff : Labels.ContextSymbolsNoneIndexed;
+            // An index that answers with no rows: say why, on the note line under the table, where a sentence has room (#3996). Graph off or down = only C# files get names (the real app's .ts names come from the graph layer); graph on = the files have no functions.
+            EmptyReason = graphWhy ?? Labels.ContextSymbolsNoneIndexed;
         }
 
-        NoRowTip = graphOff ? Labels.ContextSymbolsGraphOff : null;
+        NoRowTip = graphWhy;
 
         Unavailable = string.Equals(symbols.State, "unavailable", StringComparison.Ordinal);
         _files = (symbols.Files ?? []).ToDictionary(static f => f.Path, StringComparer.Ordinal);
@@ -70,4 +70,12 @@ internal sealed class SymbolsColumnViewModel
 
         return Labels.ContextSymbolsCell([.. file.Symbols.Take(NamesShown).Select(static s => s.Name)], Math.Max(0, file.Symbols.Count - NamesShown));
     }
+
+    // Why only C# files get names, with the fix for each reason (#3862): the profile turned the graph off, or the graph did not build; null when the graph is on and up.
+    private static string? GraphWhy(string? reason) => reason switch
+    {
+        "graph-off" => Labels.ContextSymbolsGraphOff,
+        "graph-unavailable" => Labels.ContextSymbolsGraphUnavailable,
+        _ => null,
+    };
 }

@@ -11,8 +11,11 @@ internal static partial class Labels
     /// <summary>The symbols column's heading.</summary>
     internal const string ContextSymbolsColumn = "symbols";
 
-    /// <summary>Why the column is empty when the code graph is off: the note line under the table, and a dash cell's hover text.</summary>
-    internal const string ContextSymbolsGraphOff = "only C# files get names: the code graph is off for this repo";
+    /// <summary>Why the column is empty when the profile turns the code graph off (reason graph-off), with its fix: the note line under the table, and a dash cell's hover text.</summary>
+    internal const string ContextSymbolsGraphOff = "only C# files get names: the code graph is off in the profile (index.graph.enabled)";
+
+    /// <summary>Why the column is empty when the code graph is on but did not build (reason graph-unavailable, #3862), with its fix: the note line and a dash cell's hover text.</summary>
+    internal const string ContextSymbolsGraphUnavailable = "only C# files get names: the code graph did not build, graphify is missing or failed (sindri doctor says which)";
 
     /// <summary>Why the column is empty when the code graph is on and no listed file has symbols: the note line under the table.</summary>
     internal const string ContextSymbolsNoneIndexed = "none in these files";
