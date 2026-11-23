@@ -59,8 +59,9 @@ public sealed class ProjectsPolishLinearTests
     }
 
     [Fact]
-    public async Task One_Save_sends_the_name_target_links_and_note_in_one_write()
+    public async Task One_Save_on_a_hand_made_project_sends_the_name_target_and_note_in_one_write()
     {
+        _f.Serve(ProjectSheetFixture.Attached, c => c["origin"] = "handMade");   // why: only a hand-made project's name is the owner's; Linear owns an attached one's (spec "Who owns what")
         var sheet = await _f.Opened(ProjectSheetFixture.Attached, Token);
         sheet.BeginEdit();
         (sheet.EditName, sheet.EditTarget, sheet.EditNotes) = ("Renamed", "2027-01-31", "A new note");

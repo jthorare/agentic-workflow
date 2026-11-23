@@ -7,6 +7,6 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="NodeId">The node.</param>
 /// <param name="ItemIndex">The loop item, 0 outside a loop.</param>
 /// <param name="Status">'succeeded' or 'skipped'.</param>
-/// <param name="Truncated">True when its input or output was cut at the cap.</param>
+/// <param name="Truncated">True when its output was cut at the cap; a cut input never sets it (#3896).</param>
 /// <param name="By">Who recorded it.</param>
 public sealed record WorkflowNodeFinishedPayload(WorkflowRunId RunId, NodeId NodeId, int ItemIndex, string Status, bool Truncated, string By);
