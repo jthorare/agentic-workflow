@@ -125,6 +125,13 @@ public sealed class RerunPlanTests
         => Assert.Equal(["out"], RerunPlan.Branches(Node("a"), [Row("a", NodeRunStatus.Succeeded, "{\"status\":200}")])!, StringComparer.Ordinal);
 
     [Fact]
+    public void A_re_run_from_a_step_on_a_branch_the_source_did_not_take_takes_that_branch_on_purpose()
+    {
+        Assert.Equal(["true", "false"], RerunPlan.WithChosen(Spec(), N("a"), ["true"], N("d")), StringComparer.Ordinal);
+        Assert.Equal(["true"], RerunPlan.WithChosen(Spec(), N("a"), ["true"], N("c")), StringComparer.Ordinal);
+    }
+
+    [Fact]
     public void A_skipped_step_took_no_branch()
         => Assert.Empty(RerunPlan.Branches(Node("a", "condition"), [Row("a", NodeRunStatus.Skipped)])!);
 }

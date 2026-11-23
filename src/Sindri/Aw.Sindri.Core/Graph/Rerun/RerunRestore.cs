@@ -6,7 +6,7 @@ namespace Aw.Sindri.Core.Graph.Rerun;
 
 /// <summary>
 /// Decides which steps of the source run a re-run takes (<see cref="RerunPlan.Restored"/>), each step after the steps it reads from. A step is taken when it is not after the chosen step,
-/// every step it reads from is taken, and its rows say it is done: it succeeded, or it was skipped on a branch the taken steps did not take. Every other step runs again.
+/// every step it reads from is taken, and its rows say it is done: it succeeded and its row says which branch it took, or it was skipped on a branch the taken steps did not take. Every other step runs again.
 /// </summary>
 internal sealed class RerunRestore
 {
@@ -15,7 +15,8 @@ internal sealed class RerunRestore
     private readonly GraphSpec _spec;
     private readonly HashSet<NodeId> _again;
     private readonly ILookup<NodeId, NodeRun> _rows;
-    private readonly HashSet<NodeId> _ran;
+    private readonly Dictionary<NodeId, GraphNode> _nodes;
+    private readonly Dictionary<NodeId, IReadOnlyList<string>> _branches = [];
     private readonly Dictionary<NodeId, LoopShape> _loops = [];
     private readonly Dictionary<NodeId, NodeId> _loopOf = [];
     private readonly Dictionary<NodeId, Keep> _kept = [];
@@ -25,7 +26,7 @@ internal sealed class RerunRestore
         _spec = spec;
         _again = [.. again];
         _rows = rows.ToLookup(static r => r.NodeId);
-        _ran = [.. rows.Where(static r => r.Status != NodeRunStatus.Skipped).Select(static r => r.NodeId)];
+        _nodes = spec.Nodes.ToDictionary(static n => n.Id);
         foreach (var node in spec.Nodes.Where(static n => string.Equals(n.Type, LoopBody.ForEachType, StringComparison.Ordinal)))
         {
             if (LoopBody.Find(spec, node.Id) is { IsSuccess: true } loop)
@@ -79,7 +80,13 @@ internal sealed class RerunRestore
             return Keep.Run;
         }
 
-        return _rows[id].Any(static r => r.Status == NodeRunStatus.Succeeded) ? Keep.Ran : Keep.Skipped;
+        if (!_rows[id].Any(static r => r.Status == NodeRunStatus.Succeeded))
+        {
+            return Keep.Skipped;
+        }
+
+        _branches[id] = [Out];   // the walk decides a taken loop's body and collect with 'out' (GraphWorkflow.Decide)
+        return Keep.Ran;
     }
 
     private Keep Own(NodeId id)
@@ -92,10 +99,22 @@ internal sealed class RerunRestore
 
         if (mine.Exists(static r => r.Status == NodeRunStatus.Succeeded))
         {
-            return Whole(id) ? Keep.Ran : Keep.Run;
+            return Whole(id) ? Read(id, mine) : Keep.Run;
         }
 
         return Dead(id) ? Keep.Skipped : Keep.Run;
+    }
+
+    // why: a taken step's branch comes from its own row (RerunPlan.Branches); a branching step whose row does not say runs again, so the walk never guesses a branch
+    private Keep Read(NodeId id, List<NodeRun> mine)
+    {
+        if (RerunPlan.Branches(_nodes[id], mine) is not { } branches)
+        {
+            return Keep.Run;
+        }
+
+        _branches[id] = branches;
+        return Keep.Ran;
     }
 
     // why: a loop is taken whole or runs again whole; a body step with a failed item would otherwise run once as a plain step at item 0 after its for_each was taken
@@ -108,12 +127,7 @@ internal sealed class RerunRestore
         return into.Count > 0 && into.TrueForAll(e => Decide(e.From) == Keep.Skipped || !Took(e.From, e.Output ?? Out));
     }
 
-    // why: a row does not say which branch its step took. A step took a branch when a step on that branch ran; when no step after it ran, its branch can't be read, so every branch counts as taken and those steps run
-    private bool Took(NodeId step, string output)
-    {
-        var ran = _spec.Edges.Where(e => e.From == step && _ran.Contains(e.To)).ToList();
-        return ran.Count == 0 || ran.Exists(e => string.Equals(e.Output ?? Out, output, StringComparison.Ordinal));
-    }
+    private bool Took(NodeId step, string output) => _branches.TryGetValue(step, out var branches) && branches.Contains(output, StringComparer.Ordinal);
 
     private List<GraphEdge> Into(NodeId id) => [.. _spec.Edges.Where(e => e.To == id)];
 

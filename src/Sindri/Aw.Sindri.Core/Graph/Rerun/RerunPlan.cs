@@ -3,7 +3,7 @@ using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Core.Graph.Rerun;
 
-/// <summary>Which steps a re-run from a step takes from the source run and which it runs again (Workflows page spec §7.3, P7). Pure: the service and the walk's restore activity share it.</summary>
+/// <summary>Which steps a re-run from a step takes from the source run and which it runs again (Workflows page spec §7.3, P7). Pure: the service and the walk's restore activity share it, so both read a taken step's branch from the same stored row.</summary>
 public static class RerunPlan
 {
     /// <summary>The node and every node reachable from it by edges, in spec order.</summary>
@@ -43,19 +43,20 @@ public static class RerunPlan
     {
         ArgumentNullException.ThrowIfNull(node);
         ArgumentNullException.ThrowIfNull(rows);
-        throw new NotSupportedException("red: Branches reads the step's own row");
+        return RerunBranches.Of(node, rows);
     }
 
-    /// <summary>The branches a restored node took: the outputs of its edges into steps that were not skipped in the source run. A step with no row counts as not skipped.</summary>
+    /// <summary>The branches a restored step took, plus its edges into the chosen step: a re-run from a step the source skipped on a branch it did not take runs that step on purpose.</summary>
     /// <param name="spec">The graph.</param>
-    /// <param name="node">The restored node.</param>
-    /// <param name="skipped">The nodes the source run skipped.</param>
-    /// <returns>The branch names ('out' for an edge with no named output).</returns>
-    public static IReadOnlyList<string> Taken(GraphSpec spec, NodeId node, IReadOnlySet<NodeId> skipped)
+    /// <param name="node">The restored step.</param>
+    /// <param name="branches">The branches its row says it took (<see cref="Branches"/>).</param>
+    /// <param name="from">The step the re-run starts from.</param>
+    /// <returns>The branch names.</returns>
+    public static IReadOnlyList<string> WithChosen(GraphSpec spec, NodeId node, IReadOnlyList<string> branches, NodeId from)
     {
         ArgumentNullException.ThrowIfNull(spec);
-        ArgumentNullException.ThrowIfNull(skipped);
-        return [.. spec.Edges.Where(e => e.From == node && !skipped.Contains(e.To)).Select(static e => e.Output ?? "out").Distinct(StringComparer.Ordinal)];
+        ArgumentNullException.ThrowIfNull(branches);
+        return [.. branches.Concat(spec.Edges.Where(e => e.From == node && e.To == from).Select(static e => e.Output ?? "out")).Distinct(StringComparer.Ordinal)];
     }
 
     private static List<NodeId> Reach(GraphSpec spec, NodeId start, bool forward)
