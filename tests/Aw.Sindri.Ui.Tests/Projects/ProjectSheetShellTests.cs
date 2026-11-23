@@ -116,7 +116,7 @@ public sealed class ProjectSheetShellTests
         await Until(() => !shell.Projects.IsLoading);
         var asked = new List<ProjectFocusEventArgs>();
         shell.Projects.FocusRequested += (_, e) => asked.Add(e);
-        shell.Projects.RequestOpen(shell.Projects.Groups[0].Cards[0].Link);
+        shell.Projects.RequestOpen(shell.Projects.Groups.SelectMany(g => g.Cards).First(c => c.Name == "Checkout rewrite").Link);   // the card ServeLed answers for
         await Until(() => shell.ProjectSheet.IsShown);
         var reads = _server.ProjectsCalls;
 

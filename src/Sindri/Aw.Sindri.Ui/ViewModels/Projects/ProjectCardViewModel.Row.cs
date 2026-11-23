@@ -68,6 +68,11 @@ internal sealed partial class ProjectCardViewModel
         get;
         internal set
         {
+            if (field == value)
+            {
+                return;
+            }
+
             Set(ref field, value);
             OnChanged(nameof(BlockedOnCell));
         }
@@ -85,6 +90,11 @@ internal sealed partial class ProjectCardViewModel
         get;
         internal set
         {
+            if (field == value)
+            {
+                return;
+            }
+
             Set(ref field, value);
             OnChanged(nameof(ShowsFacts));
             RowName = SpokenRow();

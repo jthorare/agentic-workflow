@@ -104,7 +104,7 @@ public sealed class ProjectsPageSearchTests
             ["blockedOnYou"] = true,
         };
         _f.Serve(list);
-        var page = await _f.Shown(Token, ProjectGrouping.None);   // opens on Needs me: the flag is served
+        var page = await _f.Shown(Token, ProjectGrouping.None, defaultView: true);   // opens on Needs me: the flag is served
         var kitchen = page.Groups[0].Cards[0];
 
         Assert.Equal(("Kitchen", "you · review"), (kitchen.Name, kitchen.BlockedOnCell));

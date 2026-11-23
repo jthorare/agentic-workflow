@@ -229,6 +229,12 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
             _ = _cards.Remove(gone);
         }
 
+        // Every served project has its card whatever the view draws, so CardOf finds a project the current view leaves out (a sheet opened on it by link).
+        foreach (var served in list.Projects.Concat(list.Finished).Concat(list.Hidden))
+        {
+            _ = Card(served);
+        }
+
         Arrange();
     }
 
