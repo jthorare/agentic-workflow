@@ -27,6 +27,24 @@ public sealed class PromptTextTests
     [InlineData("# AGENTS.md instructions for /work/alpha")]
     public void Harness_text_is_not_a_prompt(string text) => Assert.False(PromptText.IsTyped(text));
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("<ide_opened_file>The user opened src/a.cs in the IDE.</ide_opened_file> fix the null check", "fix the null check")]
+    [InlineData("<ide_selection>The user selected lines 3-9.</ide_selection>\nexplain this", "explain this")]
+    [InlineData("<ide_opened_file>a</ide_opened_file>\n<ide_selection>b</ide_selection>\nboth blocks", "both blocks")]
+    public void Text_typed_after_ide_blocks_is_a_prompt_without_the_blocks(string text, string typed)
+    {
+        Assert.True(PromptText.IsTyped(text));
+        Assert.Equal(typed, PromptText.WithoutIdeBlocks(text));
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("<ide_opened_file>The user opened src/a.cs in the IDE.</ide_opened_file>")]
+    [InlineData("<ide_selection>lines 3-9</ide_selection>\n  ")]
+    [InlineData("<ide_opened_file>a</ide_opened_file><system-reminder>context</system-reminder>")]
+    [InlineData("<ide_unknown>a</ide_unknown> fix it")]
+    [InlineData("<editor_state>a</editor_state> fix it")]
+    public void Ide_blocks_with_nothing_typed_after_them_or_another_tag_stay_machine_text(string text) => Assert.False(PromptText.IsTyped(text));
+
     [Fact, Trait("Lane", "unit")]
     public void Leading_tag_blocks_are_stripped_and_an_unclosed_one_stays()
     {

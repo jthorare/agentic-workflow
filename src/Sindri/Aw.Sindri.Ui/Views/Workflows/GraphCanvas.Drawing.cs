@@ -126,7 +126,7 @@ internal sealed partial class GraphCanvas
 
         var world = World;
         var extentW = world.Right * Zoom;
-        var extentH = GraphZoom.ExtentHeight(world.Bottom, Zoom, mapShown: true);
+        var extentH = GraphZoom.ExtentHeight(world.Bottom, Zoom, MapShown);
         var thumb = Brush("Brush.InkSubtle");
         if (extentH > Bounds.Height + 0.5)
         {

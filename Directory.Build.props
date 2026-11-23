@@ -61,7 +61,9 @@
   <!-- Project roles, from the project name (spec §4b.1). -->
   <PropertyGroup Label="Project roles">
     <_AwName>$(MSBuildProjectName)</_AwName>
-    <AwIsTestProject Condition="$(_AwName.EndsWith('.Tests')) or $(_AwName.EndsWith('.Testing'))">true</AwIsTestProject>
+    <!-- A .Testing segment with a further suffix is test support too (Aw.Connectors.Testing.Server, the fake Slack's loopback
+         host), the same reading as scripts/check-deps.mjs. -->
+    <AwIsTestProject Condition="$(_AwName.EndsWith('.Tests')) or $(_AwName.EndsWith('.Testing')) or $(_AwName.Contains('.Testing.'))">true</AwIsTestProject>
     <AwIsHostProject Condition="$(_AwName.EndsWith('.Host'))">true</AwIsHostProject>
     <AwIsAnalyzerProject Condition="$(_AwName.EndsWith('.Analyzers'))">true</AwIsAnalyzerProject>
     <AwIsCoreProject Condition="$(_AwName.EndsWith('.Core'))">true</AwIsCoreProject>

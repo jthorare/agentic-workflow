@@ -58,6 +58,21 @@ public sealed class CodexTranscriptTests : IDisposable
     }
 
     [Fact]
+    public async Task A_line_of_an_unknown_shape_is_counted_as_skipped()
+    {
+        var path = _roots.Write($"codex/sessions/2026/11/03/rollout-2026-11-03T09-00-00-{Main}.jsonl", _t.AddHours(1),
+            CodexLines.Meta(_t, Main, "/work/beta"),
+            """{"foo":1}""",
+            """{"timestamp":"2026-11-03T09:00:01.000Z","type":"event_msg"}""",
+            CodexLines.UserMessage(_t.AddSeconds(2), "go"));
+
+        var read = (await _roots.Corpus().ReadSession(TranscriptRefs.ForFile(TranscriptProvider.Codex, path), CancellationToken.None)).Value;
+
+        Assert.Equal(1, read.Session.HumanTurns);
+        Assert.Equal(2, read.SkippedLines);
+    }
+
+    [Fact]
     public async Task An_exec_run_has_no_human_turn()
     {
         _ = _roots.Write($"codex/sessions/2026/11/03/rollout-2026-11-03T09-00-00-{Main}.jsonl", _t.AddHours(1),

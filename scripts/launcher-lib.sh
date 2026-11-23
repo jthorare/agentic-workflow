@@ -237,7 +237,7 @@ launcher_cli_has_flag() {
     pid=$!
     set +m   # job control was for the probe's group only: the loop's sleep below is not a job
     # The probe's group is outside the lane's, so a hangup of the lane's terminal does not reach it: end it here.
-    trap 'kill -TERM -- "-$pid" 2> /dev/null; exit 1' HUP INT TERM
+    trap 'kill -TERM -- "-$pid" 2> /dev/null; unlink "$out" 2> /dev/null; exit 1' HUP INT TERM
     for ((i = 0; i < ${AW_LAUNCHER_PROBE_SECONDS:-5} * 10; i++)); do
       kill -0 "$pid" 2> /dev/null || break
       sleep 0.1
@@ -249,11 +249,12 @@ launcher_cli_has_flag() {
     done
     kill -KILL -- "-$pid" 2> /dev/null   # a member that ignored TERM; wait below would otherwise block until it exits
     wait "$pid" 2> /dev/null
-    exit 0
+    # The subshell reads and deletes the temp file, not the caller: a lane killed mid-probe (its pid only) leaves the subshell
+    # running, so the file still goes (#3262).
+    grep -q -- "$flag" "$out" 2> /dev/null && found=0
+    unlink "$out" 2> /dev/null
+    exit "$found"
   ) 2> /dev/null
-  grep -q -- "$flag" "$out" 2> /dev/null && found=0
-  unlink "$out" 2> /dev/null
-  return "$found"
 }
 
 launcher_agent_field() { # id field
