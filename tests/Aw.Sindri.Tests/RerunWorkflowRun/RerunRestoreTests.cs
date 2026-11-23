@@ -118,16 +118,21 @@ public sealed class RerunRestoreTests
         }
     }
 
-    /// <summary>Admits the run into the store like the real starter and keeps the request.</summary>
+    /// <summary>Admits the run into the store like the real starter and keeps each admitted request (a refused used id is not kept).</summary>
     private sealed class Starter(InMemoryWorkflowRunStore runs, TimeProvider clock, List<GraphStartRequest> started) : IGraphRunStarter
     {
         public async ValueTask<Result<GraphStart>> Start(GraphStartRequest request, CancellationToken cancellationToken)
         {
-            started.Add(request);
             var id = WorkflowRunId.Of(request.Slug, request.Revision, request.Occurrence);
             var run = new WorkflowRun(id, request.Workflow, request.Revision, request.Trigger, WorkflowRunStatus.Running, Outputs: null, Error: null, ItemId: null, clock.GetUtcNow(), EndedAt: null);
             var admitted = await runs.Admit(run, request.Concurrency, cancellationToken);
-            return admitted.IsError ? admitted.Error : new GraphStart(admitted.Value, id);
+            if (admitted.IsError)
+            {
+                return admitted.Error;   // a used run id (SND-GRAPH-100): the service tries the next number, so only admitted starts are kept
+            }
+
+            started.Add(request);
+            return new GraphStart(admitted.Value, id);
         }
     }
 }

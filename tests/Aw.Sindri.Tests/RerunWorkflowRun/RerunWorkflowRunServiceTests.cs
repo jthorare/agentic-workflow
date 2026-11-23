@@ -312,7 +312,7 @@ public sealed class RerunWorkflowRunServiceTests
         }
     }
 
-    /// <summary>Records the request and, like the real starter, admits the run into the store; a set <see cref="Answer"/> stands in for a queue answer.</summary>
+    /// <summary>Admits the run into the store like the real starter and records each admitted request (a refused used id is not kept); a set <see cref="Answer"/> stands in for a queue answer.</summary>
     private sealed class RecordingStarter(InMemoryWorkflowRunStore runs, TimeProvider clock) : IGraphRunStarter
     {
         public List<GraphStartRequest> Requests { get; } = [];
@@ -321,11 +321,16 @@ public sealed class RerunWorkflowRunServiceTests
 
         public async ValueTask<Result<GraphStart>> Start(GraphStartRequest request, CancellationToken cancellationToken)
         {
-            Requests.Add(request);
             var id = WorkflowRunId.Of(request.Slug, request.Revision, request.Occurrence);
             var run = new WorkflowRun(id, request.Workflow, request.Revision, request.Trigger, WorkflowRunStatus.Running, Outputs: null, Error: null, ItemId: null, clock.GetUtcNow(), EndedAt: null);
             var admitted = await runs.Admit(run, request.Concurrency, cancellationToken);
-            return admitted.IsError ? admitted.Error : new GraphStart(Answer ?? admitted.Value, id);
+            if (admitted.IsError)
+            {
+                return admitted.Error;   // a used run id (SND-GRAPH-100): the service tries the next number, so only admitted starts are kept
+            }
+
+            Requests.Add(request);
+            return new GraphStart(Answer ?? admitted.Value, id);
         }
     }
 }
