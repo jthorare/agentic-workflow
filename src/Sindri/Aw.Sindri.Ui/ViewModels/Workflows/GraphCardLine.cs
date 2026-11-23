@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Globalization;
 using System.Text.Json;
 
@@ -151,25 +152,32 @@ internal static class GraphCardLine
         return user < 0 ? rest : rest[(user + 1)..];
     }
 
-    // A password with a raw ?, / or # (#4063, #4156). The host is the text before the first of those, after a leading [...] (an IPv6 host, whose ':' are its
-    // own). It is host:port, and stays, only when what follows its ':' is all digits and no '@' comes later in the url. Any other ':' there is a
-    // user:password, so the host starts after the last @ of the whole url. A port followed by a later @ (host:8080/@name) reads as a password too:
-    // an all-digit password looks the same, and a wrong host on an odd url is better than a password on screen.
+    // A url password never shows (#4063, #4156). The text before the last @ of the whole url is a user and password whenever it holds a ':', wherever that
+    // ':' sits: a raw /, ? or # in the user name or the password moves it past the first separator, so no separator is trusted to end the host. The card
+    // then keeps only what follows the last @, and no password reaches past its own @. The ':' inside a leading [IPv6 address] are the host's own.
+    // The cost, on purpose: host:8080/@name and host/a:b@c show the text after the @. A wrong host on an odd url is better than a password on screen.
     private static string PastPassword(string rest)
     {
-        var start = rest.StartsWith('[') && rest.IndexOf(']', StringComparison.Ordinal) is var close and > 0 ? close + 1 : 0;
-        var end = rest.IndexOfAny(['/', '?', '#'], start);
-        var host = end < 0 ? rest[start..] : rest[start..end];
-        var colon = host.IndexOf(':', StringComparison.Ordinal);
         var lastAt = rest.LastIndexOf('@');
-        if (colon < 0 || lastAt < 0)
+        var colon = lastAt < 0 ? -1 : rest.IndexOf(':', AfterAddress(rest));
+        return colon < 0 || colon > lastAt ? rest : rest[(lastAt + 1)..];
+    }
+
+    // The index after a leading [IPv6 address], or 0. Only hex digits, ':' and '.' with two or more ':' count as an address, so "[a:secret]" hides no ':'.
+    private static int AfterAddress(string rest)
+    {
+        var close = rest.StartsWith('[') ? rest.IndexOf(']', StringComparison.Ordinal) : -1;
+        if (close < 2)
         {
-            return rest;
+            return 0;
         }
 
-        var isPort = host[(colon + 1)..].All(char.IsAsciiDigit) && (end < 0 || rest.IndexOf('@', end) < 0);
-        return isPort ? rest : rest[(lastAt + 1)..];
+        var inside = rest.AsSpan(1, close - 1);
+        var isAddress = inside.Count(':') >= 2 && !inside.ContainsAnyExcept(_addressChars);
+        return isAddress ? close + 1 : 0;
     }
+
+    private static readonly SearchValues<char> _addressChars = SearchValues.Create("0123456789abcdefABCDEF:.");
 
     private static string? Str(JsonElement config, string name) =>
         config.ValueKind == JsonValueKind.Object && config.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is { } s && s.Trim().Length > 0 ? s.Trim() : null;
