@@ -147,7 +147,7 @@ internal sealed partial class SetupApplyJobs(ControlPlaneClient client, TimeProv
 
             if (deadline is { } end && clock.GetUtcNow() >= end)
             {
-                return Aw.Kernel.Results.Success<JobView?>(value: null);
+                return Kernel.Results.Success<JobView?>(value: null);
             }
 
             await Task.Delay(Poll, clock, ct).ConfigureAwait(false);
