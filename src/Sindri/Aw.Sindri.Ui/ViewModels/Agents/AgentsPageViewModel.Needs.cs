@@ -26,7 +26,13 @@ internal sealed partial class AgentsPageViewModel
         get;
         set
         {
-            Set(ref field, value ?? string.Empty);
+            var text = value ?? string.Empty;
+            if (string.Equals(field, text, StringComparison.Ordinal))
+            {
+                return;   // ClearFilters sets it and then redraws itself: no second draw for the same text
+            }
+
+            Set(ref field, text);
             OnChanged(nameof(IsFiltered));
             RememberBeforeSearch();
             Redraw();
