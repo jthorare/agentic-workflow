@@ -38,6 +38,7 @@ internal static class NamesDetail
             "index damaged" => Labels.ContextMapNamesDamaged,
             "not configured" => Labels.ContextMapNamesNotConfigured,
             "files are in no single repo" => Labels.ContextMapNamesSeveralRepos,
+            "no files" => Labels.ContextMapNamesNoFiles,   // #3863: nothing to search, so not "not available right now"
             _ => Labels.ContextMapNamesUnknown,
         };
     }
