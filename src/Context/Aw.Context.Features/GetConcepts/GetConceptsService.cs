@@ -5,24 +5,23 @@ using Aw.Kernel.Services;
 namespace Aw.Context.Features.GetConcepts;
 
 /// <summary>
-/// One page of the concepts of the map the caller may read, built by <see cref="ConceptBuilder"/> (reads never call a model: the concepts are stored in the map). A concept's last change
-/// comes from <see cref="ConceptChangeTimes"/>, a cache the read never waits on: a cold or stale cache answers without it and fills in the background.
+/// One page of the concepts of the map the caller may read: the answer kept for this map version and caller, or built by <see cref="ConceptBuilder"/> and kept (issue 3676; reads
+/// never call a model: the concepts are stored in the map). A concept's last change comes from <see cref="ConceptChangeTimes"/>, a cache the read never waits on (#3760). It is read
+/// outside the kept answer's key, so it is laid over the kept rows on every read and never stored: a time git learns after the answer was kept still shows.
 /// </summary>
-internal sealed class GetConceptsService(ConceptReader reader, ConceptChangeTimes times) : IService<GetConceptsRequest, ConceptsView>
+internal sealed class GetConceptsService(ConceptAnswers answers, ConceptChangeTimes times) : IService<GetConceptsRequest, ConceptsView>
 {
     public async ValueTask<Result<ConceptsView>> Handle(GetConceptsRequest request, CancellationToken cancellationToken)
     {
-        var query = request.Query;
-        var read = await reader.Read(request.Scope, query.Read, query.Repo, cancellationToken).ConfigureAwait(false);
-        if (read.IsError)
+        var kept = await answers.Concepts(request.Scope, request.Query, cancellationToken).ConfigureAwait(false);
+        if (kept.IsError)
         {
-            return read.Error;
+            return kept.Error;
         }
 
-        var basis = read.Value.Basis;
-        var paths = ConceptBuilder.CodePaths(basis, query, read.Value.Graph);
-        var repos = request.Scope.Repos.Where(r => basis.Repo is null || string.Equals(r.Name.Value, basis.Repo, StringComparison.Ordinal));
-        var changed = await times.Read(repos, paths, cancellationToken).ConfigureAwait(false);
-        return ConceptBuilder.Build(basis with { Changed = changed }, query, read.Value.Graph, read.Value.Text, read.Value.Pins);
+        var repo = kept.Value.View.Repo;
+        var repos = request.Scope.Repos.Where(r => repo is null || string.Equals(r.Name.Value, repo, StringComparison.Ordinal));
+        var changed = await times.Read(repos, kept.Value.Paths, cancellationToken).ConfigureAwait(false);
+        return kept.Value.With(changed);
     }
 }

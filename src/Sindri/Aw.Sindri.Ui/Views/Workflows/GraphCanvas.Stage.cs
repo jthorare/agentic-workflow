@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Input;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.Views.Workflows;
@@ -27,11 +28,40 @@ internal sealed partial class GraphCanvas
     /// <summary>Zooms to the next ladder step down about the canvas's centre.</summary>
     internal void ZoomOut() => StepTo(GraphZoom.Previous(ZoomPercent));
 
+    /// <summary>The canvas's zoom keys (#3684): 0 is 100 %, + (also Shift+=, the keypad's +) the next step up, - the next step down. The shell passes digits,
+    /// = and - on to the focused control (ShellWindow.Keys.cs names only letters, Enter, "." and "/"), so the canvas takes them itself.</summary>
+    /// <param name="key">The key.</param>
+    /// <param name="modifiers">The modifiers held: none, or Shift for the + on the = key.</param>
+    /// <returns>True when the key zoomed.</returns>
+    internal bool ZoomKey(Key key, KeyModifiers modifiers)
+    {
+        if ((modifiers & ~KeyModifiers.Shift) != KeyModifiers.None || ZoomStepFor(key, plain: modifiers == KeyModifiers.None) is not { } step)
+        {
+            return false;
+        }
+
+        step();
+        return true;
+    }
+
+    // The zoom step a key asks for, or null. 0 and - only without Shift (Shift+- is "_"); + also with Shift (it is Shift+= on a US keyboard).
+#pragma warning disable IDE0072 // every other key is not a zoom key
+    private Action? ZoomStepFor(Key key, bool plain) =>
+        key switch
+        {
+            Key.D0 or Key.NumPad0 when plain => () => StepTo(100),
+            Key.OemPlus or Key.Add => ZoomIn,
+            Key.OemMinus or Key.Subtract when plain => ZoomOut,
+            _ => null,
+        };
+#pragma warning restore IDE0072
+
     /// <summary>Goes back to Fit: the largest zoom at which the whole graph fits. Like + and -, it never wraps the cards again unless the width, the text size or the graph changed since they were laid out.</summary>
     internal void FitNow()
     {
-        // same width, same text size, same graph: the cards stay where they are, only the zoom and pan go back to Fit
-        if (CanFit && Graph is { } graph && ReferenceEquals(graph, _laidOut) && !WrapChanged)
+        // same size, same text size, same graph: the cards stay where they are, only the zoom and pan go back to Fit. A height change after the person moved the view
+        // (nothing refits then) makes the stored zoom stale, so Fit computes it again.
+        if (CanFit && Graph is { } graph && ReferenceEquals(graph, _laidOut) && !WrapChanged && Math.Abs(Bounds.Height - _laidOutHeight) <= 0.5)
         {
             ShowFit(graph, _fitZoom);
             InvalidateVisual();

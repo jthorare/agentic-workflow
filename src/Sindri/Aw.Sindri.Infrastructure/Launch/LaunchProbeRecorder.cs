@@ -25,7 +25,8 @@ internal sealed class LaunchProbeRecorder(ILauncher launcher, IApprovedProfile a
     public async ValueTask<Result<RecordedProbe>> Record(LeaseGrant grant, CancellationToken cancellationToken)
     {
         var found = await launcher.Probe(cancellationToken).ConfigureAwait(false);
-        var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
+        // #3594: an invalid live file reads as no profile, so the probe still records the targets, with no repos, instead of freezing them at the last probe
+        var approved = await approvals.ForRead(cancellationToken).ConfigureAwait(false);
         if (approved.IsError)
         {
             return approved.Error;
