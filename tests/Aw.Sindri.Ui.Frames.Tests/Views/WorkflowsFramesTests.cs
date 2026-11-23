@@ -370,7 +370,7 @@ public sealed class WorkflowsFramesTests : FrameHost
         Assert.Equal(nodes.Count, chips.Count);
         for (var i = 0; i < chips.Count; i++)
         {
-            AssertChip(chips[i], nodes[i].ChipWord, nodes[i].ChipGlyph, nodes[i].ChipToneWord, $"node run {nodes[i].TitleText}");
+            AssertChip(chips[i], nodes[i].ChipWord, nodes[i].ChipGlyph, nodes[i].ChipToneWord, $"node run {nodes[i].Name}");
             Assert.Equal(chips[i].Tone, nodes[i].ChipToneWord);
         }
     });

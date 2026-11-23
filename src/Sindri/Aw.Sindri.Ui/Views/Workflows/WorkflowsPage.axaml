@@ -428,7 +428,7 @@
                       <Border Classes="item-row clickable" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
                         <StackPanel Spacing="4" Margin="0,4">
                           <StackPanel Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
-                            <TextBlock Classes="body-strong" Text="{Binding TitleText}" />
+                            <TextBlock Classes="body-strong" Text="{Binding TitleText}" IsVisible="{Binding HasTitle}" />
                             <controls:StateChipView Word="{Binding ChipWord}" Tone="{Binding ChipToneWord}" Glyph="{Binding ChipGlyph}" />
                           </StackPanel>
                           <Button HorizontalAlignment="Left" Content="{Binding TakeOverText}" Click="OnTakeOverNode" IsVisible="{Binding CanTakeOver}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding TakeOverText}" />
@@ -440,6 +440,10 @@
                             <TextBlock Classes="body-strong" Text="{Binding SentTitle}" TextWrapping="Wrap" />
                             <TextBlock Classes="body" Text="{Binding SentBody}" IsVisible="{Binding HasSentBody}" TextWrapping="Wrap" />
                             <TextBlock Classes="caption subtle" Text="{Binding SentTarget}" />
+                          </StackPanel>
+                          <StackPanel Spacing="2" IsVisible="{Binding HasCode}">
+                            <TextBlock Classes="caption subtle" Text="{Binding CodeHeading}" />
+                            <SelectableTextBlock Classes="mono" Text="{Binding CodeText}" TextWrapping="Wrap" />
                           </StackPanel>
                           <StackPanel Spacing="2" IsVisible="{Binding HasInput}">
                             <TextBlock Classes="caption subtle" Text="{Binding InputHeading}" />
