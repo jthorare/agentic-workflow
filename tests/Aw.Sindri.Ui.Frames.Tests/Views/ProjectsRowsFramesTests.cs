@@ -53,6 +53,7 @@ public sealed class ProjectsRowsFramesTests : FrameHost
     {
         Server.ProjectsAnswer = new RouteAnswer(HttpStatusCode.OK, Served(factsMissing));
         var (window, shell) = await Connected(width: width, height: height);
+        shell.Projects.SetView(ViewModels.Projects.ProjectView.All);   // why: the golden's finished and hidden cards carry blockedOnYou, so an unpicked view opens on Needs me, which has no row here
         shell.GoTo(PageId.Projects);
         await Until(window, () => !shell.Projects.IsLoading && shell.Projects.HasRows, "the Projects page never drew its rows");
         Settle(window);
