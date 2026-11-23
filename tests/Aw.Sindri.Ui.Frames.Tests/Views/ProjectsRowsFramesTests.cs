@@ -20,7 +20,7 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 [Lane(TestLane.Integration)]
 public sealed class ProjectsRowsFramesTests : FrameHost
 {
-    private static readonly string[] BarButtons = ["ProjectsSort", "ProjectsGroup", "ProjectsAdd"];
+    private static readonly string[] _barButtons = ["ProjectsSort", "ProjectsGroup", "ProjectsAdd"];
 
     private const string LongName = "Enterprise onboarding experience overhaul for every tenant and every region we sell in";
 
@@ -115,7 +115,7 @@ public sealed class ProjectsRowsFramesTests : FrameHost
     {
         var (window, _) = await OnProjects(width, height);
 
-        foreach (var name in BarButtons)
+        foreach (var name in _barButtons)
         {
             var right = Right(Named<Button>(window, name), window);
             Assert.True(right <= window.Bounds.Width, string.Create(CultureInfo.InvariantCulture, $"{name} ends at {right}, past the window's {window.Bounds.Width}"));
