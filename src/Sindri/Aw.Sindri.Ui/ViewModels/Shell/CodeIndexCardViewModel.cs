@@ -111,9 +111,9 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
 
     private static bool One(string state, params string[] words) => words.Contains(state, StringComparer.Ordinal);
 
-    // stale, building, waiting and queued override the file state; the other health states are the file's own.
+    // stale, building, waiting, queued and unbuildable override the file state; the other health states are the file's own.
     private static string StateOf(CodeIndexRepoView repo, CodeIndexHealthView? health) =>
-        health is { } h && One(h.State, "stale", "building", "waiting", "queued") ? h.State : repo.State;
+        health is { } h && One(h.State, "stale", "building", "waiting", "queued", "unbuildable") ? h.State : repo.State;
 
     private string Line(CodeIndexRepoView repo, CodeIndexHealthView? health)
     {

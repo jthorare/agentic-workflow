@@ -76,7 +76,7 @@
                 </Grid>
                 <TextBlock Grid.Column="1" Classes="body" Text="{Binding ForText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
                 <TextBlock Grid.Column="2" Classes="body" Text="{Binding IntentText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-                <TextBlock x:Name="FileSymbols" Grid.Column="3" Classes="body" Text="{Binding SymbolsText}" Opacity="{Binding SymbolsOpacity}" IsVisible="{Binding IsFile}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                <TextBlock x:Name="FileSymbols" Grid.Column="3" Classes="body" Text="{Binding SymbolsText}" ToolTip.Tip="{Binding SymbolsTip}" Opacity="{Binding SymbolsOpacity}" IsVisible="{Binding IsFile}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
               </Grid>
             </Border>
           </DataTemplate>

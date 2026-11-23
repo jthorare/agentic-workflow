@@ -8,5 +8,8 @@ internal static class MessageStubs
     /// <param name="phase">The phase that builds it ('M1b').</param>
     /// <returns>The exception to throw.</returns>
     internal static NotSupportedException NotBuilt(string member, string phase) =>
-        new($"{member} is not built yet: messages spec §14 phase {phase}");
+        new($"{member}{NotBuiltText}{phase}");
+
+    /// <summary>The words every Messages stub's refusal holds, Core's and Features' alike ('ResolveLinks is not built yet: messages spec §14 phase M1g'); the red tests skip on them only.</summary>
+    internal const string NotBuiltText = " is not built yet: messages spec §14 phase ";
 }
