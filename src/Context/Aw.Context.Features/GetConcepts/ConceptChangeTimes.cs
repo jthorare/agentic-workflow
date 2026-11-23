@@ -21,6 +21,9 @@ internal sealed class ConceptChangeTimes(IFileHistory history, IRepoReader repos
     // How long a HEAD read stands for the repo's HEAD (#3837): a commit or checkout shows within this long, and a page of reads costs one git process, not one each.
     internal static readonly TimeSpan HeadFor = TimeSpan.FromSeconds(30);
 
+    // How long a failed HEAD read stands (#4144): a repo with no checkout costs one git start per this long, and a fresh clone shows well before HeadFor.
+    internal static readonly TimeSpan FailedHeadFor = TimeSpan.FromSeconds(5);
+
     private readonly TimeProvider _clock = clock ?? TimeProvider.System;
     private readonly Dictionary<string, (string Head, DateTimeOffset At)> _heads = new(StringComparer.Ordinal);
 
