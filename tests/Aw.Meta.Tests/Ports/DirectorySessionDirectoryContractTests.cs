@@ -18,9 +18,10 @@ public sealed class DirectorySessionDirectoryContractTests : SessionDirectoryCon
         foreach (var session in alive.Concat(dead))
         {
             var pid = session.Pid.ToString(CultureInfo.InvariantCulture);
+            var socket = session.Address is { } address ? ",\"messagingSocketPath\":\"" + address["uds:".Length..] + "\"" : string.Empty;
             File.WriteAllText(
                 Path.Combine(_dir.Path, pid + ".json"),
-                $$"""{"pid":{{pid}},"sessionId":"{{session.Session.Value}}","name":"{{session.Name}}","status":"{{session.Status}}","cwd":"{{session.Cwd}}","kind":"interactive"}""");
+                $$"""{"pid":{{pid}},"sessionId":"{{session.Session.Value}}","name":"{{session.Name}}","status":"{{session.Status}}","cwd":"{{session.Cwd}}","kind":"interactive"{{socket}}}""");
         }
 
         return new DirectorySessionDirectory(_dir.Path, RealLiveness.Create());
