@@ -88,7 +88,7 @@ public sealed class LauncherConfigFileTests
         Assert.True(load.Sessions.Enabled);
     }
 
-    private static LauncherLoad LoadText(string json)
+    internal static LauncherLoad LoadText(string json)
     {
         var directory = Directory.CreateTempSubdirectory("aw-launcher").FullName;
         try
@@ -112,6 +112,25 @@ public sealed class LauncherConfigFileTests
         var refused = LauncherConfigFile.Read(SessionFixtures.Builtins(), Text("""{ "schema": 1, "sessions": { "scope": "mine" } }"""));
         Assert.Equal("SND-LAUNCH-011", refused.Error.Code);
         Assert.Contains("sessions.scope", refused.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public void An_unknown_sessions_scope_fails_closed_to_own_with_a_problem_row_and_a_bad_sibling_key_keeps_an_explicit_own()
+    {
+        var typo = LoadText("""{ "schema": 1, "sessions": { "scope": "onw" } }""").Sessions;
+        var sibling = LoadText("""{ "schema": 1, "sessions": { "scope": "own", "pollSeconds": 99 } }""").Sessions;
+
+        Assert.Equal([SessionScope.Own, SessionScope.Own], [typo.Scope, sibling.Scope]);
+        Assert.Contains("sessions.scope", typo.ConfigProblem, StringComparison.Ordinal);
+        Assert.NotNull(sibling.ConfigProblem);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public void A_sessions_scope_sets_this_homes_own_tmux_directory_under_the_home()
+    {
+        var load = LoadText("""{ "schema": 1, "sessions": { "scope": "own" } }""");
+
+        Assert.EndsWith(Path.DirectorySeparatorChar + "tmux", load.Sessions.OwnTmuxDirectory, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]

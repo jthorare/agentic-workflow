@@ -6112,6 +6112,8 @@ Aw.Sindri.Core.Sessions.SessionSettings.Deconstruct(out bool Enabled, out int Po
 Aw.Sindri.Core.Sessions.SessionSettings.Enabled.get -> bool
 Aw.Sindri.Core.Sessions.SessionSettings.Enabled.init -> void
 Aw.Sindri.Core.Sessions.SessionSettings.Equals(Aw.Sindri.Core.Sessions.SessionSettings? other) -> bool
+Aw.Sindri.Core.Sessions.SessionSettings.OwnTmuxDirectory.get -> string?
+Aw.Sindri.Core.Sessions.SessionSettings.OwnTmuxDirectory.init -> void
 Aw.Sindri.Core.Sessions.SessionSettings.PollSeconds.get -> int
 Aw.Sindri.Core.Sessions.SessionSettings.PollSeconds.init -> void
 Aw.Sindri.Core.Sessions.SessionSettings.Providers.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.AgentId>?

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Sessions;
 
 namespace Aw.Sindri.Features.Sessions;
@@ -10,10 +11,13 @@ namespace Aw.Sindri.Features.Sessions;
 /// One pass over the sources (collector spec §4.1): the process table, Claude's records, the hook's state files. A source that fails is a problem row and leaves the
 /// others intact; when the process table itself fails or overruns the pass is not good and the caller keeps the previous snapshot.
 /// </summary>
-internal sealed class SessionDiscovery(IProcessTable processes, IClaudeSessionRecords records, IFleetStates fleet, IAgentCatalog catalog, SessionSettings settings, SessionHosts hosts, TimeProvider time)
+internal sealed class SessionDiscovery(IProcessTable processes, IClaudeSessionRecords records, IFleetStates fleet, IAgentCatalog catalog, SessionSettings settings, SessionHosts hosts, TimeProvider time, ILaunchFiles? launches = null)
 {
     private static readonly AgentId _claude = AgentId.From("claude-code");
     private static readonly IReadOnlyDictionary<string, string> _emptyEnvironment = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>This home's launch records, which scope 'own' checks a session's launch id against (null: none known).</summary>
+    internal ILaunchFiles? Launches { get; } = launches;
 
     /// <summary>False when launcher.json turned the collector off.</summary>
     internal bool IsEnabled() => settings.Enabled;
