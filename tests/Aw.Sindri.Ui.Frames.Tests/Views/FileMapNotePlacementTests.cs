@@ -45,7 +45,7 @@ public sealed class FileMapNotePlacementTests : FrameHost
         Server.FileMapAnswer = Folder(1);
         var (window, shell) = await OpenFiles();
 
-        var row = Assert.Single(window.GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("file-row")));
+        var row = Assert.Single(window.GetVisualDescendants().OfType<Border>(), b => b.Classes.Contains("file-row"));
         var note = Named<TextBlock>(window, "FilesNote");
         var rowBottom = row.TranslatePoint(new Point(0, row.Bounds.Height), window)?.Y ?? double.NaN;
         var noteTop = note.TranslatePoint(default, window)?.Y ?? double.NaN;
