@@ -69,6 +69,20 @@ public static class ConceptBuilder
 
     private static string CodePath(string codeKey) => codeKey[CodeKeyPrefix.Length..];
 
+    /// <summary>The repo-relative paths of each concept's code files, by concept id: what a kept answer stores so its rows' last change can be laid over them on every read (issue 3676).</summary>
+    /// <param name="concepts">The concepts of the page.</param>
+    /// <param name="graph">The graph the caller may see.</param>
+    /// <returns>The distinct paths of each concept in ordinal order.</returns>
+    public static IReadOnlyDictionary<string, IReadOnlyList<string>> CodePathsOf(IEnumerable<NodeKey> concepts, GraphSnapshot graph)
+    {
+        ArgumentNullException.ThrowIfNull(concepts);
+        ArgumentNullException.ThrowIfNull(graph);
+        var (known, edges) = Known(graph);
+        var index = ConceptIndex.Of(known, edges);
+        return concepts.Where(c => index.Has(c.Value)).DistinctBy(c => c.Value, StringComparer.Ordinal).ToDictionary(c => c.Value,
+            IReadOnlyList<string> (c) => [.. index.CodeKeysOf(index.MembersOf(c.Value)).Select(CodePath).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)], StringComparer.Ordinal);
+    }
+
     // The newest known change time of the concept's code files, or null when git knew none of them.
     private static DateTimeOffset? LastChanged(ConceptIndex index, GraphNode node, IReadOnlyDictionary<string, DateTimeOffset>? changed)
     {

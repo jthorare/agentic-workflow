@@ -2,8 +2,10 @@ using Aw.Context.Core.Map;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
+using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.Server;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.ContextCalls;
@@ -52,30 +54,52 @@ public sealed class IndexSourceNeedsLookTests
     [MemberData(nameof(Cases))]
     public async Task The_status_row_says_whether_the_source_needs_a_look(string name, bool look)
     {
-        var row = await Status(_sources[name], new SourceSyncClock(TimeProvider.System));
+        var row = await Status(_sources[name], new SourceSyncClock(TimeProvider.System), new NoPauses());
 
         Assert.Equal(look, row.NeedsLook);
     }
 
+    public static TheoryData<int, bool, string?> Limit => new()
+    {
+        { 14, false, null },
+        { 15, true, "linear hasn't finished a sync in 15 minutes" },
+    };
+
+    [Theory, Trait("Lane", "unit")]
+    [MemberData(nameof(Limit))]
+    public async Task A_source_with_no_finished_pass_needs_no_look_at_14_minutes_and_a_look_at_15_3909(int minutes, bool look, string? words)
+    {
+        var row = await Status(NeverSynced(), Started(TimeSpan.FromMinutes(minutes)), new NoPauses());
+
+        Assert.Equal((look, words), (row.NeedsLook, row.LookWords));
+    }
+
     [Fact, Trait("Lane", "unit")]
-    public async Task A_source_with_no_finished_pass_ten_minutes_after_serve_started_carries_the_look_and_its_words_3832()
+    public async Task A_paused_index_sync_service_never_trips_the_first_sync_limit_3909()
+    {
+        var row = await Status(NeverSynced(), Started(TimeSpan.FromMinutes(40)), new PausedServices(IndexSyncService.ServiceId));
+
+        Assert.False(row.NeedsLook);
+        Assert.Null(row.LookWords);
+    }
+
+    private static SourceProgress NeverSynced() => Source() with { LastSync = null, Pull = "running", Records = 0 };
+
+    private static SourceSyncClock Started(TimeSpan ago)
     {
         var clock = new FakeTimeProvider(_now);
         var started = new SourceSyncClock(clock);
-        clock.Advance(TimeSpan.FromMinutes(10));
-
-        var row = await Status(Source() with { LastSync = null, Pull = "running", Records = 0 }, started);
-
-        Assert.Equal((true, "linear hasn't finished a sync in 10 minutes"), (row.NeedsLook, row.LookWords));
+        clock.Advance(ago);
+        return started;
     }
 
-    private async Task<IndexSourceRow> Status(SourceProgress source, SourceSyncClock started)
+    private async Task<IndexSourceRow> Status(SourceProgress source, SourceSyncClock started, IServicePauses pauses)
     {
         _ = await _h.Profiles.Save(SliceHarness.Profile("5m"), Ct);
         _index.Standing = [source];
         using var caller = _h.Callers.EnterService("test");
 
-        var view = await new GetIndexStatusService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), IndexStoreEngineProxy.Create(_index, new MapHealth("context:store", MapHealthState.Ok, "ok", Fix: null)), started)
+        var view = await new GetIndexStatusService(new ContextScopes(_h.Profiles, _h.Callers, new FakeRepoCheckouts()), IndexStoreEngineProxy.Create(_index, new MapHealth("context:store", MapHealthState.Ok, "ok", Fix: null)), started, pauses)
             .Handle(new GetIndexStatusRequest(), Ct);
 
         Assert.True(view.IsSuccess);

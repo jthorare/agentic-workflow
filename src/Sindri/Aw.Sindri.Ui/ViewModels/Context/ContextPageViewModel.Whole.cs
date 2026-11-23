@@ -172,7 +172,7 @@ internal sealed partial class ContextPageViewModel
         if (read.IsSuccess)
         {
             Whole.ShowArea(read.Value);
-            Problem = string.Empty;
+            SetProblem(string.Empty);
         }
         else
         {
@@ -198,6 +198,7 @@ internal sealed partial class ContextPageViewModel
     {
         OnChanged(nameof(Head));
         OnChanged(nameof(HasHead));
+        OnChanged(nameof(HeadDetail));
         OnChanged(nameof(ShowWhole));
         OnChanged(nameof(ShowWholeStatus));
         OnChanged(nameof(ShowRulesOlder));

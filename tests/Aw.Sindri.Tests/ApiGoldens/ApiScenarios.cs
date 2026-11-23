@@ -53,6 +53,7 @@ internal static class ApiScenarios
         ["Resources"] = ResourceScenarios.All,
         ["AgentStarts"] = AgentStartScenarios.All,
         ["Toolkits"] = ToolkitScenarios.All,
+        ["Home"] = HomeScenarios.All,
         ["WorkflowWrites"] = WorkflowWriteScenarios.All,
         ["Links"] = LinkScenarios.All,
     };
@@ -85,7 +86,9 @@ internal static class ApiScenarios
 
     /// <summary>The last hosts of <see cref="Start"/>: the answered workflow run, the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
-        WorkflowRunScenarios.NeedsHost(slug, scenario)
+        HomeScenarios.Handles(slug, scenario)
+            ? await HomeScenarios.Start(scenario, ct)
+            : WorkflowRunScenarios.NeedsHost(slug, scenario)
             ? await WorkflowRunScenarios.Start(ct)
             : IsSkillOrLinear(slug, scenario)
             ? await StartSkillOrLinear(slug, scenario, ct)
@@ -201,6 +204,7 @@ internal static class ApiScenarios
         : AgentStartScenarios.Handles(slug, scenario) ? () => AgentStartScenarios.Body(host, slug, scenario)
         : ResourceScenarios.Handles(slug, scenario) ? () => ResourceScenarios.Body(host, slug, scenario, ct)
         : ToolkitScenarios.Handles(slug, scenario) ? () => ToolkitScenarios.Body(host, slug, scenario, ct)
+        : HomeScenarios.Handles(slug, scenario) ? () => HomeScenarios.Body(host, slug, scenario, ct)
         : WorkflowWriteScenarios.Handles(slug, scenario) ? () => WorkflowWriteScenarios.Body(host, slug, scenario, ct)
         : Delegated(host, slug, scenario, ct);
 
