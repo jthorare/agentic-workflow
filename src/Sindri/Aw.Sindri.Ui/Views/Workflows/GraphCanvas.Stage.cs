@@ -78,7 +78,7 @@ internal sealed partial class GraphCanvas
     internal void CentreOn(Point world)
     {
         _fitPending = false;
-        Pan = new Point((Bounds.Width / 2) - (world.X * Zoom), (Bounds.Height / 2) - (world.Y * Zoom));
+        PanTo(new Point((Bounds.Width / 2) - (world.X * Zoom), (Bounds.Height / 2) - (world.Y * Zoom)));
     }
 
     // The pan held inside the scroll extent (the world plus the map's 144 px at the bottom): no pan past it, none along an axis that fits.
@@ -94,6 +94,10 @@ internal sealed partial class GraphCanvas
         return new Point(x, y);
     }
 
+    // Sets the pan already held inside the scroll extent, so the value Avalonia keeps is the one on screen. The coerce keeps the value it was given, and a
+    // later zoom's CoerceValue clamps that again: an unclamped value came back as a drift to the bottom edge (#4033). Every writer of Pan goes through here.
+    private void PanTo(Point pan) => Pan = HeldPan(pan);
+
     private void StepTo(int percent)
     {
         _fitPending = false;
@@ -101,6 +105,6 @@ internal sealed partial class GraphCanvas
         Zoom = percent / 100.0;
         var centre = new Point(Bounds.Width / 2, Bounds.Height / 2);
         var k = Zoom / old;
-        Pan = new Point(centre.X - ((centre.X - Pan.X) * k), centre.Y - ((centre.Y - Pan.Y) * k));
+        PanTo(new Point(centre.X - ((centre.X - Pan.X) * k), centre.Y - ((centre.Y - Pan.Y) * k)));
     }
 }

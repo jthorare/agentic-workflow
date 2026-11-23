@@ -47,6 +47,7 @@ internal static partial class Labels
         "building" => CodeIndexBuilding,
         "queued" => CodeIndexQueued,
         "waiting" => "waiting to retry",
+        "unbuildable" => "can't build",
         _ => state,
     };
 

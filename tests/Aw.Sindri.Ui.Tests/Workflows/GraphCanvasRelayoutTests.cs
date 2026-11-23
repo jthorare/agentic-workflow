@@ -130,6 +130,45 @@ public sealed class GraphCanvasRelayoutTests
         Assert.False(scrolls, "after Fit the graph does not fit the shorter canvas");
     }
 
+    [Fact]
+    public async Task Five_zoom_steps_in_keep_the_centre_and_five_out_come_back_to_the_top()
+    {
+        var graph = await Release();
+
+        // 1440 x 728, Fit 100 %, pan y 0, cards to y 432. Keeping the centre (y 364) gives pan y 0, 0, -64, -135.3, -206.6; the clamp's stale value gave -280 (#4033).
+        var (zoomedIn, inPath, zoomedOut) = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = graph };
+            var window = new Window { Content = canvas, Width = 1440, Height = 728 };
+            window.Show();
+            Settle(window);
+            try
+            {
+                var path = new List<double>();
+                for (var i = 0; i < 5; i++)
+                {
+                    canvas.ZoomIn();
+                    path.Add(canvas.Pan.Y);
+                }
+
+                var after = canvas.Pan.Y;
+                for (var i = 0; i < 5; i++)
+                {
+                    canvas.ZoomOut();
+                }
+
+                return (after, string.Join(", ", path.Select(y => y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))), canvas.Pan.Y);
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.True(Math.Abs(zoomedIn - -206.6) <= 0.5, $"after five zoom steps in, pan y went {inPath}, not 0, 0, -64, -135.3, -206.6");
+        Assert.Equal(0, zoomedOut, 3);
+    }
+
     // At Fit, then at 200 % from pan y -100: one wheel down, wheel up to the top edge, one more wheel up. Also the pan y after each zoom step, for the failure message.
     private static (bool AtFit, double Mid, bool TookDown, double AfterDown, double AtTop, bool TookAtTop, string Path) WheelSteps(WorkflowGraphViewModel graph)
     {

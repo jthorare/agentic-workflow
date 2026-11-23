@@ -108,14 +108,14 @@
     },
     {
       "type": "home.row.changed",
-      "keyShape": "home.row.changed:<rowId>:v<version>",
+      "keyShape": "home.row.changed:<rowId>:v<version>:<slot>",
       "invalidates": [
         "home"
       ]
     },
     {
       "type": "home.row.cleared",
-      "keyShape": "home.row.cleared:<rowId>:<ulid>",
+      "keyShape": "home.row.cleared:<rowId>:<slot>",
       "invalidates": [
         "home"
       ]
@@ -136,7 +136,7 @@
     },
     {
       "type": "home.row.raised",
-      "keyShape": "home.row.raised:<rowId>:v<version>",
+      "keyShape": "home.row.raised:<rowId>:<slot>",
       "invalidates": [
         "home"
       ]
