@@ -22,7 +22,7 @@ namespace Aw.Sindri.Features.RerunWorkflowRun;
 /// <param name="starter">Starts or queues the new run and stores the restored node runs before its walk.</param>
 internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter) : IService<RerunWorkflowRunRequest, RerunWorkflowRunResponse>
 {
-    private const string TriggerKind = "rerun";
+    private const string TriggerKind = WorkflowRunNumbers.Rerun;
     private const int Attempts = 50;
 
     public async ValueTask<Result<RerunWorkflowRunResponse>> Handle(RerunWorkflowRunRequest request, CancellationToken cancellationToken)
@@ -116,16 +116,16 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
 
     private async ValueTask<Result<RerunWorkflowRunResponse>> Start(RerunWorkflowRunRequest request, WorkflowRun source, Plan plan, JsonObject? input, CancellationToken cancellationToken)
     {
-        var last = await runs.LatestOccurrence(source.WorkflowId, TriggerKind, cancellationToken).ConfigureAwait(false);
-        if (last.IsError)
+        var next = await WorkflowRunNumbers.Next(runs, source.WorkflowId, cancellationToken).ConfigureAwait(false);
+        if (next.IsError)
         {
-            return last.Error;
+            return next.Error;
         }
 
         var trigger = Trigger(request, source, input).ToJsonString();
         var concurrency = Concurrency(plan.Spec.Concurrency);
-        var occurrence = (last.Value ?? 0) + 1;
-        // why: occurrences are numbered per revision across every trigger kind, so a re-run's number may be a manual run's; the starter refuses a used id with SND-GRAPH-100 and the next number is tried.
+        var occurrence = next.Value;
+        // why: manual runs and re-runs share one count (WorkflowRunNumbers), but two starts at once read the same number, and a hashed connection or call run can hold one; the starter refuses a used id with SND-GRAPH-100 and the next number is tried.
         for (var attempt = 0; attempt < Attempts; attempt++, occurrence++)
         {
             var id = WorkflowRunId.Of(plan.Record.Slug, source.Revision, occurrence);

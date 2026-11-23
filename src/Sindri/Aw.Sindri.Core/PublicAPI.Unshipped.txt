@@ -19647,6 +19647,10 @@ Aw.Sindri.Core.Graph.Runs.NodeRun.Output.get -> string?
 Aw.Sindri.Core.Graph.Runs.NodeRun.Output.init -> void
 Aw.Sindri.Core.Graph.Runs.NodeRun.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
 Aw.Sindri.Core.Graph.Runs.NodeRun.RunId.init -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowRunNumbers
+const Aw.Sindri.Core.Graph.Runs.WorkflowRunNumbers.Manual = "manual" -> string!
+const Aw.Sindri.Core.Graph.Runs.WorkflowRunNumbers.Rerun = "rerun" -> string!
+static Aw.Sindri.Core.Graph.Runs.WorkflowRunNumbers.Next(Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore! runs, Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Sindri.Core.Graph.Rerun.RerunPlan
 static Aw.Sindri.Core.Graph.Rerun.RerunPlan.Branches(Aw.Sindri.Core.Graph.GraphNode! node, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.NodeRun!>! rows) -> System.Collections.Generic.IReadOnlyList<string!>?
 static Aw.Sindri.Core.Graph.Rerun.RerunPlan.Before(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.Ids.NodeId node) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Ids.NodeId>!
