@@ -33,13 +33,33 @@ internal static partial class TsExports
                 }
             }
 
-            var stars = Star.Matches(clean).Where(m => !m.Groups["ns"].Success).Select(m => m.Groups["s"].Value).ToList();
-            return new ModuleExports(declared, aliases, reExports, stars);
+            var (namespaces, stars) = StarsOf(clean);
+            return new ModuleExports(declared, aliases, reExports, namespaces, stars);
         }
         catch (RegexMatchTimeoutException)
         {
             return ModuleExports.Empty;
         }
+    }
+
+    // export * from 'x' (a star) and export * as Ns from 'x' (a namespace; a later one of the same name wins, as TS reports the clash anyway)
+    private static (Dictionary<string, string> Namespaces, List<string> Stars) StarsOf(string clean)
+    {
+        var namespaces = new Dictionary<string, string>(StringComparer.Ordinal);
+        var stars = new List<string>();
+        foreach (Match m in Star.Matches(clean))
+        {
+            if (m.Groups["ns"].Success)
+            {
+                namespaces[m.Groups["ns"].Value] = m.Groups["s"].Value;
+            }
+            else
+            {
+                stars.Add(m.Groups["s"].Value);
+            }
+        }
+
+        return (namespaces, stars);
     }
 
     // a, b as c, default as d  ->  (exported, name)

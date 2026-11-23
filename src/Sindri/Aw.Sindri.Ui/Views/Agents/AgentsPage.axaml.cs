@@ -21,6 +21,8 @@ internal sealed partial class AgentsPage : UserControl
         AddHandler(EndedSessionRow.SelectEvent, OnSelectEnded);
         AddHandler(SessionGroup.ToggleEvent, OnToggle);
         SizeChanged += OnSized;
+        AddHandler(KeyDownEvent, OnAnyKeyDown, RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(TextInputEvent, OnTextInputTunnel, RoutingStrategies.Tunnel);
         TerminalPanel.ShowsList = false;
         TerminalPanel.PaneKeyPressed += (_, e) => _ = Page?.SendPaneKey(e.Name, e.Text);
         TerminalPanel.PanePasted += (_, e) => _ = Page?.SendPanePaste(e.Text);
@@ -113,6 +115,21 @@ internal sealed partial class AgentsPage : UserControl
 
     private bool _focusWasHere;
 
+    // Set when "/" asked for the search box: the key's own "/" text input may reach the box once it has focus, and that one is dropped.
+    private bool _dropSlashText;
+
+    // The next key press means the "/" text (if any) is already gone, so a "/" typed later on purpose is kept.
+    private void OnAnyKeyDown(object? sender, KeyEventArgs e) => _dropSlashText = false;
+
+    private void OnTextInputTunnel(object? sender, TextInputEventArgs e)
+    {
+        if (_dropSlashText && string.Equals(e.Text, "/", StringComparison.Ordinal))
+        {
+            _dropSlashText = false;
+            e.Handled = true;
+        }
+    }
+
     // Under 640 px only Status, Agent and For stay: the page tells the rows, and the head's columns follow.
     private void OnSized(object? sender, SizeChangedEventArgs e) => Split();
 
@@ -124,6 +141,33 @@ internal sealed partial class AgentsPage : UserControl
         Page?.ClearFilters();
     }
 
+
+    private void OnHeadLink(object? sender, RoutedEventArgs e) => Page?.FocusNeedsYou();
+
+    private void OnSortHeader(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string tag } && Enum.TryParse<AgentSort>(tag, out var sort))
+        {
+            Page?.SortBy(sort);
+        }
+    }
+
+    // Posted, like the Queue filter's focus: focused inside KeyDown, the box would also get the key's "/" text input.
+    private void OnSearchRequested(object? sender, EventArgs e)
+    {
+        _dropSlashText = true;
+        Dispatcher.UIThread.Post(() => _ = this.FindControl<TextBox>("AgentsSearch")?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
+    }
+
+    // Esc in the box clears it.
+    private void OnSearchKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && Page is { } page)
+        {
+            page.SearchText = string.Empty;
+            e.Handled = true;
+        }
+    }
 
     private AgentsPageViewModel? Page => DataContext as AgentsPageViewModel;
 
@@ -176,8 +220,10 @@ internal sealed partial class AgentsPage : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         Page?.FocusRequested -= OnFocusRequested;
+        Page?.SearchRequested -= OnSearchRequested;
         base.OnDataContextChanged(e);
         Page?.FocusRequested += OnFocusRequested;
+        Page?.SearchRequested += OnSearchRequested;
     }
 
     private void OnFocusRequested(object? sender, AgentFocusEventArgs request) =>

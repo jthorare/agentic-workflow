@@ -39,7 +39,7 @@ public sealed class ProjectsPolishLinearTests
         sheet.Done += (_, e) => done.Add(e);
         _f.Server.ProjectAnswers[ProjectSheetFixture.Attached] = RouteAnswer.Problem(HttpStatusCode.NotFound, "SND-PROJECT-404", "No project prj_x. `sindri projects` lists them.");
 
-        await sheet.Refresh(ProjectsFixture.Url, Token);
+        await sheet.Refresh(Url, Token);
 
         var e = Assert.Single(done);
         Assert.Equal((ProjectDone.Removed, "Removed elsewhere"), (e.Kind, e.Said));
@@ -59,8 +59,9 @@ public sealed class ProjectsPolishLinearTests
     }
 
     [Fact]
-    public async Task One_Save_sends_the_name_target_links_and_note_in_one_write()
+    public async Task One_Save_on_a_hand_made_project_sends_the_name_target_and_note_in_one_write()
     {
+        _f.Serve(ProjectSheetFixture.Attached, c => c["origin"] = "handMade");   // why: only a hand-made project's name is the owner's; Linear owns an attached one's (spec "Who owns what")
         var sheet = await _f.Opened(ProjectSheetFixture.Attached, Token);
         sheet.BeginEdit();
         (sheet.EditName, sheet.EditTarget, sheet.EditNotes) = ("Renamed", "2027-01-31", "A new note");
@@ -75,7 +76,7 @@ public sealed class ProjectsPolishLinearTests
     [Fact]
     public void The_Add_sheet_opens_on_By_hand_and_says_Linear_is_not_connected_when_it_is_not()
     {
-        var add = new ProjectAddViewModel(_f.Server, () => ProjectsFixture.Url);
+        var add = new ProjectAddViewModel(_f.Server, () => Url);
         add.SetLinearConnected(connected: false);
 
         add.Reset();

@@ -20,7 +20,7 @@ public sealed class TurnAssemblyTests
             new(6, _t.AddSeconds(4), EntryKind.Human, "next", []),
         ]);
 
-        Assert.Equal<string>(["transcript:0a1b2c3d#1 Human go", "transcript:0a1b2c3d#2 Assistant one\ntwo Read,Edit", "transcript:0a1b2c3d#6 Human next"],
+        Assert.Equal(["transcript:0a1b2c3d#1 Human go", "transcript:0a1b2c3d#2 Assistant one\ntwo Read,Edit", "transcript:0a1b2c3d#6 Human next"],
             turns.Select(t => $"{t.Ref.Value} {t.Role} {t.Text}{(t.Tools.Count > 0 ? " " + string.Join(',', t.Tools) : "")}"), StringComparer.Ordinal);
         Assert.Equal(_t.AddSeconds(1), turns[1].At);
     }
@@ -35,7 +35,7 @@ public sealed class TurnAssemblyTests
             new(3, _t, EntryKind.Assistant, "after", []),
         ]);
 
-        Assert.Equal<string>(["before", "after"], turns.Select(t => t.Text), StringComparer.Ordinal);
+        Assert.Equal(["before", "after"], turns.Select(t => t.Text), StringComparer.Ordinal);
         Assert.All(turns, t => Assert.Equal(TurnRole.Assistant, t.Role));
     }
 

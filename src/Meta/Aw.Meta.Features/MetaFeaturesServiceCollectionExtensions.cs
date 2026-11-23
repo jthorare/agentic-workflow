@@ -5,6 +5,9 @@ using Aw.Meta.Core.Ports;
 using Aw.Meta.Core.Worktrees;
 using Aw.Meta.Features.BoardLine;
 using Aw.Meta.Features.CheckMerge;
+using Aw.Meta.Features.Delegate;
+using Aw.Meta.Features.Delegated;
+using Aw.Meta.Features.DelegateDrop;
 using Aw.Meta.Features.GateRerun;
 using Aw.Meta.Features.GateRun;
 using Aw.Meta.Features.Health;
@@ -144,6 +147,14 @@ public static class MetaFeaturesServiceCollectionExtensions
         .AddScoped<ReportDefectService>()
         .AddScoped<IValidator<ReportDefectRequest>, ReportDefectValidator>()
         .Validated<ReportDefectService, ReportDefectRequest, ReportDefectResponse>()
+        .AddScoped<DelegateService>()
+        .AddScoped<IValidator<DelegateRequest>, DelegateValidator>()
+        .Validated<DelegateService, DelegateRequest, DelegateResponse>()
+        .AddScoped<DelegatedService>()
+        .Plain<DelegatedService, DelegatedRequest, DelegatedResponse>()
+        .AddScoped<DelegateDropService>()
+        .AddScoped<IValidator<DelegateDropRequest>, DelegateDropValidator>()
+        .Validated<DelegateDropService, DelegateDropRequest, DelegateDropResponse>()
         .AddScoped<QueueDropService>()
         .AddScoped<IValidator<QueueDropRequest>, QueueDropValidator>()
         .Validated<QueueDropService, QueueDropRequest, QueueDropResponse>()
