@@ -23,7 +23,11 @@ internal sealed class AwMetaTeamReader(IToolRunner runner, Func<string, string?>
     // why: the order Parse reads them in; team-list is optional and read after
     private static readonly string[] _required = ["lanes-context", "status", "usage"];
 
-    public ValueTask<MetaTeamRead> Read(CancellationToken cancellationToken)
+    // why: each aw-meta call blocks for up to the timeout and the scheduler runs a service inline, so the read leaves the caller's thread
+    public async ValueTask<MetaTeamRead> Read(CancellationToken cancellationToken) =>
+        await Task.Run(() => ReadBlocking(cancellationToken), cancellationToken).ConfigureAwait(false);
+
+    private MetaTeamRead ReadBlocking(CancellationToken cancellationToken)
     {
         var program = environment(ProgramVariable) is { Length: > 0 } set ? set : "aw-meta";
         var answers = new List<string>();
@@ -32,14 +36,14 @@ internal sealed class AwMetaTeamReader(IToolRunner runner, Func<string, string?>
             var (output, problem) = Run(program, command, cancellationToken);
             if (problem is not null)
             {
-                return ValueTask.FromResult(MetaTeamRead.NotAvailable(problem));
+                return MetaTeamRead.NotAvailable(problem);
             }
 
             answers.Add(output);
         }
 
         var (teamList, teamProblem) = Run(program, "team-list", cancellationToken);
-        return ValueTask.FromResult(Parse(answers, teamProblem is null ? teamList : null));
+        return Parse(answers, teamProblem is null ? teamList : null);
     }
 
     private static MetaTeamRead Parse(List<string> answers, string? teamList)
