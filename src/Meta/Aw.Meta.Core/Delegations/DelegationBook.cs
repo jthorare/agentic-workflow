@@ -6,7 +6,8 @@ namespace Aw.Meta.Core.Delegations;
 /// <summary>
 /// The delegations as the key-value store keeps them: one line per issue, tab-separated
 /// "issue, lane, session, time (round-trip), delivered (0|1), claude (0|1), url, title, attempt" (attempt empty for none; a line
-/// without it reads as none). A line that doesn't read is skipped, so the next add drops it.
+/// without it reads as none). A line that doesn't read is skipped by <see cref="Parse"/> but kept by <see cref="Add"/> and
+/// <see cref="Without"/>, so a value a later aw-meta wrote, or a damaged line, survives the next write.
 /// </summary>
 public static class DelegationBook
 {
@@ -48,6 +49,33 @@ public static class DelegationBook
         ArgumentNullException.ThrowIfNull(delegation);
         return [.. delegations.Where(d => d.Issue != delegation.Issue), delegation];
     }
+
+    /// <summary>The stored text with <paramref name="delegation"/> written last; the line of an earlier delegation of the same issue is removed, and every other line, unreadable ones too, is kept.</summary>
+    /// <param name="stored">The stored value; null when nothing was delegated yet.</param>
+    /// <param name="delegation">The new delegation.</param>
+    /// <returns>The text to store.</returns>
+    public static string Add(string? stored, Delegation delegation)
+    {
+        ArgumentNullException.ThrowIfNull(delegation);
+        return string.Join('\n', Keep(Lines(stored), delegation.Issue).Append(Format([delegation])));
+    }
+
+    /// <summary>The stored text without the line of <paramref name="issue"/>; every other line, unreadable ones too, is kept.</summary>
+    /// <param name="stored">The stored value.</param>
+    /// <param name="issue">The issue number.</param>
+    /// <returns>The text to store.</returns>
+    public static string Without(string? stored, int issue) => string.Join('\n', Keep(Lines(stored), issue));
+
+    /// <summary>The recorded delegation of one issue.</summary>
+    /// <param name="stored">The stored value.</param>
+    /// <param name="issue">The issue number.</param>
+    /// <returns>The delegation, or null when the issue has none.</returns>
+    public static Delegation? Find(string? stored, int issue) => Parse(stored).LastOrDefault(d => d.Issue == issue);
+
+    private static string[] Lines(string? stored) => stored?.Split('\n', StringSplitOptions.RemoveEmptyEntries) ?? [];
+
+    // The lines whose delegation is not of the issue; an unreadable line is no delegation of it, so it stays.
+    private static IEnumerable<string> Keep(string[] lines, int issue) => lines.Where(l => Line(l)?.Issue != issue);
 
     private static Delegation? Line(string line)
     {
