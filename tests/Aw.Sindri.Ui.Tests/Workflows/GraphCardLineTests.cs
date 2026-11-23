@@ -127,7 +127,7 @@ public sealed class GraphCardLineTests
     [InlineData("user", "1:2/3")]
     [InlineData("user", "p@1/2")]
     [InlineData("", "12/34")]
-    [InlineData("dom/user", "secret")]
+    [InlineData("dom/user", "pw12")]   // no character of a password here is in "GET host/x", so a suffix hit is a real one
     [InlineData("dom?user", "12")]
     [InlineData("[a", "9/8]")]
     public void No_suffix_of_a_url_password_shows_on_the_card(string user, string password)
