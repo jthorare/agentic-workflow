@@ -176,6 +176,14 @@ internal static partial class Labels
         ? "No map yet for " + repos[0]
         : string.Create(CultureInfo.InvariantCulture, $"No map yet for {repos.Count} repositories");
 
+    /// <summary>The No map overlay's sentence when the answer names several repositories: the one Build map button maps them all into one map (#3997).</summary>
+    /// <param name="repos">The repositories the answer names (two or more).</param>
+    /// <returns>"Build map makes one map of both, a and b: ...", or "Build map makes one map of all 3 repositories: ...".</returns>
+    internal static string ContextNoMapReposBody(IReadOnlyList<string> repos) => (repos.Count == 2
+        ? "Build map makes one map of both, " + repos[0] + " and " + repos[1]
+        : string.Create(CultureInfo.InvariantCulture, $"Build map makes one map of all {repos.Count} repositories"))
+        + ": what they are made of and how their parts connect.";
+
     // A short age in the Context page's words.
     private static string ContextAgo(TimeSpan age) => age.TotalMinutes switch
     {

@@ -55,7 +55,13 @@
               "type": "text",
               "required": true,
               "caption": "Connection",
-              "advanced": false
+              "advanced": false,
+              "services": [
+                "github",
+                "linear",
+                "slack",
+                "google"
+              ]
             },
             {
               "name": "event",
@@ -568,6 +574,53 @@
           }
         },
         {
+          "type": "skill_catalog",
+          "title": "Skill catalog",
+          "isTrigger": false,
+          "config": [],
+          "outputs": {
+            "skills": "array",
+            "count": "number"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {},
+          "exampleSpec": {
+            "version": 1,
+            "name": "List the skills",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "skills",
+                "type": "skill_catalog",
+                "config": {}
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "{{skills.count}} skills"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "skills"
+              },
+              {
+                "from": "skills",
+                "to": "tell"
+              }
+            ]
+          }
+        },
+        {
           "type": "call_tool",
           "title": "Toolkit tool",
           "isTrigger": false,
@@ -584,7 +637,8 @@
               "type": "text",
               "required": false,
               "caption": "Connection",
-              "advanced": false
+              "advanced": false,
+              "services": []
             },
             {
               "name": "arguments",

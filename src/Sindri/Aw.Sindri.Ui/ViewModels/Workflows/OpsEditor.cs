@@ -70,12 +70,12 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         {
             // another workflow: nothing of the old one stays to be saved to this one, even when this read fails
             Fields.Clear();
-            (Nodes, BaseRevision, _selected, NodeHeading) = ([], 0, null, string.Empty);
+            (Nodes, BaseRevision, _selected, NodeHeading, NodeIdLine) = ([], 0, null, string.Empty, string.Empty);
         }
 
         (_url, Slug) = (url, slug);
         var read = ++_reads;
-        var workflowRead = api.Workflow(url, slug, cancellationToken);
+        var workflowRead = api.WorkflowNewest(url, slug, cancellationToken);   // the newest revision: after a save on a live workflow that is the saved one, not the live one (#3303)
         var blocksRead = api.WorkflowBlocks(url, cancellationToken);
         await Task.WhenAll(workflowRead, blocksRead).ConfigureAwait(true);
         var (workflow, blocks) = (await workflowRead.ConfigureAwait(true), await blocksRead.ConfigureAwait(true));
@@ -87,7 +87,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         if (workflow.IsError || blocks.IsError)
         {
             var error = workflow.IsError ? workflow.Error : blocks.Error;
-            FailureText = afterSave ? Labels.WfEditSavedReloadFailed(error) : Labels.WfEditLoadFailed(error);
+            (FailureText, _refused) = (afterSave ? Labels.WfEditSavedReloadFailed(error) : Labels.WfEditLoadFailed(error), false);
             return;
         }
 
@@ -115,6 +115,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         var node = Nodes.FirstOrDefault(n => string.Equals(n.Id, nodeId, StringComparison.Ordinal));
         var block = node is null ? null : Groups.SelectMany(g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, node.Type, StringComparison.Ordinal));
         NodeHeading = HeadingOf(node, block);
+        NodeIdLine = node is null ? string.Empty : Labels.WfEditorStepId(node.Id);
         foreach (var field in block?.Config ?? [])
         {
             Fields.Add(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field)));   // why: a block was found, so node is not null
@@ -246,7 +247,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
             return false;
         }
 
-        FailureText = string.Empty;
+        (FailureText, _refused) = (string.Empty, false);
         IsSending = true;
         try
         {
@@ -275,7 +276,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         }
 
         var unsure = string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
-        FailureText = unsure ? Labels.WfEditUnsure(error) : Labels.WfEditRefused(error);
+        (FailureText, _refused) = (unsure ? Labels.WfEditUnsure(error) : Labels.WfEditRefused(error), true);
     }
 
     private static List<EditorNode> ReadNodes(JsonElement spec)

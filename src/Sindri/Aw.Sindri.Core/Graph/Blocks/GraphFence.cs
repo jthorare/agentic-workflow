@@ -181,7 +181,7 @@ public static class GraphFence
             }
 
             GraphTestRecorder.Record($"would have: start workflow '{call.Target.Value}'");
-            return Done(new GraphCalled(WorkflowRunId.Of(call.Target, 1, 1), "succeeded"));
+            return Done(new GraphCalled(WorkflowRunId.StandIn(call.Target), "succeeded"));
         }
 
         public ValueTask<Result<GraphCallEnd>> Wait(WorkflowRunId run, TimeSpan timeout, CancellationToken cancellationToken) =>

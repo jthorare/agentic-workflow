@@ -60,7 +60,7 @@ public sealed class LinearTokenMissingTests
     {
         _ = await _h.Slice.Profiles.Save(Loaded(context), Token);
         using var entered = _h.Human();
-        var reader = new ProjectPageReader(_h.Views.Views, _facts, _h.Slice.Profiles, FakeContextEngine.Instance, _h.Slice.Clock);
+        var reader = new ProjectPageReader(_h.Views.Views, _facts, _h.Slice.Profiles, FakeContextEngine.Instance, _h.Slice.Clock, new FakeProjectTruthFacts());
 
         var result = await new ListProjectsService(reader, _h.Views.Progress, _h.Slice.Callers).Handle(new ListProjectsRequest(All: false), Token);
 

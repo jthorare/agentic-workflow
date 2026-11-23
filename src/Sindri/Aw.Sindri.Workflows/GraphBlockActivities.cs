@@ -109,7 +109,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
     {
         var (fitInput, fitOutput) = (StoredJson.Fit(input.ToJsonString()), StoredJson.Fit(CleanJson(output?.ToJsonString())));
         // why: raw is model text, not JSON, so it keeps a plain cut at the cap and never sets 'Truncated' (#3486)
-        return new(NodeRunStatus.Failed, fitInput.Text, fitOutput.Text, [], NodeRunLimits.Cap(Clean($"{error.Code}: {error.Message}"), out _), NodeRunLimits.Cap(Clean(raw), out _), fitInput.Cut || fitOutput.Cut);
+        return new(NodeRunStatus.Failed, fitInput.Text, fitOutput.Text, [], NodeRunLimits.Cap(Clean($"{error.Code}: {error.Message}"), out _), NodeRunLimits.Cap(Clean(raw), out _), fitOutput.Cut);
     }
 
     private GraphBlockOutcome SucceededBlock(JsonObject input, BlockResult result, bool test)
@@ -121,7 +121,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         }
 
         var (fitInput, fitOutput) = (StoredJson.Fit(input.ToJsonString()), StoredJson.Fit(CleanJson(output.ToJsonString(test ? GraphTestWalk.Readable : null))));
-        return new GraphBlockOutcome(NodeRunStatus.Succeeded, fitInput.Text, fitOutput.Text, result.Taken, Error: null, Truncated: fitInput.Cut || fitOutput.Cut);
+        return new GraphBlockOutcome(NodeRunStatus.Succeeded, fitInput.Text, fitOutput.Text, result.Taken, Error: null, Truncated: fitOutput.Cut);
     }
 
     // why: a stored output is parsed as JSON downstream, so a blocked one becomes a JSON string, never the bare marker (#3376)
@@ -261,7 +261,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
     private static GraphBlockOutcome Failed(JsonObject? input, Kernel.Error error)
     {
         var fitInput = StoredJson.Fit(input?.ToJsonString());
-        return new(NodeRunStatus.Failed, fitInput.Text, Output: null, [], NodeRunLimits.Cap($"{error.Code}: {error.Message}", out _), Truncated: fitInput.Cut);
+        return new(NodeRunStatus.Failed, fitInput.Text, Output: null, [], NodeRunLimits.Cap($"{error.Code}: {error.Message}", out _));
     }
 
     /// <summary>Cuts a block's input or output before it enters the workflow's history; the text that results always parses as JSON (see <see cref="StoredJson.Fit"/>).</summary>

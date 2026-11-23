@@ -38,7 +38,7 @@ internal sealed partial class GraphRig : IAsyncDisposable
     private readonly InMemorySindriStore _ledger;
     private readonly SindriTimeSkippingServer _server;
 
-    private GraphRig(SindriTimeSkippingServer server, RigLog log, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits, int agentLaunchAttempts = 0)
+    private GraphRig(SindriTimeSkippingServer server, RigLog log, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits, int agentLaunchAttempts = 0, IReadOnlyList<IGraphBlock>? moreBlocks = null)
     {
         _server = server;
         _log = log;
@@ -65,7 +65,8 @@ internal sealed partial class GraphRig : IAsyncDisposable
         // why: the real wait polls on a clock; the fake one never moves while a node waits, so the caller gets the system clock
         var caller = new GraphWorkflowCaller(Workflows, Runs, starter, new InMemoryProfiles(), TimeProvider.System);
         Seen = new GraphTestBlocks.MemorySeen();
-        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new ForEachBlock(forEachLimits is { } limits ? new FixedForEachLimits(limits) : new DefaultForEachLimits()), new CollectBlock(), new OnlyNewBlock(GraphFence.Seen(Seen)), new RunWorkflowBlock(caller), new WorkflowCallTrigger(), new WaitBlock(clock), new AskOwnerBlock(GraphFence.Question(Questions), clock), new NotifyBlock(GraphFence.Notify(Ports)), new CreateItemBlock(GraphFence.CreateItem(Ports)), new PromptBlock(Model), .. Blocks.All()]);
+        // why: a rig given its own blocks brings its own 'prompt'; the bare rig runs one over Model so the budget tests can count tokens (#3805)
+        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new ForEachBlock(forEachLimits is { } limits ? new FixedForEachLimits(limits) : new DefaultForEachLimits()), new CollectBlock(), new OnlyNewBlock(GraphFence.Seen(Seen)), new RunWorkflowBlock(caller), new WorkflowCallTrigger(), new WaitBlock(clock), new AskOwnerBlock(GraphFence.Question(Questions), clock), new NotifyBlock(GraphFence.Notify(Ports)), new CreateItemBlock(GraphFence.CreateItem(Ports)), .. Blocks.All(), .. moreBlocks ?? [new PromptBlock(Model)]]);
         var options = new TemporalWorkerOptions(_taskQueue) { LoggerFactory = _log }
             .AddWorkflow<GraphWorkflow>()
             .AddWorkflow<GraphIterationWorkflow>()
@@ -126,7 +127,18 @@ internal sealed partial class GraphRig : IAsyncDisposable
     /// <returns>The started rig.</returns>
     public static Task<GraphRig> StartAsync(ForEachLimits forEachLimits) => StartAsync(agents: null, forEachLimits);
 
-    private static async Task<GraphRig> StartAsync(IAgentNodeRuntime? agents, ForEachLimits? forEachLimits, int agentLaunchAttempts = 0)
+    /// <summary>A rig that also runs <paramref name="moreBlocks"/>, such as a real 'prompt' over a scripted model and a real 'code' run in process.</summary>
+    /// <param name="moreBlocks">The blocks to add; their type names must not repeat the rig's own.</param>
+    /// <returns>The started rig.</returns>
+    public static Task<GraphRig> StartAsync(IReadOnlyList<IGraphBlock> moreBlocks) => StartAsync(agents: null, forEachLimits: null, moreBlocks: moreBlocks);
+
+    /// <summary>A rig with both an agent runtime for 'run_agent' nodes and <paramref name="moreBlocks"/>.</summary>
+    /// <param name="agents">The agent runtime.</param>
+    /// <param name="moreBlocks">The blocks to add.</param>
+    /// <returns>The started rig.</returns>
+    public static Task<GraphRig> StartAsync(IAgentNodeRuntime agents, IReadOnlyList<IGraphBlock> moreBlocks) => StartAsync(agents, forEachLimits: null, moreBlocks: moreBlocks);
+
+    private static async Task<GraphRig> StartAsync(IAgentNodeRuntime? agents, ForEachLimits? forEachLimits, int agentLaunchAttempts = 0, IReadOnlyList<IGraphBlock>? moreBlocks = null)
     {
         // why: the SDK core's own warnings (e.g. 'Error while completing workflow activation ... ACTIVITY_UNKNOWN') go to the runtime of the server's client, so the rig's log is that runtime's logger (issue 2877)
         var log = new RigLog();
@@ -134,7 +146,7 @@ internal sealed partial class GraphRig : IAsyncDisposable
         await server.InitializeAsync();
         try
         {
-            return new GraphRig(server, log, agents, forEachLimits, agentLaunchAttempts);
+            return new GraphRig(server, log, agents, forEachLimits, agentLaunchAttempts, moreBlocks);
         }
         catch
         {

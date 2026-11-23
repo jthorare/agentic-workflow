@@ -45,4 +45,41 @@ public sealed class NewAgentFormFrameTests
 
         Assert.Equal((true, "0 / 8,000", 2, true), result);
     }
+
+    [Fact]
+    public async Task A_repo_picked_in_the_open_form_survives_a_new_repo_list_3888()
+    {
+        var result = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(NewAgentFormFrameTests).Assembly).Dispatch(() =>
+        {
+            var form = new NewAgentFormViewModel(
+                () => new Uri("http://127.0.0.1:7480"),
+                new FakeNewAgentRoute(),
+                new FakeClipboard(),
+                [new RepoChoice("sindri", Onboarded: true), new RepoChoice("ledgerly", Onboarded: true)],
+                new NewAgentDefaults(Repo: null, Agent: null),
+                () => "act000001");
+            form.Open();
+            var view = new NewAgentFormView { DataContext = form };
+            var window = new Window { Width = 1000, Height = 900, Content = view };
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            window.UpdateLayout();
+            try
+            {
+                form.Repo = form.Repos[1];
+                Dispatcher.UIThread.RunJobs();
+
+                form.SetRepos([new RepoChoice("sindri", Onboarded: true), new RepoChoice("ledgerly", Onboarded: true)], new NewAgentDefaults("sindri", Agent: null));
+                Dispatcher.UIThread.RunJobs();
+
+                return form.Repo?.Name;
+            }
+            finally
+            {
+                window.Close();
+            }
+        }, Token);
+
+        Assert.Equal("ledgerly", result);
+    }
 }
