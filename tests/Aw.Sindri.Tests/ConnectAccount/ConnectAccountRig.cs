@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.OAuth;
 using Aw.Sindri.Core.Profile;
@@ -31,11 +32,34 @@ internal sealed class ConnectAccountRig
     /// <summary>Gets the live profile the device flow reads `setup.oauth` from; missing until a test sets it.</summary>
     public InMemoryProfiles Profiles { get; } = new();
 
-    public ConnectAccountService Service() =>
-        new(Slice.Callers, Gh, new AccountProfileWrites(Writer, new AcceptingParser(), Initializer, new FakeShippedEffects()), Connections, Slice.Clock, DeviceFlow());
+    public FakeConnectionSecrets Secrets { get; } = new();
 
-    public DeviceAccountSignIn DeviceFlow() =>
-        new(Device, new FakeConnectionPresets(GitHubPreset), Profiles, new ServiceCollection().BuildServiceProvider().GetRequiredService<IServiceScopeFactory>());
+    /// <summary>Gets the one device flow every service of this rig shares, as the singleton is in the host.</summary>
+    public DeviceAccountSignIn Flow => field ??= new(Device, new FakeConnectionPresets(GitHubPreset), Profiles, Scopes());
+
+    public AccountProfileWrites ProfileWrites() => new(Writer, new AcceptingParser(), Initializer, new FakeShippedEffects(), Profiles);
+
+    public ConnectionEvents Events() => new(Slice.Held, Slice.Store, Slice.Events, Slice.Clock);
+
+    public ConnectAccountService Service() => new(Slice.Callers, Gh, ProfileWrites(), Connections, Slice.Clock, Flow);
+
+    // The background write's scope: the same store, secrets and profile writer the test reads, an open command gate.
+    private IServiceScopeFactory Scopes() => new ServiceCollection()
+        .AddSingleton<IConnectionStore>(Connections).AddSingleton<IConnectionSecrets>(Secrets).AddSingleton<ICommandGate>(new OpenGate())
+        .AddScoped(_ => Events()).AddScoped(_ => ProfileWrites()).AddScoped<DeviceAccountStore>()
+        .BuildServiceProvider().GetRequiredService<IServiceScopeFactory>();
+
+    private sealed class OpenGate : ICommandGate
+    {
+        public ValueTask<IDisposable?> Enter(CancellationToken cancellationToken) => ValueTask.FromResult<IDisposable?>(new Held());
+
+        private sealed class Held : IDisposable
+        {
+            public void Dispose()
+            {
+            }
+        }
+    }
 
     /// <summary>Gets the shipped github preset's shape, with no shipped client id (first-run spec decision 15a).</summary>
     public static ConnectionPreset GitHubPreset { get; } = new("github", "GitHub", ConnectionKind.OAuth, "https://github.com/login/oauth/authorize", "https://github.com/login/oauth/access_token", RevokeUrl: null,

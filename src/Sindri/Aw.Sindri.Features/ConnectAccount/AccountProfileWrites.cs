@@ -13,7 +13,8 @@ namespace Aw.Sindri.Features.ConnectAccount;
 /// <param name="parser">Reads the edited text.</param>
 /// <param name="initializer">Creates the default profile when there is none.</param>
 /// <param name="shipped">The effect kinds a new profile allows.</param>
-internal sealed class AccountProfileWrites(IProfileKeyWriter writer, IProfileTextParser parser, IProfileInitializer initializer, IShippedEffects shipped)
+/// <param name="profiles">The live profile, read before removing `review.credential`.</param>
+internal sealed class AccountProfileWrites(IProfileKeyWriter writer, IProfileTextParser parser, IProfileInitializer initializer, IShippedEffects shipped, IProfileSource profiles)
 {
     private const string CredentialKey = "review.credential";
     private const string SkipKey = "setup.skipAccounts";
@@ -37,6 +38,35 @@ internal sealed class AccountProfileWrites(IProfileKeyWriter writer, IProfileTex
         }
 
         return Saved(writer.PlanRemove(SkipKey)) is { } skipFailed ? skipFailed : Unit.Value;
+    }
+
+    /// <summary>Removes `setup.skipAccounts`, as a device-flow connect does (it writes no `review.credential`). No profile means nothing to clear.</summary>
+    /// <param name="cancellationToken">Unused: the removal is one local file edit.</param>
+    /// <returns>Unit, or the writer's or parser's error.</returns>
+    internal ValueTask<Result<Unit>> ClearSkip(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var plan = writer.PlanRemove(SkipKey);
+        if (plan.IsError && string.Equals(plan.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal))
+        {
+            return ValueTask.FromResult<Result<Unit>>(Unit.Value);
+        }
+
+        return ValueTask.FromResult<Result<Unit>>(Saved(plan) is { } failed ? failed : Unit.Value);
+    }
+
+    /// <summary>Removes `review.credential` when it is the gh command the accounts step wrote; a credential the owner set by hand is kept.</summary>
+    /// <param name="cancellationToken">Cancels the profile read.</param>
+    /// <returns>Unit, or the writer's or parser's error.</returns>
+    internal async ValueTask<Result<Unit>> ClearGhCredential(CancellationToken cancellationToken)
+    {
+        var live = await profiles.Load(cancellationToken).ConfigureAwait(false);
+        if (live.IsError || !string.Equals(live.Value.Profile.Review?.Credential, Core.Connections.GitHubCliCredential.Command, StringComparison.Ordinal))
+        {
+            return Unit.Value;   // no profile, or not the accounts step's credential
+        }
+
+        return Saved(writer.PlanRemove(CredentialKey)) is { } failed ? failed : Unit.Value;
     }
 
     // Has the edited text read and checked (nothing is written on a refusal), then saves it atomically.

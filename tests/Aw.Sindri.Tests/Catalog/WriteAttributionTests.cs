@@ -45,7 +45,8 @@ public sealed class WriteAttributionTests
         ["POST /sindri/workflows/validate"] = "checks a stored spec and returns its findings (ValidateWorkflowService): stores nothing and writes no event",
         ["POST /sindri/setup/skip"] = "edits the live profile file (setup.skipAccounts, setup.skipFirstWorkflow) through the profile key writer, like todos/note/set: writes no ledger event",
         ["POST /sindri/restart"] = "a stub until the restart commit (first-run spec decision 11): it stops the host, so the ledger can't be read after it, and refuses a caller without the human token",
-        ["POST /sindri/setup/accounts/{provider}"] = "a stub until the accounts commit (first-run spec A8): it refuses a caller without the human token and writes to the secret store and the profile, not the ledger",
+        ["POST /sindri/setup/accounts/{provider}"] = "the owner's (first-run spec A8): a launched session gets SND-AUTH-002 and appends nothing; ConnectAccountTests covers the owner's connect",
+        ["DELETE /sindri/setup/accounts/{provider}"] = "the owner's (first-run spec §4.2): a launched session gets SND-AUTH-002 and appends nothing; DisconnectAccountTests covers the owner's disconnect",
     };
 
     // Write routes that do append events but whose caller is proven another way than a launched session's header; not swept here.
