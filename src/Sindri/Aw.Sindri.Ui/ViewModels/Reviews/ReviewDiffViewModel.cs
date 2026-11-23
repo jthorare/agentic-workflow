@@ -3,6 +3,8 @@ namespace Aw.Sindri.Ui.ViewModels.Reviews;
 /// <summary>The diff, the page's right pane (review page spec §6.2, §6.3): its state and words, the file count and the folded or open groups.</summary>
 internal sealed class ReviewDiffViewModel : ObservableObject
 {
+    private readonly ReviewDiffRowList _rows = [];
+
 #pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
     /// <summary>"Files changed".</summary>
     public string TitleText => Labels.ReviewDiffTitle;
@@ -26,10 +28,23 @@ internal sealed class ReviewDiffViewModel : ObservableObject
     /// <summary>The groups, in order.</summary>
     public IReadOnlyList<ReviewDiffGroupViewModel> Groups { get; private set => Set(ref field, value); } = [];
 
+    /// <summary>
+    /// The diff as one flat list in reading order (#2776): group headers, then the open groups' file headers, hunk headers and lines. The view draws it in a
+    /// virtualizing panel, so only the rows in view are built; it is built again when a group folds or opens and when a deleted file's contents show.
+    /// </summary>
+    public IReadOnlyList<ReviewDiffRow> Rows => _rows;
+
+    /// <summary>The index in <see cref="Rows"/> of the row a focus key names (a line, a file header, a group header); -1 when no row has it.</summary>
+    /// <param name="region">The region.</param>
+    /// <param name="key">The key.</param>
+    /// <returns>The index or -1.</returns>
+    internal int RowOf(ReviewFocusRegion region, string key) => ReviewDiffRows.IndexOf(Rows, region, key);
+
     /// <summary>Back to the placeholder while the page is read.</summary>
     internal void ShowLoading()
     {
         (State, Text, CountText, CappedText, Groups) = (ReviewPanelState.Loading, Labels.ReviewDiffReading, string.Empty, string.Empty, []);
+        _rows.ResetTo([]);
         (FocusedFile, FocusedHunk, FocusedLine) = (null, null, null);
     }
 
@@ -47,9 +62,14 @@ internal sealed class ReviewDiffViewModel : ObservableObject
         foreach (var group in groups)
         {
             group.PropertyChanged += OnGroupChanged;
+            foreach (var file in group.Files)
+            {
+                file.PropertyChanged += OnFileChanged;
+            }
         }
 
         (State, Text, Groups) = (state, diff.Text ?? string.Empty, groups);
+        _rows.ResetTo(ReviewDiffRows.Of(groups));
         (FocusedFile, FocusedHunk, FocusedLine) = (null, null, null);
         (CountText, CappedText) = (state == ReviewPanelState.Ready ? Labels.ReviewFiles(diff.FileCount) : string.Empty, diff.CappedText ?? string.Empty);
     }
@@ -145,10 +165,56 @@ internal sealed class ReviewDiffViewModel : ObservableObject
             return;
         }
 
+        if (sender is ReviewDiffGroupViewModel group)
+        {
+            Refold(group);
+        }
+
         OnChanged(nameof(VisibleFiles));
         if (FocusedFile is { } file && !VisibleFiles.Contains(file))
         {
             (FocusedFile, FocusedHunk, FocusedLine) = (null, null, null);
         }
     }
+
+    // Show on a deleted file swaps its hunks in: the flat list gets its lines.
+    private void OnFileChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (sender is not ReviewDiffFileViewModel file || !string.Equals(e.PropertyName, nameof(ReviewDiffFileViewModel.Hunks), StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var at = IndexOf(r => r is ReviewDiffFileRow row && ReferenceEquals(row.File, file), 0);
+        if (at >= 0)
+        {
+            _rows.Replace(at, End(at + 1, static r => r is ReviewDiffFileRow or ReviewDiffGroupRow) - at, ReviewDiffRows.File(file));
+        }
+    }
+
+    // A group folded or opened: only the rows under its header change; the header row (and its focus) stays.
+    private void Refold(ReviewDiffGroupViewModel group)
+    {
+        var at = IndexOf(r => r is ReviewDiffGroupRow row && ReferenceEquals(row.Group, group), 0);
+        if (at >= 0)
+        {
+            _rows.Replace(at + 1, End(at + 1, static r => r is ReviewDiffGroupRow) - at - 1, ReviewDiffRows.Body(group));
+        }
+    }
+
+    private int IndexOf(Func<ReviewDiffRow, bool> match, int from)
+    {
+        for (var i = from; i < _rows.Count; i++)
+        {
+            if (match(_rows[i]))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    // Where a run of rows ends: the first row from `from` that `stop` matches, or the end of the list.
+    private int End(int from, Func<ReviewDiffRow, bool> stop) => IndexOf(stop, from) is var at and >= 0 ? at : _rows.Count;
 }

@@ -11,9 +11,16 @@ internal sealed partial class ShellViewModel
         Health.FollowCards(() => IsSystem);
         PropertyChanged += (_, e) =>
         {
-            if (string.Equals(e.PropertyName, nameof(IsSystem), StringComparison.Ordinal) && IsSystem)
+            if (string.Equals(e.PropertyName, nameof(IsSystem), StringComparison.Ordinal))
             {
-                Health.ReadCards();
+                if (IsSystem)
+                {
+                    Health.ReadCards();
+                }
+                else
+                {
+                    Health.StopCards();
+                }
             }
         };
     }

@@ -19,7 +19,7 @@ Aw.Transcripts.Core.Refs.TurnRef.Equals(Aw.Transcripts.Core.Refs.TurnRef other, 
 Aw.Transcripts.Core.Refs.TurnRef.GetTypeCode() -> System.TypeCode
 Aw.Transcripts.Core.Refs.TurnRef.IsInitialized() -> bool
 Aw.Transcripts.Core.Refs.TurnRef.Line.get -> int
-Aw.Transcripts.Core.Refs.TurnRef.Session.get -> Aw.Transcripts.Core.Refs.SessionRef
+Aw.Transcripts.Core.Refs.TurnRef.SessionOf() -> Aw.Transcripts.Core.Refs.SessionRef
 Aw.Transcripts.Core.Refs.TurnRef.ToString(System.IFormatProvider? provider) -> string!
 Aw.Transcripts.Core.Refs.TurnRef.TurnRef() -> void
 Aw.Transcripts.Core.Refs.TurnRef.Value.get -> string!

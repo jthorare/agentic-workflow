@@ -122,7 +122,7 @@ public sealed class WorkflowGoldenContractTests
         var cron = read.Groups[0].Blocks.Single(b => b.Type == "schedule").Config.Single(f => f.Name == "cron");
         Assert.Equal(("Runs at", "0 7 * * 1-5", "Every weekday at 7:00"), (cron.Caption, cron.Presets![0].Value, cron.Presets[0].Label));
         Assert.Equal("Summarize {{search.facts}}", prompt.ExampleConfig!.Value.GetProperty("prompt").GetString());
-        Assert.Equal(["http", "memory_search", "call_tool", "workflow_result"], read.Groups[1].Blocks.Select(b => b.Type), StringComparer.Ordinal);
+        Assert.Equal(["http", "memory_search", "skill_catalog", "call_tool", "workflow_result"], read.Groups[1].Blocks.Select(b => b.Type), StringComparer.Ordinal);
         Assert.Equal(["code", "collect", "for_each", "memory_forget", "condition", "only_new", "memory_write", "run_workflow", "wait"], read.Groups[3].Blocks.Select(b => b.Type), StringComparer.Ordinal);
         Assert.Equal(["ask_owner", "create_item", "notify"], read.Groups[4].Blocks.Select(b => b.Type), StringComparer.Ordinal);
     }

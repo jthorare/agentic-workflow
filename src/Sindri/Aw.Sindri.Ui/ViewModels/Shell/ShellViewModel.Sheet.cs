@@ -104,7 +104,7 @@ internal sealed partial class ShellViewModel
         IsSheetOpen = true;
         ForgetRowSheetUnless(link);
         OnSheetOpened(link);
-        Changed(nameof(IsItemSheet), nameof(IsNeedsYouSheet), nameof(IsDecisionSheet), nameof(SheetLink), nameof(SheetSubject), nameof(SheetTitle), nameof(SheetName), nameof(EdgeTabName), nameof(EdgeTabText), nameof(IsSheetOpen), nameof(HasEdgeTab), nameof(IsSheetShown), nameof(IsEdgeTabShown), nameof(IsSheetPlaceholderShown));
+        Changed(nameof(IsItemSheet), nameof(IsNeedsYouSheet), nameof(IsDecisionSheet), nameof(SheetLink), nameof(SheetSubject), nameof(SheetTitle), nameof(SheetTitleIsMono), nameof(SheetName), nameof(EdgeTabName), nameof(EdgeTabText), nameof(IsSheetOpen), nameof(HasEdgeTab), nameof(IsSheetShown), nameof(IsEdgeTabShown), nameof(IsSheetPlaceholderShown));
     }
 
     /// <summary>Closes the sheet (Esc); its subject stays on the edge tab.</summary>

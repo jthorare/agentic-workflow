@@ -19,10 +19,11 @@ A node is `running`, `waiting`, `succeeded`, `failed`, `skipped` or `cancelled`.
 
 - A node is `skipped` when it never ran: a branch was not taken, or a failure halted the walk.
 - A node with `onFailure` set to `continue` fails without halting the run. Its own outputs are missing, so later nodes read nothing from it.
+- A node inside a `for_each` loop with `onFailure` set to `skip-item` fails for one item without halting the run. The rest of that item's nodes are `skipped`, and the loop goes on with the next item.
 
 ## What a node run stores
 
-Its input, its output and its error. Each of input and output is stored up to 64 KB. The rest is cut and the row says it was truncated. Free text is scrubbed of secrets before it is stored.
+Its input, its output and its error. Each of input and output is stored up to 64 KB, and the rest is cut. The row says it was truncated only when the output was cut. A later node can't read a cut output (`SND-GRAPH-108`). A cut input leaves the output readable. Free text is scrubbed of secrets before it is stored.
 
 ## How the walk goes
 

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Aw.Sindri.Core.Connections;
 
 namespace Aw.Sindri.Core.Reviews;
@@ -11,6 +12,15 @@ public static class ReviewConnectRules
     /// <param name="code">The source's last error code, or null.</param>
     /// <returns>True for AW-CONNECTORS-006, AW-CONNECTORS-007 and SND-REVIEW-009.</returns>
     public static bool IsSignInCode(string? code) => _signInCodes.Contains(code ?? string.Empty);
+
+    /// <summary>Whether the profile's 'context.sources.github.token' is set: the feed can then read without a connection, so a missing connection is no reason to ask for one.</summary>
+    /// <param name="context">The profile's 'context' section, or null.</param>
+    /// <returns>True when the token pointer is a non-blank string.</returns>
+    public static bool HasProfileToken(JsonElement? context) =>
+        context is { ValueKind: JsonValueKind.Object } root
+        && root.TryGetProperty("sources", out var sources) && sources.ValueKind == JsonValueKind.Object
+        && sources.TryGetProperty("github", out var github) && github.ValueKind == JsonValueKind.Object
+        && github.TryGetProperty("token", out var token) && token.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(token.GetString());
 
     /// <summary>Decides the connect state.</summary>
     /// <param name="account">The GitHub connection as the Connections page has it.</param>
