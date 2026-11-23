@@ -1,6 +1,6 @@
 using Aw.Sindri.Core.Setup;
 
-namespace Aw.Sindri.Host.Commands;
+namespace Aw.Sindri.Host.Commands.SetupApply;
 
 /// <summary>What 'sindri setup --apply --json' answers (first-run spec §5.1): the repos it added, found already there or couldn't add, whether it started serve, the setup pass and the steps after it.</summary>
 /// <param name="Added">The paths of the repos it added.</param>
