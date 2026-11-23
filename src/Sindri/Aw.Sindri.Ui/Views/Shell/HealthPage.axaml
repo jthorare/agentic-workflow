@@ -349,7 +349,8 @@
                       <!-- #4000: cadence and last run are columns of their own, each as wide as its widest row, so last run starts at
                            one x on every row. #4027: Space.XXS between columns plus an 8 px left margin on last run gives Space.SM (12)
                            after the widest cadence; the gaps still add up to 16, so the name column keeps its width and the 20-character
-                           names stay whole at 1000 px, text scale 1.3. A longer name ends in an ellipsis and shows in full on hover. -->
+                           names stay whole at 1000 px, text scale 1.3. A longer name ends in an ellipsis and shows in full on hover.
+                           The margin is a raw 8 because no Thickness token has different sides. -->
                       <Grid Classes="row data-row" ColumnSpacing="{StaticResource Space.XXS}" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding What}">
                         <Grid.ColumnDefinitions>
                           <ColumnDefinition Width="*" />
