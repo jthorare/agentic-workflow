@@ -169,6 +169,7 @@ static Aw.Transcripts.Core.Prompts.CursorPrompt.Body(string! text) -> string!
 static Aw.Transcripts.Core.Prompts.CursorPrompt.Timestamp(string! text) -> System.DateTimeOffset?
 static Aw.Transcripts.Core.Prompts.PromptText.IsTyped(string! text) -> bool
 static Aw.Transcripts.Core.Prompts.PromptText.StripLeadingTagBlocks(string! text) -> string!
+static Aw.Transcripts.Core.Prompts.PromptText.WithoutIdeBlocks(string! text) -> string!
 static Aw.Transcripts.Core.Refs.SessionRef.From(string! value) -> Aw.Transcripts.Core.Refs.SessionRef
 static Aw.Transcripts.Core.Refs.SessionRef.Parse(string! s, System.IFormatProvider? provider) -> Aw.Transcripts.Core.Refs.SessionRef
 static Aw.Transcripts.Core.Refs.SessionRef.TryFrom(string? value, out Aw.Transcripts.Core.Refs.SessionRef vo) -> bool

@@ -1,7 +1,7 @@
 namespace Aw.Sindri.Host.Commands.Transcripts;
 
 /// <summary>One session in the CLI's JSON.</summary>
-/// <param name="Ref">The opaque session ref, 'transcript:&lt;8 hex&gt;'.</param>
+/// <param name="Ref">The opaque session ref, 'transcript:&lt;12 hex&gt;'.</param>
 /// <param name="Provider">'claude-code', 'codex' or 'cursor'.</param>
 /// <param name="StartedAt">The first timestamp in the file.</param>
 /// <param name="LastWrittenAt">The file's write time.</param>
