@@ -218,6 +218,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         _ended.Clear();
         (SelectedKey, IsEmpty, EmptyText) = (null, false, string.Empty);
         OnChanged(nameof(ShowsClearFilters));
+        OnChanged(nameof(ShowsStartHint));
         OnChanged(nameof(EndedHeader));
         OnChanged(nameof(HasEnded));
         OnChanged(nameof(EndedToggleName));
@@ -265,6 +266,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         IsEmpty = kept.Count == 0;
         EmptyText = IsEmpty ? (list.Sessions.Count == 0 ? list.Empty ?? Labels.NoSessionsMatch : Labels.NoSessionsMatch) : string.Empty;
         OnChanged(nameof(ShowsClearFilters));
+        OnChanged(nameof(ShowsStartHint));
         Reselect(before);
     }
 

@@ -28,6 +28,9 @@ internal static partial class Labels
 
     /// <summary>The button on the empty page that goes to the Workflows page.</summary>
 
+    /// <summary>The empty Agents page's hint; N is the page key that opens the New agent form.</summary>
+    internal const string AgentsStartHint = "Press N to start an agent.";
+
     /// <summary>The Agents tab's count while serve is down and no figure was ever read.</summary>
     internal const string AgentsCountUnknown = "unknown";
 
