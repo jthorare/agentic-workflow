@@ -44,6 +44,11 @@ internal sealed class GraphRunResults(IWorkflowStore workflows, IWorkflowRunStor
 
     private async ValueTask<Result<WorkflowRun>> ById(WorkflowRecord record, WorkflowRunId id, CancellationToken cancellationToken)
     {
+        if (id.IsStandIn)
+        {
+            return SindriErrors.GraphResultUnavailable.With($"'{id.Value}' is the stand-in id of a call a test run only recorded; it is no run, so there is no result to read (fix: read a real run, or run the workflow for real)");
+        }
+
         var row = await runs.Get(id, cancellationToken).ConfigureAwait(false);
         if (row.IsError)
         {
