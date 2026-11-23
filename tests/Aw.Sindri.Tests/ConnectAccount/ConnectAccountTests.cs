@@ -10,7 +10,7 @@ namespace Aw.Sindri.Tests.ConnectAccount;
 /// <summary>ConnectAccount for GitHub (first-run spec decisions 13 and 14, §7 row A8): a gh login connects GitHub through `command:gh auth token`, and no token is copied or stored.</summary>
 public sealed class ConnectAccountTests
 {
-    private const string GhCommand = "command:gh auth token";
+    private const string GhCommand = "command:gh auth token --hostname github.com";
 
     private readonly ConnectAccountRig _rig = new();
 

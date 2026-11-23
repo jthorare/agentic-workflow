@@ -23,7 +23,7 @@ public sealed class GitHubConnectionAccountTests : IDisposable
 
     public void Dispose() => _http.Dispose();
 
-    private GitHubConnectionAccount Account() => new(_store, _secrets, new FakeConnectionPresets(), _http, _clock, new ConnectionCredentials(_store, _secrets, new FakeSecretWriter(), new GhRows.Commands()));
+    private GitHubConnectionAccount Account(bool ghSignedIn = true) => new(_store, new FakeConnectionPresets(), _http, _clock, new ConnectionCredentials(_store, _secrets, new FakeSecretWriter(), new GhRows.Commands(ghSignedIn)));
 
     private async Task Add(string label, ConnectionStatus status, string probe = "https://api.github.com/user")
     {
@@ -182,6 +182,31 @@ public sealed class GitHubConnectionAccountTests : IDisposable
         var account = (await Account().Current(CancellationToken.None)).Value;
 
         Assert.Equal(("github:gh", "Bearer " + GhRows.Token), (account.Connection, _handler.Authorization));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Current_reads_with_the_work_row_when_the_newer_gh_login_reads_no_token()
+    {
+        await Add("work", ConnectionStatus.Connected);
+        _ = (await _store.Insert(GhRows.Row(), CancellationToken.None)).Value;   // newer, but gh was signed out since
+        _handler.Answer = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""{"login":"joi-example"}""") };
+
+        var account = (await Account(ghSignedIn: false).Current(CancellationToken.None)).Value;
+
+        Assert.Equal(new GitHubAccount(GitHubAccountState.Connected, "github:work", "joi-example"), account);
+        Assert.Equal("Bearer gho_secret", _handler.Authorization);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Current_with_a_gh_login_and_a_work_row_reads_with_the_newer_gh_login()
+    {
+        await Add("work", ConnectionStatus.Connected);
+        _ = (await _store.Insert(GhRows.Row(), CancellationToken.None)).Value;
+        _handler.Answer = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""{"login":"ada"}""") };
+
+        var account = (await Account().Current(CancellationToken.None)).Value;
+
+        Assert.Equal(("github:gh", "ada", "Bearer " + GhRows.Token), (account.Connection, account.Login, _handler.Authorization));
     }
 
     private sealed class Handler : HttpMessageHandler

@@ -20,8 +20,9 @@ internal static class GhRows
     }
 
     /// <summary>Answers `command:gh auth token` with <see cref="Token"/>; anything else with null.</summary>
-    internal sealed class Commands : ICommandCredentials
+    /// <param name="signedIn">False plays a gh that was signed out after the connect: it prints nothing.</param>
+    internal sealed class Commands(bool signedIn = true) : ICommandCredentials
     {
-        public string? Token(string credential) => string.Equals(credential, GitHubCliCredential.Command, StringComparison.Ordinal) ? GhRows.Token : null;
+        public string? Token(string credential) => signedIn && string.Equals(credential, GitHubCliCredential.Command, StringComparison.Ordinal) ? GhRows.Token : null;
     }
 }

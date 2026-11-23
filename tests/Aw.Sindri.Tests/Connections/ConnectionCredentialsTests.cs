@@ -98,6 +98,15 @@ public sealed class ConnectionCredentialsTests
         Assert.Equal(GhRows.Token, credentials.TokenOf(GhRows.Row()));
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_signed_out_gh_login_does_not_hide_the_older_work_row()
+    {
+        await Connect("github", ConnectionStatus.Connected, "work");
+        _ = (await _connections.Insert(GhRows.Row(), CancellationToken.None)).Value;
+
+        Assert.Equal("github-connection-token-work", new ConnectionCredentials(_connections, _connectionSecrets, _pointers, new GhRows.Commands(signedIn: false)).TokenFor("github", profilePointer: null));
+    }
+
     // ideas on #2590: a pointer that doesn't resolve gives null alone, and never hides a connected connection
     [Theory, MemberData(nameof(Presets)), Trait("Lane", "unit")]
     public async Task A_pointer_that_does_not_resolve_gives_null_alone_and_the_connection_with_one(string preset)

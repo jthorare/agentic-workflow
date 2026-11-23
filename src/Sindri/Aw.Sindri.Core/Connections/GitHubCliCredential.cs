@@ -7,7 +7,7 @@ namespace Aw.Sindri.Core.Connections;
 public static class GitHubCliCredential
 {
     /// <summary>The credential: gh prints its token on each call.</summary>
-    public const string Command = "command:gh auth token";
+    public const string Command = "command:gh auth token --hostname github.com";
 
     /// <summary>The connection config key that holds a `command:` credential.</summary>
     public const string ConfigKey = "credential";

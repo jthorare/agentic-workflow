@@ -21,7 +21,14 @@ public sealed class GitHubKnownReposTests : IDisposable
 
     public void Dispose() => _http.Dispose();
 
-    private GitHubKnownRepos Known() => new(_store, _secrets, _http, new ConnectionCredentials(_store, _secrets, new FakeSecretWriter(), new GhRows.Commands()));
+    private GitHubKnownRepos Known(bool ghSignedIn = true) => new(_store, _http, new ConnectionCredentials(_store, _secrets, new FakeSecretWriter(), new GhRows.Commands(ghSignedIn)));
+
+    private async Task AddWork()
+    {
+        var work = ConnectionSamples.Oauth(ConnectionSamples.Name("github", "work"));
+        _ = (await _store.Insert(work, CancellationToken.None)).Value;
+        _ = _secrets.Store(work.Name, new TokenSet("gho_work", RefreshToken: null, ExpiresAt: null)).Value;
+    }
 
     [Fact, Trait("Lane", "unit")]
     public async Task The_gh_login_connection_reads_the_recent_repos_with_the_gh_token()
@@ -32,6 +39,28 @@ public sealed class GitHubKnownReposTests : IDisposable
 
         Assert.Equal("acme/widgets", Assert.Single(slugs));
         Assert.Equal("Bearer " + GhRows.Token, _handler.Authorization);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_gh_login_and_a_work_row_read_with_the_newer_gh_login()
+    {
+        await AddWork();
+        _ = (await _store.Insert(GhRows.Row(), CancellationToken.None)).Value;
+
+        _ = (await Known().Slugs(CancellationToken.None)).Value;
+
+        Assert.Equal("Bearer " + GhRows.Token, _handler.Authorization);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_signed_out_gh_login_falls_back_to_the_work_row()
+    {
+        await AddWork();
+        _ = (await _store.Insert(GhRows.Row(), CancellationToken.None)).Value;
+
+        var slugs = (await Known(ghSignedIn: false).Slugs(CancellationToken.None)).Value;
+
+        Assert.Equal(("acme/widgets", "Bearer gho_work"), (Assert.Single(slugs), _handler.Authorization));
     }
 
     [Fact, Trait("Lane", "unit")]
