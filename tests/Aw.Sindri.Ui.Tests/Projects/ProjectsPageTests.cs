@@ -203,7 +203,7 @@ public sealed class ProjectsPageTests
 
     private const string ServedMissingKey = "Linear needs a token. Run sindri index connect linear in your terminal to connect it.";
 
-    private async Task<ProjectsPageViewModel> ShownWithMissingKey(Action<System.Text.Json.Nodes.JsonNode>? edit = null)
+    private async Task<ProjectsPageViewModel> ShownWithMissingKey(Action<JsonNode>? edit = null)
     {
         var list = Golden("mixed");
         list["empty"] = ServedMissingKey;
@@ -239,7 +239,7 @@ public sealed class ProjectsPageTests
     [Fact]
     public async Task A_missing_key_banner_with_no_last_read_leaves_the_last_read_out()
     {
-        var page = await ShownWithMissingKey(list => list["freshness"] = new System.Text.Json.Nodes.JsonArray());
+        var page = await ShownWithMissingKey(list => list["freshness"] = new JsonArray());
 
         Assert.Equal("Sindri has no Linear key, so projects aren't refreshing.", page.Sentence);
     }
