@@ -129,6 +129,11 @@ internal sealed class YamlProfileIndexWriter(SindriSettings settings, JsonSerial
 
     private static Result<string> Read(string path)
     {
+        if (ProfileDirectoryInTheWay.At(path) is { } inTheWay)
+        {
+            return inTheWay;
+        }
+
         try
         {
             return File.Exists(path)

@@ -12,6 +12,7 @@ using Aw.Sindri.Features.Items;
 using Aw.Sindri.Features.RecordHeartbeat;
 using Aw.Sindri.Features.StreamEvents;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.HomeRoutes;
 using Aw.Sindri.Tests.Views;
 
 namespace Aw.Sindri.Tests.StreamEvents;
@@ -31,7 +32,7 @@ public sealed class StreamEventsTests
 
         var page = (await StreamEventsServices.Over(h).Handle(new StreamEventsRequest(After: 1), TestContext.Current.CancellationToken)).Value;
 
-        Assert.Equal([2L, 3L], page.Events.Select(e => e.Sequence));
+        Expect.Sequence([2L, 3L], page.Events.Select(e => e.Sequence));
         Assert.All(page.Events, e => Assert.Equal(("service.heartbeat", "local"), (e.Type, e.Tenant)));
         Assert.Equal(3L, page.ScannedTo);
     }
@@ -71,8 +72,8 @@ public sealed class StreamEventsTests
         using var entered = h.Callers.Enter(session);
         var page = (await StreamEventsServices.Over(h).Handle(new StreamEventsRequest(After: 0), ct)).Value;
 
-        Assert.Equal([1L, 2L, 3L, 4L], page.Events.Select(e => e.Sequence));
-        Assert.Equal([mine, mine, other, other], page.Events.Select(e => e.Item));
+        Expect.Sequence([1L, 2L, 3L, 4L], page.Events.Select(e => e.Sequence));
+        Expect.Sequence([mine, mine, other, other], page.Events.Select(e => e.Item));
         Assert.Equal(4L, page.ScannedTo);
     }
 
@@ -88,7 +89,7 @@ public sealed class StreamEventsTests
 
         var page = (await StreamEventsServices.Over(h).Handle(new StreamEventsRequest(After: 0), ct)).Value;
 
-        Assert.Equal([2L], page.Events.Select(e => e.Sequence));
+        Expect.Sequence([2L], page.Events.Select(e => e.Sequence));
         Assert.Equal(2L, page.ScannedTo);
     }
 
@@ -104,7 +105,7 @@ public sealed class StreamEventsTests
 
         var page = (await StreamEventsServices.Over(h).Handle(new StreamEventsRequest(After: 0, Types: TypeFilter.Parse("service.*").Value), ct)).Value;
 
-        Assert.Equal([2L], page.Events.Select(e => e.Sequence));
+        Expect.Sequence([2L], page.Events.Select(e => e.Sequence));
         Assert.Equal(3L, page.ScannedTo);   // the cursor moves past the rows the filter skipped
     }
 
@@ -132,8 +133,8 @@ public sealed class StreamEventsTests
         var byAlias = (await service.Handle(new StreamEventsRequest(After: 0, Ref: ItemRef.To(alias)), ct)).Value;
         var unknown = await service.Handle(new StreamEventsRequest(After: 0, Ref: ItemRef.To(ItemAlias.From("ENG-999"))), ct);
 
-        Assert.Equal([2L], byId.Events.Select(e => e.Sequence));
-        Assert.Equal([1L], byAlias.Events.Select(e => e.Sequence));
+        Expect.Sequence([2L], byId.Events.Select(e => e.Sequence));
+        Expect.Sequence([1L], byAlias.Events.Select(e => e.Sequence));
         Assert.Equal(SindriErrors.ItemNotFound.Code, unknown.Error.Code);
     }
 
@@ -166,7 +167,7 @@ public sealed class StreamEventsTests
 
         var page = (await StreamEventsServices.Over(h).Handle(new StreamEventsRequest(After: 0), ct)).Value;
 
-        Assert.Equal([1L, 2L], page.Events.Select(e => e.Sequence));
+        Expect.Sequence([1L, 2L], page.Events.Select(e => e.Sequence));
         Assert.Equal(2L, page.ScannedTo);
     }
 
@@ -182,8 +183,33 @@ public sealed class StreamEventsTests
 
         var page = (await StreamEventsServices.Over(h).Handle(new StreamEventsRequest(After: 0), ct)).Value;
 
-        Assert.Equal([1L, 2L], page.Events.Select(e => e.Sequence));
+        Expect.Sequence([1L, 2L], page.Events.Select(e => e.Sequence));
         Assert.Equal(2L, page.ScannedTo);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_session_streams_no_home_event_and_its_cursor_moves_past_them()
+    {
+        var h = new SliceHarness();
+        var grant = await h.HoldLease();
+        var ct = TestContext.Current.CancellationToken;
+        var row = HomeFixture.Row(HomeFixture.Review, position: 1);
+        await Append(h, grant, EventTypes.HomeRowRaised, new HomeRowRaised(row, []), "home.row.raised:review:v1");
+        await Append(h, grant, "service.heartbeat", new Heartbeat(h.Clock.GetUtcNow(), h.Clock.GetUtcNow()), "service.heartbeat:1:1");
+        await Append(h, grant, EventTypes.HomeRowRaised, new HomeRowRaised(row with { Version = 2 }, []), "home.row.raised:review:v2");
+
+        var asSession = await Read(h, new CallerContextBuilder().Session().InRepo("demo").Build(), ct);
+        var asHuman = await Read(h, new CallerContextBuilder().Human().Build(), ct);
+
+        Expect.Sequence(["service.heartbeat"], asSession.Events.Select(e => e.Type));
+        Assert.Equal(3L, asSession.ScannedTo);
+        Expect.Sequence([EventTypes.HomeRowRaised, "service.heartbeat", EventTypes.HomeRowRaised], asHuman.Events.Select(e => e.Type));
+    }
+
+    private static async Task<StreamEventsResponse> Read(SliceHarness h, CallerContext caller, CancellationToken ct)
+    {
+        using var entered = h.Callers.Enter(caller);
+        return (await StreamEventsServices.Over(h).Handle(new StreamEventsRequest(After: 0), ct)).Value;
     }
 
     private static async Task Append<TPayload>(SliceHarness h, LeaseGrant grant, string type, TPayload payload, string key, string? item = null) =>

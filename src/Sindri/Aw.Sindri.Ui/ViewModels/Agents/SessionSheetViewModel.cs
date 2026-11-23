@@ -289,6 +289,7 @@ internal sealed partial class SessionSheetViewModel(ISindriApi api) : Observable
         (Sections, IsAsking, InStatusText, RefCopy, StartedText) = ([], false, string.Empty, null, string.Empty);
         EndedResumeText = string.Empty;
         ClearSandbox();
+        ClearHeader();
     }
 
     private static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
