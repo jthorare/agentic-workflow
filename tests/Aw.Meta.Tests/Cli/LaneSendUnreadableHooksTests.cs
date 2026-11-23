@@ -1,6 +1,7 @@
 using System.Text.Json;
-using Aw.Kernel.Data;
-using Aw.Meta.Infrastructure.Sqlite;
+using Aw.Meta.Core.Ports;
+using Aw.Meta.Tests.Delegate;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Meta.Tests.Cli;
 
@@ -23,27 +24,27 @@ public sealed class LaneSendUnreadableHooksTests : IDisposable
             TestContext.Current.CancellationToken);
     }
 
-    // The lane hook beats live in the kv table: with it renamed away, the beat read fails after the message is stored and recorded.
-    private async Task BreakHookState()
+    // The real store fails only on lock, disk or corruption errors, never on purpose: wrap it so the lane hook beat reads fail
+    // ("lane.<lane>.beat"), while the inbox send and the outbound record before them still write.
+    private static void FailBeatReads(IServiceCollection services)
     {
-        var connections = new SqliteConnectionFactory(MetaDatabase.OptionsFor(_cli.File("meta/teams/t1")));
-        await using var connection = (await connections.Open(TestContext.Current.CancellationToken)).Value;
-        await using var rename = connection.CreateCommand();
-        rename.CommandText = "ALTER TABLE kv RENAME TO kv_gone";
-        _ = await rename.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
+        var store = services.Single(static d => d.ServiceType == typeof(IKeyValueStore));
+        var inner = store.ImplementationType ?? throw new InvalidOperationException("IKeyValueStore is no longer registered by type: update this test's decorator");
+        _ = services.Remove(store);
+        _ = services.AddScoped<IKeyValueStore>(sp => new FailingBeatValues((IKeyValueStore)ActivatorUtilities.CreateInstance(sp, inner)));
     }
 
     [Fact, Trait("Lane", "integration")]
     public async Task A_send_stored_for_a_lane_whose_hook_state_cant_be_read_is_attention_exit_1()
     {
         await Ready();
-        await BreakHookState();
+        _cli.Services = FailBeatReads;
 
         var sent = await _cli.Run("lane-send", "--lane", "api", "--text", "please rebase");
 
         Assert.Equal(1, sent.Exit);
         Assert.StartsWith("sent lane-send:api:1 to lane api; not woken", sent.Out, StringComparison.Ordinal);
-        Assert.Contains("attention: lane api is unreadable: its hook state could not be read", sent.Out, StringComparison.Ordinal);
+        Assert.Contains("attention: lane api is unreadable: its hook state could not be read (AW-META-012: beat store unreadable)", sent.Out, StringComparison.Ordinal);
         Assert.DoesNotContain("AW-META-", sent.Err, StringComparison.Ordinal);
     }
 
