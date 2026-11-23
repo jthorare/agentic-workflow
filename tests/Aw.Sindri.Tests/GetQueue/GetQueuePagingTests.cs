@@ -246,7 +246,7 @@ public sealed class GetQueuePagingTests
     private async Task<QueueResponse> Query(IViewReader reader, GetQueueRequest request)
     {
         using var entered = _q.Human();
-        var result = await new GetQueueService(reader, _q.Views.Progress, _q.Views.Slice.Callers).Handle(request, Token);
+        var result = await new GetQueueService(reader, _q.Views.Progress, _q.Views.Slice.Callers, _q.Views.Slice.Held).Handle(request, Token);
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
         return result.Value;
     }
