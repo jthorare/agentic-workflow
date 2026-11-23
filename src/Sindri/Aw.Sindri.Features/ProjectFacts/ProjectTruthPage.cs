@@ -6,12 +6,15 @@ namespace Aw.Sindri.Features.ProjectFacts;
 /// <summary>Puts each card's truth on the page: ONE facts read for the union of every card's sources, then the pure build per card in memory.</summary>
 internal static class ProjectTruthPage
 {
+    /// <summary>The row the page carries when PRs are in scope but no GitHub login is known, so no PR can show as blocked on the owner (issue 3797).</summary>
+    internal static readonly ProjectFreshnessRow NoLogin = new("github-login", ProjectFreshnessState.Failing, "not known: connect GitHub or set review.login to see what is blocked on you", At: null);
+
     /// <summary>Attaches the truth to every card of the page.</summary>
     /// <param name="page">The page built from the owner state and Linear's facts.</param>
     /// <param name="profileRepos">The repos 'review.projects' names, by project key.</param>
     /// <param name="facts">The facts port; read once.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>The page with each card's <see cref="ProjectCard.Truth"/> set; the page with one failing freshness row when the facts read failed.</returns>
+    /// <returns>The page with each card's <see cref="ProjectCard.Truth"/> set, plus <see cref="NoLogin"/> when PRs are in scope and no login is known; the page with one failing freshness row when the facts read failed.</returns>
     internal static async ValueTask<ProjectsPage> Attach(ProjectsPage page, IReadOnlyDictionary<string, IReadOnlyList<string>> profileRepos, IProjectTruthFacts facts, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(page);
@@ -35,6 +38,6 @@ internal static class ProjectTruthPage
         }
 
         ProjectCard With(ProjectCard card) => card with { Truth = ProjectTruths.Build(new ProjectTruthInputs(sources[card.Key], read.Value)) };
-        return page with { Projects = [.. page.Projects.Select(With)], Finished = [.. page.Finished.Select(With)], Hidden = [.. page.Hidden.Select(With)] };
+        return page with { Projects = [.. page.Projects.Select(With)], Finished = [.. page.Finished.Select(With)], Hidden = [.. page.Hidden.Select(With)], Freshness = read.Value.Owner is null && read.Value.Pulls.Count > 0 ? [.. page.Freshness, NoLogin] : page.Freshness };
     }
 }
