@@ -35,7 +35,7 @@ internal static class RepoSymbols
         };
     }
 
-    private static IReadOnlyList<string>? Named(IEnumerable<LensSymbols> columns)
+    private static List<string>? Named(IEnumerable<LensSymbols> columns)
     {
         var names = columns.SelectMany(c => c.Repos ?? []).Distinct(StringComparer.Ordinal).ToList();
         return names.Count == 0 ? null : names;
