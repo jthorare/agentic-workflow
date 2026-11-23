@@ -17,5 +17,6 @@ internal sealed class WorkflowRecordMapper : IRowMapper<WorkflowRecord>
         reader.IsDBNull(3) ? null : reader.GetInt32(3),
         reader.GetInt32(4),
         reader.IsDBNull(5) ? null : SqliteRead.GetTimestamp(reader, 5),
-        reader.GetString(6));
+        reader.GetString(6),
+        reader.GetInt32(7) != 0);
 }

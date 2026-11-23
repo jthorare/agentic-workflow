@@ -6,7 +6,12 @@
       "activeRevision": 1,
       "latestRevision": 1,
       "changedBy": "owner",
-      "changedAt": "2026-01-01T00:00:00.0000000Z"
+      "changedAt": "2026-01-01T00:00:00.0000000Z",
+      "trigger": "By hand",
+      "paused": false,
+      "nextRunAt": null,
+      "lastRun": null,
+      "recent": []
     },
     {
       "slug": "weekly-report",
@@ -14,7 +19,12 @@
       "activeRevision": null,
       "latestRevision": 1,
       "changedBy": "owner",
-      "changedAt": "2026-01-01T00:00:00.0000000Z"
+      "changedAt": "2026-01-01T00:00:00.0000000Z",
+      "trigger": "By hand",
+      "paused": false,
+      "nextRunAt": null,
+      "lastRun": null,
+      "recent": []
     }
   ]
 }
