@@ -82,6 +82,7 @@ public sealed class GoldenContractTests
         ["workflows-slug-runs"] = As<WorkflowRunList>,   // GET /workflows/{slug}/runs: a workflow's runs
         ["workflow-runs-run"] = As<WorkflowRunView>,   // GET /workflow-runs/{run}: a run's detail
         ["workflow-runs-run-cancel"] = As<WorkflowRunCancelled>,   // POST /workflow-runs/{run}/cancel's cancelled body (the API golden cancels a queued run)
+        ["workflow-runs-run-seen"] = As<WorkflowRunSeen>,   // POST /workflow-runs/{run}/seen: the run page marks a failed live run seen when it opens (#3753; spec-shaped until the route's golden is recorded)
         ["workflow-runs-run-nodes-node-takeover"] = As<AgentNodeControlled>,   // POST /workflow-runs/{run}/nodes/{node}/takeover's taken-over body; the refusals are ProblemDetails
         ["workflow-runs-run-nodes-node-handback"] = As<AgentNodeControlled>,   // POST .../handback's handed-back body; the refusals are ProblemDetails
         ["jobs-id-cancel"] = As<CommandAcceptedView>,   // POST /jobs/{id}/cancel's accepted answer; the refusals are ProblemDetails
@@ -195,6 +196,7 @@ public sealed class GoldenContractTests
         "todos-note-import",   // POST /todos/note/import (todo Ph3b): dry-run, imported and the stale 409; the app's Import and start syncing reads it with its own view once the card's golden contract lists it
         "workflows-validate",   // #2258 PR 8b: validate is the CLI's; ops and activate are read above
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
+        "messages-lists-id", "messages-status", "messages-conversations", "messages-conversations-id-messages", "messages-threads-id-id", "messages-search",   // messages spec §8.2 (M1s): M1f records these goldens; M1k and M1l move the ones the page reads to _read with their views
     };
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;

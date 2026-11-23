@@ -35,7 +35,7 @@ internal static class ContextSlicesServiceCollectionExtensions
     /// <summary>The 'index-sync' service (owned-index spec §5.5) and its five-minute built-in schedule, with the index's status read and purge command (§5.8).</summary>
     private static IServiceCollection AddIndexSyncService(this IServiceCollection services)
     {
-        _ = services.AddScoped<IValidator<GetIndexStatusRequest>, AcceptAllValidator<GetIndexStatusRequest>>().AddQuery<GetIndexStatusRequest, IndexStatusView, GetIndexStatusService>();
+        _ = services.AddSingleton<SourceSyncClock>().AddScoped<IValidator<GetIndexStatusRequest>, AcceptAllValidator<GetIndexStatusRequest>>().AddQuery<GetIndexStatusRequest, IndexStatusView, GetIndexStatusService>();
         _ = services.AddScoped<IContextSourceHealth, ContextSourceHealth>();   // #4010: a source that needs a look is a status health problem too
         _ = services.AddScoped<IValidator<PurgeIndexSourceRequest>, AcceptAllValidator<PurgeIndexSourceRequest>>().AddCommand<PurgeIndexSourceRequest, IndexPurgeView, PurgeIndexSourceService>();
         return services
