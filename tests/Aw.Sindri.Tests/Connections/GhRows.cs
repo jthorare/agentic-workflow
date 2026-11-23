@@ -1,5 +1,5 @@
-using Aw.Sindri.Core.Connections;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Connections;
 
 namespace Aw.Sindri.Tests.Connections;
 

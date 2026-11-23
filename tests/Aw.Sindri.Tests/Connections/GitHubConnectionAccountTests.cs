@@ -1,6 +1,6 @@
 using System.Net;
-using Aw.Sindri.Core.Connections;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Infrastructure.Connections.GitHub;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
@@ -23,7 +23,22 @@ public sealed class GitHubConnectionAccountTests : IDisposable
 
     public void Dispose() => _http.Dispose();
 
-    private GitHubConnectionAccount Account(bool ghSignedIn = true) => new(_store, new FakeConnectionPresets(), _http, _clock, new ConnectionCredentials(_store, _secrets, new FakeSecretWriter(), new GhRows.Commands(ghSignedIn)));
+    // why: a gh login row carries no probeUrl of its own, so the read takes the shipped preset's (config/connections/presets/github.json)
+    private static readonly ConnectionPreset _github = new(
+        "github",
+        "GitHub",
+        ConnectionKind.OAuth,
+        AuthorizeUrl: "https://github.com/login/oauth/authorize",
+        TokenUrl: "https://github.com/login/oauth/access_token",
+        RevokeUrl: null,
+        DefaultScopes: ["repo", "read:org"],
+        HostGroup: "github",
+        LoopbackAllowed: true,
+        SignInNote: "A note.",
+        PollableEvents: [],
+        ProbeUrl: "https://api.github.com/user");
+
+    private GitHubConnectionAccount Account(bool ghSignedIn = true) => new(_store, new FakeConnectionPresets(_github), _http, _clock, new ConnectionCredentials(_store, _secrets, new FakeSecretWriter(), new GhRows.Commands(ghSignedIn)));
 
     private async Task Add(string label, ConnectionStatus status, string probe = "https://api.github.com/user")
     {
