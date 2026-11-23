@@ -13,33 +13,33 @@ public sealed class ScrollbackShiftTests
 {
     [Fact]
     public void Rows_that_did_not_move_are_shift_zero() =>
-        Expect.Equal<int?>(0, ScrollbackShift.Find(["d", "e", "f"], ["a", "b", "c", "d", "e", "f"], extra: 3));
+        Expect.Equal(0, ScrollbackShift.Find(["d", "e", "f"], ["a", "b", "c", "d", "e", "f"], extra: 3));
 
     [Fact]
     public void Rows_that_moved_up_are_the_shift_of_the_rows_that_arrived() =>
-        Expect.Equal<int?>(2, ScrollbackShift.Find(["b", "c", "d"], ["a", "b", "c", "d", "e", "f"], extra: 3));
+        Expect.Equal(2, ScrollbackShift.Find(["b", "c", "d"], ["a", "b", "c", "d", "e", "f"], extra: 3));
 
     [Fact]
     public void Rows_at_the_top_of_the_capture_are_the_largest_shift() =>
-        Expect.Equal<int?>(2, ScrollbackShift.Find(["a", "b"], ["a", "b", "c", "d"], extra: 2));
+        Expect.Equal(2, ScrollbackShift.Find(["a", "b"], ["a", "b", "c", "d"], extra: 2));
 
     [Fact]
     public void Repeated_rows_take_the_smallest_shift() =>
-        Expect.Equal<int?>(0, ScrollbackShift.Find(["x", "x"], ["x", "x", "x", "x"], extra: 2));
+        Expect.Equal(0, ScrollbackShift.Find(["x", "x"], ["x", "x", "x", "x"], extra: 2));
 
     [Fact]
     public void Rows_found_at_no_shift_are_no_match() =>
-        Expect.Equal<int?>(expected: null, ScrollbackShift.Find(["p", "q"], ["a", "b", "c", "d"], extra: 2));
+        Expect.Equal(expected: null, ScrollbackShift.Find(["p", "q"], ["a", "b", "c", "d"], extra: 2));
 
     [Fact]
     public void A_blank_view_is_shift_zero() =>
-        Expect.Equal<int?>(0, ScrollbackShift.Find(["", "  "], ["a", "b", "c", "d"], extra: 2));
+        Expect.Equal(0, ScrollbackShift.Find(["", "  "], ["a", "b", "c", "d"], extra: 2));
 
     [Fact]
     public void Without_extra_rows_only_shift_zero_is_tried()
     {
-        Expect.Equal<int?>(0, ScrollbackShift.Find(["a", "b"], ["a", "b"], extra: 0));
-        Expect.Equal<int?>(expected: null, ScrollbackShift.Find(["a", "b"], ["b", "c"], extra: 0));
+        Expect.Equal(0, ScrollbackShift.Find(["a", "b"], ["a", "b"], extra: 0));
+        Expect.Equal(expected: null, ScrollbackShift.Find(["a", "b"], ["b", "c"], extra: 0));
     }
 
     [Theory]

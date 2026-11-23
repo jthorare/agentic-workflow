@@ -9,7 +9,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Proposals;
 
-/// <summary>The 'proposal' tables of ledger.db (migration 23): save, the merge of the same proposal, reject and the rejected-before rule, on a fresh file.</summary>
+/// <summary>The 'proposal' tables of ledger.db (migration 24): save, the merge of the same proposal, reject and the rejected-before rule, on a fresh file.</summary>
 [Lane(TestLane.Integration)]
 public sealed class SqliteProposalStoreTests : IDisposable
 {

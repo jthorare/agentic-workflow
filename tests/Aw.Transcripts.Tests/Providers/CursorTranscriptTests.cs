@@ -34,6 +34,22 @@ public sealed class CursorTranscriptTests : IDisposable
     }
 
     [Fact]
+    public async Task A_line_of_an_unknown_shape_is_counted_as_skipped()
+    {
+        var path = _roots.Write("cursor/projects/work-gamma/agent-transcripts/c2/c2.jsonl", _written,
+            CursorLines.User("fix it"),
+            """{"foo":1}""",
+            """{"role":"user"}""",
+            """{"role":"robot","message":{"content":"x"}}""",
+            CursorLines.TurnEnded());
+
+        var read = (await _roots.Corpus().ReadSession(TranscriptRefs.ForFile(TranscriptProvider.Cursor, path), CancellationToken.None)).Value;
+
+        Assert.Equal(1, read.Session.HumanTurns);
+        Assert.Equal(3, read.SkippedLines);
+    }
+
+    [Fact]
     public async Task A_subagent_transcript_has_no_human_turn_and_links_its_parent()
     {
         var parent = _roots.Write("cursor/projects/work-gamma/agent-transcripts/c1/c1.jsonl", _written, CursorLines.User("go"));

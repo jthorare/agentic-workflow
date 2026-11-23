@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Temp-dir cleanup (#3262): every mktemp this suite makes is recorded and removed when it exits.
+__aw_tmp_reg="$(command mktemp)"
+mktemp() { local p; p="$(command mktemp "$@")" || return; printf '%s\n' "$p" >>"$__aw_tmp_reg"; printf '%s\n' "$p"; }
+__aw_tmp_clean() { local rc=$? p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null || true; rm -rf "$p" || true; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; exit "$rc"; }
+trap __aw_tmp_clean EXIT
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK="$DIR/../../hooks/send-gate.sh"
 # The hook logs fail-open events under $AW_STATE_DIR (default ~/.agentic-workflow): this suite gets its own, never an inherited one.
 AW_STATE_DIR="$(mktemp -d)" || exit 2; export AW_STATE_DIR
-trap 'find "$AW_STATE_DIR" -delete 2> /dev/null' EXIT
 
 # Every fake judge reads all of stdin before it answers, like the real one. The hook runs under pipefail, so a stub that
 # exits without reading lets the hook's `printf | judge` die of SIGPIPE (141) when the stub wins the race, which a loaded

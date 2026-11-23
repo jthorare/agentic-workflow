@@ -5,16 +5,22 @@ namespace Aw.Transcripts.Infrastructure.Repos;
 /// <summary>
 /// Maps a session's cwd to the main repo it belongs to: the nearest directory with a '.git'. A '.git' file is a
 /// worktree's (or a submodule's) pointer, 'gitdir: &lt;dir&gt;'; that dir's 'commondir' names the main repo's git dir,
-/// whose parent is the main checkout. A cwd that no longer exists, or is in no repo, is kept as it is.
+/// whose parent is the main checkout. A cwd that no longer exists, or is in no repo, is kept as it is. A cwd that is no
+/// valid path (a NUL byte) has no repo: null, never an exception.
 /// </summary>
 internal sealed class RepoResolver
 {
-    private readonly ConcurrentDictionary<string, string> _known = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, string?> _known = new(StringComparer.Ordinal);
 
-    public string Resolve(string cwd) => _known.GetOrAdd(cwd, Find);
+    public string? Resolve(string cwd) => _known.GetOrAdd(cwd, Find);
 
-    private static string Find(string cwd)
+    private static string? Find(string cwd)
     {
+        if (cwd.AsSpan().IndexOfAny(Path.GetInvalidPathChars()) >= 0)
+        {
+            return null;
+        }
+
         if (!Path.IsPathFullyQualified(cwd))
         {
             return cwd;
@@ -36,7 +42,7 @@ internal sealed class RepoResolver
                 }
             }
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {
             return cwd;
         }
