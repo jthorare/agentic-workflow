@@ -1,7 +1,9 @@
 using System.Net;
 using System.Threading.Channels;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
+using Aw.Sindri.Core.Connections.OAuth;
 using Aw.Sindri.Infrastructure.Connections;
 using Microsoft.Extensions.Time.Testing;
 
@@ -57,6 +59,88 @@ public sealed class GitHubDeviceSignInTests : IDisposable
         Assert.True(tokens.IsSuccess, tokens.IsError ? tokens.Error.ToString() : null);
         Assert.Equal("gho_device", tokens.Value.AccessToken);
         Assert.Equal("client_id=Iv1.sindri-test&device_code=dc-secret&grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code", _fake.Bodies[^1]);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Slow_down_adds_five_seconds_to_the_wait()
+    {
+        var started = await Started(interval: "5", expiresIn: "900");
+        _fake.Polls.Enqueue("""{"error":"slow_down"}""");
+        _fake.Polls.Enqueue("""{"access_token":"gho_device"}""");
+
+        var completing = SignIn().Complete(_github, Client, started, Token).AsTask();
+        _clock.Advance(TimeSpan.FromSeconds(5));
+        _ = await _fake.NextPoll(Token);
+        _clock.Advance(TimeSpan.FromSeconds(10));
+        var second = await _fake.NextPoll(Token);
+
+        Assert.Equal(KnownInstants.Epoch.AddSeconds(15), second);
+        Assert.Equal("gho_device", (await completing).Value.AccessToken);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_code_that_expires_before_the_owner_approves_ends_as_expired_without_a_token()
+    {
+        var started = await Started(interval: "5", expiresIn: "8");
+
+        var completing = SignIn().Complete(_github, Client, started, Token).AsTask();
+        _clock.Advance(TimeSpan.FromSeconds(5));
+        _ = await _fake.NextPoll(Token);   // pending; the next wait would pass the code's expiry
+        var result = await completing;
+
+        Assert.Equal(SindriErrors.ConnectionSignInTimeout.Code, result.Error.Code);
+        Assert.DoesNotContain("dc-secret", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("access_denied", "SND-CONN-009")]
+    [InlineData("expired_token", "SND-CONN-003")]
+    [InlineData("device_flow_disabled", "SND-SETUP-013")]
+    [InlineData("something_new", "SND-CONN-012")]
+    public async Task A_final_poll_error_ends_the_sign_in_with_its_code(string error, string code)
+    {
+        var started = await Started(interval: "5", expiresIn: "900");
+        _fake.Polls.Enqueue($$"""{"error":"{{error}}","error_description":"dc-secret leaked"}""");
+
+        var completing = SignIn().Complete(_github, Client, started, Token).AsTask();
+        _clock.Advance(TimeSpan.FromSeconds(5));
+        var result = await completing;
+
+        Assert.Equal(code, result.Error.Code);
+        Assert.DoesNotContain("dc-secret", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_app_github_refuses_at_the_device_endpoint_is_setup_013()
+    {
+        _fake.Device = """{"error":"unauthorized_client","error_description":"blocked by your org"}""";
+
+        var started = await SignIn().Start(_github, Client, [], Token);
+
+        Assert.Equal(SindriErrors.SetupOauthBlocked.Code, started.Error.Code);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_preset_without_a_device_endpoint_has_no_device_sign_in()
+    {
+        var started = await SignIn().Start(_github with { DeviceCodeUrl = null }, Client, [], Token);
+
+        Assert.Equal(SindriErrors.InvalidInput.Code, started.Error.Code);
+        Assert.Empty(_fake.Bodies);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_authorization_never_prints_its_device_code()
+    {
+        var authorization = new DeviceAuthorization("dc-secret", "ABCD-1234", new Uri("https://github.com/login/device"), KnownInstants.Epoch, TimeSpan.FromSeconds(5));
+
+        Assert.DoesNotContain("dc-secret", authorization.ToString(), StringComparison.Ordinal);
+    }
+
+    private async Task<DeviceAuthorization> Started(string interval, string expiresIn)
+    {
+        _fake.Device = $$"""{"device_code":"dc-secret","user_code":"ABCD-1234","verification_uri":"https://github.com/login/device","expires_in":{{expiresIn}},"interval":{{interval}}}""";
+        return (await SignIn().Start(_github, Client, [], Token)).Value;
     }
 
     /// <summary>GitHub's device and token endpoints: a fixed device answer, a queue of poll answers, and the clock time of each poll.</summary>

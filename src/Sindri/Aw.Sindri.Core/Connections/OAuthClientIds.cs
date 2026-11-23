@@ -12,7 +12,20 @@ public static class OAuthClientIds
     /// <returns>The client id, or SND-SETUP-014 when neither holds one.</returns>
     public static Result<string> For(ConnectionPreset preset, SetupOauthSettings? oauth)
     {
-        GC.KeepAlive((preset, oauth));
-        throw new NotSupportedException("OAuthClientIds is not built yet (Part of #3321)");
+        ArgumentNullException.ThrowIfNull(preset);
+        var fromProfile = preset.Key switch
+        {
+            "github" => oauth?.Github,
+            "linear" => oauth?.Linear,
+            _ => null,
+        };
+        if (!string.IsNullOrWhiteSpace(fromProfile))
+        {
+            return fromProfile.Trim();
+        }
+
+        return !string.IsNullOrWhiteSpace(preset.ShippedClient)
+            ? preset.ShippedClient.Trim()
+            : SindriErrors.SetupNoClientId.With($"This build has no {preset.DisplayName} app id and the profile sets none in setup.oauth.{preset.Key}. Paste a token instead (fix: sindri setup connect {preset.Key} --token-env NAME)");
     }
 }
