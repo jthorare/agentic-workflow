@@ -92,6 +92,15 @@ public sealed class GraphResultOutputsTests
     }
 
     [Fact]
+    public void A_failed_collect_that_continue_let_pass_gives_no_slot_not_its_item_rows()
+    {
+        var spec = Spec(["start", "loop", "body", "gather"], [("start", "loop"), ("loop", "body"), ("body", "gather")], result: "gather");
+        NodeRun[] rows = [Row("start", "{}"), Row("loop", "{}"), Row("gather", """{"value":1}""", item: 1), Row("gather", "{}", status: NodeRunStatus.Failed)];
+
+        Assert.Null(GraphResultOutputs.Build(spec, rows));
+    }
+
+    [Fact]
     public void A_named_body_node_still_gives_its_item_outputs_in_item_order()
     {
         // why: a body node has rows at items 1..N and none at 0, so naming it as the result keeps the per-item list
