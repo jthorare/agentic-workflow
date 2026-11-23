@@ -57,6 +57,7 @@ public static class EventCatalog
         new(EventTypes.ProjectDetached, Public: true, typeof(ProjectDetached), "project.detached:<projectId>:v<version>") { Invalidates = [ApiViews.Projects] },
         new(EventTypes.ProjectHidden, Public: true, typeof(ProjectHidden), "project.hidden:<linear>:v<version>") { Invalidates = [ApiViews.Projects] },
         new(EventTypes.ProjectLedNoted, Public: true, typeof(ProjectLedNoted), "project.led.noted:<linear>:v<version>") { Invalidates = [ApiViews.Projects] },
+        new(EventTypes.MessagesSynced, Public: false, PublicPayload: null, "messages.synced:<epoch>:<slot>"),   // messages spec §5.3 (M1e writes it): counts only; private until a page reads it
         new(EventTypes.LinearIssueCreated, Public: false, PublicPayload: null, "linear.issue.created:<clientId>"),
         new(EventTypes.LinearCommentPosted, Public: false, PublicPayload: null, "linear.comment.posted:<clientId>"),
         new(EventTypes.LinearIssueChanged, Public: false, PublicPayload: null, "linear.issue.changed:<issue key>:<commandId>"),

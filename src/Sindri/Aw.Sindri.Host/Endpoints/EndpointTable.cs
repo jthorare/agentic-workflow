@@ -64,6 +64,7 @@ internal static class EndpointTable
         _ = queries.MapHomeReads();
         _ = queries.MapWorkflowReads();
         _ = queries.MapGetProjects();
+        _ = queries.MapMessagesReads();
         _ = queries.MapGetLinearLookups();
         _ = queries.MapGetLinearSince();
         _ = queries.MapGetLinearConnection();
