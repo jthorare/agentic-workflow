@@ -9,6 +9,8 @@ internal static class ViewSql
     internal const string VersionTable = "schema_version";
     /// <summary>1 when at least $count migrations are recorded: the file is fully migrated for this build.</summary>
     internal const string AllApplied = "SELECT (SELECT COUNT(*) FROM schema_version) >= $count";
+    /// <summary>How many migrations are recorded (the doctor's older-store row).</summary>
+    internal const string CountApplied = "SELECT COUNT(*) FROM schema_version";
     /// <summary>Whether a table exists: views.db is created before its migration commits, so a reader can open it with no tables yet.</summary>
     internal const string TableExists = "SELECT EXISTS (SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = $name)";
 
@@ -50,6 +52,8 @@ internal static class ViewSql
         [ViewNames.ItemLinks] = new ViewTable("view_item_links"),
         [ViewNames.WorkflowRuns] = new ViewTable("view_workflow_runs"),
         [ViewNames.Todo] = new ViewTable("view_todo"),
+        [ViewNames.HomeRows] = new ViewTable("view_home_rows", Columns(ViewNames.HomeRows)),
+        [ViewNames.HomeLinks] = new ViewTable("view_home_links", Columns(ViewNames.HomeLinks)),
     };
 
     /// <summary>The columns migrations 0003, 0004 and 0005 generate for <paramref name="view"/>: the ones <see cref="ViewColumns"/> maps, named after the column.</summary>

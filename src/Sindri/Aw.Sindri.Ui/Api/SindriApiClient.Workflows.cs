@@ -25,6 +25,10 @@ internal sealed partial class SindriApiClient
         Get<WorkflowView>(api, WorkflowRoutes.One(slug), cancellationToken);
 
     /// <inheritdoc />
+    public Task<Result<WorkflowView>> WorkflowNewest(Uri api, string slug, CancellationToken cancellationToken) =>
+        Get<WorkflowView>(api, WorkflowRoutes.Newest(slug), cancellationToken);
+
+    /// <inheritdoc />
     public Task<Result<WorkflowRunList>> WorkflowRuns(Uri api, string slug, CancellationToken cancellationToken) =>
         Get<WorkflowRunList>(api, WorkflowRoutes.Runs(slug), cancellationToken);
 
@@ -43,6 +47,10 @@ internal sealed partial class SindriApiClient
     /// <inheritdoc />
     public Task<Result<WorkflowRunCancelled>> CancelWorkflowRun(Uri api, string runId, CancellationToken cancellationToken) =>
         Call<WorkflowRunCancelled>(api, HttpMethod.Post, WorkflowRoutes.Cancel(runId), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<WorkflowRunSeen>> MarkWorkflowRunSeen(Uri api, string runId, CancellationToken cancellationToken) =>
+        Call<WorkflowRunSeen>(api, HttpMethod.Post, WorkflowRoutes.Seen(runId), cancellationToken);
 
     /// <inheritdoc />
     public Task<Result<AgentNodeControlled>> TakeOverAgentNode(Uri api, string runId, string node, int itemIndex, CancellationToken cancellationToken) =>

@@ -14,8 +14,9 @@ namespace Aw.Sindri.Features.GetStatus;
 /// <param name="stalled">The agent runs idle past their launch's idle time (issue #1000); none when this build has no launcher.</param>
 /// <param name="builds">The running and installed build stamps; none outside an install.</param>
 /// <param name="clock">Now, for how long a stalled launch still counts; none counts them all.</param>
+/// <param name="sources">The context sources' health rows (#4010); none when the build has no context engine.</param>
 internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInService> builtIns, ICodeIndexHealth? codeIndex = null, IStalledAgentRuns? stalled = null,
-    IBuildStamps? builds = null, TimeProvider? clock = null)
+    IBuildStamps? builds = null, TimeProvider? clock = null, IContextSourceHealth? sources = null)
 {
     /// <summary>What the health reads besides the views and the services: the code index's problems and now (for how long ago a service failed).</summary>
     /// <param name="codeIndexProblems">The code index's problems.</param>
@@ -62,4 +63,11 @@ internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInSe
     /// <returns>The problems; none when there is no index port or nothing to read.</returns>
     public async ValueTask<IReadOnlyList<HealthProblem>> CodeIndexProblems(LoadedProfile? approved, CancellationToken cancellationToken) =>
         codeIndex is null ? [] : await codeIndex.Problems(approved, cancellationToken).ConfigureAwait(false);
+
+    /// <summary>The context sources that need a look, one problem each (#4010).</summary>
+    /// <param name="approved">The approved profile, or null before the first approval.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The problems; none when there is no context port or nothing to read.</returns>
+    public async ValueTask<IReadOnlyList<HealthProblem>> SourceProblems(LoadedProfile? approved, CancellationToken cancellationToken) =>
+        sources is null ? [] : await sources.Problems(approved, cancellationToken).ConfigureAwait(false);
 }

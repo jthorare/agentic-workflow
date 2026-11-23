@@ -766,4 +766,20 @@ check "down removes only the fixture's rows" "$(sqlq "$CN/ledger.db" "SELECT gro
 cns empty >/dev/null 2>&1; check "connections empty exits 0" "$?" "0"
 check "empty removes every row" "$(sqlq "$CN/ledger.db" "SELECT COUNT(*) FROM connection")" "0"
 
+# --- home: the Home page's data (home spec §15, S0), home.row.raised events written to the ledger like stall's row ---
+contains "the usage lists home" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh home [clear]"
+HM="$TMPDIR/home-rows"   # its own home: "$TMPDIR/home" is $H above, whose ledger already holds the stall rows (#4071)
+mkdir -p "$HM"
+migrate "$HM/ledger.db" "$ROOT/src/Sindri/Aw.Sindri.Infrastructure/Ledger/Migrations/0001_events.sql"
+hms() { AW_SINDRI_HOME="$HM" bash "$FIXTURE" home "$@"; }
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" home >/dev/null 2>&1; check "home refuses outside a guarded home" "$?" "2"
+hms bogus >/dev/null 2>&1; check "home refuses an unknown argument (exit 2)" "$?" "2"
+out="$(hms 2>&1)"; check "home exits 0" "$?" "0"
+check "home says how many events it wrote" "$out" "6 home.row.raised event(s) in the ledger"
+check "home writes one home.row.raised per row" "$(sqlq "$HM/ledger.db" "SELECT COUNT(*) FROM events WHERE type = 'home.row.raised'")" "6"
+check "each payload is valid JSON naming a row and its edges" "$(sqlq "$HM/ledger.db" "SELECT COUNT(*) FROM events WHERE json_valid(payload_json) AND json_extract(payload_json, '$.row.id') IS NOT NULL AND json_type(payload_json, '$.edges') = 'array'")" "6"
+check "the meta row carries its three edges" "$(sqlq "$HM/ledger.db" "SELECT json_array_length(payload_json, '$.edges') FROM events WHERE json_extract(payload_json, '$.row.id') = 'lane:recycle:meta'")" "3"
+hms >/dev/null 2>&1; check "a second home adds nothing" "$(sqlq "$HM/ledger.db" "SELECT COUNT(*) FROM events")" "6"
+out="$(hms clear 2>&1)"; check "home clear says what it removed" "$out" "6 row(s) removed"
+
 exit "$fail"

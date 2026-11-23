@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Infrastructure.Setup;
 
 namespace Aw.Sindri.Tests.Setup;
@@ -42,5 +43,28 @@ public sealed class InstalledBuildStampsTests : IDisposable
         var stamps = new InstalledBuildStamps(_root + Path.DirectorySeparatorChar);
 
         Assert.Equal((null, null), (stamps.Running(), stamps.Installed()));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Each_build_reads_its_build_info_and_a_folder_without_one_names_no_build()
+    {
+        var older = Build("older");
+        var newer = Build("newer");
+        File.WriteAllText(Path.Combine(newer, "build-info"), "commit=7c81646abcdef0123\nbuilt=2026-11-22T10:31:00Z\n");
+        _ = Directory.CreateSymbolicLink(Path.Combine(_root, "bin", "cs", "current"), Path.Combine(_root, "bin", "cs", "newer"));
+
+        var stamps = new InstalledBuildStamps(older);
+
+        Assert.Null(stamps.RunningBuild());   // pruned or unfinished: no build-info
+        Assert.Equal(new BuildInfo("7c81646abcdef0123", new DateTimeOffset(2026, 11, 22, 10, 31, 0, TimeSpan.Zero)), stamps.InstalledBuild());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_build_info_without_a_built_line_names_no_build()
+    {
+        var only = Build("only");
+        File.WriteAllText(Path.Combine(only, "build-info"), "commit=7c81646\n");
+
+        Assert.Null(new InstalledBuildStamps(only).RunningBuild());
     }
 }
