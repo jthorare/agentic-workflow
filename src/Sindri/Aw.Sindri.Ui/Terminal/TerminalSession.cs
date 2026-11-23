@@ -10,7 +10,7 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
     private int _height;
     private int _hist;
     private bool _ready;
-    private (int Cols, int Rows) _sent;
+    private (int Cols, int Rows)? _sent;
     private (int Cols, int Rows)? _wanted;
 
     // Under this the pane has no room to draw: the fit is not sent (tmux would shrink the pane to nothing).
@@ -28,7 +28,7 @@ internal sealed class TerminalSession(ITerminalConnector connector, TerminalView
     {
         view.SocketOpening();
         (_height, _hist) = (0, 0);
-        (_ready, _sent) = (false, (open.Cols, open.Rows));   // the hello carried this size; a fit made before ready (or before Run) is kept in _wanted
+        (_ready, _sent) = (false, null);   // the hello's size is not a resize (Serve resizes only on `size`), so the first fit goes out once after ready; a fit made before Run is kept in _wanted
         SetBack(0);
         if (await Open(open, cancellationToken).ConfigureAwait(true) is not { } link)
         {
