@@ -80,7 +80,7 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="pvm:ProjectPrGlyph">
               <StackPanel Orientation="Horizontal" Spacing="5" ToolTip.Tip="{Binding Name}">
-                <Border Width="1" Height="12" Margin="2,0,2,0" Background="{DynamicResource Brush.InkTertiary}" IsVisible="{Binding AfterHairline}" VerticalAlignment="Center" />
+                <Border Width="1" Height="12" Margin="2,0,2,0" Background="{DynamicResource Brush.HairlineTertiary}" IsVisible="{Binding AfterHairline}" VerticalAlignment="Center" />
                 <Panel Width="14" Height="14" VerticalAlignment="Center">
                   <Panel IsVisible="{Binding IsCiRed}">
                     <Ellipse Fill="{DynamicResource Brush.Error}" />
@@ -99,7 +99,7 @@
                     <Ellipse Classes="ring" Stroke="{DynamicResource Brush.Success}" />
                     <Ellipse Width="4" Height="4" Fill="{DynamicResource Brush.Success}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                   </Panel>
-                  <Ellipse Classes="ring" Stroke="{DynamicResource Brush.InkTertiary}" StrokeDashArray="2,2" IsVisible="{Binding IsDraft}" />
+                  <Ellipse Classes="ring" Stroke="{DynamicResource Brush.InkSubtle}" StrokeDashArray="2,2" IsVisible="{Binding IsDraft}" />
                 </Panel>
                 <TextBlock Classes="caption" Foreground="{DynamicResource Brush.InkMuted}" Text="{Binding CountText}" VerticalAlignment="Center" />
               </StackPanel>
