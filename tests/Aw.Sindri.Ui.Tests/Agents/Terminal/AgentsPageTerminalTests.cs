@@ -124,7 +124,7 @@ public sealed class AgentsPageTerminalTests
     public async Task Opening_by_key_puts_focus_in_the_pane_for_a_row_that_is_drawn_and_refuses_one_that_is_not()
     {
         var page = await _f.Shown(Token);
-        var key = page.Groups.SelectMany(g => g.Rows).Select(r => r.Ref).First();
+        var key = page.Groups.SelectMany(g => g.Rows).First(r => r.Row.Host.Pane is { Length: > 0 }).Ref;
 
         var opened = page.OpenTerminalByKey(key);
         var ghost = page.OpenTerminalByKey("sindri-nothere");
