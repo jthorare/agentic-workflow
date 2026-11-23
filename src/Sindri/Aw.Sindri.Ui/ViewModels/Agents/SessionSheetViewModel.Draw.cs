@@ -37,6 +37,7 @@ internal sealed partial class SessionSheetViewModel
         (IsEnded, EndedText, EndedDetail, ProblemText, Note) = (false, string.Empty, string.Empty, string.Empty, string.Empty);
         Phase = FramePhase.Shown;
         DrawSections(session);
+        DrawHeader(session);
         DrawSandbox(session);
         DrawFocus();
     }
@@ -46,7 +47,7 @@ internal sealed partial class SessionSheetViewModel
 
     private static string StateWords(SessionRowView session)
     {
-        var words = new List<string> { SessionChips.For(session.State).Text };
+        var words = new List<string> { SessionChips.For(session.State).Word };
         if (session.Estimated)
         {
             words.Add(Labels.SheetEstimated);

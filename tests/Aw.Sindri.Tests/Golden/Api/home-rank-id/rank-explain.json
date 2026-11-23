@@ -1,0 +1,35 @@
+{
+  "asOf": {
+    "cursor": 1,
+    "ledgerHead": 1,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "id": "lane:recycle:meta",
+  "kind": "lane-recycle",
+  "since": "2026-11-12T08:55:00.0000000Z",
+  "rank": {
+    "blocks": 3,
+    "weight": 4,
+    "sinceRank": 5,
+    "position": 1
+  },
+  "blocksList": [
+    {
+      "id": "gh:ready:jthorare/agentic-workflow#3099",
+      "title": "#3099 ready to merge",
+      "via": "item-of"
+    },
+    {
+      "id": "gh:ready:jthorare/agentic-workflow#3101",
+      "title": "#3101 ready to merge",
+      "via": "item-of"
+    },
+    {
+      "id": "linear:issue:ENG-3040",
+      "title": "Issue 3040",
+      "via": "closes"
+    }
+  ]
+}

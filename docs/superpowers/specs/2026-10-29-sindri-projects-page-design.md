@@ -431,6 +431,15 @@ The ledger is `docs/sindri/prior-art/projects.md`. Issues that already exist (#2
 
 ### Health rules (#3168)
 
+**Superseded by #3718:** health comes from `HealthOf` (`src/Sindri/Aw.Sindri.Core/Projects/TruthSources/ProjectTruths.cs`), not from the rules below. It reads only open PRs (drafts are not open); a project with no open PR has no health. Off track at half red or more, at risk at any red, unknown when none is red but some have no CI summary on their current head, on track otherwise. With N open PRs the noun is "PR" for 1 and "PRs" otherwise. The reason strings, exactly:
+
+- `Off track: {red} of {open} PRs red` (with a tail `, {n} not checked yet` when some are unchecked)
+- `At risk: {red} of {open} PRs red` (same tail)
+- `CI not checked yet for {n} of {open} PRs`
+- `On track: {open} open PRs, none red`
+
+The rules below stay as the original design.
+
 Sindri works out a project's health from its linked PRs, CI and reviews. It uses Linear's own words, so the derived value and the hand-set one compare 1:1. The first rule that matches wins. The row shows that rule's reason, with counts.
 
 | Health | Rule (any one) | Reason shown |
