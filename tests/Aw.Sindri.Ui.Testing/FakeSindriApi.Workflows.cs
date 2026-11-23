@@ -28,7 +28,7 @@ internal sealed partial class FakeSindriApi
     public RouteAnswer CancelWorkflowRunAnswer { get; set; } = RouteAnswer.SpecShaped("workflow-runs-run-cancel", "cancelled");
 
     /// <summary>POST /sindri/workflow-runs/{run}/seen's answer: the marked body by default (a ProblemDetails to test a failed mark).</summary>
-    public RouteAnswer MarkWorkflowRunSeenAnswer { get; set; } = RouteAnswer.SpecShaped("workflow-runs-run-seen", "marked");
+    public RouteAnswer MarkWorkflowRunSeenAnswer { get; set; } = RouteAnswer.Api("workflow-runs-run-seen", "marked");
 
     /// <summary>Every run a seen mark was sent for, in order.</summary>
     public IReadOnlyList<string> SeenWorkflowRuns { get { lock (_gate) { return [.. _seenWorkflowRuns]; } } }
