@@ -69,6 +69,7 @@ internal static class DelegateCommand
     private static string Text(DelegateResponse response) =>
         response.MovedFrom is not { } movedFrom ? Body(response)
         : response.MovedNotice is { } notice ? Body(response) + Environment.NewLine + $"moved off {movedFrom}: send it this with SendMessage: {notice}"
+        : response.MovedProblem is { } problem ? Body(response) + Environment.NewLine + $"moved off {movedFrom}: the notice was not delivered ({problem}); it is not a Claude lane, so SendMessage can't reach it"
         : Body(response) + Environment.NewLine + $"moved off {movedFrom}: told it through lane-send";
 
     private static string Body(DelegateResponse response)

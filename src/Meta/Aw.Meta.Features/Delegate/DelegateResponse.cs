@@ -14,7 +14,7 @@ public sealed record DelegateResponse(string Outcome, DelegationView? Delegation
     /// <summary>The session of the lane the issue was delegated to before, when it moved to another lane; null otherwise.</summary>
     public string? MovedFrom { get; init; }
 
-    /// <summary>The "moved" line for <see cref="MovedFrom"/> when aw-meta could not deliver it itself (a Claude lane: the meta sends it with SendMessage); null otherwise.</summary>
+    /// <summary>The "moved" line for <see cref="MovedFrom"/> when it is a Claude lane, which the meta sends with SendMessage; null otherwise.</summary>
     public string? MovedNotice { get; init; }
 
     /// <summary>Why the "moved" line did not reach <see cref="MovedFrom"/> when it is a non-Claude lane, which SendMessage can't reach; null otherwise.</summary>
