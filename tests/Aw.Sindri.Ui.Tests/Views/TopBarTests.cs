@@ -236,11 +236,8 @@ public sealed class TopBarTests : IDisposable
         TextScale.Apply(resources, scale);
         try
         {
-            var age = Named<TextBlock>(window, "PillAgeText");
-            var problems = Named<TextBlock>(window, "PillProblems");
-            var pill = Named<Button>(window, "HealthPill");
             var bar = window.Get<TopBar>("TopBar");
-            var shown = 0;
+            var dropped = new List<string>();
             window.Width = 1000;   // settled first: the jump from the opening width (and a new text scale) is several fit steps in one layout, not the 6 px step under test
             Settle(window);
             for (var width = 1000; width <= 1400; width += 6)
@@ -250,22 +247,46 @@ public sealed class TopBarTests : IDisposable
                 window.UpdateLayout();
                 var passes = bar.MeasurePasses;
                 Settle(window);
-                var pillRight = pill.TranslatePoint(new Point(pill.Bounds.Width, 0), window)!.Value.X;
                 var where = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"at {width} px, scale {scale:0.0}");
                 Assert.True(passes <= 3, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the bar measured {passes} times for one change of width"));
-                Assert.True(pillRight <= window.Bounds.Width + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the pill ends at {pillRight}, the window is {window.Bounds.Width}"));
-                Assert.True(problems.Bounds.Width is < 0.5 or >= TopBar.MinProblems - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the problem text is a {problems.Bounds.Width} px stub"));
-                Assert.True(!age.IsEffectivelyVisible || age.Bounds.Width >= Natural(age) - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the age got {age.Bounds.Width} of its {Natural(age)}"));
-                shown += age.IsEffectivelyVisible && problems.Bounds.Width < 0.5 ? 1 : 0;
+                AssertPillFits(window, where);
+                if (Named<TextBlock>(window, "PillProblems").Bounds.Width < 0.5)
+                {
+                    dropped.Add(DroppedRow(window, width));
+                }
             }
 
-            Assert.True(shown > 0, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"at scale {scale:0.0} no width from 1000 to 1400 px shows the age with the problem text dropped"));
+            var shown = dropped.Count(r => r.EndsWith("age shown", StringComparison.Ordinal));
+            Assert.True(shown > 0, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"at scale {scale:0.0} the problem text is dropped at {dropped.Count} of 67 widths and the age shows at {shown}. Per dropped width, the space right of the pill, the age's natural width plus its 8 px gap, and the age: ") + string.Join("; ", dropped));
         }
         finally
         {
             TextScale.Apply(resources, 1.0);
         }
     });
+
+    // The per-width checks of the sweep: the pill ends inside the window, the problem text is 0 or at least 60 wide, a visible age has its whole width.
+    private static void AssertPillFits(ShellWindow window, string where)
+    {
+        var pill = Named<Button>(window, "HealthPill");
+        var age = Named<TextBlock>(window, "PillAgeText");
+        var problems = Named<TextBlock>(window, "PillProblems");
+        var pillRight = pill.TranslatePoint(new Point(pill.Bounds.Width, 0), window)!.Value.X;
+        Assert.True(pillRight <= window.Bounds.Width + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the pill ends at {pillRight}, the window is {window.Bounds.Width}"));
+        Assert.True(problems.Bounds.Width is < 0.5 or >= TopBar.MinProblems - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the problem text is a {problems.Bounds.Width} px stub"));
+        Assert.True(!age.IsEffectivelyVisible || age.Bounds.Width >= Natural(age) - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the age got {age.Bounds.Width} of its {Natural(age)}"));
+    }
+
+    // One row of the sweep's data for a width where the problem text is dropped: the window's width less the pill's right edge (the bar's right padding is in
+    // it), what the age needs (its natural width and the 8 px gap before it), and whether the age shows.
+    private static string DroppedRow(ShellWindow window, int width)
+    {
+        var pill = Named<Button>(window, "HealthPill");
+        var age = Named<TextBlock>(window, "PillAgeText");
+        var right = pill.TranslatePoint(new Point(pill.Bounds.Width, 0), window)!.Value.X;
+        var shown = age.IsEffectivelyVisible ? "age shown" : "age hidden";
+        return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{width}: right {window.Bounds.Width - right:0.#}, needs {Natural(age) + 8:0.#}, {shown}");
+    }
 
     // #2547: a window that grows from 1000 to 1280 px gives the problem text back its full width; the cap lowered at 1000 doesn't stay.
     [Fact]
