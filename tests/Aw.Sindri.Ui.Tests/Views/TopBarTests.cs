@@ -217,6 +217,41 @@ public sealed class TopBarTests : IDisposable
         }
     });
 
+    // #4070: when the problem text is dropped (under a word of room, #4008) the age comes back if it fits; it had yielded to a text that
+    // is not shown. Widths 1000 px at both scales are the ones #4008 dropped the text at. NOT computed, only read: that the age has room
+    // at these sizes (the bar's step is not NoAge) is checked by running this; if it fails for a hidden age at a size where the bar chose
+    // NoAge, pick a wider window here.
+    [Theory]
+    [InlineData(1000, 1.0)]
+    [InlineData(1000, 1.3)]
+    public Task The_pill_shows_its_age_when_the_problem_text_is_dropped(int width, double scale) => OnUi(async () =>
+    {
+        _records.Write(A.Record());
+        _server.Current = A.Status() with { Health = LongProblems() };
+        var (window, _) = await Show(s => s.State == ShellState.Normal && s.Pill.HasProblems);
+        var resources = Application.Current!.Resources;
+        TextScale.Apply(resources, scale);
+        try
+        {
+            window.Width = width;
+            Settle(window);
+            var age = Named<TextBlock>(window, "PillAgeText");
+            var problems = Named<TextBlock>(window, "PillProblems");
+            var pill = Named<Button>(window, "HealthPill");
+            var pillRight = pill.TranslatePoint(new Point(pill.Bounds.Width, 0), window)!.Value.X;
+            var where = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"at {width} px, scale {scale:0.0}");
+
+            Assert.True(problems.Bounds.Width < 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the problem text is {problems.Bounds.Width} px, the test needs it dropped"));
+            Assert.True(age.IsEffectivelyVisible, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the age is hidden although the problem text is dropped"));
+            Assert.True(age.Bounds.Width >= Natural(age) - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the age got {age.Bounds.Width} of its {Natural(age)}"));
+            Assert.True(pillRight <= window.Bounds.Width + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the pill ends at {pillRight}, the window is {window.Bounds.Width}"));
+        }
+        finally
+        {
+            TextScale.Apply(resources, 1.0);
+        }
+    });
+
     // #2547: a window that grows from 1000 to 1280 px gives the problem text back its full width; the cap lowered at 1000 doesn't stay.
     [Fact]
     public Task A_short_problem_reads_in_full_after_the_window_grows_from_1000_to_1280() => OnUi(async () =>
