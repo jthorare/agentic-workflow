@@ -41,11 +41,12 @@ public sealed class ShellProjectsTests
     {
         var shell = await Shell();
 
+        shell.Projects.SetView(ViewModels.Projects.ProjectView.All);
         shell.GoTo(PageId.Projects);
         await Until(() => !shell.Projects.IsLoading);
 
         Assert.Equal((true, 1), (shell.IsProjects, _server.ProjectsCalls));
-        Assert.Equal(3, shell.Projects.Groups.Count);
+        Assert.Equal(3, shell.Projects.Groups.Sum(g => g.Count));   // one row per open project, whatever the grouping
     }, Token);
 
     [Fact]
@@ -67,5 +68,38 @@ public sealed class ShellProjectsTests
         shell.Projects.RequestConnect();
 
         Assert.Equal(PageId.Connections, shell.CurrentPage);
+    }, Token);
+
+    [Fact]
+    public Task On_Projects_the_view_keys_pick_its_view() => UiThread.Run(async () =>
+    {
+        var shell = await Shell();
+        shell.GoTo(PageId.Projects);
+        await Until(() => !shell.Projects.IsLoading);
+
+        Assert.True(shell.Press("2"));
+
+        Assert.Equal(ViewModels.Projects.ProjectView.MyWork, shell.Projects.View);
+    }, Token);
+
+    [Fact]
+    public Task Off_Projects_a_view_key_leaves_its_view_alone() => UiThread.Run(async () =>
+    {
+        var shell = await Shell();
+        shell.GoTo(PageId.Home);
+
+        _ = shell.Press("2");
+
+        Assert.Equal(ViewModels.Projects.ProjectView.All, shell.Projects.View);
+    }, Token);
+
+    [Fact]
+    public Task The_palettes_Add_project_opens_the_Add_project_sheet() => UiThread.Run(async () =>
+    {
+        var shell = await Shell();
+
+        shell.Palette.AddProject!.Invoke();
+
+        Assert.True(shell.IsProjectAddSheet);
     }, Token);
 }

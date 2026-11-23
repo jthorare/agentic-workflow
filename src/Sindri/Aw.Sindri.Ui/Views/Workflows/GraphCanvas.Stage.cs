@@ -97,9 +97,9 @@ internal sealed partial class GraphCanvas
         return new Point(x, y);
     }
 
-    // Sets the pan already held inside the scroll extent, so the value Avalonia keeps is the one on screen. The coerce keeps the value it was given, and a
-    // later zoom's CoerceValue clamps that again: an unclamped value came back as a drift to the bottom edge (#4033). Every writer of Pan goes through here.
-    private void PanTo(Point pan) => Pan = HeldPan(pan);
+    // Sets the pan. The Pan setter stores it already held inside the scroll extent (#4063), so the value Avalonia keeps is the one on screen and a later
+    // zoom's CoerceValue has no unclamped value to bring back (#4033).
+    private void PanTo(Point pan) => Pan = pan;
 
     private void StepTo(int percent)
     {
