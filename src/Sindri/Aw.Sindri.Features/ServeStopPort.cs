@@ -11,7 +11,8 @@ namespace Aw.Sindri.Features;
 /// <summary>
 /// <see cref="IServeStop"/> over the stop handler itself, not its command chain: the restart that calls it holds the command gate, so the stop runs the
 /// way POST /sindri/stop does and records 'process.stopped' with the reason 'stop'. The stop clears the lease grant an audit row needs, so first it writes
-/// the restart's accepted 'command.handled' row while the grant is held (the RestartProcess row is self-audited); a lost row is logged and the stop still runs.
+/// the restart's accepted 'command.handled' row while the grant is held (the RestartProcess row is self-audited). A row that can't be written stops the
+/// restart: the port returns that error, serve keeps running, and the chain audits the failed attempt.
 /// </summary>
 /// <param name="stop">The stop handler.</param>
 /// <param name="audit">Writes the restart's audit row.</param>
@@ -25,7 +26,7 @@ internal sealed class ServeStopPort(StopProcessService stop, AuditTrail audit, I
         var recorded = await audit.Record(callers.Current, row, CommandOutcome.Accepted, code: null, CancellationToken.None).ConfigureAwait(false);
         if (recorded.IsError)
         {
-            audit.Lost(row, CommandOutcome.Accepted, recorded.Error);
+            return recorded.Error;
         }
 
         var stopped = await stop.Handle(new StopProcessRequest(StopReason.Stop), cancellationToken).ConfigureAwait(false);
