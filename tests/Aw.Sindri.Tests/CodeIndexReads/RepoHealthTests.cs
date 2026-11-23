@@ -84,6 +84,11 @@ public sealed class RepoHealthTests
     public void A_repo_with_no_index_off_its_default_branch_stays_missing()
         => Assert.Equal("missing", Of(Missing(), new IndexRepoHead(_repo, _new, OnDefaultBranch: false)).State);
 
+    // #3181: off its default branch the first build runs at the default branch's tip, so a repo that has one is queued like a repo on main.
+    [Fact, Trait("Lane", "unit")]
+    public void A_repo_with_no_index_off_its_default_branch_with_a_default_tip_is_queued()
+        => Assert.Equal("queued", Of(Missing(), new IndexRepoHead(_repo, _new, OnDefaultBranch: false, DefaultTip: _old)).State);
+
     [Fact, Trait("Lane", "unit")]
     public void A_first_build_that_failed_inside_its_backoff_is_waiting_not_queued()
         => Assert.Equal("waiting", Of(Missing(), new IndexRepoHead(_repo, _new, OnDefaultBranch: true), Job(JobState.Failed, TimeSpan.FromSeconds(10))).State);

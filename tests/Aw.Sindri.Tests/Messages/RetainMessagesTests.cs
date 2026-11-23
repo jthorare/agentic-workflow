@@ -43,7 +43,7 @@ public sealed class RetainMessagesTests
         Assert.Equal(ScheduledResult.Worked, ran.Value);
     });
 
-    private static async Task<Aw.Kernel.Result<ScheduledResult>> Run()
+    private static async Task<Kernel.Result<ScheduledResult>> Run()
     {
         var harness = new SliceHarness();
         var grant = await harness.HoldLease();
