@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Projects;
@@ -112,6 +113,24 @@ public sealed class ProjectsPageTests
 
         Assert.Equal("Linear projects synced 14 min ago · Linear issues synced 14 min ago · GitHub synced 14 min ago · Linear says you're Jo Smith", page.Freshness);
         Assert.False(page.FreshnessFailing);
+    }
+
+    [Fact]
+    public async Task An_unset_github_login_keeps_the_hint_on_the_freshness_line_without_tinting_it()
+    {
+        var list = Golden("mixed");
+        list["freshness"] = new JsonArray(new JsonObject
+        {
+            ["source"] = "github-login",
+            ["state"] = "ok",
+            ["text"] = "not known: connect GitHub or set review.login to see what is blocked on you",
+        });
+        _f.Serve(list);
+
+        var page = await _f.Shown(Token);
+
+        Assert.False(page.FreshnessFailing);
+        Assert.Contains("not known: connect GitHub or set review.login to see what is blocked on you", page.Freshness, StringComparison.Ordinal);
     }
 
     [Fact]
