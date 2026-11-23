@@ -17,6 +17,7 @@ It takes no config. Write `"config": {}`.
 - The step keeps the first 500 records by `id`, and the first 600 characters of each `text`, so the list stays under the 64 KB step cap.
 - The step reads files only and writes nothing. A test run reads them for real.
 - A missing rules folder is an empty list, not an error.
+- The folder is Sindri's, not the repo a workflow's payload names. When the two differ, the list can miss rules that repo has (the same gap as `skill_catalog`, issue 4107).
 
 ```json
 {
