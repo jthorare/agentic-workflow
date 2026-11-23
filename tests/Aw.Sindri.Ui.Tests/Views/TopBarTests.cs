@@ -221,7 +221,9 @@ public sealed class TopBarTests : IDisposable
     // (a pill with the age overflowed the window by 62 px at 1280 px, scale 1.3). Which widths drop the text and leave room for the age is not
     // computed here: the window grows from 1000 to 1400 px in 6 px steps, and at each width the pill must end inside the window, the problem text
     // is 0 or at least 60 wide, and an age that shows has its whole width. At least one width must show the age with the text dropped, or the
-    // age fix does nothing at this scale (then #4070 is by design and the issue closes).
+    // age fix does nothing at this scale (then #4070 is by design and the issue closes). Each change of width also measures the bar at most 3 times,
+    // which catches a Full / CompactSearch flip where 8 <= R < the age's width (R: the text's room with the age hidden). Not computed: the sweep
+    // crosses that band at some width, which is a guess until it runs.
     [Theory]
     [InlineData(1.0)]
     [InlineData(1.3)]
@@ -237,13 +239,18 @@ public sealed class TopBarTests : IDisposable
             var age = Named<TextBlock>(window, "PillAgeText");
             var problems = Named<TextBlock>(window, "PillProblems");
             var pill = Named<Button>(window, "HealthPill");
+            var bar = window.Get<TopBar>("TopBar");
             var shown = new List<int>();
             for (var width = 1000; width <= 1400; width += 6)
             {
+                bar.ResetMeasurePasses();
                 window.Width = width;
+                window.UpdateLayout();
+                var passes = bar.MeasurePasses;
                 Settle(window);
                 var pillRight = pill.TranslatePoint(new Point(pill.Bounds.Width, 0), window)!.Value.X;
                 var where = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"at {width} px, scale {scale:0.0}");
+                Assert.True(passes <= 3, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the bar measured {passes} times for one change of width"));
                 Assert.True(pillRight <= window.Bounds.Width + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the pill ends at {pillRight}, the window is {window.Bounds.Width}"));
                 Assert.True(problems.Bounds.Width is < 0.5 or >= TopBar.MinProblems - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{where}: the problem text is a {problems.Bounds.Width} px stub"));
                 if (age.IsEffectivelyVisible)
