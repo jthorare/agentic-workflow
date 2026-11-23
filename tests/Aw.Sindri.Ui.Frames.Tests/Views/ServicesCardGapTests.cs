@@ -113,7 +113,7 @@ public sealed class ServicesCardGapTests : FrameHost
     {
         var body = GoldenFiles.Node("services", "ran-ok");
         body["services"]![0]!["name"] = LongName;
-        Server.ServiceView = new RouteAnswer(System.Net.HttpStatusCode.OK, body.ToJsonString());
+        Server.ServiceView = new RouteAnswer(HttpStatusCode.OK, body.ToJsonString());
         await WithScale(1000, 1.3, async (window, shell) =>
         {
             var rows = await Rows(window, shell);
