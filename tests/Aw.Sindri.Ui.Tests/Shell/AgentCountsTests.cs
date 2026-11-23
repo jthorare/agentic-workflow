@@ -72,7 +72,7 @@ public sealed class AgentCountsTests
     }, Token);
 
     [Fact]
-    public Task Tab_count_is_blank_while_the_control_plane_is_not_running_3710() => UiThread.Run(async () =>
+    public Task Tab_count_keeps_the_last_figure_marked_stale_while_the_control_plane_is_not_running_4001() => UiThread.Run(async () =>
     {
         _server.Current = A.Status() with { Sessions = new SessionCountsView(Live: 3, Asking: 1, Problems: 0) };
         var shell = await Running();
@@ -81,7 +81,18 @@ public sealed class AgentCountsTests
         _records.Remove();
         await AdvanceUntil(() => shell.State == ShellState.NotRunning);
 
-        Assert.Equal(("", ""), (TabCount(shell), shell.Agents.NavCount));
+        Assert.Equal(("3 stale", "3 stale"), (TabCount(shell), shell.Agents.NavCount));
+    }, Token);
+
+    [Fact]
+    public Task Tab_count_says_unknown_when_no_figure_was_ever_read_and_the_control_plane_is_not_running_4001() => UiThread.Run(async () =>
+    {
+        var shell = await Running();
+
+        _records.Remove();
+        await AdvanceUntil(() => shell.State == ShellState.NotRunning);
+
+        Assert.Equal(("unknown", "unknown"), (TabCount(shell), shell.Agents.NavCount));
     }, Token);
 
     [Fact]
