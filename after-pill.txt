@@ -1,0 +1,18 @@
+pill-1000 (window 1000, scale 1.3)
+  pill accessible name: Degraded · updated 1s ago · service broken failed
+  pill width: 143
+  state word (HealthPillText): "Degraded" width 80
+  age (PillAgeText): (none)
+  problem text (PillProblems): "service broken failed" width 0
+pill-1280 (window 1280, scale 1.3)
+  pill accessible name: Degraded · updated 2s ago · service broken failed
+  pill width: 143
+  state word (HealthPillText): "Degraded" width 80
+  age (PillAgeText): (none)
+  problem text (PillProblems): "service broken failed" width 0
+pill-1000-scale1 (window 1000, scale 1.0)
+  pill accessible name: Degraded · updated 3s ago · service broken failed
+  pill width: 120
+  state word (HealthPillText): "Degraded" width 62
+  age (PillAgeText): (none)
+  problem text (PillProblems): "service broken failed" width 0
