@@ -34,7 +34,7 @@ public sealed class ContextConceptsRepoPickerTests
 
         await page.Opened(Token);
 
-        Expect.Equal((true, true, 0), (page.ShowConcepts, page.HasRepoPicker, api.WholeMapAsked.Count));
+        Expect.Equal((true, true, 0), (page.Concepts.Find("concept:billing") is not null, page.HasRepoPicker, api.WholeMapAsked.Count));
         Assert.Equal(["alpha", "beta"], page.Repos);
         Assert.Equal("alpha", page.SelectedRepo);
     }
