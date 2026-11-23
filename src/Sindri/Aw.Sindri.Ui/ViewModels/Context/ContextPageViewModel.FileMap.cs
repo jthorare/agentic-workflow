@@ -13,7 +13,14 @@ internal sealed partial class ContextPageViewModel
     internal CodeLensViewModel Code { get; } = new();
 
     [MemberNotNull(nameof(FileMap))]
-    private void InitFileMap() => FileMap = new FileMapViewModel(Ports);
+    private void InitFileMap() => FileMap = new FileMapViewModel(Ports) { OpenFile = OpenFileMap };
+
+    // Enter on a file row: the map around that file, as typing its key and asking would draw it (#3677).
+    private Task OpenFileMap(string path)
+    {
+        ShowFiles = false;
+        return Pick("code:" + path);
+    }
 
     /// <summary>Reads the code lens for some anchors into <see cref="Code"/>: the callers and callees the code index gave. A refusal or an unreachable API leaves the panels as they were and says so in the result.</summary>
     /// <param name="anchors">One to 20 anchor keys.</param>

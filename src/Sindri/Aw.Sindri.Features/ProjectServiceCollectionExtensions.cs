@@ -2,7 +2,7 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Projects.Cards;
 using Aw.Sindri.Core.Projects.Facts;
-using Aw.Sindri.Core.Projects.Truth;
+using Aw.Sindri.Core.Projects.TruthSources;
 using Aw.Sindri.Features.AttachProject;
 using Aw.Sindri.Features.ChangeProject;
 using Aw.Sindri.Features.Commands;

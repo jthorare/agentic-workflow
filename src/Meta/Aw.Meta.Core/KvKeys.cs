@@ -82,4 +82,7 @@ public static class KvKeys
 
     /// <summary>Today's report-defect counts as "yyyy-MM-dd|filed|skipped" (the UTC date); another date means 0|0.</summary>
     public const string DefectsDay = "defects.day";
+
+    /// <summary>The delegations `aw-meta delegate` recorded, one line per issue (DelegationBook).</summary>
+    public const string Delegations = "delegations";
 }

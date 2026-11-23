@@ -37,7 +37,7 @@ internal sealed class TranscriptFileReader(IRedactor redactor)
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            return TranscriptsErrors.Unreadable.With($"{file.Ref.Value}: {exception.GetType().Name}");
+            return TranscriptsErrors.Unreadable.With($"{file.SessionOf().Value}: {exception.GetType().Name}");
         }
 
         return parsed;

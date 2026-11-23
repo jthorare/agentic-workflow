@@ -1,7 +1,7 @@
 using System.Globalization;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Projects.Cards;
 using Aw.Sindri.Core.Projects.Truth;
+using Aw.Sindri.Core.Projects.TruthSources;
 using Aw.Sindri.Core.Reviews;
 
 namespace Aw.Sindri.Tests.Projects;
@@ -56,7 +56,7 @@ public sealed class ProjectTruthsTests
     public void Sources_come_from_links_that_name_a_github_pr_or_repo_and_from_the_linear_and_profile_repos()
     {
         var sources = ProjectTruths.SourcesOf(
-            [new ProjectLink("a", "https://github.com/acme/web/pull/7"), new ProjectLink("b", "https://github.com/acme/api"), new ProjectLink("c", "https://example.com/plan")],
+            ["https://github.com/acme/web/pull/7", "https://github.com/acme/api", "https://example.com/plan"],
             linearRepos: ["acme/infra"],
             profileRepos: ["acme/api"]);
 
@@ -67,7 +67,7 @@ public sealed class ProjectTruthsTests
     [Fact]
     public void Sources_list_a_repo_once_when_a_link_and_the_profile_both_name_it()
     {
-        var sources = ProjectTruths.SourcesOf([new ProjectLink("b", "https://github.com/acme/api")], linearRepos: [], profileRepos: [Api]);
+        var sources = ProjectTruths.SourcesOf(["https://github.com/acme/api"], linearRepos: [], profileRepos: [Api]);
 
         Assert.Equal(new[] { Api }, sources.Repos.ToArray());
     }
@@ -146,6 +146,15 @@ public sealed class ProjectTruthsTests
 
         var pr = truth.OpenPrs.Single();
         Assert.Equal((ProjectPrState.Waiting, "joi"), (pr.State, pr.WaitingOn));
+    }
+
+    [Fact]
+    public void A_pr_that_waits_on_a_reviewer_with_no_ci_result_on_its_head_is_not_checked_so_the_project_is_not_on_track()
+    {
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1, requested: ["joi"])], noSummaries: true));
+
+        Assert.Equal(ProjectPrState.Waiting, truth.OpenPrs.Single().State);
+        Assert.Equal((ProjectTruthLevel.Unknown, "CI not checked yet for 1 of 1 PR"), (truth.Health!.Level, truth.Health.Reason));
     }
 
     [Fact]

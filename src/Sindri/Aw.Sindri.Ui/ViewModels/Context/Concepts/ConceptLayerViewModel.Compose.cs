@@ -31,7 +31,9 @@ internal sealed partial class ConceptLayerViewModel
         var waitingNames = pinned.Where(t => t.Card.Waiting).Select(t => t.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var others = _all.Where(t => !claimed.Contains(KeyOf(t.Id))).ToList();
         var unpinned = others.Where(t => t.IsSetByPerson && !IsOther(t)).Select(t => t.WithCard(new PinCardState(Labels.ContextConceptSetByPerson, Pin: null, [], PinCardAction.None, ShowPinThis: true, ShowEditPin: false, Waiting: false))).ToList();
-        var suggested = others.Where(t => !t.IsSetByPerson && !waitingNames.Contains(t.Name)).Select(Suggested);
+        // "Suggested" tells pinned from unpinned, so it reads only when both are on the page (#3677).
+        var mixed = pinned.Count > 0;
+        var suggested = others.Where(t => !t.IsSetByPerson && !waitingNames.Contains(t.Name)).Select(t => Suggested(t, mixed));
         Composed = [.. pinned, .. unpinned, .. suggested];
         PinHeadText = HeadText(pinned);
     }
@@ -54,9 +56,9 @@ internal sealed partial class ConceptLayerViewModel
         new ConceptTileViewModel("concept:" + pin.Id, pin.Name, pin.Summary ?? string.Empty, new ConceptSize(Features: 0, Records: 0, Decisions: 0, Code: 0), setByPerson: true, pin.Aliases, static _ => { }).WithCard(card);
 
     // The unassigned concept is no suggestion and takes no pin.
-    private static ConceptTileViewModel Suggested(ConceptTileViewModel tile) => IsOther(tile)
+    private static ConceptTileViewModel Suggested(ConceptTileViewModel tile, bool mark) => IsOther(tile)
         ? tile
-        : tile.WithCard(new PinCardState(Labels.PinSuggestedMark, Pin: null, [], PinCardAction.None, ShowPinThis: true, ShowEditPin: false, Waiting: false));
+        : tile.WithCard(new PinCardState(mark ? Labels.PinSuggestedMark : string.Empty, Pin: null, [], PinCardAction.None, ShowPinThis: true, ShowEditPin: false, Waiting: false));
 
     // The button is offered only when something can answer it: Open review waits for the held-map review to be built.
     private PinCardAction Offered(PinCardAction action) => action switch

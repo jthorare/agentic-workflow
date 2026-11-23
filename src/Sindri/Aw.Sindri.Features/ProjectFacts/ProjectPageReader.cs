@@ -5,7 +5,7 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Projects.Cards;
 using Aw.Sindri.Core.Projects.Facts;
-using Aw.Sindri.Core.Projects.Truth;
+using Aw.Sindri.Core.Projects.TruthSources;
 using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Features.ProjectFacts;

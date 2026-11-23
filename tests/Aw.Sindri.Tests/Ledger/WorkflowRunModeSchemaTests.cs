@@ -34,4 +34,19 @@ public sealed class WorkflowRunModeSchemaTests : IDisposable
 
         Assert.Equal(["mode", "test_options"], names);
     }
+
+    [Fact]
+    public async Task The_workflow_run_table_has_a_seen_at_column()
+    {
+        var settings = new SindriSettings(_home.Path, Path.Combine(_home.Path, "profile.yaml"));
+        using var database = new LedgerDatabase(settings, new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await database.Writable(TestContext.Current.CancellationToken)).Value;
+
+        await using var connection = new SqliteConnection($"Data Source={settings.LedgerPath};Mode=ReadOnly;Pooling=False");
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT count(*) FROM pragma_table_info('workflow_run') WHERE name = 'seen_at'";
+
+        Assert.Equal(1L, await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
+    }
 }
