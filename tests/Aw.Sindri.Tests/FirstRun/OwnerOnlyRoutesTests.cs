@@ -5,6 +5,8 @@ using Aw.Sindri.Features.RestartProcess;
 using Aw.Sindri.Host;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.ConnectAccount;
+using Aw.Sindri.Tests.SetupSources;
+using Aw.Sindri.Tests.RestartProcess;
 
 namespace Aw.Sindri.Tests.FirstRun;
 
@@ -22,7 +24,7 @@ public sealed class OwnerOnlyRoutesTests
     {
         using var entered = Slice.Callers.Enter(A.Caller().Launched().Build());
 
-        var result = await new RestartProcessService(Slice.Callers).Handle(new RestartProcessRequest(), Token);
+        var result = await new RestartProcessService(Slice.Callers, new FixedOpenRuns(), new RecordingStop(), new FixedBuildStamps()).Handle(new RestartProcessRequest(), Token);
 
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
@@ -33,7 +35,7 @@ public sealed class OwnerOnlyRoutesTests
     {
         using var entered = Slice.Callers.Enter(A.Caller().Session().Build());
 
-        var result = await new RestartProcessService(Slice.Callers).Handle(new RestartProcessRequest(), Token);
+        var result = await new RestartProcessService(Slice.Callers, new FixedOpenRuns(), new RecordingStop(), new FixedBuildStamps()).Handle(new RestartProcessRequest(), Token);
 
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
@@ -69,10 +71,10 @@ public sealed class OwnerOnlyRoutesTests
     {
         using var entered = Slice.Callers.Enter(A.Caller().Human().Build());
 
-        var restart = await Record.ExceptionAsync(async () => await new RestartProcessService(Slice.Callers).Handle(new RestartProcessRequest(), Token));
+        var restart = await new RestartProcessService(Slice.Callers, new FixedOpenRuns(), new RecordingStop(), new FixedBuildStamps()).Handle(new RestartProcessRequest(), Token);
         var connect = await Record.ExceptionAsync(async () => await _accounts.Service().Handle(new ConnectAccountRequest("linear"), Token));
 
-        _ = Assert.IsType<NotSupportedException>(restart);   // past the check, the stub is unbuilt
+        Assert.True(restart.IsSuccess);
         _ = Assert.IsType<NotSupportedException>(connect);   // Linear sign-in is a later slice of the accounts step
     }
 
