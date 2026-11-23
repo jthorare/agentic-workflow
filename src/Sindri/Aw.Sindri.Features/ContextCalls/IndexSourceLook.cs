@@ -6,9 +6,9 @@ namespace Aw.Sindri.Features.ContextCalls;
 internal static class IndexSourceLook
 {
     /// <summary>How long serve runs before a source with no finished pass needs a look (#3832).</summary>
-    internal const int FirstPassLimitMinutes = 10;
+    internal const int FirstPassLimitMinutes = 15;
 
-    /// <summary>Whether this source needs a look: a source with no finished pass once serve has run 10 minutes, else the row's own state.</summary>
+    /// <summary>Whether this source needs a look: a source with no finished pass once serve has run 15 minutes (the caller passes zero while index-sync is paused, #3909), else the row's own state.</summary>
     /// <param name="p">The source's progress.</param>
     /// <param name="serveRunning">How long this serve has run.</param>
     /// <returns>The look and its words.</returns>

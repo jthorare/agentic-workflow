@@ -34,16 +34,16 @@ public sealed class IndexSourceLookTests
         Assert.Equal(look, IndexSourceLook.For(_sources[name], TimeSpan.Zero).NeedsLook);
 
     [Fact, Trait("Lane", "unit")]
-    public void A_source_with_no_finished_pass_needs_no_look_at_9_min_59_s_3832() =>
-        Assert.Equal(new SourceLook(NeedsLook: false, Words: null), IndexSourceLook.For(Idle(lastSync: null, records: 0, lastCommit: null), new TimeSpan(0, 9, 59)));
+    public void A_source_with_no_finished_pass_needs_no_look_at_14_min_59_s_3909() =>
+        Assert.Equal(new SourceLook(NeedsLook: false, Words: null), IndexSourceLook.For(Idle(lastSync: null, records: 0, lastCommit: null), new TimeSpan(0, 14, 59)));
 
     [Fact, Trait("Lane", "unit")]
-    public void A_source_with_no_finished_pass_needs_a_look_at_10_min_with_words_3832() =>
-        Assert.Equal(new SourceLook(NeedsLook: true, "library hasn't finished a sync in 10 minutes"), IndexSourceLook.For(Idle(lastSync: null, records: 0, lastCommit: null), TimeSpan.FromMinutes(10)));
+    public void A_source_with_no_finished_pass_needs_a_look_at_15_min_with_words_3909() =>
+        Assert.Equal(new SourceLook(NeedsLook: true, "library hasn't finished a sync in 15 minutes"), IndexSourceLook.For(Idle(lastSync: null, records: 0, lastCommit: null), TimeSpan.FromMinutes(15)));
 
     [Fact, Trait("Lane", "unit")]
-    public void A_running_first_read_with_no_finished_pass_needs_a_look_at_10_min_3832() =>
-        Assert.True(IndexSourceLook.For(Idle(lastSync: null, records: 0, lastCommit: null) with { Pull = "running" }, TimeSpan.FromMinutes(10)).NeedsLook);
+    public void A_running_first_read_with_no_finished_pass_needs_a_look_at_15_min_3909() =>
+        Assert.True(IndexSourceLook.For(Idle(lastSync: null, records: 0, lastCommit: null) with { Pull = "running" }, TimeSpan.FromMinutes(15)).NeedsLook);
 
     [Fact, Trait("Lane", "unit")]
     public void A_source_with_a_finished_pass_ignores_the_timer_3832() =>
