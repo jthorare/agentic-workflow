@@ -28,6 +28,14 @@ internal static partial class Labels
 
     /// <summary>The button on the empty page that goes to the Workflows page.</summary>
 
+    /// <summary>The Agents tab's count while serve is down and no figure was ever read.</summary>
+    internal const string AgentsCountUnknown = "unknown";
+
+    /// <summary>The Agents tab's count while serve is down: the last figure read, marked stale in words.</summary>
+    /// <param name="live">The last live count.</param>
+    /// <returns>The tab text.</returns>
+    internal static string AgentsCountStale(string live) => live + " " + Stale;
+
     /// <summary>The amber line over a list that could not be read again.</summary>
     internal const string AgentsOutOfDate = "Out of date: showing the last list Sindri read.";
 
