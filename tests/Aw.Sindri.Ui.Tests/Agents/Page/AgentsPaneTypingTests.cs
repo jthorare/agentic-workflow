@@ -114,4 +114,22 @@ public sealed class AgentsPaneTypingTests : FrameHost
 
         Assert.True(search.IsKeyboardFocusWithin);
     });
+
+    [Fact]
+    public Task Focus_coming_back_into_the_pane_after_an_overlay_closed_gives_the_keys_back_to_the_pane() => OnUi(async () =>
+    {
+        var (window, shell, typed) = await PaneOpen();
+        Tap(window, Key.Enter, PhysicalKey.Enter);
+        Settle(window);
+        _ = Named<TextBox>(window, "AgentsSearch").Focus();   // the overlay took focus: the side went to the list
+        Settle(window);
+        Assert.Equal(ViewModels.Agents.TerminalSide.List, shell.Agents.Terminal.Side);
+
+        _ = Named<TerminalView>(window, "TerminalPanel").Focus(NavigationMethod.Tab);   // the overlay closed and handed focus back to the pane
+        Settle(window);
+        Tap(window, Key.A, PhysicalKey.A, "a");
+
+        Assert.Equal(ViewModels.Agents.TerminalSide.Pane, shell.Agents.Terminal.Side);
+        Assert.Equal(["A"], typed);
+    });
 }
