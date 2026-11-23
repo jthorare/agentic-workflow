@@ -14,6 +14,6 @@ public interface IProfileSandboxWriter
     /// <param name="kind">Network adds the host to 'hosts'; Path adds the home entry (read-only) to 'homeAllow'.</param>
     /// <param name="target">The host, or the absolute path.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
-    /// <returns>What was written, SND-SANDBOX-001 when the target is not something the profile can hold (a path outside the home), SND-PROFILE-002 when the file has a layout Sindri won't edit or can't be written, SND-PROFILE-001 when it can't be read.</returns>
+    /// <returns>What was written, SND-SANDBOX-001 when the target is not something the profile can hold (a path outside the home), SND-PROFILE-002 when the file has a layout Sindri won't edit, SND-PROFILE-004 when it can't be read, SND-PROFILE-001 when there is none.</returns>
     public ValueTask<Result<SandboxAllowed>> Allow(string repo, DenialKind kind, string target, CancellationToken cancellationToken);
 }

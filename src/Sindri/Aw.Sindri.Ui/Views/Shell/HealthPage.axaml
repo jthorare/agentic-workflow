@@ -346,13 +346,15 @@
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="shell:ServiceRowViewModel">
                     <StackPanel>
-                      <Grid Classes="row data-row" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding What}">
+                      <!-- #4000: cadence and last run are columns of their own, each as wide as its widest row, so last run starts at
+                           one x on every row and one spacing token always parts it from the cadence. -->
+                      <Grid Classes="row data-row" ColumnSpacing="{StaticResource Space.XS}" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding What}">
                         <Grid.ColumnDefinitions>
-                          <ColumnDefinition Width="Auto" SharedSizeGroup="SvcName" />
                           <ColumnDefinition Width="*" />
-                          <ColumnDefinition Width="Auto" />
+                          <ColumnDefinition Width="Auto" SharedSizeGroup="SvcEvery" />
+                          <ColumnDefinition Width="Auto" SharedSizeGroup="SvcLastRun" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Classes="body-strong" Margin="0,8,16,8" Text="{Binding Name}" AutomationProperties.Name="{Binding Name}" />
+                        <TextBlock Classes="body-strong" Margin="0,8,0,8" Text="{Binding Name}" AutomationProperties.Name="{Binding Name}" />
                         <TextBlock Grid.Column="1" Classes="body muted" Text="{Binding Every}" AutomationProperties.Name="{Binding Every}" />
                         <TextBlock Grid.Column="2" Classes="body subtle" Text="{Binding LastRun}" AutomationProperties.Name="{Binding LastRun}" />
                       </Grid>

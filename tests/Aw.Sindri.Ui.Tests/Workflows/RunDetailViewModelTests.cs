@@ -17,9 +17,26 @@ public sealed class RunDetailViewModelTests
     {
         var run = await _f.OpenedRun(Token);
 
-        Assert.Equal(("Run morning-check@1:1", "✓ Succeeded", "Started by manual", "Revision 1"), (run.TitleText, run.ChipGlyph + " " + run.ChipWord, run.TriggerText, run.RevisionText));
+        Assert.Equal(("Run morning-check@1:1", "✓ Succeeded", "Started by hand", "Revision 1"), (run.TitleText, run.ChipGlyph + " " + run.ChipWord, run.TriggerText, run.RevisionText));
         Assert.Contains("\"summary\": \"no drift\"", run.OutputsText, StringComparison.Ordinal);
         Assert.Equal((true, false), (run.HasOutputs, run.HasError));
+    }
+
+    [Theory]
+    [InlineData("manual", "Started by hand")]
+    [InlineData("schedule", "Started on a schedule")]
+    [InlineData("workflow_call", "Started by another workflow")]
+    [InlineData("connection_event", "Started by an event from a connection")]
+    [InlineData("carrier_pigeon", "Started by a carrier_pigeon trigger")]
+    public async Task A_run_says_how_it_started_in_words_per_trigger_kind(string kind, string expected)
+    {
+        var served = Golden("workflow-runs-run", "finished");
+        served["trigger"] = new JsonObject { ["kind"] = kind };
+        _f.ServeRun(served);
+
+        var run = await _f.OpenedRun(Token);
+
+        Assert.Equal(expected, run.TriggerText);
     }
 
     [Fact]

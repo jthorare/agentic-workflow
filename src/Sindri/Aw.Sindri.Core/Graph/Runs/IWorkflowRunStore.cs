@@ -126,7 +126,7 @@ public interface IWorkflowRunStore
     /// <returns>True when the row was removed; false when it was not running or does not exist.</returns>
     public ValueTask<Result<bool>> Discard(WorkflowRunId id, CancellationToken cancellationToken);
 
-    /// <summary>Writes one node run, replacing the row with the same run, node and item index. Input and output over <see cref="NodeRunLimits.PayloadBytes"/> are cut and 'Truncated' is set.</summary>
+    /// <summary>Writes one node run, replacing the row with the same run, node and item index. Input and output over <see cref="NodeRunLimits.PayloadBytes"/> are cut; 'Truncated' is set only when the output was cut (#3896).</summary>
     /// <param name="nodeRun">The node run.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
     /// <returns>The node run as stored, or SND-GRAPH-101 when the run does not exist.</returns>
