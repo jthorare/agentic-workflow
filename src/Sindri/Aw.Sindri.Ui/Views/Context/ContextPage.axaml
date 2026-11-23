@@ -65,7 +65,7 @@
     </Style>
   </UserControl.Styles>
 
-  <!-- The Context page (F3 spec 1 §2): the head, a control row (the search box, Map or Files, coverage), and the stage, which
+  <!-- The Context page (F3 spec 1 §2): the head, a control row (the search box, Map or Files), the coverage sentence under it, and the stage, which
        is the pannable map. The hosts below are the seams the later stages fill: the lens stack is the stage, the node card and the
        sources are the inspector, the review and the file map are the Files view. -->
   <Grid RowDefinitions="Auto,Auto,*" RowSpacing="{StaticResource Size.PanelGap}">
@@ -93,7 +93,7 @@
       </Border>
     </Grid>
 
-    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" MinHeight="{StaticResource Size.TopBar}">
+    <Grid Grid.Row="1" MinHeight="{StaticResource Size.TopBar}">
       <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
         <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,16,8">
           <TextBlock Classes="eyebrow" Text="{Binding StartsAtLabel}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
@@ -113,8 +113,6 @@
           </StackPanel>
         </Border>
       </WrapPanel>
-      <TextBlock x:Name="ContextCoverage" Grid.Column="1" Classes="caption subtle" Text="{Binding Coverage}" IsVisible="{Binding HasCoverage}" TextWrapping="Wrap" MaxWidth="420"
-                 VerticalAlignment="Center" Margin="0,0,0,8" AutomationProperties.Name="{Binding Coverage}" />
     </Grid>
 
     <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="8">
@@ -147,6 +145,9 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
+        <!-- The coverage sentence on its own line under the control row, as wide as the page: in a 420 px column beside the controls its last words wrapped alone (#3900). -->
+        <TextBlock x:Name="ContextCoverage" Classes="caption subtle" Text="{Binding Coverage}" IsVisible="{Binding HasCoverage}" TextWrapping="Wrap"
+                   AutomationProperties.Name="{Binding Coverage}" />
         <TextBlock x:Name="ConceptsNote" Classes="caption subtle" Text="{Binding Concepts.Note}" ToolTip.Tip="{Binding Concepts.NoteTip}" IsVisible="{Binding Concepts.HasNote}" TextWrapping="Wrap"
                    AutomationProperties.Name="{Binding Concepts.Note}" />
         <StackPanel x:Name="ContextAnswerFiles" IsVisible="{Binding HasAnswerFiles}" Spacing="4" AutomationProperties.Name="{Binding AnswerFilesName}">
