@@ -47,9 +47,29 @@ internal sealed partial class AgentsPage
         {
             Dispatcher.UIThread.Post(() => _ = TerminalPanel.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
         }
-        else if (Page?.SelectedKey is { Length: > 0 } key)
+        else
         {
-            Dispatcher.UIThread.Post(() => Focus(new AgentFocusEventArgs(key, toFocusLine: false, onlyIfLost: false)), DispatcherPriority.Loaded);
+            Dispatcher.UIThread.Post(FocusRowIfPaneHadIt, DispatcherPriority.Loaded);
+        }
+    }
+
+    // The keys went back to the list: the row takes focus only when the pane still holds it. A click that already put focus on a filter, the Transcript sheet or a
+    // tab keeps it (#4002).
+    private void FocusRowIfPaneHadIt()
+    {
+        if (TerminalPanel.IsKeyboardFocusWithin && Page?.SelectedKey is { Length: > 0 } key)
+        {
+            Focus(new AgentFocusEventArgs(key, toFocusLine: false, onlyIfLost: false));
+        }
+    }
+
+    // Focus landed outside the pane while the pane had the keys (a mouse click on a tab or a control, which never reaches OnPressed): the keys are the list's again, so the
+    // footer and the key routing agree with where focus is (#4002).
+    private void DropSideWhenFocusLeavesPane(RoutedEventArgs e)
+    {
+        if (Page is { IsTerminalOpen: true } page && page.Terminal.Side != TerminalSide.List && e.Source is Visual source && !ReferenceEquals(source, TerminalPanel) && !TerminalPanel.IsVisualAncestorOf(source))
+        {
+            page.Terminal.ClickList();
         }
     }
 
