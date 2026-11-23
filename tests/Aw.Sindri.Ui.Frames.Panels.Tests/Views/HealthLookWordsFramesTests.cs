@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using Avalonia.Controls;
 using Avalonia.VisualTree;
@@ -42,7 +43,7 @@ public sealed class HealthLookWordsFramesTests : FrameHost
     public Task A_flagged_source_with_words_shows_the_servers_sentence_as_its_line(double width) => OnUi(async () =>
     {
         var (window, lines) = await Shown(Status("\"" + Words + "\""), width);
-        FrameFile.Save(window, FormattableString.Invariant($"health-look-words-{width}"));
+        FrameFile.Save(window, string.Create(CultureInfo.InvariantCulture, $"health-look-words-{width}"));
 
         Assert.Contains(lines, l => l.StartsWith(Words, StringComparison.Ordinal));
     });
