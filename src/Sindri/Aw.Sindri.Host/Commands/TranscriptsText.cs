@@ -32,7 +32,7 @@ internal static class TranscriptsText
         {
             var turns = s.HumanTurns == 1 ? "1 human turn" : Invariant($"{s.HumanTurns} human turns");
             var sub = s.IsSubagent ? $"  subagent of {s.Parent?.Value ?? "an unknown session"}" : string.Empty;
-            _ = text.AppendLine(Invariant($"{s.Ref.Value}  {TranscriptProviderNames.Of(s.Provider),-11}  {Time(s.LastWrittenAt)}  {turns,-14}  {s.Repo ?? "-"}{sub}"));
+            _ = text.AppendLine(Invariant($"{s.Ref.Value}  {TranscriptProviderNames.Of(s.Provider),-11}  {Time(s.LastWrittenAt)}  {turns,-14}  {Shown(s.Repo ?? "-")}{sub}"));
         }
 
         return text.ToString();
@@ -42,7 +42,7 @@ internal static class TranscriptsText
     internal static string Show(SessionTranscript t, bool fence)
     {
         var s = t.Session;
-        var text = new StringBuilder(Invariant($"{s.Ref.Value}  {TranscriptProviderNames.Of(s.Provider)}  started {Time(s.StartedAt)}  last written {Time(s.LastWrittenAt)}  {s.HumanTurns} human  repo {s.Repo ?? "-"}\n"));
+        var text = new StringBuilder(Invariant($"{s.Ref.Value}  {TranscriptProviderNames.Of(s.Provider)}  started {Time(s.StartedAt)}  last written {Time(s.LastWrittenAt)}  {s.HumanTurns} human  repo {Shown(s.Repo ?? "-")}\n"));
         if (s.IsSubagent)
         {
             _ = text.AppendLine($"subagent of {s.Parent?.Value ?? "an unknown session"}");
@@ -50,9 +50,9 @@ internal static class TranscriptsText
 
         foreach (var turn in t.Turns)
         {
-            var tools = turn.Tools.Count > 0 ? $"  tools: {string.Join(", ", turn.Tools)}" : string.Empty;
+            var tools = turn.Tools.Count > 0 ? $"  tools: {Shown(string.Join(", ", turn.Tools))}" : string.Empty;
             _ = text.AppendLine().AppendLine(Invariant($"{Role(turn.Role)}  {Time(turn.At)}  #{turn.Ref.Line}{tools}"));
-            foreach (var line in Body(turn.Text, fence).Split('\n'))
+            foreach (var line in Shown(Body(turn.Text, fence)).Split('\n'))
             {
                 _ = text.Append("  ").AppendLine(line);
             }
@@ -65,6 +65,12 @@ internal static class TranscriptsText
 
         return text.ToString();
     }
+
+    // Control bytes (ESC, OSC 52, BEL) as \xNN so transcript text can't drive the terminal; newlines and tabs stay. Text output only: JSON escapes them itself.
+    private static string Shown(string text) =>
+        text.Any(static c => char.IsControl(c) && c is not '\n' and not '\t')
+            ? string.Concat(text.Select(static c => char.IsControl(c) && c is not '\n' and not '\t' ? Invariant($"\\x{(int)c:x2}") : c.ToString()))
+            : text;
 
     private static string Body(string text, bool fence) => fence ? UntrustedFence.Wrap(Source, author: null, text) : text;
 

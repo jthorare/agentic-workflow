@@ -539,9 +539,11 @@ Neither verb has a slice: like `WfValidateCommand`, the Host command calls `ITra
 is 7 days. `--repo` is an absolute path, matched exactly against the session's main checkout. Subagents are listed
 only with `--subagents`.
 
-Turn text is untrusted. When stdout is not a terminal (an agent session, a script), `show` wraps each turn's text in
-`<untrusted source="transcript">…</untrusted>` and sets `fenced`; a person on a terminal gets it bare. The text is
-already scrubbed by the corpus.
+Turn text is untrusted. `show` wraps each turn's text in `<untrusted source="transcript">…</untrusted>` and sets
+`fenced` unless a person runs it on a terminal (stdin and stdout both a terminal, and no `AW_SINDRI_LAUNCH` or
+`AW_SINDRI_ONEOFF`: a session Sindri launched or started is never a person, #3466). The text is already scrubbed by the
+corpus. Text output shows control bytes (ESC, BEL) as `\xNN`; newlines and tabs stay. Not covered: a session the owner
+started by hand on a pty, with no Sindri variable, reads as a person and gets the text bare.
 
 Exit codes: 0 ok, 1 an unknown ref, an unreadable file or two files with one ref (`AW-TRANSCRIPTS-002`..`004` on stderr),
 2 usage (`SND-CLI-003`).

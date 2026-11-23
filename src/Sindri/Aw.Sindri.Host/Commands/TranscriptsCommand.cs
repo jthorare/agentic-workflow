@@ -37,8 +37,8 @@ internal static class TranscriptsCommand
 
     /// <summary>Whether turn text reaches this caller fenced as untrusted.</summary>
     /// <param name="session">How the CLI classed itself.</param>
-    /// <returns>True unless a person runs it on a terminal.</returns>
-    internal static bool Fenced(AgentSession session) => !session.Terminal;
+    /// <returns>True unless a person runs it on a terminal: a session Sindri launched or started is never a person, whatever its streams are (#3466).</returns>
+    internal static bool Fenced(AgentSession session) => !session.Terminal || session.Launch is not null || session.OneOff;
 
     private static async Task<int> List(string[] args, ITranscriptCorpus corpus, DateTimeOffset now, Output output, CancellationToken ct)
     {
