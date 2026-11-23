@@ -10,7 +10,8 @@ namespace Aw.Sindri.Host.Commands;
 /// 'sindri setup [--json]': where "set up Sindri once" stands, a client of GET /sindri/setup. It reads the route and never starts the control plane (API spec §7), and it only reports:
 /// every control that moves a step forward is the app's. Exit 0 when every step is done or skipped; 3 when every step that is not done waits on the person at the keyboard (state needs-you and no command
 /// an agent can run: first-run spec decision 9; an agent stops and tells the owner); 1 when a step is still to do, running or failed, or when Sindri isn't running (SND-API-001); 2 on usage or any other error.
-/// 'sindri setup scan …' is <see cref="SetupScanVerb"/>.
+/// With serve down it decides serve, repo, profile and agent in process and says the other four wait for Sindri to run (first-run spec decision 8).
+/// 'sindri setup --apply …' is <see cref="SetupApplyVerb"/>; 'sindri setup scan …' is <see cref="SetupScanVerb"/>.
 /// 'sindri setup skip accounts|first-workflow [--undo] [--json]' skips a step that may be skipped, or undoes the skip, through POST /sindri/setup/skip (any caller).
 /// </summary>
 /// <param name="client">The API client.</param>
@@ -18,7 +19,7 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="offline">The setup list without the control plane: what 'sindri setup' prints while Sindri isn't running (first-run spec decision 8).</param>
 internal sealed class SetupVerbs(ControlPlaneClient client, Output output, IService<GetSetupOfflineRequest, GetSetupResponse> offline)
 {
-    internal const string Usage = "setup [--json] | setup scan [--root DIR] [--depth N] [--json] | setup skip accounts|first-workflow [--undo] [--json]";
+    internal const string Usage = "setup [--json] | " + SetupApplyVerb.Usage + " | setup scan [--root DIR] [--depth N] [--json] | setup skip accounts|first-workflow [--undo] [--json]";
 
     internal async Task<int> Run(string[] args, CancellationToken ct)
     {
