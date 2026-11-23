@@ -39,6 +39,9 @@ public sealed class FakeIntentStore : IIntentStore
     /// <summary>When set, <see cref="SaveConflict"/> alone fails with it.</summary>
     public Error? SaveConflictFailure { get; set; }
 
+    /// <summary>The layer's counter: it moves on every write, as stamp_intent does in SQLite.</summary>
+    public long Stamp { get; private set; }
+
     /// <summary>When set, the <see cref="Layer"/> call with this number (1 is the first) alone fails with <see cref="LayerFailure"/>.</summary>
     public int? LayerFailureOnCall { get; set; }
 
@@ -49,6 +52,13 @@ public sealed class FakeIntentStore : IIntentStore
 
     /// <summary>When set, a <see cref="SaveDecisions"/> of a batch with no decisions alone fails with it (the pass's refusal of an oversized record).</summary>
     public Error? EmptyBatchFailure { get; set; }
+
+    // The store keeps its layer until a write, as SQLite keeps it until the change stamp moves.
+    private void Changed()
+    {
+        _layer = null;
+        Stamp++;
+    }
 
     /// <inheritdoc/>
     public ValueTask<Result<IntentLayer>> Layer(CancellationToken cancellationToken)
@@ -82,7 +92,7 @@ public sealed class FakeIntentStore : IIntentStore
     /// <inheritdoc/>
     public ValueTask<Result<IntentCommit>> CommitPage(IntentPage page, CancellationToken cancellationToken)
     {
-        _layer = null;   // the store keeps its layer until a write, as SQLite keeps it until the change stamp moves
+        Changed();
         ArgumentNullException.ThrowIfNull(page);
         return Attempt(() =>
         {
@@ -137,7 +147,7 @@ public sealed class FakeIntentStore : IIntentStore
 
     public ValueTask<Result<Unit>> SaveDecisions(DecisionBatch batch, CancellationToken cancellationToken)
     {
-        _layer = null;   // the store keeps its layer until a write, as SQLite keeps it until the change stamp moves
+        Changed();
         ArgumentNullException.ThrowIfNull(batch);
         if (EmptyBatchFailure is { } failure && batch.Decisions.Count == 0)
         {
@@ -180,7 +190,7 @@ public sealed class FakeIntentStore : IIntentStore
 
     public ValueTask<Result<Unit>> Requeue(RecordKey record, string version, CancellationToken cancellationToken)
     {
-        _layer = null;   // the store keeps its layer until a write, as SQLite keeps it until the change stamp moves
+        Changed();
         if (RequeueFailure is { } failure)
         {
             return ValueTask.FromResult<Result<Unit>>(failure);
@@ -199,7 +209,7 @@ public sealed class FakeIntentStore : IIntentStore
 
     public ValueTask<Result<Unit>> ReplaceRuleLinks(RecordKey record, LinkRule rule, IReadOnlyList<IntentLink> links, CancellationToken cancellationToken)
     {
-        _layer = null;   // the store keeps its layer until a write, as SQLite keeps it until the change stamp moves
+        Changed();
         return Done(() =>
         {
             if (_records.ContainsKey(record.Value))   // SQLite: a record that isn't stored takes no link
@@ -214,7 +224,7 @@ public sealed class FakeIntentStore : IIntentStore
 
     public ValueTask<Result<Unit>> SetAliases(RecordKey record, string version, IReadOnlyList<string> aliases, CancellationToken cancellationToken)
     {
-        _layer = null;   // the store keeps its layer until a write, as SQLite keeps it until the change stamp moves
+        Changed();
         return Done(() =>
         {
             if (_records.TryGetValue(record.Value, out var stored) && stored.Version == version)
@@ -228,7 +238,7 @@ public sealed class FakeIntentStore : IIntentStore
 
     public ValueTask<Result<Unit>> SaveConflict(DecisionConflict conflict, CancellationToken cancellationToken)
     {
-        _layer = null;   // the store keeps its layer until a write, as SQLite keeps it until the change stamp moves
+        Changed();
         ArgumentNullException.ThrowIfNull(conflict);
         if (SaveConflictFailure is { } failure)
         {

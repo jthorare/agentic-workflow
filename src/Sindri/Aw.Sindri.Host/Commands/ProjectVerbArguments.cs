@@ -1,5 +1,6 @@
 using System.Globalization;
 using Aw.Kernel;
+using Aw.Kernel.Dates;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Projects.Vocabulary;
 
@@ -8,9 +9,9 @@ namespace Aw.Sindri.Host.Commands;
 /// <summary>Reads the arguments of the project write verbs ('project add', 'edit', 'remove', 'hide', 'unhide'; projects page spec §5.3) into one <see cref="Parsed"/>, or the usage error.</summary>
 internal static class ProjectVerbArguments
 {
-    internal const string Usage = "project add [--linear KEY] [--name T] [--link URL]... [--state S] [--notes T] [--target YYYY-MM-DD] [--json] [--no-start] | project show <project> [--json] | projects [--all] [--json] | project edit <project> [--version N] [--name T] [--link URL]... [--state S | --clear-state] [--notes T | --clear-notes] [--target D | --clear-target] [--json] [--no-start] | project remove <project> [--version N] [--json] [--no-start] | project hide|unhide <project> [--version N] [--json] [--no-start]";
+    internal const string Usage = "project add [--linear KEY] [--name T] [--link URL]... [--state S] [--notes T] [--target D] [--json] [--no-start] | project show <project> [--json] | projects [--all] [--json] | project edit <project> [--version N] [--name T] [--link URL]... [--state S | --clear-state] [--notes T | --clear-notes] [--target D | --clear-target] [--json] [--no-start] | project remove <project> [--version N] [--json] [--no-start] | project hide|unhide <project> [--version N] [--json] [--no-start]";
 
-    internal static Result<Parsed> Parse(string[] args)
+    internal static Result<Parsed> Parse(string[] args, DateOnly today)
     {
         var (verb, rest) = args switch
         {
@@ -32,7 +33,7 @@ internal static class ProjectVerbArguments
         var words = new List<string>();
         for (var i = 0; i < rest.Length; i++)
         {
-            var taken = Flag(parsed, rest, i, words);
+            var taken = Flag(parsed, rest, i, words, today);
             if (taken.IsError)
             {
                 return taken.Error;
@@ -44,7 +45,7 @@ internal static class ProjectVerbArguments
         return Shape(parsed, words) is { } wrong ? wrong : parsed;
     }
 
-    private static Result<int> Flag(Parsed parsed, string[] rest, int i, List<string> words)
+    private static Result<int> Flag(Parsed parsed, string[] rest, int i, List<string> words, DateOnly today)
     {
         var flag = rest[i];
         switch (flag)
@@ -62,7 +63,7 @@ internal static class ProjectVerbArguments
                 Clear(parsed, flag);
                 return 0;
             case "--linear" or "--name" or "--link" or "--state" or "--notes" or "--note" or "--target" or "--version" when Takes(parsed.Verb, flag):
-                return i + 1 < rest.Length ? Valued(parsed, flag, rest[i + 1]) : SindriErrors.InvalidInput.With($"{flag} needs a value: {Usage}");
+                return i + 1 < rest.Length ? Valued(parsed, flag, rest[i + 1], today) : SindriErrors.InvalidInput.With($"{flag} needs a value: {Usage}");
             case var other when other.StartsWith("--", StringComparison.Ordinal):
                 return SindriErrors.InvalidInput.With($"'{other}' isn't a flag of this command: {Usage}");
             default:
@@ -94,12 +95,12 @@ internal static class ProjectVerbArguments
         }
     }
 
-    private static Result<int> Valued(Parsed parsed, string flag, string value)
+    private static Result<int> Valued(Parsed parsed, string flag, string value, DateOnly today)
     {
         switch (flag)
         {
             case "--state" or "--target" or "--version":
-                if (Typed(parsed, flag, value) is { } error)
+                if (Typed(parsed, flag, value, today) is { } error)
                 {
                     return error;
                 }
@@ -123,7 +124,7 @@ internal static class ProjectVerbArguments
     }
 
     /// <summary>Reads the flags whose value has a shape; the error, or null when it fitted.</summary>
-    private static Error? Typed(Parsed parsed, string flag, string value)
+    private static Error? Typed(Parsed parsed, string flag, string value, DateOnly today)
     {
         switch (flag)
         {
@@ -136,12 +137,13 @@ internal static class ProjectVerbArguments
                 parsed.State = state;
                 return null;
             case "--target":
-                if (!DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var target))
+                var target = DueWords.Resolve(value, today);
+                if (target.IsError)
                 {
-                    return SindriErrors.ProjectInvalid.With($"target: '{value}' isn't a date (YYYY-MM-DD)");
+                    return SindriErrors.ProjectInvalid.With($"target: {target.Error.Message}");
                 }
 
-                parsed.Target = target;
+                parsed.Target = target.Value;
                 return null;
             default:
                 if (!long.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var version))

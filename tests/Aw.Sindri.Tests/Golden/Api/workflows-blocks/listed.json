@@ -55,7 +55,13 @@
               "type": "text",
               "required": true,
               "caption": "Connection",
-              "advanced": false
+              "advanced": false,
+              "services": [
+                "github",
+                "linear",
+                "slack",
+                "google"
+              ]
             },
             {
               "name": "event",
@@ -631,7 +637,8 @@
               "type": "text",
               "required": false,
               "caption": "Connection",
-              "advanced": false
+              "advanced": false,
+              "services": []
             },
             {
               "name": "arguments",

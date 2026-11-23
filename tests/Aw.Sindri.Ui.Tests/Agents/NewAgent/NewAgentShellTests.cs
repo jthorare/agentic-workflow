@@ -45,6 +45,21 @@ public sealed class NewAgentShellTests
     }, Token);
 
     [Fact]
+    public Task A_failed_setup_read_on_a_later_open_keeps_the_repos_that_loaded_before_3888() => UiThread.Run(async () =>
+    {
+        var shell = await OnAgents();
+        await shell.OpenNewAgent(Token);
+        var (count, name) = (shell.NewAgent.Repos.Count, shell.NewAgent.Repo?.Name);
+        Assert.True(count > 0);
+        _server.SetupAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.InternalServerError, "SND-SETUP-001", "the setup read failed");
+
+        shell.NewAgent.Close();
+        await shell.OpenNewAgent(Token);
+
+        Assert.Equal((count, name, true), (shell.NewAgent.Repos.Count, shell.NewAgent.Repo?.Name, shell.NewAgent.CanStart));
+    }, Token);
+
+    [Fact]
     public Task Esc_closes_the_form_and_N_brings_back_the_same_text() => UiThread.Run(async () =>
     {
         var shell = await OnAgents();

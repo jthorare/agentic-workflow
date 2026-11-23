@@ -11,7 +11,8 @@ namespace Aw.Sindri.Features.SetupSources;
 /// <param name="sources">The index sources read.</param>
 /// <param name="mcp">The MCP registration read.</param>
 /// <param name="map">The map read.</param>
-internal sealed class SetupFacts(ProfileSetupReader profile, SourcesSetupReader sources, McpSetupReader mcp, MapSetupReader map) : ISetupFacts
+/// <param name="builds">The running and installed builds (first-run spec §3.2).</param>
+internal sealed class SetupFacts(ProfileSetupReader profile, SourcesSetupReader sources, McpSetupReader mcp, MapSetupReader map, IBuildStamps builds) : ISetupFacts
 {
     public ValueTask<Result<RepoFact>> Repos(CancellationToken cancellationToken) => profile.Repos(cancellationToken);
 
@@ -23,8 +24,13 @@ internal sealed class SetupFacts(ProfileSetupReader profile, SourcesSetupReader 
 
     public ValueTask<Result<SourcesFact>> Sources(CancellationToken cancellationToken) => sources.Read(cancellationToken);
 
-    // Until the build-info compare (first-run spec A5) there is no stamp to differ on, so serve counts as current.
-    public ValueTask<Result<ServeFact>> Serve(CancellationToken cancellationToken) => ValueTask.FromResult<Result<ServeFact>>(new ServeFact(Current: true));
+    // Current unless both stamps are known and differ: a dev run or a test has none (first-run spec A5).
+    public ValueTask<Result<ServeFact>> Serve(CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<ServeFact>>(new ServeFact(builds.Running() is not { } running || builds.Installed() is not { } installed || string.Equals(running, installed, StringComparison.Ordinal))
+        {
+            Running = builds.RunningBuild(),
+            Installed = builds.InstalledBuild(),
+        });
 
     public ValueTask<Result<AgentFact>> Agent(CancellationToken cancellationToken) => profile.Agent(cancellationToken);
 
