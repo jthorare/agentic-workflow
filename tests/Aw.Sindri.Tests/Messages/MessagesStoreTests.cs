@@ -122,5 +122,18 @@ public sealed class MessagesStoreTests : IDisposable
         Assert.Null(_home.Scalar($"SELECT newest_ts FROM thread_state WHERE thread_ts = '{LeeRoot}'"));
     }
 
+    [Fact]
+    public async Task An_edited_message_is_found_by_its_new_text_and_not_its_old_text()
+    {
+        await _home.Conversation("T0HARBOR", Harbor, ConversationKind.Channel);
+        _ = await _home.Put(new StoredMessage(Harbor, new MessageTs(LeeRoot), ThreadTs: null, "U0LEE", "ferry timetable", Mine: false, NamesMe: false));
+
+        _ = await _home.Put(new StoredMessage(Harbor, new MessageTs(LeeRoot), ThreadTs: null, "U0LEE", "ferry schedule", Mine: false, NamesMe: false));
+
+        Assert.Equal(1L, _home.Count("SELECT COUNT(*) FROM messages"));
+        Assert.Equal(1L, _home.Matches("schedule"));
+        Assert.Equal(0L, _home.Matches("timetable"));
+    }
+
     private long Rev(string root) => _home.Count($"SELECT rev FROM thread_state WHERE conversation = '{Harbor}' AND thread_ts = '{root}'");
 }
