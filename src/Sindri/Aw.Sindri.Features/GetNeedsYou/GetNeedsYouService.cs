@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -7,6 +8,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Items.Vocabulary;
+using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Views;
 
@@ -21,10 +23,9 @@ namespace Aw.Sindri.Features.GetNeedsYou;
 /// <param name="callers">The caller; a read needs one.</param>
 /// <param name="live">The rows read at request time, not from the view (the setup rows).</param>
 /// <param name="json">The host's JSON options: the tag hashes each row as the client receives it.</param>
-internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus status, ICallerContextAccessor callers, NeedsYouLiveRows live, JsonSerializerOptions json) : IService<GetNeedsYouRequest, GetNeedsYouResponse>
+/// <param name="lease">The lease this serve process holds: its epoch goes into the tag (#3883).</param>
+internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus status, ICallerContextAccessor callers, NeedsYouLiveRows live, JsonSerializerOptions json, HeldLease lease) : IService<GetNeedsYouRequest, GetNeedsYouResponse>
 {
-    private static readonly string[] _marked = [ViewNames.NeedsYou, ViewNames.Decisions, ViewNames.Items];
-
     public async ValueTask<Result<GetNeedsYouResponse>> Handle(GetNeedsYouRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -35,7 +36,7 @@ internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus sta
 
         var current = status.Current;
         var setup = await live.Read(cancellationToken).ConfigureAwait(false);   // at most two rows, read at request time: hashed as served, so every input they read (jobs, profile, consent, the mcp switch) is in the tag
-        var marks = await Marks(cancellationToken).ConfigureAwait(false);
+        var marks = await Marks(setup, current, cancellationToken).ConfigureAwait(false);
         if (marks.IsError)
         {
             return marks.Error;
@@ -74,25 +75,52 @@ internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus sta
     }
 
     /// <summary>
-    /// The marks of the three views the answer reads (#2882): 'needs_you' (the rows), 'decisions' (the joined decision) and 'items' (the
-    /// empty sentence's counts). Each is one aggregate query that reads no row and moves on any write, delete or rebuild of its view.
+    /// The serve process's lease epoch (#3883), then the marks of the views the answer reads (#2882): 'needs_you' (the rows),
+    /// 'decisions' (the joined decision) and, only while the list can show its empty sentence, 'items' (that sentence's counts). Each
+    /// mark is one aggregate query that reads no row and moves on any write or delete of its view.
     /// </summary>
-    private async ValueTask<Result<string>> Marks(CancellationToken cancellationToken)
+    private async ValueTask<Result<string>> Marks(IReadOnlyList<NeedsYouRow> setup, ViewsStatus current, CancellationToken cancellationToken)
     {
-        var marks = new StringBuilder();
-        foreach (var view in _marked)
+        // why (#3883): a views rebuild replays the same ledger, so the marks come back the same even when a new build folds other row text; each serve takes the lease at a new epoch and keeps it while it runs
+        var marks = new StringBuilder("serve=").Append((lease.Current?.Epoch ?? 0).ToString(CultureInfo.InvariantCulture)).Append(';');
+        var rows = await Append(marks, ViewNames.NeedsYou, cancellationToken).ConfigureAwait(false);
+        var decisions = rows.IsError ? rows : await Append(marks, ViewNames.Decisions, cancellationToken).ConfigureAwait(false);
+        if (decisions.IsError)
         {
-            var mark = await views.Mark(view, cancellationToken).ConfigureAwait(false);
-            if (mark.IsError)
-            {
-                return mark.Error;
-            }
+            return decisions;
+        }
 
+        if (!MayShowCounts(setup, current, rows.Value))
+        {
+            return marks.ToString();   // #3883: a list with rows (or a stale-views sentence) never shows the counts, so an item write keeps its tag
+        }
+
+        var items = await Append(marks, ViewNames.Items, cancellationToken).ConfigureAwait(false);
+        return items.IsError ? items : marks.ToString();
+    }
+
+    /// <summary>Reads one view's mark and, when it reads, adds it to the tag text.</summary>
+    private async ValueTask<Result<string>> Append(StringBuilder marks, string view, CancellationToken cancellationToken)
+    {
+        var mark = await views.Mark(view, cancellationToken).ConfigureAwait(false);
+        if (!mark.IsError)
+        {
             _ = marks.Append(view).Append('=').Append(mark.Value).Append(';');
         }
 
-        return marks.ToString();
+        return mark;
     }
+
+    /// <summary>
+    /// Whether the answer can be the items' empty sentence: no stale-views sentence, no setup row and no folded row, the last known from
+    /// the needs_you mark's count without reading a row. A mark that names no count keeps the items in: a needless 200, never a stale 304.
+    /// </summary>
+    private static bool MayShowCounts(IReadOnlyList<NeedsYouRow> setup, ViewsStatus current, string rowsMark) =>
+        current.Text is null && setup.Count == 0 && RowCount(rowsMark) is null or 0;
+
+    /// <summary>The row count a view's mark ends with (<see cref="IViewReader.Mark"/>: '…:&lt;count&gt;'), or null when it names none.</summary>
+    private static long? RowCount(string mark) =>
+        long.TryParse(mark.AsSpan(mark.LastIndexOf(':') + 1), NumberStyles.None, CultureInfo.InvariantCulture, out var count) ? count : null;
 
     private async ValueTask<Result<string?>> EmptySentence(ViewsStatus current, List<NeedsYouRow> rows, CancellationToken cancellationToken)
     {
@@ -172,7 +200,7 @@ internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus sta
     }
 
     /// <summary>
-    /// The tag (#2882): a hash of every input of the answer, each read in O(1) rows. The marks of the views it reads stand for the
+    /// The tag (#2882): a hash of every input of the answer, each read in O(1) rows. The serve's lease epoch and the marks of the views it reads stand for the
     /// folded rows, the joined decisions and the empty sentence's counts. The setup rows are read at request time, so each is hashed as
     /// the client receives it (every field). Then the projector's state word, its stale-views sentence (a rebuild's names the cursor)
     /// and whether the views are behind. Never the as-of time or the cursor alone: an event that writes none of the three views keeps

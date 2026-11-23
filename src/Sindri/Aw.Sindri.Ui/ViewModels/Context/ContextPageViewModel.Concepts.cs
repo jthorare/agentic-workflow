@@ -12,6 +12,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 internal sealed partial class ContextPageViewModel
 {
     private bool _conceptsRead;
+    private int _openGeneration;
     private string? _conceptsVersion;
 
     /// <summary>The first layer of the map: the product's concepts.</summary>
@@ -37,6 +38,7 @@ internal sealed partial class ContextPageViewModel
     }
 
     // The page's first read: the concepts; with some, the layer is the page, else the whole map is read as before.
+    // The read started last wins (#3697): each await's continuation drops its result when another first read or a repo switch began meanwhile.
     private async Task OpenFirst(CancellationToken cancellationToken)
     {
         if (Ports.ApiUrl() is not { } api)
@@ -44,27 +46,57 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
+        var generation = ++_openGeneration;
+        if (Whole.IsLoading)
+        {
+            Whole.Quiet();   // an older whole-map read still in flight is dropped when it ends, so it must not leave "Reading the map" behind
+        }
+
         Concepts.Loading();
         ChangedConcepts();
         var read = await ReadConcepts(api, cancellationToken).ConfigureAwait(true);
-        _conceptsRead = read.IsSuccess || !string.Equals(read.Error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
-        var fresh = read.IsSuccess && string.Equals(read.Value.State, "ok", StringComparison.Ordinal) ? await ReadSuggestedSeen(read.Value, cancellationToken).ConfigureAwait(true) : null;
-        NoteConcepts(read, fresh);
-        CountNoConcept(read.IsSuccess ? read.Value : null);
-        if (Concepts.HasConcepts)
+        if (generation == _openGeneration)
         {
-            Head = Labels.ContextConceptsHead;
-            ChangedConcepts();
-            ChangedWhole();
-            _conceptsVersion = read.Value.MapVersion;
-            await ReadGlossary(api, read.Value.MapVersion, cancellationToken).ConfigureAwait(true);
-            await ReadPins(api, cancellationToken).ConfigureAwait(true);
+            await DrawFirst(api, read, generation, cancellationToken).ConfigureAwait(true);
+        }
+    }
+
+    // The concepts' answer onto the page, then the glossary and pins, or the whole map when there are no concepts.
+    private async Task DrawFirst(Uri api, Result<ContextConceptsView> read, int generation, CancellationToken cancellationToken)
+    {
+        _conceptsRead = ConceptsReached(read);
+        var fresh = await ReadNewSuggested(read, cancellationToken).ConfigureAwait(true);
+        if (generation != _openGeneration)
+        {
             return;
         }
 
+        NoteConcepts(read, fresh);
+        CountNoConcept(read.IsSuccess ? read.Value : null);
+        if (!Concepts.HasConcepts)
+        {
+            ChangedConcepts();
+            await ReadWhole(cancellationToken).ConfigureAwait(true);
+            return;
+        }
+
+        Head = Labels.ContextConceptsHead;
         ChangedConcepts();
-        await ReadWhole(cancellationToken).ConfigureAwait(true);
+        ChangedWhole();
+        _conceptsVersion = read.Value.MapVersion;
+        var glossary = await AskGlossary(api, read.Value.MapVersion, cancellationToken).ConfigureAwait(true);
+        if (generation == _openGeneration)
+        {
+            ShowGlossary(glossary);
+            await ReadPins(api, cancellationToken).ConfigureAwait(true);
+        }
     }
+
+    // Whether the server answered the concepts read at all (an unreachable one is read again later).
+    private static bool ConceptsReached(Result<ContextConceptsView> read) => read.IsSuccess || !string.Equals(read.Error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
+
+    private async Task<IReadOnlyDictionary<string, int>?> ReadNewSuggested(Result<ContextConceptsView> read, CancellationToken cancellationToken) =>
+        read.IsSuccess && string.Equals(read.Value.State, "ok", StringComparison.Ordinal) ? await ReadSuggestedSeen(read.Value, cancellationToken).ConfigureAwait(true) : null;
 
     // Every page of the concepts, joined: the first page's state and Other, the concepts and links of all. A later page that fails keeps what was read.
     private async Task<Result<ContextConceptsView>> ReadConcepts(Uri api, CancellationToken cancellationToken)
@@ -103,9 +135,14 @@ internal sealed partial class ContextPageViewModel
 
     // The concept cards' terms. No map (the 030 refusal, or a 200 "unavailable") and a server without the route leave the cards as the concepts read left them;
     // any other refusal is said in one line with its code and message.
-    private async Task ReadGlossary(Uri api, string? mapVersion, CancellationToken cancellationToken)
+    private async Task ReadGlossary(Uri api, string? mapVersion, CancellationToken cancellationToken) =>
+        ShowGlossary(await AskGlossary(api, mapVersion, cancellationToken).ConfigureAwait(true));
+
+    private Task<Result<ConceptGlossaryView>> AskGlossary(Uri api, string? mapVersion, CancellationToken cancellationToken) =>
+        Ports.Api.ContextConceptGlossary(api, new ConceptGlossaryQuery(_repo ?? string.Empty, mapVersion), cancellationToken);
+
+    private void ShowGlossary(Result<ConceptGlossaryView> read)
     {
-        var read = await Ports.Api.ContextConceptGlossary(api, new ConceptGlossaryQuery(_repo ?? string.Empty, mapVersion), cancellationToken).ConfigureAwait(true);
         if (read.IsSuccess)
         {
             if (!string.Equals(read.Value.State, "unavailable", StringComparison.Ordinal))
@@ -228,54 +265,5 @@ internal sealed partial class ContextPageViewModel
 
         CloseConcept();
         return true;
-    }
-
-    // A query at the concept layer: the concepts whose name, summary or terms hold the words, and the ones that hold a node the words (or the anchors the question
-    // resolved to) name. The question's suggestions are choices, never matches (#1699).
-    private async Task SearchConcepts(Uri api, List<string> words, int generation, CancellationToken cancellationToken)
-    {
-        var matches = new HashSet<string>(Concepts.Matching(AnchorText.Trim()), StringComparer.Ordinal);
-        var resolved = await Resolve(api, words, generation, cancellationToken).ConfigureAwait(true);
-        if (generation != _generation)
-        {
-            return;
-        }
-
-        Choices = [];
-        if (resolved is { } found)
-        {
-            var located = await Ports.Api.WholeMap(api, new WholeMapQuery("areas", Area: null, [.. found.Anchors.Take(MaxLocate)], MapVersion: null, Draft: false, Repo: _repo), cancellationToken).ConfigureAwait(true);
-            if (generation != _generation)
-            {
-                return;
-            }
-
-            if (located.IsSuccess)
-            {
-                matches.UnionWith((located.Value.Located ?? []).SelectMany(l => l.Concept ?? []));
-            }
-        }
-
-        Concepts.ApplySearch(matches);
-        if (matches.Count == 0 && resolved is { Suggested.Count: > 0 } missed)
-        {
-            Choices = missed.Suggested;
-        }
-
-        ChangedConcepts();
-        Refresh();
-    }
-
-    private void ChangedConcepts()
-    {
-        OnChanged(nameof(ShowConcepts));
-        OnChanged(nameof(ShowWhole));
-        OnChanged(nameof(ShowWholeStatus));
-        OnChanged(nameof(OpenedConceptId));
-        OnChanged(nameof(Head));
-        OnChanged(nameof(HasHead));
-        OnChanged(nameof(SearchNote));
-        OnChanged(nameof(HasSearchNote));
-        ChangedNoConcept();
     }
 }

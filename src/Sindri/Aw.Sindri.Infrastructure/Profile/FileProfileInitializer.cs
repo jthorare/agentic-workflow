@@ -21,6 +21,11 @@ internal sealed class FileProfileInitializer(SindriSettings settings, Core.Profi
             return exists;
         }
 
+        if (ProfileDirectoryInTheWay.At(path) is { } inTheWay)
+        {
+            return inTheWay;
+        }
+
         try
         {
             if (Path.GetDirectoryName(path) is { Length: > 0 } directory)

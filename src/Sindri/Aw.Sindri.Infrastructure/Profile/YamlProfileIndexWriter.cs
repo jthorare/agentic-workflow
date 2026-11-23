@@ -129,6 +129,11 @@ internal sealed class YamlProfileIndexWriter(SindriSettings settings, JsonSerial
 
     private static Result<string> Read(string path)
     {
+        if (ProfileDirectoryInTheWay.At(path) is { } inTheWay)
+        {
+            return inTheWay;
+        }
+
         try
         {
             return File.Exists(path)
@@ -137,7 +142,7 @@ internal sealed class YamlProfileIndexWriter(SindriSettings settings, JsonSerial
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            return SindriErrors.ProfileMissing.With($"{path} can't be read: {e.Message}");
+            return SindriErrors.ProfileUnreadable.With($"{path} can't be read: {e.Message} (fix: check the file's permissions, e.g. chmod 600 {path})");
         }
     }
 
