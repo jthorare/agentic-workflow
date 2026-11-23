@@ -1,10 +1,11 @@
 using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Home;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Scheduling;
 
-namespace Aw.Sindri.Core.Home;
+namespace Aw.Sindri.Core.HomeWrites;
 
 /// <summary>
 /// Appends one collector pass's plan as 'home.row.raised', '.changed' and '.cleared' events (home spec §3.1), fenced by the pass's lease grant.
