@@ -94,6 +94,12 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
     /// <summary>The row's tooltip: the same words as its accessible name (provider, title, state, "estimated", what it asks, host).</summary>
     public string Tip => Name;
 
+    /// <summary>The status dot's glyph (stub).</summary>
+    public string DotGlyph => Glyph;
+
+    /// <summary>The text the row's title cell shows (stub).</summary>
+    public string ListText => TitleText;
+
     /// <summary>True when the row has something for the Repository column.</summary>
     internal bool HasRepoValue => !string.Equals(RepoText, Labels.EmptyCell, StringComparison.Ordinal);
 

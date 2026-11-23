@@ -85,4 +85,74 @@ public sealed class AgentsNarrowRowTests
 
         Assert.Equal((false, false), (ClaudeRow(page).ShowsProvider, ClaudeRow(page).ShowsEstimated));
     }
+
+    [Fact]
+    public async Task An_estimated_row_in_the_narrow_column_draws_a_hollow_dot_and_a_wide_one_the_full_dot()
+    {
+        ServeEstimated();
+        var page = await _f.Shown(Token);
+        var row = ClaudeRow(page);
+
+        page.Resize(1280);
+        var wide = row.DotGlyph;
+        page.Resize(360);
+
+        Assert.Equal(("●", "○"), (wide, row.DotGlyph));
+        Assert.Equal("●", row.Glyph);   // the chip's own glyph (and its accessible name) stay
+    }
+
+    [Fact]
+    public async Task A_row_that_is_not_estimated_keeps_the_full_dot_in_the_narrow_column()
+    {
+        var page = await _f.Shown(Token);
+
+        page.Resize(360);
+
+        Assert.Equal("●", ClaudeRow(page).DotGlyph);
+    }
+
+    [Fact]
+    public async Task In_the_narrow_column_a_lane_row_is_named_by_its_lane_and_the_title_stays_in_the_tooltip()
+    {
+        _f.Serve(Edited(l => Row(l, Claude)["lane"] = new System.Text.Json.Nodes.JsonObject { ["team"] = "sindri", ["lane"] = "ideas" }));
+        var page = await _f.Shown(Token);
+        var row = ClaudeRow(page);
+
+        page.Resize(1280);
+        var wide = row.ListText;
+        page.Resize(360);
+
+        Assert.Equal((row.TitleText, "ideas"), (wide, row.ListText));
+        Assert.Contains(row.TitleText, row.Tip, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task In_the_narrow_column_a_row_without_a_lane_is_named_by_its_tmux_session()
+    {
+        _f.Serve(Edited(l =>
+        {
+            Row(l, Claude)["lane"] = null;
+            Row(l, Claude)["host"]!["session"] = "ideas-tmux";
+        }));
+        var page = await _f.Shown(Token);
+
+        page.Resize(360);
+
+        Assert.Equal("ideas-tmux", ClaudeRow(page).ListText);
+    }
+
+    [Fact]
+    public async Task In_the_narrow_column_a_row_with_neither_lane_nor_tmux_name_shows_its_title()
+    {
+        _f.Serve(Edited(l =>
+        {
+            Row(l, Claude)["lane"] = null;
+            Row(l, Claude)["host"]!["session"] = null;
+        }));
+        var page = await _f.Shown(Token);
+
+        page.Resize(360);
+
+        Assert.Equal(ClaudeRow(page).TitleText, ClaudeRow(page).ListText);
+    }
 }

@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -51,6 +52,20 @@ public sealed class AgentsNarrowRowFrameTests : FrameHost
             Assert.False(Named<TextBlock>(row, "SessionRowProvider").IsEffectivelyVisible);
             var title = Named<TextBlock>(row, "SessionRowTitle");
             Assert.True(title.Bounds.Width >= LeastTitleWidth, $"the title is {title.Bounds.Width} px wide");
+            Assert.Same(TextTrimming.PrefixCharacterEllipsis, title.TextTrimming);   // 8 characters, the ellipsis, then the tail
         });
+    });
+
+    [Fact]
+    public Task Without_the_pane_the_title_still_ends_with_the_ellipsis() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected(width: 1440);
+        shell.GoTo(PageId.Agents);
+        await Until(window, () => shell.Agents.Drawn > 0, "the Agents page never read the list");
+        Settle(window);
+
+        var rows = window.GetVisualDescendants().OfType<SessionRow>().Where(r => r.IsEffectivelyVisible).ToList();
+        Assert.NotEmpty(rows);
+        Assert.All(rows, row => Assert.Same(TextTrimming.CharacterEllipsis, Named<TextBlock>(row, "SessionRowTitle").TextTrimming));
     });
 }
