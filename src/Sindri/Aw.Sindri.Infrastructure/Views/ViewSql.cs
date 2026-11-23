@@ -52,6 +52,8 @@ internal static class ViewSql
         [ViewNames.ItemLinks] = new ViewTable("view_item_links"),
         [ViewNames.WorkflowRuns] = new ViewTable("view_workflow_runs"),
         [ViewNames.Todo] = new ViewTable("view_todo"),
+        [ViewNames.HomeRows] = new ViewTable("view_home_rows", Columns(ViewNames.HomeRows)),
+        [ViewNames.HomeLinks] = new ViewTable("view_home_links", Columns(ViewNames.HomeLinks)),
     };
 
     /// <summary>The columns migrations 0003, 0004 and 0005 generate for <paramref name="view"/>: the ones <see cref="ViewColumns"/> maps, named after the column.</summary>

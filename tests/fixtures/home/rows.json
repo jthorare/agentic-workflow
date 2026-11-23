@@ -1,0 +1,360 @@
+{
+  "rows": [
+    {
+      "id": "lane:recycle:meta",
+      "version": 1,
+      "kind": "lane-recycle",
+      "group": "needs-you",
+      "title": "meta: at 205k, recycle from a digest",
+      "facts": [
+        {
+          "kind": "why",
+          "text": "blocks 3"
+        },
+        {
+          "kind": "object",
+          "text": "meta"
+        },
+        {
+          "kind": "from",
+          "text": "lane meta"
+        }
+      ],
+      "waitsOn": "you",
+      "since": "2026-11-12T08:55:00Z",
+      "rank": {
+        "blocks": 3,
+        "weight": 4,
+        "sinceRank": 5,
+        "position": 1
+      },
+      "blocksList": [
+        {
+          "id": "gh:ready:jthorare/agentic-workflow#3099",
+          "title": "#3099 ready to merge",
+          "via": "item-of"
+        },
+        {
+          "id": "gh:ready:jthorare/agentic-workflow#3101",
+          "title": "#3101 ready to merge",
+          "via": "item-of"
+        },
+        {
+          "id": "linear:issue:ENG-3040",
+          "title": "Issue 3040",
+          "via": "closes"
+        }
+      ],
+      "links": [
+        {
+          "kind": "lane",
+          "id": "lane:recycle:meta",
+          "title": "meta"
+        }
+      ],
+      "state": "open",
+      "snoozeUntil": null,
+      "doneAt": null,
+      "actions": [
+        "copy-digest-request",
+        "open-session"
+      ],
+      "source": {
+        "name": "home-lanes",
+        "readAt": "2026-11-12T09:10:00Z",
+        "connection": null
+      },
+      "repo": "demo"
+    },
+    {
+      "id": "gh:review:jthorare/agentic-workflow#3120",
+      "version": 1,
+      "kind": "review-requested",
+      "group": "needs-you",
+      "title": "Review requested: PR 3120",
+      "facts": [
+        {
+          "kind": "why",
+          "text": "blocks 2"
+        },
+        {
+          "kind": "object",
+          "text": "#3120"
+        },
+        {
+          "kind": "from",
+          "text": "Sam"
+        }
+      ],
+      "waitsOn": "you",
+      "since": "2026-11-12T07:30:00Z",
+      "rank": {
+        "blocks": 2,
+        "weight": 5,
+        "sinceRank": 1,
+        "position": 2
+      },
+      "blocksList": [
+        {
+          "id": "linear:issue:ENG-3055",
+          "title": "Issue 3055",
+          "via": "closes"
+        },
+        {
+          "id": "gh:pr:jthorare/agentic-workflow#3125",
+          "title": "PR 3125",
+          "via": "stacked"
+        }
+      ],
+      "links": [
+        {
+          "kind": "issue",
+          "id": "linear:issue:ENG-3055",
+          "title": "Issue 3055"
+        },
+        {
+          "kind": "pr",
+          "id": "gh:pr:jthorare/agentic-workflow#3125",
+          "title": "PR 3125"
+        }
+      ],
+      "state": "open",
+      "snoozeUntil": null,
+      "doneAt": null,
+      "actions": [
+        "open-review",
+        "approve",
+        "comment",
+        "request-changes"
+      ],
+      "source": {
+        "name": "github",
+        "readAt": "2026-11-12T09:10:00Z",
+        "connection": "jthorare"
+      },
+      "repo": "demo"
+    },
+    {
+      "id": "gh:ready:jthorare/agentic-workflow#3099",
+      "version": 1,
+      "kind": "pr-ready-merge",
+      "group": "needs-you",
+      "title": "PR 3099 is ready to merge",
+      "facts": [
+        {
+          "kind": "why",
+          "text": "blocks 2"
+        },
+        {
+          "kind": "object",
+          "text": "#3099"
+        },
+        {
+          "kind": "from",
+          "text": "meta queue"
+        }
+      ],
+      "waitsOn": "you",
+      "since": "2026-11-12T08:02:00Z",
+      "rank": {
+        "blocks": 2,
+        "weight": 5,
+        "sinceRank": 2,
+        "position": 3
+      },
+      "blocksList": [
+        {
+          "id": "gh:ready:jthorare/agentic-workflow#3101",
+          "title": "#3101 ready to merge",
+          "via": "merge-order"
+        },
+        {
+          "id": "linear:issue:ENG-3040",
+          "title": "Issue 3040",
+          "via": "closes"
+        }
+      ],
+      "links": [
+        {
+          "kind": "issue",
+          "id": "linear:issue:ENG-3040",
+          "title": "Issue 3040"
+        }
+      ],
+      "state": "open",
+      "snoozeUntil": null,
+      "doneAt": null,
+      "actions": [
+        "merge",
+        "open"
+      ],
+      "source": {
+        "name": "home-lanes",
+        "readAt": "2026-11-12T09:10:00Z",
+        "connection": null
+      },
+      "repo": "demo"
+    },
+    {
+      "id": "lane:recycle:ideas",
+      "version": 1,
+      "kind": "lane-recycle",
+      "group": "needs-you",
+      "title": "ideas: at 210k, recycle from a digest",
+      "facts": [
+        {
+          "kind": "why",
+          "text": "blocks 2"
+        },
+        {
+          "kind": "object",
+          "text": "ideas"
+        },
+        {
+          "kind": "from",
+          "text": "lane ideas"
+        }
+      ],
+      "waitsOn": "you",
+      "since": "2026-11-12T08:50:00Z",
+      "rank": {
+        "blocks": 2,
+        "weight": 4,
+        "sinceRank": 4,
+        "position": 4
+      },
+      "blocksList": [
+        {
+          "id": "gh:pr:jthorare/agentic-workflow#3078",
+          "title": "PR 3078",
+          "via": "item-of"
+        },
+        {
+          "id": "linear:issue:ENG-3014",
+          "title": "Issue 3014",
+          "via": "item-of"
+        }
+      ],
+      "links": [
+        {
+          "kind": "pr",
+          "id": "gh:pr:jthorare/agentic-workflow#3078",
+          "title": "PR 3078"
+        }
+      ],
+      "state": "open",
+      "snoozeUntil": null,
+      "doneAt": null,
+      "actions": [
+        "copy-digest-request",
+        "open-session"
+      ],
+      "source": {
+        "name": "home-lanes",
+        "readAt": "2026-11-12T09:10:00Z",
+        "connection": null
+      },
+      "repo": "demo"
+    },
+    {
+      "id": "gh:ready:jthorare/agentic-workflow#3101",
+      "version": 1,
+      "kind": "pr-ready-merge",
+      "group": "needs-you",
+      "title": "PR 3101 is ready to merge",
+      "facts": [
+        {
+          "kind": "why",
+          "text": "blocks 1"
+        },
+        {
+          "kind": "object",
+          "text": "#3101"
+        },
+        {
+          "kind": "from",
+          "text": "meta queue"
+        }
+      ],
+      "waitsOn": "you",
+      "since": "2026-11-12T08:40:00Z",
+      "rank": {
+        "blocks": 1,
+        "weight": 5,
+        "sinceRank": 3,
+        "position": 5
+      },
+      "blocksList": [
+        {
+          "id": "linear:issue:ENG-3040",
+          "title": "Issue 3040",
+          "via": "closes"
+        }
+      ],
+      "links": [
+        {
+          "kind": "issue",
+          "id": "linear:issue:ENG-3040",
+          "title": "Issue 3040"
+        }
+      ],
+      "state": "open",
+      "snoozeUntil": null,
+      "doneAt": null,
+      "actions": [
+        "merge",
+        "open"
+      ],
+      "source": {
+        "name": "home-lanes",
+        "readAt": "2026-11-12T09:10:00Z",
+        "connection": null
+      },
+      "repo": "demo"
+    },
+    {
+      "id": "slack:dm:sam-0902",
+      "version": 1,
+      "kind": "dm",
+      "group": "needs-you",
+      "title": "Sam asked about the offsite room",
+      "facts": [
+        {
+          "kind": "why",
+          "text": "DM"
+        },
+        {
+          "kind": "object",
+          "text": "Sam"
+        },
+        {
+          "kind": "from",
+          "text": "Sam"
+        }
+      ],
+      "waitsOn": "you",
+      "since": "2026-11-12T09:02:00Z",
+      "rank": {
+        "blocks": 0,
+        "weight": 4,
+        "sinceRank": 6,
+        "position": 6
+      },
+      "blocksList": [],
+      "links": [],
+      "state": "open",
+      "snoozeUntil": null,
+      "doneAt": null,
+      "actions": [
+        "reply",
+        "open-in-slack"
+      ],
+      "source": {
+        "name": "slack",
+        "readAt": "2026-11-12T09:10:00Z",
+        "connection": "work-slack"
+      },
+      "repo": null
+    }
+  ]
+}

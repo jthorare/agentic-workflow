@@ -82,10 +82,10 @@ public sealed class WorkflowsEditorSheetTests
         Assert.Equal((true, false), (page.Editor.NeedsReload, page.CanSave));
         Assert.StartsWith("This workflow changed elsewhere", page.Editor.ReloadPromptText, StringComparison.Ordinal);
 
-        var reads = _f.Server.WorkflowCalls;
+        var reads = _f.Server.WorkflowNewestCalls;
         await page.Editor.Reload(Token);
 
-        Assert.Equal(reads + 1, _f.Server.WorkflowCalls);
+        Assert.Equal(reads + 1, _f.Server.WorkflowNewestCalls);   // the editor reads the newest revision (#3303)
         Assert.Equal((false, true), (page.Editor.NeedsReload, page.CanSave));
     }
 

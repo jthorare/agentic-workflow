@@ -127,15 +127,27 @@ public static class SetupSteps
             : new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Todo, string.Join(" and ", missing) + (missing.Count == 1 ? " needs" : " need") + " a token.", Detail: null, Error: null, SetupActions.ConnectAccount, Progress: null) { Items = fact.Items.Lines };
     }
 
-    /// <summary>The serve step (step 1): done when the running Sindri is the installed build; otherwise the owner's, with a restart.</summary>
-    /// <param name="fact">Whether serve runs the installed build.</param>
+    /// <summary>
+    /// The serve step (step 1, first-run spec §3.2 and §4.5): done when the running Sindri is the installed build; otherwise the owner's, with a restart. It names both
+    /// builds' commits and built times; a running folder the install pruned has no 'build-info', and then the step names no times.
+    /// </summary>
+    /// <param name="fact">Whether serve runs the installed build, and each build's 'build-info'.</param>
     /// <returns>The step.</returns>
     public static SetupStep Serve(ServeFact fact)
     {
         ArgumentNullException.ThrowIfNull(fact);
-        return fact.Current
-            ? new SetupStep(SetupStepId.Serve, ServeTitle, SetupState.Done, "Sindri is running the installed build.", Detail: null, Error: null, Action: null, Progress: null)
-            : new SetupStep(SetupStepId.Serve, ServeTitle, SetupState.NeedsYou, "A different Sindri is installed than the one running.", "Restart Sindri to run the installed one.", Error: null, SetupActions.RestartProcess, Progress: null);
+        if (fact.Current)
+        {
+            return new SetupStep(SetupStepId.Serve, ServeTitle, SetupState.Done, "Sindri is running the installed build.", fact.Running is { } build ? "Running " + Words(build) + "." : null, Error: null, Action: null, Progress: null);
+        }
+
+        if (fact.Running is not { } running || fact.Installed is not { } installed)
+        {
+            return new SetupStep(SetupStepId.Serve, ServeTitle, SetupState.NeedsYou, "A different Sindri is installed.", "Restart Sindri to run the installed one.", Error: null, SetupActions.RestartProcess, Progress: null);
+        }
+
+        var why = (installed.Built > running.Built ? "A newer Sindri is installed (" : "A different Sindri is installed (") + Words(installed) + ").";
+        return new SetupStep(SetupStepId.Serve, ServeTitle, SetupState.NeedsYou, why, "Running " + Words(running) + ". Restart Sindri to run the installed one.", Error: null, SetupActions.RestartProcess, Progress: null);
     }
 
     /// <summary>The serve step while Sindri isn't running (first-run spec decision 8): open, and the fix is to start it, which any caller may do.</summary>
@@ -148,6 +160,9 @@ public static class SetupSteps
     /// <returns>The step.</returns>
     public static SetupStep WaitsForServe(SetupStepId id) =>
         Unreadable(id, SindriErrors.NotRunning.Code) with { State = SetupState.Todo, Why = "Waits for Sindri to run.", Error = null };
+
+    private static string Words(BuildInfo build) =>
+        build.ShortCommit + ", built " + build.Built.ToUniversalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + " UTC";
 
     /// <summary>The agent step (step 5): it waits for a repo, then done once `workflow.agent.target` is set. It has no action: the setup service sets the target from the first agent it finds.</summary>
     /// <param name="fact">Which agent the workflows use.</param>

@@ -38,6 +38,8 @@ public static class ViewColumns
                 ViewNames.Jobs when column != ViewColumn.Item => [name],
                 ViewNames.Launches when column != ViewColumn.Kind => [name],
                 ViewNames.NeedsYou when column != ViewColumn.State => ["row", name],
+                ViewNames.HomeRows when column is ViewColumn.State or ViewColumn.Kind => [name],
+                ViewNames.HomeLinks when column == ViewColumn.Item => ["from"],
                 _ => null,
             };
     }
