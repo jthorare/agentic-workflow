@@ -24,9 +24,9 @@ internal static class WorkflowRunSql
         "INSERT INTO workflow_run (id, workflow_id, revision, trigger, status, outputs, error, item_id, started_at, mode, test_options) VALUES ($id, $workflow, $revision, $trigger, $status, $outputs, $error, $item, $at, $mode, $options)";
 
     // why: live failed runs the owner has not opened, across every workflow; the filter is in the query, so a test row or a seen run takes no room (Home spec §3.3, E1)
-    internal const string FailedUnseen = SelectRun + " WHERE status = 'failed' AND seen_at IS NULL AND mode = 'live' ORDER BY started_at DESC, id DESC";
+    internal const string FailedUnseen = SelectRun + " WHERE status = 'failed' AND seen_at IS NULL AND mode = 'live' ORDER BY started_at DESC, id DESC LIMIT $limit";
 
-    internal const string MarkSeen = "UPDATE workflow_run SET seen_at = $at WHERE id = $id AND seen_at IS NULL";
+    internal const string MarkSeen = "UPDATE workflow_run SET seen_at = $at WHERE id = $id AND seen_at IS NULL AND status = 'failed'";
 
     internal const string SetItem = "UPDATE workflow_run SET item_id = $item WHERE id = $id AND item_id IS NULL";
 

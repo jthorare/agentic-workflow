@@ -66,7 +66,7 @@ internal static partial class WorkflowTools
     private static Tool ApplyOpsTool { get; } = new()
     {
         Name = ApplyOps,
-        Description = "Edit a workflow with small ops against the revision you read: add_node, set_config (a path set), remove_node, connect, disconnect, rename, set_meta. All ops apply or none do; the result is the next revision. "
+        Description = "Edit a workflow with small ops against the revision you read: add_node, set_config (a path set), remove_node, connect, disconnect, rename, set_meta (name, description, concurrency, result). All ops apply or none do; the result is the next revision. "
             + "A stale baseRevision is a conflict that names the current revision.",
         InputSchema = ContextTools.Schema(new JsonObject
         {

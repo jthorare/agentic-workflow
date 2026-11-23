@@ -1217,7 +1217,7 @@
   },
   {
     "name": "workflow_apply_ops",
-    "description": "Edit a workflow with small ops against the revision you read: add_node, set_config (a path set), remove_node, connect, disconnect, rename, set_meta. All ops apply or none do; the result is the next revision. A stale baseRevision is a conflict that names the current revision.",
+    "description": "Edit a workflow with small ops against the revision you read: add_node, set_config (a path set), remove_node, connect, disconnect, rename, set_meta (name, description, concurrency, result). All ops apply or none do; the result is the next revision. A stale baseRevision is a conflict that names the current revision.",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,

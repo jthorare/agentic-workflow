@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Core.Graph.Blocks;
 
@@ -74,6 +75,11 @@ public sealed class WorkflowResultBlock(IGraphResultPort results) : IGraphBlock
         }
 
         var result = read.Value;
+        if (RunResultMarker.Refusal(result.Run, result.Outputs) is { } cut)
+        {
+            return SindriErrors.GraphOutputTruncated.With(cut);   // why: a result over 64 KB is a marker, never read as if it were the value (#3807)
+        }
+
         return new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal)
         {
             ["runId"] = result.Run.Value,
