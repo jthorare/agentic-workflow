@@ -1,3 +1,4 @@
+using Aw.Context.Core;
 using Aw.Context.Core.Sync;
 using Aw.Sindri.Core.Health;
 
@@ -25,6 +26,21 @@ internal static class IndexSourceLook
     internal static HealthProblem? Problem(SourceProgress p)
     {
         ArgumentNullException.ThrowIfNull(p);
-        throw new NotSupportedException();
+        if (!For(p))
+        {
+            return null;
+        }
+
+        var name = p.Source.Value;
+        var code = p.LastError ?? p.LastCode ?? ContextErrors.SourceUnavailable.Code;   // a pass that found nothing carries no code of its own
+        var failed = p.LastErrorText ?? "its last pull failed";
+        var words = p.Pull switch
+        {
+            "backoff" => failed + ", retrying",
+            "failed" => failed,
+            "idle" => "a pass ended and found nothing",
+            _ => "it can't be used yet",
+        };
+        return new HealthProblem(code, $"{name}: {words}", $"the {name} source needs a look");
     }
 }

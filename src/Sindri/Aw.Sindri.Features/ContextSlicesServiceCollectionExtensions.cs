@@ -13,6 +13,7 @@ using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.WholeMap;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core.Health;
 using Aw.Sindri.Core.Locks;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
@@ -35,6 +36,7 @@ internal static class ContextSlicesServiceCollectionExtensions
     private static IServiceCollection AddIndexSyncService(this IServiceCollection services)
     {
         _ = services.AddScoped<IValidator<GetIndexStatusRequest>, AcceptAllValidator<GetIndexStatusRequest>>().AddQuery<GetIndexStatusRequest, IndexStatusView, GetIndexStatusService>();
+        _ = services.AddScoped<IContextSourceHealth, ContextSourceHealth>();   // #4010: a source that needs a look is a status health problem too
         _ = services.AddScoped<IValidator<PurgeIndexSourceRequest>, AcceptAllValidator<PurgeIndexSourceRequest>>().AddCommand<PurgeIndexSourceRequest, IndexPurgeView, PurgeIndexSourceService>();
         return services
             .AddScoped<IScheduledService, IndexSyncService>()
