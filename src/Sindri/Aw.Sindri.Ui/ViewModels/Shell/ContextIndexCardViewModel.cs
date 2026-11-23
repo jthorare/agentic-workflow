@@ -140,10 +140,13 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
         }
     }
 
+    // A source the server flags with its own sentence (#3911) reads that sentence in place of its state; any other reads its name and state.
     private string Line(IndexSourceView source)
     {
         var firstSync = IsFirstSync(source);
-        var line = source.Source + ": " + (firstSync ? Labels.ContextSourceFirstSync : State(source));
+        var line = source is { NeedsLook: true, LookWords: { Length: > 0 } words }
+            ? words
+            : source.Source + ": " + (firstSync ? Labels.ContextSourceFirstSync : State(source));
         if (source.Records is { } records)
         {
             line += firstSync ? ", " + Labels.ContextRecordsSoFar(records) : " · " + Labels.ContextRecords(records);
