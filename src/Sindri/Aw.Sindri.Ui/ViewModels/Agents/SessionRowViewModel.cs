@@ -85,6 +85,15 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
     /// <summary>True when every column shows.</summary>
     public bool IsWide => !IsCompact;
 
+    /// <summary>True when the row shows the provider word (stub).</summary>
+    public bool ShowsProvider => true;
+
+    /// <summary>True when the row shows "estimated" (stub).</summary>
+    public bool ShowsEstimated => IsEstimated;
+
+    /// <summary>The row's tooltip (stub).</summary>
+    public string Tip => string.Empty;
+
     /// <summary>True when the row has something for the Repository column.</summary>
     internal bool HasRepoValue => !string.Equals(RepoText, Labels.EmptyCell, StringComparison.Ordinal);
 
