@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Graph.Schedule;
 
 namespace Aw.Sindri.Features.ListWorkflows;
 
@@ -59,14 +60,14 @@ internal sealed class ListWorkflowsService(IWorkflowStore workflows, IWorkflowRu
             return recent.Error;
         }
 
-        var trigger = TriggerWords.Trigger(shown.Value.Spec);
+        var trigger = WorkflowNextRun.Trigger(shown.Value.Spec);
         var strip = recent.Value.Select(static r => new WorkflowRecentRun(r.Id, RunWords.Of(r.Status), r.StartedAt, RunWords.Seconds(r.StartedAt, r.EndedAt))).ToList();
         return new WorkflowSummary(record.Slug, record.Name, record.ActiveRevision, record.LatestRevision, newest.CreatedBy, newest.CreatedAt)
         {
             Archived = record.ArchivedAt is null ? null : true,
             Trigger = TriggerWords.Of(trigger),
             Paused = record.WasActivated && record.ActiveRevision is null,
-            NextRunAt = record.ActiveRevision is null ? null : TriggerWords.Next(trigger, clock.GetUtcNow()),
+            NextRunAt = WorkflowNextRun.Of(record, shown.Value.Spec, clock.GetUtcNow()),
             LastRun = recent.Value.Count == 0 ? null : new WorkflowLastRun(recent.Value[0].Id, strip[0].Status, recent.Value[0].StartedAt),
             Recent = strip,
         };

@@ -23904,6 +23904,10 @@ static Aw.Sindri.Core.Graph.Runs.RunWords.Of(Aw.Sindri.Core.Graph.Runs.WorkflowR
 static Aw.Sindri.Core.Graph.Runs.RunWords.Result(Aw.Sindri.Core.Graph.Runs.WorkflowRun! run) -> string?
 static Aw.Sindri.Core.Graph.Runs.RunWords.Seconds(System.DateTimeOffset started, System.DateTimeOffset? ended) -> double?
 static Aw.Sindri.Core.Graph.Runs.RunWords.TriggerWord(string! trigger) -> string!
+Aw.Sindri.Core.Graph.Schedule.WorkflowNextRun
+static Aw.Sindri.Core.Graph.Schedule.WorkflowNextRun.Crons(Aw.Sindri.Core.Graph.GraphNode! node) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Graph.Schedule.WorkflowNextRun.Of(Aw.Sindri.Core.Graph.WorkflowRecord! record, Aw.Sindri.Core.Graph.GraphSpec! spec, System.DateTimeOffset now) -> System.DateTimeOffset?
+static Aw.Sindri.Core.Graph.Schedule.WorkflowNextRun.Trigger(Aw.Sindri.Core.Graph.GraphSpec! spec) -> Aw.Sindri.Core.Graph.GraphNode?
 Aw.Sindri.Core.Graph.Runs.RunResultMarker
 static Aw.Sindri.Core.Graph.Runs.RunResultMarker.IsMarker(System.Text.Json.Nodes.JsonNode? node) -> bool
 static Aw.Sindri.Core.Graph.Runs.RunResultMarker.Of(long? bytes) -> System.Text.Json.Nodes.JsonObject!
