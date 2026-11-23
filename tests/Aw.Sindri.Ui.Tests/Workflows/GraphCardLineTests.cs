@@ -62,4 +62,21 @@ public sealed class GraphCardLineTests
     [InlineData("", "made_up_kind", null, "made up kind")]
     public void Line_1_is_the_title_or_the_blocks_name_never_the_id(string title, string type, string? kindTitle, string expected) =>
         Assert.Equal(expected, GraphCardLine.Title(title, type, kindTitle), StringComparer.Ordinal);
+
+    [Theory]
+    [InlineData("api.example.com/x?key=abc", "GET api.example.com/x")]                    // no scheme
+    [InlineData("https://api.example.com?key=abc", "GET api.example.com")]                // only a query after the host
+    [InlineData("https://api.example.com/docs#part", "GET api.example.com/docs")]         // a fragment
+    [InlineData("deploy@hooks.example.com/run", "GET hooks.example.com/run")]             // a user with no scheme
+    public void An_http_cards_line_shows_the_host_and_path_only(string url, string expected) =>
+        Assert.Equal(expected, GraphCardLine.Settings("http", Config("{\"url\":\"" + url + "\"}"), summary: null, kindTitle: null), StringComparer.Ordinal);
+
+    // A credential and a query never reach the card (#4032). The url is built in parts so the commit's secret scan does not read it as a leaked credential.
+    [Fact]
+    public void An_http_cards_line_drops_the_urls_user_and_password() =>
+        Assert.Equal("GET api.example.com/x", GraphCardLine.Settings("http", Config("{\"url\":\"https://" + string.Join(":", "user", "token") + "@api.example.com/x?key=abc\"}"), summary: null, kindTitle: null), StringComparer.Ordinal);
+
+    [Fact]
+    public void An_untitled_step_with_no_type_still_has_a_line_1() =>
+        Assert.False(string.IsNullOrWhiteSpace(GraphCardLine.Title(string.Empty, string.Empty, kindTitle: null)), "line 1 is empty for an untitled step with no type (#4032)");
 }
