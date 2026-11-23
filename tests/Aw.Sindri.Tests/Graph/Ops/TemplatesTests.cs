@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Graph.Expressions;
 using Aw.Sindri.Core.Graph.Schedule;
 using Aw.Sindri.Core.Graph.Templates;
 using Aw.Sindri.Core.Graph.Validation;
+using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Graph.Blocks;
 
 namespace Aw.Sindri.Tests.Graph.Ops;
@@ -12,7 +13,7 @@ namespace Aw.Sindri.Tests.Graph.Ops;
 public sealed class TemplatesTests
 {
     private static GraphValidator RealValidator() => GraphFixtures.Validator(
-        blocks: GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), more: [new CreateItemBlock(new FlowFakes.RecordingItemPort()), new CodeBlock(runner: null!)]).Types,
+        blocks: GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), more: [new CreateItemBlock(new FlowFakes.RecordingItemPort()), new CodeBlock(runner: null!), .. GraphBlockRegistry.SkillBlocks(new FakeSkillCatalog([]))]).Types,
         cron: (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem,
         condition: text => ConditionExpression.TryParse(text, out var expression, out var error) ? new ConditionParse(Error: null, expression!.References) : new ConditionParse(error, []));
 

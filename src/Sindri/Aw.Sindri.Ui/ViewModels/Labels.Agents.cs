@@ -11,6 +11,9 @@ internal static partial class Labels
     /// <summary>The group of sessions Sindri launched, until recipe states group them (Q1).</summary>
     internal const string StartedBySindri = "Started by Sindri";
 
+    /// <summary>The pinned group of the asking rows (#3082).</summary>
+    internal const string NeedsYouGroup = "Needs you";
+
     /// <summary>The page's footer: what the list can't show.</summary>
     internal const string CursorChatsNotShown = "Cursor IDE chats aren't shown";
 

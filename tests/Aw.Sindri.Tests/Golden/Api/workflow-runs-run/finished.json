@@ -27,7 +27,8 @@
       "truncated": false,
       "error": null,
       "agent": null,
-      "raw": null
+      "raw": null,
+      "seconds": 0
     },
     {
       "node": "start",
@@ -40,7 +41,9 @@
       "truncated": false,
       "error": null,
       "agent": null,
-      "raw": null
+      "raw": null,
+      "seconds": null
     }
-  ]
+  ],
+  "triggerKind": "manual"
 }

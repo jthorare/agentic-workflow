@@ -6,7 +6,7 @@ namespace Aw.Sindri.Features.ListWorkflowRuns;
 /// <param name="Id">The run.</param>
 /// <param name="Revision">The revision it walked.</param>
 /// <param name="Status">'queued', 'running', 'waiting', 'succeeded', 'failed' or 'cancelled'.</param>
-/// <param name="Trigger">What started it: 'manual', 'schedule', 'cli' or 'agent' (a stored 'manual' trigger by 'session:&lt;id&gt;' is 'agent', by 'cli' is 'cli'); any other stored kind as it is.</param>
+/// <param name="Trigger">What started it: 'manual', 'schedule', 'cli' or 'agent' (a stored 'manual' trigger by a session is 'agent', by 'human:cli' is 'cli'); any other stored kind as it is.</param>
 /// <param name="StartedAt">When it was recorded.</param>
 /// <param name="EndedAt">When it ended, or null while it has not.</param>
 /// <param name="Error">Why it failed, or null (all of it; <see cref="Result"/> is the one-line form).</param>

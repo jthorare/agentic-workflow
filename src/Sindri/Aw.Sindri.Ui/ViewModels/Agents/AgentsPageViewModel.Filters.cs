@@ -76,7 +76,8 @@ internal sealed partial class AgentsPageViewModel
     private bool Matches(SessionRowView row) =>
         (ProviderFilter is null || string.Equals(row.ProviderLabel, ProviderFilter, StringComparison.Ordinal))
         && (StateFilter is null || string.Equals(row.State, StateFilter, StringComparison.Ordinal))
-        && (RepoFilter is null || string.Equals(row.Repo, RepoFilter, StringComparison.Ordinal));
+        && (RepoFilter is null || string.Equals(row.Repo, RepoFilter, StringComparison.Ordinal))
+        && MatchesSearch(row);
 
     private void Redraw()
     {

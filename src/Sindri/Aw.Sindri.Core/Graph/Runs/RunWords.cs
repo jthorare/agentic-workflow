@@ -37,7 +37,7 @@ public static class RunWords
         }
     }
 
-    /// <summary>The trigger as the run list says it (#3683): 'manual', 'schedule', 'cli' or 'agent'. A stored 'manual' trigger started by 'session:&lt;id&gt;' is 'agent', one started by 'cli' is 'cli'; any other kind comes back as stored.</summary>
+    /// <summary>The trigger as the run list says it (#3683): 'manual', 'schedule', 'cli' or 'agent'. A stored 'manual' trigger started by a session ('session:&lt;label&gt;', 'session:launch:&lt;id&gt;') is 'agent', one started by 'human:cli' ('sindri wf run') is 'cli', any other ('human:ui', 'human:http') 'manual'; any other kind comes back as stored.</summary>
     /// <param name="trigger">The trigger JSON object.</param>
     /// <returns>The word.</returns>
     public static string TriggerWord(string trigger)
@@ -53,7 +53,7 @@ public static class RunWords
             var by = JsonNode.Parse(trigger) is JsonObject obj && obj["by"] is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;
             return by switch
             {
-                "cli" => "cli",
+                "human:cli" => "cli",
                 not null when by.StartsWith("session:", StringComparison.Ordinal) => "agent",
                 _ => "manual",
             };

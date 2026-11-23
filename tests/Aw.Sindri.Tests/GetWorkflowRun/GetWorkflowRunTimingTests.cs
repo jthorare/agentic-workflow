@@ -47,7 +47,10 @@ public sealed class GetWorkflowRunTimingTests
     [Theory]
     [InlineData("{\"kind\":\"manual\",\"by\":\"owner\"}", "manual")]
     [InlineData("{\"kind\":\"manual\",\"by\":\"session:s1\"}", "agent")]
-    [InlineData("{\"kind\":\"manual\",\"by\":\"cli\"}", "cli")]
+    [InlineData("{\"kind\":\"manual\",\"by\":\"session:launch:L-1\"}", "agent")]
+    [InlineData("{\"kind\":\"manual\",\"by\":\"human:cli\"}", "cli")]
+    [InlineData("{\"kind\":\"manual\",\"by\":\"human:ui\"}", "manual")]
+    [InlineData("{\"kind\":\"manual\",\"by\":\"human:http\"}", "manual")]
     [InlineData("{\"kind\":\"schedule\"}", "schedule")]
     public async Task The_run_says_its_trigger_kind_in_the_lists_words(string stored, string served)
     {

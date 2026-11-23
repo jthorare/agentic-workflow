@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Services;
@@ -9,7 +10,7 @@ using Aw.Sindri.Core.Graph.Schedule;
 namespace Aw.Sindri.Features.GetWorkflow;
 
 /// <summary>
-/// One workflow by slug, an archived one too: the revision it runs (the newest when it is off), the graph, the hash and who saved the newest revision. Node positions come from
+/// One workflow by slug, an archived one too: the revision it runs (the newest when it is off, or the one the request asks for: a number, or the newest), the graph, the hash and who saved the newest revision. Node positions come from
 /// <see cref="WorkflowPositions"/>. An unknown slug is SND-GRAPH-008.
 /// </summary>
 /// <param name="workflows">The workflows and their revisions.</param>
@@ -32,7 +33,13 @@ internal sealed class GetWorkflowService(IWorkflowStore workflows, IGraphBlockCa
             return SindriErrors.GraphNotFound.With($"no workflow '{request.Slug.Value}'; list the workflows to see what exists");
         }
 
-        var shown = await workflows.GetRevision(record.Id, record.ActiveRevision ?? record.LatestRevision, cancellationToken).ConfigureAwait(false);
+        var target = Target(request, record);
+        if (target.IsError)
+        {
+            return target.Error;
+        }
+
+        var shown = await workflows.GetRevision(record.Id, target.Value, cancellationToken).ConfigureAwait(false);
         if (shown.IsError)
         {
             return shown.Error;
@@ -49,6 +56,16 @@ internal sealed class GetWorkflowService(IWorkflowStore workflows, IGraphBlockCa
         return new GetWorkflowResponse(record.Id, record.Slug, record.Name, shown.Value.Revision, record.ActiveRevision, record.LatestRevision, record.ArchivedAt, record.CreatedBy,
             newest.Value.CreatedBy, newest.Value.CreatedAt, shown.Value.SpecHash, spec, WorkflowPositions.Of(shown.Value.Spec), [.. shown.Value.Spec.Nodes.Select(Summary)],
             WorkflowNextRun.Of(record, shown.Value.Spec, clock.GetUtcNow()));
+    }
+
+    private static Result<int> Target(GetWorkflowRequest request, WorkflowRecord record)
+    {
+        if (!request.Newest && request.Revision is { } asked && (asked < 1 || asked > record.LatestRevision))
+        {
+            return SindriErrors.GraphNotFound.With(string.Create(CultureInfo.InvariantCulture, $"workflow '{request.Slug.Value}' has no revision {asked} (its newest is {record.LatestRevision})"));   // never the active spec instead
+        }
+
+        return request.Newest ? record.LatestRevision : request.Revision ?? record.ActiveRevision ?? record.LatestRevision;
     }
 
     private NodeSummary Summary(GraphNode node)

@@ -9,7 +9,7 @@ namespace Aw.Sindri.Core.Graph.Runs;
 /// <param name="Status">Where it stands.</param>
 /// <param name="Input">The interpolated config as JSON, or null.</param>
 /// <param name="Output">The block's output as JSON, or null.</param>
-/// <param name="Truncated">True when the store cut the input or the output at <see cref="NodeRunLimits.PayloadBytes"/>.</param>
+/// <param name="Truncated">True when the output was cut at <see cref="NodeRunLimits.PayloadBytes"/>, so a reference to it fails (SND-GRAPH-108). A cut input never sets it (#3896).</param>
 /// <param name="Error">Why it failed, or null.</param>
 /// <param name="Usage">Tokens and cost as JSON, or null.</param>
 /// <param name="StartedAt">When the node began, or null for a row written without times (issue 3683).</param>
