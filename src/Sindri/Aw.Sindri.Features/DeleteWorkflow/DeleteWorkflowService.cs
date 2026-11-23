@@ -11,7 +11,7 @@ namespace Aw.Sindri.Features.DeleteWorkflow;
 
 /// <summary>
 /// Deletes a workflow (Workflows page spec §4.9): it is archived (the store never deletes revisions or runs), then the resources of <c lang="text">workflow:slug</c> and every
-/// <c lang="text">node:slug/id</c> are purged the way <c>PurgeResourcesService</c> purges them (stage, check the runs again, delete). An unknown slug is SND-GRAPH-008, an archived
+/// <c lang="text">node:slug/id</c> are purged the way <c lang="csharp">PurgeResourcesService</c> purges them (stage, check the runs again, delete). An unknown slug is SND-GRAPH-008, an archived
 /// workflow SND-GRAPH-011, an active one SND-GRAPH-114 and one with a run in flight, live or test, SND-GRAPH-115 (the message names the oldest run). A purge that fails does not
 /// undo the archive: the answer names the owners whose resources stayed.
 /// </summary>
@@ -119,7 +119,7 @@ internal sealed class DeleteWorkflowService(IWorkflowStore workflows, IWorkflowR
         var listed = files.List(owner: null);
         if (listed.IsError)
         {
-            return (0L, (IReadOnlyList<string>)[$"workflow:{slug}"]);
+            return (0L, [$"workflow:{slug}"]);
         }
 
         var mine = listed.Value.Where(e => Belongs(e.Owner, slug)).ToList();
@@ -146,7 +146,7 @@ internal sealed class DeleteWorkflowService(IWorkflowStore workflows, IWorkflowR
         return (freed, stayed);
     }
 
-    /// <summary>Stage, check the runs again (a run may have started after the first check), then delete or put back; the same steps as <c>PurgeResourcesService</c>.</summary>
+    /// <summary>Stage, check the runs again (a run may have started after the first check), then delete or put back; the same steps as <c lang="csharp">PurgeResourcesService</c>.</summary>
     private async ValueTask<bool> TryPurge(WorkflowRecord record, ResourceOwner owner, CancellationToken cancellationToken)
     {
         var staged = files.Stage(owner);
@@ -169,6 +169,7 @@ internal sealed class DeleteWorkflowService(IWorkflowStore workflows, IWorkflowR
     {
         ResourceOwnerKind.Workflow => string.Equals(owner.Key, slug, StringComparison.Ordinal),
         ResourceOwnerKind.Node => owner.Key.StartsWith(slug + "/", StringComparison.Ordinal),
+        ResourceOwnerKind.Toolkit => false,
         _ => false,
     };
 }
