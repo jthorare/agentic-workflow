@@ -75,7 +75,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
 
         (_url, Slug) = (url, slug);
         var read = ++_reads;
-        var workflowRead = api.Workflow(url, slug, cancellationToken);
+        var workflowRead = api.WorkflowNewest(url, slug, cancellationToken);   // the newest revision: after a save on a live workflow that is the saved one, not the live one (#3303)
         var blocksRead = api.WorkflowBlocks(url, cancellationToken);
         await Task.WhenAll(workflowRead, blocksRead).ConfigureAwait(true);
         var (workflow, blocks) = (await workflowRead.ConfigureAwait(true), await blocksRead.ConfigureAwait(true));
@@ -87,7 +87,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         if (workflow.IsError || blocks.IsError)
         {
             var error = workflow.IsError ? workflow.Error : blocks.Error;
-            FailureText = afterSave ? Labels.WfEditSavedReloadFailed(error) : Labels.WfEditLoadFailed(error);
+            (FailureText, _refused) = (afterSave ? Labels.WfEditSavedReloadFailed(error) : Labels.WfEditLoadFailed(error), false);
             return;
         }
 
@@ -246,7 +246,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
             return false;
         }
 
-        FailureText = string.Empty;
+        (FailureText, _refused) = (string.Empty, false);
         IsSending = true;
         try
         {
@@ -275,7 +275,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         }
 
         var unsure = string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
-        FailureText = unsure ? Labels.WfEditUnsure(error) : Labels.WfEditRefused(error);
+        (FailureText, _refused) = (unsure ? Labels.WfEditUnsure(error) : Labels.WfEditRefused(error), true);
     }
 
     private static List<EditorNode> ReadNodes(JsonElement spec)

@@ -118,7 +118,7 @@ public abstract class TranscriptCorpusContract
         {
             var read = await corpus.ReadSession(session.Ref, _none);
             Expect.That(read.IsSuccess && read.Value.Session == session, $"the ref {session.Ref.Value} reads back as its session");
-            Expect.That(read.Value.Turns.All(t => t.Ref.Session == session.Ref), $"every turn of {session.Ref.Value} names it");
+            Expect.That(read.Value.Turns.All(t => t.Ref.SessionOf() == session.Ref), $"every turn of {session.Ref.Value} names it");
         }
     }
 

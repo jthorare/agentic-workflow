@@ -1,4 +1,5 @@
 using Aw.Context.Core;
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Map;
@@ -10,9 +11,9 @@ namespace Aw.Context.Features.ImportMap;
 /// <summary>
 /// Imports a map file as the current version (spec Phase 3, §8.7). It is bound to the content hash the owner confirmed:
 /// a file that changed since is SND-CONTEXT-034, and nothing is written on any refusal. Sindri's protected-command
-/// gate (a human at a terminal) runs before this.
+/// gate (a human at a terminal) runs before this. The new version's concepts and glossary are built and kept after it is saved, in the background (issue 3676).
 /// </summary>
-internal sealed class ImportMapService(IMapFileReader reader, IGraphStore store, TimeProvider clock) : IService<ImportMapRequest, MapImported>
+internal sealed class ImportMapService(IMapFileReader reader, IGraphStore store, IConceptAnswerFills fills, TimeProvider clock) : IService<ImportMapRequest, MapImported>
 {
     public async ValueTask<Result<MapImported>> Handle(ImportMapRequest request, CancellationToken cancellationToken)
     {
@@ -45,6 +46,12 @@ internal sealed class ImportMapService(IMapFileReader reader, IGraphStore store,
         }
 
         var saved = await store.SaveCurrent(map.Value with { Ruleset = MapRuleset.Running(request.Scope), PinHashes = MapRuleset.RunningPins(request.Scope) }, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
-        return saved.IsError ? saved.Error : new MapImported(saved.Value, map.Value.Counts, file.Value.Hash);
+        if (saved.IsError)
+        {
+            return saved.Error;
+        }
+
+        fills.Start(request.Scope);   // after the commit, outside this call
+        return new MapImported(saved.Value, map.Value.Counts, file.Value.Hash);
     }
 }

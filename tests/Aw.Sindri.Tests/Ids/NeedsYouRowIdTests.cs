@@ -67,4 +67,14 @@ public sealed class NeedsYouRowIdTests
     [InlineData("workflow-notify:nightly@3:12:note:1", false)]
     public void A_question_row_id_may_name_its_loop_item(string text, bool valid) =>
         Assert.Equal(valid, NeedsYouRowId.TryParse(text, provider: null, out _));
+
+    // #3733: a failed run has one row, so 'run-failed:' is the run id alone, with no node part
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("run-failed:nightly@3:12", true)]
+    [InlineData("run-failed:nightly@3:12:agent", false)]
+    [InlineData("run-failed:nightly@3", false)]
+    [InlineData("run-failed:nightly@0:12", false)]
+    [InlineData("run-failed:", false)]
+    public void A_run_failed_row_id_names_one_run(string text, bool valid) =>
+        Assert.Equal(valid, NeedsYouRowId.TryParse(text, provider: null, out _));
 }

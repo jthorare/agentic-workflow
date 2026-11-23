@@ -42,6 +42,7 @@ internal sealed partial class ContextPageViewModel
         }
 
         _repo = repo;
+        _openGeneration++;   // a first read of the other repo still in flight is dropped when it ends (#3697)
         OnChanged(nameof(SelectedRepo));
         FileMap.UseRepo(repo);
         CloseInspector();
