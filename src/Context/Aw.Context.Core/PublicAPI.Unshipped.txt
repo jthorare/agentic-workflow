@@ -2791,6 +2791,8 @@ Aw.Context.Core.Lenses.LensSymbols.AsOfMismatch.get -> bool
 Aw.Context.Core.Lenses.LensSymbols.AsOfMismatch.init -> void
 Aw.Context.Core.Lenses.LensSymbols.Code.get -> string?
 Aw.Context.Core.Lenses.LensSymbols.Code.init -> void
+Aw.Context.Core.Lenses.LensSymbols.Repos.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Lenses.LensSymbols.Repos.init -> void
 Aw.Context.Core.Lenses.LensSymbols.Commit.get -> string?
 Aw.Context.Core.Lenses.LensSymbols.Commit.init -> void
 Aw.Context.Core.Lenses.LensSymbols.Deconstruct(out Aw.Context.Core.Symbols.SymbolsState State, out string? Reason, out System.Collections.Generic.IReadOnlyList<string!>! Items) -> void
