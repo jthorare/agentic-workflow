@@ -28,7 +28,9 @@ internal sealed partial class AgentsPageViewModel
         {
             Set(ref field, value ?? string.Empty);
             OnChanged(nameof(IsFiltered));
+            RememberBeforeSearch();
             Redraw();
+            RestoreAfterSearch();
         }
     } = string.Empty;
 
@@ -105,6 +107,35 @@ internal sealed partial class AgentsPageViewModel
         {
             group.Toggle();
         }
+    }
+
+    // The row selected before a search hid it, and the row the search left selected: clearing the search goes back unless the human picked another since.
+    private string? _beforeSearch;
+    private string? _searchPick;
+
+    private void RememberBeforeSearch()
+    {
+        if (!string.IsNullOrWhiteSpace(SearchText) && (_beforeSearch is null || !string.Equals(SelectedKey, _searchPick, StringComparison.Ordinal)))
+        {
+            _beforeSearch = SelectedKey;
+        }
+    }
+
+    private void RestoreAfterSearch()
+    {
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            _searchPick = SelectedKey;
+            return;
+        }
+
+        if (_beforeSearch is { } was && string.Equals(SelectedKey, _searchPick, StringComparison.Ordinal) && WalkKeys().Contains(was, StringComparer.Ordinal))
+        {
+            SelectedKey = was;
+            Mark();
+        }
+
+        (_beforeSearch, _searchPick) = (null, null);
     }
 
     private bool _picked;

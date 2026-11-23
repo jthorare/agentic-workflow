@@ -310,7 +310,7 @@ public sealed class AgentsPageNeedsYouTests
         _ = page.Select(Outside(page).Rows.Single(r => r.TitleText == "zeta").Ref);
 
         page.SearchText = "al";
-        var picked = Outside(page).Rows.Single(r => r.TitleText == "alpine").Ref;
+        var picked = Outside(page).Rows.Select(r => r.Ref).First(r => r != page.SelectedKey && Outside(page).Rows.Any(x => x.Ref == r && x.TitleText.StartsWith("al", StringComparison.Ordinal)));
         _ = page.Select(picked);
         page.SearchText = string.Empty;
 
