@@ -16,6 +16,7 @@ using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Docs;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Graph.Templates;
+using Aw.Sindri.Core.Home;
 using Aw.Sindri.Core.Judge;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
@@ -163,13 +164,12 @@ public static class SindriInfrastructureServiceCollectionExtensions
         return services
             .AddSingleton<IIdGenerator, GuidV7Ids>().AddSingleton<IProcessProbe, PosixProcessProbe>()
             .AddSingleton<LedgerDatabase>().AddSingleton<IStoreCheckpoints>(static sp => new SqliteStoreCheckpoints([sp.GetRequiredService<SindriSettings>().LedgerPath, sp.GetRequiredService<SindriSettings>().ViewsPath]))   // #2221: the tick that truncates both logs
-            .AddSingleton<ILedgerStore, SqliteLedger>()
-            .AddSingleton<ILedgerReader, SqliteLedgerReader>()
+            .AddSingleton<ILedgerStore, SqliteLedger>().AddSingleton<ILedgerReader, SqliteLedgerReader>()
             .AddSingleton<IMirroredSequences, SqliteMirroredSequences>()   // API P13: which ledger row mirrors a Temporal event
             .AddSingleton<ILease, SqliteLease>()
             .AddSingleton<ViewsDatabase>()
-            .AddSingleton<IViewStore, SqliteViewStore>()
-            .AddSingleton<IViewReader, SqliteViewReader>()
+            .AddSingleton<IViewStore, SqliteViewStore>().AddSingleton<IViewReader, SqliteViewReader>().AddSingleton<IHomeViewReader, SqliteHomeView>()
+            .AddSingleton<IDoctorStores, SqliteDoctorStores>()   // first-run spec §3.4: doctor's older-store rows and SQLite guard
             .AddSingleton<IModelHistory, SqliteModelHistory>().AddSingleton<IModelPickSettings, ProfileModelPickSettings>().AddSingleton<IModelPickHistory, ModelPickHistoryAdapter>()   // the pick's ports read the approved profile and the model-history view
             .AddSingleton<IJobViews, SqliteJobViews>().AddSingleton<IServicePauses, ViewServicePauses>()
             .AddSingleton<IProfileSource>(sp => new YamlProfileSource(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory)))

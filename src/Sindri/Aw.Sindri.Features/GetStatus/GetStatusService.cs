@@ -47,8 +47,9 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
     private async ValueTask<HealthReport> Health(bool running, ViewsStatus views, LoadedProfile? approved, CancellationToken cancellationToken)
     {
         var rows = await healthRows.Read(approved, cancellationToken).ConfigureAwait(false);
-        var problems = await healthRows.CodeIndexProblems(approved, cancellationToken).ConfigureAwait(false);
-        var health = HealthSummary.For(running, views, rows, healthRows.Context(problems));
+        var codeIndex = await healthRows.CodeIndexProblems(approved, cancellationToken).ConfigureAwait(false);
+        var sources = await healthRows.SourceProblems(approved, cancellationToken).ConfigureAwait(false);   // #4010: a flagged Context index card is not "healthy"
+        var health = HealthSummary.For(running, views, rows, healthRows.Context([.. codeIndex, .. sources]));
         var stalled = HealthSummary.WithStalledAgents(health, await healthRows.Stalled(cancellationToken).ConfigureAwait(false));   // issue #1000: so do agent runs idle past their launch's idle time
         return HealthSummary.WithIdleAgents(stalled, await healthRows.IdleAgents(cancellationToken).ConfigureAwait(false));   // issue #1265: and sessions ended as idle that no retry replaced (ended launches, so no overlap with the live count above)
     }

@@ -111,7 +111,7 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
         if (set.IsError)
         {
             var code = await output.Error(set.Error).ConfigureAwait(false);
-            return ProfileExit(set.Error.Code) ? code : 1;
+            return IsProfileFileError(set.Error) ? code : 1;
         }
 
         var done = set.Value;
@@ -135,6 +135,12 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
             : report.ExitCode;
     }
 
+    // No profile, a profile that can't be read, or one that can't be written: exit 2 (the file), not 1 (the key or value).
+    private static bool IsProfileFileError(Kernel.Error error) =>
+        string.Equals(error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal)
+        || string.Equals(error.Code, SindriErrors.ProfileUnreadable.Code, StringComparison.Ordinal)
+        || string.Equals(error.Code, SindriErrors.ProfileUnwritable.Code, StringComparison.Ordinal);
+
     private static string Line(DoctorCheck c) => $"{Word(c.State),-5} {c.Name,-17} {c.Detail}{(c.Fix is null ? string.Empty : $" (fix: {c.Fix})")}\n";
 
     /// <summary>'profile approve [&lt;hash&gt;]' after approval is gone (#2258 PR 1): says so and exits 0, so an old script keeps going; needs no control plane.</summary>
@@ -151,10 +157,4 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
         CheckState.Fail => "fail",
         _ => "?",
     };
-
-    // the profile codes whose own exit code the command keeps (missing, invalid, unreadable)
-    private static bool ProfileExit(string code) =>
-        string.Equals(code, "SND-PROFILE-001", StringComparison.Ordinal)
-        || string.Equals(code, "SND-PROFILE-004", StringComparison.Ordinal)
-        || string.Equals(code, "SND-PROFILE-005", StringComparison.Ordinal);
 }
