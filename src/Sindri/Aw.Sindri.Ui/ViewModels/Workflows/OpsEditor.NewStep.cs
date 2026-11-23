@@ -26,17 +26,34 @@ internal sealed partial class OpsEditor
         _pending = new PendingStep(id, block.Type, after);
         Fields.Clear();
         var example = block.ExampleConfig ?? default;   // the block's example settings: a step that opens complete saves untouched; a block with no example opens with its required fields empty
+        var steps = Nodes.Select(static n => n.Id).ToHashSet(StringComparer.Ordinal);
         foreach (var field in block.Config)
         {
             var boolean = string.Equals(field.Type, "boolean", StringComparison.Ordinal);
             var text = EditorFieldText.Of(example, field);
-            Fields.Add(new ConfigFieldViewModel(field, text.Length == 0 && boolean && field.Required ? "false" : text, block.Type));   // why: a required check box shows a value, and the value it shows is the one sent; the box already holds the example, so no example line under it
+            var foreign = ExampleReferences.NamesMissingStep(text, steps);   // the example reads a step of the doc page's graph ("{{triage.items}}"): it starts empty, with the example as its hint (#3944)
+            var shown = foreign ? string.Empty : text;
+            Fields.Add(new ConfigFieldViewModel(field, shown.Length == 0 && boolean && field.Required ? "false" : shown, block.Type) { Placeholder = foreign ? text : string.Empty });   // why: a required check box shows a value, and the value it shows is the one sent; the block type gives a new Code step its code box (#3682)
         }
 
         NodeHeading = Labels.WfEditorNewStep(block.Title);
+        NodeIdLine = string.Empty;   // a new step has no id until it is saved
         AdvancedOpen = false;   // a new Code step gets the code box and a shut Advanced group, like an existing one (#3682)
         OnChanged(nameof(HasAdvancedFields));
+        OnChanged(nameof(ShowsAdvanced));
         OnChanged(nameof(HasPendingStep));
+    }
+
+    // True while FailureText is Sindri's refusal of an edit (or an unsure answer), not a failed read: closing the sheet drops the edit, so its refusal goes too (#3944).
+    private bool _refused;
+
+    /// <summary>Clears the failure line when it is the refusal of an edit the closed sheet held; a failed read after a save ("The edit was saved, but ...") stays.</summary>
+    internal void ClearRefusal()
+    {
+        if (_refused)
+        {
+            (FailureText, _refused) = (string.Empty, false);
+        }
     }
 
     /// <summary>Drops the new step being filled in, with whatever was typed.</summary>
@@ -50,7 +67,9 @@ internal sealed partial class OpsEditor
         _pending = null;
         Fields.Clear();
         NodeHeading = string.Empty;
+        NodeIdLine = string.Empty;
         OnChanged(nameof(HasAdvancedFields));
+        OnChanged(nameof(ShowsAdvanced));
         OnChanged(nameof(HasPendingStep));
     }
 

@@ -95,6 +95,35 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     }
 
     /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<WorkflowRun> failed = [.. _runs
+                .Where(static r => r.Status == WorkflowRunStatus.Failed && r.SeenAt is null && string.Equals(r.Mode, WorkflowRunMode.Live, StringComparison.Ordinal))
+                .OrderByDescending(static r => r.StartedAt)
+                .ThenByDescending(static r => r.Id.Value, StringComparer.Ordinal)];
+            return Ok(failed);
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<WorkflowRun>> MarkSeen(WorkflowRunId id, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var found = _runs.FindIndex(r => r.Id == id);
+            if (found < 0)
+            {
+                return Done<WorkflowRun>(NotFound(id));
+            }
+
+            _runs[found] = _runs[found] with { SeenAt = _runs[found].SeenAt ?? at };
+            return Done<WorkflowRun>(_runs[found]);
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun>> Get(WorkflowRunId id, CancellationToken cancellationToken)
     {
         lock (_gate)
@@ -240,9 +269,9 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     public ValueTask<Result<NodeRun>> RecordNodeRun(NodeRun nodeRun, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(nodeRun);
-        var input = NodeRunLimits.Cap(nodeRun.Input, out var inputCut);
+        var input = NodeRunLimits.Cap(nodeRun.Input, out _);   // why: a cut input is for display; 'Truncated' says only that the output was cut (#3896)
         var output = NodeRunLimits.Cap(nodeRun.Output, out var outputCut);
-        var stored = nodeRun with { Input = input, Output = output, Truncated = nodeRun.Truncated || inputCut || outputCut };
+        var stored = nodeRun with { Input = input, Output = output, Truncated = nodeRun.Truncated || outputCut };
         lock (_gate)
         {
             if (!_runs.Exists(r => r.Id == stored.RunId))

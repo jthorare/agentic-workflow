@@ -9,17 +9,23 @@ namespace Aw.Sindri.Host.Commands;
 /// 'sindri setup [--json]': where "set up Sindri once" stands, a client of GET /sindri/setup. It reads the route and never starts the control plane (API spec §7), and it only reports:
 /// every control that moves a step forward is the app's. Exit 0 when every step is done or skipped; 3 when every step that is not done waits on the person at the keyboard (state needs-you and no command
 /// an agent can run: first-run spec decision 9; an agent stops and tells the owner); 1 when a step is still to do, running or failed, or when Sindri isn't running (SND-API-001); 2 on usage or any other error.
+/// 'sindri setup scan …' is <see cref="SetupScanVerb"/>.
 /// 'sindri setup skip accounts|first-workflow [--undo] [--json]' skips a step that may be skipped, or undoes the skip, through POST /sindri/setup/skip (any caller).
 /// </summary>
 /// <param name="client">The API client.</param>
 /// <param name="output">Where the verb writes.</param>
 internal sealed class SetupVerbs(ControlPlaneClient client, Output output)
 {
-    internal const string Usage = "setup [--json] | setup skip accounts|first-workflow [--undo] [--json]";
+    internal const string Usage = "setup [--json] | setup scan [--root DIR] [--depth N] [--json] | setup skip accounts|first-workflow [--undo] [--json]";
 
     internal async Task<int> Run(string[] args, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(args);
+        if (args is ["scan", .. var scan])
+        {
+            return await new SetupScanVerb(client, output).Run(scan, ct).ConfigureAwait(false);
+        }
+
         if (args is ["skip", .. var skip])
         {
             return await Skip(skip, ct).ConfigureAwait(false);

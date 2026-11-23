@@ -49,6 +49,13 @@ internal sealed partial class ContextPageViewModel
     /// <summary>Whether there is a refusal to show.</summary>
     public bool HasProblem => Problem.Length > 0;
 
+    /// <summary>True when the last search found nothing, or several items: a plain sentence with one action, not the refusal banner (#3677).</summary>
+    public bool IsMiss => HasProblem
+        && (string.Equals(_problemCode, "SND-CONTEXT-003", StringComparison.Ordinal) || string.Equals(_problemCode, "SND-CONTEXT-037", StringComparison.Ordinal));
+
+    /// <summary>Whether the refusal banner shows: a refusal that is not a miss.</summary>
+    public bool ShowBanner => HasProblem && !IsMiss;
+
     /// <summary>The choices' name.</summary>
     public string ChoicesName { get; } = Labels.ContextSuggestions;
 
@@ -57,7 +64,7 @@ internal sealed partial class ContextPageViewModel
     /// <returns>When the answer is drawn.</returns>
     public async Task Submit(CancellationToken cancellationToken = default)
     {
-        var words = Words(AnchorText);
+        var words = Words(Asked);
         if (words.Count == 0)
         {
             _ = BackToWholeMap();   // Enter on an empty box returns to the full map
@@ -96,18 +103,21 @@ internal sealed partial class ContextPageViewModel
         if (result.IsSuccess)
         {
             Show(result.Value, choices: [], fromQuestion);
+            ShowAnswerFiles(fromQuestion);
             NoteRead();
             await ZoomIntoWhole(api, cancellationToken).ConfigureAwait(true);
         }
         else if (string.Equals(result.Error.Code, NoMapCode, StringComparison.Ordinal))
         {
             Show(view: null, choices: []);
+            ShowAnswerFiles(fromQuestion);
             ShowProblem(result.Error);
             await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
         }
         else
         {
             // A miss is said in plain words and the map that was on the page stays: nothing is cleared or dimmed for it.
+            ShowAnswerFiles(fromQuestion);
             Choices = Suggestions(result.Error) is { Count: > 0 } own ? own : suggested;
             ShowProblem(result.Error, Labels.ContextRefusal(result.Error.Code, result.Error.Message, AnchorText.Trim()));
             await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
@@ -120,11 +130,29 @@ internal sealed partial class ContextPageViewModel
     /// <param name="anchor">The suggested anchor.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>When the answer is drawn.</returns>
-    public Task Pick(string anchor, CancellationToken cancellationToken = default)
+    public Task Pick(string anchor, CancellationToken cancellationToken = default) => Pick(anchor, title: null, cancellationToken);
+
+    /// <summary>Reads a suggested anchor, then shows its title in the box, not its key.</summary>
+    /// <param name="anchor">The anchor's key.</param>
+    /// <param name="title">What the box should say once it is read; null leaves the key.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>When the answer is drawn.</returns>
+    public Task Pick(string anchor, string? title, CancellationToken cancellationToken = default)
     {
-        AnchorText = anchor;
+        // The box shows the title; what is read is the key (a person typing the same title later reads it as a question).
+        _picked = title is null ? null : (anchor, title);
+        _picking = true;
+        AnchorText = title ?? anchor;
+        _picking = false;
         return Submit(cancellationToken);
     }
+
+    private (string Key, string Title)? _picked;
+
+    private bool _picking;
+
+    // What the box asks: the key of a chip whose title it still shows, else what is typed.
+    private string Asked => _picked is { } p && string.Equals(AnchorText, p.Title, StringComparison.Ordinal) ? p.Key : AnchorText;
 
     private List<string> Suggestions(Error error)
     {
@@ -177,8 +205,11 @@ internal sealed partial class ContextPageViewModel
     private void Show(LensesView? view, List<string> choices, bool fromQuestion = false)
     {
         ForgetSelection();
-        Problem = string.Empty;
+        SetProblem(string.Empty);
         Choices = choices;
+        AnswerFiles = [];
+        _answerFilesHidden = 0;
+        StageMessage = string.Empty;
         if (view is null)
         {
             Head = Whole.IsReady ? Whole.Head : string.Empty;   // no neighbourhood: the whole map is what the page shows
@@ -196,7 +227,14 @@ internal sealed partial class ContextPageViewModel
     {
         OnChanged(nameof(Map));
         OnChanged(nameof(Head));
+        OnChanged(nameof(AnswerFiles));
+        OnChanged(nameof(HasAnswerFiles));
+        OnChanged(nameof(AnswerFilesMore));
+        OnChanged(nameof(HasAnswerFilesMore));
+        OnChanged(nameof(StageMessage));
+        OnChanged(nameof(HasStageMessage));
         OnChanged(nameof(HasHead));
+        OnChanged(nameof(HeadDetail));
         OnChanged(nameof(Missing));
         OnChanged(nameof(Choices));
         OnChanged(nameof(ChoiceRows));
@@ -211,5 +249,7 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(IsDraft));
         OnChanged(nameof(HasChoices));
         OnChanged(nameof(HasProblem));
+        OnChanged(nameof(IsMiss));
+        OnChanged(nameof(ShowBanner));
     }
 }

@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -125,8 +126,9 @@ public sealed class AgentsPageTests : FrameHost
         Assert.Equal(offset, scroll.Offset);
     });
 
+    // Enter opens the selected row's terminal view, not its sheet (#3382); the view's Transcript button opens the sheet on that row.
     [Fact]
-    public Task J_K_Enter_open_the_sheet_on_the_selected_row() => OnUi(async () =>
+    public Task J_K_Enter_open_the_terminal_on_the_selected_row_and_Transcript_opens_its_sheet() => OnUi(async () =>
     {
         var (window, shell) = await OnAgents();
         SessionOpenRequestedEventArgs? opened = null;
@@ -138,8 +140,14 @@ public sealed class AgentsPageTests : FrameHost
         var selected = shell.Agents.SelectedKey!;
         Assert.True(Rows(window).Single(b => ((SessionRowViewModel)b.DataContext!).Ref == selected).IsKeyboardFocusWithin);
         Press(window, Key.Enter);
+        Settle(window);
+        var (open, shown, sheetOnEnter) = (shell.Agents.IsTerminalOpen, shell.Agents.TerminalKey, opened);
 
-        Assert.Equal(new DeepLink(DeepLinkKind.Session, selected), opened!.Link);
+        Named<Button>(window, "TranscriptButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        Assert.Equal((true, selected), (open, shown));
+        Assert.Null(sheetOnEnter);
+        Assert.Equal(new DeepLink(DeepLinkKind.Session, selected), opened?.Link);
     });
 
     // F3: a row draws no Focus button or CLI line of its own (Watch the agent lives on the session's sheet, under Details); O on a row with no Step puts keyboard focus on the row.

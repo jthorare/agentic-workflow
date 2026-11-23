@@ -18,7 +18,6 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
     private Uri? _url;
     private int _reads;
     private string? _selected;
-    private bool _failureIsRefusal;   // a refused save belongs to its step and ends when the selection moves; a failed read does not
 
     /// <summary>The workflow's slug; empty until loaded.</summary>
     public string Slug { get; private set => Set(ref field, value); } = string.Empty;
@@ -34,28 +33,6 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
 
     /// <summary>The form of the selected node.</summary>
     public ObservableCollection<ConfigFieldViewModel> Fields { get; } = [];
-
-    /// <summary>True when the selected step has settings in an Advanced group.</summary>
-    public bool HasAdvancedFields => Fields.Any(f => f.InAdvanced);
-
-    /// <summary>True when the Advanced group is open.</summary>
-    public bool AdvancedOpen
-    {
-        get;
-        set
-        {
-            Set(ref field, value);
-            foreach (var f in Fields)
-            {
-                f.GroupOpen = value;
-            }
-        }
-    }
-
-    /// <summary>The Advanced toggle's words.</summary>
-#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
-    public string AdvancedText => Labels.WfFieldAdvanced;
-#pragma warning restore CA1822, MA0041
 
     /// <summary>The selected step as the sheet names it ("Every weekday at 7:00 \u00b7 trigger"), never its id; empty when none is selected.</summary>
     public string NodeHeading { get; private set => Set(ref field, value); } = string.Empty;
@@ -80,9 +57,6 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
     /// <summary>Why the last edit or read failed (not a stale base), in words; empty otherwise.</summary>
     public string FailureText { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>Drops the refusal on screen: it belongs to the sheet it came from, which is closing or moving on.</summary>
-    internal void ClearFailure() => FailureText = string.Empty;
-
     /// <summary>Reads a workflow and the block list. Both must be read: the form is made from the two.</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="slug">The workflow.</param>
@@ -96,12 +70,12 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         {
             // another workflow: nothing of the old one stays to be saved to this one, even when this read fails
             Fields.Clear();
-            (Nodes, BaseRevision, _selected, NodeHeading) = ([], 0, null, string.Empty);
+            (Nodes, BaseRevision, _selected, NodeHeading, NodeIdLine) = ([], 0, null, string.Empty, string.Empty);
         }
 
         (_url, Slug) = (url, slug);
         var read = ++_reads;
-        var workflowRead = api.Workflow(url, slug, cancellationToken);
+        var workflowRead = api.WorkflowNewest(url, slug, cancellationToken);   // the newest revision: after a save on a live workflow that is the saved one, not the live one (#3303)
         var blocksRead = api.WorkflowBlocks(url, cancellationToken);
         await Task.WhenAll(workflowRead, blocksRead).ConfigureAwait(true);
         var (workflow, blocks) = (await workflowRead.ConfigureAwait(true), await blocksRead.ConfigureAwait(true));
@@ -113,7 +87,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         if (workflow.IsError || blocks.IsError)
         {
             var error = workflow.IsError ? workflow.Error : blocks.Error;
-            (FailureText, _failureIsRefusal) = (afterSave ? Labels.WfEditSavedReloadFailed(error) : Labels.WfEditLoadFailed(error), false);
+            (FailureText, _refused) = (afterSave ? Labels.WfEditSavedReloadFailed(error) : Labels.WfEditLoadFailed(error), false);
             return;
         }
 
@@ -137,14 +111,12 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         }
 
         _selected = nodeId.Length == 0 ? null : nodeId;
-        if (_failureIsRefusal)
-        {
-            FailureText = string.Empty;   // a refusal belongs to the step it came from
-        }
+        ClearRefusal();   // a refusal belongs to the step it came from; a failed read stays
         Fields.Clear();
         var node = Nodes.FirstOrDefault(n => string.Equals(n.Id, nodeId, StringComparison.Ordinal));
         var block = node is null ? null : Groups.SelectMany(g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, node.Type, StringComparison.Ordinal));
         NodeHeading = HeadingOf(node, block);
+        NodeIdLine = node is null ? string.Empty : Labels.WfEditorStepId(node.Id);
         foreach (var field in block?.Config ?? [])
         {
             Fields.Add(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field), block!.Type, ExampleOf(block, field.Name)));   // why: a block was found, so node and block are not null
@@ -152,6 +124,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
 
         AdvancedOpen = false;
         OnChanged(nameof(HasAdvancedFields));
+        OnChanged(nameof(ShowsAdvanced));
     }
 
     private static string ExampleOf(WorkflowBlock block, string field) =>
@@ -227,7 +200,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
             return false;
         }
 
-        FailureText = string.Empty;
+        (FailureText, _refused) = (string.Empty, false);
         IsSending = true;
         try
         {
@@ -256,7 +229,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         }
 
         var unsure = string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
-        (FailureText, _failureIsRefusal) = (unsure ? Labels.WfEditUnsure(error) : Labels.WfEditRefused(error), true);
+        (FailureText, _refused) = (unsure ? Labels.WfEditUnsure(error) : Labels.WfEditRefused(error), true);
     }
 
     private static List<EditorNode> ReadNodes(JsonElement spec)

@@ -47,8 +47,9 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
     private async ValueTask<HealthReport> Health(bool running, ViewsStatus views, LoadedProfile? approved, CancellationToken cancellationToken)
     {
         var rows = await healthRows.Read(approved, cancellationToken).ConfigureAwait(false);
-        var problems = await healthRows.CodeIndexProblems(approved, cancellationToken).ConfigureAwait(false);
-        var health = HealthSummary.For(running, views, rows, healthRows.Context(problems));
+        var codeIndex = await healthRows.CodeIndexProblems(approved, cancellationToken).ConfigureAwait(false);
+        var sources = await healthRows.SourceProblems(approved, cancellationToken).ConfigureAwait(false);   // #4010: a flagged Context index card is not "healthy"
+        var health = HealthSummary.For(running, views, rows, healthRows.Context([.. codeIndex, .. sources]));
         var stalled = HealthSummary.WithStalledAgents(health, await healthRows.Stalled(cancellationToken).ConfigureAwait(false));   // issue #1000: so do agent runs idle past their launch's idle time
         return HealthSummary.WithIdleAgents(stalled, await healthRows.IdleAgents(cancellationToken).ConfigureAwait(false));   // issue #1265: and sessions ended as idle that no retry replaced (ended launches, so no overlap with the live count above)
     }
@@ -60,15 +61,18 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         new(loaded.IsSuccess ? loaded.Value.Hash : null, loaded.IsError ? loaded.Error.Message : null, loaded.IsSuccess ? loaded.Value.Source : null,
             ModelPick(approved), labelPick, surfacePick, ProblemKind(loaded, profiles.FileExists()));
 
-    // 'missing' when there is no profile file yet; 'unreadable' when the file is there but the source can't read it (it answers SND-PROFILE-001 and the file exists); 'invalid' for any other reason it won't load (bad YAML, a broken profile rule); null when it loads (#3113, #3622): the app reads the word, not the message.
-    // The health row's fix: a file the source can't read answers SND-PROFILE-001, so it gets Setup's permissions line; any other reason is the reader's own message (#3607).
+    // 'missing' when there is no profile file yet; 'unreadable' when the file is there but the source can't read it (SND-PROFILE-004, #3345, or SND-PROFILE-001 with the file on disk); 'invalid' for any other reason it won't load (bad YAML, a broken profile rule); null when it loads (#3113, #3622): the app reads the word, not the message.
+    // The health row's fix: a file the source can't read (SND-PROFILE-004 or SND-PROFILE-001) gets Setup's permissions line; any other reason is the reader's own message (#3607).
     private static string? ProfileFix(Result<LoadedProfile> loaded) =>
-        loaded.IsSuccess ? null : string.Equals(loaded.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal) ? SindriErrors.ProfileUnreadableFix : loaded.Error.Message;
+        loaded.IsSuccess ? null : IsCode(loaded.Error, SindriErrors.ProfileMissing) || IsCode(loaded.Error, SindriErrors.ProfileUnreadable) ? SindriErrors.ProfileUnreadableFix : loaded.Error.Message;
 
     private static string? ProblemKind(Result<LoadedProfile> loaded, bool fileExists) =>
         loaded.IsSuccess ? null
-        : !string.Equals(loaded.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal) ? "invalid"
+        : IsCode(loaded.Error, SindriErrors.ProfileUnreadable) ? "unreadable"
+        : !IsCode(loaded.Error, SindriErrors.ProfileMissing) ? "invalid"
         : fileExists ? "unreadable" : "missing";
+
+    private static bool IsCode(Error error, ErrorDefinition definition) => string.Equals(error.Code, definition.Code, StringComparison.Ordinal);
 
     private async ValueTask<IReadOnlyList<ServiceStatus>> Services(LoadedProfile? approved, CancellationToken cancellationToken)
     {
