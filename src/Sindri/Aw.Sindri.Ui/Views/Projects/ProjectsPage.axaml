@@ -58,7 +58,15 @@
        The shell's page scroller does not scroll while Projects shows (ShellWindow fixed-page), so the rows scroll here and the heads and hints stay on screen. -->
   <Grid x:Name="ProjectsRoot" RowDefinitions="Auto,Auto,*,Auto" Classes.no-agents="{Binding !ShowsAgents}" Classes.narrow="{Binding !ShowsWide}">
     <StackPanel x:Name="ProjectsTop" Spacing="{StaticResource Size.PanelGap}" Margin="0,0,0,16">
-    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+    <!-- The bar: title, tabs, a spacer, the search box (the one flexible part: 100 to 280 px, most of the free width), then Sort, Group and Add project at their own size. -->
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="100*" MinWidth="100" MaxWidth="280" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
       <TextBlock x:Name="ProjectsTitle" Classes="page-title" Focusable="True" Text="{Binding Title}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Title}" />
       <ItemsControl x:Name="ProjectsTabs" Grid.Column="1" Margin="16,0,0,0" ItemsSource="{Binding Tabs}" VerticalAlignment="Center">
         <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="2" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -73,13 +81,19 @@
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
-      <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="{StaticResource Space.SM}" VerticalAlignment="Center">
-        <!-- Search (/): name, note and lead; the count is the rows found of the rows the view holds. Esc clears it, Down goes to the list (ProjectsPage.axaml.cs). -->
-        <Panel Width="280">
-          <TextBox x:Name="ProjectsSearch" Text="{Binding SearchText, Mode=TwoWay}" PlaceholderText="{Binding SearchPlaceholder}" Padding="8,4,64,4"
-                   KeyDown="OnSearchKey" GotFocus="OnSearchFocus" LostFocus="OnSearchFocus" AutomationProperties.Name="{Binding SearchName}" />
+      <!-- Search (/): name, note and lead; the count is the rows found of the rows the view holds. Esc clears it, Down goes to the list (ProjectsPage.axaml.cs). -->
+      <Panel Grid.Column="3" Margin="0,0,12,0" VerticalAlignment="Center">
+          <TextBox x:Name="ProjectsSearch" BorderBrush="{DynamicResource Brush.Hairline}" Text="{Binding SearchText, Mode=TwoWay}" PlaceholderText="{Binding SearchPlaceholder}" Padding="8,4,64,4"
+                   KeyDown="OnSearchKey" GotFocus="OnSearchFocus" LostFocus="OnSearchFocus" AutomationProperties.Name="{Binding SearchName}">
+            <TextBox.Resources>
+              <SolidColorBrush x:Key="TextControlBorderBrush" Color="{StaticResource Color.Hairline}" />
+              <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource Color.Hairline}" />
+              <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{StaticResource Color.Primary}" />
+            </TextBox.Resources>
+          </TextBox>
           <TextBlock Classes="caption subtle" Text="{Binding SearchCount}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0" IsHitTestVisible="False" AutomationProperties.AccessibilityView="Raw" />
         </Panel>
+      <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="{StaticResource Space.SM}" VerticalAlignment="Center">
         <Button x:Name="ProjectsSort" AutomationProperties.Name="{Binding SortName}">
           <StackPanel Orientation="Horizontal" Spacing="6">
             <TextBlock Classes="caption subtle" Text="{Binding SortLabel}" VerticalAlignment="Center" />

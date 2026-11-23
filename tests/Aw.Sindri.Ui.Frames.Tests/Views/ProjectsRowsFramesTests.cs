@@ -105,4 +105,20 @@ public sealed class ProjectsRowsFramesTests : FrameHost
         Assert.Equal(["In progress", "Planned", "Paused"], heads, StringComparer.Ordinal);
         Frame(window, string.Create(CultureInfo.InvariantCulture, $"projects-rows-facts-missing-{width}"), prefix: string.Empty);
     });
+
+    [Theory]
+    [InlineData(1280, 800)]
+    [InlineData(1000, 700)]
+    public Task The_bar_fits_the_window_with_Group_and_Add_project_on_screen(int width, int height) => OnUi(async () =>
+    {
+        var (window, _) = await OnProjects(width, height);
+
+        foreach (var name in new[] { "ProjectsSort", "ProjectsGroup", "ProjectsAdd" })
+        {
+            var right = Right(Named<Button>(window, name), window);
+            Assert.True(right <= window.Bounds.Width, string.Create(CultureInfo.InvariantCulture, $"{name} ends at {right}, past the window's {window.Bounds.Width}"));
+        }
+
+        Assert.True(Right(Named<TextBox>(window, "ProjectsSearch"), window) <= Left(Named<Button>(window, "ProjectsSort"), window), "the search box runs under Sort");
+    });
 }
