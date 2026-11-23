@@ -30,7 +30,7 @@ public sealed class CodexTranscriptTests : IDisposable
 
         var read = (await _roots.Corpus().ReadSession(TranscriptRefs.ForFile(TranscriptProvider.Codex, path), CancellationToken.None)).Value;
 
-        Assert.Equal<string>(["Human rename the flag", "Assistant Renamed. [exec_command]", "Human thanks"],
+        Assert.Equal(["Human rename the flag", "Assistant Renamed. [exec_command]", "Human thanks"],
             read.Turns.Select(t => $"{t.Role} {t.Text}{(t.Tools.Count > 0 ? $" [{string.Join(',', t.Tools)}]" : "")}"), StringComparer.Ordinal);
         Assert.Equal(5, read.Turns[0].Ref.Line);
         Assert.Equal("/work/beta", read.Session.Repo);
@@ -55,6 +55,21 @@ public sealed class CodexTranscriptTests : IDisposable
         Assert.Equal(TranscriptRefs.ForFile(TranscriptProvider.Codex, parent), child.Parent);
         Assert.Equal(0, child.HumanTurns);
         Assert.Equal(1, Assert.Single(sessions, s => !s.IsSubagent).HumanTurns);
+    }
+
+    [Fact]
+    public async Task A_line_of_an_unknown_shape_is_counted_as_skipped()
+    {
+        var path = _roots.Write($"codex/sessions/2026/11/03/rollout-2026-11-03T09-00-00-{Main}.jsonl", _t.AddHours(1),
+            CodexLines.Meta(_t, Main, "/work/beta"),
+            """{"foo":1}""",
+            """{"timestamp":"2026-11-03T09:00:01.000Z","type":"event_msg"}""",
+            CodexLines.UserMessage(_t.AddSeconds(2), "go"));
+
+        var read = (await _roots.Corpus().ReadSession(TranscriptRefs.ForFile(TranscriptProvider.Codex, path), CancellationToken.None)).Value;
+
+        Assert.Equal(1, read.Session.HumanTurns);
+        Assert.Equal(2, read.SkippedLines);
     }
 
     [Fact]

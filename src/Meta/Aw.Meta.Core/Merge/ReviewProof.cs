@@ -9,17 +9,18 @@ public static partial class ReviewProof
 {
     /// <summary>Collects the review facts for <paramref name="pr"/>.</summary>
     /// <param name="messages">Every inbound message, oldest first.</param>
-    /// <param name="reviewer">The reviewer lane's session name.</param>
+    /// <param name="reviewer">The reviewer lane's session name ("team-lane").</param>
     /// <param name="pr">The pull request number.</param>
+    /// <param name="address">The sender address of the reviewer lane's running session; null when none was found.</param>
     /// <returns>The reviewer's standing OK (with its qa line) and the newest ready message with its counts.</returns>
-    public static ReviewFacts Collect(IReadOnlyList<InboxMessage> messages, string reviewer, int pr)
+    public static ReviewFacts Collect(IReadOnlyList<InboxMessage> messages, string reviewer, int pr, string? address)
     {
         ArgumentNullException.ThrowIfNull(messages);
 
         // Replay the reviewer's lines in order: an OK sets the standing OK and lifts a hold, a HOLD clears the OK and stands as
         // the hold. A later message that names neither keeps whatever stands, so a reviewer's unrelated message never voids an OK.
         var standing = Standing.None;
-        foreach (var message in messages.Where(m => string.Equals(m.FromName, reviewer, StringComparison.Ordinal)))
+        foreach (var message in messages.Where(m => IsReviewer(m, reviewer, address)))
         {
             standing = Replay(message.Body, pr, standing);
         }
@@ -37,6 +38,12 @@ public static partial class ReviewProof
             BuildOnly = ready is not null && IsBuildOnly(ready.Body),
         };
     }
+
+    // A message is the reviewer's when it carries the lane's session name, or when it came from the socket of the session the
+    // lane runs now: a recycled lane sends under its digest prompt, and an account switch drops the name too (#4103).
+    private static bool IsReviewer(InboxMessage message, string reviewer, string? address) =>
+        string.Equals(message.FromName, reviewer, StringComparison.Ordinal)
+        || (address is { Length: > 0 } && string.Equals(message.From, address, StringComparison.Ordinal));
 
     private readonly record struct Qa(bool NotYet, string? Sha)
     {

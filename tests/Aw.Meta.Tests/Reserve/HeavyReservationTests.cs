@@ -319,7 +319,7 @@ public sealed class HeavyReservationTests
         new(_world.Config, new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, _world.LogFiles), new GateStepRunner(_world.Runner, _world.Paths), _world.Gates, Worlds.Reservation(_world), _world.Clock, _world.Repo);
 
     private MergeRunService MergeRun() =>
-        new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages), _world.Repo, _world.Gates, new MergeRecorder(_world.Repo, _world.Values, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock, _world.Board));
+        new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages, new LaneAddress(_world.LaneFiles, _world.LaneSessions, _world.Sessions)), _world.Repo, _world.Gates, new MergeRecorder(_world.Repo, _world.Values, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock, _world.Board));
 
     // PR 190 is gated green and ready to merge; main moves when gh merges it.
     private async Task ScriptMerge()

@@ -2,9 +2,9 @@ using System.Net;
 using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Aw.Sindri.Ui.Platform;
+using Aw.Sindri.Ui.Terminal;
 
-namespace Aw.Sindri.Ui.Terminal;
+namespace Aw.Sindri.Ui.Platform;
 
 /// <summary>
 /// The real connector: a <see cref="ClientWebSocket"/> to GET /sindri/sessions/{provider}/{id}/terminal. The human token goes in the first message (hello), never in the URL.
@@ -106,13 +106,26 @@ internal sealed class WebSocketTerminalConnector(IHumanTokenSource token) : ITer
                 await socket.SendAsync(Encoding.UTF8.GetBytes(json), WebSocketMessageType.Text, endOfMessage: true, cancellationToken).ConfigureAwait(false);
                 return true;
             }
-            catch (WebSocketException)
+            catch (Exception e) when (e is WebSocketException or ObjectDisposedException)
             {
-                return false;
+                return false;   // the socket broke, or DisposeAsync ran while this send was in flight
             }
             finally
             {
+                Release();
+            }
+        }
+
+        // DisposeAsync may have disposed the semaphore while this send was in flight.
+        private void Release()
+        {
+            try
+            {
                 _ = _sending.Release();
+            }
+            catch (ObjectDisposedException)
+            {
+                // the link was disposed: nothing is waiting on the semaphore
             }
         }
 

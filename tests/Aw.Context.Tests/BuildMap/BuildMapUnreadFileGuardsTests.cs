@@ -85,7 +85,7 @@ public sealed class BuildMapUnreadFileGuardsTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public void The_extractor_version_is_unchanged_by_file_nodes() =>
         // why: #1670's file nodes are made in the record half, so the backtest's as-of cache key doesn't change.
-        Assert.Equal(7, MapExtractor.Version);
+        Assert.Equal(9, MapExtractor.Version);
 
     // Two profile repos, each holding a README.md: alpha's doc cites it, and a PR of zeta mentions it.
     private async Task<GraphSnapshot> BuildTwoRepos(params RecordWrite[] writes)

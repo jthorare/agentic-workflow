@@ -12,7 +12,7 @@ public sealed class CheckMergeTests
 {
     private readonly MetaWorld _world = new();
 
-    private CheckMergeService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages));
+    private CheckMergeService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages, new LaneAddress(_world.LaneFiles, _world.LaneSessions, _world.Sessions)));
 
     private async Task SaveGate(string head, string main, string[] scopes, GateVerdict verdict = GateVerdict.Pass, int pr = 190, params GateStep[] red)
     {

@@ -66,7 +66,7 @@ internal static class TranscriptsCommand
         var (corpus, output) = io;
         if (!SessionRef.TryFrom(text, out var session))
         {
-            return await output.Error(SindriErrors.InvalidInput.With($"'{text}' is not a session ref: it is 'transcript:' and 8 hex digits, as 'transcripts list' prints ({TranscriptsArguments.ShowUsage})")).ConfigureAwait(false);
+            return await output.Error(SindriErrors.InvalidInput.With($"'{text}' is not a session ref: it is 'transcript:' and 12 hex digits, as 'transcripts list' prints ({TranscriptsArguments.ShowUsage})")).ConfigureAwait(false);
         }
 
         var read = await corpus.ReadSession(session, ct).ConfigureAwait(false);
@@ -81,7 +81,7 @@ internal static class TranscriptsCommand
     }
 
     // An unknown ref, an unreadable file or two files with one ref: attention (exit 1), not a usage error.
-    private static async Task<int> Failed(Aw.Kernel.Error error, Output output)
+    private static async Task<int> Failed(Kernel.Error error, Output output)
     {
         await output.Notice($"{error.Code} {error.Message}").ConfigureAwait(false);
         return error.Code == TranscriptsErrors.Invalid.Code ? 2 : 1;

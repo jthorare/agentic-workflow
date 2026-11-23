@@ -126,6 +126,8 @@ public sealed class CommandChainTests : IAsyncDisposable
 
         Assert.Equal(SindriErrors.AuthRefused.Code, refused.Error.Code);
         Assert.Equal((CommandOutcome.Refused, "StopProcess"), (Assert.Single(_c.Handled).Outcome, _c.Handled[0].Command.Value));
+        var row = Assert.Single(_c.Events, static e => string.Equals(e.Envelope.Type, EventTypes.CommandHandled, StringComparison.Ordinal));
+        Assert.Equal($"{EventTypes.CommandHandled}:{_c.Handled[0].CommandId.Value}:final", row.IdempotencyKey);   // a self-audited row's outcome other than accepted is keyed ':final' (#4024)
         Assert.NotNull(_c.H.Held.Current);
         Assert.False(_c.H.Shutdown.Requested);
     }

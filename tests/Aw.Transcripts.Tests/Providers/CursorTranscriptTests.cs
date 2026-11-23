@@ -26,11 +26,27 @@ public sealed class CursorTranscriptTests : IDisposable
         var read = (await _roots.Corpus().ReadSession(TranscriptRefs.ForFile(TranscriptProvider.Cursor, path), CancellationToken.None)).Value;
 
         var at = new DateTimeOffset(2026, 11, 3, 17, 15, 0, TimeSpan.Zero);
-        Assert.Equal<string>([$"Human {at:O} fix it", $"Assistant {at:O} All done. [Shell]", $"Human {at:O} and the docs"],
+        Assert.Equal([$"Human {at:O} fix it", $"Assistant {at:O} All done. [Shell]", $"Human {at:O} and the docs"],
             read.Turns.Select(t => $"{t.Role} {t.At:O} {t.Text}{(t.Tools.Count > 0 ? $" [{string.Join(',', t.Tools)}]" : "")}"), StringComparer.Ordinal);
         Assert.Equal(at, read.Session.StartedAt);
         Assert.Null(read.Session.Repo);
         Assert.Equal(2, read.Session.HumanTurns);
+    }
+
+    [Fact]
+    public async Task A_line_of_an_unknown_shape_is_counted_as_skipped()
+    {
+        var path = _roots.Write("cursor/projects/work-gamma/agent-transcripts/c2/c2.jsonl", _written,
+            CursorLines.User("fix it"),
+            """{"foo":1}""",
+            """{"role":"user"}""",
+            """{"role":"robot","message":{"content":"x"}}""",
+            CursorLines.TurnEnded());
+
+        var read = (await _roots.Corpus().ReadSession(TranscriptRefs.ForFile(TranscriptProvider.Cursor, path), CancellationToken.None)).Value;
+
+        Assert.Equal(1, read.Session.HumanTurns);
+        Assert.Equal(3, read.SkippedLines);
     }
 
     [Fact]
