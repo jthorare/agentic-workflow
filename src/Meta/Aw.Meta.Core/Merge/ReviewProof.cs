@@ -20,7 +20,7 @@ public static partial class ReviewProof
         // Replay the reviewer's lines in order: an OK sets the standing OK and lifts a hold, a HOLD clears the OK and stands as
         // the hold. A later message that names neither keeps whatever stands, so a reviewer's unrelated message never voids an OK.
         var standing = Standing.None;
-        foreach (var message in messages.Where(m => IsReviewer(m, reviewer, address)))
+        foreach (var message in messages.Where(m => m.IsFromLane(reviewer, address, StringComparison.Ordinal)))
         {
             standing = Replay(message.Body, pr, standing);
         }
@@ -38,12 +38,6 @@ public static partial class ReviewProof
             BuildOnly = ready is not null && IsBuildOnly(ready.Body),
         };
     }
-
-    // A message is the reviewer's when it carries the lane's session name, or when it came from the socket of the session the
-    // lane runs now: a recycled lane sends under its digest prompt, and an account switch drops the name too (#4103).
-    private static bool IsReviewer(InboxMessage message, string reviewer, string? address) =>
-        string.Equals(message.FromName, reviewer, StringComparison.Ordinal)
-        || (address is { Length: > 0 } && string.Equals(message.From, address, StringComparison.Ordinal));
 
     private readonly record struct Qa(bool NotYet, string? Sha)
     {

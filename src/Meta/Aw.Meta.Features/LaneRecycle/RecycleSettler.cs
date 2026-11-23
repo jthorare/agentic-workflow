@@ -29,11 +29,13 @@ internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, Tim
             return all.Error;
         }
 
-        _ = addresses; // #4108 red: the lane's socket is not matched yet.
+        // A lane recycled before sends under its digest title, so its socket finds it too (#4108). After the /clear the lane's
+        // Claude keeps its process, so the new session sends from the socket the old one did.
+        var address = addresses is null ? null : await addresses.Find(plan.Team, plan.Lane, cancellationToken).ConfigureAwait(false);
         var now = clock.GetUtcNow();
         var reason = string.Create(CultureInfo.InvariantCulture, $"settled by lane-recycle {plan.Lane} at {now.UtcDateTime:yyyy-MM-dd HH:mm:ss}Z");
         var settled = new List<string>();
-        foreach (var message in all.Value.Where(m => AsksForThisRecycle(m, plan, started, now)))
+        foreach (var message in all.Value.Where(m => AsksForThisRecycle(m, plan, address, started, now)))
         {
             var owed = obligations is not null && await obligations.IsOwed(message.Id.Value, cancellationToken).ConfigureAwait(false);
             var resolved = await messages.Resolve(message.Id, new MessageResolution(MessageResolutionKind.Dismissed, reason), cancellationToken).ConfigureAwait(false);
@@ -106,10 +108,10 @@ internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, Tim
         return Results.Ok();
     }
 
-    // An open message (or one whose deferral ran out) the lane sent before this run, asking for this recycle.
-    private static bool AsksForThisRecycle(InboxMessage m, RecyclePlan plan, DateTimeOffset started, DateTimeOffset now) =>
+    // An open message (or one whose deferral ran out) the lane sent before this run, by name or from its socket, asking for this recycle.
+    private static bool AsksForThisRecycle(InboxMessage m, RecyclePlan plan, string? address, DateTimeOffset started, DateTimeOffset now) =>
         m.At <= started
-        && string.Equals(m.FromName, plan.Session, StringComparison.OrdinalIgnoreCase)
+        && m.IsFromLane(plan.Session, address, StringComparison.OrdinalIgnoreCase)
         && (m.Resolution is null || (m.Resolution is { Kind: MessageResolutionKind.Deferred } && !InboxState.IsDeferred(m, now)))
         && !NoticeRule.IsNotice(m.Body)
         && AsksForThisRecycle(m.Body, plan.Digest);
