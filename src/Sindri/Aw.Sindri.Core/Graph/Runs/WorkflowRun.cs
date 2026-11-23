@@ -16,6 +16,7 @@ namespace Aw.Sindri.Core.Graph.Runs;
 /// <param name="ItemId">The item it works for, or null.</param>
 /// <param name="StartedAt">When the run was recorded.</param>
 /// <param name="EndedAt">When it reached a final status, or null.</param>
+/// <param name="SeenAt">When the owner first opened the run after it failed, or null while unseen (and for a run that has not failed).</param>
 /// <param name="Mode">Live, or a test run that records every write instead of making it (spec 2026-11-12 §3.2).</param>
 /// <param name="TestOptions">How a test ran (with model, with agents, the pinned nodes) as JSON; null for a live run.</param>
 public sealed record WorkflowRun(
@@ -30,7 +31,8 @@ public sealed record WorkflowRun(
     DateTimeOffset StartedAt,
     DateTimeOffset? EndedAt,
     string Mode = WorkflowRunMode.Live,
-    string? TestOptions = null)
+    string? TestOptions = null,
+    DateTimeOffset? SeenAt = null)
 {
     /// <summary>Why <paramref name="trigger"/> can't be a run's trigger: it must be a JSON object, since runs are found by its 'kind'.</summary>
     /// <param name="trigger">The trigger text.</param>

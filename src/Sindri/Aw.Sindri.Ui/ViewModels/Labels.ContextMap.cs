@@ -128,9 +128,6 @@ internal static partial class Labels
     /// <summary>The mark on the page head of a draft map.</summary>
     internal const string ContextMapDraftTag = "Draft map";
 
-    /// <summary>The label of the starting points box.</summary>
-    internal const string ContextMapStartsAt = "Search";
-
     /// <summary>The map view's name in the view switch.</summary>
     internal const string ContextMapViewMap = "Map";
 
@@ -154,6 +151,21 @@ internal static partial class Labels
 
     /// <summary>The detail under the function names area when the code index is not built.</summary>
     internal const string ContextMapNamesDetail = "Function names are not available yet: the code index isn't built.";
+
+    /// <summary>The detail under the function names area while the code index is being built.</summary>
+    internal const string ContextMapNamesBuilding = "Function names are not available yet: the code index is still building.";
+
+    /// <summary>The detail under the function names area when the code index is damaged.</summary>
+    internal const string ContextMapNamesDamaged = "Function names are not available: the code index is damaged and will be rebuilt.";
+
+    /// <summary>The detail under the function names area when no code index is set up for the repo.</summary>
+    internal const string ContextMapNamesNotConfigured = "Function names are not available: no code index is set up for this repo.";
+
+    /// <summary>The detail under the function names area when the files belong to more than one repo.</summary>
+    internal const string ContextMapNamesSeveralRepos = "Function names are not available: these files are in more than one repo.";
+
+    /// <summary>The detail under the function names area for a reason the page does not know.</summary>
+    internal const string ContextMapNamesUnknown = "Function names are not available right now.";
 
     /// <summary>The function names area, in the coverage sentence.</summary>
     internal const string ContextMapWordNames = "function names";

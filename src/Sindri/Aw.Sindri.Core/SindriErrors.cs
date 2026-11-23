@@ -20,6 +20,12 @@ public static partial class SindriErrors
     /// <summary>SND-PROFILE-002: the profile doesn't parse or doesn't match the schema.</summary>
     public static readonly ErrorDefinition ProfileInvalid = new("SND-PROFILE-002", ErrorKind.Invalid, "The profile is invalid");
 
+    /// <summary>SND-PROFILE-004: the profile file exists but can't be read (permissions, an I/O error, or a directory at its path). It is not "no profile yet": nothing may write a fresh one over it.</summary>
+    public static readonly ErrorDefinition ProfileUnreadable = new("SND-PROFILE-004", ErrorKind.Unavailable, "The profile can't be read");
+
+    /// <summary>SND-PROFILE-005: the profile file can't be written (permissions or an I/O error).</summary>
+    public static readonly ErrorDefinition ProfileUnwritable = new("SND-PROFILE-005", ErrorKind.Unavailable, "The profile can't be written");
+
     /// <summary>SND-MODEL-001: a 'workflow.agent' model key names an agent or a state that isn't there, or a default that isn't in its list (model-pick spec §8); the message names the nearest id.</summary>
     public static readonly ErrorDefinition ModelKeyInvalid = new("SND-MODEL-001", ErrorKind.Invalid, "A model key doesn't match anything");
 
@@ -218,18 +224,6 @@ public static partial class SindriErrors
     /// <summary>SND-SESSION-409: the session at that ref is a different process than the caller looked at (collector spec CA-4, CA-5, CA-9).</summary>
     public static readonly ErrorDefinition SessionConflict = new("SND-SESSION-409", ErrorKind.Conflict, "The session at that ref is a different process");
 
-    /// <summary>SND-WT-001: a worktree request is not valid: the base is not a full 40-hex sha, the repo or path is not absolute, the branch is not usable, or the path is inside another worktree.</summary>
-    public static readonly ErrorDefinition WorktreeInvalid = new("SND-WT-001", ErrorKind.Invalid, "The worktree request is not valid");
-
-    /// <summary>SND-WT-002: the worktree path (or its branch) already exists at a different base or branch; nothing is reset, so the engine parks.</summary>
-    public static readonly ErrorDefinition WorktreeConflict = new("SND-WT-002", ErrorKind.Conflict, "The worktree path or branch is already in use at a different base");
-
-    /// <summary>SND-WT-003: git failed: the command failed, the repo is missing, or the commit is unknown.</summary>
-    public static readonly ErrorDefinition WorktreeGitFailed = new("SND-WT-003", ErrorKind.Unavailable, "git could not create or remove the worktree");
-
-    /// <summary>SND-WT-004: the worktree has uncommitted or untracked files; it is left as it is, never discarded.</summary>
-    public static readonly ErrorDefinition WorktreeDirty = new("SND-WT-004", ErrorKind.Conflict, "The worktree has uncommitted changes");
-
     /// <summary>SND-SETUP-001: the folder to add is missing, is not a git checkout, is unreadable, is inside the Sindri home, is '/', is the home folder, or contains the Sindri home (setup-once spec §7.6).</summary>
     public static readonly ErrorDefinition SetupFolderInvalid = new("SND-SETUP-001", ErrorKind.Invalid, "That folder can't be added as a repo (fix: pick the repo's top folder)");
 
@@ -269,7 +263,7 @@ public static partial class SindriErrors
     // A method, not a static initializer: the codes live in several partial files, whose static initializers run in file order.
     private static ErrorDefinition[] Every() =>
     [
-        LeaseHeld, LeaseLost, LeaseStale, ProfileMissing, ProfileInvalid, ModelKeyInvalid, ProfileHashMismatch,
+        LeaseHeld, LeaseLost, LeaseStale, ProfileMissing, ProfileInvalid, ProfileUnreadable, ProfileUnwritable, ModelKeyInvalid, ProfileHashMismatch,
         LedgerSchema, LedgerUnavailable, NotRunning, ApiTimeout, PortInUse, ApiNoCode, ApiInternal,
         CallerUnknown, OriginRefused, CommandBusy, AuthTokenRequired, AuthRefused, UnknownVerb, StartFailed,
         InvalidInput, ServiceFailed, ViewsRebuilding, ViewsBehind, StreamsFull, ViewsStalled, ItemNotFound, ItemConflict, RequestInvalid, RequestsRateLimited, DecisionNotFound, DecisionInvalid, JobNotFound, JobConflict, JobInterrupted, JobsRateLimited, JobNotWaiting, JobStalled, ServiceNotFound, SecretNotStored, SecretPointerInvalid, SecretUnresolved, SecretFileUnsafe, IndexTokenUnresolved, IndexRepoUnreadable, IndexNotInProfile, IndexOnyxLeftover, IndexOnyxInProfile,
