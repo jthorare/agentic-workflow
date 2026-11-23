@@ -1,8 +1,8 @@
 using Avalonia.Controls;
-using Avalonia.Media;
-using Avalonia.VisualTree;
 using Avalonia.Headless;
+using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 using Aw.Sindri.Ui.Views.Workflows;
