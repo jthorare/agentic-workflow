@@ -13,10 +13,12 @@ internal static class IndexSourceLook
     /// <summary>Whether this source needs a look: a source with no finished pass once serve has run 15 minutes (the caller passes zero while index-sync is paused, #3909), else the row's own state.</summary>
     /// <param name="p">The source's progress.</param>
     /// <param name="serveRunning">How long this serve has run.</param>
+    /// <param name="now">The time now, for the age of the last commit.</param>
     /// <returns>The look and its words.</returns>
-    internal static SourceLook For(SourceProgress p, TimeSpan serveRunning)
+    internal static SourceLook For(SourceProgress p, TimeSpan serveRunning, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(p);
+        _ = now;
 
         // why: a feed that never finishes a tick would otherwise read as a fresh source forever (#3832); LastSync is the stored outcome, so it
         // counts a pass from any process, and only this serve's run time starts the limit
@@ -40,11 +42,12 @@ internal static class IndexSourceLook
     /// status health and the index row never disagree.</summary>
     /// <param name="p">The source's progress.</param>
     /// <param name="serveRunning">How long this serve has run; zero while index-sync is paused.</param>
+    /// <param name="now">The time now, for the age of the last commit.</param>
     /// <returns>The problem, or null.</returns>
-    internal static HealthProblem? Problem(SourceProgress p, TimeSpan serveRunning)
+    internal static HealthProblem? Problem(SourceProgress p, TimeSpan serveRunning, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(p);
-        var look = For(p, serveRunning);
+        var look = For(p, serveRunning, now);
         if (!look.NeedsLook)
         {
             return null;

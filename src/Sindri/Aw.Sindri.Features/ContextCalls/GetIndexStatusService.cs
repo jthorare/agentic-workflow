@@ -35,7 +35,7 @@ internal sealed class GetIndexStatusService(ContextScopes scopes, IContextEngine
         var concepts = await engine.ConceptStatus(scope.Value, cancellationToken).ConfigureAwait(false);
         var store = await engine.CheckStore(cancellationToken).ConfigureAwait(false);
         var running = await IndexSyncRunTime.For(started, pauses, cancellationToken).ConfigureAwait(false);
-        return new IndexStatusView([.. progress.Value.Select(p => Row(p, running))]) { Concepts = concepts.IsError ? new IndexConceptsView(Enabled: true, Code: concepts.Error.Code) : Concepts(concepts.Value), Store = Store(store) };
+        return new IndexStatusView([.. progress.Value.Select(p => Row(p, running, started.Now()))]) { Concepts = concepts.IsError ? new IndexConceptsView(Enabled: true, Code: concepts.Error.Code) : Concepts(concepts.Value), Store = Store(store) };
     }
 
     // why: like concepts, a failed store check still lets the status answer, as a fail row
@@ -46,9 +46,9 @@ internal sealed class GetIndexStatusService(ContextScopes scopes, IContextEngine
     private static IndexConceptsView Concepts(ConceptStatus c) =>
         new(c.Enabled, c.Concepts, c.MultiSource, c.Queued, c.Covered, c.Embedded, c.Pending, c.Embedded == 0 ? 0 : (double)c.Covered / c.Embedded, c.Watermark, Code: null, c.LastRun, c.LastCode);
 
-    private static IndexSourceRow Row(SourceProgress p, TimeSpan running)
+    private static IndexSourceRow Row(SourceProgress p, TimeSpan running, DateTimeOffset now)
     {
-        var look = IndexSourceLook.For(p, running);
+        var look = IndexSourceLook.For(p, running, now);
         return new(p.Source.Value, Phase(p.Phase), p.Usable, p.Complete, p.LastSync, p.LastCode, p.ReReading, p.Pull, p.Records, p.LastCommit, p.LastError, p.LastErrorText, p.Failures, p.NextTry)
         {
             NeedsLook = look.NeedsLook,
