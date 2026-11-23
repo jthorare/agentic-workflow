@@ -356,7 +356,8 @@ public sealed class AgentsPageViewModelTests
     public async Task A_row_that_leaves_moves_selection_to_its_neighbour()
     {
         var page = await _f.Shown(Token);
-        var neighbour = RowOf(page, Claude).Ref;
+        // Codex is asking, so it sits alone in Needs you; the row that follows it on the page is the launched Cursor row (Started by Sindri), then Claude.
+        var neighbour = RowOf(page, Cursor).Ref;
         _ = page.Select(RowOf(page, Codex).Ref);
 
         _f.Serve(Edited(l => Remove(l, Codex)));

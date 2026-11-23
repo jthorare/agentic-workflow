@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -19,7 +20,15 @@ public sealed class AgentsRowHeightTests : FrameHost
     [InlineData(1280)]
     public Task Every_session_row_is_one_line_high_and_the_dash_is_left_aligned_at(int width) => OnUi(async () =>
     {
-        Server.SessionAnswer = RouteAnswer.Api("sessions", "fixture-three-providers");
+        // The golden has three rows in three groups (Needs you, Started by Sindri, Outside a workflow), so no two share a group: a second Outside row gives the pitch inside one group.
+        var list = JsonNode.Parse(GoldenFiles.Api("sessions", "fixture-three-providers"))!;   // why: the golden is a JSON document
+        var sessions = list["sessions"]!.AsArray();
+        var second = sessions.First(r => ((string)r!["ref"]!).StartsWith("claude-code/", StringComparison.Ordinal))!.DeepClone().AsObject();   // why: every row has a ref
+        second["ref"] = "claude-code/dddddddd-0000-4000-8000-000000000011";
+        second["id"] = "dddddddd-0000-4000-8000-000000000011";
+        second["title"] = "second outside row";
+        sessions.Add(second);
+        Server.SessionAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, list.ToJsonString());
         var (window, shell) = await Connected(width: width, height: 900);
         shell.GoTo(PageId.Agents);
         await Until(window, () => shell.Agents.Groups.Count > 0);
@@ -36,7 +45,7 @@ public sealed class AgentsRowHeightTests : FrameHost
         Assert.All(dashes, d => Assert.Equal(default, d.Margin));
         var tops = rows.Select(r => Named<Border>(r, "SessionRowFrame").TranslatePoint(default, window)!.Value.Y).Order().ToList();   // why: the frame is in the window
         var pitches = tops.Zip(tops.Skip(1), static (a, b) => b - a).ToList();
-        Assert.Contains(pitches, p => Math.Abs(p - 33) <= 0.5);   // two rows in one group sit 33 px apart: a 32 px row and its 1 px line
+        Assert.Contains(pitches, p => Math.Abs(p - 33) <= 0.5);   // two rows in one group sit 33 px apart; the group heads add the rest between groups: a 32 px row and its 1 px line
         Assert.DoesNotContain(pitches, p => p < 32.5);
     });
 }
