@@ -11,7 +11,6 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.CodeIndexJobs;
 using Aw.Sindri.Tests.Server;
 using IndexRepoHead = Aw.CodeIndex.Core.Model.RepoHead;
-using Ids = Aw.Sindri.Core.Ids;
 using RepoStatus = Aw.CodeIndex.Core.Facade.RepoStatus;
 
 namespace Aw.Sindri.Tests.CodeIndexJobs;
@@ -128,7 +127,7 @@ public sealed class CodeIndexDoctorTests
     [Fact, Trait("Lane", "unit")]
     public void A_running_first_build_reads_as_building_even_with_no_main_or_origin_main_gh3928()
     {
-        var running = new JobRow(Ids.JobId.From($"JOB-{1:x32}"), Ids.JobKind.From("BuildCodeIndex"), Ids.JobKey.From("index:demo"), Item: null, Ids.RepoName.From("demo"), Service: null, JobState.Running,
+        var running = new JobRow(Core.Ids.JobId.From($"JOB-{1:x32}"), Core.Ids.JobKind.From("BuildCodeIndex"), Core.Ids.JobKey.From("index:demo"), Item: null, Core.Ids.RepoName.From("demo"), Service: null, JobState.Running,
             "service:code-index", _now.AddMinutes(-1), EndedAt: null, [], 0, Summary: null, Code: null, Result: null, CancelledBy: null, Sequence: 1);
 
         var row = CodeIndexDoctor.Rows(new([new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null)], [new IndexRepoHead(_repo, _new, OnDefaultBranch: false, DefaultTip: null)], [running]), _now)
