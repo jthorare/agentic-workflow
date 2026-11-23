@@ -140,13 +140,19 @@ public sealed class ConceptChangeTimesTests : IDisposable
 
         public string Current { get; set; } = MapWorld.Head;
 
+        /// <summary>HEAD reads of the fixture repo. The scope's second repo has no checkout: its failed read is never cached, so it is left out of the count.</summary>
         public int HeadReads { get; private set; }
 
         public async ValueTask<Result<string>> Head(ContextRepo repo, CancellationToken cancellationToken)
         {
-            HeadReads++;
             var known = await _inner.Head(repo, cancellationToken);
-            return known.IsError ? known : Current;
+            if (known.IsError)
+            {
+                return known;
+            }
+
+            HeadReads++;
+            return Current;
         }
 
         public ValueTask<Result<IReadOnlyList<string>>> ListFiles(ContextRepo repo, string commit, CancellationToken cancellationToken) => _inner.ListFiles(repo, MapWorld.Head, cancellationToken);
