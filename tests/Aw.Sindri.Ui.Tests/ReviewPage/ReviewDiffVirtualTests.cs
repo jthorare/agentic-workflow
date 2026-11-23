@@ -193,4 +193,29 @@ public sealed class ReviewDiffVirtualTests : FrameHost
 
         await Until(window, () => Focused(window) is Control { DataContext: ReviewDiffFileViewModel file } focused && string.Equals(focused.Name, "ReviewDiffFile", StringComparison.Ordinal) && ReferenceEquals(file, deleted), "the file row never took keyboard focus after Show");
     });
+
+    [Fact]
+    public Task Show_on_a_deleted_file_moves_the_pages_focus_to_the_files_path_row_so_the_next_j_goes_on_from_there() => OnUi(async () =>
+    {
+        Server.ReviewPageAnswer = new RouteAnswer(HttpStatusCode.OK, ReviewPageFixture.Golden("full").ToJsonString());
+        var (window, shell) = await Connected(width: 1440, height: 900);
+        shell.Navigate(DeepLink.ForReview("acme/api", 2071));
+        await Until(window, () => shell.IsReviewPageShown && shell.ReviewPage.State == ReviewPageState.Ready && Visible(window, "ReviewDiffLine"), "the review page never showed its diff");
+        var page = shell.ReviewPage;
+        var deleted = page.Diff.Groups.SelectMany(g => g.Files).Single(f => f.HasShow);
+        var rows = window.GetVisualDescendants().OfType<ItemsControl>().First(c => c.Name == "ReviewDiffRows");
+        rows.ScrollIntoView(page.Diff.RowOf(ReviewFocusRegion.FileNote, deleted.Path));
+        Button? show = null;
+        await Until(window, () => (show = window.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => string.Equals(b.Name, "ReviewDiffShow", StringComparison.Ordinal) && ReferenceEquals(b.DataContext, deleted) && b.IsEffectivelyVisible)) is not null, "the Show button never appeared");
+        Assert.True(show!.Focus(NavigationMethod.Tab));
+
+        show.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        await Until(window, () => Focused(window) is Control { DataContext: ReviewDiffFileViewModel file } focused && ReferenceEquals(file, deleted) && string.Equals(focused.Name, "ReviewDiffFile", StringComparison.Ordinal), "the file row never took keyboard focus after Show");
+
+        Assert.Equal(new ReviewFocus(ReviewFocusRegion.FileNote, deleted.Path), page.Focus);
+        var files = page.Diff.VisibleFiles;
+        var next = files[Math.Min(files.ToList().IndexOf(deleted) + 1, files.Count - 1)];
+        _ = page.PressDiffKey("j", focusInDiff: true, textBoxHasFocus: false);
+        Assert.Same(next, page.Diff.FocusedFile);
+    });
 }
