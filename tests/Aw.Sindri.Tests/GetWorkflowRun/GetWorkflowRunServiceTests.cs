@@ -98,7 +98,7 @@ public sealed class GetWorkflowRunServiceTests
 
         var result = await _service.Handle(new GetWorkflowRunRequest(_run), Token);
 
-        Assert.Equal([("agent", "waiting"), ("start", null)], result.Value.Nodes.Select(static n => (n.Node.Value, n.Agent)));
+        Assert.Equal([("start", null), ("agent", "waiting")], result.Value.Nodes.Select(static n => (n.Node.Value, n.Agent)));
     }
 
     [Fact]
@@ -173,6 +173,56 @@ public sealed class GetWorkflowRunServiceTests
         var result = await _service.Handle(new GetWorkflowRunRequest(_run), Token);
 
         Assert.All(result.Value.Nodes, static n => Assert.Null(n.Agent));
+    }
+
+    // #3307: the store keeps rows by node id, so a straight start -> measure -> check -> tell run read "check, measure, start, tell".
+    [Fact]
+    public async Task Node_runs_come_in_graph_order_not_by_node_id()
+    {
+        await InsertRun(
+            ["tell", "check", "start", "measure"],
+            [("start", "measure"), ("measure", "check"), ("check", "tell")],
+            [("check", 0), ("measure", 0), ("start", 0), ("tell", 0)]);
+
+        var result = await _service.Handle(new GetWorkflowRunRequest(_run), Token);
+
+        Assert.Equal(["start", "measure", "check", "tell"], result.Value.Nodes.Select(static n => n.Node.Value), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task Nodes_a_branch_reaches_at_once_keep_the_spec_order_and_items_stay_by_index()
+    {
+        await InsertRun(
+            ["start", "zeta", "alpha", "end"],
+            [("start", "zeta"), ("start", "alpha"), ("zeta", "end"), ("alpha", "end")],
+            [("alpha", 0), ("end", 0), ("start", 0), ("zeta", 2), ("zeta", 0), ("zeta", 1)]);
+
+        var result = await _service.Handle(new GetWorkflowRunRequest(_run), Token);
+
+        Assert.Equal([("start", 0), ("zeta", 0), ("zeta", 1), ("zeta", 2), ("alpha", 0), ("end", 0)], result.Value.Nodes.Select(static n => (n.Node.Value, n.ItemIndex)));
+    }
+
+    [Fact]
+    public async Task A_row_whose_node_the_revision_lacks_comes_last_in_the_stored_order()
+    {
+        await InsertRun(["start", "tell"], [("start", "tell")], [("gone", 0), ("start", 0), ("tell", 0)]);
+
+        var result = await _service.Handle(new GetWorkflowRunRequest(_run), Token);
+
+        Assert.Equal(["start", "tell", "gone"], result.Value.Nodes.Select(static n => n.Node.Value), StringComparer.Ordinal);
+    }
+
+    private async Task InsertRun(string[] nodes, (string From, string To)[] edges, (string Node, int Item)[] rows)
+    {
+        var spec = new GraphSpec(Version: 1, Name: "Size check", Description: null, Concurrency: null, Resources: null,
+            Nodes: [.. nodes.Select(static n => new GraphNode(NodeId.From(n), n == "start" ? "manual" : "notify", Title: null, []))],
+            Edges: [.. edges.Select(static e => new GraphEdge(NodeId.From(e.From), Output: null, NodeId.From(e.To)))]);
+        _ = (await _workflows.Create(_id, _slug, spec, "owner", Token)).Value;
+        _ = (await _runs.Insert(Run(WorkflowRunStatus.Succeeded, outputs: null, error: null) with { Revision = 1 }, Token)).Value;
+        foreach (var (node, item) in rows)
+        {
+            _ = (await _runs.RecordNodeRun(new NodeRun(_run, NodeId.From(node), item, NodeRunStatus.Succeeded, Input: null, Output: "{}", Truncated: false, Error: null, Usage: null), Token)).Value;
+        }
     }
 
     private async Task InsertAgentRun(WorkflowRunStatus status, NodeRunStatus agent)
