@@ -72,6 +72,17 @@ public sealed class AgentsPageTests : FrameHost
     });
 
     [Fact]
+    public Task The_head_link_says_the_head_once_to_a_screen_reader_3913() => OnUi(async () =>
+    {
+        var (window, shell) = await OnAgents();
+        var link = Named<Button>(window, "AgentsHeadLink");
+
+        List<string> heard = [Heard.Name(link), .. Heard.Tree(link).Select(n => n.Name)];
+
+        Assert.Equal(1, heard.Count(n => string.Equals(n, shell.Agents.HeadName, StringComparison.Ordinal)));
+    });
+
+    [Fact]
     public Task Problem_and_unavailable_lines_are_named_text() => OnUi(async () =>
     {
         var (window, shell) = await OnAgents(() => Server.SessionAnswer = RouteAnswer.Api("sessions", "problems-source-failed"));
