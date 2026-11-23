@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Agents;
 
 namespace Aw.Sindri.Ui.Tests.Agents.Page;
@@ -334,6 +335,15 @@ public sealed class AgentsPageNeedsYouTests
 
         Assert.Equal(0, same);
         Assert.Empty(changed);
+    }
+
+    [Fact]
+    public async Task The_search_box_copy_comes_from_Labels_3913()
+    {
+        var page = await _f.Shown(Token);
+
+        Assert.Equal((Labels.SearchHint, Labels.SearchName), (page.SearchHint, page.SearchName));
+        Assert.Equal(("Search (/)", "Search agents"), (Labels.SearchHint, Labels.SearchName));
     }
 
     private static SessionRowViewModel Row(AgentsPageViewModel page, string prefix) => page.Groups.SelectMany(g => g.Rows).Single(r => r.Ref.StartsWith(prefix, StringComparison.Ordinal));

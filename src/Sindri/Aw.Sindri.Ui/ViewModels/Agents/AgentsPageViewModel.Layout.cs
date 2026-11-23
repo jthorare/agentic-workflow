@@ -21,6 +21,12 @@ internal sealed partial class AgentsPageViewModel
     /// <summary>"Clear filters": the button on the no-match line.</summary>
     public string ClearFiltersText { get; } = Labels.ClearFilters;
 
+    /// <summary>The search box's hint.</summary>
+    public string SearchHint { get; } = string.Empty;
+
+    /// <summary>The search box's accessible name.</summary>
+    public string SearchName { get; } = string.Empty;
+
     /// <summary>True while a filter is set.</summary>
     public bool IsFiltered => ProviderFilter is not null || StateFilter is not null || RepoFilter is not null || !string.IsNullOrWhiteSpace(SearchText);
 

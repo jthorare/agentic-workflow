@@ -26,6 +26,12 @@ internal static partial class Labels
     /// <summary>The button that drops every filter when none of the sessions match them.</summary>
     internal const string ClearFilters = "Clear filters";
 
+    /// <summary>The Agents search box's hint; the / key opens it.</summary>
+    internal const string SearchHint = "Search (/)";
+
+    /// <summary>The Agents search box's accessible name.</summary>
+    internal const string SearchName = "Search agents";
+
     /// <summary>The button on the empty page that goes to the Workflows page.</summary>
 
     /// <summary>The amber line over a list that could not be read again.</summary>
