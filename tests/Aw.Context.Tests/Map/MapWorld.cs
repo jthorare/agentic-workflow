@@ -1,4 +1,5 @@
 using Aw.Context.Core.Code;
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Docs;
@@ -25,6 +26,7 @@ using Aw.Context.Core.Walks;
 using Aw.Context.Core.WholeMap;
 using Aw.Context.Features;
 using Aw.Context.Testing.Code;
+using Aw.Context.Testing.Concepts;
 using Aw.Context.Testing.ConceptSynthesis;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Extract;
@@ -85,7 +87,7 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton<TimeProvider>(Clock)
             .AddSingleton<IGraphStore>(Store)
             .AddSingleton<IProposalRuns>(Store)
-            .AddSingleton<IConceptHintStore>(Hints)
+            .AddSingleton<IConceptHintStore>(Hints).AddSingleton<IConceptAnswerStore>(Answers = new FakeConceptAnswerStore(Store, Intents))
             .AddSingleton<IConceptSynthesisStore>(ConceptSynthesis)
             .AddSingleton<IExportStore>(Exports)
             .AddSingleton<IMapFileReader>(Reader)
@@ -119,9 +121,20 @@ internal sealed class MapWorld : IDisposable
         _scope = _provider.CreateScope();
     }
 
+    /// <summary>The publish fill of the kept concepts answers runs inside the publish call (issue 3676), so a test never races a background fill.</summary>
+    private static void AddInlineFills(IServiceCollection services)
+    {
+        _ = services.AddSingleton<IConceptAnswerFills>(static sp => new InlineConceptAnswerFills(async (scope, ct) =>
+        {
+            await using var own = sp.CreateAsyncScope();
+            await own.ServiceProvider.GetRequiredService<ConceptAnswers>().Fill(scope, ct);
+        }));
+    }
+
     /// <summary>What a test replaces after AddContextFeatures: the walk options and the owned index's sync port and its record feeds.</summary>
     private static void AddOverrides(IServiceCollection services, (WalkOptions? Walk, IIndexSync? IndexSync, IRecordFeedCatalog? Feeds) overrides, Action<IServiceCollection>? configure)
     {
+        AddInlineFills(services);
         var (walk, indexSync, feeds) = overrides;
         configure?.Invoke(services);
         if (feeds is not null)
@@ -143,6 +156,9 @@ internal sealed class MapWorld : IDisposable
     public FakeTimeProvider Clock { get; } = new(DateTimeOffset.Parse("2026-08-01T12:00:00Z", System.Globalization.CultureInfo.InvariantCulture));
 
     public FakeGraphStore Store { get; } = new();
+
+    /// <summary>The kept concepts and glossary answers, over <see cref="Store"/> and <see cref="Intents"/>.</summary>
+    public FakeConceptAnswerStore Answers { get; }
 
     public FakeConceptHintStore Hints { get; } = new();
 

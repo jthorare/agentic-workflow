@@ -1,0 +1,67 @@
+{
+  "asOf": {
+    "cursor": 1,
+    "ledgerHead": 1,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "keepDays": 7,
+  "rows": [
+    {
+      "id": "gh:review:jthorare/agentic-workflow#3210",
+      "version": 1,
+      "kind": "review-requested",
+      "group": "needs-you",
+      "title": "Row 8",
+      "facts": [
+        {
+          "kind": "why",
+          "text": "why"
+        },
+        {
+          "kind": "object",
+          "text": "gh:review:jthorare/agentic-workflow#3210"
+        },
+        {
+          "kind": "from",
+          "text": "Sam"
+        }
+      ],
+      "waitsOn": "you",
+      "since": "2026-11-12T08:08:00.0000000Z",
+      "rank": {
+        "blocks": 0,
+        "weight": 5,
+        "sinceRank": 8,
+        "position": 8
+      },
+      "blocksList": [
+        {
+          "id": "gh:pr:a/b#1",
+          "title": "PR 1",
+          "via": "closes"
+        }
+      ],
+      "links": [
+        {
+          "kind": "pr",
+          "id": "gh:pr:a/b#1",
+          "title": "PR 1"
+        }
+      ],
+      "state": "done",
+      "snoozeUntil": null,
+      "doneAt": "2026-11-12T09:00:00.0000000Z",
+      "actions": [
+        "open"
+      ],
+      "source": {
+        "name": "github",
+        "readAt": "2026-11-12T08:00:00.0000000Z",
+        "connection": null
+      },
+      "repo": "demo"
+    }
+  ]
+}

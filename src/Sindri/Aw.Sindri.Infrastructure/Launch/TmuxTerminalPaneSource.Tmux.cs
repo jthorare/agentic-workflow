@@ -16,7 +16,7 @@ internal sealed partial class TmuxTerminalPaneSource
         /// <summary>The cursor, size and mode facts of the pane, or null when tmux or the pane is gone.</summary>
         internal async ValueTask<PaneFacts?> Facts(CancellationToken cancellationToken)
         {
-            const string format = "#{cursor_x} #{cursor_y} #{pane_width} #{pane_height} #{pane_in_mode} #{alternate_on} #{pane_dead} #{history_size}";
+            const string format = "#{cursor_x} #{cursor_y} #{pane_width} #{pane_height} #{pane_in_mode} #{alternate_on} #{pane_dead} #{history_size} #{history_limit}";
             var run = await Call(["display-message", "-p", "-t", target.Pane, format], stdin: null, cancellationToken).ConfigureAwait(false);
             if (run.ExitCode != 0)
             {
@@ -24,13 +24,13 @@ internal sealed partial class TmuxTerminalPaneSource
             }
 
             var parts = run.Output.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length < 8 || !parts.All(p => int.TryParse(p, NumberStyles.None, CultureInfo.InvariantCulture, out _)))
+            if (parts.Length < 9 || !parts.All(p => int.TryParse(p, NumberStyles.None, CultureInfo.InvariantCulture, out _)))
             {
                 return null;
             }
 
             var n = parts.Select(p => int.Parse(p, CultureInfo.InvariantCulture)).ToArray();
-            return new PaneFacts(n[0], n[1], n[2], n[3], n[4] == 1, n[5] == 1, n[6] == 1, n[7]);
+            return new PaneFacts(n[0], n[1], n[2], n[3], n[4] == 1, n[5] == 1, n[6] == 1, n[7], n[8]);
         }
 
         private static List<string> Rows(string output, int height)
