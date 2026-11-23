@@ -51,17 +51,18 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("nodes[].input", EveryString: true), new("nodes[].output", EveryString: true), new("nodes[].error"), new("nodes[].failure", EveryString: true),
     ]);
 
-    /// <summary>sindri_projects: the Linear-sourced text of every card (name, description, lead's name) in the three lists, and the viewer's name; the owner's notes (free text a session reads); the owner's links stay plain.</summary>
+    /// <summary>sindri_projects: the Linear-sourced text of every card (name, description, lead's name) in the three lists, and the viewer's name; the owner's notes (free text a session reads) and each open PR's title (forge text); the owner's links stay plain.</summary>
     internal static FencePlan Projects { get; } = new("sindri:project",
     [
         new("viewer"),
         new("projects[].name"), new("projects[].description"), new("projects[].lead.name"), new("projects[].notes"),
         new("finished[].name"), new("finished[].description"), new("finished[].lead.name"), new("finished[].notes"),
         new("hidden[].name"), new("hidden[].description"), new("hidden[].lead.name"), new("hidden[].notes"),
+        new("projects[].truth.openPrs[].title"), new("finished[].truth.openPrs[].title"), new("hidden[].truth.openPrs[].title"),
     ]);
 
     /// <summary>sindri_projects for one project: the card's Linear-sourced text, the owner's notes and the viewer's name.</summary>
-    internal static FencePlan OneProject { get; } = new("sindri:project", [new("viewer"), new("project.name"), new("project.description"), new("project.lead.name"), new("project.notes")]);
+    internal static FencePlan OneProject { get; } = new("sindri:project", [new("viewer"), new("project.name"), new("project.description"), new("project.lead.name"), new("project.notes"), new("project.truth.openPrs[].title")]);
 
     /// <summary>GET /sindri/projects/linear for a session: each row's Linear name and lead's name.</summary>
     internal static FencePlan LinearProjects { get; } = new("sindri:project", [new("projects[].name"), new("projects[].lead")]);

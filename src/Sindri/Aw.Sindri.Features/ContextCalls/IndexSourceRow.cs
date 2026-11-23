@@ -5,7 +5,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <param name="Phase">'recent', 'backfill', 'incremental' or 'reconcile', or null for a source that never committed a page.</param>
 /// <param name="Usable">The recent window is synced.</param>
 /// <param name="Complete">The backfill is done (the embeddings are not counted yet).</param>
-/// <param name="LastSync">When the last tick of this feed ended since the process started, or null when none has.</param>
+/// <param name="LastSync">When the last tick of this feed ended, in any process (read from the stored outcome row, so it survives a restart), or null when none has.</param>
 /// <param name="LastCode">The code that tick ended with (a down source's SND-CONTEXT-010), or null when it completed or none has run.</param>
 /// <param name="ReReading">How many records the source holds while it re-reads them (the Linear issue feed's one-time re-read for project links), or null.</param>
 /// <param name="Pull">'idle', 'running', 'backoff' or 'failed'.</param>
@@ -20,4 +20,7 @@ public sealed record IndexSourceRow(string Source, string? Phase, bool Usable, b
 {
     /// <summary>True when the source needs a look (issue #3430): its pull failed or backs off, it is idle holding nothing and never committed after a pass ended, or, with no pull read, it is unusable with a code.</summary>
     public bool NeedsLook { get; init; }
+
+    /// <summary>Why the source needs a look when its own state words don't say it ("linear hasn't finished a sync in 15 minutes", #3832, #3909), or null.</summary>
+    public string? LookWords { get; init; }
 }

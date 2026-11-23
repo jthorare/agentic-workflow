@@ -25,6 +25,7 @@ internal static class WorkflowReadScenarios
     [
         ("workflows", "list-empty"), ("workflows", "list-two"), ("workflows", "list-include-archived"),
         ("workflows-slug", "found"), ("workflows-slug", "not-found"),
+        ("workflows-slug", "found-latest"), ("workflows-slug", "revision-not-found"), ("workflows-slug", "revision-invalid"),
         ("workflows-slug-runs", "list-empty"), ("workflows-slug-runs", "list-three"),
         ("workflow-runs-run", "running"), ("workflow-runs-run", "finished"), ("workflow-runs-run", "not-found"),
         ("workflow-runs-run", "agent-waiting"), ("workflow-runs-run", "agent-taken-over"), ("workflow-runs-run", "failed"),
@@ -59,10 +60,8 @@ internal static class WorkflowReadScenarios
                 await Create(host, _weekly, _weeklySlug, "Weekly report", activate: false, ct);
                 _ = (await host.App.Services.GetRequiredService<IWorkflowStore>().Archive(_weekly, ct)).Value;
                 return await Ask(host, Get("/sindri/workflows?includeArchived=true", human));
-            case ("workflows-slug", "found"):
-                await Create(host, _morning, _morningSlug, "Morning check", activate: true, ct);
-                await Save(host, ct);
-                return await Ask(host, Get($"/sindri/workflows/{_morningSlug.Value}", human));
+            case ("workflows-slug", "found") or ("workflows-slug", "found-latest") or ("workflows-slug", "revision-not-found") or ("workflows-slug", "revision-invalid"):
+                return await SlugRead(host, scenario, human, ct);
             case ("workflows-slug", "not-found"):
                 return await Ask(host, Get("/sindri/workflows/nope", human));
             case ("workflows-slug-runs", "list-empty"):
@@ -75,6 +74,26 @@ internal static class WorkflowReadScenarios
             default:
                 return await RunRead(host, scenario, human, ct);
         }
+    }
+
+    // GET /sindri/workflows/{slug}[?revision=N|latest] on the Morning check workflow (active at 1); every scenario but "revision-invalid" saves revision 2 first.
+    private static async Task<string> SlugRead(GoldenHost host, string scenario, (string Name, string Value)[] human, CancellationToken ct)
+    {
+        await Create(host, _morning, _morningSlug, "Morning check", activate: true, ct);
+        if (!string.Equals(scenario, "revision-invalid", StringComparison.Ordinal))
+        {
+            await Save(host, ct);
+        }
+
+        // "found-latest": the same workflow as "found" with the newest revision shown (#3303)
+        var query = scenario switch
+        {
+            "found-latest" => "?revision=latest",
+            "revision-not-found" => "?revision=9",
+            "revision-invalid" => "?revision=soon",
+            _ => string.Empty,
+        };
+        return await Ask(host, Get($"/sindri/workflows/{_morningSlug.Value}{query}", human));
     }
 
     // GET /sindri/workflow-runs/{run}: the running run (its run_agent node 'agent' runs, so its row says 'waiting'), the same once the human took the node over ('taken_over': the held marker of its launch is set, as the workflow sets it),

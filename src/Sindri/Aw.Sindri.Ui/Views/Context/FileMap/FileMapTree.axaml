@@ -51,7 +51,7 @@
     <Panel Grid.Row="3">
       <!-- Rows are 36 px and built as they scroll into view; a plain StackPanel would build every row of a big folder. -->
       <ScrollViewer x:Name="FileScroll" IsVisible="{Binding HasRows}" HorizontalScrollBarVisibility="Disabled">
-      <ItemsControl x:Name="FileRows" ItemsSource="{Binding Rows}">
+      <ItemsControl x:Name="FileRows" ctl:ResultListKeys.Arrows="True" ItemsSource="{Binding Rows}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
             <VirtualizingStackPanel />
@@ -64,10 +64,12 @@
                 <!-- Name and file count keep their size; the status takes what is left of the column and trims, so it never draws over the next column. -->
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" VerticalAlignment="Center">
                   <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <Button Classes="file-open" IsVisible="{Binding IsDirectory}" Click="OnOpen" AutomationProperties.Name="{Binding Name}">
+                    <Button Classes="file-open result-open" IsVisible="{Binding IsDirectory}" Click="OnOpen" AutomationProperties.Name="{Binding Name}">
                       <TextBlock Classes="body-strong" Text="{Binding Name}" />
                     </Button>
-                    <TextBlock Classes="body" Text="{Binding Name}" IsVisible="{Binding IsFile}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                    <Button Classes="file-open result-open" IsVisible="{Binding IsFile}" Click="OnOpen" AutomationProperties.Name="{Binding Name}">
+                      <TextBlock Classes="body" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                    </Button>
                     <TextBlock Classes="caption subtle" Text="{Binding FilesText}" IsVisible="{Binding IsDirectory}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
                   </StackPanel>
                   <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding StatusWord}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />

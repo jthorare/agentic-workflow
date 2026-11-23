@@ -14,6 +14,8 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// diff of the profile (<see cref="ProfileDiff"/>, keyed by the entry's id): no diff row is 'approved', a new or changed entry is 'waiting', an approved entry the live file dropped is 'removing' and listed after the live ones.
 /// The repo scope is the engine's (<see cref="RepoAddressing"/>): a session sees the profile's pins and its own repo's only. A pin's <c xml:lang="en">change</c> compares the approved entry's hash with the one the
 /// current map stored for that pin (<see cref="PinChanges"/>); a map that stored none leaves it null.
+/// An invalid live profile file is refused with its SND-PROFILE-002, which names the file, the key and the fix (#3594): the pins live in that file, and reading it as
+/// no profile would list no pins and point at 'sindri repo add' instead of the line to fix.
 /// </summary>
 internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine engine, IProfileSource live, IApprovedProfile approved, MapRebuildState rebuild, IJobViews jobs) : IService<GetContextPinsRequest, ContextPinsView>
 {

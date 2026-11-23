@@ -29,6 +29,7 @@
     <ProjectReference Include="../Aw.Context.Testing/Aw.Context.Testing.csproj" />
     <ProjectReference Include="../Aw.Connectors.Testing/Aw.Connectors.Testing.csproj" />
     <ProjectReference Include="../Aw.CodeIndex.Testing/Aw.CodeIndex.Testing.csproj" />
+    <ProjectReference Include="../Aw.Transcripts.Testing/Aw.Transcripts.Testing.csproj" />
     <ProjectReference Include="../Aw.Kernel.Telemetry.Testing/Aw.Kernel.Telemetry.Testing.csproj" />
   </ItemGroup>
 

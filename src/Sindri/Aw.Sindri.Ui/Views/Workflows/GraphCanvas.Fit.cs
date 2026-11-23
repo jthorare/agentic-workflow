@@ -23,6 +23,7 @@ internal sealed partial class GraphCanvas
         var fitZoom = graph.Relayout(Bounds.Width, Bounds.Height, TextScale);
         _fitZoom = fitZoom;
         _laidOutWidth = Bounds.Width;
+        _laidOutHeight = Bounds.Height;
         _laidOutScale = TextScale;
         _laidOut = graph;
         if (_fitPending || wrapChanged)
@@ -33,6 +34,8 @@ internal sealed partial class GraphCanvas
         InvalidateVisual();
         ViewChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    private double _laidOutHeight;   // the height the stored Fit zoom was found for: a new height needs a new Fit, which may wrap the cards differently
 
     private double _fitZoom = 1;   // the Fit zoom of the current layout: Fit goes back to it without laying the cards out again
 

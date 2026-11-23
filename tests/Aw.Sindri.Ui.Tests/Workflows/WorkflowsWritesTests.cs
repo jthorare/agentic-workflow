@@ -38,7 +38,7 @@ public sealed class WorkflowsWritesTests
         Assert.Equal([Slug], _f.Server.StartedWorkflows);
         Assert.Equal(reads + 1, _f.Server.WorkflowRunsCalls);
         Assert.Equal((true, NewRun, false), (page.IsRun, page.Run.Id, page.Runs.IsStarting));
-        Assert.Equal("Run now", page.Runs.RunNowText);
+        Assert.Equal("Run revision 1 (live)", page.Runs.RunNowText);   // back to its words, not "Starting…": the found golden is live at 1 with 2 saved (#3303)
     }
 
     [Fact]
