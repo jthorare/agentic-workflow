@@ -11,8 +11,8 @@ internal sealed class NodeRunViewModel : ObservableObject
     internal NodeRunViewModel(NodeRunView run, int count, Func<NodeRunViewModel, bool, CancellationToken, Task>? control = null)
     {
         _control = control;
-        HasTitle = count > 1 || run.ItemIndex > 0;
-        TitleText = HasTitle ? Labels.WfItemTitle(run.ItemIndex, count) : string.Empty;   // a node that runs once is named by its group's heading (#3307)
+        HasTitle = run.ItemIndex > 0;
+        TitleText = HasTitle ? Labels.WfItemTitle(run.ItemIndex, count) : string.Empty;   // a node that runs once, and a collect's own row, are named by the group's heading (#3307, #4082)
         var (glyph, word) = Labels.WfChip(run.Status);
         Tone = RunStatus.Tone(run.Status);
         (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(run.Status));

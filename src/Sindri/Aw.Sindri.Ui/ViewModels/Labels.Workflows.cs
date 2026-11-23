@@ -169,10 +169,10 @@ internal static partial class Labels
     internal static string WfNodeItems(string node, int count) => string.Create(CultureInfo.InvariantCulture, $"{node} · {count} items");
 
     /// <summary>One item of a for_each node.</summary>
-    /// <param name="index">The item's position, from 0.</param>
+    /// <param name="index">The item's position as served, counted from 1.</param>
     /// <param name="count">How many items.</param>
     /// <returns>The words.</returns>
-    internal static string WfItemTitle(int index, int count) => string.Create(CultureInfo.InvariantCulture, $"Item {index + 1} of {count}");
+    internal static string WfItemTitle(int index, int count) => string.Create(CultureInfo.InvariantCulture, $"Item {index} of {count}");
 
     /// <summary>A node run's accessible name.</summary>
     /// <param name="title">The node or item.</param>
