@@ -234,6 +234,28 @@ public sealed class AgentsPageViewModelTests
     }
 
     [Fact]
+    public async Task Empty_list_shows_a_start_hint_naming_the_key_that_opens_the_New_agent_form_4001()
+    {
+        _f.Serve("empty");
+        var page = await _f.Shown(Token);
+
+        Assert.True(page.ShowsStartHint);
+        Assert.Equal("Press N to start an agent.", page.StartHint);
+    }
+
+    [Fact]
+    public async Task A_filter_with_no_match_shows_no_start_hint_4001()
+    {
+        var page = await _f.Shown(Token);
+
+        page.FilterProvider("Codex");
+        page.FilterState("idle");
+
+        Assert.True(page.IsEmpty);
+        Assert.False(page.ShowsStartHint);
+    }
+
+    [Fact]
     public async Task A_filter_with_no_match_shows_the_apps_sentence()
     {
         var page = await _f.Shown(Token);

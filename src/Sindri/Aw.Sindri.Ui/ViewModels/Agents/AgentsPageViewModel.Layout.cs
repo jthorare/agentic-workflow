@@ -27,6 +27,12 @@ internal sealed partial class AgentsPageViewModel
     /// <summary>True when the list has sessions and the filters leave none of them: the line offers to clear the filters.</summary>
     public bool ShowsClearFilters => IsEmpty && IsFiltered && _list is { Sessions.Count: > 0 };
 
+    /// <summary>The empty page's start hint: names the key that opens the New agent form.</summary>
+    public string StartHint => string.Empty;
+
+    /// <summary>True when the list has no session at all (not a filter that hides them): the hint shows.</summary>
+    public bool ShowsStartHint => false;
+
     /// <summary>What resumes a recently ended session, for its sheet.</summary>
     /// <param name="reference">The session's ref.</param>
     /// <returns>Null when the ref is not a recently ended session; empty when it has no resume command; else the command.</returns>
