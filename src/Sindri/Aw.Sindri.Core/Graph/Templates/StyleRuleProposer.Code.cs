@@ -38,13 +38,15 @@ internal static partial class StyleRuleProposer
     ]);
 
     /// <summary>
-    /// 'trim', once after 'rules': cuts the catalog to two short lists so the steps after it stay under the engine's 64 KB input cap. Output: known (per record id, section and
-    /// checks: all 'vet' reads) and brief (per record id, section and the first <see cref="BriefChars"/> characters of the text, never splitting a surrogate pair: all 'classify' reads).
+    /// 'trim', once after 'rules': cuts the catalog to two short lists so the steps after it stay under the engine's 64 KB limit (a node output over it is cut, and a later reference to it fails).
+    /// Output: known (per record id, section and checks: all 'vet' reads), brief (per record id, section and the first <see cref="BriefChars"/> characters of the text, never splitting
+    /// a surrogate pair: all 'classify' reads) and more (how many records, in id order after the last that fit, were left out because the two lists would pass <see cref="TrimBytes"/> bytes as JSON).
     /// </summary>
     public static string TrimCode { get; } = Lines(
     [
         "var doc = (input is JsonValue packed && packed.TryGetValue<string>(out var json) ? JsonNode.Parse(json) : input) as JsonObject;",
         "var (known, brief) = (new JsonArray(), new JsonArray());",
+        "var (used, more) = (0, 0);",
         "foreach (var item in doc?[\"rules\"] as JsonArray ?? new JsonArray())",
         "{",
         "    var rule = item as JsonObject;",
@@ -60,16 +62,28 @@ internal static partial class StyleRuleProposer
         "        checks.Add((JsonNode)new JsonObject { [\"type\"] = Str((check as JsonObject)?[\"type\"]) ?? string.Empty, [\"id\"] = Str((check as JsonObject)?[\"id\"]) ?? string.Empty });",
         "    }",
         "",
-        "    known.Add((JsonNode)new JsonObject { [\"id\"] = id, [\"section\"] = section, [\"checks\"] = checks });",
         "    var text = Str(rule?[\"text\"]) ?? string.Empty;",
-        $"    var cut = text.Length > {BriefChars.ToString(System.Globalization.CultureInfo.InvariantCulture)} && char.IsHighSurrogate(text[{(BriefChars - 1).ToString(System.Globalization.CultureInfo.InvariantCulture)}]) ? {(BriefChars - 1).ToString(System.Globalization.CultureInfo.InvariantCulture)} : {BriefChars.ToString(System.Globalization.CultureInfo.InvariantCulture)};",
-        "    brief.Add((JsonNode)new JsonObject { [\"id\"] = id, [\"section\"] = section, [\"text\"] = text.Length > cut ? text[..cut] : text });",
+        $"    var cut = text.Length > {Num(BriefChars)} && char.IsHighSurrogate(text[{Num(BriefChars - 1)}]) ? {Num(BriefChars - 1)} : {Num(BriefChars)};",
+        "    var knownEntry = new JsonObject { [\"id\"] = id, [\"section\"] = section, [\"checks\"] = checks };",
+        "    var briefEntry = new JsonObject { [\"id\"] = id, [\"section\"] = section, [\"text\"] = text.Length > cut ? text[..cut] : text };",
+        "    var size = knownEntry.ToJsonString().Length + briefEntry.ToJsonString().Length + 2;",
+        $"    if (more > 0 || used + size > {Num(TrimBytes)})",
+        "    {",
+        "        more++;",
+        "        continue;",
+        "    }",
+        "",
+        "    used += size;",
+        "    known.Add((JsonNode)knownEntry);",
+        "    brief.Add((JsonNode)briefEntry);",
         "}",
         "",
-        "return new JsonObject { [\"known\"] = known, [\"brief\"] = brief };",
+        "return new JsonObject { [\"known\"] = known, [\"brief\"] = brief, [\"more\"] = more };",
         "",
         "static string? Str(JsonNode? node) => node is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;",
     ]);
+
+    private static string Num(int value) => value.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>
     /// 'entry', once per draft: the rule and check the draft is for, the agent's report (title, rationale, files, checks, violations on main; malformed parts dropped, at most 20 files)

@@ -97,6 +97,47 @@ public sealed class StyleRuleProposerTrimTests : IClassFixture<RoslynWarmup>
         Assert.True(classify < NodeRunLimits.PayloadBytes, "classify's stored input is " + classify.ToString(CultureInfo.InvariantCulture) + " bytes");
     }
 
+    [Fact]
+    public void Trim_keeps_its_output_under_the_64_KB_cap_for_200_worst_case_records_and_counts_what_it_leaves_out()
+    {
+        var rules = new JsonArray();
+        for (var i = 0; i < 200; i++)
+        {
+            var name = i.ToString("D3", CultureInfo.InvariantCulture);
+            rules.Add((JsonNode)new JsonObject
+            {
+                ["id"] = "engineering.csharp." + name + new string('i', 77),
+                ["section"] = "4b.1a",
+                ["text"] = string.Concat(Enumerable.Repeat("\"\\é😀", 150)),
+                ["checks"] = new JsonArray(Check("analyzer", "CA" + name), Check("test", new string('T', 60) + name), Check("review", new string('r', 80) + name), Check("test", new string('q', 80) + name)),
+            });
+        }
+
+        var trimmed = Trim(rules);
+
+        var bytes = Encoding.UTF8.GetByteCount(new JsonObject { ["result"] = trimmed.DeepClone() }.ToJsonString());
+        Assert.True(bytes < NodeRunLimits.PayloadBytes, "trim's output is " + bytes.ToString(CultureInfo.InvariantCulture) + " bytes");
+        var kept = trimmed["known"]!.AsArray().Count;
+        Assert.Equal(200, kept + trimmed["more"]!.GetValue<int>());
+        Assert.InRange(kept, 1, 199);
+        Assert.Equal(kept, trimmed["brief"]!.AsArray().Count);
+    }
+
+    [Fact]
+    public void Trim_hands_on_every_record_of_a_catalog_the_size_of_today_s_and_says_none_were_left_out()
+    {
+        var rules = new JsonArray();
+        for (var i = 0; i < 95; i++)
+        {
+            var name = i.ToString("D3", CultureInfo.InvariantCulture);
+            rules.Add((JsonNode)new JsonObject { ["id"] = "engineering.csharp." + name + new string('i', 37), ["section"] = "4b.2", ["text"] = new string('a', 500), ["checks"] = new JsonArray(Check("test", "Aw" + new string('T', 30) + name), Check("review", new string('r', 40) + name)) });
+        }
+
+        var trimmed = Trim(rules);
+
+        Assert.Equal((95, 0), (trimmed["known"]!.AsArray().Count, trimmed["more"]!.GetValue<int>()));
+    }
+
     private static JsonObject Check(string type, string id) => new() { ["type"] = type, ["id"] = id };
 
     // why: the engine stores a step's interpolated config through StoredJson.Fit; this is that config's size with the field rendered from the scope, as the caps tests of 'steering-miner' measure it

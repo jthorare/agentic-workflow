@@ -8,7 +8,7 @@ Template name: `style-rule-proposer` (issue 3787, piece 4). This first version e
 
 1. `start` (manual) takes the payload below, and `check` (code) stops the run when it has no `repo` or no `findings` list, naming what is missing. It hands on the first 3 findings.
 2. `rules` (`rule_catalog`) lists the existing rule records with their checks and sections.
-3. `trim` (code) cuts that list down to two short ones, so the steps after it stay under the engine's 64 KB input cap. `known` holds each record's id, section and checks, and `vet` reads it. `brief` holds each record's id, section and the first 160 characters of its text, and `classify` reads it.
+3. `trim` (code) cuts that list down to two short ones, so the steps after it stay under the engine's 64 KB input cap. `known` holds each record's id, section and checks, and `vet` reads it. `brief` holds each record's id, section and the first 160 characters of its text, and `classify` reads it. `trim` keeps the two lists under 60,000 bytes together. When the catalog is bigger, it drops the records after the last that fit, in id order, and counts them in `more`. Those records are then unknown to `vet` and `classify`, so a duplicate of one of them is not caught.
 4. `each` loops over those 3. The first ones are the top ranked, so a longer list is fine: the rest get no draft.
 5. `classify` (prompt) says whether an analyzer, an architecture test or a banned symbol can enforce the mistake, or none. It answers none when an existing rule covers it.
 6. `vet` (code) keeps the answer only when it is well formed and new. Anything else becomes `none`.
@@ -62,6 +62,7 @@ No transcript ref goes into a record. `source.ref` cites the miner run, never a 
 
 - Each draft is one agent session, up to 60 minutes, and it builds. That is why only the top 3 findings get one.
 - The miner has no `code_style` label yet. `classify` looks at every finding, so most become `none`.
-- The engine keeps 64 KB of a step's input. `trim` itself reads the full catalog, so its own stored input is cut past roughly 70 records (an estimate, not measured). Its code gets the whole list; only the stored copy is cut. `vet` and `classify` read the short lists, which stay under 64 KB for 200 records.
+- The engine keeps 64 KB of a step's input and output. A cut output breaks the run: a later step that reads it fails. `trim` keeps its own output under 64 KB by the 60,000-byte rule above. Text full of quotes, backslashes or non-ASCII characters takes up to 6 bytes a character as JSON, so such a catalog fits fewer records. Today's 95 records fit whole (an estimate, not measured).
+- A step's input is cut when stored, but its code still gets the whole input. `trim` reads the full catalog, so its stored input is cut past about 70 records. That does not break the run.
 - `summary` counts the findings that got no draft, but not why. The reason of each `none` (`not_checkable`, `malformed` or `duplicate`) sits in that item's `vet` step.
 - A draft whose agent fails stops the run.
