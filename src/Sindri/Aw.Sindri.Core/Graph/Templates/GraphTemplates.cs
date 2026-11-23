@@ -25,6 +25,10 @@ public static partial class GraphTemplates
             SteeringMiner.Name,
             "Run it with a list of batches of human turns from past agent sessions, each batch at most 60,000 bytes as JSON: a model labels each turn, and each mistake the human corrected at least twice comes back as one finding with its turns.",
             SteeringMiner.Json()),
+        (
+            SkillProposer.Name,
+            "Run it with a payload holding 'findings' (from a steering-miner run) and 'repo' (the toolkit repo's name in your profile): for each of the top 5, a model picks the skill to change and an agent drafts the edit on its own branch.",
+            SkillProposer.Json()),
     ];
 
     /// <summary>Every template, in the order they are listed.</summary>
