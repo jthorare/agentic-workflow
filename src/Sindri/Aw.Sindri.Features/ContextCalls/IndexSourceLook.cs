@@ -1,4 +1,6 @@
+using Aw.Context.Core;
 using Aw.Context.Core.Sync;
+using Aw.Sindri.Core.Health;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
@@ -33,4 +35,37 @@ internal static class IndexSourceLook
         "idle" => p.Records == 0 && p.LastCommit is null && p.LastSync is not null,
         _ => false,
     };
+
+    /// <summary>The source's health problem (#4010): one line with its code, or null when the source needs no look. It asks <see cref="For"/>, so the
+    /// status health and the index row never disagree.</summary>
+    /// <param name="p">The source's progress.</param>
+    /// <param name="serveRunning">How long this serve has run; zero while index-sync is paused.</param>
+    /// <returns>The problem, or null.</returns>
+    internal static HealthProblem? Problem(SourceProgress p, TimeSpan serveRunning)
+    {
+        ArgumentNullException.ThrowIfNull(p);
+        var look = For(p, serveRunning);
+        if (!look.NeedsLook)
+        {
+            return null;
+        }
+
+        var name = p.Source.Value;
+        var fix = $"the {name} source needs a look";
+        if (look.Words is not null)
+        {
+            return new HealthProblem(ContextErrors.SourceUnavailable.Code, look.Words, fix);   // the first-pass limit: no pass ended, so no code of its own
+        }
+
+        var code = p.LastError ?? p.LastCode ?? ContextErrors.SourceUnavailable.Code;   // a pass that found nothing carries no code of its own
+        var failed = p.LastErrorText ?? "its last pull failed";
+        var words = p.Pull switch
+        {
+            "backoff" => failed + ", retrying",
+            "failed" => failed,
+            "idle" => "a pass ended and found nothing",
+            _ => "it can't be used yet",
+        };
+        return new HealthProblem(code, $"{name}: {words}", fix);
+    }
 }
