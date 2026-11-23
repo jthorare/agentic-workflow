@@ -7395,6 +7395,7 @@ static Aw.Sindri.Core.Sessions.TerminalName.operator !=(Aw.Sindri.Core.Sessions.
 static Aw.Sindri.Core.Sessions.TerminalName.operator ==(Aw.Sindri.Core.Sessions.TerminalName? left, Aw.Sindri.Core.Sessions.TerminalName? right) -> bool
 static Aw.Sindri.Core.Sessions.TmuxAttachLine.Argv(string! socket, string! session) -> System.Collections.Generic.IReadOnlyList<string!>!
 static Aw.Sindri.Core.Sessions.TmuxAttachLine.Line(string! socket, string! session) -> string!
+static Aw.Sindri.Core.Sessions.TmuxAttachLine.NamedLine(string! server, string! session) -> string!
 static Aw.Sindri.Core.Sessions.TmuxClient.operator !=(Aw.Sindri.Core.Sessions.TmuxClient? left, Aw.Sindri.Core.Sessions.TmuxClient? right) -> bool
 static Aw.Sindri.Core.Sessions.TmuxClient.operator ==(Aw.Sindri.Core.Sessions.TmuxClient? left, Aw.Sindri.Core.Sessions.TmuxClient? right) -> bool
 static Aw.Sindri.Core.Sessions.TmuxFacts.operator !=(Aw.Sindri.Core.Sessions.TmuxFacts? left, Aw.Sindri.Core.Sessions.TmuxFacts? right) -> bool
