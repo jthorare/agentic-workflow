@@ -1,6 +1,7 @@
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.WholeMap;
 using Aw.Context.Infrastructure.ConceptAnswers;
 using Aw.Context.Infrastructure.Graph;
 using Aw.Context.Infrastructure.Store;
@@ -83,6 +84,23 @@ public sealed class ConceptAnswerRoundTripTests : IDisposable
         Assert.Null(view.Next);
         Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : null);
         Assert.NotNull(read.Value);
+        Assert.Equal(AwJson.Serialize(view, _json), AwJson.Serialize(read.Value.View, _json));
+    }
+
+    // #3696: the repo picker's list is part of the kept answer; a body kept before it (no 'repos') still reads back, as the last-page test above shows.
+    [Fact]
+    public async Task A_kept_answer_reads_back_its_repos()
+    {
+        var graph = ConceptGraph.Product().Build();
+        var view = ConceptBuilder.Build(ConceptGraph.Basis, new ConceptsQuery(MapRead.Current, new ConceptPage()), graph, ConceptGraph.Text).Value
+            with { Repos = [new WholeMapRepo("aw-split-panes", 4), new WholeMapRepo("other", 1)] };
+        var built = new KeptConcepts(view, ConceptBuilder.CodePathsOf(view.Concepts.Select(c => c.Id), graph));
+
+        _ = await _answers.Keep("repos", await Basis(), built, MapWorld.None);
+        var read = await _answers.Concepts("repos", MapWorld.None);
+
+        Assert.NotNull(read.Value);
+        Assert.Equal(view.Repos, read.Value.View.Repos);
         Assert.Equal(AwJson.Serialize(view, _json), AwJson.Serialize(read.Value.View, _json));
     }
 
