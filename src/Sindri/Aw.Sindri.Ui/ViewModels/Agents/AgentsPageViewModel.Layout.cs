@@ -28,7 +28,7 @@ internal sealed partial class AgentsPageViewModel
     public bool ShowsClearFilters => IsEmpty && IsFiltered && _list is { Sessions.Count: > 0 };
 
     /// <summary>The empty page's start hint: names the key that opens the New agent form.</summary>
-    public string StartHint => Labels.AgentsStartHint;
+    public string StartHint { get; } = Labels.AgentsStartHint;
 
     /// <summary>True when the list has no session at all (not a filter that hides them): the hint shows.</summary>
     public bool ShowsStartHint => IsEmpty && _list is { Sessions.Count: 0 };
