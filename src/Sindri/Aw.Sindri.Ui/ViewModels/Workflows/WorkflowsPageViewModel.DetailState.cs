@@ -3,8 +3,9 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <summary>The open workflow's state beside its title on the runs level: the text and the header chip.</summary>
 internal sealed partial class WorkflowsPageViewModel
 {
-    /// <summary>True when the open workflow's own state shows beside its title (on its runs level).</summary>
-    public bool ShowsDetailState => IsRuns && DetailStateText.Length > 0;
+    /// <summary>True when the header chip shows beside the open workflow's title (on its runs level): only for a workflow that is off (#3684 frames:
+    /// cards.png "a paused workflow shows this chip in its header"; canvas-16.png, an active workflow's header has no chip).</summary>
+    public bool ShowsDetailState => IsRuns && DetailActive == false;
 
     /// <summary>The open workflow's state, as its list row says it ("● Active", "○ Off"): from the workflow read, else from the list row; empty when neither is known.</summary>
     public string DetailStateText => Runs.Shown is { } shown

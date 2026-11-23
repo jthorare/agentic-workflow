@@ -116,7 +116,7 @@ internal static partial class CommandTable
             ["request" or "requests" or "decisions" or "decide" or "needs-you", ..] => await new RequestVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct).ConfigureAwait(false),
             ["index", "connect", .. var rest] => await new IndexConnectVerbs(services, output, environment).Run(["connect", .. rest], ct).ConfigureAwait(false),
             ["services" or "jobs", ..] or ["index", "embed", ..] => await JobCommands.Run(args, (client, output), start.EnsureRunning, services.GetRequiredService<TimeProvider>(), (ct, interrupt.Again)).ConfigureAwait(false),
-            ["agents" or "skill" or "skills" or "setup" or "code-index" or "index" or "library", ..] => await ReadVerbs(args, (client, output), (services, start), (ct, interrupt.Again)).ConfigureAwait(false),
+            ["agents" or "skill" or "skills" or "setup" or "code-index" or "index" or "library" or "transcripts", ..] => await ReadVerbs(args, (client, output), (services, start), session, (ct, interrupt.Again)).ConfigureAwait(false),
             ["repo", ..] => await Repo(args, client, output, services, (ct, interrupt.Again)).ConfigureAwait(false),
             ["ledger", .. var rest] => await new LedgerVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(rest, ct).ConfigureAwait(false),
             ["launch" or "session", ..] => await LaunchOrSession(args, client, (output, environment), services, (ct, interrupt.Again)).ConfigureAwait(false),
@@ -144,6 +144,7 @@ internal static partial class CommandTable
         ["wf", "validate", .. var rest] => await WfValidateCommand.Run(rest, services, output, ct).ConfigureAwait(false),   // in process: reads the graph file, never starts or contacts serve
         ["wf", "run", .. var rest] => await WfRunCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "cancel", .. var rest] => await WfRunCommand.Cancel(rest, desk, output, ct).ConfigureAwait(false),
+        ["wf", "seen", .. var rest] => await WfSeenCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "takeover", .. var rest] => await WfAgentNodeCommand.TakeOver(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "handback", .. var rest] => await WfAgentNodeCommand.HandBack(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "list", .. var rest] => await new WfReadVerbs(desk.Client, output).List(rest, ct).ConfigureAwait(false),   // the reads go to the routes and never start the control plane

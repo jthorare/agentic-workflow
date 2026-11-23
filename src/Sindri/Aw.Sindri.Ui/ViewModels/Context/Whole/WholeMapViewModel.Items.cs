@@ -1,4 +1,5 @@
 using Aw.Sindri.Ui.Api.Context;
+
 namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 /// <summary>The map's accessible list (<see cref="WholeMapViewModel"/>, continued; UX pass C-3): what the canvas draws, as items a keyboard and a screen reader reach. Enter on one does what a click on the map does.</summary>
@@ -30,12 +31,19 @@ internal sealed partial class WholeMapViewModel
         {
             IReadOnlyList<MapItemViewModel> built = shown.ByArea
                 ? [.. shown.Tiles.Select(t => new MapItemViewModel(t.Key, t.Label, Labels.ContextMapItemName(t.Label, Labels.ContextWholeMembers(t.Members)), IsTile: true))]
-                : [.. shown.Nodes.Select(n => new MapItemViewModel(n.Key, n.Label, Labels.ContextMapItemName(n.Label, n.Kind), IsTile: false))];
+                : [.. shown.Nodes
+                    .OrderByDescending(n => n.Confirmed).ThenByDescending(n => n.Confidence).ThenBy(PathOf, StringComparer.Ordinal)
+                    .Select(n => new MapItemViewModel(n.Key, n.Label, Labels.ContextMapItemName(n.Label, n.Kind), IsTile: false) { Path = PathOf(n) })];
             _items = cached = (shown, built);
         }
 
         return cached.Items;
     }
+
+    // A file's full path: a code node's key carries it ("code:src/ledger/Events.cs"); a doc's label is it. Any other node has none.
+    private static string PathOf(PlacedNode node) => node.Key.StartsWith("code:", StringComparison.Ordinal)
+        ? node.Key["code:".Length..]
+        : node.Label.Contains('/', StringComparison.Ordinal) ? node.Label : string.Empty;
 
     /// <summary>The item the pinned node or feature is, so the list follows the map.</summary>
     public MapItemViewModel? SelectedItem => Pinned is { } key ? Items.FirstOrDefault(i => string.Equals(i.Key, key, StringComparison.Ordinal)) : null;

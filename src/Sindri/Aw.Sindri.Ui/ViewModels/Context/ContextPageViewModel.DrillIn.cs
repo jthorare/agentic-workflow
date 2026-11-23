@@ -39,7 +39,7 @@ internal sealed partial class ContextPageViewModel
         if (read.IsSuccess)
         {
             Whole.ShowArea(read.Value);
-            Problem = string.Empty;
+            SetProblem(string.Empty);
         }
         else
         {
@@ -79,7 +79,7 @@ internal sealed partial class ContextPageViewModel
         if (read.IsSuccess && string.Equals(OpenedConceptId, concept, StringComparison.Ordinal))
         {
             Whole.Show(read.Value);
-            Problem = string.Empty;
+            SetProblem(string.Empty);
         }
         else if (!read.IsSuccess)
         {
