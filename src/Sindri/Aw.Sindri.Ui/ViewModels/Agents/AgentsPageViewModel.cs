@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Sessions;
 using Aw.Sindri.Ui.Platform;
+using Aw.Sindri.Ui.Terminal;
 using Aw.Sindri.Ui.ViewModels.Components;
 using Aw.Sindri.Ui.ViewModels.Controls;
 
@@ -19,7 +20,7 @@ namespace Aw.Sindri.Ui.ViewModels.Agents;
 /// <param name="connector">Opens the terminal WebSocket; null: the pane never connects.</param>
 /// <param name="stopper">The stop route for the pane header's Stop; null: Stop is refused.</param>
 /// <param name="control">Stop and Interrupt for the terminal view's header; null until Serve's routes are wired (the buttons then answer "Couldn't stop it.").</param>
-internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard clipboard, TimeProvider clock, CatalogViewModel catalog, Aw.Sindri.Ui.Terminal.ISessionControl? control = null, Aw.Sindri.Ui.Terminal.ITerminalConnector? connector = null, Aw.Sindri.Ui.Terminal.ISessionStopper? stopper = null) : ObservableObject
+internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard clipboard, TimeProvider clock, CatalogViewModel catalog, ISessionControl? control = null, ITerminalConnector? connector = null, ISessionStopper? stopper = null) : ObservableObject
 {
     private readonly Dictionary<string, SessionRowViewModel> _rows = new(StringComparer.Ordinal);
     private readonly Dictionary<string, EndedSessionViewModel> _ended = new(StringComparer.Ordinal);
