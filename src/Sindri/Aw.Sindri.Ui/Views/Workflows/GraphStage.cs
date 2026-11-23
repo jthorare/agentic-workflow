@@ -40,7 +40,9 @@ internal sealed class GraphStage : Grid
         RowDefinitions = [new RowDefinition(GridLength.Star), new RowDefinition(new GridLength(GraphZoom.StripHeight))];
         var top = new Grid();
         top.Children.Add(Canvas);
-        top.Children.Add(Map);
+        MapPanel.Child = Map;
+        ActualThemeVariantChanged += (_, _) => PaintMapPanel();
+        top.Children.Add(MapPanel);
         SetRow(top, 0);
         top.ClipToBounds = true;
         Children.Add(top);
@@ -76,13 +78,34 @@ internal sealed class GraphStage : Grid
     internal GraphCanvas Canvas { get; } = new();
 
     /// <summary>Gets the minimap.</summary>
-    internal MiniMapControl Map { get; } = new() { Width = GraphZoom.MapWidth, Height = GraphZoom.MapHeight, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, GraphZoom.MapMargin, GraphZoom.MapMargin), IsVisible = false };
+    internal MiniMapControl Map { get; } = new() { IsVisible = false };
+
+    /// <summary>Gets the opaque panel the minimap sits on, in the canvas's bottom right corner (#4055): shown only while the canvas scrolls, like the map.</summary>
+    internal Border MapPanel { get; } = new()
+    {
+        Width = GraphZoom.MapWidth,
+        Height = GraphZoom.MapHeight,
+        HorizontalAlignment = HorizontalAlignment.Right,
+        VerticalAlignment = VerticalAlignment.Bottom,
+        Margin = new Thickness(0, 0, GraphZoom.MapMargin, GraphZoom.MapMargin),
+        Padding = new Thickness(8),
+        BorderThickness = new Thickness(1),
+        IsVisible = false,
+    };
 
     /// <summary>Gets the band under the canvas.</summary>
     internal Border Strip { get; } = new() { Height = GraphZoom.StripHeight };
 
     /// <summary>Gets the zoom percent's words.</summary>
     internal string PercentText => _percent.Text ?? string.Empty;
+
+    // The minimap's panel: the cards' surface (opaque, so nothing under the map shows through, #4055), a hairline border and the small radius.
+    private void PaintMapPanel()
+    {
+        MapPanel.Background = this.TryFindResource("Brush.Surface2", ActualThemeVariant, out var surface) && surface is IBrush fill ? fill : Brushes.Black;
+        MapPanel.BorderBrush = this.TryFindResource("Brush.Hairline", ActualThemeVariant, out var line) && line is IBrush hairline ? hairline : Brushes.Gray;
+        MapPanel.CornerRadius = this.TryFindResource("Radius.SM", ActualThemeVariant, out var radius) && radius is CornerRadius corner ? corner : new CornerRadius(6);
+    }
 
     private static Button MakeButton(string text, string name, Action click)
     {
@@ -106,6 +129,8 @@ internal sealed class GraphStage : Grid
         _percent.Text = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{Canvas.ZoomPercent}%");
         var scrolls = Canvas.Scrolls;
         Map.IsVisible = scrolls;
+        PaintMapPanel();
+        MapPanel.IsVisible = scrolls;   // no reserved room and no panel while the graph fits: ExtentHeight adds the map's 144 px only while it shows
         if (scrolls && Graph is { } graph)
         {
             var fill = this.TryFindResource("Brush.InkSubtle", ActualThemeVariant, out var value) && value is IBrush brush ? brush : Brushes.Gray;
