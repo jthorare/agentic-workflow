@@ -7,6 +7,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Items.Vocabulary;
+using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Features.GetQueue;
@@ -19,7 +20,8 @@ namespace Aw.Sindri.Features.GetQueue;
 /// <param name="views">The 'items' view.</param>
 /// <param name="status">How fresh the views are.</param>
 /// <param name="callers">The caller; a read needs one.</param>
-internal sealed class GetQueueService(IViewReader views, IProjectorStatus status, ICallerContextAccessor callers) : IService<GetQueueRequest, QueueResponse>
+/// <param name="lease">The lease this serve process holds: its epoch goes into the tag (#4007).</param>
+internal sealed class GetQueueService(IViewReader views, IProjectorStatus status, ICallerContextAccessor callers, HeldLease lease) : IService<GetQueueRequest, QueueResponse>
 {
     private static readonly ItemState[] _openStates =
         [.. Enum.GetValues<ItemState>().Where(static s => QueueGroups.GroupOf(s) is not null)];
@@ -45,7 +47,7 @@ internal sealed class GetQueueService(IViewReader views, IProjectorStatus status
             return mark.Error;
         }
 
-        var tag = TagOf(mark.Value, current, request);
+        var tag = TagOf(mark.Value, current, request, lease.Current?.Epoch ?? 0);
         if (request.IfNoneMatch is not null && string.Equals(request.IfNoneMatch, tag, StringComparison.Ordinal))
         {
             return new QueueResponse([], Empty: null, current.AsOf, Tag: tag, NotModified: true);
@@ -172,14 +174,14 @@ internal sealed class GetQueueService(IViewReader views, IProjectorStatus status
     }
 
     /// <summary>
-    /// A hash of what the answer shows, built without reading a row (#2852): the items view's mark (a write or a removal of any item row
+    /// A hash of what the answer shows, built without reading a row (#2852): the serve process's lease epoch (#4007: a views rebuild replays the same ledger, so the mark alone can repeat across a serve upgrade), the items view's mark (a write or a removal of any item row
     /// moves it, a close too), the projector's state word, whether the views are behind, and the paging request; never the cursor or the as-of time.
     /// </summary>
-    private static string TagOf(string itemsMark, ViewsStatus current, GetQueueRequest request)
+    private static string TagOf(string itemsMark, ViewsStatus current, GetQueueRequest request, long epoch)
     {
         var state = current.Stalled ? "stalled" : current.Rebuilding ? "rebuilding" : "ok";
         var behind = current.Cursor < current.LedgerHead;
-        var text = new StringBuilder(itemsMark)
+        var text = new StringBuilder("serve=").Append(epoch.ToString(CultureInfo.InvariantCulture)).Append(';').Append(itemsMark)
             .Append('|').Append(state).Append('|').Append(behind ? "behind" : "current")
             .Append('|').Append(request.Limit?.ToString(CultureInfo.InvariantCulture)).Append('|').Append(request.Group).Append('|').Append(request.After);
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(text.ToString()));

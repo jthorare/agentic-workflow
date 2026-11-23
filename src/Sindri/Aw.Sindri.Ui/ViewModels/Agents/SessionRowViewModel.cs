@@ -207,15 +207,16 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
     private static string LaneOf(SessionRowView row) =>
         row.Lane is { } lane ? Labels.LaneLine(lane.Team, lane.Lane) : row.LaunchId is { Length: > 0 } ? Labels.LaunchLine : string.Empty;
 
-    // A title as the human gave it; else where it is (repo and the id's first characters); else the id's first characters.
-    private static string TitleOf(SessionRowView row)
+    // #3082: a title as the human gave it; else the repo and the worktree's folder (the branch's name); else the provider. The id shows only in the sheet.
+    internal static string TitleOf(SessionRowView row)
     {
         if (row.Title is { Length: > 0 } title)
         {
             return title;
         }
 
-        var id8 = ShortId.Of(row.Id);
-        return row.Repo is { Length: > 0 } repo ? repo + "/" + id8 : id8;
+        var folder = row.Worktree is { Length: > 0 } worktree ? LastFolder(worktree) : string.Empty;
+        var where = string.Join(' ', new[] { row.Repo ?? string.Empty, folder }.Where(p => p.Length > 0));
+        return where.Length > 0 ? where : row.ProviderLabel;
     }
 }

@@ -266,5 +266,4 @@ internal sealed partial class ContextPageViewModel
         CloseConcept();
         return true;
     }
-
 }
