@@ -117,7 +117,7 @@ public sealed class GraphStageTests
                 stage.Canvas.ZoomIn();
                 stage.Canvas.ZoomIn();   // the cards now run a little past the canvas's right edge (#4055 at rest)
                 Settle(window);
-                return (Scrolls: stage.Canvas.Scrolls, Map: stage.Map.IsVisible, Panel: stage.MapPanel.IsVisible);
+                return (stage.Canvas.Scrolls, Map: stage.Map.IsVisible, Panel: stage.MapPanel.IsVisible);
             }
             finally
             {
