@@ -58,7 +58,7 @@ internal static partial class StyleRuleProposer
             Node("start", "manual", "Run with findings and the repo", []),
             Node("check", "code", "Check the payload", new JsonObject { ["input"] = "{{trigger.payload}}", ["code"] = CheckCode(MaxFindings), ["timeout"] = "10s" }),
             Node("rules", "rule_catalog", "List the rules", []),
-            Node("trim", "code", "Shorten the rule list", new JsonObject { ["input"] = """{"rules":{{rules.rules}}}""", ["code"] = TrimCode, ["timeout"] = "10s" }),
+            Node("trim", "code", "Shorten the rule list", new JsonObject { ["input"] = """{"rules":{{rules.rules}},"more":{{rules.more}}}""", ["code"] = TrimCode, ["timeout"] = "10s" }),
             Node("each", "for_each", "Each top finding", new JsonObject { ["items"] = "{{check.result.top}}", ["maxItems"] = MaxFindings }),
             Node("classify", "prompt", "Can a check enforce it?", new JsonObject { ["prompt"] = ClassifyPrompt, ["output"] = ClassifyAnswer() }),
             Node("vet", "code", "Keep a well formed new rule", new JsonObject { ["input"] = """{"rules":{{trim.result.known}},"sections":{{rules.sections}},"answer":{{classify.answer}}}""", ["code"] = VetCode, ["timeout"] = "10s" }),

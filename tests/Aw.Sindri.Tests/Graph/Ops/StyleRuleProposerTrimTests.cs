@@ -119,6 +119,7 @@ public sealed class StyleRuleProposerTrimTests : IClassFixture<RoslynWarmup>
         Assert.True(bytes < NodeRunLimits.PayloadBytes, "trim's output is " + bytes.ToString(CultureInfo.InvariantCulture) + " bytes");
         var kept = trimmed["known"]!.AsArray().Count;
         Assert.Equal(200, kept + trimmed["more"]!.GetValue<int>());
+        Assert.Equal(trimmed["more"]!.GetValue<int>(), trimmed["trimmed"]!.GetValue<int>());
         Assert.InRange(kept, 1, 199);
         Assert.Equal(kept, trimmed["brief"]!.AsArray().Count);
     }
@@ -138,6 +139,23 @@ public sealed class StyleRuleProposerTrimTests : IClassFixture<RoslynWarmup>
         Assert.Equal((95, 0), (trimmed["known"]!.AsArray().Count, trimmed["more"]!.GetValue<int>()));
     }
 
+    [Fact]
+    public void Trim_adds_the_records_rule_catalog_left_out_to_its_own_drops_in_one_more()
+    {
+        var rules = new JsonArray();
+        for (var i = 0; i < 300; i++)
+        {
+            rules.Add((JsonNode)new JsonObject { ["id"] = "engineering.csharp.r" + i.ToString("D3", CultureInfo.InvariantCulture) + new string('i', 37), ["section"] = "4b.2", ["text"] = new string('a', 500), ["checks"] = new JsonArray(Check("test", new string('T', 40))) });
+        }
+
+        var trimmed = Trim(rules, more: 7);
+
+        var own = trimmed["trimmed"]!.GetValue<int>();
+        Assert.InRange(own, 1, 299);
+        Assert.Equal(300, trimmed["known"]!.AsArray().Count + own);
+        Assert.Equal(7 + own, trimmed["more"]!.GetValue<int>());
+    }
+
     private static JsonObject Check(string type, string id) => new() { ["type"] = type, ["id"] = id };
 
     // why: the engine stores a step's interpolated config through StoredJson.Fit; this is that config's size with the field rendered from the scope, as the caps tests of 'steering-miner' measure it
@@ -149,10 +167,10 @@ public sealed class StyleRuleProposerTrimTests : IClassFixture<RoslynWarmup>
         return Encoding.UTF8.GetByteCount(config.ToJsonString());
     }
 
-    private static JsonObject Trim(JsonArray rules)
+    private static JsonObject Trim(JsonArray rules, int more = 0)
     {
         var config = Spec.Nodes.Single(static n => string.Equals(n.Id.Value, "trim", StringComparison.Ordinal)).Config;
-        var scope = new JsonObject { ["rules"] = new JsonObject { ["rules"] = rules } };
+        var scope = new JsonObject { ["rules"] = new JsonObject { ["rules"] = rules, ["more"] = more } };
         var input = Template.Render(config["input"]!.GetValue<string>(), reference => Lookup(scope, reference));
         Result<string> result = InProcessCodePort.Execute(config["code"]!.GetValue<string>(), input?.ToJsonString() ?? "null", Token);
 

@@ -40,13 +40,14 @@ internal static partial class StyleRuleProposer
     /// <summary>
     /// 'trim', once after 'rules': cuts the catalog to two short lists so the steps after it stay under the engine's 64 KB limit (a node output over it is cut, and a later reference to it fails).
     /// Output: known (per record id, section and checks: all 'vet' reads), brief (per record id, section and the first <see cref="BriefChars"/> characters of the text, never splitting
-    /// a surrogate pair: all 'classify' reads) and more (how many records, in id order after the last that fit, were left out because the two lists would pass <see cref="TrimBytes"/> bytes as JSON).
+    /// a surrogate pair: all 'classify' reads) and more (how many records are unknown to the steps after it: the 'more' of 'rules', the records its output budget left out, plus the records, in id order after the last that fit, that 'trim' itself left out because the two lists would pass <see cref="TrimBytes"/> bytes as JSON) and trimmed (only the second part of more).
     /// </summary>
     public static string TrimCode { get; } = Lines(
     [
         "var doc = (input is JsonValue packed && packed.TryGetValue<string>(out var json) ? JsonNode.Parse(json) : input) as JsonObject;",
         "var (known, brief) = (new JsonArray(), new JsonArray());",
-        "var (used, more) = (0, 0);",
+        "var (used, dropped) = (0, 0);",
+        "var cataloged = doc?[\"more\"] is JsonValue left && left.TryGetValue<int>(out var leftOut) && leftOut > 0 ? leftOut : 0;",
         "foreach (var item in doc?[\"rules\"] as JsonArray ?? new JsonArray())",
         "{",
         "    var rule = item as JsonObject;",
@@ -67,9 +68,9 @@ internal static partial class StyleRuleProposer
         "    var knownEntry = new JsonObject { [\"id\"] = id, [\"section\"] = section, [\"checks\"] = checks };",
         "    var briefEntry = new JsonObject { [\"id\"] = id, [\"section\"] = section, [\"text\"] = text.Length > cut ? text[..cut] : text };",
         "    var size = knownEntry.ToJsonString().Length + briefEntry.ToJsonString().Length + 2;",
-        $"    if (more > 0 || used + size > {Num(TrimBytes)})",
+        $"    if (dropped > 0 || used + size > {Num(TrimBytes)})",
         "    {",
-        "        more++;",
+        "        dropped++;",
         "        continue;",
         "    }",
         "",
@@ -78,7 +79,7 @@ internal static partial class StyleRuleProposer
         "    brief.Add((JsonNode)briefEntry);",
         "}",
         "",
-        "return new JsonObject { [\"known\"] = known, [\"brief\"] = brief, [\"more\"] = more };",
+        "return new JsonObject { [\"known\"] = known, [\"brief\"] = brief, [\"more\"] = cataloged + dropped, [\"trimmed\"] = dropped };",
         "",
         "static string? Str(JsonNode? node) => node is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;",
     ]);
