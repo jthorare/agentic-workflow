@@ -662,6 +662,215 @@
           }
         },
         {
+          "type": "transcript_batch",
+          "title": "Transcript batch",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "refs",
+              "type": "text",
+              "required": true,
+              "caption": "Turn refs",
+              "advanced": false
+            },
+            {
+              "name": "before",
+              "type": "boolean",
+              "required": false,
+              "caption": "Include the assistant text before each turn",
+              "advanced": false
+            }
+          ],
+          "outputs": {
+            "turns": "array",
+            "missing": "number",
+            "dropped": "number"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "refs": "{{item}}",
+            "before": true
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Read one batch",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "turns",
+                "type": "transcript_turns",
+                "config": {
+                  "maxTurns": 40
+                }
+              },
+              {
+                "id": "each",
+                "type": "for_each",
+                "config": {
+                  "items": "{{turns.batches}}"
+                }
+              },
+              {
+                "id": "load",
+                "type": "transcript_batch",
+                "config": {
+                  "refs": "{{item}}",
+                  "before": false
+                }
+              },
+              {
+                "id": "gather",
+                "type": "collect",
+                "config": {
+                  "value": "{{load.turns}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "turns"
+              },
+              {
+                "from": "turns",
+                "to": "each"
+              },
+              {
+                "from": "each",
+                "to": "load"
+              },
+              {
+                "from": "load",
+                "to": "gather"
+              }
+            ]
+          }
+        },
+        {
+          "type": "transcript_turns",
+          "title": "Transcript turns",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "since",
+              "type": "text",
+              "required": false,
+              "caption": "How far back",
+              "advanced": false
+            },
+            {
+              "name": "providers",
+              "type": "text list",
+              "required": false,
+              "caption": "Agents",
+              "advanced": false
+            },
+            {
+              "name": "repo",
+              "type": "text",
+              "required": false,
+              "caption": "Repository",
+              "advanced": false
+            },
+            {
+              "name": "batchSize",
+              "type": "number",
+              "required": false,
+              "caption": "Turns per batch",
+              "advanced": false
+            },
+            {
+              "name": "maxTurns",
+              "type": "number",
+              "required": false,
+              "caption": "Most turns",
+              "advanced": false
+            }
+          ],
+          "outputs": {
+            "batches": "array",
+            "sessions": "number",
+            "turns": "number",
+            "truncated": "boolean"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "since": "7d",
+            "providers": [
+              "claude-code"
+            ],
+            "batchSize": 20,
+            "maxTurns": 400
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Read last week's turns",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "turns",
+                "type": "transcript_turns",
+                "config": {
+                  "since": "7d",
+                  "batchSize": 20
+                }
+              },
+              {
+                "id": "each",
+                "type": "for_each",
+                "config": {
+                  "items": "{{turns.batches}}",
+                  "maxItems": 20
+                }
+              },
+              {
+                "id": "load",
+                "type": "transcript_batch",
+                "config": {
+                  "refs": "{{item}}"
+                }
+              },
+              {
+                "id": "gather",
+                "type": "collect",
+                "config": {
+                  "value": "{{load.missing}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "turns"
+              },
+              {
+                "from": "turns",
+                "to": "each"
+              },
+              {
+                "from": "each",
+                "to": "load"
+              },
+              {
+                "from": "load",
+                "to": "gather"
+              }
+            ]
+          }
+        },
+        {
           "type": "workflow_result",
           "title": "Workflow result",
           "isTrigger": false,
