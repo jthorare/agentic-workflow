@@ -347,7 +347,9 @@ public sealed class AgentsPageNeedsYouTests
         var afterRead = Titles(Outside(page));
         page.SortBy(AgentSort.Repo);
 
-        Assert.Equal((["zeta", "alpha", "private title"], ["private title", "alpha", "zeta"], ["private title", "alpha", "zeta"]), (up, down, afterRead));
+        Assert.Equal(["zeta", "alpha", "private title"], up);
+        Assert.Equal(["private title", "alpha", "zeta"], down);
+        Assert.Equal(["private title", "alpha", "zeta"], afterRead);
         Assert.Equal((true, false), (upMark.Contains('▲', StringComparison.Ordinal), page.ForHeader.Contains('▲', StringComparison.Ordinal) || page.ForHeader.Contains('▼', StringComparison.Ordinal)));
         Assert.True(downMark.Contains('▼', StringComparison.Ordinal));
         Assert.Equal((AgentSort.Repo, false), (page.Sort, page.SortDescending));
