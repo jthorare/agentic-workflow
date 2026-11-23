@@ -6,7 +6,7 @@ using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Infrastructure.Workflow;
 
-/// <summary>The admission rule of <see cref="SqliteWorkflowRunStore.Admit"/>: how many live runs are in flight and whether a trigger's run starts, queues or is skipped, inside the caller's write.</summary>
+/// <summary>The admission rule of <see cref="Admit"/>: how many live runs are in flight and whether a trigger's run starts, queues or is skipped, inside the caller's write.</summary>
 internal sealed partial class SqliteWorkflowRunStore
 {
     private static async ValueTask<Result<GraphStartKind>> Decide(ISqliteSession session, WorkflowRun run, GraphConcurrency mode, CancellationToken token)

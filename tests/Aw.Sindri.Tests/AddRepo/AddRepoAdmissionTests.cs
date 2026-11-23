@@ -167,7 +167,7 @@ public sealed class AddRepoAdmissionTests : IDisposable
     public async Task A_profile_that_exists_but_cannot_be_read_refuses_the_add_and_is_left_alone()
     {
         Assert.SkipWhen(Environment.IsPrivilegedProcess, "root ignores file permissions");
-        using var files = new Aw.Sindri.Tests.Profile.ProfileFiles();
+        using var files = new Profile.ProfileFiles();
         const string Mine = "schemaVersion: 1\nuser: thor\n";
         files.Write(Mine);
         _ = _rig.Admission();   // takes the caller slot the gate uses

@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.ViewModels.Workflows;
