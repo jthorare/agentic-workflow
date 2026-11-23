@@ -90,8 +90,8 @@ internal sealed class DelegateService(IMetaConfig config, RepoCommands repo, ILa
             return Retry(appended.Error, delegation);
         }
 
-        var moved = previous is null ? default : await Moved(previous, delegation, confirm, cancellationToken).ConfigureAwait(false);
-        return new DelegateResponse(DelegationView.Name(state), DelegationView.Of(delegation, state), []) { SendProblem = problem, LogLine = line, MovedFrom = moved.From, MovedNotice = moved.Notice, MovedProblem = moved.Problem };
+        var (movedFrom, movedNotice, movedProblem) = previous is null ? default : await Moved(previous, delegation, confirm, cancellationToken).ConfigureAwait(false);
+        return new DelegateResponse(DelegationView.Name(state), DelegationView.Of(delegation, state), []) { SendProblem = problem, LogLine = line, MovedFrom = movedFrom, MovedNotice = movedNotice, MovedProblem = movedProblem };
     }
 
     // Best effort: the lane the issue moved off is told once. A non-Claude lane gets the line through lane-send's delivery; a Claude lane
