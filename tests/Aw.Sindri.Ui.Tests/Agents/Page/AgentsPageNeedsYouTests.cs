@@ -279,6 +279,44 @@ public sealed class AgentsPageNeedsYouTests
         Assert.NotEqual(first, other);
     }
 
+    [Fact]
+    public async Task Clearing_the_search_puts_the_selection_back_on_the_row_it_hid_3913()
+    {
+        var list = AgentsPageFixture.Edited(_ => { });
+        _ = Add(list, Claude, "000000000011", title: "zeta");
+        _ = Add(list, Claude, "000000000012", title: "alpha");
+        _f.Serve(list);
+        var page = await _f.Shown(Token);
+        var zeta = Outside(page).Rows.Single(r => r.TitleText == "zeta").Ref;
+        _ = page.Select(zeta);
+
+        page.SearchText = "alpha";
+        var during = page.SelectedKey;
+        page.SearchText = string.Empty;
+
+        Assert.NotEqual(zeta, during);
+        Assert.Equal(zeta, page.SelectedKey);
+    }
+
+    [Fact]
+    public async Task Clearing_the_search_keeps_a_row_the_human_picked_while_it_ran_3913()
+    {
+        var list = AgentsPageFixture.Edited(_ => { });
+        _ = Add(list, Claude, "000000000011", title: "zeta");
+        _ = Add(list, Claude, "000000000012", title: "alpha");
+        _ = Add(list, Claude, "000000000013", title: "alpine");
+        _f.Serve(list);
+        var page = await _f.Shown(Token);
+        _ = page.Select(Outside(page).Rows.Single(r => r.TitleText == "zeta").Ref);
+
+        page.SearchText = "al";
+        var picked = Outside(page).Rows.Single(r => r.TitleText == "alpine").Ref;
+        _ = page.Select(picked);
+        page.SearchText = string.Empty;
+
+        Assert.Equal(picked, page.SelectedKey);
+    }
+
     private static SessionRowViewModel Row(AgentsPageViewModel page, string prefix) => page.Groups.SelectMany(g => g.Rows).Single(r => r.Ref.StartsWith(prefix, StringComparison.Ordinal));
 
     private static void Set(JsonNode list, string prefix, string state, bool estimated)
