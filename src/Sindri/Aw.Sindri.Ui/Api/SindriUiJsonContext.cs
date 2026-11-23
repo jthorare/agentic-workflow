@@ -96,6 +96,7 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(Workflows.WorkflowRunView))]
 [JsonSerializable(typeof(Workflows.WorkflowRunStarted))]
 [JsonSerializable(typeof(Workflows.WorkflowRunCancelled))]
+[JsonSerializable(typeof(Workflows.WorkflowRunSeen))]
 [JsonSerializable(typeof(Workflows.RunWorkflowBody))]
 [JsonSerializable(typeof(Workflows.AgentNodeControlled))]
 [JsonSerializable(typeof(Workflows.AgentNodeBody))]
