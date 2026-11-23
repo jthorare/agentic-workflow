@@ -17,7 +17,8 @@ namespace Aw.Meta.Core.Coordination;
 /// <param name="repo">The git and gh calls.</param>
 /// <param name="logs">Reads the red steps' logs for their failing tests.</param>
 /// <param name="messages">The lanes' messages, where a reviewer's OK and a lane's ready notice are read.</param>
-public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCommands repo, ILogFiles logs, IMessageStore messages)
+/// <param name="addresses">Finds the reviewer lane's sender address, so its OK lines count under any session name.</param>
+public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCommands repo, ILogFiles logs, IMessageStore messages, LaneAddress addresses)
 {
     private const string Fields = "headRefOid,isDraft,title,state";
     private const int LogCharacters = 32 * 1024 * 1024;
@@ -167,9 +168,13 @@ public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCom
         }
 
         var all = await messages.Messages(cancellationToken).ConfigureAwait(false);
-        return all.IsError
-            ? all.Error
-            : Results.Success<ReviewFacts?>(ReviewProof.Collect(all.Value, $"{team.Team}-{review.Lane}", pr) with { CountsMode = review.IsCounts });
+        if (all.IsError)
+        {
+            return all.Error;
+        }
+
+        var address = await addresses.Find(team.Team, review.Lane, cancellationToken).ConfigureAwait(false);
+        return Results.Success<ReviewFacts?>(ReviewProof.Collect(all.Value, $"{team.Team}-{review.Lane}", pr, address) with { CountsMode = review.IsCounts });
     }
 
     private static MergeAssessment NeverGated(TeamConfig team, int pr) =>
