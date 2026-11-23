@@ -21,7 +21,7 @@ internal sealed class ProjectsFixture
 
     internal void Serve(JsonNode list) => Server.ProjectsAnswer = new RouteAnswer(HttpStatusCode.OK, list.ToJsonString());
 
-    /// <summary>A page on the Projects (All) view. The goldens serve <c>blockedOnYou</c>, so a page whose view the owner never picked opens on Needs me with no rows; <paramref name="defaultView"/> keeps the page bare for the tests about that default.</summary>
+    /// <summary>A page on the Projects (All) view. The goldens serve blockedOnYou, so a page whose view the owner never picked opens on Needs me with no rows; <paramref name="defaultView"/> keeps the page bare for the tests about that default.</summary>
     internal ProjectsPageViewModel Page(bool defaultView = false)
     {
         var page = new ProjectsPageViewModel(Server, Clock);
