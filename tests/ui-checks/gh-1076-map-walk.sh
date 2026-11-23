@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tests/ui-checks/gh-1076-map-walk.sh — check for #1076 (UX pass C-3): the Context map's nodes and edges can be reached from the keyboard alone.
 # Expected (the issue): a map you can walk with Tab or arrows, Enter opening the item card, Esc closing it. Steps, keys only after the first focus:
-#   1. focus the search box ('Ask or look up'), then Tab (at most 25 times) until focus is inside the 'Map items' list;
+#   1. focus the search box ('Ask a question'), then Tab (at most 25 times) until focus is inside the 'Map items' list;
 #   2. Down, then Enter: the node's card opens (the Border named 'Item details', with its title);
 #   3. Tab (at most 25 times) until an edge row of that card (a Button under WholeNodeGroups) has focus, then Enter: the card shows the node at the
 #      other end of that edge (the title changes) - that is how an edge is reached;
@@ -30,7 +30,7 @@ list="$(ctx_node --type ListBox --name "Map items")"
 list_id="$(jq -r .id <<<"$list")"
 
 # 1. Tab from the search box into the list.
-"$DRIVER" action --name "Ask or look up" --do focus >/dev/null 2>&1 || setup_fail "could not focus the search box"
+"$DRIVER" action --name "Ask a question" --do focus >/dev/null 2>&1 || setup_fail "could not focus the search box"
 reached=0
 for i in $(seq 1 25); do
   press Tab
