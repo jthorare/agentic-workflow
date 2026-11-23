@@ -322,7 +322,7 @@ public sealed class CliProjectVerbsTests : IDisposable
 
         var code = await Verbs(api, today).Run(["project", "add", "--name", "Kitchen", "--target", word], Token);
 
-        var expected = Aw.Kernel.Dates.DueWords.Resolve(word, today).Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+        var expected = Kernel.Dates.DueWords.Resolve(word, today).Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
         Assert.Equal(0, code);
         Assert.Contains($"\"target\":\"{expected}\"", api.Calls[^1].Body, StringComparison.Ordinal);
     }
@@ -336,7 +336,7 @@ public sealed class CliProjectVerbsTests : IDisposable
 
         Assert.Equal(2, code);
         Assert.Contains("SND-PROJECT-004 target: 'someday'", _error.ToString(), StringComparison.Ordinal);
-        Assert.Contains(Aw.Kernel.Dates.DueWords.Resolve("someday", new DateOnly(2026, 11, 12)).Error.Message, _error.ToString(), StringComparison.Ordinal);
+        Assert.Contains(Kernel.Dates.DueWords.Resolve("someday", new DateOnly(2026, 11, 12)).Error.Message, _error.ToString(), StringComparison.Ordinal);
         Assert.Empty(api.Calls);
     }
 
