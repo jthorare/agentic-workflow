@@ -85,14 +85,14 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
     /// <summary>True when every column shows.</summary>
     public bool IsWide => !IsCompact;
 
-    /// <summary>True when the row shows the provider word (stub).</summary>
-    public bool ShowsProvider => true;
+    /// <summary>True when the row shows the provider word: not in the narrow list column (#4162), where the title takes the width.</summary>
+    public bool ShowsProvider => IsWide;
 
-    /// <summary>True when the row shows "estimated" (stub).</summary>
-    public bool ShowsEstimated => IsEstimated;
+    /// <summary>True when the row shows "estimated" beside its state: not in the narrow list column (#4162); the tooltip and the name still say it.</summary>
+    public bool ShowsEstimated => IsEstimated && IsWide;
 
-    /// <summary>The row's tooltip (stub).</summary>
-    public string Tip => string.Empty;
+    /// <summary>The row's tooltip: the same words as its accessible name (provider, title, state, "estimated", what it asks, host).</summary>
+    public string Tip => Name;
 
     /// <summary>True when the row has something for the Repository column.</summary>
     internal bool HasRepoValue => !string.Equals(RepoText, Labels.EmptyCell, StringComparison.Ordinal);
@@ -124,6 +124,8 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
     {
         IsCompact = compact;
         OnChanged(nameof(IsWide));
+        OnChanged(nameof(ShowsProvider));
+        OnChanged(nameof(ShowsEstimated));
     }
 
     /// <summary>The lane ("meta · sindri/ideas") or, for a launched session, its launch; else empty.</summary>
@@ -199,7 +201,7 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
         Name = Labels.SessionName(Row.ProviderLabel, title, chip.Word.ToLowerInvariant() + (EstimatedText.Length > 0 ? " (" + EstimatedText + ")" : string.Empty), string.Join(", ", new[] { AskingText, StepText }.Where(p => p.Length > 0)), HostText);
         Signature = string.Join('|', Row.State, AskingText, EstimatedText, title, WorktreeText, HostText, LaneText, StepText, Row.Focus.Method, Row.Repo);
         Focus.Show(Row.Ref);
-        foreach (var name in (string[])[nameof(IsAsking), nameof(HasAsking), nameof(IsEstimated), nameof(EstimatedTip), nameof(HasWorktree), nameof(HasLane), nameof(IsLaunched), nameof(HasStep), nameof(HasNoStep)])
+        foreach (var name in (string[])[nameof(IsAsking), nameof(HasAsking), nameof(IsEstimated), nameof(ShowsEstimated), nameof(Tip), nameof(EstimatedTip), nameof(HasWorktree), nameof(HasLane), nameof(IsLaunched), nameof(HasStep), nameof(HasNoStep)])
         {
             OnChanged(name);
         }
