@@ -60,7 +60,7 @@ public sealed class WorkflowsCanvasTextScaleFramesTests : FrameHost
         var (window, shell) = await OpenWithCondition();
         var graph = shell.Workflows.Runs.Graph!;
         var check = graph.Nodes.Single(n => string.Equals(n.Id, "check", StringComparison.Ordinal));
-        string[] words = [check.Title, check.Type, "true", "false → done", "done"];
+        string[] words = [check.Title, check.Line, "true", "false → done", "done"];
         try
         {
             shell.ApplyAppearance(new AppearanceSettings(1.0, ReduceMotion: false));
