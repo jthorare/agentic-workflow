@@ -15,7 +15,8 @@ internal sealed partial class SqliteMessagesStore
     /// <summary>A conversation's workspace and whether its row is the conversation (a DM or group DM).</summary>
     private sealed record Place(string Workspace, string Conversation, bool IsDm);
 
-    private sealed record ThreadRef(string Conversation, string Root);
+    /// <summary>A thread losing messages to a retention pass; PastCap is true when the 180-day cap takes any of them.</summary>
+    private sealed record ThreadRef(string Conversation, string Root, bool PastCap);
 
     private sealed class PlaceMapper : IRowMapper<Place>
     {
@@ -29,7 +30,7 @@ internal sealed partial class SqliteMessagesStore
     {
         public static readonly ThreadMapper Instance = new();
 
-        public ThreadRef Map(SqliteDataReader reader) => new(reader.GetString(0), reader.GetString(1));
+        public ThreadRef Map(SqliteDataReader reader) => new(reader.GetString(0), reader.GetString(1), reader.GetInt64(2) == 1);
     }
 
     private sealed class TextMapper : IRowMapper<string>

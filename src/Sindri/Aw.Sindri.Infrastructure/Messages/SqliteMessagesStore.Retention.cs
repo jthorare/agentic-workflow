@@ -70,7 +70,7 @@ internal sealed partial class SqliteMessagesStore
             return prepared.Error;
         }
 
-        var affected = await Translated(SqliteQueries.List(session, new SqlStatement(MessagesSql.SelectExpiringThreads, c => c.Bind("$cut", olderThan.Value), "expiring threads"),
+        var affected = await Translated(SqliteQueries.List(session, new SqlStatement(MessagesSql.SelectExpiringThreads, c => c.Bind("$cut", olderThan.Value).Bind("$cap", capOlderThan.Value), "expiring threads"),
             ThreadMapper.Instance, cancellationToken)).ConfigureAwait(false);
         var deleted = affected.IsError ? affected.Error
             : await Execute(session, new SqlStatement(MessagesSql.DeleteExpired, c => c.Bind("$cut", olderThan.Value), "expired messages"), cancellationToken).ConfigureAwait(false);
@@ -120,7 +120,8 @@ internal sealed partial class SqliteMessagesStore
         return Results.Ok();
     }
 
-    // After the delete: a thread with messages left is rebuilt; an empty one loses its derived columns, and a kept one (its skip ended at the cap) says "text expired".
+    // After the delete: a thread with messages left is rebuilt, unless it was kept and the cap took part of it (then it keeps needs_reply and says "text
+    // expired"); an empty one loses its derived columns, and a kept one (its skip ended at the cap) says "text expired".
     private async ValueTask<Result<int>> SettleThreads(ISqliteSession session, IReadOnlyList<ThreadRef> affected, IReadOnlyList<RetentionThread> keep, CancellationToken cancellationToken)
     {
         var expired = 0;
@@ -134,21 +135,28 @@ internal sealed partial class SqliteMessagesStore
             }
 
             var wasKept = keep.Any(k => string.Equals(k.Conversation, thread.Conversation, StringComparison.Ordinal) && string.Equals(k.Root, thread.Root, StringComparison.Ordinal));
-            var statement = left.Value
-                ? new SqlStatement(MessagesSql.RebuildThread, Bind(thread.Conversation, thread.Root), "thread")
-                : wasKept
-                    ? new SqlStatement(MessagesSql.ExpireThreadText, c => Bind(thread.Conversation, thread.Root)(c.Bind("$at", at)), "thread")
-                    : new SqlStatement(MessagesSql.ClearEmptyThread, Bind(thread.Conversation, thread.Root), "thread");
-            var settled = await Execute(session, statement, cancellationToken).ConfigureAwait(false);
+            var settled = await Execute(session, Settle(thread, left.Value, wasKept, at), cancellationToken).ConfigureAwait(false);
             if (settled.IsError)
             {
                 return settled.Error;
             }
 
-            expired += !left.Value && wasKept ? 1 : 0;
+            expired += wasKept && (!left.Value || thread.PastCap) ? 1 : 0;
         }
 
         return expired;
+    }
+
+    // The one statement that settles a thread after the delete (see SettleThreads).
+    private static SqlStatement Settle(ThreadRef thread, bool left, bool wasKept, DateTimeOffset at)
+    {
+        var bind = Bind(thread.Conversation, thread.Root);
+        if (wasKept && (!left || thread.PastCap))
+        {
+            return new SqlStatement(left ? MessagesSql.PartExpireThreadText : MessagesSql.ExpireThreadText, c => bind(c.Bind("$at", at)), "thread");
+        }
+
+        return new SqlStatement(left ? MessagesSql.RebuildThread : MessagesSql.ClearEmptyThread, bind, "thread");
     }
 
     /// <summary>One retention pass's cuts and the threads it skips.</summary>

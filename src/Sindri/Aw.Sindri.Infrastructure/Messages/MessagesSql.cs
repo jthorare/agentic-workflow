@@ -54,6 +54,17 @@ internal static class MessagesSql
         "ON CONFLICT (conversation, thread_ts) DO UPDATE SET my_last_ts = NULL, gist = NULL, gist_key = NULL, text_expired_at = excluded.text_expired_at, " +
         "rev = thread_state.rev + 1";
 
+    /// <summary>
+    /// A kept thread the cap took only part of: the skip ended for the old text, so the row says "text expired", but the thread keeps its needs_reply and
+    /// owner columns; only the text-derived columns move to what is left. A rebuild here would drop a thread nobody answered once its anchor (my message,
+    /// or one naming me) went.
+    /// </summary>
+    internal const string PartExpireThreadText =
+        "UPDATE thread_state SET my_last_ts = (SELECT MAX(ts) FROM messages WHERE conversation = $c AND thread_root = $root AND mine = 1), " +
+        "newest_ts = (SELECT MAX(ts) FROM messages WHERE conversation = $c AND thread_root = $root), " +
+        "newest_user = (SELECT user_id FROM messages WHERE conversation = $c AND thread_root = $root ORDER BY ts DESC LIMIT 1), " +
+        "gist = NULL, gist_key = NULL, text_expired_at = $at, rev = rev + 1 WHERE conversation = $c AND thread_ts = $root";
+
     internal const string ThreadHasMessages = "SELECT EXISTS (SELECT 1 FROM messages WHERE conversation = $c AND thread_root = $root)";
 
     internal const string UpsertOwnerState =
@@ -93,8 +104,10 @@ internal static class MessagesSql
         "INSERT OR IGNORE INTO temp.retain_keep (id) " +
         "SELECT id FROM (SELECT id FROM messages WHERE conversation = $c AND thread_root = '' AND ts >= $cap ORDER BY ts DESC LIMIT 20)";
 
+    /// <summary>Each thread losing messages to this pass, and whether the 180-day cap takes any of them (1) or only the 30-day cut does (0).</summary>
     internal const string SelectExpiringThreads =
-        "SELECT DISTINCT conversation, thread_root FROM messages WHERE ts < $cut AND id NOT IN (SELECT id FROM temp.retain_keep)";
+        "SELECT conversation, thread_root, MAX(ts < $cap) FROM messages WHERE ts < $cut AND id NOT IN (SELECT id FROM temp.retain_keep) " +
+        "GROUP BY conversation, thread_root";
 
     internal const string DeleteExpired = "DELETE FROM messages WHERE ts < $cut AND id NOT IN (SELECT id FROM temp.retain_keep)";
 
