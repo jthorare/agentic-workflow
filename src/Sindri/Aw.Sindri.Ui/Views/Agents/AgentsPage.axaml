@@ -21,7 +21,7 @@
         </Button>
       </StackPanel>
       <WrapPanel x:Name="AgentsFilters" Grid.Column="2" Orientation="Horizontal" ItemSpacing="8" LineSpacing="8" VerticalAlignment="Center" IsVisible="{Binding ShowsFilters}">
-        <TextBox x:Name="AgentsSearch" Text="{Binding SearchText, Mode=TwoWay}" MinWidth="180" PlaceholderText="Search (/)" KeyDown="OnSearchKey" AutomationProperties.Name="Search agents" />
+        <TextBox x:Name="AgentsSearch" Text="{Binding SearchText, Mode=TwoWay}" MinWidth="180" PlaceholderText="{Binding SearchHint}" KeyDown="OnSearchKey" AutomationProperties.Name="{Binding SearchName}" />
         <ComboBox x:Name="ProviderFilter" ItemsSource="{Binding ProviderChoices}" SelectedIndex="0" IsEnabled="{Binding FiltersEnabled}" SelectionChanged="OnProviderChosen"
                   MinWidth="150" AutomationProperties.Name="{Binding ProviderFilterName}" />
         <ComboBox x:Name="StateFilter" ItemsSource="{Binding StateChoices}" SelectedIndex="0" IsEnabled="{Binding FiltersEnabled}" SelectionChanged="OnStateChosen"

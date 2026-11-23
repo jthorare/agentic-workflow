@@ -22,10 +22,10 @@ internal sealed partial class AgentsPageViewModel
     public string ClearFiltersText { get; } = Labels.ClearFilters;
 
     /// <summary>The search box's hint.</summary>
-    public string SearchHint { get; } = string.Empty;
+    public string SearchHint { get; } = Labels.SearchHint;
 
     /// <summary>The search box's accessible name.</summary>
-    public string SearchName { get; } = string.Empty;
+    public string SearchName { get; } = Labels.SearchName;
 
     /// <summary>True while a filter is set.</summary>
     public bool IsFiltered => ProviderFilter is not null || StateFilter is not null || RepoFilter is not null || !string.IsNullOrWhiteSpace(SearchText);
