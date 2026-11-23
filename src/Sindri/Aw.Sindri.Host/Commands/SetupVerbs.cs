@@ -1,3 +1,4 @@
+using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.GetSetup;
@@ -14,7 +15,8 @@ namespace Aw.Sindri.Host.Commands;
 /// </summary>
 /// <param name="client">The API client.</param>
 /// <param name="output">Where the verb writes.</param>
-internal sealed class SetupVerbs(ControlPlaneClient client, Output output)
+/// <param name="offline">The setup list without the control plane: what 'sindri setup' prints while Sindri isn't running (first-run spec decision 8).</param>
+internal sealed class SetupVerbs(ControlPlaneClient client, Output output, IService<GetSetupOfflineRequest, GetSetupResponse> offline)
 {
     internal const string Usage = "setup [--json] | setup scan [--root DIR] [--depth N] [--json] | setup skip accounts|first-workflow [--undo] [--json]";
 
@@ -37,6 +39,11 @@ internal sealed class SetupVerbs(ControlPlaneClient client, Output output)
         }
 
         var answer = await client.Get<GetSetupResponse>("/sindri/setup", ct).ConfigureAwait(false);
+        if (answer.IsError && answer.Error.Code == SindriErrors.NotRunning.Code)
+        {
+            return await Offline(answer.Error, json: args.Length > 0, ct).ConfigureAwait(false);
+        }
+
         if (answer.IsError)
         {
             return await output.Error(answer.Error).ConfigureAwait(false);
@@ -46,6 +53,21 @@ internal sealed class SetupVerbs(ControlPlaneClient client, Output output)
         return args.Length > 0
             ? await output.Raw(answer.Value.Body, code).ConfigureAwait(false)
             : await output.Text(SetupText.Render(answer.Value.Value), code).ConfigureAwait(false);
+    }
+
+    // Serve is down (first-run spec decision 8): "not running" first, then the steps decided in process; exit 1, as for any open step.
+    private async Task<int> Offline(Kernel.Error notRunning, bool json, CancellationToken ct)
+    {
+        _ = await output.Error(notRunning).ConfigureAwait(false);
+        var steps = await offline.Handle(new GetSetupOfflineRequest(), ct).ConfigureAwait(false);
+        if (steps.IsError)
+        {
+            return await output.Error(steps.Error).ConfigureAwait(false);
+        }
+
+        return json
+            ? await output.Json(steps.Value, 1).ConfigureAwait(false)
+            : await output.Text(SetupText.Render(steps.Value), 1).ConfigureAwait(false);
     }
 
     // 0 every step done or skipped; 3 every other step waits on the person (needs-you with no command an agent can run); 1 otherwise.

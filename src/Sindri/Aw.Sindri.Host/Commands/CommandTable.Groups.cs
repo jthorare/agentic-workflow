@@ -31,7 +31,7 @@ internal static partial class CommandTable
         {
             ["agents", .. var rest] => await new AgentsVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["skills", .. var rest] => await new SkillsVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
-            ["setup", .. var rest] => await new SetupVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
+            ["setup", .. var rest] => await new SetupVerbs(client, output, host.Services.GetRequiredService<Kernel.Services.IService<Features.GetSetup.GetSetupOfflineRequest, Features.GetSetup.GetSetupResponse>>()).Run(rest, ct).ConfigureAwait(false),
             ["code-index", .. var rest] => await new CodeIndexVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["index", .. var rest] => await Index(client, output, host).Run(rest, ct, signals.Again).ConfigureAwait(false),
             ["library", .. var rest] => await new LibraryVerbs(Index(client, output, host), client, output).Run(rest, ct, signals.Again).ConfigureAwait(false),
