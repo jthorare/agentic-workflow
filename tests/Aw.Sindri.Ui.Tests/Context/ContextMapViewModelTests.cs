@@ -168,6 +168,7 @@ public sealed class ContextMapViewModelTests
     [InlineData("index damaged", Labels.ContextMapNamesDamaged)]
     [InlineData("not configured", Labels.ContextMapNamesNotConfigured)]
     [InlineData("files are in no single repo", Labels.ContextMapNamesSeveralRepos)]
+    [InlineData("no-files", Labels.ContextMapNamesNoFiles)]   // #3863: nothing is unavailable, there is nothing to search
     [InlineData("something new", Labels.ContextMapNamesUnknown)]
     [InlineData(null, Labels.ContextMapNamesNotIndexed)]
     public void The_coverage_sentence_says_why_the_function_names_were_not_searched(string? reason, string why)
