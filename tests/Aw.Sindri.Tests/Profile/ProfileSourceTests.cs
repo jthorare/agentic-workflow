@@ -102,4 +102,16 @@ public sealed class ProfileSourceTests : IDisposable
             File.SetUnixFileMode(_files.Settings.ProfilePath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
         }
     }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_directory_at_the_profile_path_is_unreadable_not_missing()
+    {
+        _ = Directory.CreateDirectory(_files.Settings.ProfilePath);
+
+        var error = (await _files.Source.Load(Token)).Error;
+
+        Assert.Equal(SindriErrors.ProfileUnreadable.Code, error.Code);   // #3833
+        Assert.Contains("is a directory", error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("sindri profile init", error.Message, StringComparison.Ordinal);
+    }
 }
