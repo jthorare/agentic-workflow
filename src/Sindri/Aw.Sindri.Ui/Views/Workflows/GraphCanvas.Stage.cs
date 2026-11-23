@@ -102,9 +102,10 @@ internal sealed partial class GraphCanvas
     {
         _fitPending = false;
         var old = Zoom;
+        var pan = Pan;   // before the zoom: its handler clamps the pan to the new extent, and the centre formula needs the pan on screen now
         Zoom = percent / 100.0;
         var centre = new Point(Bounds.Width / 2, Bounds.Height / 2);
         var k = Zoom / old;
-        PanTo(new Point(centre.X - ((centre.X - Pan.X) * k), centre.Y - ((centre.Y - Pan.Y) * k)));
+        PanTo(new Point(centre.X - ((centre.X - pan.X) * k), centre.Y - ((centre.Y - pan.Y) * k)));
     }
 }
