@@ -24,6 +24,7 @@ using Aw.Sindri.Core.Leftovers;
 using Aw.Sindri.Core.Locks;
 using Aw.Sindri.Core.Mcp;
 using Aw.Sindri.Core.Memory;
+using Aw.Sindri.Core.Messages;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Resources;
@@ -57,6 +58,7 @@ using Aw.Sindri.Infrastructure.Leftovers;
 using Aw.Sindri.Infrastructure.Locks;
 using Aw.Sindri.Infrastructure.Mcp;
 using Aw.Sindri.Infrastructure.Memory;
+using Aw.Sindri.Infrastructure.Messages;
 using Aw.Sindri.Infrastructure.Notifications;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Profile;
@@ -143,6 +145,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton(static sp => new ResourceProvisioner(new ResourceStore(Path.Combine(sp.GetRequiredService<ISindriHome>().Path, "resources")), sp.GetRequiredService<LedgerDatabase>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IResourceProvisioner>(static sp => sp.GetRequiredService<ResourceProvisioner>())   // makes an owner's resources exist before a run and books them in ledger.db
             .AddSingleton<IMemoryStore, SqliteMemoryStore>()       // memory stores and facts (agent-first PR 13): memory and memory_fact in ledger.db
+            .AddSingleton<IMessagesStore, SqliteMessagesStore>()   // messages.db (messages spec §8.1): a stub until M1c
             .AddSingleton<IToolkitCalls, SqliteToolkitCalls>()       // toolkit call log (agent-first PR 16): toolkit_call in ledger.db
             .AddSingleton<ToolkitCallLog>()
             .AddSingleton<IGraphSeenStore, SqliteSeenStore>()      // what 'only_new' nodes have passed on (agent-first PR 9): workflow_seen in ledger.db
@@ -160,13 +163,12 @@ public static class SindriInfrastructureServiceCollectionExtensions
         return services
             .AddSingleton<IIdGenerator, GuidV7Ids>().AddSingleton<IProcessProbe, PosixProcessProbe>()
             .AddSingleton<LedgerDatabase>().AddSingleton<IStoreCheckpoints>(static sp => new SqliteStoreCheckpoints([sp.GetRequiredService<SindriSettings>().LedgerPath, sp.GetRequiredService<SindriSettings>().ViewsPath]))   // #2221: the tick that truncates both logs
-            .AddSingleton<ILedgerStore, SqliteLedger>()
-            .AddSingleton<ILedgerReader, SqliteLedgerReader>()
+            .AddSingleton<ILedgerStore, SqliteLedger>().AddSingleton<ILedgerReader, SqliteLedgerReader>()
             .AddSingleton<IMirroredSequences, SqliteMirroredSequences>()   // API P13: which ledger row mirrors a Temporal event
             .AddSingleton<ILease, SqliteLease>()
             .AddSingleton<ViewsDatabase>()
-            .AddSingleton<IViewStore, SqliteViewStore>()
-            .AddSingleton<IViewReader, SqliteViewReader>()
+            .AddSingleton<IViewStore, SqliteViewStore>().AddSingleton<IViewReader, SqliteViewReader>()
+            .AddSingleton<IDoctorStores, SqliteDoctorStores>()   // first-run spec §3.4: doctor's older-store rows and SQLite guard
             .AddSingleton<IModelHistory, SqliteModelHistory>().AddSingleton<IModelPickSettings, ProfileModelPickSettings>().AddSingleton<IModelPickHistory, ModelPickHistoryAdapter>()   // the pick's ports read the approved profile and the model-history view
             .AddSingleton<IJobViews, SqliteJobViews>().AddSingleton<IServicePauses, ViewServicePauses>()
             .AddSingleton<IProfileSource>(sp => new YamlProfileSource(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory)))
@@ -183,6 +185,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IPreCommitGit, GitPreCommit>()   // cutover §6.2: the scrub verb, the onboarding hook slot and the doctor read the hook through it
             .AddSingleton<IBuildStamps>(static _ => new InstalledBuildStamps(AppContext.BaseDirectory))   // #1032: status and doctor compare the running build with bin/cs/current
             .AddSingleton<IProcessAncestry, PosixProcessAncestry>()
+            .AddSingleton<IRepoScanTree>(static _ => new FileRepoScanTree(RealPath.Of(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)) ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)))   // first-run §3.3: the repo scan's file system
             .AddSingleton<IRepoLocator, GitRepoLocator>().AddSingleton<IRepoInspector, GitRepoInspector>().AddSingleton<IRepoCheckouts, FileRepoCheckouts>().AddSingleton<IProfileRepoWriter, YamlProfileRepoWriter>().AddSingleton<IProfileIndexWriter>(sp => new YamlProfileIndexWriter(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), sp.GetRequiredService<IProfileCache>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))).AddSingleton<IProfileSandboxWriter, YamlProfileSandboxWriter>().AddSingleton<IProfileInitializer, FileProfileInitializer>()   // setup-once §5.1: AddRepo's folder checks and the profile's repos[] appender
             .AddSingleton<ICommandOrigins, LedgerCommandOrigins>()   // engine P4 unit (d): the bridge's causation route
             .AddRecipeAdapters(environment)
@@ -242,6 +245,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IConnectionToolPort>(static sp => new ConnectionToolAdapter(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<IMcpConnectionClient>(), NoRedirectClient(), sp.GetRequiredService<ITextScrubber>()))
             .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener())
             .AddSingleton<IConnectionCredentials>(static sp => new ConnectionCredentials(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<ISecretPointers>()))   // #2508: the one token order (connection first, profile pointer second) for the github, slack and linear feeds
+            .AddSingleton<IKnownRepos>(static sp => new Connections.GitHub.GitHubKnownRepos(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), NoRedirectClient()))   // first-run gap 7: the scan's 'known'
             .AddSingleton<IGitHubAccount>(static sp => new Connections.GitHub.GitHubConnectionAccount(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<IConnectionPresetCatalog>(), NoRedirectClient(), sp.GetRequiredService<TimeProvider>()))   // #2499: the Reviews tab's GitHub account, from the Connections page
             .AddSingleton<IPollCursors, SqlitePollCursors>()   // PR 11: poll cursors in ledger.db
             .AddSingleton<IEventPoller>(static sp => new GitHubEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))
