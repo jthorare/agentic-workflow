@@ -19,7 +19,7 @@ namespace Aw.Sindri.Features.CodeIndexJobs;
 /// The 'code-index-main-move' background service (code index spec §6.1): when a registered repo's checkout moved along its default branch past the commit its index describes, it starts a 'BuildCodeIndex'
 /// job of key 'index:&lt;repo&gt;' as itself, through the command chain. Each repo is decided on its own by <see cref="MainMoveDecision"/> (a running build first, then nothing when the index is at the head, then the
 /// backoff after failures in a row). A layer that became buildable
-/// (found by the facade's probe) starts a layers-only build at the same commit. Embeddings are not this service's: the 'code-index-embed' service finishes them (spec §6.3). A repo on a feature branch starts nothing and is named in the summary.
+/// (found by the facade's probe) starts a layers-only build at the same commit. Embeddings are not this service's: the 'code-index-embed' service finishes them (spec §6.3). A repo on a feature branch starts nothing and is named in the summary, except its first build, which runs at the default branch's tip (#3181).
 /// Three failed builds in a row for a repo that still needs one fail the run (needs-you 'failure:service:code-index-main-move'). A tick reads the heads, the stored index heads and the jobs once.
 /// </summary>
 /// <param name="scopes">The profile's scope and the caller.</param>
@@ -118,13 +118,14 @@ internal sealed partial class CodeIndexMainMoveService(CodeIndexJobScopes scopes
 
     private async ValueTask<Result<RepoStep>> Step(IndexRepoHead head, IReadOnlyList<RecordedHead> recorded, IReadOnlyList<JobRow> builds, HashSet<string> buildable, CancellationToken cancellationToken)
     {
-        if (head.Head is not { } commit || !head.OnDefaultBranch)
+        var stored = recorded.FirstOrDefault(h => h.Repo == head.Repo)?.Commit;
+        if (BuildCommit(head, stored) is not { } commit)
         {
             return new RepoStep(Elsewhere: true);
         }
 
         var repo = head.Repo.Value;
-        var (action, failing) = Decide(repo, commit, recorded.FirstOrDefault(h => h.Repo == head.Repo)?.Commit, [.. builds.Where(j => IndexJobs.IsOf(j, repo))], buildable.Contains(repo));
+        var (action, failing) = Decide(repo, commit, stored, [.. builds.Where(j => IndexJobs.IsOf(j, repo))], buildable.Contains(repo));
         if (action != MainMoveAction.Start)
         {
             return new RepoStep(Failing: failing);
@@ -138,6 +139,10 @@ internal sealed partial class CodeIndexMainMoveService(CodeIndexJobScopes scopes
 
         return new RepoStep(Started: true, Failing: failing);
     }
+
+    // The commit to build at: the head on the default branch; off it, the default branch's tip, only for a repo with no index yet, so the checkout isn't touched (#3181). Later builds wait for main to move.
+    private static CommitSha? BuildCommit(IndexRepoHead head, CommitSha? stored) =>
+        head.Head is null ? null : head.OnDefaultBranch ? head.Head : stored is null ? head.DefaultTip : null;
 
     // The repo's own decision: the stored index against the head, the key's running and ended builds.
     private (MainMoveAction Action, bool Failing) Decide(string repo, CommitSha commit, CommitSha? stored, List<JobRow> mine, bool layerBuildable)

@@ -79,11 +79,11 @@ internal sealed partial class GraphEditViewModel : ObservableObject
     /// <summary>True when the reload prompt is shown.</summary>
     public bool HasReloadPrompt => Editor.NeedsReload;
 
-    /// <summary>Why the last edit failed (not a stale base), in words; empty otherwise.</summary>
-    public string FailureText => Editor.FailureText;
+    /// <summary>Why the last edit failed (not a stale base), in words; empty otherwise, and empty while the editor sheet is open: the sheet shows it then, once (#3944).</summary>
+    public string FailureText => SheetOpen ? string.Empty : Editor.FailureText;
 
     /// <summary>True when a failure line is shown.</summary>
-    public bool HasFailure => Editor.FailureText.Length > 0;
+    public bool HasFailure => FailureText.Length > 0;
 
     private GraphNodeViewModel? Selected => _runs.Graph is { SelectedId: { } id } graph ? graph.Nodes.FirstOrDefault(n => string.Equals(n.Id, id, StringComparison.Ordinal)) : null;
 
@@ -100,10 +100,13 @@ internal sealed partial class GraphEditViewModel : ObservableObject
         SetMode(Editor.Groups.Count > 0 ? Mode.Add : Mode.None);
     }
 
-    /// <summary>Adds a step of a block, connected after the selected node when one is selected; as one set of ops.</summary>
+    /// <summary>Set by the page: opens the editor sheet on a new step (the block, the id it gets, the node it follows). Nothing is sent until the sheet's Save.</summary>
+    internal Action<WorkflowBlock, string, string?>? OpenNewStep { get; set; }
+
+    /// <summary>Starts a step of a block: the editor sheet opens on its settings, pre-filled with the block's example, placed after the selected node when one is selected. Nothing is sent; Save in the sheet sends one add_node.</summary>
     /// <param name="block">The block.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>A task that completes when the answer is shown.</returns>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>A task that completes when the sheet is open.</returns>
     internal async Task AddStep(WorkflowBlock block, CancellationToken cancellationToken)
     {
         if (!CanAdd || !await EnsureLoaded(cancellationToken).ConfigureAwait(true) || !StillSame)
@@ -112,7 +115,8 @@ internal sealed partial class GraphEditViewModel : ObservableObject
         }
 
         var after = _runs.Graph?.SelectedId;
-        await Send(() => Editor.AddNodeAfter(FreshId(block.Type), block.Type, after, cancellationToken), cancellationToken).ConfigureAwait(true);
+        SetMode(Mode.None);
+        OpenNewStep?.Invoke(block, FreshId(block.Type), after);
     }
 
     /// <summary>Asks to remove the selected node: the confirm names it, nothing is sent yet.</summary>

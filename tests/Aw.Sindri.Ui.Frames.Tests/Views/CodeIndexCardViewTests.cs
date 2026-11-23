@@ -17,14 +17,15 @@ public sealed class CodeIndexCardViewTests : FrameHost
 {
     private const string LongRepo = "a-repository-with-an-unreasonably-long-name-that-would-not-fit-on-one-line-of-a-narrow-window";
 
-    private static string Body(string repo) => $$"""{"repos":[{"repo":"{{repo}}","state":"ok","commit":"abcdef0123456789abcdef0123456789abcdef01","builtAt":"2026-10-20T12:00:00Z","layers":[{"layer":"structure","state":"ok","code":null,"detail":"ok"},{"layer":"graph","state":"unavailable","code":"SND-CODEIDX-020","detail":"graphify failed"},{"layer":"embeddings","state":"pending","code":null,"detail":"31 of 100 embedded"}],"counts":null}]}""";
+    private static string Body(string repo) => $$"""{"repos":[{"repo":"{{repo}}","state":"ok","commit":"abcdef0123456789abcdef0123456789abcdef01","builtAt":"2026-10-20T12:00:00Z","layers":[{"layer":"structure","state":"ok","code":null,"detail":"ok"},{"layer":"graph","state":"unavailable","code":"SND-CODEIDX-020","detail":"graphify failed"},{"layer":"embeddings","state":"pending","code":null,"detail":"31 of 100 embedded"}],"counts":null}],"health":[{"repo":"{{repo}}","state":"ok","embeddingsPercent":null,"waiting":null,"needsLook":true}]}""";
 
     [Fact]
     public Task The_card_names_each_line_and_the_heading_for_assistive_technology() => OnUi(async () =>
     {
         Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, Body("repo"));
-        var (window, shell) = await Connected(s => s.Health.CodeIndex.Lines.Count > 0);
-        shell.GoTo(PageId.System);
+        var (window, shell) = await Connected();
+        shell.GoTo(PageId.System);   // #2775: the cards read only while System is the page
+        await Until(window, () => shell.Health.CodeIndex.Lines.Count > 0);
         Settle(window);
 
         var line = Assert.Single(Named<ItemsControl>(window, "CodeIndexLines").GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible);
@@ -38,8 +39,9 @@ public sealed class CodeIndexCardViewTests : FrameHost
     public Task The_card_follows_Views_in_the_overview() => OnUi(async () =>
     {
         Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, Body("repo"));
-        var (window, shell) = await Connected(s => s.Health.CodeIndex.Lines.Count > 0);
-        shell.GoTo(PageId.System);
+        var (window, shell) = await Connected();
+        shell.GoTo(PageId.System);   // #2775: the cards read only while System is the page
+        await Until(window, () => shell.Health.CodeIndex.Lines.Count > 0);
         Settle(window);
 
         // Both say whether the data is current (System spec), so the code index sits right after Views.
@@ -51,8 +53,9 @@ public sealed class CodeIndexCardViewTests : FrameHost
     public Task A_long_line_wraps_inside_a_narrow_window() => OnUi(async () =>
     {
         Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, Body(LongRepo));
-        var (window, shell) = await Connected(s => s.Health.CodeIndex.Lines.Count > 0, width: 360, height: 800);
-        shell.GoTo(PageId.System);
+        var (window, shell) = await Connected(width: 360, height: 800);
+        shell.GoTo(PageId.System);   // #2775: the cards read only while System is the page
+        await Until(window, () => shell.Health.CodeIndex.Lines.Count > 0);
         Settle(window);
 
         var panel = Named<Border>(window, "CodeIndexPanel");
@@ -72,8 +75,9 @@ public sealed class CodeIndexCardViewTests : FrameHost
     {
         string[] names = [LongRepo, LongRepo + "-2", "short-a", "short-b"];
         Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, "{\"repos\":[" + string.Join(',', names.Select(Missing)) + "],\"health\":[" + string.Join(',', names.Select(Paused)) + "]}");
-        var (window, shell) = await Connected(s => s.Health.CodeIndex.Lines.Count > 3, width: 360, height: 1000);
-        shell.GoTo(PageId.System);
+        var (window, shell) = await Connected(width: 360, height: 1000);
+        shell.GoTo(PageId.System);   // #2775: the cards read only while System is the page
+        await Until(window, () => shell.Health.CodeIndex.Lines.Count > 3);
         Settle(window);
 
         var lines = Named<ItemsControl>(window, "CodeIndexLines").GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).ToList();
@@ -93,8 +97,9 @@ public sealed class CodeIndexCardViewTests : FrameHost
     {
         string[] names = ["repo-a", "repo-b", "repo-c"];
         Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, "{\"repos\":[" + string.Join(',', names.Select(Missing)) + "],\"health\":[" + string.Join(',', names.Select(Paused)) + "]}");
-        var (window, shell) = await Connected(s => s.Health.CodeIndex.Lines.Count > 2);
-        shell.GoTo(PageId.System);
+        var (window, shell) = await Connected();
+        shell.GoTo(PageId.System);   // #2775: the cards read only while System is the page
+        await Until(window, () => shell.Health.CodeIndex.Lines.Count > 2);
         Settle(window);
 
         var panel = Named<Border>(window, "CodeIndexPanel");

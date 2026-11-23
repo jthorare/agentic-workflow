@@ -192,8 +192,11 @@ internal sealed partial class FileMapViewModel(ContextPorts ports) : ObservableO
     internal Task Open(FileRowViewModel row, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(row);
-        return row.IsDirectory ? Load(row.Path, cancellationToken) : Task.CompletedTask;
+        return row.IsDirectory ? Load(row.Path, cancellationToken) : OpenFile?.Invoke(row.Path) ?? Task.CompletedTask;
     }
+
+    /// <summary>What Enter on a file row does: the page draws the map around that file; null leaves a file row inert.</summary>
+    internal Func<string, Task>? OpenFile { get; set; }
 
     /// <summary>Goes to a level of the breadcrumb; the last step is the folder already shown and does nothing.</summary>
     /// <param name="crumb">The step.</param>

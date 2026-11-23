@@ -117,15 +117,37 @@ internal sealed partial class ReviewPageView : UserControl
     };
 #pragma warning restore IDE0072
 
-    private void MoveFocus()
+    private void MoveFocus() => MoveFocus(retry: true);
+
+    // The diff is virtualized (#2776): a line, file header or group header may not be built yet. Scroll its row into view by index first, then focus
+    // the control the list built for it; when the scroll's layout pass has not built it yet, try once more after it.
+    private void MoveFocus(bool retry)
     {
         if (Page?.Focus is not { } focus)
         {
             return;
         }
 
+        BringDiffRowIntoView(focus);
         var all = this.GetVisualDescendants().OfType<Control>().Where(c => c.IsEffectivelyVisible).ToList();
-        _ = Find(all, focus)?.Focus(NavigationMethod.Tab);
+        if (Find(all, focus) is { } target)
+        {
+            _ = target.Focus(NavigationMethod.Tab);
+        }
+        else if (retry && Page?.Diff.RowOf(focus.Region, focus.Key) >= 0)
+        {
+            Dispatcher.UIThread.Post(() => MoveFocus(retry: false), DispatcherPriority.Loaded);
+        }
+    }
+
+    private void BringDiffRowIntoView(ReviewFocus focus)
+    {
+        var index = Page?.Diff.RowOf(focus.Region, focus.Key) ?? -1;
+        if (index >= 0 && this.FindControl<ItemsControl>("ReviewDiffRows") is { } rows)
+        {
+            rows.ScrollIntoView(index);
+            rows.UpdateLayout();
+        }
     }
 
     private static Control? Find(List<Control> all, ReviewFocus focus) => focus.Region switch
@@ -225,9 +247,9 @@ internal sealed partial class ReviewPageView : UserControl
 
     private void OnShowFile(object? sender, RoutedEventArgs e)
     {
-        if (sender is Control { DataContext: ReviewDiffFileViewModel file })
+        if (sender is Control { DataContext: ReviewDiffFileViewModel file } button)
         {
-            file.Show();
+            ShowFile(button, file);
         }
     }
 

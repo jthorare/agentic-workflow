@@ -77,7 +77,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         (Setup, LibraryRoots, LinearConnection) = (new SetupViewModel(api, Health.Catalog, clock, OpensInApp, window.Folders), InitLibraryRoots(api, window), InitLinearConnection(api));
         InitSetup();
         InitSheetNames();
-        InitAgents(clipboard, window.Launcher);
+        InitAgents(clipboard, window.Launcher, window);
         InitContext(api, clipboard, window.Launcher);
         Queue.PropertyChanged += OnQueueChanged;
         Create.Created += (_, created) => Queue.Reveal(created.ItemId);
@@ -94,9 +94,9 @@ internal sealed partial class ShellViewModel : ObservableObject
         InitToast();
         WireQuickAddToasts();
         InitLinear();
-        Health.Follow(Queue.Refresh);
+        Health.Follow(ReadQueue);
         Health.Follow(Item.Refresh);
-        Health.FollowCards();
+        FollowSystemCards();
     }
 
     /// <summary>The app's copy, for the view.</summary>
@@ -235,10 +235,10 @@ internal sealed partial class ShellViewModel : ObservableObject
     {
         if (page == PageId.Settings)
         {
-            ReadLibraryRoots();
+            var library = Health.ApiUrl() is { } url ? ReadLibraryRoots(url) : null;
             Setup.RevealChecklist();   // every way into Settings (the rail, ⌘,, G U, the setup link, Home's line) shows the checklist, its first section
             ReadLinearConnection();   // after the checklist's reveal, so a Connect that asked for the Linear card is the last scroll
-            ReadTodoNoteCard();
+            ReadTodoNoteCard(library);
         }
 
         if (page == PageId.Context)
@@ -266,6 +266,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         }
 
         CurrentPage = page;
+        Start.ShowPage(PageName);
         Queue.PageShown(RowScopeOf(page));
         Changed(_pageProperties);
         Remember(p => p with { LastPage = page.ToString() });

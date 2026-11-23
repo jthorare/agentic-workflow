@@ -79,7 +79,7 @@ public sealed class ContextLensStackTests
         Assert.Equal(3, map.Bands.Count);
         Assert.Equal(bands["intent"]!["records"]!.AsArray().Count + bands["intent"]!["decisions"]!.AsArray().Count + bands["product"]!["own"]!.AsArray().Count + bands["code"]!["files"]!.AsArray().Count, map.Nodes.Count);
         Assert.Equal(bands["product"]!["edges"]!.AsArray().Count + golden["edges"]!.AsArray().Count, map.Edges.Count);   // the conflict replaces one edge
-        Assert.Equal(Labels.ContextMapCoverageLead(1, 4), map.CoverageLead);
+        Assert.Equal(string.Empty, map.Coverage);   // the anchor was typed, so the answer is an exact hit
         Assert.False(page.IsDraft);
     }
 
