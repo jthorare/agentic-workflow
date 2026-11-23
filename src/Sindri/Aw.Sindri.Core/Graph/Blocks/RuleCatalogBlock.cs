@@ -43,10 +43,54 @@ public sealed class RuleCatalogBlock(IRuleCatalogPort catalog) : IGraphBlock
     public BlockOutputs OutputsFor(JsonObject config) => _outputs;
 
     /// <inheritdoc />
-    public ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
+    public async ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        _ = catalog;
-        throw new NotSupportedException("red: rule_catalog is not built yet");
+        var listed = await catalog.List(cancellationToken).ConfigureAwait(false);
+        if (listed.IsError)
+        {
+            return listed.Error;
+        }
+
+        var taken = listed.Value.Rules.Take(MaxRules).ToList();
+        var rules = new JsonArray();
+        foreach (var rule in taken)
+        {
+            rules.Add((JsonNode)RuleJson(rule));
+        }
+
+        var sections = new JsonArray();
+        foreach (var section in taken.Select(static r => r.Section).Where(static s => s.Length > 0).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal))
+        {
+            sections.Add(section);
+        }
+
+        return new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal)
+        {
+            ["rules"] = rules,
+            ["count"] = taken.Count,
+            ["skipped"] = listed.Value.Skipped,
+            ["sections"] = sections,
+        });
+    }
+
+    private static JsonObject RuleJson(RuleListing rule)
+    {
+        var checks = new JsonArray();
+        foreach (var check in rule.Checks)
+        {
+            checks.Add((JsonNode)new JsonObject { ["type"] = check.Type, ["id"] = check.Id });
+        }
+
+        var cut = rule.Text.Length > TextChars && char.IsHighSurrogate(rule.Text[TextChars - 1]) ? TextChars - 1 : TextChars;
+        return new JsonObject
+        {
+            ["id"] = rule.Id,
+            ["kind"] = rule.Kind,
+            ["section"] = rule.Section,
+            ["text"] = rule.Text.Length > cut ? rule.Text[..cut] : rule.Text,
+            ["status"] = rule.Status,
+            ["checks"] = checks,
+        };
     }
 }
