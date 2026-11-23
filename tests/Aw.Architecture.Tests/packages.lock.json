@@ -966,6 +966,8 @@
           "Aw.Sindri.Features": "[1.0.0, )",
           "Aw.Sindri.Infrastructure": "[1.0.0, )",
           "Aw.Sindri.Workflows": "[1.0.0, )",
+          "Aw.Transcripts.Core": "[1.0.0, )",
+          "Aw.Transcripts.Infrastructure": "[1.0.0, )",
           "ModelContextProtocol.AspNetCore": "[2.2.0, 2.2.0]",
           "SkiaSharp.NativeAssets.Linux.NoDependencies": "[3.119.4, 3.119.4]",
           "SkiaSharp.NativeAssets.Win32": "[3.119.4, 3.119.4]",

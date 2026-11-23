@@ -142,8 +142,8 @@ public sealed class HostTests
 
         var start = Assert.Single(provider.GetServices<IHostedService>().OfType<SourceSyncClockStart>());   // the host resolves its hosted services as serve starts
         await start.StartAsync(TestContext.Current.CancellationToken);
-        clock.Advance(TimeSpan.FromMinutes(10));
+        clock.Advance(TimeSpan.FromMinutes(15));
 
-        Assert.Equal(TimeSpan.FromMinutes(10), provider.GetRequiredService<SourceSyncClock>().Running());
+        Assert.Equal(TimeSpan.FromMinutes(15), provider.GetRequiredService<SourceSyncClock>().Running());
     }
 }
