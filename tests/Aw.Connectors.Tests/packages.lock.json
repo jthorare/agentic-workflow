@@ -198,6 +198,12 @@
           "Aw.Kernel.Testing": "[1.0.0, )"
         }
       },
+      "aw.connectors.testing.server": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Connectors.Testing": "[1.0.0, )"
+        }
+      },
       "aw.kernel": {
         "type": "Project"
       },
