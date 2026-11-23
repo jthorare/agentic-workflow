@@ -17,7 +17,7 @@ public sealed class ProjectReadServicesTests
     private readonly ProjectWriteHarness _h = new();
     private readonly FakeProjectFacts _facts = new();
 
-    private ProjectPageReader Reader() => new(_h.Views.Views, _facts, _h.Slice.Profiles, FakeContextEngine.Instance, _h.Slice.Clock);
+    private ProjectPageReader Reader() => new(_h.Views.Views, _facts, _h.Slice.Profiles, FakeContextEngine.Instance, _h.Slice.Clock, new FakeProjectTruthFacts());
 
     private ListProjectsService List() => new(Reader(), _h.Views.Progress, _h.Slice.Callers);
 

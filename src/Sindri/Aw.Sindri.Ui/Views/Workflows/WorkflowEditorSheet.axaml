@@ -39,9 +39,9 @@
                 </ComboBox.ItemTemplate>
               </ComboBox>
               <ToggleButton Name="EditorFieldAdvanced" IsVisible="{Binding HasAdvanced}" IsChecked="{Binding ShowAdvanced, Mode=TwoWay}" Content="{Binding AdvancedText}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding AdvancedText}" />
-              <TextBox Name="EditorFieldText" IsVisible="{Binding IsRawVisible}" Text="{Binding Text, Mode=TwoWay}" AutomationProperties.Name="{Binding Caption}" />
+              <TextBox Name="EditorFieldText" IsVisible="{Binding IsRawVisible}" Text="{Binding Text, Mode=TwoWay}" PlaceholderText="{Binding Placeholder}" AutomationProperties.Name="{Binding Caption}" />
               <CheckBox Name="EditorFieldCheck" AutomationProperties.AutomationId="{Binding CheckAutomationId}" IsVisible="{Binding IsBoolean}" IsChecked="{Binding IsOn, Mode=TwoWay}" AutomationProperties.Name="{Binding Caption}" />
-              <TextBox Name="EditorFieldLines" IsVisible="{Binding IsMultiline}" Text="{Binding Text, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding Caption}" />
+              <TextBox Name="EditorFieldLines" IsVisible="{Binding IsMultiline}" Text="{Binding Text, Mode=TwoWay}" PlaceholderText="{Binding Placeholder}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding Caption}" />
               <Border Name="EditorFieldError" IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding ErrorText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                 <TextBlock Classes="caption" Text="{Binding ErrorText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
               </Border>
@@ -49,6 +49,13 @@
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
+
+      <!-- The step's id shows only here (#3684): never on the card or in the heading. -->
+      <Expander x:Name="EditorAdvanced" Header="{Binding Editor.AdvancedText}" IsVisible="{Binding Editor.NodeIdLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Editor.AdvancedText}">
+        <Border x:Name="EditorStepIdName" AutomationProperties.Name="{Binding Editor.NodeIdLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption mono" Text="{Binding Editor.NodeIdLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </Expander>
 
       <Border x:Name="EditorFailure" IsVisible="{Binding Editor.FailureText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Editor.FailureText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding Editor.FailureText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />

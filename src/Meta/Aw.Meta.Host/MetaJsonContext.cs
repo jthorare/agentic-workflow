@@ -5,6 +5,9 @@ using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Features.BoardLine;
 using Aw.Meta.Features.CheckMerge;
+using Aw.Meta.Features.Delegate;
+using Aw.Meta.Features.Delegated;
+using Aw.Meta.Features.DelegateDrop;
 using Aw.Meta.Features.GateRerun;
 using Aw.Meta.Features.GateRun;
 using Aw.Meta.Features.Health;
@@ -61,6 +64,9 @@ namespace Aw.Meta.Host;
 [JsonSerializable(typeof(AppendLogResponse))]
 [JsonSerializable(typeof(ReadEventsResponse))]
 [JsonSerializable(typeof(ReportDefectResponse))]
+[JsonSerializable(typeof(DelegateResponse))]
+[JsonSerializable(typeof(DelegatedResponse))]
+[JsonSerializable(typeof(DelegateDropResponse))]
 [JsonSerializable(typeof(QueueDropResponse))]
 [JsonSerializable(typeof(StatusResponse))]
 [JsonSerializable(typeof(StopCheckResponse))]

@@ -78,9 +78,13 @@ internal sealed class YamlProfileSandboxWriter(SindriSettings settings, IProfile
         {
             before = File.ReadAllText(path);
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
         {
             return SindriErrors.ProfileMissing.With($"{path} can't be read: {e.Message} (fix: sindri profile init)");
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return SindriErrors.ProfileUnreadable.With($"{path} can't be read: {e.Message} (fix: check the file's permissions, e.g. chmod 600 {path})");
         }
 
         if (YamlToJson.TryConvert(before, out var json) is { } problem)
@@ -100,6 +104,12 @@ internal sealed class YamlProfileSandboxWriter(SindriSettings settings, IProfile
             return SindriErrors.ProfileInvalid.With($"{path} has a layout Sindri won't edit (fix: add {string.Join(" / ", Lines(kind, entry))} to sandbox.repos.{repo}.{list} by hand)");
         }
 
+        return Put(path, before, after, entry);
+    }
+
+    // null: the file changed under us, read again.
+    private Result<SandboxAllowed>? Put(string path, string before, string after, string entry)
+    {
         var (written, reason) = YamlProfileRepoWriter.Write(path, before, after);
         return written switch
         {

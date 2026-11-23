@@ -33,8 +33,12 @@ internal sealed class SetupFactsRig : IAsyncDisposable
             new ProfileSetupReader(Profiles, new Core.Setup.RepoGitCache(Inspector, Clock), new NoProfileFile(), new Testing.Workflow.InMemoryWorkflowStore(Clock), new Testing.Workflow.InMemoryWorkflowRunStore(Clock)),
             Sources(new PointerSecrets(name => Env.GetValueOrDefault(name), new FakeToolRunner(ToolRun.Missing))),
             new McpSetupReader(Profiles, Host, Jobs, Queue),
-            new MapSetupReader(Profiles, Engine.Proxy, Jobs, Pauses, Clock));
+            new MapSetupReader(Profiles, Engine.Proxy, Jobs, Pauses, Clock),
+            Builds);
     }
+
+    /// <summary>The running and installed builds the serve step compares; a dev run (no stamps) until a test sets them.</summary>
+    internal FixedBuildStamps Builds { get; } = new();
 
     /// <summary>The Connections page's rows the sources step asks first (#2508).</summary>
     internal InMemoryConnectionStore Connections { get; } = new();
