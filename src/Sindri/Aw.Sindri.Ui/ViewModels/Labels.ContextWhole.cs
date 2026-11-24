@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.ViewModels;
 
@@ -206,16 +205,14 @@ internal static partial class Labels
     /// <summary>What an empty band says.</summary>
     internal const string ContextAreaNone = "none in this area";
 
-    /// <summary>The words of a Core sub-group.</summary>
-    /// <param name="group">The sub-group.</param>
-    /// <returns>"Requests", "Services and rules" or "Responses".</returns>
-    internal static string ContextAreaGroup(CoreGroup group) => group switch
-    {
-        CoreGroup.Requests => "Requests",
-        CoreGroup.Responses => "Responses",
-        CoreGroup.Services => "Services and rules",
-        _ => "Services and rules",
-    };
+    /// <summary>The Core band's Requests sub-group.</summary>
+    internal const string ContextAreaGroupRequests = "Requests";
+
+    /// <summary>The Core band's Services sub-group.</summary>
+    internal const string ContextAreaGroupServices = "Services and rules";
+
+    /// <summary>The Core band's Responses sub-group.</summary>
+    internal const string ContextAreaGroupResponses = "Responses";
 
     /// <summary>The bar over an area's canvas.</summary>
     /// <param name="nodes">How many nodes the area draws.</param>

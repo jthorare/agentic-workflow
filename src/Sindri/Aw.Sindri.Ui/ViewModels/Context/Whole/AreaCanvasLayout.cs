@@ -61,7 +61,7 @@ internal static class AreaCanvasLayout
             var column = WidthOf(members);
             var left = sideBySide ? coreRight : coreLeft;
             var top = sideBySide || stackTop <= HeadingHeight ? HeadingHeight : stackTop + 28;   // stacked: room for the next group's heading
-            headings.Add(new PlacedAreaBand(Labels.ContextAreaGroup(group), string.Empty, members.Count, new WholeRect(left, top - 24, column, 20), Sub: true));
+            headings.Add(new PlacedAreaBand(GroupWords(group), string.Empty, members.Count, new WholeRect(left, top - 24, column, 20), Sub: true));
             var next = Column(members, left, top, column, placed);
             coreBottom = Math.Max(coreBottom, next);
             stackTop = next;
@@ -78,6 +78,15 @@ internal static class AreaCanvasLayout
     }
 
     // An outer band (Entry, Data): one column as wide as its words, or the thin empty one.
+    // The words of a Core sub-group. The switch lives here, not in Labels, so Labels never names a Whole type (ARCH-CYCLE-001).
+    private static string GroupWords(CoreGroup group) => group switch
+    {
+        CoreGroup.Requests => Labels.ContextAreaGroupRequests,
+        CoreGroup.Responses => Labels.ContextAreaGroupResponses,
+        CoreGroup.Services => Labels.ContextAreaGroupServices,
+        _ => Labels.ContextAreaGroupServices,
+    };
+
     private static (double Right, double Bottom) Outer(OuterBand band, double x, double bottom, Drawn sink)
     {
         var members = band.Members;
