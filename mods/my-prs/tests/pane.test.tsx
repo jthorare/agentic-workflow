@@ -1,12 +1,23 @@
 import { expect, mock, test } from 'claude-code/testing'
 
 const HEAD = 'abc123'
-const REQUIRED = ['buildkite/white-check-mark-pr-checks', 'buildkite/database-pr-db-tests']
+const OPTIONS = {
+  bots: JSON.stringify({
+    'example-org/app': [
+      { name: 'review-bot', reviewLogin: 'review-bot' },
+      { name: 'scan-bot', checkRun: 'Scan Bot' },
+    ],
+  }),
+  botCheckRuns: 'Preview Deploy',
+  stripPrefixes: 'ci/',
+  homeRepo: 'example-org/app',
+}
+const REQUIRED = ['ci/lint', 'ci/unit']
 
 function pr(over: Record<string, unknown>) {
   return {
     number: 1,
-    title: 'fix(schedule): sample (FRN-1)',
+    title: 'fix: sample (ABC-1)',
     url: 'https://github.com/example-org/app/pull/1',
     isDraft: false,
     mergeable: 'MERGEABLE',
@@ -19,7 +30,7 @@ function pr(over: Record<string, unknown>) {
     commits: { nodes: [{ commit: { statusCheckRollup: { contexts: { nodes: [
       { __typename: 'StatusContext', context: REQUIRED[0], state: 'SUCCESS' },
       { __typename: 'StatusContext', context: REQUIRED[1], state: 'SUCCESS' },
-      { __typename: 'CheckRun', name: 'Cursor Bugbot', status: 'COMPLETED', conclusion: 'SUCCESS' },
+      { __typename: 'CheckRun', name: 'Scan Bot', status: 'COMPLETED', conclusion: 'SUCCESS' },
     ] } } } }] },
     reviewThreads: { nodes: [] },
     latestReviews: { nodes: [
@@ -47,7 +58,7 @@ const SEARCH = { data: { search: { nodes: [
     ] },
     reviewRequests: { nodes: [{ requestedReviewer: { __typename: 'Team', name: 'eng' } }] },
   }),
-  pr({ number: 104, headRefName: 'frn-1-sample', reviewThreads: { nodes: [{ isResolved: false }] } }),
+  pr({ number: 104, headRefName: 'abc-1-sample', reviewThreads: { nodes: [{ isResolved: false }] } }),
 ] } } }
 
 const PANE = {
@@ -64,7 +75,7 @@ const PANE = {
   },
 } as const
 
-test('the pane shows each PR with its next step', async ($, on) => {
+test('the pane shows each PR with its next step', { options: OPTIONS }, async ($, on) => {
   mock.clock(on)
   on('command.register', () => ({ value: { command: 'prs' } }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
@@ -83,7 +94,7 @@ test('the pane shows each PR with its next step', async ($, on) => {
     const text = async (re: RegExp) => (await ui.find({ type: 'Text', text: re }))?.text
 
     expect(await text(/armed/)).toBe('  -> armed, waiting on approval')
-    expect(await text(/CI ✗/)).toContain('CI ✗ white-check-mark-pr-checks')
+    expect(await text(/CI ✗/)).toContain('CI ✗ lint')
     expect(await text(/fix CI/)).toBe('  -> fix CI')
     expect(await text(/people: ✓ alex/)).toBe('  people: ✓ alex (old)   ✗ sam   ? eng')
     expect(await text(/sam asked/)).toBe('  -> sam asked for changes')
@@ -93,7 +104,7 @@ test('the pane shows each PR with its next step', async ($, on) => {
   }
 })
 
-test('a gh failure shows on the pane', async ($, on) => {
+test('a gh failure shows on the pane', { options: OPTIONS }, async ($, on) => {
   mock.clock(on)
   on('command.register', () => ({ value: { command: 'prs' } }))
   on('ui.open', () => ({ value: { isPlaced: true } }))

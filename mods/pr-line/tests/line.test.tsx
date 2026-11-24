@@ -1,12 +1,23 @@
 import { expect, mock, test } from 'claude-code/testing'
 
 const HEAD = 'abc123'
-const REQUIRED = ['buildkite/white-check-mark-pr-checks', 'buildkite/database-pr-db-tests']
+const OPTIONS = {
+  bots: JSON.stringify({
+    'example-org/app': [
+      { name: 'review-bot', reviewLogin: 'review-bot' },
+      { name: 'scan-bot', checkRun: 'Scan Bot' },
+    ],
+  }),
+  botCheckRuns: 'Preview Deploy',
+  stripPrefixes: 'ci/',
+  homeRepo: 'example-org/app',
+}
+const REQUIRED = ['ci/lint', 'ci/unit']
 
 function pr(over: Record<string, unknown>) {
   return {
     number: 1,
-    title: 'fix(schedule): sample (FRN-1)',
+    title: 'fix: sample (ABC-1)',
     url: 'https://github.com/example-org/app/pull/1',
     isDraft: false,
     mergeable: 'MERGEABLE',
@@ -19,7 +30,7 @@ function pr(over: Record<string, unknown>) {
     commits: { nodes: [{ commit: { statusCheckRollup: { contexts: { nodes: [
       { __typename: 'StatusContext', context: REQUIRED[0], state: 'SUCCESS' },
       { __typename: 'StatusContext', context: REQUIRED[1], state: 'SUCCESS' },
-      { __typename: 'CheckRun', name: 'Cursor Bugbot', status: 'COMPLETED', conclusion: 'SUCCESS' },
+      { __typename: 'CheckRun', name: 'Scan Bot', status: 'COMPLETED', conclusion: 'SUCCESS' },
     ] } } } }] },
     reviewThreads: { nodes: [] },
     latestReviews: { nodes: [
@@ -47,7 +58,7 @@ const SEARCH = { data: { search: { nodes: [
     ] },
     reviewRequests: { nodes: [{ requestedReviewer: { __typename: 'Team', name: 'eng' } }] },
   }),
-  pr({ number: 104, headRefName: 'frn-1-sample', reviewThreads: { nodes: [{ isResolved: false }] } }),
+  pr({ number: 104, headRefName: 'abc-1-sample', reviewThreads: { nodes: [{ isResolved: false }] } }),
 ] } } }
 
 function ghAndGit(branch: string, origin: string | null = 'https://github.com/example-org/app.git', search: unknown = SEARCH) {
@@ -68,11 +79,11 @@ const BAND = {
   props: { isDraft: false, isWorking: false, hint: '? for shortcuts' },
 } as const
 
-test('the PR shows under the prompt for the session branch', async ($, on) => {
+test('the PR shows under the prompt for the session branch', { options: OPTIONS }, async ($, on) => {
   mock.clock(on)
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('session.cwd', () => ({ value: '/' }))
-  on('process.run', ghAndGit('frn-1-sample'))
+  on('process.run', ghAndGit('abc-1-sample'))
 
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
 
@@ -85,7 +96,7 @@ test('the PR shows under the prompt for the session branch', async ($, on) => {
   }
 })
 
-test('nothing extra shows under the prompt on main', async ($, on) => {
+test('nothing extra shows under the prompt on main', { options: OPTIONS }, async ($, on) => {
   mock.clock(on)
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('session.cwd', () => ({ value: '/' }))
@@ -117,21 +128,21 @@ async function drawn($: any, on: any, origin: string | null) {
   return text
 }
 
-test('the same branch name open in two repos shows only the session repo PR', async ($, on) => {
+test('the same branch name open in two repos shows only the session repo PR', { options: OPTIONS }, async ($, on) => {
   // example-org/app has 1 open thread; other-org/lib (listed first) has 2.
   expect(await drawn($, on, 'git@github.com:example-org/app.git')).toBe('CI ✓   bots ✓✓   threads 1 •   -> reply to 1 thread')
 })
 
-test('a session with no remote shows no line', async ($, on) => {
+test('a session with no remote shows no line', { options: OPTIONS }, async ($, on) => {
   expect(await drawn($, on, null)).toBeUndefined()
 })
 
-test('the line says (stale) when the last gh poll failed', async ($, on) => {
+test('the line says (stale) when the last gh poll failed', { options: OPTIONS }, async ($, on) => {
   const clock = mock.clock(on)
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('session.cwd', () => ({ value: '/' }))
   let calls = 0
-  const ok = ghAndGit('frn-1-sample')
+  const ok = ghAndGit('abc-1-sample')
   on('process.run', (h: unknown, e: { readonly argv: readonly string[] }) => {
     if (e.argv.includes('graphql') && ++calls > 1) {
       return { value: { exitCode: 1, stdout: '', stderr: 'rate limited', isStdoutTruncated: false, isStderrTruncated: false } }
@@ -145,11 +156,11 @@ test('the line says (stale) when the last gh poll failed', async ($, on) => {
   await ui.unmount()
 })
 
-test('a second session.start does not stack a second poll timer', async ($, on) => {
+test('a second session.start does not stack a second poll timer', { options: OPTIONS }, async ($, on) => {
   const clock = mock.clock(on)
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('session.cwd', () => ({ value: '/' }))
-  const ok = ghAndGit('frn-1-sample')
+  const ok = ghAndGit('abc-1-sample')
   let branchReads = 0
   on('process.run', (h: unknown, e: { readonly argv: readonly string[] }) => {
     if (e.argv[0] === 'git' && e.argv[1] === 'branch') branchReads++

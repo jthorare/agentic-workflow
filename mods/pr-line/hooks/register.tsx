@@ -2,8 +2,8 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { Person, PrRow, Snapshot } from '../types'
-import { QUERY, toRows } from './rows'
-import type { ThreadMemory } from './rows'
+import { QUERY, readConfig, toRows } from './rows'
+import type { ModConfig, ThreadMemory } from './rows'
 
 const POLL_MS = 60_000
 const EMPTY: Snapshot = { rows: [], updatedAt: null, error: null }
@@ -99,14 +99,14 @@ async function requiredChecks($: EngineInterface, repo: string): Promise<string[
 }
 
 // A second caller waits on the poll already running instead of starting another.
-function poll($: EngineInterface): Promise<void> {
-  inFlight ??= fetchRows($).finally(() => {
+function poll($: EngineInterface, cfg: ModConfig): Promise<void> {
+  inFlight ??= fetchRows($, cfg).finally(() => {
     inFlight = null
   })
   return inFlight
 }
 
-async function fetchRows($: EngineInterface): Promise<void> {
+async function fetchRows($: EngineInterface, cfg: ModConfig): Promise<void> {
   lastPollAt = await $.clock.now()
   try {
     const res = await $.process.run(['gh', 'api', 'graphql', '-f', `query=${QUERY}`], { timeoutMs: 30_000 })
@@ -124,7 +124,7 @@ async function fetchRows($: EngineInterface): Promise<void> {
     )
     for (const repo of repos) await requiredChecks($, repo)
     const now = await $.clock.now()
-    const built = toRows(json, required, memory, now)
+    const built = toRows(json, required, memory, now, cfg)
     memory = built.memory
     await update($, snapshot, () => ({ rows: built.rows, updatedAt: now, error: null }))
   } catch (err) {
@@ -133,15 +133,16 @@ async function fetchRows($: EngineInterface): Promise<void> {
   }
 }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  const cfg = readConfig(options)
   on('session.start', async ($, e, next) => {
     const started = await next(e)
     // Polls only while the session is on a branch other than main.
     // One timer per module: a second session.start (resume, clear) must not stack another.
     timer ??= $.clock.every(POLL_MS, async () => {
-      if ((await refreshBranch($)) !== null) await poll($)
+      if ((await refreshBranch($)) !== null) await poll($, cfg)
     })
-    if ((await refreshBranch($)) !== null) void poll($)
+    if ((await refreshBranch($)) !== null) void poll($, cfg)
     return started
   })
 
@@ -152,7 +153,7 @@ export const register: Register = on => {
     const branch = await refreshBranch($)
     if (branch === null) return result
     const hasRow = (await sessionRow($, branch)) !== undefined
-    if (branch !== before || (!hasRow && (await $.clock.now()) - lastPollAt > MIN_GAP_MS)) void poll($)
+    if (branch !== before || (!hasRow && (await $.clock.now()) - lastPollAt > MIN_GAP_MS)) void poll($, cfg)
     return result
   })
 

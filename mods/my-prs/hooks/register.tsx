@@ -2,10 +2,9 @@ import { atom, read, update } from 'claude-code'
 import type { ElementTable, EngineInterface, Register } from 'claude-code'
 
 import type { Person, PrRow, Snapshot } from '../types'
-import { BOTS, QUERY, toRows } from './rows'
-import type { ThreadMemory } from './rows'
+import { QUERY, readConfig, toRows } from './rows'
+import type { ModConfig, ThreadMemory } from './rows'
 
-const HOME_REPO = Object.keys(BOTS)[0]
 const PANE = 'my-prs'
 const POLL_MS = 60_000
 const EMPTY: Snapshot = { rows: [], updatedAt: null, error: null }
@@ -85,14 +84,14 @@ async function requiredChecks($: EngineInterface, repo: string): Promise<string[
 }
 
 // A second caller waits on the poll already running instead of starting another.
-function poll($: EngineInterface): Promise<void> {
-  inFlight ??= fetchRows($).finally(() => {
+function poll($: EngineInterface, cfg: ModConfig): Promise<void> {
+  inFlight ??= fetchRows($, cfg).finally(() => {
     inFlight = null
   })
   return inFlight
 }
 
-async function fetchRows($: EngineInterface): Promise<void> {
+async function fetchRows($: EngineInterface, cfg: ModConfig): Promise<void> {
   try {
     const res = await $.process.run(['gh', 'api', 'graphql', '-f', `query=${QUERY}`], { timeoutMs: 30_000 })
     if (res.exitCode !== 0) {
@@ -109,7 +108,7 @@ async function fetchRows($: EngineInterface): Promise<void> {
     )
     for (const repo of repos) await requiredChecks($, repo)
     const now = await $.clock.now()
-    const built = toRows(json, required, memory, now)
+    const built = toRows(json, required, memory, now, cfg)
     memory = built.memory
     await update($, snapshot, () => ({ rows: built.rows, updatedAt: now, error: null }))
   } catch (err) {
@@ -118,14 +117,15 @@ async function fetchRows($: EngineInterface): Promise<void> {
   }
 }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  const cfg = readConfig(options)
   on('session.start', async ($, e, next) => {
     const started = await next(e)
     await $.command.register({ name: 'prs', description: 'Open the My PRs pane' })
     // Polls only while the pane is open.
     // One timer per module: a second session.start (resume, clear) must not stack another.
     timer ??= $.clock.every(POLL_MS, async () => {
-      if (isOpen) await poll($)
+      if (isOpen) await poll($, cfg)
     })
     return started
   })
@@ -133,7 +133,7 @@ export const register: Register = on => {
   on('command.run', { command: 'prs' }, async $ => {
     await $.ui.open({ id: PANE, title: 'My PRs' })
     isOpen = true
-    await poll($)
+    await poll($, cfg)
     return { text: 'My PRs pane opened.' }
   })
 
@@ -161,7 +161,7 @@ export const register: Register = on => {
           <Box flexDirection="column" marginTop={1}>
             <Text wrap="wrap">
               <Link href={row.url}>#{row.number}</Link> {row.title}
-              {row.repo === HOME_REPO ? '' : ` (${row.repo})`}
+              {row.repo === cfg.homeRepo ? '' : ` (${row.repo})`}
             </Text>
             {rowLines({ Text }, row, '  ')}
           </Box>

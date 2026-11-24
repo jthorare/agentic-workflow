@@ -25,14 +25,41 @@ export const QUERY = `query {
   }
 }`
 
-// Bot reviewers the ship sequence waits on, per repo. Edit for your own repos; the first repo is the pane's home repo.
-export const BOTS: Record<string, { name: string; reviewLogin?: string; checkRun?: string }[]> = {
-  'example-org/app': [
-    { name: 'review-bot', reviewLogin: 'review-bot' },
-    { name: 'Bugbot', checkRun: 'Cursor Bugbot' },
-  ],
+type Bot = { name: string; reviewLogin?: string; checkRun?: string }
+
+// What the mod's options say about the repos it watches. Every field is empty unless the person sets it.
+export type ModConfig = {
+  // Bot reviewers the ship sequence waits on, per repo (owner/name).
+  bots: Record<string, Bot[]>
+  // Check runs that belong to bots or deploy previews: left out of the CI count.
+  botCheckRuns: Set<string>
+  // Prefixes cut from check names in the "CI ✗ ..." text.
+  stripPrefixes: string[]
+  // The pane's home repo: its rows show no "(owner/name)" suffix.
+  homeRepo: string | null
 }
-const BOT_CHECK_RUNS = new Set(['Cursor Bugbot', 'Mintlify Deployment'])
+
+const list = (v: unknown): string[] =>
+  typeof v === 'string' ? v.split(',').map(x => x.trim()).filter(x => x !== '') : []
+
+// Options (all strings, see each plugin.json): `bots` is JSON like
+// {"owner/name":[{"name":"Lint bot","reviewLogin":"lint-bot"},{"name":"Scan","checkRun":"Scan"}]};
+// `botCheckRuns` and `stripPrefixes` are comma lists; `homeRepo` is owner/name.
+export function readConfig(options: Readonly<Record<string, unknown>>): ModConfig {
+  let bots: Record<string, Bot[]> = {}
+  try {
+    const parsed: unknown = JSON.parse(typeof options.bots === 'string' && options.bots !== '' ? options.bots : '{}')
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) bots = parsed as Record<string, Bot[]>
+  } catch {
+    // A bad `bots` value means no bots, not a broken mod.
+  }
+  const botCheckRuns = new Set(list(options.botCheckRuns))
+  for (const repoBots of Object.values(bots)) {
+    for (const b of Array.isArray(repoBots) ? repoBots : []) if (b.checkRun) botCheckRuns.add(b.checkRun)
+  }
+  const home = typeof options.homeRepo === 'string' ? options.homeRepo.trim() : ''
+  return { bots, botCheckRuns, stripPrefixes: list(options.stripPrefixes), homeRepo: home === '' ? null : home }
+}
 
 type Context =
   | { __typename: 'CheckRun'; name: string; status: string; conclusion: string | null }
@@ -78,14 +105,14 @@ function contextState(c: Context): 'pass' | 'fail' | 'running' {
   return 'fail'
 }
 
-function ciOf(contexts: Context[], required: string[] | undefined): PrRow['ci'] {
-  const ci = contexts.filter(c => !(c.__typename === 'CheckRun' && BOT_CHECK_RUNS.has(c.name)))
+function ciOf(contexts: Context[], required: string[] | undefined, cfg: ModConfig): PrRow['ci'] {
+  const ci = contexts.filter(c => !(c.__typename === 'CheckRun' && cfg.botCheckRuns.has(c.name)))
   const byName = new Map(ci.map(c => [contextName(c), contextState(c)]))
   // With the repo's required list, a required check that has not reported yet counts as running.
   const names = required && required.length > 0 ? required : [...byName.keys()]
   if (names.length === 0) return { state: 'none', failing: [], done: 0, total: 0 }
   const states = names.map(n => byName.get(n) ?? 'running')
-  const failing = names.filter((_, i) => states[i] === 'fail').map(n => n.replace(/^buildkite\//, ''))
+  const failing = names.filter((_, i) => states[i] === 'fail').map(n => cfg.stripPrefixes.reduce((name, p) => (name.startsWith(p) ? name.slice(p.length) : name), n))
   const done = states.filter(s => s !== 'running').length
   const state = failing.length > 0 ? 'fail' : done < names.length ? 'running' : 'pass'
   return { state, failing, done, total: names.length }
@@ -139,6 +166,7 @@ export function toRows(
   required: Record<string, string[]>,
   memory: ThreadMemory,
   now: number,
+  cfg: ModConfig,
 ): { rows: PrRow[]; memory: ThreadMemory } {
   const nodes = ((json as { data?: { search?: { nodes?: Pr[] } } }).data?.search?.nodes ?? []).filter(
     n => n && typeof n.number === 'number',
@@ -148,9 +176,9 @@ export function toRows(
     const repo = pr.repository.nameWithOwner
     const key = `${repo}#${pr.number}`
     const contexts = pr.commits.nodes[0]?.commit.statusCheckRollup?.contexts.nodes ?? []
-    const ci = ciOf(contexts, required[repo])
-    const bots = BOTS[repo]
-      ? BOTS[repo].map(b => ({
+    const ci = ciOf(contexts, required[repo], cfg)
+    const bots = cfg.bots[repo]
+      ? cfg.bots[repo].map(b => ({
           name: b.name,
           isOnHead: b.reviewLogin
             ? pr.latestReviews.nodes.some(r => r.author?.login === b.reviewLogin && r.commit?.oid === pr.headRefOid)
