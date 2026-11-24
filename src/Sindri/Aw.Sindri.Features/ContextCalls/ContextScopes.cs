@@ -19,6 +19,15 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <param name="checkouts">Which profile repos are git checkouts (#3371). Required: a dropped registration fails at resolve, not by quietly mapping plain folders (#3408).</param>
 internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAccessor callers, IRepoCheckouts checkouts)
 {
+    /// <summary>The first-pass no-commit limit under the approved profile (<see cref="IndexSourceLook.Limit"/>, #4035); 15 minutes when it can't be read.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The limit.</returns>
+    internal async ValueTask<TimeSpan> NoCommitLimit(CancellationToken cancellationToken)
+    {
+        var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
+        return IndexSourceLook.Limit(approved.IsSuccess ? approved.Value?.Profile : null);
+    }
+
     /// <summary>The scope of the call running now.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The scope, or SND-PROFILE-001 when the profile file is missing, or SND-PROFILE-004 when it can't be read.</returns>

@@ -18,7 +18,7 @@ namespace Aw.Transcripts.Infrastructure;
 /// <param name="reader">Reads one file.</param>
 internal sealed class FileTranscriptCorpus(TranscriptsSettings settings, TranscriptFileReader reader) : ITranscriptCorpus
 {
-    private readonly RepoResolver _repos = new();
+    private readonly RepoResolver _repos = new(settings.WorktreeRoots);
 
     public async ValueTask<Result<IReadOnlyList<TranscriptSession>>> ListSessions(SessionQuery query, CancellationToken cancellationToken)
     {
