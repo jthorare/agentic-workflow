@@ -59,6 +59,7 @@ let memory: ThreadMemory = {}
 const required: Record<string, string[]> = {}
 let inFlight: Promise<void> | null = null
 let isOpen = false
+let timer: ReturnType<EngineInterface['clock']['every']> | null = null
 
 // The repo's required check names. Only a successful call is cached: a failed or timed-out one returns [] for this
 // poll and is asked again on the next, so a rate-limited first call can't hide a required check for the session.
@@ -122,7 +123,8 @@ export const register: Register = on => {
     const started = await next(e)
     await $.command.register({ name: 'prs', description: 'Open the My PRs pane' })
     // Polls only while the pane is open.
-    $.clock.every(POLL_MS, async () => {
+    // One timer per module: a second session.start (resume, clear) must not stack another.
+    timer ??= $.clock.every(POLL_MS, async () => {
       if (isOpen) await poll($)
     })
     return started

@@ -32,6 +32,7 @@ let memory: ThreadMemory = {}
 let lastPollAt = 0
 const required: Record<string, string[]> = {}
 let inFlight: Promise<void> | null = null
+let timer: ReturnType<EngineInterface['clock']['every']> | null = null
 
 // owner/name from the https, scp-style ssh and ssh:// forms of a GitHub remote URL; null for any other host.
 function repoOf(remote: string): string | null {
@@ -136,7 +137,8 @@ export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     const started = await next(e)
     // Polls only while the session is on a branch other than main.
-    $.clock.every(POLL_MS, async () => {
+    // One timer per module: a second session.start (resume, clear) must not stack another.
+    timer ??= $.clock.every(POLL_MS, async () => {
       if ((await refreshBranch($)) !== null) await poll($)
     })
     if ((await refreshBranch($)) !== null) void poll($)

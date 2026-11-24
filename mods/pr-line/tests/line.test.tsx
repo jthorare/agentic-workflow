@@ -144,3 +144,21 @@ test('the line says (stale) when the last gh poll failed', async ($, on) => {
   expect(await ui.find({ type: 'Text', text: /\(stale\)/ })).toBeDefined()
   await ui.unmount()
 })
+
+test('a second session.start does not stack a second poll timer', async ($, on) => {
+  const clock = mock.clock(on)
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('session.cwd', () => ({ value: '/' }))
+  const ok = ghAndGit('frn-1-sample')
+  let branchReads = 0
+  on('process.run', (h: unknown, e: { readonly argv: readonly string[] }) => {
+    if (e.argv[0] === 'git' && e.argv[1] === 'branch') branchReads++
+    return ok(h, e)
+  })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  const before = branchReads
+  await clock.advance(60_000)
+  // One timer firing reads the branch once.
+  expect(branchReads - before).toBe(1)
+})
