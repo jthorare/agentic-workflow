@@ -35,4 +35,7 @@ public sealed record StatusResponse(IReadOnlyList<Obligation> Obligations, IRead
 
     /// <summary>"issue cap hit (N skipped)" when `report-defect` skipped defects today; null otherwise.</summary>
     public string? Defects { get; init; }
+
+    /// <summary>An "ATTENTION" line naming each lane whose recycle waiter gave up since that lane last recycled; null when none did.</summary>
+    public string? RecycleStuck { get; init; }
 }

@@ -1217,6 +1217,8 @@ Aw.Meta.Features.ReportDefect.ReportDefectResponse.Url.get -> string?
 Aw.Meta.Features.ReportDefect.ReportDefectResponse.Url.init -> void
 Aw.Meta.Features.Status.StatusResponse.Defects.get -> string?
 Aw.Meta.Features.Status.StatusResponse.Defects.init -> void
+Aw.Meta.Features.Status.StatusResponse.RecycleStuck.get -> string?
+Aw.Meta.Features.Status.StatusResponse.RecycleStuck.init -> void
 override Aw.Meta.Features.ReportDefect.ReportDefectRequest.Equals(object? obj) -> bool
 override Aw.Meta.Features.ReportDefect.ReportDefectRequest.GetHashCode() -> int
 override Aw.Meta.Features.ReportDefect.ReportDefectRequest.ToString() -> string!
