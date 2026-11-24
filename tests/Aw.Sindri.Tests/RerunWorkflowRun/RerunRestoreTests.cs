@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
@@ -92,6 +93,46 @@ public sealed class RerunRestoreTests
         Assert.Equal(["side"], result.Value.Rerun);
     }
 
+    [Fact]
+    public async Task A_kept_ask_owner_whose_answer_was_cut_at_64_KB_is_SND_GRAPH_108()
+    {
+        // t -> q -(answered)-> b, t -> s: q's stored answer was cut, so its row can't say who answered; running it again would ask the owner a second time
+        await Source(Ask(), WorkflowRunStatus.Succeeded, ("t", 0, NodeRunStatus.Succeeded), ("b", 0, NodeRunStatus.Succeeded), ("s", 0, NodeRunStatus.Succeeded));
+        await Cut("q", "{\"answeredBy\":\"ow");
+
+        var result = await _service.Handle(new RerunWorkflowRunRequest(_source, "s", Input: null, "owner"), Token);
+
+        Assert.Equal(SindriErrors.GraphOutputTruncated.Code, result.Error.Code);
+        Assert.Empty(_started);
+    }
+
+    [Fact]
+    public async Task A_cut_ask_owner_at_the_chosen_step_runs_again()
+    {
+        await Source(Ask(), WorkflowRunStatus.Succeeded, ("t", 0, NodeRunStatus.Succeeded), ("b", 0, NodeRunStatus.Succeeded), ("s", 0, NodeRunStatus.Succeeded));
+        await Cut("q", "{\"answeredBy\":\"ow");
+
+        var result = await _service.Handle(new RerunWorkflowRunRequest(_source, "q", Input: null, "owner"), Token);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["t", "s"], result.Value.Restored);
+        Assert.Equal(["q", "b"], result.Value.Rerun);
+    }
+
+    [Fact]
+    public async Task A_kept_ask_owner_whose_whole_row_does_not_say_who_answered_runs_again()
+    {
+        // q's row is whole but has no 'answeredBy' (Source writes {"ok":true,"result":true}), so the walk never guesses its branch
+        await Source(Ask(), WorkflowRunStatus.Succeeded, ("t", 0, NodeRunStatus.Succeeded), ("q", 0, NodeRunStatus.Succeeded), ("b", 0, NodeRunStatus.Succeeded),
+            ("s", 0, NodeRunStatus.Succeeded));
+
+        var result = await _service.Handle(new RerunWorkflowRunRequest(_source, "s", Input: null, "owner"), Token);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["t"], result.Value.Restored);
+        Assert.Equal(["q", "b", "s"], result.Value.Rerun);
+    }
+
     private static GraphNode Node(string id, string type = "http") => new(N(id), type, Title: null, []);
 
     private static GraphEdge Edge(string from, string to, string? output = null) => new(N(from), output, N(to));
@@ -102,6 +143,8 @@ public sealed class RerunRestoreTests
 
     private static GraphSpec Branch() => Spec([Node("t", "manual"), Node("a", "condition"), Node("b"), Node("c"), Node("d")],
         [Edge("t", "a"), Edge("a", "b", "true"), Edge("b", "c"), Edge("a", "d", "false")]);
+
+    private static GraphSpec Ask() => Spec([Node("t", "manual"), Node("q", "ask_owner"), Node("b"), Node("s")], [Edge("t", "q"), Edge("q", "b", "answered"), Edge("t", "s")]);
 
     private static GraphSpec Loop() => Spec([Node("t", "manual"), Node("each", "for_each"), Node("body"), Node("gather", "collect"), Node("after"), Node("side")],
         [Edge("t", "each"), Edge("each", "body"), Edge("body", "gather"), Edge("gather", "after"), Edge("t", "side")]);
@@ -117,6 +160,9 @@ public sealed class RerunRestoreTests
             _ = (await _runs.RecordNodeRun(new NodeRun(_source, N(node), item, rowStatus, Input: null, output, Truncated: false, Error: null, Usage: null), Token)).Value;
         }
     }
+
+    private async Task Cut(string node, string output) =>
+        _ = (await _runs.RecordNodeRun(new NodeRun(_source, N(node), 0, NodeRunStatus.Succeeded, Input: null, output, Truncated: true, Error: null, Usage: null), Token)).Value;
 
     /// <summary>Admits the run into the store like the real starter and keeps each admitted request (a refused used id is not kept).</summary>
     private sealed class Starter(InMemoryWorkflowRunStore runs, TimeProvider clock, List<GraphStartRequest> started) : IGraphRunStarter

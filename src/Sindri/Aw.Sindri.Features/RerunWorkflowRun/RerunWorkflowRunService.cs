@@ -125,7 +125,7 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
         var trigger = Trigger(request, source, input).ToJsonString();
         var concurrency = Concurrency(plan.Spec.Concurrency);
         var occurrence = next.Value;
-        // why: manual runs and re-runs share one count (WorkflowRunNumbers), but two starts at once read the same number, and a hashed connection or call run can hold one; the starter refuses a used id with SND-GRAPH-100 and the next number is tried.
+        // why: manual runs and re-runs share one count (WorkflowRunNumbers), but two starts at once read the same number (hashed connection and call runs start at 100,000,000 and never hold a counted one, so only that race takes it); the starter refuses a used id with SND-GRAPH-100 and the next number is tried.
         for (var attempt = 0; attempt < Attempts; attempt++, occurrence++)
         {
             var id = WorkflowRunId.Of(plan.Record.Slug, source.Revision, occurrence);
