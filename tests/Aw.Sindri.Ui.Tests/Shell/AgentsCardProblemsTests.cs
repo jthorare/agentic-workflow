@@ -9,7 +9,10 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Shell;
 
-/// <summary>The System page's Agents card says what its problems are (#4012): each one's sentence and code under the counts, and a link to the Agents page.</summary>
+/// <summary>
+/// The System page's Agents card says what its problems are (#4012): each one's sentence and code under the counts, and a link to the Agents page.
+/// While the owner turned session watching off it says so in place of problems (#4316).
+/// </summary>
 [Lane(TestLane.Unit)]
 public sealed class AgentsCardProblemsTests
 {
@@ -50,6 +53,35 @@ public sealed class AgentsCardProblemsTests
         Assert.Empty(system.Vm.AgentsProblemLines);
         Assert.True(system.Vm.HasAgentsProblems);
     }
+
+    [Fact]
+    public async Task The_agents_card_shows_watching_off_in_place_of_problems()
+    {
+        var system = new SystemTestHarness();
+
+        await system.Show(A.Status() with { Sessions = new SessionCountsView(Live: 0, Asking: 0, Problems: 0, Running: 0, ProblemRows: [], Watching: "off") });
+
+        Assert.True(system.Vm.IsAgentsWatchingOff);
+        Assert.Equal("Session watching is off · turn on in Settings", system.Vm.AgentsWatchingOffText);
+        Assert.Contains(new HealthCell(Labels.AgentsProblems, "0"), system.Vm.AgentsRows);
+        Assert.False(system.Vm.HasAgentsProblems);
+    }
+
+    [Theory]
+    [InlineData("on")]
+    [InlineData(null)]
+    public async Task Watching_on_or_an_older_answer_shows_no_watching_line(string? watching)
+    {
+        var system = new SystemTestHarness();
+
+        await system.Show(A.Status() with { Sessions = new SessionCountsView(Live: 3, Asking: 1, Problems: 0, Running: 1, ProblemRows: [], Watching: watching) });
+
+        Assert.False(system.Vm.IsAgentsWatchingOff);
+    }
+
+    [Fact]
+    public void The_agents_page_says_watching_is_off_in_the_same_words() =>
+        Assert.Equal(Labels.AgentsWatchingOff, Labels.SessionsUnavailable("disabled"));
 
     [Fact]
     public Task The_link_opens_the_agents_page() => UiThread.Run(async () =>

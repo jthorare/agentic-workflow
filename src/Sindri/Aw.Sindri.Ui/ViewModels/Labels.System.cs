@@ -44,6 +44,9 @@ internal static partial class Labels
     /// <summary>The Agents card's row for sources that failed.</summary>
     internal const string AgentsProblems = "Problems";
 
+    /// <summary>The Agents card's line, and the Agents page's, while the owner turned session watching off (#4316).</summary>
+    internal const string AgentsWatchingOff = "Session watching is off · turn on in Settings";
+
     /// <summary>The Agents card's link to the Agents page, under its problems (#4012).</summary>
     internal const string AgentsOpen = "Open Agents";
 
