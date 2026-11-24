@@ -1,6 +1,7 @@
 using Aw.Sindri.Core.Health;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Features.GetStatus;
+using Aw.Sindri.Features.Sessions;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.ListSessions;
 using Aw.Sindri.Tests.Views;
@@ -9,7 +10,8 @@ namespace Aw.Sindri.Tests.GetStatus;
 
 /// <summary>
 /// The System page's Agents card names its problems (#4012): GET /status lists each counted session problem with its code and sentence, a failed source or a
-/// collector that can't run makes the health degraded through the same rows a flagged card uses (#4010), and a test override is neither counted nor listed.
+/// collector that can't run makes the health degraded through the same rows a flagged card uses (#4010), a pass that overran its budget is listed but leaves
+/// the health healthy (slow is not broken), and a test override is neither counted nor listed.
 /// </summary>
 public sealed class StatusSessionProblemsTests
 {
@@ -74,5 +76,16 @@ public sealed class StatusSessionProblemsTests
 
         Assert.Equal([off], status.Sessions!.ProblemRows);
         Assert.Equal(HealthWord.Healthy, status.Health!.Word);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_pass_that_overran_its_budget_is_listed_on_the_card_and_leaves_the_health_healthy()
+    {
+        var status = await Status(SessionProblems.Overrun);
+
+        Assert.Equal(1, status.Sessions!.Problems);
+        Assert.Equal([SessionProblems.Overrun], status.Sessions.ProblemRows);
+        Assert.Equal(HealthWord.Healthy, status.Health!.Word);
+        Assert.DoesNotContain(status.Health.Problems, p => string.Equals(p.Code, "SND-SESSION-001", StringComparison.Ordinal));
     }
 }
