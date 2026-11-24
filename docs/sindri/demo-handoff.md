@@ -262,7 +262,7 @@ Launch with bare `sindri`. Start it from a folder that stays put. Click into a t
 | Recipes / recipe sheet | G R; "Recipe ▸" in the frame or a group head | States, inputs, outputs of the pinned version |
 | Start form | N on Workflows, ⌘N / Ctrl+N from any page | Start an instance from the app: pick a recipe, fill inputs, send |
 | Agents | G A | Live sessions by provider/lane, ASKING rows, filters, session sheet (Enter), ended fold (E), copy resume (Y); the tab count; tray line |
-| Context | G C | Type an anchor (or two), Enter: head "map vN · K anchors", intent/product/code bands with edges, coverage strip, searched-source chips; "not found" and suggested anchors |
+| Context | G C | Type an anchor (or two), Enter: head "map vN · K anchors", intent/product/code bands with edges, a coverage sentence under the search box (what was searched and why the rest was not; none on an exact hit), searched-source chips; "not found" and suggested anchors |
 | Work (queue) | G Q | Items with sizes; item sheet; Create (C) and Close item |
 | System / Health | G . (or G S) | Control plane, services, freshness |
 
