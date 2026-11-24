@@ -53,7 +53,7 @@ public sealed class ContextQuestionTests
 
         await page.Submit(Token);
 
-        Assert.Equal("Searched Code. No Why or Product records. Function names aren't indexed.", page.Coverage);
+        Assert.Equal("Searched Code. No Why or Product records. Function names aren't indexed yet. See Code index on the System page.", page.Coverage);
     }
 
     [Fact]

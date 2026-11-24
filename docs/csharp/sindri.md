@@ -205,7 +205,7 @@ foreign browser `Origin` a 403):
 
 | Route | Service |
 |---|---|
-| `GET /sindri/status` | `GetStatus`: running, pid, epoch, lease expiry, the live profile hash, each service with its cadence and last run, and `sessions {live, asking, problems}` from the session collector's last pass (additive, collector CA-8; zeros before the first pass; box-wide for every caller, a `session` caller included, and deliberately public, through the MCP `sindri_status` tool too, because it is counts only and no rows; the list stays scoped to its repo) |
+| `GET /sindri/status` | `GetStatus`: running, pid, epoch, lease expiry, the live profile hash, each service with its cadence and last run, and `sessions {live, asking, problems, running, problemRows}` from the session collector's last pass (additive, collector CA-8; zeros before the first pass; box-wide for every caller, a `session` caller included, and deliberately public, through the MCP `sindri_status` tool too, because it holds counts and no session rows: `problemRows` are the counted problems' `{source, code, text}`, fixed sentences that name no session (#4012); the list stays scoped to its repo). A test override (SND-SESSION-003) is not counted or listed; a failed source (SND-SESSION-001) or a collector that can't run (SND-SESSION-002, except one launcher.json turned off) is also a `health.problems[]` row, so the word turns `degraded` (#4012) |
 | `GET /sindri/sessions?provider=&state=&repo=&inWorkflow=` | `ListSessions` (a query, collector CA-1; reads the collector's in-memory snapshot, not `views.db`): `{sessions, recentlyEnded, problems, counts{live, asking, outsideWorkflow}, empty, asOf}`. Every caller, a session too, gets every row with `title`, `pid`, `host.session`, `host.pane` and `recentlyEnded[].resume`. `focus` is `{method: none, possible: false, why: not-built}` until CO-4a. `SND-SESSION-002` replaces the list. No catalog row (`ARCH-CQRS-003`) |
 | `GET /sindri/sessions/{provider}/{id}` | `GetSession` (a query, CA-2): `{session: <row>, cwd, stateHistory, asOf}`; `cwd`, `session.host.socket` and `stateHistory` (the last 20 state changes of this run, oldest first) are filled for every caller, a session too. A ref that is unknown or ended is `SND-SESSION-404` |
 | `GET /sindri/sessions/{provider}/{id}/terminal` | `FindTerminalPane` (a query, Agents A8) before the upgrade, then the terminal WebSocket (`TerminalSocketSession`, text JSON messages; `docs/sindri/agents.md`). The human token travels in the first message. Plain GET (no upgrade) is 400, a foreign `Origin` 403 SND-API-008, no pane 409 SND-AGENT-015, a gone pane 404 SND-AGENT-016; a bad token closes 1008 |
@@ -716,6 +716,39 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-CONTEXT-023` | NotFound | Unknown tool (`sindri_decide` and every other absent tool) |
 
 **Goldens.** `tests/Aw.Sindri.Tests/Golden/Mcp/<tool>/<scenario>.json`, plus `tools-list/default.json` (names, schemas, annotations; descriptions may be reworded and the golden re-recorded) and `errors/`. They sit outside `Golden/Api`, so the UI contract test doesn't enumerate them. The AOT smoke (`src/Sindri/aot-smoke`) lists the 28 tools and calls `sindri_queue`, `sindri_request`, `sindri_item` (`SND-CLI-003`) and `sindri_decide` (`SND-CONTEXT-023`); its profile names the repo `smoke`.
+
+## Accounts step (first-run spec §4.2, decisions 13-15a)
+
+`POST /sindri/setup/accounts/{provider}` (`ConnectAccount`) and `DELETE /sindri/setup/accounts/{provider}` (`DisconnectAccount`) are the owner's: a caller without the per-start human token gets `SND-AUTH-002`. Only `github` is built; `linear` and `slack` come with their sign-ins.
+
+The answer of both routes is one shape (`ConnectAccountResponse`); a field that doesn't apply is null:
+
+| Field | When | Meaning |
+|---|---|---|
+| `provider` | always | `github` |
+| `state` | always | `connected`, `code`, `token-needed` or `disconnected` |
+| `userCode` | `code` | the code the owner types at GitHub, such as `ABCD-1234` |
+| `verificationUri` | `code` | the page to type it on (`https://github.com/login/device`) |
+| `expiresAt` | `code` | when GitHub stops taking the code (from its `expires_in`) |
+| `reason` | `token-needed` | `SND-SETUP-014` (no client id, a wrong one, or an app with no Device Flow) or `SND-SETUP-013` (GitHub refused the app) |
+
+What the POST does, in order:
+
+1. With a gh login (`gh auth status --hostname github.com` passes), it sets `review.credential` to `command:gh auth token --hostname github.com`, writes the `github:gh` connection holding the same command, removes `setup.skipAccounts` and answers `connected`. No token is copied or stored. The first write creates the profile.
+2. With no gh login, it picks the client id (`setup.oauth.github`, else the preset's shipped `clientId`). With none it answers `token-needed` with `SND-SETUP-014`.
+3. It asks GitHub for a device code and answers `code` at once. A background poll then asks GitHub at its `interval` (slower after `slow_down`), with one last poll at the expiry. One sign-in runs at a time: a new POST ends the poll before it.
+
+How the background poll ends (none of these changes the answer already sent; the app follows the connection events and `GET /sindri/setup`):
+
+| End | What is written |
+|---|---|
+| GitHub says yes | the token, through the secret store only, as the OAuth connection `github:default`; `connection.signed-in`; `setup.skipAccounts` removed. `review.credential` stays unset: the forge's default `AW_FORGE_TOKEN` falls back to the connected github row |
+| the code expired (`SND-CONN-003`) | nothing; logged by code |
+| the owner denied (`SND-CONN-009`) | nothing; logged by code |
+| GitHub refused the app or the client id (`SND-SETUP-013`, `-014`) | nothing; logged by code |
+| cancelled (the DELETE, or a newer POST) | nothing, and nothing logged |
+
+The DELETE ends a sign-in in progress, removes the `github:gh` and `github:default` connections (the device token first, then the row, then `connection.removed`), removes `review.credential` only when it is the gh command, and answers `disconnected`. A GitHub connection added by hand on the Connections page stays. The device code and the token never reach a response, an event, the profile, a log or an error.
 
 ## Errors
 

@@ -12,9 +12,13 @@ set -uo pipefail
 INPUT="$(cat 2>/dev/null || true)"
 SESSIONS_DIR="${AW_JUDGE_SESSIONS_DIR:-${AW_STATE_DIR:-$HOME/.agentic-workflow}/judge/sessions}"
 
+RETRY_DIR="${AW_STATE_DIR:-$HOME/.agentic-workflow}/retry-guard"
+
+# Also the retry guard's per-session state files (issue 4248), on the same 24 h rule.
 sweep_old_sessions() {
-  [ -d "$SESSIONS_DIR" ] || return 0
-  find "$SESSIONS_DIR" -maxdepth 1 -name '*.json' -mtime +0 -delete 2>/dev/null || true
+  [ -d "$SESSIONS_DIR" ] && find "$SESSIONS_DIR" -maxdepth 1 -name '*.json' -mtime +0 -delete 2>/dev/null
+  [ -d "$RETRY_DIR" ] && find "$RETRY_DIR" -maxdepth 1 -name '*.json' -mtime +0 -delete 2>/dev/null
+  return 0
 }
 
 if [ -n "$INPUT" ]; then

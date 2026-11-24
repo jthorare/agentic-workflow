@@ -46,7 +46,7 @@ internal sealed partial class ProjectsPageViewModel
 
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     /// <summary>The field's placeholder.</summary>
-    public string SearchPlaceholder => Labels.ProjectsSearchPlaceholder;
+    public string SearchPlaceholder => ShowsBarLabels ? Labels.ProjectsSearchPlaceholder : Labels.ProjectsSearchPlaceholderShort;
 
     /// <summary>The field's accessible name.</summary>
     public string SearchName => Labels.ProjectsSearchName;

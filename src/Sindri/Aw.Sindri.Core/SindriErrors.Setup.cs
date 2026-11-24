@@ -22,7 +22,7 @@ public static partial class SindriErrors
     /// <summary>SND-SETUP-013: GitHub or Linear refused Sindri's OAuth app, an org policy.</summary>
     public static readonly ErrorDefinition SetupOauthBlocked = new("SND-SETUP-013", ErrorKind.Forbidden, "Your org blocks Sindri's app. Paste a token instead (fix: sindri setup connect <provider> --token-env NAME)");
 
-    /// <summary>SND-SETUP-014: this build ships no client id for the provider and the profile sets none (`setup.oauth.github` or `setup.oauth.linear`).</summary>
+    /// <summary>SND-SETUP-014: this build ships no client id for the provider and the profile sets none (`setup.oauth.github` or `setup.oauth.linear`), or the provider doesn't take the client id (a wrong id, or an app with no Device Flow).</summary>
     public static readonly ErrorDefinition SetupNoClientId = new("SND-SETUP-014", ErrorKind.Conflict, "This build has no app id for that provider. Paste a token instead (fix: sindri setup connect <provider> --token-env NAME)");
 
     /// <summary>SND-SETUP-015: `sindri setup --apply`'s setup pass didn't finish within --timeout.</summary>

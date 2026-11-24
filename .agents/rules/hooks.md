@@ -47,7 +47,7 @@ Put provider-specific parsing in the adapter, not the canonical hook. The one ex
 
 | Hook | Outputs |
 |------|---------|
-| `git-context.sh` | Current branch, last 5 commits, working tree status |
+| `git-context.sh` | Current branch, last 5 commits, working tree status, and one `Commands: N in .agentic-workflow/commands.json; find one with: aw-commands search <words>` line when the repo has a command catalog (#4221; nothing without jq or for a file that isn't JSON) |
 | `prism-context.sh` | One-line warning if prism-mcp dashboard at `PRISM_DASHBOARD_PORT` (default 7180) is unreachable; silent on success |
 | `sindri-nudge.sh` | One line when the session's repo is not in the approved sindri profile; silent otherwise; bounded by `AW_SINDRI_NUDGE_BUDGET_MS` |
 
@@ -85,6 +85,9 @@ All hook scripts live in `config/hooks/`:
 | `meta-lane-gate.sh` | UserPromptSubmit, Stop (Codex); sessionStart, postToolUse, stop (Cursor) | — |
 | `session-id-report.sh` | SessionStart (Codex); sessionStart (Cursor) | — |
 | `fleet-state.sh` | SessionStart, UserPromptSubmit, PermissionRequest, Notification, PostToolUse, Stop, SessionEnd (Claude; Codex and Cursor in CO-1b) | PostToolUse: `.*` |
+| `retry-gate.sh` | PreToolUse (`scripts/install-retry-guard.sh`, every provider; Cursor `preToolUse`) | `.*` |
+| `retry-record.sh` | PostToolUseFailure + PostToolUse (Codex: PostToolUse; Cursor: `postToolUseFailure` + `postToolUse`) | `.*` |
+| `dup-script-gate.sh` | PreToolUse (`scripts/install-dup-script-guard.sh`, every provider; Cursor `preToolUse`) | `Bash\|Write` (Codex `.*`) |
 
 Each provider's `install-hooks.sh` installs them by copying, not symlinking, so they survive repo moves. Claude Code's copies go to `~/.claude/hooks/`, and Codex and Cursor copies go to `~/.agentic-workflow/hooks/`. The script then registers the command in that provider's hook config, wrapped by the adapter for Codex and Cursor.
 
@@ -171,6 +174,13 @@ The steps below apply to **PreToolUse hooks**. SessionStart hooks have different
 3. Exit 0 to allow the action, exit 2 to block with the reason on stderr
 4. Register it in each `providers/<name>/install-hooks.sh` (or a `scripts/install-*.sh --provider` lever installer) via `aw_hook_set`; skip providers whose hook system lacks the event and record it in the `config/hooks/adapters/README.md` mapping table
 5. Document it in this file and in AGENTS.md's `config/` directory comment
+
+**Never put payload-sized text on argv** (#4300, #4308). Linux caps one argument (and one env string) at 128 KiB. Past it, exec fails, the
+hook gets empty output and fails open: a padded `rm -rf` passed the Cursor adapter, and a long message skipped send-gate. Pipe the
+payload to `jq` on stdin and pass other big strings as `--rawfile name <(printf '%s' "$VAR")` (or `--slurpfile` for JSON). Keep `--arg`
+/ `--argjson` for short values: ids, event names, paths, fixed reasons. Shell functions and builtins (`printf`, `echo`) are fine; the limit
+is on exec. A hook test for a new input path adds a 200 KB row. Short text a hook builds itself is exempt: `done-gate-annotate.sh`
+(fixed text plus the brief quote cut to 120 characters), `context-guard.sh`'s and `retry-gate.sh`'s `--arg m "$MSG"`.
 
 ## Probe Hook (cheap-agent-harness rollout step 0.5)
 

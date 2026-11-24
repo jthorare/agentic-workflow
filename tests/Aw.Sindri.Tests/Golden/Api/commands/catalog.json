@@ -636,6 +636,24 @@
       "confirm": null
     },
     {
+      "action": "DisconnectAccount",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "DELETE",
+      "route": "/sindri/setup/accounts/{provider}",
+      "cli": "sindri setup disconnect <provider>",
+      "ui": "pending:FR5",
+      "destructive": true,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "EmbedCodeIndex",
       "class": "job",
       "allowedCallers": [
