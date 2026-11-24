@@ -1,4 +1,4 @@
-using Avalonia;
+using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
@@ -51,7 +51,7 @@ public sealed class AgentsNarrowRowFrameTests : FrameHost
         {
             Assert.False(Named<TextBlock>(row, "SessionRowProvider").IsEffectivelyVisible);
             var title = Named<TextBlock>(row, "SessionRowTitle");
-            Assert.True(title.Bounds.Width >= LeastTitleWidth, $"the title is {title.Bounds.Width} px wide");
+            Assert.True(title.Bounds.Width >= LeastTitleWidth, $"the title is {title.Bounds.Width.ToString(CultureInfo.InvariantCulture)} px wide");
             Assert.Same(TextTrimming.PrefixCharacterEllipsis, title.TextTrimming);   // 8 characters, the ellipsis, then the tail
         });
     });
