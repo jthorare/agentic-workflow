@@ -158,7 +158,7 @@ function nextOf(
   const isArmed = pr.autoMergeRequest != null
   const needsApproval = pr.reviewDecision === 'REVIEW_REQUIRED'
   if (isArmed) return { next: needsApproval ? 'armed, waiting on approval' : 'armed', nextTone: 'success' }
-  return { next: 'ready for /pr-review', nextTone: 'warning' }
+  return { next: 'ready for /review', nextTone: 'warning' }
 }
 
 export function toRows(
