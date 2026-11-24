@@ -122,6 +122,23 @@ public sealed class RerunWorkflowRunServiceTests
     }
 
     [Fact]
+    public async Task A_rerun_of_a_rerun_points_original_at_the_first_trigger_and_does_not_nest()
+    {
+        var rerun = "{\"kind\":\"rerun\",\"payload\":{\"repo\":\"api\"},\"of\":\"nightly-check@1:0\",\"fromNode\":\"a\",\"by\":\"owner\",\"input\":null,"
+            + "\"original\":{\"kind\":\"manual\",\"payload\":{\"repo\":\"api\"},\"by\":\"owner\"}}";
+        await EndedRun(sourceTrigger: rerun);
+
+        _ = await _service.Handle(new RerunWorkflowRunRequest(_source, "b", Input: null, "owner"), Token);
+
+        var trigger = JsonNode.Parse(Assert.Single(_starter.Requests).Trigger)!;
+        Assert.Equal("rerun", trigger["kind"]!.GetValue<string>());
+        Assert.Equal(_source.Value, trigger["of"]!.GetValue<string>());
+        Assert.Equal("manual", trigger["original"]!["kind"]!.GetValue<string>());
+        Assert.Null(trigger["original"]!["original"]);
+        Assert.Equal("api", trigger["payload"]!["repo"]!.GetValue<string>());
+    }
+
+    [Fact]
     public async Task A_rerun_never_moves_the_manual_run_counter()
     {
         await EndedRun();
@@ -304,11 +321,11 @@ public sealed class RerunWorkflowRunServiceTests
         new(_source, N(node), item, status, Input: "{\"cfg\":\"" + node + "\"}", output, truncated, Error: null, Usage: null);
 
     // A run of revision 1 that ended (or not), with one row per step: t, a, d succeeded; b and c per the arguments.
-    private async Task EndedRun(WorkflowRunStatus status = WorkflowRunStatus.Succeeded, string? failedNode = null, IReadOnlyList<NodeRun>? extra = null, string? replaceItem0Of = null)
+    private async Task EndedRun(WorkflowRunStatus status = WorkflowRunStatus.Succeeded, string? failedNode = null, IReadOnlyList<NodeRun>? extra = null, string? replaceItem0Of = null, string? sourceTrigger = null)
     {
         _ = (await _workflows.Create(_id, _slug, Spec(), "owner", Token)).Value;
         _ = (await _workflows.Activate(_id, 1, Token)).Value;
-        var trigger = "{\"kind\":\"manual\",\"payload\":{\"repo\":\"api\"},\"by\":\"owner\"}";
+        var trigger = sourceTrigger ?? "{\"kind\":\"manual\",\"payload\":{\"repo\":\"api\"},\"by\":\"owner\"}";
         var ended = status is WorkflowRunStatus.Running ? (DateTimeOffset?)null : _clock.GetUtcNow();
         _ = (await _runs.Insert(new WorkflowRun(_source, _id, 1, trigger, status, Outputs: null, Error: null, ItemId: null, _clock.GetUtcNow(), ended), Token)).Value;
         var rows = new List<NodeRun>
