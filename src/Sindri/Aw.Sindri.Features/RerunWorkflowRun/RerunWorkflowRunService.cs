@@ -168,10 +168,11 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
 
     private static JsonObject Trigger(RerunWorkflowRunRequest request, WorkflowRun source, JsonObject? input)
     {
-        var original = Parse(source.Trigger);
+        var parsed = Parse(source.Trigger);
+        var original = First(parsed);
         var trigger = new JsonObject();
         // why: the source trigger's fields stay at the top, so '{{trigger.payload.repo}}' in a step that runs again reads what it read the first time.
-        foreach (var (key, value) in original ?? [])
+        foreach (var (key, value) in parsed ?? [])
         {
             trigger[key] = value?.DeepClone();
         }
@@ -184,6 +185,10 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
         trigger["input"] = input?.DeepClone();
         return trigger;
     }
+
+    // why: a re-run's trigger already holds the first run's trigger as 'original'; carrying the whole re-run trigger would nest one level deeper on every re-run of a re-run
+    private static JsonObject? First(JsonObject? source) =>
+        source is not null && string.Equals(source["kind"]?.ToString(), TriggerKind, StringComparison.Ordinal) && source["original"] is JsonObject first ? first : source;
 
     private static JsonObject? Parse(string text)
     {
