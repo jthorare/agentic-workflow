@@ -71,6 +71,9 @@ internal sealed class ConnectionHarness
 
     public FakeConnectionProbe Probe { get; } = new();
 
+    /// <summary>Gets the check a pasted key goes through before it is stored (#4357).</summary>
+    public FakeKeyCheck Keys { get; } = new();
+
     /// <summary>Gets the command gate the test slice's status write waits for.</summary>
     internal CommandGateLock Gate { get; } = new();
 
@@ -87,7 +90,7 @@ internal sealed class ConnectionHarness
     public ICallerContextAccessor Callers { get; }
 
     public AddConnectionService Add(ISignInSession? signIn = null)
-        => new(Store, Secrets, Presets, Environment, Clock, Callers, new OAuthSignInFlow(Store, Secrets, signIn ?? SignIn, new CommandGateAccess(Gate, Clock), Outcomes, Events(), new TypedLog<OAuthSignInFlow>(Logs)));
+        => new(Store, Presets, Environment, Callers, new OAuthSignInFlow(Store, Secrets, signIn ?? SignIn, new CommandGateAccess(Gate, Clock), Outcomes, Events(), new TypedLog<OAuthSignInFlow>(Logs)), new KeyConnectionAdd(Store, Secrets, Environment, Clock, Callers, Keys));
 
     /// <summary>Gets the lease the connection events are fenced by; empty until <see cref="Hold"/>.</summary>
     public HeldLease Held { get; } = new();
