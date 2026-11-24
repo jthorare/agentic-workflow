@@ -6,4 +6,13 @@ internal sealed record ContextIndexLine(string Text)
 {
     /// <summary>The line read aloud: "Context index: " first.</summary>
     public string Name { get; } = Labels.ContextIndexNamePrefix + Text;
+
+    /// <summary>The words up to the first ": ", colon kept ("linear:"); empty when the line has none (#4269, not built yet).</summary>
+    public string Label { get; } = string.Empty;
+
+    /// <summary>The words after the label, with codes and time phrases glued so a wrap can't split them (#4269, not built yet).</summary>
+    public string Rest { get; } = string.Empty;
+
+    /// <summary>True when the line has a label column.</summary>
+    public bool HasLabel => Label.Length > 0;
 }
