@@ -8030,6 +8030,8 @@ static Aw.Sindri.Core.Sessions.SessionRows.Worktree(string? cwd, string? repoPat
 static Aw.Sindri.Core.Sessions.StateHistoryRules.Next(System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Sessions.SessionRef, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.SessionStateEntry!>!>! previous, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.ObservedSession!>! sessions) -> System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Sessions.SessionRef, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.SessionStateEntry!>!>!
 Aw.Sindri.Core.Sessions.SessionProblem.Reason.get -> Aw.Sindri.Core.Sessions.UnavailableReason?
 Aw.Sindri.Core.Sessions.SessionProblem.Reason.init -> void
+Aw.Sindri.Core.Sessions.SessionProblem.IsOverrun.get -> bool
+Aw.Sindri.Core.Sessions.SessionProblem.IsOverrun.init -> void
 Aw.Sindri.Core.Sandbox.Credentials.IModelCredentialSource
 Aw.Sindri.Core.Sandbox.Credentials.IModelCredentialSource.Id.get -> Aw.Sindri.Core.Sandbox.ModelLoginSource
 Aw.Sindri.Core.Sandbox.Credentials.IModelCredentialSource.Prepare(Aw.Sindri.Core.Launch.AgentId target, Aw.Sindri.Core.Launch.LaunchId launch, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Aw.Kernel.Result<Aw.Sindri.Core.Sandbox.Credentials.PreparedLogin!>!>!

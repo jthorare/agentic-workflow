@@ -9,7 +9,8 @@ namespace Aw.Sindri.Features.GetStatus;
 /// What the System page's Agents card and the health make of the collector's problems (#4012). A test override (SND-SESSION-003) is no problem: not
 /// counted, not listed. A failed source (SND-SESSION-001) or a collector that can't run (SND-SESSION-002) is a health problem as well, through the same
 /// rows a flagged card uses (#4010), so the banner never says "Everything is running." beside a counted problem. A collector the owner turned off in
-/// launcher.json is listed but is the owner's choice, not a health problem.
+/// launcher.json is listed but is the owner's choice, not a health problem. A pass that overran its budget (the collector's overrun row, also
+/// SND-SESSION-001) is counted and listed but is no health problem either: slow is not broken, and nothing failed.
 /// </summary>
 internal static class SessionHealth
 {
@@ -26,7 +27,7 @@ internal static class SessionHealth
         [.. problems.Where(IsHealthProblem).Select(static p => new HealthProblem(p.Code, p.Text, Clause(p)))];
 
     private static bool IsHealthProblem(SessionProblem problem) =>
-        IsCode(problem, SindriErrors.SessionSourceFailed) || (IsCode(problem, SindriErrors.SessionsUnavailable) && problem.Reason != UnavailableReason.Disabled);
+        (IsCode(problem, SindriErrors.SessionSourceFailed) && !problem.IsOverrun) || (IsCode(problem, SindriErrors.SessionsUnavailable) && problem.Reason != UnavailableReason.Disabled);
 
     private static string Clause(SessionProblem problem) =>
         IsCode(problem, SindriErrors.SessionSourceFailed) ? "an agent session source failed" : "Sindri can't see agent sessions";
