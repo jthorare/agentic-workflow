@@ -29,11 +29,14 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
         ["conversations.replies"] = static (s, q) => s.Replies(q),
         ["conversations.info"] = static (s, q) => s.ConversationInfo(q),
         ["users.info"] = static (s, q) => s.UserInfo(q),
+        ["users.list"] = static (s, q) => s.UsersList(q),
         ["emoji.list"] = static (s, _) => s.EmojiList(),
         ["search.messages"] = static (s, q) => FakeSlackSearch.Answer(s, q),
     };
 
     private static readonly HashSet<string> _channelReads = new(["conversations.history", "conversations.replies"], StringComparer.Ordinal);
+
+    private static readonly HashSet<string> _paged = new(["users.conversations", "users.list", "conversations.history", "conversations.replies"], StringComparer.Ordinal);
 
     private readonly Lock _gate = new();
     private readonly HashSet<string> _allowed = new(allowedChannels ?? [], StringComparer.Ordinal);
@@ -128,6 +131,15 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
     /// <summary>Seeds the made-up workspace of <see cref="SlackWorkspaceSeed"/>: people, a DM, a group DM, channels, a mention and a thread with replies.</summary>
     /// <returns>This server.</returns>
     public FakeSlackServer SeedWorkspace() => SlackWorkspaceSeed.Apply(this);
+
+    /// <summary>Whether the fake serves <paramref name="method"/> ('conversations.history'), so a caller can check a name before scripting it.</summary>
+    /// <param name="method">The Web API method.</param>
+    /// <returns>True when the fake answers it.</returns>
+    public static bool Serves(string method)
+    {
+        ArgumentNullException.ThrowIfNull(method);
+        return _methods.ContainsKey(method);
+    }
 
     /// <summary>Revokes the token: from now on every method answers HTTP 200 with {"ok":false,"error":<paramref name="error"/>}, before any script.</summary>
     /// <param name="error">Slack's error code; 'invalid_auth' by default ('token_revoked' is the other one Slack sends).</param>
@@ -245,7 +257,8 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
     {
         ArgumentNullException.ThrowIfNull(request);
         var query = ParseQuery(request.RequestUri!.Query);
-        if (request.Content is { } form && string.Equals(form.Headers.ContentType?.MediaType, "application/x-www-form-urlencoded", StringComparison.Ordinal))
+        // why: Slack reads a body with no Content-Type as form fields, the same as application/x-www-form-urlencoded
+        if (request.Content is { } form && (form.Headers.ContentType is null || string.Equals(form.Headers.ContentType.MediaType, "application/x-www-form-urlencoded", StringComparison.Ordinal)))
         {
             foreach (var (key, value) in ParseQuery(await form.ReadAsStringAsync(cancellationToken).ConfigureAwait(false)))
             {
@@ -264,9 +277,9 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
         var uri = request.RequestUri!;
         _requests.Add(new RecordedRequest(request.Method, uri, request.Headers.Authorization?.ToString(), request.Headers.UserAgent.ToString()));
         var method = Admit(uri, query);
-        if (_revoked is { } revoked)
+        if (Refusal(request, method, query) is { } refused)
         {
-            return Error(revoked);
+            return Error(refused);
         }
 
         if (_methodLimits.TryGetValue(method, out var limits) && limits.Count > 0)
@@ -280,6 +293,34 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
         }
 
         return _methods[method](this, query);
+    }
+
+    /// <summary>
+    /// Slack's own refusals, before any script: 'not_authed' when the request carries no token (no Authorization header and no 'token' field), the revoked
+    /// token's error, then 'invalid_limit' or 'invalid_cursor' for a list method given a limit that is not a positive number or a cursor this fake never
+    /// handed out. Null when the request may go on.
+    /// </summary>
+    private string? Refusal(HttpRequestMessage request, string method, Dictionary<string, string> query)
+    {
+        if (request.Headers.Authorization is null && !query.ContainsKey("token"))
+        {
+            return "not_authed";
+        }
+
+        return _revoked ?? (_paged.Contains(method) ? PageError(query) : null);
+    }
+
+    private static string? PageError(Dictionary<string, string> query)
+    {
+        if (query.TryGetValue("limit", out var limit) && !(int.TryParse(limit, NumberStyles.None, CultureInfo.InvariantCulture, out var size) && size > 0))
+        {
+            return "invalid_limit";
+        }
+
+        var cursor = query.GetValueOrDefault("cursor", string.Empty);
+        return cursor.Length == 0 || (cursor.StartsWith("off", StringComparison.Ordinal) && int.TryParse(cursor[3..], NumberStyles.None, CultureInfo.InvariantCulture, out _))
+            ? null
+            : "invalid_cursor";
     }
 
     /// <summary>Fails the run (throws) for a host that is not Slack's, a route the fake does not know or a history or replies read of a channel that is not allowed; returns the method otherwise.</summary>
@@ -331,7 +372,7 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
     private HttpResponseMessage History(Dictionary<string, string> query)
     {
         var channel = query["channel"];
-        return MessagesPage(query, channel, Store.Top(channel, query.GetValueOrDefault("oldest"), query.GetValueOrDefault("latest")));
+        return MessagesPage(query, channel, Store.Top(channel, query.GetValueOrDefault("oldest"), query.GetValueOrDefault("latest"), IsTrue(query, "inclusive")));
     }
 
     private HttpResponseMessage Replies(Dictionary<string, string> query)
@@ -350,6 +391,12 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
             ["has_more"] = next.Length > 0,
             ["response_metadata"] = new JsonObject { ["next_cursor"] = next },
         });
+    }
+
+    private HttpResponseMessage UsersList(Dictionary<string, string> query)
+    {
+        var (page, next) = Slice(query, [.. _users.Values.OrderBy(static u => u.Id, StringComparer.Ordinal)], u => SlackUserJson.Of(u, Identity.TeamId));
+        return Json(new JsonObject { ["ok"] = true, ["members"] = page, ["response_metadata"] = new JsonObject { ["next_cursor"] = next } });
     }
 
     private HttpResponseMessage ConversationInfo(Dictionary<string, string> query)

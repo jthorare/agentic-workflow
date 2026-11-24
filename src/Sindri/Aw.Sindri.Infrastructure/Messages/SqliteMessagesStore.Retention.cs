@@ -15,7 +15,7 @@ internal sealed partial class SqliteMessagesStore
             return Array.Empty<RetentionThread>();
         }
 
-        return await InTransaction<IReadOnlyList<RetentionThread>>(session => Translated(SqliteQueries.List(session,
+        return await InTransaction(session => Translated(SqliteQueries.List(session,
             new SqlStatement(MessagesSql.SelectRetentionThreads, c => c.Bind("$cut", olderThan.Value), "retention threads"), RetentionThreadMapper.Instance, cancellationToken)), cancellationToken).ConfigureAwait(false);
     }
 
@@ -27,7 +27,7 @@ internal sealed partial class SqliteMessagesStore
             return new RetentionOutcome(0, 0, 0);
         }
 
-        return await InTransaction<RetentionOutcome>(session => ExpireIn(session, new ExpirePass(olderThan, capOlderThan, outboxOlderThan, keep), cancellationToken), cancellationToken).ConfigureAwait(false);
+        return await InTransaction(session => ExpireIn(session, new ExpirePass(olderThan, capOlderThan, outboxOlderThan, keep), cancellationToken), cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<Result<int>> Purge(string? conversation, bool ownerState, CancellationToken cancellationToken)
@@ -37,7 +37,7 @@ internal sealed partial class SqliteMessagesStore
             return 0;
         }
 
-        return await InTransaction<int>(async session =>
+        return await InTransaction(async session =>
         {
             Action<SqliteCommand>? bind = conversation is null ? null : c => c.Bind("$c", conversation);
             string[] statements = conversation is null
