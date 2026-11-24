@@ -128,7 +128,7 @@ internal sealed partial class ShellViewModel
     // The tab's badge and Home's line follow the waiting count: empty and gone at 0.
     private void ShowWaiting(int count)
     {
-        Navigation.First(n => n.Page == PageId.Reviews).Count = count > 0 ? count.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty;
+        ShowPageCount(PageId.Reviews, count > 0 ? count.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty);
         ReviewsWaitingLine = count > 0 ? Labels.ReviewsWaitingLine(count) : null;
         Changed(nameof(ReviewsWaitingLine), nameof(HasReviewsWaitingLine));
     }
