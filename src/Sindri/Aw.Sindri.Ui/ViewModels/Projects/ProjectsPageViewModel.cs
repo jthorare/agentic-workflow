@@ -165,6 +165,10 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
         {
             _reads++;   // a read already on its way is not wanted
             Dispose();
+            if (was && SearchText.Length > 0)
+            {
+                SearchText = string.Empty;   // the search lives while the page does: leaving it clears it (a view change keeps it)
+            }
         }
     }
 
