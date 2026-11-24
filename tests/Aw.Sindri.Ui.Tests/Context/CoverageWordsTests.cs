@@ -5,6 +5,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context;
 using Aw.Sindri.Ui.ViewModels.Context.Layout;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
@@ -183,4 +184,29 @@ public sealed class CoverageWordsTests
     [Fact]
     public void An_exact_hit_says_nothing_even_when_areas_were_skipped() =>
         Assert.Equal(string.Empty, CoverageWords.Sentence(View(OneSearchedThreeNot), exact: true));
+
+    // #4184: the Code index card can't put files of several repos in one index, so that reason ends the sentence without pointing there.
+    [Fact]
+    public void Files_in_more_than_one_repo_get_no_next_step_to_the_code_index_card()
+    {
+        var words = CoverageWords.Sentence(View(node =>
+        {
+            OneSearchedThreeNot(node);
+            node["bands"]!["code"]!["symbols"]!["reason"] = "files-are-in-no-single-repo";
+        }), exact: false);
+
+        Assert.Equal("Searched Code. No Why or Product records. " + Labels.ContextMapNamesSeveralRepos, words);
+    }
+
+    [Fact]
+    public void A_reason_the_code_index_card_can_fix_keeps_its_next_step()
+    {
+        var words = CoverageWords.Sentence(View(node =>
+        {
+            OneSearchedThreeNot(node);
+            node["bands"]!["code"]!["symbols"]!["reason"] = "not configured";
+        }), exact: false);
+
+        Assert.Equal("Searched Code. No Why or Product records. " + Labels.ContextMapNamesNotConfigured + " " + NextStep, words);
+    }
 }
