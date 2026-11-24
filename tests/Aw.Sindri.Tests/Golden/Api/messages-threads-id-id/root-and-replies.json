@@ -1,0 +1,41 @@
+{
+  "root": {
+    "ts": "1767771000.000100",
+    "author": "U0ADA",
+    "text": "<@U0JOI> review the fare table PR?",
+    "thread": "1767771000.000100",
+    "replies": 1,
+    "partial": false,
+    "authorName": null
+  },
+  "replies": [
+    {
+      "ts": "1767771500.000100",
+      "author": "U0KIM",
+      "text": "<@U0JOI> and the group path too?",
+      "thread": "1767771000.000100",
+      "replies": 0,
+      "partial": false,
+      "authorName": null
+    }
+  ],
+  "row": {
+    "key": "slack:thread:T0HARBOR/C0HARBOR/1767771000.000100",
+    "kind": "channel",
+    "conversation": "C0HARBOR",
+    "newest": "1767771500.000100",
+    "thread": "1767771000.000100",
+    "members": 0,
+    "mine": "namedMe",
+    "newestIsMine": false,
+    "repliedAfterNewest": false,
+    "namesMe": true,
+    "newestText": "<@U0JOI> and the group path too?",
+    "linksWaitingOnMe": false,
+    "blocks": 0,
+    "done": false,
+    "snoozed": false,
+    "linkedToOwnedIssue": false,
+    "class": "none"
+  }
+}

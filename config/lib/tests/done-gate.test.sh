@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Temp-dir cleanup (#3262): every mktemp this suite makes is recorded and removed when it exits.
+__aw_tmp_reg="$(command mktemp)"
+mktemp() { local p; p="$(command mktemp "$@")" || return; printf '%s\n' "$p" >>"$__aw_tmp_reg"; printf '%s\n' "$p"; }
+__aw_tmp_clean() { local rc=$? p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null || true; rm -rf "$p" || true; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; exit "$rc"; }
+trap __aw_tmp_clean EXIT
 . "$(dirname "${BASH_SOURCE[0]}")/../../../scripts/lib/test-grep.sh"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK="$DIR/../../hooks/done-gate.sh"
 # The hook logs fail-open events under $AW_STATE_DIR (default ~/.agentic-workflow): this suite gets its own, never an inherited one.
 AW_STATE_DIR="$(mktemp -d)" || exit 2; export AW_STATE_DIR
-trap 'find "$AW_STATE_DIR" -delete 2> /dev/null' EXIT
 
 write_transcript_with_assistant_text() {
   local file="$1" text="$2"
@@ -625,6 +630,21 @@ test_a_turn_that_read_no_image_keeps_the_ask_check_input_byte_identical() {
 
 test_a_turn_that_read_no_image_keeps_the_ask_check_input_byte_identical
 test_a_turn_that_read_a_png_sends_images_to_ask_check
+
+# #4308: a last reply over 128 KiB must still reach ask-check whole. As one jq argv string it failed exec: the ask-check
+# input was empty.
+test_a_200kb_last_reply_still_reaches_ask_check() {
+  local bin_dir transcript dir
+  bin_dir="$(setup_recording_judge)"; transcript="$(mktemp)"; dir="$(mktemp -d)"; git -C "$dir" init -q
+  jq -nc '{type:"user", message:{role:"user", content:"check the page"}}' > "$transcript"
+  jq -nc --rawfile t <({ printf 'still working on the next step '; head -c 204800 /dev/zero | tr '\0' x; }) \
+    '{type:"assistant", message:{content:[{type:"text", text:$t}]}}' >> "$transcript"
+  ( cd "$dir" && PATH="$bin_dir:$PATH" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" ) || true
+  [ "$(jq -r '.transcriptTail | length' "$bin_dir/ask-input.json" 2>/dev/null)" = "204831" ] \
+    || { echo "FAIL: ask-check must get the whole 200 KB reply, got $(head -c 200 "$bin_dir/ask-input.json" 2>/dev/null)"; exit 1; }
+  echo "PASS: test_a_200kb_last_reply_still_reaches_ask_check"
+}
+test_a_200kb_last_reply_still_reaches_ask_check
 test_only_the_newest_four_images_are_sent_newest_first
 
 # More than 4 images read: the newest 4 go, and one probe-log line says how many were left out.

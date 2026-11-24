@@ -18,6 +18,7 @@ Referenced via: SHARED_DIR pattern (CD2).
 | **Wait, then run again** (come back to a task after N minutes; default 5 min, cap 8 h, then a stop report) | `ScheduleWakeup` (a delay and the prompt to resume) or `Monitor` on a polling command | a bounded `sleep` loop in the shell: `sleep 300`, re-check, stop at the cap | a bounded `sleep` loop in the shell: `sleep 300`, re-check, stop at the cap |
 | **Invoke another skill** | `Skill` tool (`skill: <name>`) | Mention `$<name>` or read `$TOOLKIT/skills/<name>/SKILL.md` and follow it | `/<name>` or read `$TOOLKIT/skills/<name>/SKILL.md` and follow it |
 | **Run shell** | `Bash` | `exec` / shell | `Shell` |
+| **Run a command with long output** (a build, a test run, a log dump: keep the full output on disk, read a short summary) | `aw-run -- <command...>` through `Bash`, then `aw-run show <run folder> --lines A:B` or `--grep RE` for more | `aw-run -- <command...>` in the shell, then `aw-run show` | `aw-run -- <command...>` through `Shell`, then `aw-run show` |
 | **Read / search files** | `Read`, `Grep`, `Glob` | shell (`rg`, `sed -n`) | `Read`, `Grep`, `Glob` |
 | **Write / edit files** | `Write`, `Edit` | `apply_patch` | `Write`, `StrReplace` |
 | **Fetch a URL / search the web** | `WebFetch`, `WebSearch` | `web_search` | `WebFetch`, `WebSearch` |

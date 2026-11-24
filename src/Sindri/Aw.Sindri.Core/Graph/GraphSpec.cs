@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Aw.Sindri.Core.Graph.Ids;
 
 namespace Aw.Sindri.Core.Graph;
 
@@ -23,4 +24,11 @@ public sealed record GraphSpec(
     /// <summary>Gets the run's token budget (#3805), or null: a run then takes the profile's 'workflow.budget.tokens', and with neither it has no cap.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public GraphBudget? Budget { get; init; }
+
+    /// <summary>
+    /// Gets the node whose output is the run's result, what 'run_workflow' and 'workflow_result' read (#3807), or null: then the result is what the nodes no edge leaves gave.
+    /// The result is kept up to 64 KB on its own; a larger one is stored as a marker, never as null.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public NodeId? Result { get; init; }
 }

@@ -157,6 +157,30 @@ public sealed class AnchorMatchTests
         Assert.Equal([("concept:b", "same", "concept"), ("feature:a", "Same", "feature")], Choices(node.Error, "choices"));
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(200)]
+    [InlineData(199)]
+    public void A_choice_label_up_to_the_cap_is_shown_whole(int length)
+    {
+        var label = new string('a', length);
+
+        var choice = Assert.Single(AnchorMatch.Choices(new GraphBuilder().Node("feature:a", label).Build().Nodes));
+
+        Assert.Equal(label, choice.Label);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(201)]
+    [InlineData(500)]
+    public void A_choice_label_past_the_cap_is_cut_to_the_cap_and_ends_in_an_ellipsis(int length)
+    {
+        var label = new string('a', length);
+
+        var choice = Assert.Single(AnchorMatch.Choices(new GraphBuilder().Node("feature:a", label).Build().Nodes));
+
+        Assert.Equal(new string('a', 199) + "…", choice.Label);   // why: a title cut with no mark looked whole (#3045)
+    }
+
     private static List<(string Key, string Label, string Kind)> Choices(Kernel.Error error, string name)
     {
         var member = Assert.Single(error.Extensions ?? Kernel.ErrorExtensions.Empty, m => m.Key == name);

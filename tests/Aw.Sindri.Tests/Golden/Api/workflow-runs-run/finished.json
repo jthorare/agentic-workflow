@@ -15,6 +15,20 @@
   "endedAt": "2026-01-01T00:00:00.0000000Z",
   "nodes": [
     {
+      "node": "start",
+      "itemIndex": 0,
+      "status": "succeeded",
+      "input": null,
+      "output": {
+        "kind": "manual"
+      },
+      "truncated": false,
+      "error": null,
+      "agent": null,
+      "raw": null,
+      "seconds": null
+    },
+    {
       "node": "agent",
       "itemIndex": 0,
       "status": "succeeded",
@@ -27,24 +41,13 @@
       "truncated": false,
       "error": null,
       "agent": null,
-      "raw": null
-    },
-    {
-      "node": "start",
-      "itemIndex": 0,
-      "status": "succeeded",
-      "input": null,
-      "output": {
-        "kind": "manual"
-      },
-      "truncated": false,
-      "error": null,
-      "agent": null,
-      "raw": null
+      "raw": null,
+      "seconds": 0
     }
   ],
   "tokens": {
     "used": 0,
     "budget": null
-  }
+  },
+  "triggerKind": "manual"
 }

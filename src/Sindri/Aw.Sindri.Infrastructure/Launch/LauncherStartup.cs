@@ -19,7 +19,7 @@ internal static class LauncherStartup
         var config = IsolatedLauncherRead.Read(builtins, bytes);
         var problem = unreadable ?? config.Problem;
         var section = config.Sessions;
-        return new LauncherLoad(new AgentCatalog(config.Agents), Sessions(section, problem, TestOverride(environment)), ClaudeDirectory(environment, section?.ClaudeSessionsDir)) { AttendedProblems = config.AttendedProblems };
+        return new LauncherLoad(new AgentCatalog(config.Agents), Sessions(section, problem, TestOverride(environment), settings), ClaudeDirectory(environment, section?.ClaudeSessionsDir)) { AttendedProblems = config.AttendedProblems };
     }
 
     /// <summary>The catalog that re-reads launcher.json when it changes (the launcher's, one read per open).</summary>
@@ -36,8 +36,8 @@ internal static class LauncherStartup
     private static bool TestOverride(Func<string, string?> environment) =>
         NonEmpty(environment("AW_SESSIONS_PROC_ROOT")) is not null || NonEmpty(environment("AW_SESSIONS_CLAUDE_DIR")) is not null;
 
-    private static SessionSettings Sessions(SessionsSection? section, string? problem, bool overridden) =>
-        new(section?.Enabled ?? true, section?.PollSeconds ?? 2, Providers(section), overridden) { ConfigProblem = problem };
+    private static SessionSettings Sessions(SessionsSection? section, string? problem, bool overridden, SindriSettings settings) =>
+        new(section?.Enabled ?? true, section?.PollSeconds ?? 2, Providers(section), overridden) { ConfigProblem = problem, Scope = section?.Scope is { } scope ? LauncherConfigFile.ScopeOf(scope) ?? SessionScope.Own : SessionScope.All, OwnTmuxDirectory = Path.Combine(settings.Home, "tmux") };
 
     private static IReadOnlyList<AgentId>? Providers(SessionsSection? section) =>
         section?.Providers is { } named ? [.. named.Select(AgentId.From)] : null;

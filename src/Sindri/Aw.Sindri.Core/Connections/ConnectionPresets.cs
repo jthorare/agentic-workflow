@@ -7,9 +7,9 @@ namespace Aw.Sindri.Core.Connections;
 public static class ConnectionPresets
 {
     private static readonly string[] _requiredText = ["id", "displayName", "kind", "authorizeUrl", "tokenUrl", "hostGroup", "signInNote"];
-    private static readonly string[] _httpsUrls = ["authorizeUrl", "tokenUrl", "revokeUrl", "probeUrl"];
+    private static readonly string[] _httpsUrls = ["authorizeUrl", "tokenUrl", "revokeUrl", "probeUrl", "deviceCodeUrl"];
 
-    /// <summary>Parses one preset's JSON (camelCase keys: id (read as Key), displayName, kind, authorizeUrl, tokenUrl, revokeUrl, defaultScopes, hostGroup, loopbackAllowed, signInNote, pollableEvents, probeUrl).</summary>
+    /// <summary>Parses one preset's JSON (camelCase keys: id (read as Key), displayName, kind, authorizeUrl, tokenUrl, revokeUrl, defaultScopes, hostGroup, loopbackAllowed, signInNote, pollableEvents, probeUrl, and the optional clientId and deviceCodeUrl of first-run spec decision 15a).</summary>
     /// <param name="json">The file's text.</param>
     /// <returns>The preset, or invalid input naming the key that is wrong.</returns>
     public static Result<ConnectionPreset> Parse(string json)
@@ -38,7 +38,7 @@ public static class ConnectionPresets
             text[name] = value;
         }
 
-        var optional = new Dictionary<string, string?>(StringComparer.Ordinal) { ["revokeUrl"] = Text(root, "revokeUrl"), ["probeUrl"] = Text(root, "probeUrl") };
+        var optional = new Dictionary<string, string?>(StringComparer.Ordinal) { ["revokeUrl"] = Text(root, "revokeUrl"), ["probeUrl"] = Text(root, "probeUrl"), ["deviceCodeUrl"] = Text(root, "deviceCodeUrl") };
         if (PlainHttp(text, optional) is { } plain)
         {
             return Bad($"'{plain}' is not an https URL");
@@ -51,7 +51,11 @@ public static class ConnectionPresets
             return Bad("'kind', 'defaultScopes' or 'loopbackAllowed' is missing or has the wrong type");
         }
 
-        return new ConnectionPreset(text["id"], text["displayName"], kind.Value, text["authorizeUrl"], text["tokenUrl"], optional["revokeUrl"], scopes, text["hostGroup"], loopback, text["signInNote"], [.. PollableEvents.For(text["id"])], optional["probeUrl"]);
+        return new ConnectionPreset(text["id"], text["displayName"], kind.Value, text["authorizeUrl"], text["tokenUrl"], optional["revokeUrl"], scopes, text["hostGroup"], loopback, text["signInNote"], [.. PollableEvents.For(text["id"])], optional["probeUrl"])
+        {
+            ShippedClient = Text(root, "clientId"),
+            DeviceCodeUrl = optional["deviceCodeUrl"],
+        };
     }
 
     private static string? PlainHttp(Dictionary<string, string> text, Dictionary<string, string?> optional) =>

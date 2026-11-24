@@ -52,12 +52,12 @@ public sealed class WorkflowGoldenContractTests
         Assert.Equal("manual", run.Trigger!.Value.GetProperty("kind").GetString());
         Assert.Equal("no drift", run.Outputs!.Value.GetProperty("summary").GetString());
         Assert.True(run.Error is null && run.ItemId is null);
-        Assert.Equal(["agent", "start"], run.Nodes.Select(n => n.Node), StringComparer.Ordinal);
-        Assert.Equal((0, "succeeded", false), (run.Nodes[0].ItemIndex, run.Nodes[0].Status, run.Nodes[0].Truncated));
-        Assert.Null(run.Nodes[0].Error);
-        Assert.Equal("Look for drift", run.Nodes[0].Input!.Value.GetProperty("prompt").GetString());
-        Assert.Equal("no drift", run.Nodes[0].Output!.Value.GetProperty("text").GetString());
-        Assert.Null(run.Nodes[1].Input);
+        Assert.Equal(["start", "agent"], run.Nodes.Select(n => n.Node), StringComparer.Ordinal);   // graph order (#3307)
+        Assert.Equal((0, "succeeded", false), (run.Nodes[1].ItemIndex, run.Nodes[1].Status, run.Nodes[1].Truncated));
+        Assert.Null(run.Nodes[1].Error);
+        Assert.Equal("Look for drift", run.Nodes[1].Input!.Value.GetProperty("prompt").GetString());
+        Assert.Equal("no drift", run.Nodes[1].Output!.Value.GetProperty("text").GetString());
+        Assert.Null(run.Nodes[0].Input);
         Assert.Equal(new WorkflowRunTokens(Used: 0, Budget: null), run.Tokens);
     }
 
@@ -67,8 +67,8 @@ public sealed class WorkflowGoldenContractTests
         var run = Read<WorkflowRunView>("workflow-runs-run", "running");
 
         Assert.True(run.Status == "running" && run.Outputs is null && run.EndedAt is null);
-        Assert.Null(run.Nodes[0].Output);
-        Assert.Equal(JsonValueKind.Object, run.Nodes[0].Input!.Value.ValueKind);
+        Assert.Null(run.Nodes[1].Output);
+        Assert.Equal(JsonValueKind.Object, run.Nodes[1].Input!.Value.ValueKind);
     }
 
     [Fact]

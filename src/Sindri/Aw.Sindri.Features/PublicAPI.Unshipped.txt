@@ -2290,6 +2290,8 @@ Aw.Sindri.Features.GetStatus.SessionStatus.Deconstruct(out int Live, out int Ask
 Aw.Sindri.Features.GetStatus.SessionStatus.Equals(Aw.Sindri.Features.GetStatus.SessionStatus? other) -> bool
 Aw.Sindri.Features.GetStatus.SessionStatus.Live.get -> int
 Aw.Sindri.Features.GetStatus.SessionStatus.Live.init -> void
+Aw.Sindri.Features.GetStatus.SessionStatus.ProblemRows.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.SessionProblem!>!
+Aw.Sindri.Features.GetStatus.SessionStatus.ProblemRows.init -> void
 Aw.Sindri.Features.GetStatus.SessionStatus.Problems.get -> int
 Aw.Sindri.Features.GetStatus.SessionStatus.Problems.init -> void
 Aw.Sindri.Features.GetStatus.SessionStatus.Running.get -> int
@@ -2967,6 +2969,7 @@ Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Repo.get -> string!
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Repo.init -> void
 const Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Later = "later" -> string!
 const Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Ok = "ok" -> string!
+const Aw.Sindri.Features.CodeIndexReads.RepoHealth.QueuedWords = "the first build starts on code-index-main-move's next tick" -> string!
 const Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Pending = "pending" -> string!
 override Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest.Equals(object? obj) -> bool
 override Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest.GetHashCode() -> int
@@ -5715,6 +5718,15 @@ override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.GetHashCode(
 override Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.ToString() -> string!
 static Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.operator !=(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? left, Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? right) -> bool
 static Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse.operator ==(Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? left, Aw.Sindri.Features.TerminalSocket.FindTerminalPaneResponse? right) -> bool
+Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest
+Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.<Clone>$() -> Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest!
+Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.Equals(Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest? other) -> bool
+Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.GetSetupOfflineRequest() -> void
+override Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.ToString() -> string!
+static Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.operator !=(Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest? left, Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest? right) -> bool
+static Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest.operator ==(Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest? left, Aw.Sindri.Features.GetSetup.GetSetupOfflineRequest? right) -> bool
 Aw.Sindri.Features.ListHome.ListHomeRequest
 Aw.Sindri.Features.ListHome.ListHomeRequest.<Clone>$() -> Aw.Sindri.Features.ListHome.ListHomeRequest!
 Aw.Sindri.Features.ListHome.ListHomeRequest.Deconstruct(out Aw.Sindri.Core.Home.HomeGroup? Split, out bool Snoozed, out string? After, out int Limit) -> void
@@ -6212,3 +6224,9 @@ static Aw.Sindri.Features.SearchMessages.SearchMessagesRequest.operator !=(Aw.Si
 static Aw.Sindri.Features.SearchMessages.SearchMessagesRequest.operator ==(Aw.Sindri.Features.SearchMessages.SearchMessagesRequest? left, Aw.Sindri.Features.SearchMessages.SearchMessagesRequest? right) -> bool
 static Aw.Sindri.Features.SearchMessages.SearchMessagesResponse.operator !=(Aw.Sindri.Features.SearchMessages.SearchMessagesResponse? left, Aw.Sindri.Features.SearchMessages.SearchMessagesResponse? right) -> bool
 static Aw.Sindri.Features.SearchMessages.SearchMessagesResponse.operator ==(Aw.Sindri.Features.SearchMessages.SearchMessagesResponse? left, Aw.Sindri.Features.SearchMessages.SearchMessagesResponse? right) -> bool
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.Ci.get -> string?
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.Ci.init -> void
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.Since.get -> System.DateTimeOffset?
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.Since.init -> void
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.WaitsOn.get -> string?
+Aw.Sindri.Features.ResolveLinks.ResolvedLink.WaitsOn.init -> void

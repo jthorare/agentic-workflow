@@ -1,0 +1,47 @@
+{
+  "schema": "aw-replay-fixture/1",
+  "id": "cursor/block-destructive/deny-rm-rf",
+  "provider": "cursor",
+  "scenario": "block-destructive",
+  "verified": "captured",
+  "source": {
+    "hostVersion": "cursor 2026.09.02",
+    "capturedAt": null,
+    "sanitizedBy": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  },
+  "policy": "block-destructive/1",
+  "notes": "Payload copied from config/hooks/tests/fixtures/cursor/ (cursor_version 2026.09.02).",
+  "events": [
+    {
+      "n": 1,
+      "hook": "beforeShellExecution",
+      "script": "block-destructive.sh",
+      "payload": {
+        "conversation_id": "cu-1",
+        "generation_id": "g-1",
+        "model": "claude",
+        "hook_event_name": "beforeShellExecution",
+        "cursor_version": "2026.09.02",
+        "workspace_roots": [
+          "/tmp"
+        ],
+        "user_email": null,
+        "transcript_path": null,
+        "command": "rm -rf node_modules",
+        "cwd": "/tmp",
+        "sandbox": false
+      }
+    }
+  ],
+  "judge": null,
+  "expect": [
+    {
+      "event": 1,
+      "decision": "deny",
+      "reasonCode": null,
+      "textContains": "is destructive"
+    }
+  ]
+}

@@ -12,7 +12,7 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 /// </summary>
 internal sealed partial class ShellViewModel
 {
-    private static readonly string[] _inboxProperties = [nameof(IsNeedsYouInbox), nameof(IsHomeShown), nameof(IsInboxShown), nameof(IsPagesShown)];
+    private static readonly string[] _inboxProperties = [nameof(IsNeedsYouInbox), nameof(IsHomeShown), nameof(IsInboxShown), nameof(IsPagesShown), nameof(IsHomeRowsShown)];
 
     /// <summary>The inbox page.</summary>
     public NeedsYouPageViewModel Inbox { get; }
@@ -20,14 +20,14 @@ internal sealed partial class ShellViewModel
     /// <summary>True while the inbox shows in place of Home's panels (Home stays the page).</summary>
     public bool IsNeedsYouInbox { get; private set; }
 
-    /// <summary>Home's panels show: Home, and not the inbox over it.</summary>
-    public bool IsHomeShown => IsHome && !IsNeedsYouInbox;
+    /// <summary>Home's panels show: Home, not the inbox over it, and not Home as rows.</summary>
+    public bool IsHomeShown => IsHome && !IsNeedsYouInbox && !IsHomeRows;
 
     /// <summary>The inbox shows: it is open and the pages have something to show.</summary>
     public bool IsInboxShown => IsNeedsYouInbox && IsPageVisible;
 
-    /// <summary>The pages' scrolling region shows: the pages are visible and the inbox, which scrolls itself, does not take their place.</summary>
-    public bool IsPagesShown => IsPageVisible && !IsNeedsYouInbox && !IsReviewPageShown;
+    /// <summary>The pages' scrolling region shows: the pages are visible and neither the inbox nor Home's rows, which scroll themselves, take their place.</summary>
+    public bool IsPagesShown => IsPageVisible && !IsNeedsYouInbox && !IsReviewPageShown && !IsHomeRowsShown;
 
     /// <summary>Opens the inbox, on a row when one is named and listed, else on the first row.</summary>
     /// <param name="rowId">The row to select; null for the first.</param>

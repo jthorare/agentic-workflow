@@ -65,8 +65,7 @@ internal sealed partial class GraphRig : IAsyncDisposable
         // why: the real wait polls on a clock; the fake one never moves while a node waits, so the caller gets the system clock
         var caller = new GraphWorkflowCaller(Workflows, Runs, starter, new InMemoryProfiles(), TimeProvider.System);
         Seen = new GraphTestBlocks.MemorySeen();
-        // why: a rig given its own blocks brings its own 'prompt'; the bare rig runs one over Model so the budget tests can count tokens (#3805)
-        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new ForEachBlock(forEachLimits is { } limits ? new FixedForEachLimits(limits) : new DefaultForEachLimits()), new CollectBlock(), new OnlyNewBlock(GraphFence.Seen(Seen)), new RunWorkflowBlock(caller), new WorkflowCallTrigger(), new WaitBlock(clock), new AskOwnerBlock(GraphFence.Question(Questions), clock), new NotifyBlock(GraphFence.Notify(Ports)), new CreateItemBlock(GraphFence.CreateItem(Ports)), .. Blocks.All(), .. moreBlocks ?? [new PromptBlock(Model)]]);
+        var registry = Registry(caller, clock, forEachLimits, moreBlocks);
         var options = new TemporalWorkerOptions(_taskQueue) { LoggerFactory = _log }
             .AddWorkflow<GraphWorkflow>()
             .AddWorkflow<GraphIterationWorkflow>()
@@ -81,6 +80,10 @@ internal sealed partial class GraphRig : IAsyncDisposable
         _worker = new TemporalWorker(Client, options);
         _loop = _worker.ExecuteAsync(_stop.Token);
     }
+
+    // why: a rig given its own blocks brings its own 'prompt'; the bare rig runs one over Model so the budget tests can count tokens (#3805)
+    private GraphBlockRegistry Registry(GraphWorkflowCaller caller, FakeTimeProvider clock, ForEachLimits? forEachLimits, IReadOnlyList<IGraphBlock>? moreBlocks) =>
+        new([new ManualBlock(), new ConditionBlock(), new ForEachBlock(forEachLimits is { } limits ? new FixedForEachLimits(limits) : new DefaultForEachLimits()), new CollectBlock(), new OnlyNewBlock(GraphFence.Seen(Seen)), new RunWorkflowBlock(caller), new WorkflowCallTrigger(), new WaitBlock(clock), new AskOwnerBlock(GraphFence.Question(Questions), clock), new NotifyBlock(GraphFence.Notify(Ports)), new CreateItemBlock(GraphFence.CreateItem(Ports)), .. Blocks.All(), .. moreBlocks ?? [new PromptBlock(Model)]]);
 
     public InMemoryWorkflowRunStore Runs { get; }
 

@@ -1,0 +1,162 @@
+# Retry guard: the state file
+
+The retry guard stops an agent from repeating a tool call that already failed when nothing has changed since (issue 4248).
+Two hooks share one state file per session:
+
+- `config/hooks/retry-record.sh` runs after a tool call. On a failure, it classifies the error text and records the
+  problem. On a success, it clears the problem of that same call, if there is one.
+- `config/hooks/retry-gate.sh` runs before a tool call. With no state file, it exits 0 at once. Otherwise, it hashes the
+  call and denies it or adds advice, by the table in "What the gate does".
+
+aw-meta (`problem-sync`, Phase B) and the judge (`RepeatProgressQuestion`, Phase C) read this file. They code against this
+document, so a change to a field here is a change to their contract: bump `version`.
+
+## Where it lives
+
+`$AW_STATE_DIR/retry-guard/<session id>.json` (default `AW_STATE_DIR` is `~/.agentic-workflow`). The folder is 0700 and the
+file 0600. A session id must match `^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`, or the hooks write nothing.
+
+- Writers take the mkdir lock `<file>.lock` holding their pid (`rg_lock` in `config/lib/retry-guard.sh`: the lock
+  `config/lib/locks.sh` makes, retried every 50 ms for 2 s, a dead holder reclaimed). A writer writes the whole file to
+  `<file>.tmp.<pid>` and renames it over the file, so a reader never sees half a file. Readers take no lock.
+- turn-origin's 24 h sweep removes files older than a day, as it does for `judge/sessions`.
+- A file that does not parse, or has another `version`, is removed. The hook then logs one `HOOK-FAILOPEN` line (cause
+  `state-unreadable`) and allows the call. The next failure starts a new file.
+
+## Fields
+
+| Field | Type | Meaning |
+|---|---|---|
+| `version` | integer | The file format, `1`. |
+| `policy` | string | The classifier version, `retry-guard/1`. A file with another policy is read as empty, so old problems never match new rules. |
+| `session` | string | The session id (the file name without `.json`). |
+| `provider` | string | `claude`, `codex` or `cursor` (`AW_PROVIDER`, default `claude`). |
+| `updatedAt` | string | UTC time of the last write, `YYYY-MM-DDTHH:MM:SSZ`. |
+| `problems` | object | The open problems, keyed by call hash (see below). A cleared problem is removed. |
+| `overrides` | array | The last 50 overrides, oldest first (see below). aw-meta turns new ones into events. |
+| `counters` | object | Totals for the session (see below). |
+
+### A problem: `problems.<call hash>`
+
+| Field | Type | Meaning |
+|---|---|---|
+| `key` | string | `<session>\|<kind>\|<resource>\|<policy>`: the one problem key aw-meta dedupes on. |
+| `kind` | string | `missing-exe`, `auth-expired`, `bad-args`, `missing-path`, `transient` or `unknown`. |
+| `resource` | string | What to fix: the executable name (`missing-exe`), the auth host such as `github.com` (`auth-expired`), the missing path, absolute (`missing-path`), or the call hash (`bad-args`, `transient`, `unknown`). At most 256 characters, no control characters. |
+| `tool` | string | The tool name after the adapter's mapping (`Bash`, `Read`, `mcp__github__get_pr`, ...). |
+| `exe` | string | The first word of a Bash command (`gh`, `rg`), or `""` for other tools. Used in the deny text. |
+| `failures` | integer | Identical failures recorded for this hash, 1 or more. |
+| `denies` | integer | Calls of this hash the gate denied. |
+| `advisories` | integer | Calls of this hash the gate allowed with advice. |
+| `wouldDeny` | integer | Calls of this hash the gate would have denied in advisory mode (the default; see "Mode"). |
+| `firstAt`, `lastAt` | string | UTC times of the first and the latest recorded failure. |
+| `retryAfter` | string | `transient` only: the earliest time a retry is not "too soon", or `""`. The wait doubles from 30 s per failure, up to 300 s. |
+| `authStamp` | string | `auth-expired` only: the mtime (epoch seconds) of the provider's auth file when the failure was recorded, or `""` when no auth file is known for the host. For `github.com` the file is `${GH_CONFIG_DIR:-~/.config/gh}/hosts.yml`. |
+| `errorHash` | string | sha256 (hex) of the last failure's error text, as the classifier read it (the first 8 KiB). The text itself is never stored. |
+| `errorHashes` | array | The distinct `errorHash` values this call has failed with, oldest first, at most the last 16. Bookkeeping for `distinctErrors`. |
+| `distinctErrors` | integer | How many different error texts this call has failed with. 1 with `failures` > 1 means the same failure again; it rising with `failures` means each try got new output, such as a poll seeing new state. Past 16 distinct texts an evicted one that comes back counts again. |
+
+### An override: `overrides[]`
+
+| Field | Type | Meaning |
+|---|---|---|
+| `hash` | string | The call hash that was let through. |
+| `kind` | string | The kind of its problem. |
+| `reason` | string | The text after `# aw-retry:` in the Bash command: control characters turned into spaces, trimmed, at most 200 characters, and passed to no other tool. Never empty: a marker with an empty or blank reason is no override (see below). |
+| `at` | string | UTC time. |
+
+### Counters: `counters`
+
+All integers, starting at 0.
+
+| Field | Counts |
+|---|---|
+| `failures` | Failures recorded (every kind). |
+| `denies` | Calls denied (block mode only). |
+| `wouldDeny` | Calls the gate would have denied, allowed with the deny text as advice instead (advisory mode, the default). A replay with 0 wrong would-be denies is what lets the guard switch to block. |
+| `advisories` | Calls allowed with advice. |
+| `overrides` | Calls let through by `# aw-retry:`. |
+| `cleared` | Problems removed because the same call then succeeded, or because the gate saw the prerequisite change. |
+| `clearedAfterChange` | Of `cleared`: problems that had been denied, would-be denied or advised at least once before they cleared. Each one is a retry the guard avoided. |
+
+## The call hash
+
+`sha256` (hex, lowercase) of the tool name, one newline, then `jq -S -c .tool_input` of the payload. For `Bash`, a trailing
+`# aw-retry: <reason>` comment is removed from `tool_input.command` first, so an override hashes the same as the call it
+repeats. Any changed argument gives a new hash. The hooks store the hash, never the input or the tool output.
+
+## What the gate does
+
+| Kind | Classified from (case-insensitive) | Gate, for the same hash |
+|---|---|---|
+| `missing-exe` | `command not found`, `Exit code 127` | Deny while `command -v <exe>` still fails. Once it succeeds, clear the problem. |
+| `auth-expired` | `HTTP 401`, `401 Unauthorized`, `status 401` (a bare 401, such as "line 401", does not count), `bad credentials`, `token expired`, `gh auth login`, `authentication required`, `not logged in` | Deny once while the auth file's mtime is unchanged and less than 10 min have passed. After that, advise. A changed mtime clears the problem. |
+| `bad-args` | `unknown flag`, `unknown option`, `unknown command`, `invalid option`, `unrecognized option`, `usage:`, `invalid argument` | Bash: deny. Other tools: advise only. |
+| `missing-path` | `No such file or directory` with a path in the text, or `File does not exist` from a tool with a `file_path` or `path` argument | Deny while the path still does not exist. Once it exists, clear the problem. |
+| `transient` | `timed out`, `timeout`, `could not resolve host`, `temporary failure in name resolution`, `connection reset`, `connection refused`, `HTTP 5xx`, `rate limit` | Never deny. Advise "wait N s" while `retryAfter` is in the future. |
+| `unknown` | anything else | Never deny. Advise from the 3rd identical failure on. |
+
+The table is checked top to bottom: the first kind that matches wins. An interrupt (`is_interrupt: true`) is never recorded.
+
+## Mode
+
+The guard ships advisory (#4257). In advisory mode a call the table says to deny is allowed: the deny text goes out as
+advice (`additionalContext`, exit 0), and `wouldDeny` is counted on the problem and in `counters`. With
+`AW_POLICY_RETRY_GUARD_1_MODE=block` the gate denies as the table says (exit 2). Unset or any other value is advisory.
+The auth row's "deny once" counts a would-be deny as that one deny. A shared reader, `policy_mode retry-guard/1` in
+`config/lib/policy.sh`, replaces the variable later (#4257).
+
+The override: a Bash command that ends in `# aw-retry: <reason>` passes, and the gate records it in `overrides` with its
+reason. The reason is required. A marker with an empty or blank reason (`# aw-retry:`) is no override: the call is judged as
+if the marker were not there, and a deny adds that the override needs a reason.
+
+A deny exits 2 with one line on stderr that names the fix, for example:
+`` retry-guard: `rg` is not installed (this exact call failed with "command not found"). Install it or use another command. To repeat it on purpose, end the command with `# aw-retry: <reason>`. ``
+
+Advice exits 0 with `{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"retry-guard: ..."}}` on stdout.
+
+## Example
+
+```json
+{
+  "version": 1,
+  "policy": "retry-guard/1",
+  "session": "5f0c2a9e-1b7d-4c1e-9d2a-0a6b1c2d3e4f",
+  "provider": "claude",
+  "updatedAt": "2026-11-24T10:04:12Z",
+  "problems": {
+    "3b1f0c4e9a7d2b6c8e5f1a0d4c7b9e2f6a3d8c1b5e0f7a2d9c4b6e1f8a3d5c7b": {
+      "key": "5f0c2a9e-1b7d-4c1e-9d2a-0a6b1c2d3e4f|missing-exe|rg|retry-guard/1",
+      "kind": "missing-exe",
+      "resource": "rg",
+      "tool": "Bash",
+      "exe": "rg",
+      "failures": 1,
+      "denies": 2,
+      "advisories": 0,
+      "wouldDeny": 0,
+      "firstAt": "2026-11-24T10:03:40Z",
+      "lastAt": "2026-11-24T10:03:40Z",
+      "retryAfter": "",
+      "authStamp": "",
+      "errorHash": "6f1d8a2c9b4e7f3a0d5c8b1e4a7f2d9c6b3e0a5d8c1f4b7e2a9d6c3f0b5e8a1d",
+      "errorHashes": ["6f1d8a2c9b4e7f3a0d5c8b1e4a7f2d9c6b3e0a5d8c1f4b7e2a9d6c3f0b5e8a1d"],
+      "distinctErrors": 1
+    }
+  },
+  "overrides": [
+    { "hash": "9e2f6a3d8c1b5e0f7a2d9c4b6e1f8a3d5c7b3b1f0c4e9a7d2b6c8e5f1a0d4c7b", "kind": "unknown", "reason": "polling the deploy", "at": "2026-11-24T10:01:02Z" }
+  ],
+  "counters": { "failures": 4, "denies": 2, "wouldDeny": 0, "advisories": 1, "overrides": 1, "cleared": 2, "clearedAfterChange": 1 }
+}
+```
+
+## Provider coverage
+
+| Provider | Failure input | Pre-tool deny |
+|---|---|---|
+| Claude Code | `PostToolUseFailure` (`error`, `is_interrupt`); `PostToolUse` clears | every tool (`PreToolUse .*`) |
+| Codex (unverified: no captured payload) | `PostToolUse` whose shell `tool_response` says `Exit code: N` or `Process exited with code N`, or has an `exit_code`, with N not 0. The adapter keeps the event `PostToolUse` (other hooks see no change) and adds `aw_tool_failed: true` and `error` (the result text, 8 KiB at most) | every tool the Codex adapter maps |
+| Cursor | `postToolUseFailure` (`error_message`, `is_interrupt`); `postToolUse` clears | `preToolUse` and `beforeShellExecution`. Post-tool output is advice only (`additional_context`) |
+
+The adapters README holds the full table (`config/hooks/adapters/README.md`).

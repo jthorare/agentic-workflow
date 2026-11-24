@@ -17,6 +17,9 @@ public sealed class ContextChoiceTitlesTests
     private static readonly RouteAnswer _unknown = new(HttpStatusCode.NotFound,
         $$"""{"type":"about:blank","title":"SND-CONTEXT-003","status":404,"detail":"no node is named 'how are tabs restored' (fix: try {{Restore}}, {{Groups}})","traceId":"<trace>","suggestedAnchors":["{{Restore}}","{{Groups}}"],"choices":[{"key":"{{Restore}}","label":"Tab layout and restore","kind":"action"},{"key":"{{Groups}}","label":"Tab groups","kind":"concept"}]}""");
 
+    private static readonly RouteAnswer _bareKeys = new(HttpStatusCode.NotFound,
+        $$"""{"type":"about:blank","title":"SND-CONTEXT-003","status":404,"detail":"no node is named 'feature:tabs.nope' (fix: try {{Groups}})","traceId":"<trace>","suggestedAnchors":["{{Groups}}"]}""");
+
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private static ContextPageViewModel Page(FakeSindriApi api)
@@ -39,6 +42,23 @@ public sealed class ContextChoiceTitlesTests
 
         await page.Pick(page.ChoiceRows[1].Key, Token);
         Assert.Equal(Groups, page.AnchorText);
+    }
+
+    [Fact]
+    public async Task A_read_that_draws_a_map_forgets_the_titles_of_the_choices_before_it()
+    {
+        var server = new FakeSindriApi { LensesAnswer = _ => _unknown };
+        var page = Page(server);
+        page.AnchorText = "feature:tabs.nope";
+        await page.Submit(Token);
+        server.LensesAnswer = _ => new RouteAnswer(HttpStatusCode.OK, GoldenFiles.Node("context-lenses", "map-tabs").ToJsonString());
+        await page.Submit(Token);
+        server.LensesAnswer = _ => _bareKeys;
+
+        await page.Submit(Token);
+
+        // why: the titles were kept by key for good, so a later refusal that sends bare keys showed titles from an old read (#3045)
+        Assert.Equal([new ContextChoice(Groups, Groups, string.Empty)], page.ChoiceRows);
     }
 
     [Fact]
