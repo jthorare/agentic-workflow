@@ -21,13 +21,12 @@ internal sealed partial class WholeMapCanvas
         {
             var lane = new Rect(0, band.LaneTop, geometry.World.Width, band.LaneBottom - band.LaneTop);
             context.DrawRectangle(fill, line, lane, radiusX: Radius, radiusY: Radius);
-            var accent = Brush(BandAccent(band.Band));
-            var size = dots ? LaneTitleSize / Math.Max(Scale, 0.25) : LaneTitleSize;
-            var title = Text(NodeBands.Title(band.Band), size, accent, 240, bold: true);
+            var size = LaneSize(dots);
+            var title = LaneTitle(band, size, Brush(BandAccent(band.Band)));
             context.DrawText(title, new Point(WholeMapLayout.Margin / 2, band.LaneTop + 3));
             if (band.Meta.Length > 0)
             {
-                context.DrawText(Text(band.Meta, size * 0.9, muted, Math.Max(80, geometry.World.Width - 360)), new Point((WholeMapLayout.Margin / 2) + title.WidthIncludingTrailingWhitespace + 12, band.LaneTop + 3));
+                context.DrawText(LaneMeta(geometry, band, title, size, muted), new Point(LaneMetaX(title), band.LaneTop + 3));
             }
         }
     }

@@ -291,7 +291,11 @@
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock x:Name="ContextIndexEyebrow" Classes="section-title head-title" Text="{Binding Heading}" AutomationProperties.Name="{Binding Heading}" />
-                <TextBlock x:Name="ContextIndexWord" Grid.Column="1" Classes="body-strong head-word" Text="{Binding Word}" AutomationProperties.Name="{Binding Word}" />
+                <!-- #4129: the word's mark, as the Control plane card's: the ok check, or the attention mark for "needs a look". -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+                  <icons:StateIcon x:Name="ContextIndexGlyph" Glyph="{Binding Glyph}" VerticalAlignment="Center" />
+                  <TextBlock x:Name="ContextIndexWord" Classes="body-strong head-word" Text="{Binding Word}" AutomationProperties.Name="{Binding Word}" />
+                </StackPanel>
               </Grid>
               <StackPanel x:Name="ContextIndexBacklog" Spacing="{StaticResource Space.XS}" IsVisible="{Binding HasBacklog}"
                           Margin="0,8">
@@ -331,6 +335,18 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
+              <!-- #4012: while the count is above 0, each problem's sentence and code, one wrapped line each, and a link to the Agents page. -->
+              <ItemsControl x:Name="AgentsProblems" ItemsSource="{Binding AgentsProblemLines}" IsVisible="{Binding HasAgentsProblems}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="shell:AgentProblemLine">
+                    <TextBlock Classes="body" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text}">
+                      <Run Text="{Binding Text}" /><Run Classes="subtle" Text=" · " /><Run Classes="subtle" Text="{Binding Code}" />
+                    </TextBlock>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Button x:Name="AgentsLink" Classes="row-title" IsVisible="{Binding HasAgentsProblems}" Click="OnOpenAgents" Content="{Binding AgentsLinkText}"
+                      AutomationProperties.Name="{Binding AgentsLinkText}" />
             </StackPanel>
           </Border>
         </Border>

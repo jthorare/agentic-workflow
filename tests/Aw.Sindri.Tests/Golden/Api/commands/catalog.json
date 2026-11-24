@@ -636,6 +636,24 @@
       "confirm": null
     },
     {
+      "action": "DisconnectAccount",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "DELETE",
+      "route": "/sindri/setup/accounts/{provider}",
+      "cli": "sindri setup disconnect <provider>",
+      "ui": "pending:FR5",
+      "destructive": true,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "EmbedCodeIndex",
       "class": "job",
       "allowedCallers": [
@@ -1590,6 +1608,24 @@
       "method": "PUT",
       "route": "/sindri/workflows/{slug}",
       "cli": "sindri wf edit <slug> --base <revision> --file <specFile>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "RerunWorkflowRun",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflow-runs/{run}/rerun",
+      "cli": "sindri wf rerun <run> --from <node> [--input <json>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,

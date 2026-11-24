@@ -79,20 +79,11 @@ jobs:
           node-version-file: .nvmrc
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         if: env.CHANGED == 'true'
+        # The SDK stays for the suites that dotnet-build a tool themselves: forge-fixture and cutover-clean-ts (#4276).
         with:
           global-json-file: global.json
           cache: true
           cache-dependency-path: "**/packages.lock.json"
-      - name: Publish the C# judge and sindri the suites call
-        if: env.CHANGED == 'true'
-        # The suites run the real binaries (hooks, installers, the nudge), never a TS build. Judge is the NativeAOT
-        # publish the hooks run; sindri is framework-dependent (the Temporal worker cannot be trimmed). The paths go to
-        # the later steps through GITHUB_ENV; scripts/ci/bash-tests.sh keeps them in every suite's environment.
-        run: |
-          dotnet publish src/Judge/Aw.Judge.Host/Aw.Judge.Host.csproj -c Release -o "$RUNNER_TEMP/cs-bin/judge" -nologo -v quiet
-          dotnet publish src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj -c Release -o "$RUNNER_TEMP/cs-bin/sindri" -nologo -v quiet
-          echo "AW_JUDGE_CS_BIN=$RUNNER_TEMP/cs-bin/judge/judge" >> "$GITHUB_ENV"
-          echo "AW_SINDRI_CS_BIN=$RUNNER_TEMP/cs-bin/sindri/sindri" >> "$GITHUB_ENV"
       - name: Run every tracked bash test suite
         if: env.CHANGED == 'true'
         # The leak check fails the step when the run leaves a new aw-* or tmp.* entry in $TMPDIR (#3262); it deletes nothing.
@@ -130,6 +121,12 @@ jobs:
           fi
       - name: Rule records name real checks
         run: node scripts/check-rules.mjs
+      - name: Sindri MCP tool examples match the last-known tools/list golden
+        # Here, not in the Bash tests job: a C# PR that changes a tool's schema (and its golden) runs only the .NET
+        # job and this one, and a skill PR that adds an `mcp: sindri/<tool>` call runs this one too (issue 4249).
+        run: |
+          npm ci --prefix scripts --ignore-scripts --no-audit --no-fund
+          node scripts/check-tool-examples.mjs
       - name: Prose on the changed Markdown (Vale, scripts/check-prose.sh)
         # Only hits on added lines fail, so a PR never inherits an old file's slop (issue 2919). The base is the PR's
         # base, the merge group's base, or the pushed range's start; a run with no base (a dispatch, a new branch)

@@ -73,6 +73,7 @@ internal sealed partial class ContextPageViewModel
         }
 
         NoteConcepts(read, fresh);
+        NoteRepos(read.IsSuccess ? read.Value.Repos : null);
         CountNoConcept(read.IsSuccess ? read.Value : null);
         if (!Concepts.HasConcepts)
         {

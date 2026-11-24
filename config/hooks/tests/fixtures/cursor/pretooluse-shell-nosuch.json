@@ -1,0 +1,1 @@
+{"conversation_id":"cursor-fixture-1","generation_id":"gen-2","model":"claude-sonnet","hook_event_name":"preToolUse","workspace_roots":["/tmp"],"cwd":"/tmp","tool_name":"Shell","tool_input":{"command":"aw-nosuch-tool --version"},"tool_use_id":"tool-2"}

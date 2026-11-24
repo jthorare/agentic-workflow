@@ -4,7 +4,8 @@ using Aw.Sindri.Ui.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Platform;
 
-/// <summary>A file opens in the configured editor, as an argv list with no shell, and falls back to the system default when none is set or it won't start (#3715).</summary>
+/// <summary>A file opens in the configured editor, as an argv list with no shell, and falls back to the system default when none is set or it won't start (#3715),
+/// or when it is a terminal editor, which has no terminal to draw in here (#3836).</summary>
 [Lane(TestLane.Unit)]
 public sealed class EditorLauncherTests
 {
@@ -43,16 +44,47 @@ public sealed class EditorLauncherTests
         {
             var odd = Path.Combine(dir.FullName, "a b;$(x)#.cs");
             await File.WriteAllTextAsync(odd, "x", Token);
-            var (launcher, _, started) = Make(new EditorEnvironment(Configured: "vim", Visual: null, Editor: null));
+            var (launcher, _, started) = Make(new EditorEnvironment(Configured: "code", Visual: null, Editor: null));
 
             Assert.True(await launcher.OpenFile(odd, Token));
 
-            Assert.Equal(["vim", odd], started[0], StringComparer.Ordinal);
+            Assert.Equal(["code", odd], started[0], StringComparer.Ordinal);
         }
         finally
         {
             dir.Delete(recursive: true);
         }
+    }
+
+    [Theory]
+    [InlineData(null, null, "vim")]
+    [InlineData(null, null, "/usr/bin/vim")]
+    [InlineData(null, "emacs -nw", null)]
+    [InlineData("nvim", "code", null)]
+    [InlineData(null, null, "nano")]
+    public async Task A_terminal_editor_opens_the_file_with_the_system_default(string? configured, string? visual, string? editor)
+    {
+        var (launcher, inner, started) = Make(new EditorEnvironment(configured, visual, editor));
+
+        Assert.True(await launcher.OpenFile(_file, Token));
+
+        Assert.Empty(started);
+        Assert.Equal([_file], inner.Opened, StringComparer.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("emacs", "emacs")]
+    [InlineData("code", "code")]
+    [InlineData("code -w", "code")]
+    [InlineData("/usr/bin/gvim -f", "/usr/bin/gvim")]
+    public async Task A_gui_editor_still_gets_the_file(string editor, string program)
+    {
+        var (launcher, inner, started) = Make(new EditorEnvironment(Configured: null, Visual: null, Editor: editor));
+
+        Assert.True(await launcher.OpenFile(_file, Token));
+
+        Assert.Equal(program, Assert.Single(started)[0], StringComparer.Ordinal);
+        Assert.Empty(inner.Opened);
     }
 
     [Fact]

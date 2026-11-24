@@ -123,6 +123,21 @@ public sealed class MessagesStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task A_window_names_each_author_from_the_users_table_and_leaves_an_unknown_one_null()
+    {
+        await _home.Conversation("T0HARBOR", Harbor, ConversationKind.Channel);
+        _ = await _home.Put(
+            new StoredMessage(Harbor, new MessageTs(AdaRoot), ThreadTs: null, "U0ADA", "fare table ready", Mine: false, NamesMe: false),
+            new StoredMessage(Harbor, new MessageTs(LeeRoot), ThreadTs: null, "U0LEE", "lunch Friday", Mine: false, NamesMe: false));
+        _home.Exec("INSERT INTO users (id, workspace, name, real_name, display_name) VALUES ('U0ADA', 'T0HARBOR', 'ada', 'Ada Moss', '')");
+
+        var window = await _home.Store.Window(Harbor, before: null, after: null, limit: 10, Cancel);
+
+        Assert.True(window.IsSuccess, window.IsError ? window.Error.Message : null);
+        Assert.Equal([("U0ADA", "Ada Moss"), ("U0LEE", null)], window.Value.Lines.Select(static l => (l.Author, l.AuthorName)));   // an empty display name falls back to the real name
+    }
+
+    [Fact]
     public async Task An_edited_message_is_found_by_its_new_text_and_not_its_old_text()
     {
         await _home.Conversation("T0HARBOR", Harbor, ConversationKind.Channel);

@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Text;
 using System.Text.Json.Nodes;
 using Aw.Connectors.Testing.Server;
 using Aw.Connectors.Testing.Slack;
@@ -73,5 +74,19 @@ public sealed class FakeSlackHostTests
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         Assert.Contains("unexpected route", await response.Content.ReadAsStringAsync(Ct), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task The_host_reads_a_body_without_a_content_type_as_form_fields()
+    {
+        await using var host = await FakeSlackHost.Start(new FakeSlackServer().SeedWorkspace(), cancellationToken: Ct);
+        using var client = new HttpClient { BaseAddress = host.BaseUrl };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+        using var body = new ByteArrayContent(Encoding.UTF8.GetBytes("user=" + Pat));
+
+        using var response = await client.PostAsync(new Uri("api/users.info", UriKind.Relative), body, Ct);
+
+        var user = JsonNode.Parse(await response.Content.ReadAsStringAsync(Ct))!["user"]!;
+        Assert.Equal(Pat, user["id"]!.GetValue<string>());
     }
 }

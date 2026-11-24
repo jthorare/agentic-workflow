@@ -37,13 +37,19 @@ public sealed class MetaSweep(InboxSync sync, LaneRefresher refresher, Obligatio
 
         // A figure that can't be read never blocks a stop: an unmeasured lane owes nothing.
         var measured = await context.ReadLane(config.Team, config.MetaLane, config.Context.RecycleAt, cancellationToken).ConfigureAwait(false);
-        var waiting = await WaiterRunning(config.MetaLane, cancellationToken).ConfigureAwait(false);
+        var waiting = await RecycleWaiterRunning(config.MetaLane, cancellationToken).ConfigureAwait(false);
         return await reader.Open(config.MetaLane, now, cancellationToken, measured.IsSuccess ? measured.Value : null, waiting).ConfigureAwait(false);
     }
 
-    // The waiter clears its record in a finally, which a SIGKILL, an OOM kill or a reboot never runs: a dead pid does not count, as in
-    // RecycleWaiter's own check. A liveness read that fails counts as running, so a figure that can't be read never blocks a stop.
-    private async ValueTask<bool> WaiterRunning(string lane, CancellationToken cancellationToken)
+    /// <summary>
+    /// Whether a live recycle waiter is recorded for the lane. The waiter clears its record in a finally, which a SIGKILL, an OOM kill or a
+    /// reboot never runs: a dead pid does not count, as in RecycleWaiter's own check. A liveness read that fails counts as running, so a
+    /// figure that can't be read never blocks a stop.
+    /// </summary>
+    /// <param name="lane">The lane.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>True while a recorded waiter's pid runs.</returns>
+    public async ValueTask<bool> RecycleWaiterRunning(string lane, CancellationToken cancellationToken)
     {
         var waiter = await files.Waiter(lane, cancellationToken).ConfigureAwait(false);
         if (!waiter.IsSuccess || waiter.Value is not { } recorded)
