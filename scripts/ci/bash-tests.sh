@@ -118,6 +118,7 @@ SERIAL=(
   "config/lib/tests/installed-hooks-smoke.test.sh	runs scripts/install-judge-hooks.sh for real and fires the installed hooks against a fake judge under their timeouts; it built judge/dist before the cutover and stays serial until the switch PR rechecks it"
   "config/lib/tests/install-wake-gating.test.sh	runs scripts/install-judge-hooks.sh and the wake-gating hooks against a fake judge under their timeouts; it built judge/ before the cutover and stays serial until the switch PR rechecks it"
   "scripts/tests/forge-fixture.test.sh	dotnet-builds src/Forge in the shared checkout (obj dirs), which races any other dotnet build there; builds once, then runs git and jq only"
+  "scripts/tests/aw-run.test.sh	times a 2 s timeout and a 1 s grace, waits 5 s for a zombie the KILL can't remove and sends INT mid-run; a loaded machine shifts the windows"
   "scripts/tests/run-test-guard.test.sh	asserts a 2 s timeout plus 3 s grace returns within 20 s and reaps a daemonized sleep by token; a loaded machine shifts the windows"
   "scripts/tests/cutover-clean-ts.test.sh	dotnet-builds src/BugFix in the shared checkout (obj dirs), which races any other dotnet build there; builds once, then runs git and jq only"
   "scripts/tests/aot-smoke-cleanup.test.sh	starts fake serve and temporal processes that ignore TERM and polls up to 15 s per scenario for them to be gone; a loaded machine shifts the windows"
