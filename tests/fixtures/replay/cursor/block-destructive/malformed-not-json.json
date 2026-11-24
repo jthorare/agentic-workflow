@@ -1,0 +1,33 @@
+{
+  "schema": "aw-replay-fixture/1",
+  "id": "cursor/block-destructive/malformed-not-json",
+  "provider": "cursor",
+  "scenario": "block-destructive",
+  "verified": "unverified",
+  "source": {
+    "hostVersion": "cursor 2026.09.02",
+    "capturedAt": null,
+    "sanitizedBy": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  },
+  "policy": "block-destructive/1",
+  "notes": "Stdin that is not JSON: the hook fails open with one HOOK-FAILOPEN line.",
+  "events": [
+    {
+      "n": 1,
+      "hook": "beforeShellExecution",
+      "script": "block-destructive.sh",
+      "payloadRaw": "not json {"
+    }
+  ],
+  "judge": null,
+  "expect": [
+    {
+      "event": 1,
+      "decision": "abstain",
+      "reasonCode": null,
+      "textContains": null
+    }
+  ]
+}

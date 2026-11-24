@@ -1,0 +1,1 @@
+{"conversation_id": "cursor-dup-1", "generation_id": "gen-1", "model": "claude-sonnet", "hook_event_name": "preToolUse", "workspace_roots": ["/tmp"], "cwd": "/tmp", "tool_name": "Shell", "tool_input": {"command": "while true; do gh pr checks 7 --repo acme/app; sleep 60; done"}, "tool_use_id": "tool-1"}

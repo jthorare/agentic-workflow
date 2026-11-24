@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-workflow.local/schemas/replay-fixture.schema.json",
+  "title": "replay fixture",
+  "description": "One replay case (#4257): one session's hook events for one provider and what each event should decide. Path: tests/fixtures/replay/<provider>/<scenario>/<case>.json, at most 64 KB, and id equals that path without .json. The runner (scripts/replay/run-hooks.sh) pipes each payload to the real hook as data and never runs it. Contract: docs/hooks/replay.md. Validate with Ajv2020; the checks a schema can't make (id equals the path, event numbers ascending, expect names a hook event, reviewedBy set, no secrets or home paths) are scripts/check-replay-fixtures.sh's.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "provider", "scenario", "verified", "source", "policy", "events", "expect"],
+  "properties": {
+    "schema": { "const": "aw-replay-fixture/1" },
+    "id": {
+      "type": "string",
+      "pattern": "^(claude|codex|cursor)/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9][a-z0-9._-]{0,63}$",
+      "description": "<provider>/<scenario>/<case>: the file's path under tests/fixtures/replay/ without .json."
+    },
+    "provider": { "enum": ["claude", "codex", "cursor"] },
+    "scenario": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "maxLength": 48,
+      "description": "The scenario id (docs/hooks/replay.md \"Scenarios\"), equal to the id's middle part."
+    },
+    "verified": {
+      "enum": ["captured", "unverified"],
+      "description": "captured: every payload is copied from a real run of source.hostVersion. unverified: a shape inferred from docs or another host. Unverified cases run and print but never count toward promotion."
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hostVersion", "capturedAt", "sanitizedBy", "reviewedBy", "reviewedAt"],
+      "properties": {
+        "hostVersion": { "type": "string", "minLength": 1, "maxLength": 64, "description": "The host and its version, such as claude-code 2.1.4. For an unverified case: the version whose docs gave the shape." },
+        "capturedAt": { "type": ["string", "null"], "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "description": "The day of the real run; null for an unverified case." },
+        "sanitizedBy": { "type": ["string", "null"], "maxLength": 64, "description": "The sanitizer and its version, such as judge replay sanitize 1; null for a hand-written case." },
+        "reviewedBy": { "type": ["string", "null"], "maxLength": 64, "description": "Who read the sanitized text. The sanitizer writes null; a merged fixture has a name (check-replay-fixtures.sh)." },
+        "reviewedAt": { "type": ["string", "null"], "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+      }
+    },
+    "policy": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*/[0-9]+$",
+      "description": "The policy id the case scores, a key of config/policy/interventions.json, such as retry-guard/1."
+    },
+    "pendingHook": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "description": "Set while the hook the case needs is not on main yet (the issue and the script, such as #4221 duplicate-script.sh). The runner still runs the case; the report counts each of its expect rows as notCovered, never as correct or wrong."
+    },
+    "notes": { "type": "string", "maxLength": 500 },
+    "world": { "$ref": "#/$defs/world" },
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 200,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/hookEvent" },
+          { "$ref": "#/$defs/worldEvent" },
+          { "$ref": "#/$defs/resetEvent" }
+        ]
+      }
+    },
+    "judge": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["verdicts"],
+      "properties": {
+        "verdicts": {
+          "type": "string",
+          "pattern": "^verdicts/[a-z0-9][a-z0-9._-]*\\.jsonl$",
+          "description": "The recorded judge answers, relative to tests/fixtures/replay/<provider>/. null or no judge: the case expects no judge call, and any call reads as judge unavailable."
+        }
+      }
+    },
+    "expect": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/expectation" }
+    }
+  },
+  "$defs": {
+    "n": { "type": "integer", "minimum": 1, "maximum": 200, "description": "The event's number; unique and ascending in events." },
+    "world": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What the temp root holds. A description, not state: the runner builds it. Each later world event applies on top.",
+      "properties": {
+        "commandsOnPath": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$" },
+          "description": "Names the runner puts on PATH as empty stub executables that exit 0."
+        },
+        "files": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^__ROOT__/[^\\0]{1,200}$", "not": { "pattern": "(^|/)\\.\\.(/|$)" } },
+          "description": "Empty files the runner makes under the temp root."
+        },
+        "authFileMtime": {
+          "type": "object",
+          "maxProperties": 8,
+          "propertyNames": { "pattern": "^[a-z0-9.-]{1,64}$" },
+          "additionalProperties": { "type": "integer", "minimum": 0 },
+          "description": "Host name -> the mtime (epoch seconds) of that host's auth file under the temp HOME."
+        }
+      }
+    },
+    "hookEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["n", "hook", "script"],
+      "dependentRequired": { "padBytes": ["payload"] },
+      "oneOf": [
+        { "required": ["payload"], "properties": { "payload": true } },
+        { "required": ["payloadRaw"], "properties": { "payloadRaw": true } },
+        { "required": ["payloadBase64"], "properties": { "payloadBase64": true } }
+      ],
+      "properties": {
+        "n": { "$ref": "#/$defs/n" },
+        "hook": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9]{0,47}$",
+          "description": "The host's own event name, as in its hook config: PreToolUse (Claude, Codex), beforeShellExecution (Cursor)."
+        },
+        "script": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*\\.sh$",
+          "description": "The canonical hook script in config/hooks/. Claude: the runner pipes the payload to it. Codex and Cursor: through config/hooks/adapters/<provider>.sh <script>."
+        },
+        "payload": { "type": "object", "description": "The host's native JSON. __ROOT__ in any string is replaced by the temp root." },
+        "payloadRaw": { "type": "string", "maxLength": 16384, "description": "Stdin as text, for a malformed payload: empty, not JSON, truncated." },
+        "payloadBase64": { "type": "string", "maxLength": 21848, "contentEncoding": "base64", "description": "Stdin as bytes, for bad UTF-8." },
+        "padBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4194304,
+          "description": "With payload only: the runner adds a field \"_pad\" holding this many x characters, for an oversized payload that is still valid JSON."
+        },
+        "advanceClock": { "type": "integer", "minimum": 0, "maximum": 604800, "description": "Seconds the fake clock moves forward before this event; 86400 reaches the 24 h sweep." }
+      }
+    },
+    "worldEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["n", "world"],
+      "properties": {
+        "n": { "$ref": "#/$defs/n" },
+        "world": { "$ref": "#/$defs/world" }
+      }
+    },
+    "resetEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["n", "reset"],
+      "properties": {
+        "n": { "$ref": "#/$defs/n" },
+        "reset": {
+          "enum": ["session", "corrupt-state"],
+          "description": "session: later payloads get a new session id. corrupt-state: the runner overwrites the hook's state file with bytes that are not JSON."
+        }
+      }
+    },
+    "expectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event", "decision"],
+      "properties": {
+        "event": { "$ref": "#/$defs/n", "description": "The n of a hook event." },
+        "decision": {
+          "enum": ["allow", "advise", "deny", "abstain"],
+          "description": "allow: the hook is silent. advise: allowed, with text. deny: exit 2 or the host's deny. abstain: the hook or the judge could not decide, failed open and logged one HOOK-FAILOPEN line."
+        },
+        "reasonCode": { "type": ["string", "null"], "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "maxLength": 64 },
+        "textContains": { "type": ["string", "null"], "minLength": 1, "maxLength": 200, "description": "A substring the hook's text (stderr, or the host's reason field) must hold." },
+        "unsupported": {
+          "type": "boolean",
+          "description": "true: the host has no mapping for this event (config/hooks/adapters/README.md). The report row says unsupported; the decision must be allow or advise."
+        }
+      },
+      "if": { "required": ["unsupported"], "properties": { "unsupported": { "const": true } } },
+      "then": { "properties": { "decision": { "enum": ["allow", "advise"] } } }
+    }
+  }
+}

@@ -230,13 +230,21 @@ Aw.Meta.Core.Coordination.MergeAssessment.Team.init -> void
 Aw.Meta.Core.Coordination.MergeQueueReader
 Aw.Meta.Core.Coordination.MergeReadiness
 Aw.Meta.Core.Coordination.MergeReadiness.Assess(int pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Coordination.MergeAssessment!>!>
-Aw.Meta.Core.Coordination.MergeReadiness.MergeReadiness(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.ILogFiles! logs, Aw.Meta.Core.Ports.IMessageStore! messages) -> void
+Aw.Meta.Core.Coordination.MergeReadiness.MergeReadiness(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.ILogFiles! logs, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Coordination.LaneAddress! addresses) -> void
 Aw.Meta.Core.Coordination.MetaSession
 Aw.Meta.Core.Coordination.MetaSession.MetaSession(Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.ISessionDirectory! sessions) -> void
 Aw.Meta.Core.Coordination.MetaSession.Resolve(Aw.Meta.Core.Ids.SessionId session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Config.TeamConfig?>!>
 Aw.Meta.Core.Coordination.MetaSweep
 Aw.Meta.Core.Coordination.MetaSweep.MetaSweep(Aw.Meta.Core.Coordination.InboxSync! sync, Aw.Meta.Core.Coordination.LaneRefresher! refresher, Aw.Meta.Core.Coordination.ObligationReader! reader, Aw.Meta.Core.Coordination.LaneContextReader! context, Aw.Meta.Core.Ports.ILaneFiles! files, Aw.Meta.Core.Ports.IProcessLiveness! liveness) -> void
 Aw.Meta.Core.Coordination.MetaSweep.Run(string! transcript, Aw.Meta.Core.Config.TeamConfig! config, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Obligations.Obligation!>!>!>
+Aw.Meta.Core.Coordination.MetaSweep.RecycleWaiterRunning(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Meta.Core.Coordination.LaneBeats.RecordGaveUp(string! lane, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Coordination.LaneBeats.ClearGaveUp(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Coordination.RecycleGiveUps
+static Aw.Meta.Core.Coordination.RecycleGiveUps.With(string? stored, string! lane, System.DateTimeOffset at) -> string!
+static Aw.Meta.Core.Coordination.RecycleGiveUps.Without(string? stored, string! lane) -> string!
+static Aw.Meta.Core.Coordination.RecycleGiveUps.Line(string? stored) -> string?
+const Aw.Meta.Core.KvKeys.RecycleGaveUp = "recycle.gave-up" -> string!
 Aw.Meta.Core.Coordination.ObligationReader
 Aw.Meta.Core.Coordination.ObligationReader.ObligationReader(Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.ILaneStore! lanes, Aw.Meta.Core.Ports.IOwnerStore! owner, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Ports.IKeyValueStore! values) -> void
 Aw.Meta.Core.Coordination.ObligationReader.Open(string! metaLane, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken, Aw.Meta.Core.Lanes.LaneContext? metaContext = null, bool metaWaiter = false) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Obligations.Obligation!>!>!>
@@ -797,6 +805,7 @@ Aw.Meta.Core.Messages.InboxMessage.FromName.init -> void
 Aw.Meta.Core.Messages.InboxMessage.Id.get -> Aw.Meta.Core.Ids.MessageId
 Aw.Meta.Core.Messages.InboxMessage.Id.init -> void
 Aw.Meta.Core.Messages.InboxMessage.InboxMessage(Aw.Meta.Core.Ids.MessageId Id, string! From, string! FromName, string! Body, System.DateTimeOffset At, Aw.Meta.Core.Messages.Classification! Class) -> void
+Aw.Meta.Core.Messages.InboxMessage.IsFromLane(string! session, string? address, System.StringComparison nameComparison) -> bool
 Aw.Meta.Core.Messages.InboxMessage.ShownAt.get -> System.DateTimeOffset?
 Aw.Meta.Core.Messages.InboxMessage.ShownAt.init -> void
 Aw.Meta.Core.Messages.InboxMessage.Resolution.get -> Aw.Meta.Core.Messages.MessageResolution?
@@ -2543,7 +2552,7 @@ static Aw.Meta.Core.Merge.CountLine.operator !=(Aw.Meta.Core.Merge.CountLine? le
 static Aw.Meta.Core.Merge.CountLine.operator ==(Aw.Meta.Core.Merge.CountLine? left, Aw.Meta.Core.Merge.CountLine? right) -> bool
 static Aw.Meta.Core.Merge.ReviewFacts.operator !=(Aw.Meta.Core.Merge.ReviewFacts? left, Aw.Meta.Core.Merge.ReviewFacts? right) -> bool
 static Aw.Meta.Core.Merge.ReviewFacts.operator ==(Aw.Meta.Core.Merge.ReviewFacts? left, Aw.Meta.Core.Merge.ReviewFacts? right) -> bool
-static Aw.Meta.Core.Merge.ReviewProof.Collect(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>! messages, string! reviewer, int pr) -> Aw.Meta.Core.Merge.ReviewFacts!
+static Aw.Meta.Core.Merge.ReviewProof.Collect(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>! messages, string! reviewer, int pr, string? address) -> Aw.Meta.Core.Merge.ReviewFacts!
 static Aw.Meta.Core.Merge.ReviewProof.Counts(string! body) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.CountLine!>!
 static Aw.Meta.Core.Merge.ReviewProof.IsHead(string? sha, string! head) -> bool
 static Aw.Meta.Core.Merge.ReviewProof.ReadySha(string! body) -> string?
@@ -2977,3 +2986,8 @@ static Aw.Meta.Core.Delegations.DelegationBook.Add(string? stored, Aw.Meta.Core.
 static Aw.Meta.Core.Delegations.DelegationBook.Without(string? stored, int issue) -> string!
 static Aw.Meta.Core.Delegations.DelegationBook.Find(string? stored, int issue) -> Aw.Meta.Core.Delegations.Delegation?
 Aw.Meta.Core.Coordination.DelegationLedger.Remove(int issue, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Delegations.Delegation?>!>
+Aw.Meta.Core.Coordination.LaneAddress
+Aw.Meta.Core.Coordination.LaneAddress.Find(string! team, string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
+Aw.Meta.Core.Coordination.LaneAddress.LaneAddress(Aw.Meta.Core.Ports.ILaneFiles! files, Aw.Meta.Core.Ports.ILaneSessions! sessions, Aw.Meta.Core.Ports.ISessionDirectory! live) -> void
+Aw.Meta.Core.Lanes.LiveSession.Address.get -> string?
+Aw.Meta.Core.Lanes.LiveSession.Address.init -> void

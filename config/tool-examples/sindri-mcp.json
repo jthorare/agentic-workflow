@@ -1,0 +1,10 @@
+{
+  "$comment": "Registered examples of the Sindri MCP calls the skills make (issue 4249): one per `mcp: sindri/<tool>` call site in skills/ and bootstrap/, plus calls a skill names by bare tool name. scripts/check-tool-examples.mjs checks each one's args against that tool's inputSchema in the last-known golden tests/Aw.Sindri.Tests/Golden/Mcp/tools-list/default.json. Where the skill gives no arguments, the example is the smallest valid call.",
+  "examples": [
+    { "tool": "context_lenses", "args": { "anchor": "checkout" }, "source": "skills/system-design/SKILL.md:37" },
+    { "tool": "context_query", "args": { "q": "where is the checkout total computed" }, "source": "skills/system-design/SKILL.md:37" },
+    { "tool": "context_neighbors", "args": { "key": "checkout" }, "source": "skills/system-design/SKILL.md:37" },
+    { "tool": "context_lenses", "args": { "anchor": "checkout" }, "source": "skills/system-design-video/SKILL.md:54" },
+    { "tool": "context_query", "args": { "symbol": "src/checkout/total.ts" }, "source": "skills/system-design-video/SKILL.md:54" }
+  ]
+}

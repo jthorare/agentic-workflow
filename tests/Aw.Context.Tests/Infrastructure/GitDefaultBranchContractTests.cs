@@ -51,6 +51,21 @@ public sealed class GitDefaultBranchContractTests : DefaultBranchContract, IDisp
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task A_checkout_with_only_origin_main_is_on_its_default_branch_like_the_code_index_says_gh3928()
+    {
+        using var temp = new TempGitRepo(RepoReaderContract.Files);
+        var onMain = temp.Head;
+        _ = temp.Run("update-ref", "refs/remotes/origin/main", onMain);
+        _ = temp.Run("checkout", "-q", "--detach");
+        _ = temp.Run("branch", "-q", "-D", "main");
+        var branch = new GitDefaultBranch(new GitCli());
+
+        var reaches = await branch.Reaches(temp.Repo, onMain, TestContext.Current.CancellationToken);
+
+        Assert.True(reaches.IsSuccess && reaches.Value);   // the same refs as GitRepoHeads (DefaultBranchRefs): origin/main counts
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task Origin_head_is_preferred_over_main()
     {
         using var temp = new TempGitRepo(RepoReaderContract.Files);

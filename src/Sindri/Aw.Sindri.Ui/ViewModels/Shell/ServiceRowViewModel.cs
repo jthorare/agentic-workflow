@@ -19,7 +19,18 @@ internal sealed class ServiceRowViewModel(string name) : ObservableObject
     public string Every { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>One plain sentence for what it does, or empty for a service the app does not know.</summary>
-    public string What { get; private set => Set(ref field, value); } = Labels.ServiceWhat(name);
+    public string What
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(Tip));
+        }
+    } = Labels.ServiceWhat(name);
+
+    /// <summary>The row's tip: the name on line 1, so a trimmed name reads in full, and what the service does under it (#4047).</summary>
+    public string Tip => What.Length > 0 ? Name + "\n" + What : Name;
 
     /// <summary>Why the service is paused or failed, in plain words ("Paused by you, 14:02"), or empty.</summary>
     public string Why

@@ -4,14 +4,14 @@ using Aw.Meta.Features.Status;
 
 namespace Aw.Meta.Host.Commands;
 
-/// <summary>The 'status' command: exit 1 while anything is owed.</summary>
+/// <summary>The 'status' command: exit 1 while anything is owed or a recycle waiter gave up.</summary>
 internal static class StatusCommand
 {
     internal static CommandEntry Entry { get; } = new(
         "status",
         CommandSpec.None("status [--json]"),
         NeedsConfig: true,
-        static context => CommandOutput.Call<StatusRequest, StatusResponse>(context, new StatusRequest(), Text, static r => r.Obligations.Count > 0));
+        static context => CommandOutput.Call<StatusRequest, StatusResponse>(context, new StatusRequest(), Text, static r => r.Obligations.Count > 0 || r.RecycleStuck is not null));
 
     private static string QueueLine(QueuedPr pr) =>
         string.Create(CultureInfo.InvariantCulture, $"  #{pr.Pr} ready (from {pr.From}); gate {pr.Gate}") + (pr.Github is { } github ? $"; github {github}" : string.Empty);
@@ -20,6 +20,7 @@ internal static class StatusCommand
         string.Join(
             Environment.NewLine,
             [
+                .. Optional(status.RecycleStuck),
                 status.Obligations.Count == 0 ? "owed: nothing" : "owed:",
                 .. status.Obligations.Select(static o => $"  [{o.Kind}] {o.Summary}{Environment.NewLine}    next: {o.NextCommand}"),
                 status.MergeQueue.Count == 0 ? "merge queue: empty" : "merge queue:",

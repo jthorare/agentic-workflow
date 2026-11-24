@@ -29,6 +29,9 @@ internal static partial class Labels
     /// <summary>A source that is pulling.</summary>
     internal const string ContextSourcePulling = "pulling";
 
+    /// <summary>A source on its first pass (phase recent or backfill) that is pulling or between pulls (#4035).</summary>
+    internal const string ContextSourceFirstSync = "first sync";
+
     /// <summary>A source between pulls.</summary>
     internal const string ContextSourceIdle = "idle";
 
@@ -63,6 +66,11 @@ internal static partial class Labels
     /// <returns>"200 records".</returns>
     internal static string ContextRecords(int records) =>
         string.Create(CultureInfo.InvariantCulture, $"{records} {(records == 1 ? "record" : "records")}");
+
+    /// <summary>How many records a source on its first pass holds so far (#4035).</summary>
+    /// <param name="records">The count.</param>
+    /// <returns>"12400 records so far".</returns>
+    internal static string ContextRecordsSoFar(int records) => ContextRecords(records) + " so far";
 
     /// <summary>The words when a source has records but its last commit is unknown.</summary>
     internal const string ContextNothingCommitted = "nothing committed yet";
