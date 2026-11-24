@@ -1,3 +1,5 @@
+using Aw.Sindri.Ui.ViewModels.Context.Whole;
+
 namespace Aw.Sindri.Ui.ViewModels.Context;
 
 /// <summary>The repo picker (<see cref="ContextPageViewModel"/>, continued): when the map covers more than one repo, each has its own top ("~") and the page reads one at a time.</summary>
@@ -40,6 +42,7 @@ internal sealed partial class ContextPageViewModel
         }
 
         _repo = repo;
+        _openGeneration++;   // a first read of the other repo still in flight is dropped when it ends (#3697)
         OnChanged(nameof(SelectedRepo));
         FileMap.UseRepo(repo);
         CloseInspector();
@@ -48,6 +51,7 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(IsZoomedIn));
         Whole.LeaveConcept();   // the concepts are another repo's now
         OpenedConceptId = null;
+        _conceptsRead = false;   // the other repo's concepts are not read yet, so its first event reads them before its whole map (#3792)
         Concepts.Reset();
         ChangedConcepts();
         return ShowFiles ? FileMap.Opened(cancellationToken) : OpenFirst(cancellationToken);
@@ -58,7 +62,7 @@ internal sealed partial class ContextPageViewModel
     {
         if (answer.Repos is { Count: > 0 } repos)
         {
-            Repos = [.. repos.Select(r => r.Name).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+            Repos = [.. repos.Select(r => r.Name).Distinct(StringComparer.Ordinal).Order(NaturalOrder.Instance)];
             OnChanged(nameof(HasRepoPicker));
             OnChanged(nameof(SelectedRepo));
         }

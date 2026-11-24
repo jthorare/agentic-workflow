@@ -99,8 +99,16 @@ internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher la
     /// <summary>Linear's description, or null.</summary>
     public string? Description { get; private set => Set(ref field, value); }
 
-    /// <summary>The owner's notes, read-only here, or null.</summary>
-    public string? Notes { get; private set => Set(ref field, value); }
+    /// <summary>The owner's notes as the sheet read them, or null; drawn read-only only when the page has no row to edit them through (<see cref="NotesCard"/>).</summary>
+    public string? Notes
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            NotesPlaceChanged();
+        }
+    }
 
     /// <summary>The card's links: Open in Linear, then the owner's.</summary>
     public IReadOnlyList<ProjectLinkItem> Links { get; private set => Set(ref field, value); } = [];
@@ -112,7 +120,10 @@ internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher la
     public IReadOnlyList<ProjectStateChoice> StateChoices { get; } = ProjectStateChoice.All;
 
     /// <summary>The state the picker holds.</summary>
-    public ProjectStateChoice? SelectedState { get; set => Set(ref field, value); }
+    public ProjectStateChoice? SelectedState { get; set { Set(ref field, value); OnChanged(nameof(StateChips)); } }
+
+    /// <summary>The state chips: a row, the picked one marked; a press saves the state at once.</summary>
+    public IReadOnlyList<ProjectStateChip> StateChips => [.. StateChoices.Select(c => new ProjectStateChip(c, c == SelectedState))];
 
     /// <summary>True when the card takes edits (attached or hand-made, not hidden).</summary>
     public bool CanEdit { get; private set => Set(ref field, value); }
@@ -232,9 +243,12 @@ internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher la
             return;
         }
 
-        (EditName, EditTarget, EditLinks) = (one.Project.Name, one.Project.Target ?? string.Empty, string.Join('\n', OwnerLinks(one.Project)));
+        (EditName, EditTarget, EditLinks, EditNotes) = (one.Project.Name, one.Project.Target ?? string.Empty, string.Join('\n', OwnerLinks(one.Project)), one.Project.Notes ?? string.Empty);
         (SaveError, IsConflict, IsEditing) = (string.Empty, false, true);
     }
+
+    /// <summary>The note in the edit form (#3719: one Save for every field).</summary>
+    public string EditNotes { get; set => Set(ref field, value); } = string.Empty;
 
     /// <summary>Closes the form without saving.</summary>
     internal void CancelEdit() => (IsEditing, SaveError, IsConflict) = (false, string.Empty, false);

@@ -13,4 +13,12 @@ public interface IBuildStamps
     /// <summary>The stamp 'bin/cs/current' names.</summary>
     /// <returns>The stamp, or null when there is no link.</returns>
     public string? Installed();
+
+    /// <summary>The running build folder's 'build-info' (first-run spec §3.2).</summary>
+    /// <returns>Its commit and built time, or null in a dev run or when the install pruned the folder this process runs from.</returns>
+    public BuildInfo? RunningBuild() => null;
+
+    /// <summary>The 'build-info' of the build 'bin/cs/current' names.</summary>
+    /// <returns>Its commit and built time, or null with no link or when that build has no 'build-info' (an unfinished install, SND-SETUP-011).</returns>
+    public BuildInfo? InstalledBuild() => null;
 }

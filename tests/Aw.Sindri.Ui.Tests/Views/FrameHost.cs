@@ -69,13 +69,16 @@ public abstract class FrameHost : IDisposable
                 return true;
             }, Token);
 
+    /// <summary>The terminal socket the shell is given; null (no live pane) unless a test sets it before <see cref="Connected"/>.</summary>
+    private protected FakeTerminalConnector? Terminal { get; set; }
+
     /// <summary>The folder chooser the shell is given: available unless a test turns it off.</summary>
     private protected FakeFolderPicker Folders { get; } = new();
 
     private protected async Task<(ShellWindow Window, ShellViewModel Shell)> Connected(Func<ShellViewModel, bool>? ready = null, double? width = null, double? height = null)
     {
         _records.Write(A.Record());
-        var shell = new ShellViewModel(_records, Server, Clock, new Preferences(new InMemoryPreferencesStore()), new FakeClipboard(), Motion, new WindowPorts(NullLauncher.Instance, Files, Folders));
+        var shell = new ShellViewModel(_records, Server, Clock, new Preferences(new InMemoryPreferencesStore()), new FakeClipboard(), Motion, new WindowPorts(NullLauncher.Instance, Files, Folders, Terminal));
         await shell.Restore(Token);
         var window = new ShellWindow { DataContext = shell };
         if (width is { } w)
@@ -118,9 +121,9 @@ public abstract class FrameHost : IDisposable
 
     private protected static async Task Until(Window window, Func<bool> condition, string what = "the view never reached the expected state")
     {
-        for (var i = 0; i < 300 && !condition(); i++)
+        for (var i = 0; i < 3000 && !condition(); i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Settle(window);
         }
 

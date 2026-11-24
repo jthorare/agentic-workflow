@@ -4,6 +4,32 @@ Every bash suite in the repo, with what it covers. `bash scripts/ci/bash-tests.s
 
 Each suite runs with its own fresh temp HOME and AW_STATE_DIR and without the lane environment (AW_META_LANE*, AW_SINDRI_CHILD, TMUX, ...). Tools keep working through GIT_CONFIG_GLOBAL, DOTNET_ROOT, NUGET_PACKAGES and npm_config_cache.
 
+## Temp dirs
+
+A suite removes every temp dir it makes. Each suite that called `mktemp` with no cleanup of its own wraps `mktemp` in a function that records each path. An `EXIT` trap removes them all and exits with the suite's own exit code.
+
+Two checks guard this. Each guards a different place.
+
+1. The runner's per-suite check (`scripts/ci/bash-tests.sh`). Each suite gets its own `TMPDIR` inside its sandbox, and the runner deletes the sandbox afterwards. Before the delete, the runner lists what the suite left at the top of that `TMPDIR`. A leftover appends `bash-tests: <suite> left in TMPDIR: <names>` to the suite's log, fails the suite and marks its `FAIL` line `(left files in TMPDIR)`. `scripts/tests/ci-bash-tests.test.sh` tests it.
+2. `scripts/ci/tmp-leak-check.sh` (outer `TMPDIR`). CI's "Bash tests" job runs `bash scripts/ci/tmp-leak-check.sh -- bash scripts/ci/bash-tests.sh`. The check lists the `aw-*` and `tmp.*` entries in `${TMPDIR:-/tmp}` before and after the command. It exits 1 and names each new entry still there. When the command fails, its own exit code wins. It deletes nothing. It catches what escapes a suite's sandbox: the runner itself, or a suite that writes to an explicit `/tmp` path. `scripts/tests/tmp-leak-check.test.sh` tests it.
+
+To check a run on your own box, give it a private `TMPDIR` so other runs do not show up as leaks:
+
+```bash
+export TMPDIR="$(mktemp -d)"
+bash scripts/ci/tmp-leak-check.sh -- bash scripts/ci/bash-tests.sh
+```
+
+### One-time cleanup of old leaks (owner)
+
+Old runs left tens of thousands of dirs in `/tmp` (#3262). Run the dry run first. It prints how many entries match:
+
+```bash
+find /tmp -maxdepth 1 -user "$USER" -mmin +1440 \( -name 'aw-owner-copy-*' -o -name 'aw-separate-login-*' -o -name 'aw-golden-locks-*' -o -name 'aw-map-tabs-*' -o -name 'aw-split-panes-*' -o -name 'aw-code-lens-*' -o -name 'aw-sindri-*' -o -name 'tmp*' -o -name 'MSBuild*' \) | wc -l
+```
+
+To delete, run the same command with `-exec rm -rf {} +` in place of `| wc -l`. The command only matches your own entries older than one day (`-mmin +1440`), so a live run keeps its dirs.
+
 ```bash
 bash scripts/ci/bash-tests.sh   # each suite runs with its own fresh temp HOME and AW_STATE_DIR and without the lane environment (AW_META_LANE*, AW_SINDRI_CHILD, TMUX, ...) (tools keep working through GIT_CONFIG_GLOBAL, DOTNET_ROOT, NUGET_PACKAGES, npm_config_cache)
 bash providers/tests/install.test.sh
@@ -22,6 +48,7 @@ bash scripts/tests/check-library-schemas.test.sh # schemas/library/design-doc.sc
 bash scripts/tests/check-library-fixtures.test.sh # tests/fixtures/library/ (made-up design docs) against its expected.json, the contract the C# parser's tests share: every .md listed, every SND-LIB-010..019 has a fixture, good front matter passes $defs/frontMatter, broken fails, generated shas match (node scripts/check-library-fixtures.mjs; Ajv as above)
 bash scripts/tests/check-profile-doc.test.sh # docs/csharp/sindri-profile.md names every SindriProfile key (node scripts/check-profile-doc.mjs)
 bash scripts/tests/scaffold.test.sh
+bash scripts/tests/scaffold-e2e.test.sh   # scripts/scaffold/e2e.sh with stub node and dotnet in a throwaway repo: the cli tree holds no build output when the http step starts, no whole-solution build, one `e2e: <step> <N>s` line per step, TMPDIR left empty (#3700)
 bash scripts/tests/check-env-example.test.sh
 bash scripts/tests/check-skills-toolkit.test.sh   # scripts/check-skills-toolkit.sh and scripts/skills-toolkit-rewrite.sh on fixture trees: a bare toolkit path or a hand-spelled per-repo path fails with file:line, the rewrite is idempotent
 bash scripts/tests/check-skill-requires.test.sh   # scripts/check-skill-requires.sh on fixture skills: good, missing sidecar, empty file, unknown key, unknown agent, unknown mcp, unknown bin (and a stub), missing or misplaced gate line, two Result blocks, an opening that never runs the gate or runs it after the first heading, the unswept list (skipped, stale and unknown entries), usage errors, then the real tree
@@ -40,6 +67,7 @@ bash scripts/tests/repo-templates.test.sh
 bash scripts/tests/probe.test.sh
 bash scripts/tests/probe-linear-projects.test.sh   # scripts/probe-linear-projects.sh (the projects page Ph0 probe) with stub curl and gh: output, legacy state fallback, no key exit 2, a failed call exit 1, the key never printed
 bash scripts/tests/linear-probe.test.sh   # scripts/linear-probe.sh (the Linear hub Ph0 probe) with a stub stateful curl: every read-only fact line and zero mutations, the write part (labelled issues only, cleanup archives all incl. strays, left 0), a mid-write failure exit 1 with cleanup, the guards exit 2, keys and Linear text never printed
+bash scripts/tests/slack-probe.test.sh   # scripts/slack-probe.sh (the Messages page's P0 probe, lines 1 to 8) with a stub stateful Slack (tests/fixtures/slack-probe): counts and yes/no only, never a channel name, user name, id or text, keys never printed or in curl args; a 429 stops the burst and reads Retry-After; error codes are findings, invalid_auth and transport failures exit 1; the --write part only in a private one-member channel of the owner's, cleanup deletes all (also on SIGINT), left 0; --write without --channel, a missing key and the url guard exit 2; the manifest holds the spec's 25 user scopes
 bash scripts/tests/run-test-guard.test.sh   # scripts/run-test-guard.sh (the check wrapper for the TS bugfix-state, #1130): exit code passes through, a timeout exits 124 and the EXIT trap runs, a daemonized child is gone after a normal exit and after a timeout, usage errors exit 2 (Linux only)
 bash scripts/tests/heavy-reclaim-race.test.sh   # scripts/heavy.sh's dead-holder reclaim (#2058, #2065) on scratch lock dirs: two reclaimers of one dead owner never both hold the slot (TLC WrapperReclaimRace), and a slot left with only an owner.reclaim.<dead pid> is freed
 bash scripts/tests/heavy-mixed-reclaim-race.test.sh   # the real scripts/heavy.sh and config/lib/locks.sh acquire_any_lock racing for one dead holder's slot on scratch lock dirs: never two jobs on it (TLC MixedReclaimRace, #2058)
@@ -49,6 +77,8 @@ bash scripts/tests/heavy-cap-reserve.test.sh   # every heavy-slot taker reads he
 bash scripts/tests/heavy-stale-cap.test.sh   # a cap lowered while the memory guard runs keeps a waiting job off the slots above it: an awk shim slows the guard on every OS (#2718)
 bash scripts/tests/heavy-full-reserve.test.sh   # heavy-meta-reserve is capped at the slot count minus one, so a lane job always has a slot: config/lib/heavy-config.sh heavy_reserve and config/lib/locks.sh acquire_any_lock on scratch lock dirs (#2060; the wrapper rows are in heavy.test.sh)
 bash scripts/tests/heavy-pgid-race.test.sh   # heavy.sh kills a dead session's job even when setsid or perl is slow to make its process group: a 1 s slow setsid, a 1 s slow perl with no setsid, and a control (#2799)
+bash scripts/tests/heavy-light-pool.test.sh   # scripts/heavy.sh's light pool for `--light` builds (#3796) on scratch lock dirs, a fake dotnet and an awk shim for MemAvailable: N light slots (heavy-light-cap, read again while waiting; AW_HEAVY_LIGHT_SLOTS; default 4), the hold while a live box-wide waiter is short of memory and its end, the hold counting heavy-meta-reserve and the slots that waiter can take (#3810), heavy-meta-reserve held as a slot count at 6000 MB, by the box-wide pool and the hold alike (#3885), its note repeated, printed again at once for a new hold or another waiter, and naming the waiter and the memory figure, no memory read without a box-wide waiter, slot 1 free and dead waiters hold nothing, a path-qualified dotnet build and dotnet msbuild take a light slot, non-compiling light jobs never wait, priority meta skips the hold, a held wait doesn't count toward the timeout, dead-holder reclaim
+bash scripts/tests/heavy-fifo.test.sh   # scripts/heavy.sh hands out slots in arrival order (#3819) on scratch lock dirs and a fake dotnet: three box-wide and three light waiters get one slot in order, a live older wait file holds a free slot back, dead / reused-pid (its "start" differs) / no "start" / no "fifo":1 / other-pool / other-session files hold nothing, the same genuine and reused-pid cases through pid_start's `ps -o lstart=` branch (AW_HEAVY_TEST_PS_START=1, #3859) and a ps that prints nothing (the pid just died) leaving the job running, the session pool is ordered too, meta skips the queue both ways, AW_HEAVY_FIFO_MAX_DEFER lets a waiter through, standing back counts toward the lock timeout, an empty queue adds no wait
 bash scripts/tests/heavy-wait-file.test.sh   # scripts/heavy.sh writes locks/heavy-wait/<pid> for a job that waits for a slot (JSON fields, exact argv) and removes it when the slot is taken, on TERM and on the lock timeout; a job that gets a slot at once writes none (#3142)
 bash scripts/tests/skill-lock.test.sh   # skills/_shared/skill-lock.sh called the way the skills document it (`LOCK_NAME=browser source skill-lock.sh; acquire_lock`, then release_lock): exit 0, the lock named, the file gone after release, and the default name
 bash scripts/tests/skill-lock-recovery.test.sh   # skill-lock.sh after a failed or abandoned call (#1989): an abandoned lock is taken over, a failed acquire leaves the holder's pid and none of its own, the next acquire gets the lock; the #2569 reclaim guard: a dead holder's guard is cleared, a live or young one is waited on
@@ -70,7 +100,7 @@ bash scripts/tests/worktree-path.test.sh   # skills/_shared/worktree-path.sh on 
 bash scripts/tests/eval-git-wrapper.test.sh     # evals/stubs/bin/git: pass-through; under AW_GIT_MODE=readonly refuses commit, push, merge, rebase, cherry-pick, revert, am, tag <name>, branch <name>, worktree add, checkout -b, switch -c with exit 1 and an `aw-eval: git <sub> refused` line
 bash scripts/tests/eval-av-fakes.test.sh        # evals/stubs/bin/{bun,ffmpeg,ffprobe}: the planted probe answers travel with the mp4 (render outside the workspace still probes has_b_frames=2), frame grabs show the beat at -ss, a missing input exits 1, *720p* is 1280x720, review.sh and deliver.sh report the B-frames, no fake names itself
 bash scripts/tests/system-design-tokens.test.sh   # skills/system-design/scripts/tokens_to_css.py: known tokens and aliases map, unmapped ones are printed and keep the neutral fallback, a missing tokens file exits 1 without output
-bash scripts/tests/system-design-packet.test.sh   # build_prs.py (cards, numeric order, idempotent, refusals), write_packet.py (packet.json, *.src.html skipped), packet-to-storyboard.ts parser/layout imported under node 22+ (skips without it; no bun)
+bash scripts/tests/system-design-packet.test.sh   # build_prs.py (cards, numeric order, idempotent, refusals), write_packet.py (packet.json, *.src.html skipped; doc.md ends with the performance and bug sweep phases, a TDD without the ROI plan first warns), packet-to-storyboard.ts parser/layout imported under node 22+ (skips without it; no bun)
 bash scripts/tests/formal-verify-tlc.test.sh   # skills/formal-verify/scripts/tlc.sh: usage, fetch from a file:// lock (install, cache hit, sha256 refusal, bad lock), java 8 and a missing jar refused, a fake java (-Xmx from TLC_HEAP and bad values refused, the OutOfMemoryError line, TERM/INT/HUP to tlc.sh stop its java and remove the temp dir), then the pinned jar from tla2tools.lock and real TLC runs (a check-then-set mutex broken, its fix passing, a witness, starvation, deadlock, a parse error, a PlusCal lost update); SKIP without java 11+ or the network
 bash scripts/tests/system-design-share.test.sh    # build_share.py: tdd-share.html + deck.html from the example story (two chapters, every block, 20 slides, images inlined, byte-identical rebuild), one chapter without part chrome, project tokens layered last, escaping, refusals (history markers, limits, unknown type, lifecycle states, untitled chapter, missing image), --check, packet.json share/deck keys
 bash scripts/tests/system-design-diagrams.test.sh    # skills/system-design/scripts/draw_diagrams.mjs against a stub tldraw server: dark by default (darkMode export, the reported palette swapped for Sindri's by role), --theme light untouched, a bad theme exits 2
@@ -84,6 +114,7 @@ bash scripts/tests/sindri-ui-fixture.test.sh
 bash scripts/tests/sindri-ui-fixture-prs.test.sh   # the Projects fixture seeds the GitHub repos and three open PRs with their relates links, once (#1908)
 bash scripts/tests/sindri-ui-fixture-reviews.test.sh   # the reviews fixture: review.login and workflow.forge in the profile, the PR built in a forge world inside the home (stub aw-forge-fake), its Context record, serve restarted on the forge state, idempotent, down
 bash scripts/tests/forge-fixture.test.sh    # scripts/forge-fixture.sh over the real aw-forge-fake (dotnet build once): the PR babysitter's fixture PR set, every variant, the guard, --github refusals and dry run
+bash scripts/tests/slack-fixture.test.sh    # scripts/slack-fixture.sh with a stub host on loopback (AW_SLACK_FAKE; no dotnet build): the guard, the marker and its port, the owner-only fixture token file, the slack:messages row, a repeat up, down removes only its own, and Fixture_seed_never_touches_the_keychain (stub security and secret-tool record any call)
 bash scripts/tests/cutover-clean-ts.test.sh   # scripts/cutover-clean-ts.sh on a scratch box: what the TS install left, removed and nothing else; its last case runs the real bugfix-state (needs dotnet, or BUGFIX_STATE_BIN)
 bash scripts/tests/cutover-prove.test.sh      # the switch proof: setup.sh on a scratch box, the C# binaries linked, the TS wrappers gone
 bash scripts/tests/install-cs.test.sh         # scripts/install-cs.sh: publish, link, the wrappers, the stamps, the running-serve guard
@@ -95,6 +126,7 @@ bash scripts/tests/agent-token.test.sh
 bash scripts/tests/signal-suites-ignored-hup.test.sh   # agent-token.test.sh, formal-verify-tlc.test.sh and meta-launch.test.sh started with SIGHUP ignored (a `nohup` gate) all pass: each wrapper resets every signal it sends (#2377, #2566)
 bash scripts/tests/ci-changed-areas.test.sh
 bash scripts/tests/ci-bash-tests.test.sh
+bash scripts/tests/tmp-leak-check.test.sh   # scripts/ci/tmp-leak-check.sh: a new aw-* or tmp.* entry the command leaves is named and exits 1, a clean command exits 0, the command's own exit code wins, old entries are ignored, nothing is deleted, usage exits 2 (#3262)
 bash scripts/tests/ci-lane-budgets.test.sh
 bash scripts/tests/tmux-isolation.test.sh   # scripts/ci/tmux-isolation.sh: no test runs a tmux outside scripts/test-tmux.sh, -L, -S or AW_TMUX
 bash scripts/tests/test-ports.test.sh   # scripts/ci/test-ports.sh: no *.test.sh binds a literal listener port or assigns digits to a *PORT variable without a "test-ports: ok <reason>" waiver (#2597)
@@ -117,7 +149,7 @@ bash scripts/tests/meta-version.test.sh     # the installed aw-meta's version an
 bash scripts/tests/install-meta.test.sh
 bash scripts/tests/oom-policy.test.sh   # install-meta.sh writes the DefaultOOMPolicy=continue drop-in only when the user manager says stop (idempotent, dry run, other drop-ins untouched, never runs daemon-reload), aw-meta-launch warns once when it isn't continue; no line without systemctl or on macOS (#2931)
 bash scripts/tests/meta-gate-reserve.test.sh   # scripts/meta-gate-reserve.sh (the meta gate's heavy-slot reserve, linked to $AW_STATE_DIR/bin-r1b/meta-gate-reserve by install-cs.sh) on a temp state dir: depth tiers, the heavy-slots-cap clamp, --show, --clear, usage exit 2, the file holds just the number
-bash scripts/tests/heavy.test.sh              # scripts/heavy.sh (the heavy-job wrapper, linked to $AW_STATE_DIR/bin-r1b/heavy by install-cs.sh) on a temp state dir and a stub dotnet: usage, exit codes (75, 124, 130), lock files and owner line, heavy-slots-cap, the meta reserve, the memory guard, nested runs, --light/--expensive classification, UseSharedCompilation=false unless the caller sets it (#3178) (~25 s)
+bash scripts/tests/heavy.test.sh              # scripts/heavy.sh (the heavy-job wrapper, linked to $AW_STATE_DIR/bin-r1b/heavy by install-cs.sh) on a temp state dir and a stub dotnet: usage, exit codes (75, 124, 130), lock files and owner line, heavy-slots-cap, the meta reserve and the note a lane job prints while it waits beside a free reserved slot (at the start, every 300 s, again at once after the wait ends; none when every slot is held or for a meta job, #3907), the memory guard, nested runs, --light/--expensive classification (dotnet matched by its basename, dotnet msbuild expensive, #3810), UseSharedCompilation=false unless the caller sets it (#3178) (~25 s)
 bash scripts/tests/meta-teams.test.sh
 bash config/hooks/tests/codex-adapter.test.sh
 bash config/hooks/tests/cursor-adapter.test.sh
@@ -134,6 +166,10 @@ bash scripts/tests/install-tmux.test.sh       # install-tmux.sh on a temp HOME a
 bash scripts/tests/external-packs.test.sh    # scripts/lib/external-packs.sh: fetch_external_pack on local git repos, the unpinned vercel-labs/ui pack follows upstream, a pinned pack stays, the subdir arg links only the user skill, setup.sh and the pin files (#3458)
 bash scripts/tests/result-gate.test.sh   # every skill's Result-block gate prints AW_RESULT and a non-empty AW_DIR, run alone in a fresh shell (#2036)
 bash config/hooks/tests/failopen.test.sh
+bash config/hooks/tests/block-destructive.test.sh   # config/hooks/block-destructive.sh (#3621): each destructive rule blocks with the reason on stderr and none on stdout; quoted text, a heredoc body or a grep pattern that names one is not a command; a shell -c string is still judged
+bash config/hooks/tests/rtk-rewrite.test.sh   # config/hooks/rtk-rewrite.sh (#3778): one JSON document per command; the rewrite matches the start of the whole command (a heredoc script then a git diff line gets none, a rewritable first line with more lines after it gets one document), each rewrite keeps its args
+bash config/hooks/tests/hook-timeouts.test.sh   # #3778: each installer's host timeout is at least 2x the hook's own wall-clock budget (sindri-tasks, prompt-sort, done-gate), read from the sources
+bash config/hooks/tests/block-push-main.test.sh   # config/hooks/block-push-main.sh (#3621) in a temp git repo: a real push to main or master is blocked with the reason on stderr and none on stdout; a heredoc body, quoted text, an echo or a later checkout of main is not a push
 bash config/hooks/tests/meta-hooks.test.sh
-for t in config/lib/tests/*.test.sh; do bash "$t" || echo "FAILED: $t"; done  # merge-hook, levers, installers, judge-cs-hook-surface (the hook contract: real hooks vs the C# judge; needs dotnet) and sindri-cs-hook-surface (the sindri-nudge SessionStart hook vs the C# `sindri repo status --nudge`: one line, silence, exit 0, read-only, bounded; builds the Sindri host, needs dotnet)
+for t in config/lib/tests/*.test.sh; do bash "$t" || echo "FAILED: $t"; done  # merge-hook, levers, installers, kill-tree (#3890: `_aw_kill_tree` from config/lib/kill-tree.sh kills a parent, its child and its grandchild; done-gate, prompt-sort and sindri-tasks source it and their missing-lib fallback is the lib's line word for word), judge-cs-hook-surface (the hook contract: real hooks vs the C# judge; needs dotnet) and sindri-cs-hook-surface (the sindri-nudge SessionStart hook vs the C# `sindri repo status --nudge`: one line, silence, exit 0, read-only, bounded; builds the Sindri host, needs dotnet)
 ```

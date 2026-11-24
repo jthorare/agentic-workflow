@@ -11,6 +11,7 @@ namespace Aw.Context.Core.Concepts;
 public static class ConceptBuilder
 {
     private const string OtherName = "Other";
+    private const string CodeKeyPrefix = "code:";
 
     /// <summary>One page of the concepts of a graph.</summary>
     /// <param name="basis">The map version and repo the answer is for.</param>
@@ -39,8 +40,67 @@ public static class ConceptBuilder
         var end = offset + page.Count;
         var other = new ConceptOther(NodeKey.From(ConceptKeys.Other), OtherName, Size(index, index.MembersOf(ConceptKeys.Other)));
         var pages = PageReader.ByConcept(graph);
-        var rows = page.Select(n => Row(index, n, text, pins, pages.GetValueOrDefault(n.Key.Value))).ToList();
+        var rows = page.Select(n => Row(index, n, text, pins, pages.GetValueOrDefault(n.Key.Value)) with { LastChanged = LastChanged(index, n, basis.Changed) }).ToList();
         return new ConceptsView(1, basis.Repo, basis.MapVersion, index.Concepts.Count == 0 ? ConceptStates.Empty : ConceptStates.Ok, Code: null, rows, other, Links(index, edges, page), ConceptPages.Next(basis.MapVersion, end, matching.Count)) { PagesInNoConcept = PagesInNoConcept.Of(graph).Count };
+    }
+
+    /// <summary>The repo-relative paths of the code files behind the concepts of one page: what the caller asks git for before <see cref="Build"/>.</summary>
+    /// <param name="basis">The map version and repo the answer is for.</param>
+    /// <param name="query">The filter and the page.</param>
+    /// <param name="graph">The graph the caller may see.</param>
+    /// <returns>The distinct paths in ordinal order; none for a bad page.</returns>
+    public static IReadOnlyList<string> CodePaths(ConceptsBasis basis, ConceptsQuery query, GraphSnapshot graph)
+    {
+        ArgumentNullException.ThrowIfNull(basis);
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(graph);
+        var slice = ConceptPages.Slice(basis.MapVersion, query.Page);
+        if (slice.IsError)
+        {
+            return [];
+        }
+
+        var (known, edges) = Known(graph);
+        var index = ConceptIndex.Of(known, edges);
+        var (offset, size) = slice.Value;
+        var page = index.Concepts.Where(n => Matches(index, n, query.Q)).Skip(offset).Take(size);
+        return [.. page.SelectMany(n => index.CodeKeysOf(index.MembersOf(n.Key.Value))).Select(CodePath).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+    }
+
+    private static string CodePath(string codeKey) => codeKey[CodeKeyPrefix.Length..];
+
+    /// <summary>The repo-relative paths of each concept's code files, by concept id: what a kept answer stores so its rows' last change can be laid over them on every read (issue 3676).</summary>
+    /// <param name="concepts">The concepts of the page.</param>
+    /// <param name="graph">The graph the caller may see.</param>
+    /// <returns>The distinct paths of each concept in ordinal order.</returns>
+    public static IReadOnlyDictionary<string, IReadOnlyList<string>> CodePathsOf(IEnumerable<NodeKey> concepts, GraphSnapshot graph)
+    {
+        ArgumentNullException.ThrowIfNull(concepts);
+        ArgumentNullException.ThrowIfNull(graph);
+        var (known, edges) = Known(graph);
+        var index = ConceptIndex.Of(known, edges);
+        return concepts.Where(c => index.Has(c.Value)).DistinctBy(c => c.Value, StringComparer.Ordinal).ToDictionary(c => c.Value,
+            IReadOnlyList<string> (c) => [.. index.CodeKeysOf(index.MembersOf(c.Value)).Select(CodePath).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)], StringComparer.Ordinal);
+    }
+
+    // The newest known change time of the concept's code files, or null when git knew none of them.
+    private static DateTimeOffset? LastChanged(ConceptIndex index, GraphNode node, IReadOnlyDictionary<string, DateTimeOffset>? changed)
+    {
+        DateTimeOffset? newest = null;
+        if (changed is null)
+        {
+            return newest;
+        }
+
+        foreach (var path in index.CodeKeysOf(index.MembersOf(node.Key.Value)).Select(CodePath))
+        {
+            if (changed.TryGetValue(path, out var at) && (newest is null || at > newest))
+            {
+                newest = at;
+            }
+        }
+
+        return newest;
     }
 
     /// <summary>One page of one concept's members.</summary>

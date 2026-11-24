@@ -12,7 +12,7 @@ public sealed class CheckMergeTests
 {
     private readonly MetaWorld _world = new();
 
-    private CheckMergeService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages));
+    private CheckMergeService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages, new LaneAddress(_world.LaneFiles, _world.LaneSessions, _world.Sessions)));
 
     private async Task SaveGate(string head, string main, string[] scopes, GateVerdict verdict = GateVerdict.Pass, int pr = 190, params GateStep[] red)
     {
@@ -154,6 +154,20 @@ public sealed class CheckMergeTests
 
         Assert.Empty(Failed(response));
         Assert.Contains("merge queue re-tests on the merged tree", response.Checks.Single(c => c.Name == "main").Detail, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Main_moved_with_a_merge_queue_still_refuses_when_the_head_conflicts_with_main()
+    {
+        await _world.ReadyWithGate();
+        await SaveTreeGate("oldmain", "tree1");
+        Script(main: "newmain", queue: QueueAnswers.OnNotQueued);
+        _ = _world.Runner.When("merge-tree --write-tree newmain headsha", "tree2\n", 1);   // exit 1: a conflict
+
+        var response = await Check();
+
+        Assert.Equal(["main"], Failed(response));
+        Assert.Contains("conflicts", response.Checks.Single(c => c.Name == "main").Detail, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

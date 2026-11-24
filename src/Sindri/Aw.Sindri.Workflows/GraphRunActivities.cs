@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Rerun;
 using Aw.Sindri.Core.Graph.Runs;
 using Temporalio.Activities;
 using Temporalio.Exceptions;
@@ -28,6 +29,46 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         var cancel = ActivityExecutionContext.Current.CancellationToken;
         var row = GraphFailures.Value(await runs.Get(run, cancel).ConfigureAwait(false));
         return GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
+    }
+
+    /// <summary>The steps a re-run from a step (spec §7.3) took from its source run: the nodes that already have a succeeded or skipped row when the walk starts, and for a succeeded one the branch its row says it took (RerunPlan.Branches). Empty for every other run.</summary>
+    /// <param name="run">The run.</param>
+    /// <returns>The restored steps.</returns>
+    [Activity("GraphRestored")]
+    public async Task<IReadOnlyList<GraphRestoredNode>> RestoredAsync(WorkflowRunId run)
+    {
+        var cancel = ActivityExecutionContext.Current.CancellationToken;
+        var rows = GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false));
+        if (rows.Count == 0)
+        {
+            return [];
+        }
+
+        var row = GraphFailures.Value(await runs.Get(run, cancel).ConfigureAwait(false));
+        var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
+        // why: each restored step's branch is read from its own copied row, the same way the re-run service read it from the source run; a step with no row never counts as a taken branch
+        var nodes = spec.Nodes.ToDictionary(static n => n.Id);
+        var from = Chosen(row.Trigger);
+        return [.. rows.GroupBy(static r => r.NodeId).Select(g => new GraphRestoredNode(g.Key.Value, Taken(spec, nodes, g.Key, [.. g], from)))];
+    }
+
+    private static IReadOnlyList<string> Taken(GraphSpec spec, Dictionary<NodeId, GraphNode> nodes, NodeId id, List<NodeRun> rows, NodeId? from)
+    {
+        var branches = nodes.TryGetValue(id, out var node) ? RerunPlan.Branches(node, rows) ?? [] : [];
+        return from is { } chosen ? RerunPlan.WithChosen(spec, id, branches, chosen) : branches;
+    }
+
+    // The re-run's 'fromNode' (RerunWorkflowRunService's trigger), or null for a trigger that names none.
+    private static NodeId? Chosen(string trigger)
+    {
+        try
+        {
+            return JsonNode.Parse(trigger)?["fromNode"] is JsonValue value && value.TryGetValue<string>(out var text) && NodeId.TryFrom(text, out var id) ? id : null;
+        }
+        catch (System.Text.Json.JsonException)   // boundary: a stored trigger that is not JSON names no step
+        {
+            return null;
+        }
     }
 
     /// <summary>Marks the run running and mirrors it as started.</summary>
@@ -77,11 +118,11 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         }
     }
 
-    // why: the scrub can make a text longer, so Fit runs after it; a cut here sets 'Truncated' like the block's own Fit does (#3486)
+    // why: the scrub can make a text longer, so Fit runs after it (#3486); only the input is fitted here, and a cut input never sets 'Truncated', which says the output was cut (#3896)
     private NodeRun Scrubbed(NodeRun nodeRun)
     {
         var input = StoredJson.Fit(StoredJson.Quote(mirror.Clean(nodeRun.Input)));
-        return nodeRun with { Input = input.Text, Truncated = nodeRun.Truncated || input.Cut, Error = mirror.Clean(nodeRun.Error) };
+        return nodeRun with { Input = input.Text, Error = mirror.Clean(nodeRun.Error) };
     }
 
     /// <summary>Mirrors one change of a 'run_agent' node's session into the ledger (#3151). Keyed by the node run and the change's place in its series, so a retry or a replay writes it once.</summary>
@@ -99,7 +140,7 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
     }
 
     /// <summary>
-    /// Writes the 'collect' node's own row once a loop is done: 'items' (each item's value in item order; an item whose branch skipped the collect adds nothing) and 'count'.
+    /// Writes the 'collect' node's own row once a loop is done: 'items' (each item's value in item order; an item whose branch skipped the collect, or that a 'skip-item' node dropped, adds nothing), 'count' and 'skipped'.
     /// The values are read here and written here, so they never pass through the workflow's history.
     /// </summary>
     /// <param name="request">The loop's collect node.</param>
@@ -113,7 +154,7 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
             .Where(r => r.NodeId == request.Collect && r.ItemIndex > 0 && r.Status == NodeRunStatus.Succeeded)
             .OrderBy(static r => r.ItemIndex)
             .ToList();
-        var (output, failure) = Gather(rows);
+        var (output, failure) = Gather(rows, request.Skipped);
         if (failure is not null)
         {
             return failure;
@@ -125,8 +166,9 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
 
     /// <summary>Builds the 'collect' node's output from the item rows, or says why it can't be: a value was cut at 64 KB, or all the values together do not fit in the 64 KB the store keeps.</summary>
     /// <param name="rows">The collect rows of items 1 to N that succeeded, in item order.</param>
+    /// <param name="skipped">How many items a body node with 'onFailure: skip-item' dropped.</param>
     /// <returns>The output text, or the failure.</returns>
-    internal static (string? Output, string? Failure) Gather(IReadOnlyList<NodeRun> rows)
+    internal static (string? Output, string? Failure) Gather(IReadOnlyList<NodeRun> rows, int skipped = 0)
     {
         ArgumentNullException.ThrowIfNull(rows);
         var cut = rows.FirstOrDefault(static r => r.Truncated);
@@ -136,7 +178,7 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         }
 
         var items = new JsonArray([.. rows.Select(static r => (StoredJson.Parse(r.Output) as JsonObject)?["value"]?.DeepClone())]);
-        var text = new JsonObject { ["items"] = items, ["count"] = rows.Count }.ToJsonString();
+        var text = new JsonObject { ["items"] = items, ["count"] = rows.Count, ["skipped"] = skipped }.ToJsonString();
         var bytes = System.Text.Encoding.UTF8.GetByteCount(text);
         return bytes > NodeRunLimits.PayloadBytes
             ? (null, $"the collected values from {rows.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} items are {bytes.ToString(System.Globalization.CultureInfo.InvariantCulture)} bytes, over the {NodeRunLimits.PayloadBytes.ToString(System.Globalization.CultureInfo.InvariantCulture)}-byte (64 KB) cap on a node's output; collect a smaller field or fewer items")
@@ -160,11 +202,11 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
             await mirror.AppendStarted(ended, cancel).ConfigureAwait(false);
             if (finish.Status == WorkflowRunStatus.Cancelled)
             {
-                await mirror.Append(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(finish.Run, mirror.Clean(finish.Error), GraphMirror.By, WorkflowRunMode.Live), $"{EventTypes.WorkflowRunCancelled}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
+                await mirror.Append(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(finish.Run, mirror.Clean(finish.Error), GraphMirror.By, ended.Mode), $"{EventTypes.WorkflowRunCancelled}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
             }
             else
             {
-                await mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(finish.Run, GraphMirror.Name(finish.Status), mirror.Clean(finish.Error), GraphMirror.By, WorkflowRunMode.Live), $"{EventTypes.WorkflowRunFinished}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
+                await mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(finish.Run, GraphMirror.Name(finish.Status), mirror.Clean(finish.Error), GraphMirror.By, ended.Mode), $"{EventTypes.WorkflowRunFinished}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
             }
         }
 
@@ -182,23 +224,11 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         }
     }
 
-    /// <summary>
-    /// A succeeded run's outputs as JSON: an object keyed by node id holding what each succeeded node gave. A node that ran once gives its outputs object; a node that ran per item
-    /// (item index above 0) gives an array of them in item order. Null when nothing succeeded or the text would pass <see cref="NodeRunLimits.PayloadBytes"/>.
-    /// </summary>
+    /// <summary>A succeeded run's outputs as JSON: its result node or last nodes (<see cref="GraphResultOutputs"/>), kept up to 64 KB on their own (#3807).</summary>
     private async Task<string?> Outputs(WorkflowRunId run, CancellationToken cancel)
     {
-        var rows = GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false));
-        var result = new JsonObject();
-        foreach (var group in rows.Where(static n => n.Status == NodeRunStatus.Succeeded && n.Output is not null && !n.Truncated).GroupBy(static n => n.NodeId))
-        {
-            // why: a cut output is no longer JSON, so that node is left out rather than half-written
-            var parsed = group.OrderBy(static n => n.ItemIndex).Select(static n => JsonNode.Parse(n.Output!)).ToList();
-            result[group.Key.Value] = group.Any(static n => n.ItemIndex > 0) ? new JsonArray([.. parsed]) : parsed[0];
-        }
-
-        var text = result.Count == 0 ? null : result.ToJsonString();
-        // why: like a node's output, the run's is kept only up to 64 KB; a cut JSON text is worse than none, so a larger one is not stored
-        return text is not null && NodeRunLimits.Cap(text, out var truncated) is not null && !truncated ? text : null;
+        var row = GraphFailures.Value(await runs.Get(run, cancel).ConfigureAwait(false));
+        var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
+        return GraphResultOutputs.Build(spec, GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false)));
     }
 }

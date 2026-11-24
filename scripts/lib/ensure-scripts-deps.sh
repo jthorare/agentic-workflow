@@ -21,7 +21,8 @@ ensure_scripts_deps() {
     sleep 0.5
   done
   if ! _scripts_deps_ready "$dir"; then
-    if ! (cd "$dir" && npm ci --ignore-scripts --no-audit --no-fund >/dev/null 2>&1); then
+    # why: Node writes a node-compile-cache folder into TMPDIR during npm ci, and bash-tests.sh fails a suite that leaves anything there (#3262)
+    if ! (cd "$dir" && NODE_DISABLE_COMPILE_CACHE=1 npm ci --ignore-scripts --no-audit --no-fund >/dev/null 2>&1); then
       rmdir "$lock"
       echo "cannot install Ajv (npm ci in $dir)" >&2
       return 1

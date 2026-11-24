@@ -60,6 +60,9 @@ internal sealed class ConfigFieldViewModel : ObservableObject
     /// <summary>The config key.</summary>
     public string Name { get; }
 
+    /// <summary>The automation id of this field's checkbox: "EditorFieldCheck." and the config key, so a driver can target one field's checkbox (#3111).</summary>
+    public string CheckAutomationId => "EditorFieldCheck." + Name;
+
     /// <summary>"text", "boolean", "number", "text list" or "object", as the block list serves it.</summary>
     public string Type { get; }
 
@@ -68,6 +71,9 @@ internal sealed class ConfigFieldViewModel : ObservableObject
 
     /// <summary>The text being edited: a text list has one item per line, an object is JSON.</summary>
     public string Text { get; set { Set(ref field, value); OnChanged(nameof(IsOn)); OnChanged(nameof(IsChanged)); OnChanged(nameof(SelectedPreset)); } }
+
+    /// <summary>The hint the empty text box shows: a new step's example value that names a step the workflow lacks, so it was not filled in (#3944); empty otherwise.</summary>
+    public string Placeholder { get; init; } = string.Empty;
 
     /// <summary>The text the field had when the form was made: Save sends only the fields that differ from it.</summary>
     public string Original { get; }

@@ -5,11 +5,20 @@ namespace Aw.Sindri.Ui.ViewModels;
 /// <summary>The app's own copy (<see cref="Labels"/>, continued): the code index's words on the file map and the code lens (code index spec §7.3, §10).</summary>
 internal static partial class Labels
 {
-    /// <summary>The symbols column's heading.</summary>
     /// <summary>The line under the file when the code index could not be asked.</summary>
     internal const string ContextCodeUnavailable = "code lens unavailable";
 
+    /// <summary>The symbols column's heading.</summary>
     internal const string ContextSymbolsColumn = "symbols";
+
+    /// <summary>Why the column is empty when the code graph is off: the note line under the table, and a dash cell's hover text.</summary>
+    internal const string ContextSymbolsGraphOff = "only C# files get names: the code graph is off for this repo";
+
+    /// <summary>Why the column is empty when the code graph is on and no listed file has symbols: the note line under the table.</summary>
+    internal const string ContextSymbolsNoneIndexed = "none in these files";
+
+    /// <summary>A file's symbols cell when the index has no row for it.</summary>
+    internal const string ContextSymbolsNoRow = "—";
 
     /// <summary>The cell and caption when no index file exists yet.</summary>
     internal const string ContextSymbolsNotBuilt = "index not built";

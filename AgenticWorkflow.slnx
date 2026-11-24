@@ -6,6 +6,11 @@
     <Project Path="src/Aw.Kernel.Telemetry/Aw.Kernel.Telemetry.csproj" />
     <Project Path="src/Redaction/Aw.Redaction/Aw.Redaction.csproj" />
   </Folder>
+  <Folder Name="/src/Transcripts/">
+    <Project Path="src/Transcripts/Aw.Transcripts.Core/Aw.Transcripts.Core.csproj" />
+    <Project Path="src/Transcripts/Aw.Transcripts.Features/Aw.Transcripts.Features.csproj" />
+    <Project Path="src/Transcripts/Aw.Transcripts.Infrastructure/Aw.Transcripts.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Toolkit/">
     <Project Path="src/Toolkit/Aw.Sindri.Toolkit/Aw.Sindri.Toolkit.csproj" />
   </Folder>
@@ -109,6 +114,7 @@
     <Project Path="tests/Aw.Sindri.Ui.Rendering.Tests/Aw.Sindri.Ui.Rendering.Tests.csproj" />
     <Project Path="tests/Aw.Sindri.Ui.Controls.Tests/Aw.Sindri.Ui.Controls.Tests.csproj" />
     <Project Path="tests/Aw.Sindri.Ui.Frames.Tests/Aw.Sindri.Ui.Frames.Tests.csproj" />
+    <Project Path="tests/Aw.Sindri.Ui.Frames.Panels.Tests/Aw.Sindri.Ui.Frames.Panels.Tests.csproj" />
     <Project Path="tests/Aw.Sindri.Ui.Testing/Aw.Sindri.Ui.Testing.csproj" />
     <Project Path="tests/Aw.Context.Testing/Aw.Context.Testing.csproj" />
     <Project Path="tests/Aw.Context.Testing.Tests/Aw.Context.Testing.Tests.csproj" />
@@ -121,9 +127,12 @@
     <Project Path="tests/Aw.CodeIndex.Testing/Aw.CodeIndex.Testing.csproj" />
     <Project Path="tests/Aw.Connectors.Tests/Aw.Connectors.Tests.csproj" />
     <Project Path="tests/Aw.Connectors.Testing/Aw.Connectors.Testing.csproj" />
+    <Project Path="tests/Aw.Connectors.Testing.Server/Aw.Connectors.Testing.Server.csproj" />
     <Project Path="tests/Aw.Embeddings.Tests/Aw.Embeddings.Tests.csproj" />
     <Project Path="tests/Aw.Embeddings.Testing/Aw.Embeddings.Testing.csproj" />
     <Project Path="tests/Aw.Sindri.Toolkit.Testing/Aw.Sindri.Toolkit.Testing.csproj" />
     <Project Path="tests/Aw.Sindri.Toolkit.Tests/Aw.Sindri.Toolkit.Tests.csproj" />
+    <Project Path="tests/Aw.Transcripts.Tests/Aw.Transcripts.Tests.csproj" />
+    <Project Path="tests/Aw.Transcripts.Testing/Aw.Transcripts.Testing.csproj" />
   </Folder>
 </Solution>

@@ -30,22 +30,36 @@ internal sealed partial class GraphCanvas : Control
     internal static readonly StyledProperty<double> ZoomProperty = AvaloniaProperty.Register<GraphCanvas, double>(nameof(Zoom), 1, coerce: (_, v) => Math.Clamp(v, MinZoom, MaxZoom));
 
     /// <summary>Where the world's origin sits in this control.</summary>
-    internal static readonly StyledProperty<Point> PanProperty = AvaloniaProperty.Register<GraphCanvas, Point>(nameof(Pan), _defaultPan);
+    internal static readonly StyledProperty<Point> PanProperty = AvaloniaProperty.Register<GraphCanvas, Point>(nameof(Pan), _defaultPan, coerce: static (o, v) => o is GraphCanvas canvas ? canvas.HeldPan(v) : v);
+
+    /// <summary>The text size setting as a factor (1 = 100 %): cards are laid out at it, and a change wraps them again.</summary>
+    internal static readonly StyledProperty<double> TextScaleProperty = AvaloniaProperty.Register<GraphCanvas, double>(nameof(TextScale), 1);
 
     private const double ViewMargin = 24;
     private const double MinHandle = 40;
     private const double ZoomStep = 1.1;
+    private const double WheelStep = 48;
 
     private WorkflowGraphViewModel? _watched;
     private Point? _panFrom;
     private Point _panStart;
+    private double _laidOutWidth;
+    private double _laidOutScale = 1;
+    private WorkflowGraphViewModel? _laidOut;
     private bool _fitPending;   // a workflow just opened and the person has not moved the view: fit it to the canvas
 
     static GraphCanvas()
     {
-        AffectsRender<GraphCanvas>(GraphProperty, ZoomProperty, PanProperty);
+        AffectsRender<GraphCanvas>(GraphProperty, ZoomProperty, PanProperty, TextScaleProperty);
         FocusableProperty.OverrideDefaultValue<GraphCanvas>(defaultValue: true);
         ClipToBoundsProperty.OverrideDefaultValue<GraphCanvas>(defaultValue: true);
+        _ = ZoomProperty.Changed.AddClassHandler<GraphCanvas>((canvas, _) =>
+        {
+            canvas.CoerceValue(PanProperty);   // a new zoom changes the scroll extent
+            canvas.ViewChanged?.Invoke(canvas, EventArgs.Empty);
+        });
+        _ = PanProperty.Changed.AddClassHandler<GraphCanvas>((canvas, _) => canvas.ViewChanged?.Invoke(canvas, EventArgs.Empty));
+        _ = TextScaleProperty.Changed.AddClassHandler<GraphCanvas>((canvas, _) => canvas.FitIfPending());
         _ = GraphProperty.Changed.AddClassHandler<GraphCanvas>((c, e) => c.OnGraphChanged(e.OldValue as WorkflowGraphViewModel, e.NewValue as WorkflowGraphViewModel));
     }
 
@@ -63,11 +77,19 @@ internal sealed partial class GraphCanvas : Control
         set => SetValue(ZoomProperty, value);
     }
 
-    /// <summary>Gets or sets where the world's origin sits in this control.</summary>
+    /// <summary>Gets or sets the text size setting as a factor.</summary>
+    internal double TextScale
+    {
+        get => GetValue(TextScaleProperty);
+        set => SetValue(TextScaleProperty, value);
+    }
+
+    /// <summary>Gets or sets where the world's origin sits in this control. The value stored is already held inside the scroll extent (GraphZoom.ClampPan),
+    /// so a later zoom's re-coerce has no unclamped value to bring back (#4033, #4063), whoever writes the pan.</summary>
     internal Point Pan
     {
         get => GetValue(PanProperty);
-        set => SetValue(PanProperty, value);
+        set => SetValue(PanProperty, HeldPan(value));
     }
 
     /// <summary>A node's card in this control's coordinates, after pan and zoom.</summary>
@@ -103,7 +125,11 @@ internal sealed partial class GraphCanvas : Control
     public GraphCanvas()
     {
         ActualThemeVariantChanged += (_, _) => InvalidateVisual();   // the brushes are looked up while drawing, so a theme switch needs a new pass
-        SizeChanged += (_, _) => FitIfPending();
+        SizeChanged += (_, _) =>
+        {
+            FitIfPending();
+            ViewChanged?.Invoke(this, EventArgs.Empty);
+        };
     }
 
     /// <inheritdoc/>
@@ -143,11 +169,14 @@ internal sealed partial class GraphCanvas : Control
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
+        var at = e.GetPosition(this);
         if (_panFrom is { } from)
         {
-            var at = e.GetPosition(this);
-            Pan = new Point(_panStart.X + (at.X - from.X), _panStart.Y + (at.Y - from.Y));
+            PanTo(new Point(_panStart.X + (at.X - from.X), _panStart.Y + (at.Y - from.Y)));
+            return;
         }
+
+        ToolTip.SetTip(this, TipAt(at));   // the card's full settings line, which the card may cut (#4203); none off the cards
     }
 
     /// <inheritdoc/>
@@ -165,18 +194,31 @@ internal sealed partial class GraphCanvas : Control
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {
         base.OnPointerWheelChanged(e);
-        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        e.Handled = Wheel(e.Delta, e.KeyModifiers, e.GetPosition(this));
+    }
+
+    /// <summary>One wheel step. Ctrl+wheel zooms about the pointer. A plain wheel scrolls up and down; a sideways swipe (or Shift+wheel) scrolls left and right. The canvas takes the
+    /// wheel only while it can move that way; at its end, or when it fits, the wheel is left to the page.</summary>
+    /// <param name="delta">The wheel's delta.</param>
+    /// <param name="modifiers">The keys held.</param>
+    /// <param name="at">The pointer, in this control.</param>
+    /// <returns>True when the canvas took the wheel.</returns>
+    internal bool Wheel(Vector delta, KeyModifiers modifiers, Point at)
+    {
+        _fitPending = false;
+        if (!modifiers.HasFlag(KeyModifiers.Control))
         {
-            return;
+            var (dx, dy) = modifiers.HasFlag(KeyModifiers.Shift) && Math.Abs(delta.X) < 1e-9 ? (delta.Y, 0d) : (delta.X, delta.Y);
+            var before = Pan;
+            PanTo(new Point(Pan.X + (dx * WheelStep), Pan.Y + (dy * WheelStep)));
+            return Pan != before;
         }
 
         // Zoom about the pointer: the world point under it stays under it.
-        _fitPending = false;
-        var at = e.GetPosition(this);
         var world = ToWorld(at);
-        Zoom *= Math.Pow(ZoomStep, e.Delta.Y);
-        Pan = new Point(at.X - (world.X * Zoom), at.Y - (world.Y * Zoom));
-        e.Handled = true;
+        Zoom *= Math.Pow(ZoomStep, delta.Y);
+        PanTo(new Point(at.X - (world.X * Zoom), at.Y - (world.Y * Zoom)));
+        return true;
     }
 
     /// <inheritdoc/>
@@ -188,9 +230,16 @@ internal sealed partial class GraphCanvas : Control
             return;
         }
 
+        if (ZoomKey(e.Key, e.KeyModifiers))
+        {
+            e.Handled = true;   // a zoom key zooms about the centre and leaves the selection where it is
+            return;
+        }
+
 #pragma warning disable IDE0072 // every other key is not the canvas's
         e.Handled = e.Key switch
         {
+            Key.F when e.KeyModifiers == KeyModifiers.None => FitKey(),
             Key.Right or Key.Down => graph.SelectNext(),
             Key.Left or Key.Up => graph.SelectPrevious(),
             Key.Tab => e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? graph.SelectPrevious() : graph.SelectNext(),   // at either end Tab is not handled, so focus moves on
@@ -205,19 +254,10 @@ internal sealed partial class GraphCanvas : Control
         }
     }
 
-    /// <summary>Pans the least that brings a node's card fully into view, with a margin; does nothing when it is already inside.</summary>
-    /// <param name="id">The node's id.</param>
-    internal void ScrollIntoView(string id)
+    private bool FitKey()
     {
-        if (NodeRect(id) is not { } card || (new Rect(Bounds.Size).Contains(card.TopLeft) && new Rect(Bounds.Size).Contains(card.BottomRight)))
-        {
-            return;
-        }
-
-        static double Shift(double near, double far, double size) =>
-            near < 0 || far - near > size ? ViewMargin - near : far > size ? size - ViewMargin - far : 0;
-
-        Pan = new Point(Pan.X + Shift(card.Left, card.Right, Bounds.Width), Pan.Y + Shift(card.Top, card.Bottom, Bounds.Height));
+        FitNow();
+        return true;
     }
 
     private void OnGraphChanged(WorkflowGraphViewModel? old, WorkflowGraphViewModel? graph)
@@ -228,7 +268,7 @@ internal sealed partial class GraphCanvas : Control
         if (old is null || graph is null || !string.Equals(old.Slug, graph.Slug, StringComparison.Ordinal))
         {
             Zoom = 1;
-            Pan = _defaultPan;
+            PanTo(_defaultPan);
             _fitPending = true;
         }
 
@@ -239,28 +279,6 @@ internal sealed partial class GraphCanvas : Control
         (ControlAutomationPeer.FromElement(this) as GraphCanvasAutomationPeer)?.Refresh();
         FitIfPending();
         InvalidateVisual();
-    }
-
-    // A graph wider or taller than the canvas is shrunk (never below the minimum zoom) so every card shows; one that fits keeps the default view (#2668).
-    private void FitIfPending()
-    {
-        if (!_fitPending || Graph is not { Nodes.Count: > 0 } graph || Bounds.Width <= 0 || Bounds.Height <= 0)
-        {
-            return;
-        }
-
-        var world = graph.Nodes.Select(WorldRect).Aggregate(static (a, b) => a.Union(b));
-        var room = new Size(Math.Max(1, Bounds.Width - (2 * ViewMargin)), Math.Max(1, Bounds.Height - (2 * ViewMargin)));
-        var zoom = Math.Min(1, Math.Min(room.Width / world.Width, room.Height / world.Height));
-        if (zoom >= 1)
-        {
-            Zoom = 1;
-            Pan = _defaultPan;
-            return;
-        }
-
-        Zoom = zoom;
-        Pan = new Point(ViewMargin - (world.X * Zoom), ViewMargin - (world.Y * Zoom));
     }
 
     private void OnGraphProperty(object? sender, PropertyChangedEventArgs e)

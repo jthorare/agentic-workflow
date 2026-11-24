@@ -39,12 +39,18 @@ public sealed class WriteAttributionTests
         ["POST /sindri/workflow/challenges/app"] = "refuses every text (IssueAppChallengeService.cs:17, no ports) and its endpoint appends nothing: writes no event",
         ["POST /sindri/workflows/{slug}/activate"] = "a session is refused (#3199): the owner's, so no launched session appends its event",
         ["POST /sindri/workflows/{slug}/pause"] = "a session is refused (#3199): the owner's, so no launched session appends its event",
+        ["POST /sindri/workflow-runs/{run}/seen"] = "the owner's (#3733): a launched session gets SND-AUTH-002, and the owner's mark sets workflow_run.seen_at and writes no ledger event",
         ["POST /sindri/workflows/{slug}/test"] = "a Workflows page P0 stub (#3191): refuses SND-GRAPH-119 and writes no event until the test phase builds it",
         ["POST /sindri/workflows/{slug}/pins"] = "a Workflows page P0 stub (#3191): refuses SND-GRAPH-119 and writes no event until the pins phase builds it",
         ["POST /sindri/workflows/validate"] = "checks a stored spec and returns its findings (ValidateWorkflowService): stores nothing and writes no event",
         ["POST /sindri/setup/skip"] = "edits the live profile file (setup.skipAccounts, setup.skipFirstWorkflow) through the profile key writer, like todos/note/set: writes no ledger event",
         ["POST /sindri/restart"] = "a stub until the restart commit (first-run spec decision 11): it stops the host, so the ledger can't be read after it, and refuses a caller without the human token",
         ["POST /sindri/setup/accounts/{provider}"] = "a stub until the accounts commit (first-run spec A8): it refuses a caller without the human token and writes to the secret store and the profile, not the ledger",
+        ["POST /sindri/messages/connect"] = "the owner's (messages spec §5.1): it writes the token to the secret store and the 'slack:messages' connection row, not the ledger; a stub until M1d (#3272)",
+        ["POST /sindri/messages/conversations/{id}/read"] = "a local write (messages spec §8.2): it moves read pointers in messages.db and writes no ledger event; a stub until M1h (#3275)",
+        ["POST /sindri/messages/conversations/{id}/unread"] = "a local write (messages spec §8.2): it moves read pointers in messages.db and writes no ledger event; a stub until M1h (#3275)",
+        ["POST /sindri/messages/lists/unread/read"] = "a local write (messages spec §8.2): it moves read pointers in messages.db and writes no ledger event; a stub until M1h (#3275)",
+        ["POST /sindri/messages/lists/unread/unread"] = "a local write (messages spec §8.2): it moves read pointers in messages.db and writes no ledger event; a stub until M1h (#3275)",
     };
 
     // Write routes that do append events but whose caller is proven another way than a launched session's header; not swept here.
@@ -94,6 +100,7 @@ public sealed class WriteAttributionTests
     private static readonly Dictionary<string, string> _onlyRefusals = new(StringComparer.Ordinal)
     {
         ["POST /sindri/workflows/{slug}/runs"] = "a run that starts needs the Temporal worker, which the golden host doesn't run; its goldens are refusals (#2434)",
+        ["POST /sindri/workflow-runs/{run}/rerun"] = "a re-run that starts needs the Temporal worker, like a run; its goldens are refusals (bad id, unknown run, not ended, unknown step) and RerunWorkflowRunServiceTests pins the start; the succeeding scenario is #2434 (#3204)",
         ["POST /sindri/setup/mcp"] = "a job starter; its only golden is not-in-profile, a refusal; the job's mcp.registered needs a succeeding scenario (#2434)",
         ["POST /sindri/setup/repos/onboard"] = "a job starter; its only golden is not-approved, a refusal; the job's repo.onboarded needs a succeeding scenario (#2434)",
     };

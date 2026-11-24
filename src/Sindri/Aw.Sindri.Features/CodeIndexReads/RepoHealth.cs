@@ -12,7 +12,7 @@ namespace Aw.Sindri.Features.CodeIndexReads;
 /// layer's progress as a percent. Counts and words only.
 /// </summary>
 /// <param name="Repo">The repo.</param>
-/// <param name="State">missing, damaged, ok, stale (the head moved past the index), building (a build job runs), waiting (a failed build holds the next one) or queued (no index yet, the head is on the default branch and code-index-main-move is not paused, so it starts the first build on its next tick; #3342, #3399). Off the default branch a repo with no index stays missing: no build is coming (#3181).</param>
+/// <param name="State">missing, damaged, ok, stale (the head moved past the index), building (a build job runs), waiting (a failed build holds the next one) queued (no index yet, the head is on the default branch or the checkout has a default-branch tip to build from, and code-index-main-move is not paused, so it starts the first build on its next tick; #3342, #3399, #3181) or unbuildable (no index yet, the head off its default branch and no default branch to build from, so no first build can ever run; #3187).</param>
 /// <param name="EmbeddingsPercent">The share of embeddable symbols that have a vector, or null when the layer states no count.</param>
 /// <param name="Waiting">'retrying in N min' while the state is waiting, else null.</param>
 public sealed record RepoHealth(string Repo, string State, int? EmbeddingsPercent, string? Waiting)
@@ -122,7 +122,14 @@ public sealed record RepoHealth(string Repo, string State, int? EmbeddingsPercen
     private static bool Moved(RepoStatus status, IndexRepoHead? live) => live?.Head is { } head && head != status.Commit;
 
     private static string Word(string? waiting, bool missing, bool behind, IndexRepoHead? live) =>
-        waiting is not null ? "waiting" : missing ? (live is { Head: not null, OnDefaultBranch: true } ? "queued" : "missing") : behind ? "stale" : "ok";
+        waiting is not null ? "waiting" : missing ? MissingWord(live) : behind ? "stale" : "ok";
+
+    // A missing index: queued when a first build comes, unbuildable when none ever can (off the default branch, no default tip; #3187), else missing.
+    private static string MissingWord(IndexRepoHead? live) =>
+        FirstBuildComes(live) ? "queued" : live is { Head: not null, OnDefaultBranch: false, DefaultTip: null } ? "unbuildable" : "missing";
+
+    // why: off the default branch the first build runs at the default branch's tip (#3181), so a repo with one is queued too
+    private static bool FirstBuildComes(IndexRepoHead? live) => live is { Head: not null } && (live.OnDefaultBranch || live.DefaultTip is not null);
 
     private static string? WaitingWords(IReadOnlyList<JobRow> builds, DateTimeOffset now) =>
         IndexBuildWords.Waiting([.. builds.Where(static j => j.EndedAt is not null).OrderByDescending(static j => j.EndedAt)], now);

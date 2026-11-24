@@ -1,5 +1,3 @@
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -7,7 +5,6 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sessions;
-using Aw.Sindri.Infrastructure.Processes;
 
 namespace Aw.Sindri.Infrastructure.Launch;
 
@@ -16,7 +13,7 @@ namespace Aw.Sindri.Infrastructure.Launch;
 /// while the stream is open, and types with 'send-keys' and 'paste-buffer -p'. Every call passes <see cref="TmuxAllowlist"/> first and drops TMUX from
 /// its environment. It never attaches, never enters copy-mode and never resizes a foreign window. It logs no frame or key.
 /// </summary>
-internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalPaneLocator locator) : ITerminalPaneSource
+internal sealed partial class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalPaneLocator locator) : ITerminalPaneSource
 {
     private const int TimedOut = 124;   // the exit code timeout(1) uses
     private const string PasteBuffer = "sindri-paste";
@@ -55,9 +52,15 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
         }
     }
 
-    private sealed class PaneStream(TmuxHostOptions options, TerminalTarget target) : IOpenTerminalPane
+    private sealed partial class PaneStream(TmuxHostOptions options, TerminalTarget target) : IOpenTerminalPane
     {
         private readonly SemaphoreSlim _kick = new(0);
+        private readonly Lock _view = new();   // guards _back, _hist, _alt and _seenBack: the pump reads them, the receive loop sets them
+        private int _back;   // rows above the live screen the view shows; 0 is live
+        private int _hist;   // the history size of the last capture, 0 on the alternate screen
+        private bool _alt;
+        private int _seenBack;   // the offset of the last capture's rows: a view still there was not scrolled since
+        private List<string>? _seen;   // the last capture's rows, which a full history finds again by content (the pump only)
         private long _seq;   // per stream, not per enumeration: a reader that comes back gets the next number, so frames always count up
 
         public TerminalHost Host { get; } = new(target.SocketIsPath ? "path" : target.Socket, target.Session, target.Pane);
@@ -73,18 +76,17 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
                     yield break;   // tmux or the session went away: the socket closes with 4016
                 }
 
-                var captured = await Call(["capture-pane", "-e", "-p", "-t", target.Pane], stdin: null, cancellationToken).ConfigureAwait(false);
-                if (captured.ExitCode != 0)
+                if (await Capture(facts, cancellationToken).ConfigureAwait(false) is not { } shown)
                 {
                     yield break;
                 }
 
-                var rows = Rows(captured.Output, facts.Height);
-                var signature = string.Join('\n', rows) + facts.Signature;
+                var (rows, back, hist) = shown;
+                var signature = string.Join('\n', rows) + facts.Signature + "|" + back.ToString(CultureInfo.InvariantCulture) + "," + hist.ToString(CultureInfo.InvariantCulture);
                 if (!string.Equals(signature, last, StringComparison.Ordinal))
                 {
                     last = signature;
-                    yield return new TerminalFrame(Interlocked.Increment(ref _seq), rows, facts.CursorX, facts.CursorY, facts.Width, facts.Height, facts.Alt, facts.InMode, facts.Dead);
+                    yield return new TerminalFrame(Interlocked.Increment(ref _seq), rows, facts.CursorX, facts.CursorY, facts.Width, facts.Height, facts.Alt, facts.InMode, facts.Dead) { Back = back, Hist = hist };
                     if (facts.Dead)
                     {
                         yield break;
@@ -96,6 +98,33 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
             }
         }
 
+        /// <summary>
+        /// The rows this capture shows, with its offset and history size, or null when tmux refused it. With a full history it also captures the rows above
+        /// the view and holds the view on the last capture's rows by content (issue 3829): no match keeps the offset and sends what is there.
+        /// </summary>
+        private async ValueTask<(List<string> Rows, int Back, int Hist)?> Capture(PaneFacts facts, CancellationToken cancellationToken)
+        {
+            var (back, hist, extra) = View(facts);
+            string[] captureArgs = back == 0
+                ? ["capture-pane", "-e", "-p", "-t", target.Pane]
+                : [
+                    "capture-pane", "-e", "-p", "-t", target.Pane,
+                    "-S", (-(back + extra)).ToString(CultureInfo.InvariantCulture),
+                    "-E", (facts.Height - 1 - back).ToString(CultureInfo.InvariantCulture),
+                ];
+            var captured = await Call(captureArgs, stdin: null, cancellationToken).ConfigureAwait(false);
+            if (captured.ExitCode != 0)
+            {
+                return null;
+            }
+
+            var all = Rows(captured.Output, facts.Height + extra);
+            var shift = extra > 0 && _seen is { } seen && seen.Count == facts.Height ? ScrollbackShift.Find(seen, all, extra) ?? 0 : 0;
+            var rows = all.GetRange(extra - shift, all.Count - extra);
+            _seen = rows;
+            return (rows, Hold(back, shift), hist);
+        }
+
         public async ValueTask<Result<Unit>> SendKey(string key, CancellationToken cancellationToken)
         {
             var named = TerminalKeys.Check(key);
@@ -104,7 +133,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
                 return named;
             }
 
-            return await Typed(["send-keys", "-t", target.Pane, key], stdin: null, cancellationToken).ConfigureAwait(false);
+            return Live(await Typed(["send-keys", "-t", target.Pane, key], stdin: null, cancellationToken).ConfigureAwait(false));
         }
 
         public async ValueTask<Result<Unit>> SendText(string text, CancellationToken cancellationToken)
@@ -116,7 +145,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
 
             return text.Length == 0
                 ? Unit.Value
-                : await Typed(["send-keys", "-t", target.Pane, "-l", "--", EscapeTrailingSemicolon(text)], stdin: null, cancellationToken).ConfigureAwait(false);
+                : Live(await Typed(["send-keys", "-t", target.Pane, "-l", "--", EscapeTrailingSemicolon(text)], stdin: null, cancellationToken).ConfigureAwait(false));
         }
 
         /// <summary>
@@ -135,7 +164,7 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
             var loaded = await Typed(["load-buffer", "-b", PasteBuffer, "-"], text, cancellationToken).ConfigureAwait(false);
             return loaded.IsError
                 ? loaded
-                : await Typed(["paste-buffer", "-p", "-d", "-b", PasteBuffer, "-t", target.Pane], stdin: null, cancellationToken).ConfigureAwait(false);
+                : Live(await Typed(["paste-buffer", "-p", "-d", "-b", PasteBuffer, "-t", target.Pane], stdin: null, cancellationToken).ConfigureAwait(false));
         }
 
         public async ValueTask<Result<Unit>> Resize(HostSize newSize, CancellationToken cancellationToken)
@@ -156,134 +185,81 @@ internal sealed class TmuxTerminalPaneSource(TmuxHostOptions options, ITerminalP
                 cancellationToken).ConfigureAwait(false);
         }
 
+        public ValueTask<Result<Unit>> Scroll(int back, CancellationToken cancellationToken)
+        {
+            lock (_view)
+            {
+                _back = _alt ? 0 : Math.Clamp(back, 0, _hist);   // clamped to the history of the last capture; the next capture clamps again
+            }
+
+            _ = _kick.Release();   // capture right away, like a key
+            return ValueTask.FromResult<Result<Unit>>(Unit.Value);
+        }
+
+        /// <summary>A key, text or paste that went through returns the view to the live screen.</summary>
+        private Result<Unit> Live(Result<Unit> sent)
+        {
+            if (sent.IsSuccess)
+            {
+                lock (_view)
+                {
+                    _back = 0;
+                }
+            }
+
+            return sent;
+        }
+
+        /// <summary>
+        /// The offset and history size this capture shows. The alternate screen has no scrollback, so entering it drops the offset (leaving it lands live). While
+        /// scrolled, rows that arrived since the last capture move the offset with them, so the view stays on the same lines; then it is clamped to the history.
+        /// A full history can't count new rows, so a view not scrolled since the last capture also gets the rows to capture above it for the content match.
+        /// </summary>
+        private (int Back, int Hist, int Extra) View(PaneFacts facts)
+        {
+            lock (_view)
+            {
+                _alt = facts.Alt;
+                var hist = facts.Alt ? 0 : facts.Hist;
+                var anchored = _back > 0 && _back == _seenBack;   // not scrolled since the last capture, so its rows are where the view was
+                if (facts.Alt)
+                {
+                    _back = 0;
+                }
+                else if (_back > 0 && hist > _hist)
+                {
+                    _back += hist - _hist;
+                }
+
+                _back = Math.Clamp(_back, 0, hist);
+                _hist = hist;
+                return (_back, hist, anchored ? ScrollbackShift.Extra(_back, hist, facts.Limit, facts.Height) : 0);
+            }
+        }
+
+        /// <summary>Moves the offset by the shift the content match found, unless a scroll came in since the capture. Returns the offset of the rows sent.</summary>
+        private int Hold(int back, int shift)
+        {
+            lock (_view)
+            {
+                if (_back == back)
+                {
+                    _back = back + shift;
+                }
+
+                _seenBack = back + shift;
+                return back + shift;
+            }
+        }
+
         public ValueTask DisposeAsync()
         {
             _kick.Dispose();
             return ValueTask.CompletedTask;   // detaching is dropping the polling: nothing was attached, nothing is stopped
         }
-
-        /// <summary>The cursor, size and mode facts of the pane, or null when tmux or the pane is gone.</summary>
-        internal async ValueTask<PaneFacts?> Facts(CancellationToken cancellationToken)
-        {
-            const string format = "#{cursor_x} #{cursor_y} #{pane_width} #{pane_height} #{pane_in_mode} #{alternate_on} #{pane_dead}";
-            var run = await Call(["display-message", "-p", "-t", target.Pane, format], stdin: null, cancellationToken).ConfigureAwait(false);
-            if (run.ExitCode != 0)
-            {
-                return null;
-            }
-
-            var parts = run.Output.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length < 7 || !parts.All(p => int.TryParse(p, NumberStyles.None, CultureInfo.InvariantCulture, out _)))
-            {
-                return null;
-            }
-
-            var n = parts.Select(p => int.Parse(p, CultureInfo.InvariantCulture)).ToArray();
-            return new PaneFacts(n[0], n[1], n[2], n[3], n[4] == 1, n[5] == 1, n[6] == 1);
-        }
-
-        private static List<string> Rows(string output, int height)
-        {
-            var rows = output.Split('\n').ToList();
-            if (rows.Count > 0 && rows[^1].Length == 0)
-            {
-                rows.RemoveAt(rows.Count - 1);
-            }
-
-            while (rows.Count < height)
-            {
-                rows.Add(string.Empty);
-            }
-
-            return rows.Count > height && height > 0 ? rows[..height] : rows;
-        }
-
-        private async ValueTask<Result<Unit>> Typed(IReadOnlyList<string> args, string? stdin, CancellationToken cancellationToken)
-        {
-            var run = await Call(args, stdin, cancellationToken).ConfigureAwait(false);
-            if (run.ExitCode != 0)
-            {
-                return SindriErrors.AgentPaneGone.With("tmux refused the call");
-            }
-
-            _ = _kick.Release();   // capture right away instead of waiting for the next tick
-            return Unit.Value;
-        }
-
-        private async Task<TmuxOutput> Call(IReadOnlyList<string> args, string? stdin, CancellationToken cancellationToken)
-        {
-            var allowed = TmuxAllowlist.Check(target.Foreign ? TmuxList.Foreign : TmuxList.Launch, args);
-            if (allowed.IsError)
-            {
-                return new TmuxOutput(2, string.Empty);
-            }
-
-            var socketArgs = target.SocketIsPath ? new[] { "-S", target.Socket } : ["-L", target.Socket];
-            var extra = options.TmuxTmpDir is { } tmp ? new Dictionary<string, string?>(StringComparer.Ordinal) { ["TMUX_TMPDIR"] = tmp } : null;
-            var start = ChildEnvironment.Start(options.Executable, [.. socketArgs, .. args], extra);
-            start.RedirectStandardOutput = true;
-            start.RedirectStandardError = true;
-            start.RedirectStandardInput = stdin is not null;
-            _ = start.Environment.Remove("TMUX");   // a pane's own server is never ours
-            using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            deadline.CancelAfter(_callBudget);
-            Process process;
-            try
-            {
-                process = Process.Start(start) ?? throw new Win32Exception("tmux did not start");
-            }
-            catch (Win32Exception)
-            {
-                return new TmuxOutput(127, string.Empty);
-            }
-
-            using (process)
-            {
-                try
-                {
-                    return await Collect(process, stdin, deadline.Token).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-                {
-                    // The 5 s budget fired, not the caller: a failed call (the stream closes with 4016 or the key is refused), never a silent cancel.
-                    return new TmuxOutput(TimedOut, string.Empty);
-                }
-            }
-        }
-
-        /// <summary>Writes stdin, reads stdout and waits for the exit; a cancel kills the client, so no tmux client is left running.</summary>
-        private static async Task<TmuxOutput> Collect(Process process, string? stdin, CancellationToken cancellationToken)
-        {
-            try
-            {
-                if (stdin is not null)
-                {
-                    await process.StandardInput.WriteAsync(stdin.AsMemory(), cancellationToken).ConfigureAwait(false);
-                    process.StandardInput.Close();
-                }
-
-                var output = process.StandardOutput.ReadToEndAsync(cancellationToken);
-                _ = process.StandardError.ReadToEndAsync(cancellationToken);
-                await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
-                return new TmuxOutput(process.ExitCode, (await output.ConfigureAwait(false)).TrimEnd('\n'));
-            }
-            catch (OperationCanceledException)
-            {
-                try
-                {
-                    process.Kill();
-                }
-                catch (InvalidOperationException)
-                {
-                    // it ended between the cancel and the kill
-                }
-
-                throw;
-            }
-        }
     }
 
-    private sealed record PaneFacts(int CursorX, int CursorY, int Width, int Height, bool InMode, bool Alt, bool Dead)
+    private sealed record PaneFacts(int CursorX, int CursorY, int Width, int Height, bool InMode, bool Alt, bool Dead, int Hist, int Limit)
     {
         public string Signature => string.Create(CultureInfo.InvariantCulture, $"|{CursorX},{CursorY},{Width},{Height},{InMode},{Alt},{Dead}");
     }

@@ -9,7 +9,7 @@
 # brings up the pinned Temporal dev server, so the temporal CLI must be installed: scripts/binaries-lock.sh fetch
 # temporal): doctor with nothing running, start headless with a live profile, a second serve refused by the lease,
 # the removed `profile approve` (a human's and a session's both print the removal line, exit 0), status (text and --json's apiVersion), /sindri/mcp's initialize and tools/list as a stateless MCP client, then the 12 tools' calls (sindri_queue, sindri_request filed as session:mcp, sindri_item refused, sindri_decide absent),
-# the views rebuild requested by a session and by the human, status's views and health lines, the item verbs (API P3: a human's item add, the queue and the item list, a session's item add, the human's item close, the done list and the queue again), the request verbs (API P4: a session's request, the needs-you list, a session's decide, the list again and the accepted requests), the ledger read (API P5: the human's lists command.handled, a session's doesn't, one item's events, and GET /events/catalog), QUERY /context/subgraph with a JSON body on the published host (POST is 405), the service and job verbs (API P6: the services list as JSON, a manual run of heartbeat followed to its end, a session's run, jobs show and the jobs list, pause and resume with a session's pause, and the services list after each; a manual run of index-sync so the last doctor's library row never depends on its 5-minute slot, #3628), a session's stop, status and doctor again (doctor with HOME on an empty scratch dir, so its
+# the views rebuild requested by a session and by the human, status's views and health lines, the item verbs (API P3: a human's item add, the queue and the item list, a session's item add, the human's item close, the done list and the queue again), the request verbs (API P4: a session's request, the needs-you list, a session's decide, the list again and the accepted requests), the ledger read (API P5: the human's lists command.handled, a session's doesn't, one item's events, and GET /events/catalog), QUERY /context/subgraph with a JSON body on the published host (POST is 405), the service and job verbs (API P6: the services list as JSON, a manual run of heartbeat followed to its end, a session's run, jobs show and the jobs list, pause and resume with a session's pause, and the services list after each; a manual run of index-sync so the last doctor's library row never depends on its 5-minute slot, #3628), setup with serve up, a session's stop, status, setup with serve down (#3319) and doctor again (doctor with HOME on an empty scratch dir, so its
 # context:mcp-scope row never reads the real provider files), and a one-node Code workflow (wf create, activate, run, run-show) whose node returns {"sum":3}, run by sindri-code-runner published into the same folder as the host (the sandbox must be able to confine it: a box that can't prints the failed run's error in the 'code-node:' line and the diff fails);
 # The normalized output (pids, ports, hashes, times, the host name and the temp path
 # masked) must equal expected.txt.
@@ -362,8 +362,10 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   settle
   run services
   code_node_run
+  run setup   # the steps with serve up (first-run spec §5.1)
   session stop
   run status
+  run setup   # serve down: serve, repo, profile and agent decided in process, the other four wait for Sindri to run (first-run spec decision 8, #3319)
   doctor
 } >"$out/actual.raw"
 

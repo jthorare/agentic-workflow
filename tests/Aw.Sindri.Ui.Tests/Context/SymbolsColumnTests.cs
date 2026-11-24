@@ -22,7 +22,33 @@ public sealed class SymbolsColumnTests
 
         Assert.Equal(("from 7c3e1a2", false), (column.Caption, column.Dimmed));
         Assert.Equal("setOrientation · resize · +3", column.Cell("src/layout/SplitPane.ts"));
-        Assert.Equal(string.Empty, column.Cell("src/unknown.ts"));
+        Assert.Equal("—", column.Cell("src/unknown.ts"));
+    }
+
+    [Fact]
+    public void An_ok_index_with_graph_off_and_no_rows_says_only_csharp_gets_names()
+    {
+        var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false) with { Reason = "graph-off" });
+
+        Assert.Equal(("from 7c3e1a2", "only C# files get names: the code graph is off for this repo", false), (column.Caption, column.EmptyReason, column.Dimmed));
+        Assert.Equal("—", column.Cell("src/tabs/TabManager.ts"));
+    }
+
+    [Fact]
+    public void An_ok_index_with_graph_on_and_no_rows_says_none_in_these_files()
+    {
+        var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false));
+
+        Assert.Equal(("from 7c3e1a2", "none in these files", false), (column.Caption, column.EmptyReason, column.Dimmed));
+        Assert.Equal("—", column.Cell("src/tabs/TabManager.ts"));
+    }
+
+    [Fact]
+    public void Graph_off_with_rows_keeps_the_commit_caption()
+    {
+        var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false, Row("src/a.cs", "Save")) with { Reason = "graph-off" });
+
+        Assert.Equal(("from 7c3e1a2", null), (column.Caption, column.EmptyReason));
     }
 
     [Fact]
@@ -38,7 +64,7 @@ public sealed class SymbolsColumnTests
     {
         var column = new SymbolsColumnViewModel(Served("stale", Asked, mismatch: true, Row("src/a.ts", "save")));
 
-        Assert.Equal(("from 7c3e1a2, not 1234567", true), (column.Caption, column.Dimmed));
+        Assert.Equal(("from 7c3e1a2", "from 7c3e1a2, not 1234567", true), (column.Caption, column.AsOfNote, column.Dimmed));
         Assert.Equal("save", column.Cell("src/a.ts"));
     }
 

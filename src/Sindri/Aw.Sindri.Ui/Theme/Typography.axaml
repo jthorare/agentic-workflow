@@ -32,7 +32,8 @@
     <Setter Property="FontWeight" Value="{DynamicResource Type.DetailTitle.Weight}" />
     <Setter Property="LetterSpacing" Value="-0.24" />
   </Style>
-  <Style Selector="TextBlock.body">
+  <!-- The Linear issue lines (LinearLineView) are SelectableTextBlocks in the body type (#3785). -->
+  <Style Selector="TextBlock.body, SelectableTextBlock.body">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.Body.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Body.LineHeight}" />
@@ -46,7 +47,8 @@
     <Setter Property="FontWeight" Value="{DynamicResource Type.BodyStrong.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
   </Style>
-  <Style Selector="TextBlock.caption">
+  <!-- A type selector matches the exact type, so the copyable caption lines (a failed open, a run error) need their own (#3785). -->
+  <Style Selector="TextBlock.caption, SelectableTextBlock.caption">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Caption.LineHeight}" />

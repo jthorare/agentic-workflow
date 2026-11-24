@@ -26,10 +26,56 @@ internal static class TsWorkspace
 
         var dir = RepoPath.Dir(file.Path);
         var root = doc.RootElement;
-        var entries = new[] { root.TryGetProperty("exports", out var exports) ? Target(exports) : null, Text(root, "types"), Text(root, "main") }
+        var hasExports = root.TryGetProperty("exports", out var exports);
+        var entries = new[] { hasExports ? Target(exports) : null, Text(root, "types"), Text(root, "main") }
             .OfType<string>().Select(e => RepoPath.Join(dir, e)).OfType<string>().ToList();
-        return new PackageRoot(name, dir, entries);
+        return new PackageRoot(name, dir, entries, hasExports ? Subpaths(dir, exports) : []);
     }
+
+    // "./sql": "./src/sql/index.ts", "./*": "./src/*.ts" or a conditions object: exact keys first, then patterns by longest prefix and, for the same prefix,
+    // by the longer whole key ('./a/*.js' before './a/*'), as Node's PATTERN_KEY_COMPARE orders them (issue 4043)
+    private static IReadOnlyList<PackageSubpath> Subpaths(string dir, JsonElement exports)
+    {
+        if (exports.ValueKind != JsonValueKind.Object)
+        {
+            return [];
+        }
+
+        return [.. exports.EnumerateObject()
+            .Where(p => p.Name.StartsWith("./", StringComparison.Ordinal))
+            .Select(p => Subpath(dir, p))
+            .OrderBy(s => s.Wild).ThenByDescending(s => s.Prefix.Length).ThenByDescending(s => s.Prefix.Length + s.Suffix.Length)];
+    }
+
+    private static PackageSubpath Subpath(string dir, JsonProperty key)
+    {
+        var targets = Leaves(key.Value).OrderBy(t => t.EndsWith(".d.ts", StringComparison.Ordinal)).Select(t => RepoPath.Join(dir, t)).OfType<string>().ToList();
+        var star = key.Name.IndexOf('*', StringComparison.Ordinal);
+        var blocked = Blocks(key.Value);
+        return star < 0
+            ? new PackageSubpath(key.Name, Suffix: "", Wild: false, targets, blocked)
+            : new PackageSubpath(key.Name[..star], key.Name[(star + 1)..], Wild: true, targets, blocked);
+    }
+
+    // a null target, or conditions and fallbacks that are all null: Node refuses the subpath (an empty object or array is no target at all, not a block)
+    private static bool Blocks(JsonElement value) => value.ValueKind switch
+    {
+        JsonValueKind.Null => true,
+        JsonValueKind.Object => value.EnumerateObject().Any() && value.EnumerateObject().All(p => Blocks(p.Value)),
+        JsonValueKind.Array => value.GetArrayLength() > 0 && value.EnumerateArray().All(Blocks),
+        JsonValueKind.Undefined or JsonValueKind.String or JsonValueKind.True or JsonValueKind.False or JsonValueKind.Number => false,
+        _ => false,
+    };
+
+    // every target string of an exports value, conditions objects and fallback arrays included, in the order written
+    private static IEnumerable<string> Leaves(JsonElement value) => value.ValueKind switch
+    {
+        JsonValueKind.String => value.GetString() is { Length: > 0 } target ? [target] : [],
+        JsonValueKind.Object => value.EnumerateObject().SelectMany(p => Leaves(p.Value)),
+        JsonValueKind.Array => value.EnumerateArray().SelectMany(Leaves),
+        JsonValueKind.Undefined or JsonValueKind.Null or JsonValueKind.True or JsonValueKind.False or JsonValueKind.Number => [],   // why: no target here; a null one marks the subpath Blocked (see Blocks)
+        _ => [],
+    };
 
     private static string? Target(JsonElement element)
     {

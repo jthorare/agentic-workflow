@@ -252,7 +252,9 @@ public sealed class CommandPaletteTests : IDisposable
         Press(window, Key.K, PhysicalKey.K, _command, "k");
         var scroll = Named<ScrollViewer>(window, "PaletteScroll");
 
-        Assert.Equal(("CreateItem", 0d), (shell.Palette.Selected?.Id, scroll.Offset.Y));   // the first enabled action by name
+        // The first enabled action by name: "Add project" (AttachProject) runs since the Projects rows slice (issue 3717)
+        // and sorts before "Create item" (issue 4211).
+        Assert.Equal(("AttachProject", 0d), (shell.Palette.Selected?.Id, scroll.Offset.Y));
         var heading = Named<ItemsControl>(window, "PaletteSections").GetVisualDescendants().OfType<TextBlock>().First(t => t.Text == "Actions");
         Assert.True(heading.TranslatePoint(default, scroll) is { Y: >= 0 } at && at.Y < scroll.Viewport.Height, "the Actions heading is in view");
         Frame(window, "palette-top");

@@ -21,7 +21,7 @@ internal sealed partial class Row
         var x = _slots.TitleX;
         var id = Built(Id);
         Put(context, id, x, height);
-        x += id.Width + TitleGap;
+        x += IdSpan(id);
         var title = Built(Title);
         Put(context, title, x, height);
         x += title.Width + TitleGap;

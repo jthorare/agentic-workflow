@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Temp-dir cleanup (#3262): every mktemp this suite makes is recorded and removed when it exits.
+__aw_tmp_reg="$(command mktemp)"
+mktemp() { local p; p="$(command mktemp "$@")" || return; printf '%s\n' "$p" >>"$__aw_tmp_reg"; printf '%s\n' "$p"; }
+__aw_tmp_clean() { local rc=$? p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null || true; rm -rf "$p" || true; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; exit "$rc"; }
+trap __aw_tmp_clean EXIT
 . "$(dirname "${BASH_SOURCE[0]}")/../../../scripts/lib/test-grep.sh"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK="$DIR/../../hooks/done-gate.sh"
 # The hook logs fail-open events under $AW_STATE_DIR (default ~/.agentic-workflow): this suite gets its own, never an inherited one.
 AW_STATE_DIR="$(mktemp -d)" || exit 2; export AW_STATE_DIR
-trap 'find "$AW_STATE_DIR" -delete 2> /dev/null' EXIT
 
 write_transcript_with_assistant_text() {
   local file="$1" text="$2"
@@ -672,3 +677,46 @@ test_images_sent_to_a_judge_that_predates_the_field_still_work() {
   echo "PASS: test_images_sent_to_a_judge_that_predates_the_field_still_work"
 }
 test_images_sent_to_a_judge_that_predates_the_field_still_work
+
+# #3778: judge ask-check hangs (a stalled box). The hook ends within AW_DONE_GATE_BUDGET_MS, prints nothing, exits 0 and writes ONE
+# failopen timeout row, instead of running into the host timeout with no trace.
+test_a_hanging_judge_ends_the_hook_within_its_budget_with_one_timeout_row() {
+  local bin transcript out rc t0 t1 rows
+  bin="$(mktemp -d)"; transcript="$(mktemp)"
+  write_transcript_with_assistant_text "$transcript" "still working on the next step"
+  printf '#!/usr/bin/env bash\ncat > /dev/null\n/bin/sleep 20\n' > "$bin/judge"; chmod +x "$bin/judge"
+  find "$AW_STATE_DIR/logs" -delete 2> /dev/null
+  t0=$(date +%s%3N 2> /dev/null); case "$t0" in *[!0-9]* | '') echo "SKIP: no millisecond clock"; return 0 ;; esac
+  set +e
+  out="$(PATH="$bin:$PATH" AW_DONE_GATE_BUDGET_MS=800 bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" 2>&1)"; rc=$?
+  set -e
+  t1=$(date +%s%3N)
+  [ "$rc" -eq 0 ] || { echo "FAIL: expected exit 0, got $rc"; exit 1; }
+  [ -z "$out" ] || { echo "FAIL: expected no output, got: $out"; exit 1; }
+  [ $((t1 - t0)) -lt 3000 ] || { echo "FAIL: the hook ran $((t1 - t0)) ms against an 800 ms budget"; exit 1; }
+  rows="$(grep -c '"hook":"done-gate","cause":"timeout"' "$AW_STATE_DIR/logs/failopen.log" 2> /dev/null || true)"
+  [ "$rows" = "1" ] || { echo "FAIL: expected one failopen timeout row, got $rows"; exit 1; }
+  echo "PASS: test_a_hanging_judge_ends_the_hook_within_its_budget_with_one_timeout_row"
+}
+test_a_hanging_judge_ends_the_hook_within_its_budget_with_one_timeout_row
+
+# #3778: a timeout must not leave the judge it started running. `judge brief get` hangs on a done claim; the fake writes its own
+# pid and then becomes the sleep (exec), so that pid is the hanging process. After the hook returns it must be gone within 1 s
+# (10 checks, 0.1 s apart). Checked by the recorded pid only, never by process name.
+test_a_hanging_brief_get_is_killed_with_the_hook() {
+  local bin transcript out rc pid n
+  bin="$(mktemp -d)"; transcript="$(mktemp)"
+  write_transcript_with_assistant_text "$transcript" "Done, all good."
+  printf '#!/usr/bin/env bash\necho "$$" > "%s/judge.pid"\nexec /bin/sleep 20\n' "$bin" > "$bin/judge"; chmod +x "$bin/judge"
+  set +e
+  out="$(PATH="$bin:$PATH" AW_DONE_GATE_BUDGET_MS=800 bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" 2>&1)"; rc=$?
+  set -e
+  [ "$rc" -eq 0 ] || { echo "FAIL: expected exit 0 on a spent budget, got $rc"; exit 1; }
+  [ -z "$out" ] || { echo "FAIL: expected no output, got: $out"; exit 1; }
+  pid="$(cat "$bin/judge.pid" 2> /dev/null)"
+  [ -n "$pid" ] || { echo "FAIL: the hanging fake judge never wrote its pid"; exit 1; }
+  for n in 1 2 3 4 5 6 7 8 9 10; do kill -0 "$pid" 2> /dev/null || break; sleep 0.1; done
+  if kill -0 "$pid" 2> /dev/null; then kill -9 "$pid" 2> /dev/null; echo "FAIL: #3778: judge brief get (pid $pid) still runs after the hook timed out"; exit 1; fi
+  echo "PASS: test_a_hanging_brief_get_is_killed_with_the_hook"
+}
+test_a_hanging_brief_get_is_killed_with_the_hook
