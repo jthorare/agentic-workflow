@@ -169,6 +169,7 @@ internal sealed partial class NodeCardViewModel(ContextPorts ports) : Observable
         {
             Connected = [.. read.Value.Out.Select(e => Row(map, e.To, e)).Concat(read.Value.In.Select(e => Row(map, e.From, e)))];
             NoneConnected = Connected.Count == 0;
+            TakeFile(read.Value);
         }
         else
         {
@@ -187,6 +188,7 @@ internal sealed partial class NodeCardViewModel(ContextPorts ports) : Observable
         Connected = [];
         (NoneConnected, CanCopyPath) = (false, false);
         FillRecord(found: null);
+        ForgetFile();
         ResetReview();
         Refresh();
     }
@@ -204,6 +206,7 @@ internal sealed partial class NodeCardViewModel(ContextPorts ports) : Observable
         ConflictBody = ConflictWords(map, node.Key);
         CanCopyPath = layout.Path.Length > 0;
         FillRecord(map.RecordFor(node.Key));
+        ForgetFile();
         Connected = [];
         NoneConnected = false;
         Problem = string.Empty;

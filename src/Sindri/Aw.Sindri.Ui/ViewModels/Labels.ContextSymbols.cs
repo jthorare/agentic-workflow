@@ -5,16 +5,22 @@ namespace Aw.Sindri.Ui.ViewModels;
 /// <summary>The app's own copy (<see cref="Labels"/>, continued): the code index's words on the file map and the code lens (code index spec §7.3, §10).</summary>
 internal static partial class Labels
 {
-    /// <summary>The symbols column's heading.</summary>
     /// <summary>The line under the file when the code index could not be asked.</summary>
     internal const string ContextCodeUnavailable = "code lens unavailable";
 
+    /// <summary>The symbols column's heading.</summary>
     internal const string ContextSymbolsColumn = "symbols";
 
-    /// <summary>The caption when the code graph is off and no listed file has symbols.</summary>
-    internal const string ContextSymbolsGraphOff = "only C# files get names: the code graph is off for this repo";
+    /// <summary>Why the column is empty when the profile turns the code graph off (reason graph-off): the note line under the table, and a dash cell's hover text. Two whole sentences, so the heading's "from b3f29d6" and this "off" read as one story (#3862).</summary>
+    internal const string ContextSymbolsGraphOff = ContextSymbolsGraphLead + "is off for this repo (index.graph.enabled in the profile).";
 
-    /// <summary>The caption when the code graph is on and no listed file has symbols.</summary>
+    /// <summary>Why the column is empty when the code graph is on but did not build (reason graph-unavailable, #3862), with its fix: the note line and a dash cell's hover text.</summary>
+    internal const string ContextSymbolsGraphUnavailable = ContextSymbolsGraphLead + "did not build: graphify is missing or failed (sindri doctor says which).";
+
+    // The part both graph reasons share: the C# names are the code index's, every other language waits on the code graph.
+    private const string ContextSymbolsGraphLead = "C# names come from the index. Other languages need the code graph, which ";
+
+    /// <summary>Why the column is empty when the code graph is on and no listed file has symbols: the note line under the table.</summary>
     internal const string ContextSymbolsNoneIndexed = "none in these files";
 
     /// <summary>A file's symbols cell when the index has no row for it.</summary>

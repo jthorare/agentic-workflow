@@ -17,12 +17,12 @@ public sealed class MergeRunTests
     private readonly MetaWorld _world = new();
     private readonly InMemoryMetaEventStore _events = new();
 
-    private MergeRunService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages), _world.Repo, _world.Gates, new MergeRecorder(_world.Repo, _world.Values, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock, _world.Board), new MergeEventWriter(new MetaEventSink(_events), _world.Messages, _world.Clock));
+    private MergeRunService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages, new LaneAddress(_world.LaneFiles, _world.LaneSessions, _world.Sessions)), _world.Repo, _world.Gates, new MergeRecorder(_world.Repo, _world.Values, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock, _world.Board), new MergeEventWriter(new MetaEventSink(_events), _world.Messages, _world.Clock));
 
     private async Task<IReadOnlyList<(string Kind, string? Lane, string Fields)>> Written() =>
         [.. (await _events.Read(0, kind: null, lane: null, 100, CancellationToken.None)).Value.Events.Select(e => (e.Kind, e.Lane, e.Fields))];
 
-    private async Task Ready(bool gated = true, bool mergeFails = false, bool fetchFails = false, string state = "OPEN", string? mergeCommit = null, string queue = QueueAnswers.Off, bool queueFails = false, bool positionFails = false, string? queueBefore = null, string? extensions = null, string stateAfterMerge = "MERGED")
+    private async Task Ready(bool gated = true, bool mergeFails = false, bool fetchFails = false, string state = "OPEN", string? mergeCommit = null, string queue = QueueAnswers.Off, bool queueFails = false, bool positionFails = false, string? queueBefore = null, string? extensions = null, string? stateAfterMerge = "MERGED")
     {
         await _world.ReadyWithGate();
         if (gated)
@@ -38,10 +38,14 @@ public sealed class MergeRunTests
         }
     }
 
-    // The re-read after a stack merge: the pull request reads as `state` once "gh stack merge" ran, and OPEN before.
-    private void ScriptStateAfterStackMerge(string state) =>
+    // The re-read after a stack merge: the pull request reads as `state` once "gh stack merge" ran (a null state fails the read), and OPEN before.
+    private void ScriptStateAfterStackMerge(string? state) =>
         _ = _world.Runner.When("gh pr view 190 --json state", _ =>
-            new CommandResult(0, "{\"state\":\"" + (_world.Runner.Lines.Contains("gh stack merge 190 --yes", StringComparer.Ordinal) ? state : "OPEN") + "\"}", string.Empty, TimedOut: false));
+            !_world.Runner.Lines.Contains("gh stack merge 190 --yes", StringComparer.Ordinal)
+                ? new CommandResult(0, """{"state":"OPEN"}""", string.Empty, TimedOut: false)
+                : state is null
+                    ? new CommandResult(1, string.Empty, "gh: HTTP 502: Bad Gateway", TimedOut: false)
+                    : new CommandResult(0, "{\"state\":\"" + state + "\"}", string.Empty, TimedOut: false));
 
     // What "gh extension list" prints: name, repo and version, tab separated.
     private const string StackInstalled = "gh stack\tgithub/gh-stack\tv1.0.0\n";
@@ -392,6 +396,36 @@ public sealed class MergeRunTests
         Assert.True(result.IsError);
         Assert.Equal(MetaErrors.CommandFailed.Code, result.Error.Code);
         Assert.Contains("still open", result.Error.Message, StringComparison.Ordinal);
+        Assert.Null((await _world.Gates.LatestMerge(CancellationToken.None)).Value);
+        Assert.Empty(await Written());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_stack_merge_that_exits_0_is_not_recorded_when_the_pr_was_closed_without_merging()
+    {
+        await Ready(queue: QueueAnswers.Stacked(), extensions: StackInstalled, stateAfterMerge: "CLOSED");
+
+        var result = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
+
+        Assert.True(result.IsError);
+        Assert.Equal(MetaErrors.CommandFailed.Code, result.Error.Code);
+        Assert.Contains("was closed without merging", result.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("still open", result.Error.Message, StringComparison.Ordinal);
+        Assert.Null((await _world.Gates.LatestMerge(CancellationToken.None)).Value);
+        Assert.Empty(await Written());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_stack_merge_whose_state_re_read_fails_returns_the_error_and_records_nothing()
+    {
+        await Ready(queue: QueueAnswers.Stacked(), extensions: StackInstalled, stateAfterMerge: null);
+
+        var result = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
+
+        Assert.True(result.IsError);
+        Assert.Equal(MetaErrors.CommandFailed.Code, result.Error.Code);
+        Assert.Contains("HTTP 502", result.Error.Message, StringComparison.Ordinal);   // gh's own error, not the still-open refusal
+        Assert.Contains("gh stack merge 190 --yes", _world.Runner.Lines, StringComparer.Ordinal);
         Assert.Null((await _world.Gates.LatestMerge(CancellationToken.None)).Value);
         Assert.Empty(await Written());
     }

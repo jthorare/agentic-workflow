@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Features.RestartProcess;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Commands.Chain;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.RestartProcess;
 
@@ -47,5 +48,37 @@ public sealed class RestartAuditTests : IAsyncDisposable
         Assert.DoesNotContain(c.Events, static e => string.Equals(e.Envelope.Type, EventTypes.ProcessStopped, StringComparison.Ordinal));
         Assert.False(c.H.Shutdown.Requested);   // serve was not stopped
         Assert.NotNull(c.H.Held.Current);       // and still holds its lease
+    }
+
+    // #4024: the early accepted row holds 'command.handled:<commandId>'; the chain's failed row for the same command must not be dropped as its replay
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_restart_whose_stop_fails_with_the_grant_held_records_failed_after_accepted()
+    {
+        await using var c = new ChainHarness(serveStop: static sp => ActivatorUtilities.CreateInstance<HeldGrantFailingStop>(sp));
+        _ = await c.H.HoldLease();
+
+        var restarted = await c.Run<RestartProcessRequest, RestartProcessResponse>(new RestartProcessRequest(), Human);
+
+        Assert.Equal(HeldGrantFailingStop.Failure.Code, restarted.Error.Code);
+        var rows = c.Handled.Where(static h => string.Equals(h.Command.Value, "RestartProcess", StringComparison.Ordinal)).ToList();
+        CommandOutcome[] expected = [CommandOutcome.Accepted, CommandOutcome.Failed];
+        Assert.Equal(expected, rows.Select(static h => h.Outcome));
+        Assert.Equal(rows[0].CommandId, rows[1].CommandId);   // one command id, the failed row last
+        Assert.Equal(HeldGrantFailingStop.Failure.Code, rows[1].Code);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_replay_of_the_same_failed_restart_writes_no_second_failed_row()
+    {
+        await using var c = new ChainHarness(serveStop: static sp => ActivatorUtilities.CreateInstance<HeldGrantFailingStop>(sp));
+        _ = await c.H.HoldLease();
+        var caller = Human;   // the same command id both times: the second attempt is a replay
+
+        _ = await c.Run<RestartProcessRequest, RestartProcessResponse>(new RestartProcessRequest(), caller);
+        _ = await c.Run<RestartProcessRequest, RestartProcessResponse>(new RestartProcessRequest(), caller);
+
+        var rows = c.Handled.Where(static h => string.Equals(h.Command.Value, "RestartProcess", StringComparison.Ordinal)).Select(static h => h.Outcome);
+        CommandOutcome[] expected = [CommandOutcome.Accepted, CommandOutcome.Failed];
+        Assert.Equal(expected, rows);
     }
 }

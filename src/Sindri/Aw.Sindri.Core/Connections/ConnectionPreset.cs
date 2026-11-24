@@ -28,4 +28,11 @@ public sealed record ConnectionPreset(
     bool LoopbackAllowed,
     string SignInNote,
     IReadOnlyList<string> PollableEvents,
-    string? ProbeUrl);
+    string? ProbeUrl)
+{
+    /// <summary>Gets the client id of Sindri's own OAuth app for this provider, as this build ships it (first-run spec decision 15a): null or empty until the owner registers the app. The profile's `setup.oauth.*` replaces it (<see cref="OAuthClientIds"/>). Not a secret.</summary>
+    public string? ShippedClient { get; init; }
+
+    /// <summary>Gets the provider's device authorization endpoint (RFC 8628, https), or null when the provider has no device flow.</summary>
+    public string? DeviceCodeUrl { get; init; }
+}

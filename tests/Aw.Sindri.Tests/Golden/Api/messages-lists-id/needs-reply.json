@@ -1,0 +1,45 @@
+{
+  "list": "needs-reply",
+  "rows": [
+    {
+      "key": "slack:dm:T0HARBOR/D0SAM",
+      "kind": "dm",
+      "conversation": "D0SAM",
+      "newest": "1767771200.000100",
+      "thread": null,
+      "members": 0,
+      "mine": "directMessage",
+      "newestIsMine": false,
+      "repliedAfterNewest": false,
+      "namesMe": false,
+      "newestText": "can you ship the fare table today?",
+      "linksWaitingOnMe": false,
+      "blocks": 0,
+      "done": false,
+      "snoozed": false,
+      "linkedToOwnedIssue": false,
+      "class": "directQuestion"
+    },
+    {
+      "key": "slack:thread:T0HARBOR/C0HARBOR/1767771000.000100",
+      "kind": "channel",
+      "conversation": "C0HARBOR",
+      "newest": "1767771500.000100",
+      "thread": "1767771000.000100",
+      "members": 0,
+      "mine": "namedMe",
+      "newestIsMine": false,
+      "repliedAfterNewest": false,
+      "namesMe": true,
+      "newestText": "<@U0JOI> and the group path too?",
+      "linksWaitingOnMe": false,
+      "blocks": 0,
+      "done": false,
+      "snoozed": false,
+      "linkedToOwnedIssue": false,
+      "class": "directQuestion"
+    }
+  ],
+  "count": 2,
+  "next": null
+}

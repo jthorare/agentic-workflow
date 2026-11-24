@@ -55,6 +55,9 @@ internal sealed record ContentBlocks(IReadOnlyList<string> Texts, IReadOnlyList<
         return new ContentBlocks(texts, tools, toolResult);
     }
 
+    /// <summary>Whether a message's content has a shape the readers know: a string or an array of blocks.</summary>
+    public static bool IsReadable(JsonElement? content) => content is { ValueKind: JsonValueKind.String or JsonValueKind.Array };
+
     /// <summary>A string member of a JSON object, or null.</summary>
     public static string? Str(JsonElement element, string name) =>
         element.ValueKind == JsonValueKind.Object && element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;

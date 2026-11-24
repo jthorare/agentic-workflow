@@ -48,7 +48,7 @@ internal sealed partial class ShellViewModel
         }
 
         var count = Queue.IsLoading ? string.Empty : Queue.Total.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        Navigation.First(n => n.Page == PageId.Work).Count = count;
+        ShowPageCount(PageId.Work, count);
     }
 
     // The item sheet's part of opening the sheet (OpenSheet): the item is fetched; any other kind leaves it alone.

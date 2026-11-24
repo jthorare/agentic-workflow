@@ -44,6 +44,9 @@ internal sealed class CliHarness : IDisposable
 
     internal string Env(string name) => _env[name];
 
+    /// <summary>Changes the composed services of every later run before the container is built (a test's store decorator); null keeps them as Program.cs composes them.</summary>
+    internal Action<IServiceCollection>? Services { get; set; }
+
     internal Task<CliResult> Run(params string[] args) => RunWithInput(string.Empty, args);
 
     internal async Task<CliResult> RunWithInput(string stdin, params string[] args)
@@ -59,6 +62,7 @@ internal sealed class CliHarness : IDisposable
         }
 
         var services = Composition.Compose(new ServiceCollection(), io.Env, Clock);
+        Services?.Invoke(services);
         var provider = services.BuildServiceProvider();
         await using (provider.ConfigureAwait(false))
         {

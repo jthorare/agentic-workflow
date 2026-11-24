@@ -28,6 +28,9 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
     /// <summary>The state in a word at the heading's right: "ok" or "needs a look"; empty with no lines.</summary>
     public string Word { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The mark beside <see cref="Word"/> (#4129): the ok check, the attention mark for "needs a look", none with no lines.</summary>
+    public StateGlyph Glyph { get; private set => Set(ref field, value); } = StateGlyph.None;
+
     /// <summary>The embedding backlog as a bar: records with a vector against all of them; null unless both counts are known and there is at least one record.</summary>
     public ContextBacklog? Backlog { get; private set => Set(ref field, value); }
 
@@ -59,11 +62,7 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
     {
         if (read.IsError)
         {
-            Lines = [];
-            Backlog = null;
-            OnChanged(nameof(HasBacklog));
-            Word = string.Empty;
-            Show(Labels.ContextIndexUnreadable);
+            ApplyUnreadable();
             return;
         }
 
@@ -71,9 +70,25 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
         Backlog = BacklogOf(concepts);
         OnChanged(nameof(HasBacklog));
         Lines = sources.Count == 0 ? [] : [.. sources.Select(Line).Concat(ConceptLines(concepts, Backlog is not null)).Concat(StoreLines(store)).Select(t => new ContextIndexLine(t))];
-        var fine = sources.All(static s => !s.NeedsLook) && concepts?.Code is null && (store is null || Is(store.State, "ok"));
-        Word = sources.Count == 0 ? string.Empty : fine ? Labels.CodeIndexOk : Labels.CodeIndexNeedsLook;
+        SetMark(sources.Count == 0, sources.All(static s => !s.NeedsLook) && concepts?.Code is null && (store is null || Is(store.State, "ok")));
         Show(sources.Count == 0 ? Labels.ContextIndexNone : string.Empty);
+    }
+
+    private void ApplyUnreadable()
+    {
+        Lines = [];
+        Backlog = null;
+        OnChanged(nameof(HasBacklog));
+        Word = string.Empty;
+        Glyph = StateGlyph.None;
+        Show(Labels.ContextIndexUnreadable);
+    }
+
+    // The card's word and mark: none without sources, Ok when every source, the concepts and the store read fine, else needs a look.
+    private void SetMark(bool empty, bool fine)
+    {
+        Word = empty ? string.Empty : fine ? Labels.CodeIndexOk : Labels.CodeIndexNeedsLook;
+        Glyph = empty ? StateGlyph.None : fine ? StateGlyph.Ok : StateGlyph.Warning;
     }
 
     private void Show(string message)
@@ -140,12 +155,17 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
         }
     }
 
+    // A source the server flags with its own sentence (#3911) reads that sentence in place of its state; any other reads its name and state.
     private string Line(IndexSourceView source)
     {
-        var line = source.Source + ": " + State(source);
+        var pass = Pass(source);
+        var line = source is { NeedsLook: true, LookWords: { Length: > 0 } words }
+            ? words
+            : source.Source + ": " + (pass ?? State(source));
         if (source.Records is { } records)
         {
-            line += " · " + Labels.ContextRecords(records);
+            line += pass is null ? " · " + Labels.ContextRecords(records)
+                : ", " + (IsReReading(source) ? Labels.ContextRecords(records) : Labels.ContextRecordsSoFar(records));
         }
 
         if (source.LastCommit is { } commit)
@@ -155,6 +175,17 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
 
         return source.Records is null ? line : line + " · " + Labels.ContextNothingCommitted;
     }
+
+    // A pass the server does not flag reads as progress, not as a pull word: a re-read of stored records (#4084), else a first pass, phase recent or backfill
+    // (#4035); a failing pull keeps its words. Null for any other source. At the time cap (SND-CONTEXT-059) a pass still reads as its pass: the cap ends a
+    // tick, not the pass.
+    private static string? Pass(IndexSourceView source) =>
+        source.NeedsLook || !(Is(source.Pull, "running") || Is(source.Pull, "idle")) ? null
+        : IsReReading(source) ? Labels.ContextSourceReReading
+        : Is(source.Phase, "recent") || Is(source.Phase, "backfill") ? Labels.ContextSourceFirstSync
+        : null;
+
+    private static bool IsReReading(IndexSourceView source) => source.ReReading is not null;
 
     private string State(IndexSourceView source) => source.Pull switch
     {

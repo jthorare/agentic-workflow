@@ -20,11 +20,15 @@ RUN curl -sSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh \
     && chmod +x /tmp/dotnet-install.sh \
     && /tmp/dotnet-install.sh --channel 10.0 --install-dir /usr/local/dotnet \
     && rm /tmp/dotnet-install.sh
+# csharp-ls is pinned to a release built for the SDK channel above: 0.29.0 ships net11.0 only,
+# so the .NET 10 SDK can't find its DotnetToolSettings.xml and the install fails (#4206).
+# Bump this pin only together with --channel.
+ARG CSHARP_LS_VERSION=0.28.0
 ENV DOTNET_ROOT=/usr/local/dotnet
 ENV PATH="$PATH:/usr/local/dotnet:/root/.dotnet/tools"
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libicu-dev \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /root/.dotnet/tools \
-    && dotnet tool install --global csharp-ls \
+    && dotnet tool install --global csharp-ls --version "${CSHARP_LS_VERSION}" \
     && csharp-ls --version
