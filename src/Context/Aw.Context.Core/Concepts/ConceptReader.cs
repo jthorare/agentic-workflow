@@ -1,6 +1,8 @@
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Graph;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Trust;
+using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Concepts;
@@ -43,6 +45,7 @@ public sealed class ConceptReader(MapReader reader, IScrubberFactory scrubbers)
         var graph = addressed.Value.Cut is { } cut ? visible.Value.Graph.ScopedTo(cut) : visible.Value.Graph;
         var mapped = ScopeRules.Mapped(settings.Value, scope.Repos);
         var pins = mapped.Any(r => r.Concepts.Count > 0) ? PinSet.Of(mapped, scope.Repos, visible.Value.Graph) : null;
-        return new ConceptRead(new ConceptsBasis(visible.Value.Snapshot.Tag, addressed.Value.Name), graph, new MapText(built.Value, FencePolicies.For(scope.Caller))) { Pins = pins };
+        var repos = WholeMapBuilder.Repos(NodeRepos.Index(visible.Value.Graph, visible.Value.Snapshot.Version.Repo.Value));   // the uncut graph, as the whole map lists them (#3696)
+        return new ConceptRead(new ConceptsBasis(visible.Value.Snapshot.Tag, addressed.Value.Name), graph, new MapText(built.Value, FencePolicies.For(scope.Caller))) { Pins = pins, Repos = repos };
     }
 }

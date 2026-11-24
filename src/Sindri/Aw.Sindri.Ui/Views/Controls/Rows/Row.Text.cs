@@ -165,13 +165,16 @@ internal sealed partial class Row
         BuildFacts(item, m);
     }
 
+    // What the id takes of the title column: its width and the gap after it, or nothing for a row with no id, so that row's title starts on the text edge (#3733 frames: every first text at x 52).
+    private static double IdSpan(TextLayout id) => id.Width > 0 ? id.Width + TitleGap : 0;
+
     private void BuildTitleLine(IRowItem item)
     {
         var f = FontsNow();
         var k = InksNow();
         var id = _text[Id] ??= Make(item.Id, f.Mono, f.MonoSize, k.Subtle);
-        var sub = BuildSubLine(item, f, k, _slots.TitleWidth - id.Width - TitleGap);
-        var room = Math.Max(0, _slots.TitleWidth - id.Width - TitleGap - (sub is null ? 0 : TitleGap + sub.Width));
+        var sub = BuildSubLine(item, f, k, _slots.TitleWidth - IdSpan(id));
+        var room = Math.Max(0, _slots.TitleWidth - IdSpan(id) - (sub is null ? 0 : TitleGap + sub.Width));
         if (_text[Title] is not null && _titleRoom.Equals(room))
         {
             return;

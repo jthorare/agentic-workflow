@@ -117,13 +117,13 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         var map = await graphs.Read(request.Scope, read, cancellationToken).ConfigureAwait(false);
         if (query.Node is { } node)
         {
-            var anchor = map.Bind(m => AnchorMatch.Resolve(m.Graph, node, request.Scope.Repos, PinContext.AliasPins(settings, request.Scope.Repos, m.Graph)));
+            var text = new MapText(scrubbers);
+            var anchor = map.Bind(m => AnchorMatch.Resolve(m.Graph, node, request.Scope.Repos, PinContext.AliasPins(settings, request.Scope.Repos, m.Graph), text.ChoiceLabel));
             if (anchor.IsError)
             {
                 return anchor.Error;
             }
 
-            var text = new MapText(scrubbers);
             return (GraphAnswer.Build(map.Value, [anchor.Value], [], reach, text), text.SearchTerms(anchor.Value.Label));
         }
 

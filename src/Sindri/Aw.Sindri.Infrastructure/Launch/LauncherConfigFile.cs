@@ -3,6 +3,7 @@ using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sessions;
 
 namespace Aw.Sindri.Infrastructure.Launch;
 
@@ -96,8 +97,18 @@ internal static class LauncherConfigFile
 
         return s.PollSeconds is < 1 or > 30
             ? "sessions.pollSeconds is 1 to 30"
+            : s.Scope is not null && ScopeOf(s.Scope) is null
+            ? "sessions.scope is 'all' or 'own'"
             : (s.Providers ?? []).FirstOrDefault(static id => !AgentId.TryFrom(id, out _)) is { } bad ? $"sessions.providers: '{bad}' isn't an agent id" : null;
     }
+
+    /// <summary>The scope a 'sessions.scope' value names, or null for any other text.</summary>
+    internal static SessionScope? ScopeOf(string value) => value switch
+    {
+        "all" => SessionScope.All,
+        "own" => SessionScope.Own,
+        _ => null,
+    };
 
     private static Result<IReadOnlyList<AgentEntry>> Agents(Dictionary<string, AgentSection> builtins, Dictionary<string, AgentSection>? added)
     {

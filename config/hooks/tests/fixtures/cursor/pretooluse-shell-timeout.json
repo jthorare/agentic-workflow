@@ -1,0 +1,1 @@
+{"conversation_id":"cursor-fixture-2","generation_id":"gen-2","model":"claude-sonnet","hook_event_name":"preToolUse","workspace_roots":["/tmp"],"cwd":"/tmp","tool_name":"Shell","tool_input":{"command":"curl -s https://example.invalid/x"},"tool_use_id":"tool-4"}

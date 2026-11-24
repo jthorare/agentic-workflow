@@ -14,5 +14,7 @@ internal sealed record SessionsSection
 
     public IReadOnlyList<string>? TmuxSockets { get; init; }
 
+    public string? Scope { get; init; }
+
     public string? ClaudeSessionsDir { get; init; }
 }

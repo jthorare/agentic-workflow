@@ -154,6 +154,9 @@ internal static partial class Labels
     /// <summary>The heading over a node's input.</summary>
     internal const string WfInputHeading = "Input";
 
+    /// <summary>The heading over a code step's body.</summary>
+    internal const string WfCodeHeading = "Code";
+
     /// <summary>The heading over a node's output.</summary>
     internal const string WfOutputHeading = "Output";
 

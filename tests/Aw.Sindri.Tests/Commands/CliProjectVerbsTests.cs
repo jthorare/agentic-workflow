@@ -324,7 +324,7 @@ public sealed class CliProjectVerbsTests : IDisposable
 
         var code = await Verbs(api, today).Run(["project", "add", "--name", "Kitchen", "--target", word], Token);
 
-        var expected = Kernel.Dates.DueWords.Resolve(word, today).Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+        var expected = Kernel.Dates.DueWords.Resolve(word, today).Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         Assert.Equal(0, code);
         Assert.Contains($"\"target\":\"{expected}\"", api.Calls[^1].Body, StringComparison.Ordinal);
     }

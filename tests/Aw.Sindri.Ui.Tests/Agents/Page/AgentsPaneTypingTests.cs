@@ -85,4 +85,51 @@ public sealed class AgentsPaneTypingTests : FrameHost
         Assert.Equal(["A"], typed);
         Assert.False(shell.NewAgent.IsOpen);
     });
+
+    [Fact]
+    public Task Focus_moving_out_of_the_pane_by_mouse_gives_the_keys_back_to_the_list() => OnUi(async () =>
+    {
+        var (window, shell, _) = await PaneOpen();
+        Tap(window, Key.Enter, PhysicalKey.Enter);
+        Settle(window);
+        Assert.Equal(ViewModels.Agents.TerminalSide.Pane, shell.Agents.Terminal.Side);
+
+        _ = Named<TextBox>(window, "AgentsSearch").Focus();
+        Settle(window);
+
+        Assert.Equal(ViewModels.Agents.TerminalSide.List, shell.Agents.Terminal.Side);
+    });
+
+    [Fact]
+    public Task The_side_going_to_the_list_leaves_focus_alone_when_it_already_moved_to_another_control() => OnUi(async () =>
+    {
+        var (window, shell, _) = await PaneOpen();
+        Tap(window, Key.Enter, PhysicalKey.Enter);
+        Settle(window);
+        var search = Named<TextBox>(window, "AgentsSearch");
+
+        shell.Agents.Terminal.ClickList();
+        _ = search.Focus();
+        Settle(window);
+
+        Assert.True(search.IsKeyboardFocusWithin);
+    });
+
+    [Fact]
+    public Task Focus_coming_back_into_the_pane_after_an_overlay_closed_gives_the_keys_back_to_the_pane() => OnUi(async () =>
+    {
+        var (window, shell, typed) = await PaneOpen();
+        Tap(window, Key.Enter, PhysicalKey.Enter);
+        Settle(window);
+        _ = Named<TextBox>(window, "AgentsSearch").Focus();   // the overlay took focus: the side went to the list
+        Settle(window);
+        Assert.Equal(ViewModels.Agents.TerminalSide.List, shell.Agents.Terminal.Side);
+
+        _ = Named<TerminalView>(window, "TerminalPanel").Focus(NavigationMethod.Tab);   // the overlay closed and handed focus back to the pane
+        Settle(window);
+        Tap(window, Key.A, PhysicalKey.A, "a");
+
+        Assert.Equal(ViewModels.Agents.TerminalSide.Pane, shell.Agents.Terminal.Side);
+        Assert.Equal(["A"], typed);
+    });
 }

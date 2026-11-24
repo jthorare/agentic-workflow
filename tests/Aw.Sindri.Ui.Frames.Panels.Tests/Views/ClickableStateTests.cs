@@ -24,16 +24,17 @@ using Aw.Sindri.Ui.Views.Workflows;
 
 namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
-/// <summary>Clickable surfaces answer the pointer (#2535): the shared clickable class gives a hover and a pressed look from theme tokens, eased over Motion.Hover (150 ms), instantly under reduced motion. The project card is the first user.</summary>
+/// <summary>Clickable surfaces answer the pointer (#2535): the shared clickable class gives a hover and a pressed look from theme tokens, eased over Motion.Hover (150 ms), instantly under reduced motion. The project row is the first user (it was the card until issue 3717).</summary>
 [Lane(TestLane.Integration)]
 public sealed class ClickableStateTests : FrameHost
 {
     private async Task<(Window Window, Border Card)> OnFirstCard()
     {
         var (window, shell) = await Connected();
+        shell.Projects.SetView(ViewModels.Projects.ProjectView.All);   // why: the golden carries blockedOnYou, so an unpicked view opens on Needs me, which has no row
         shell.GoTo(PageId.Projects);
         await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
-        var card = window.GetVisualDescendants().OfType<Border>().First(b => string.Equals(b.Name, "ProjectCardFrame", StringComparison.Ordinal) && b.IsEffectivelyVisible);
+        var card = window.GetVisualDescendants().OfType<Border>().First(b => string.Equals(b.Name, "ProjectRowFrame", StringComparison.Ordinal) && b.IsEffectivelyVisible);
         return (window, card);
     }
 
@@ -87,7 +88,7 @@ public sealed class ClickableStateTests : FrameHost
     private static Point Corner(Window window, Border card) => card.TranslatePoint(new Point(6, 6), window)!.Value; // the card's own padding, no control in it
 
     [Fact]
-    public Task A_project_card_carries_the_shared_class_and_eases_its_colours_over_Motion_Hover() => OnUi(async () =>
+    public Task A_project_row_carries_the_shared_class_and_eases_its_colours_over_Motion_Hover() => OnUi(async () =>
     {
         var (_, card) = await OnFirstCard();
 
@@ -102,7 +103,7 @@ public sealed class ClickableStateTests : FrameHost
     });
 
     [Fact]
-    public Task The_pointer_over_a_project_card_lifts_its_background_and_border_to_the_hover_tokens() => OnUi(async () =>
+    public Task The_pointer_over_a_project_row_lifts_its_background_and_border_to_the_hover_tokens() => OnUi(async () =>
     {
         Motion.Set(reduce: true); // no easing: the value is the end value at once
         using var instant = InstantMotion.Start();
@@ -119,7 +120,7 @@ public sealed class ClickableStateTests : FrameHost
     });
 
     [Fact]
-    public Task A_pressed_project_card_takes_the_pressed_tokens_and_lets_go_on_release() => OnUi(async () =>
+    public Task A_pressed_project_row_takes_the_pressed_tokens_and_lets_go_on_release() => OnUi(async () =>
     {
         Motion.Set(reduce: true);
         using var instant = InstantMotion.Start();
@@ -131,14 +132,17 @@ public sealed class ClickableStateTests : FrameHost
         Settle(window);
 
         Assert.Contains(":pressed", card.Classes, StringComparer.Ordinal);
+        // A press focuses a row and so selects it (ProjectsPage.OnRowFocused): the fill is the pressed one, and the border keeps the selection's PrimaryHover over
+        // the pressed outline (ClickableStyles "Border.clickable.selected:pressed", #3517).
+        Assert.Contains("selected", card.Classes, StringComparer.Ordinal);
         Assert.Equal(TokenColor("Brush.Clickable.Pressed"), ((ISolidColorBrush)card.Background!).Color);
-        Assert.Equal(TokenColor("Brush.Clickable.PressedBorder"), ((ISolidColorBrush)card.BorderBrush!).Color);
+        Assert.Equal(TokenColor("Brush.PrimaryHover"), ((ISolidColorBrush)card.BorderBrush!).Color);
 
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
         point = await PointAt(window, () => Corner(window, card), card); // the press near the edge left the shrunk card, and its focus scrolled it into view
         Assert.DoesNotContain(":pressed", card.Classes, StringComparer.Ordinal);
         Assert.True(card.IsPointerOver, $"at {point}, hit {Describe(window.InputHitTest(point))}, chain {Chain(card)}, at now {Corner(window, card)}");
-        Assert.Equal(TokenColor("Brush.Clickable.Hover"), ((ISolidColorBrush)card.Background!).Color);
+        Assert.Equal(TokenColor("Brush.Clickable.Lift"), ((ISolidColorBrush)card.Background!).Color);   // the selected row's lift fill, not the plain hover
     });
 
     [Fact]
@@ -173,7 +177,7 @@ public sealed class ClickableStateTests : FrameHost
     {
         // A Border with no background is not hit-tested (#2535 review): a real pointer over its empty space reaches the panel behind. Each view is
         // shown in a window so the app's styles apply; the page rows are built from their item templates, the way Every_list_row_frame finds Linear's.
-        var views = new Control[] { new ItemRow(), new CompactItemRow(), new JobRow(), new ConnectionRow(), new SessionRow(), new EndedSessionRow(), new NeedsYouRow(), new NeedsYouInboxRow(), new ProjectCard() };
+        var views = new Control[] { new ItemRow(), new CompactItemRow(), new JobRow(), new ConnectionRow(), new SessionRow(), new EndedSessionRow(), new NeedsYouRow(), new NeedsYouInboxRow(), new ProjectRow() };
         var pages = new Control[] { new LinearWorkView(), new ReviewsPage(), new WorkflowsPage() };
         var host = new StackPanel();
         foreach (var view in views.Concat(pages.SelectMany(Templated)))
@@ -321,7 +325,7 @@ public sealed class ClickableStateTests : FrameHost
     });
 
     [Fact]
-    public Task A_pressed_project_card_changes_only_its_fill_and_border_and_moves_nothing() => OnUi(async () =>
+    public Task A_pressed_project_row_changes_only_its_fill_and_border_and_moves_nothing() => OnUi(async () =>
     {
         var (window, card) = await OnFirstCard();
         var point = Corner(window, card);
