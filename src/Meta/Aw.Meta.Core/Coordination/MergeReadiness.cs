@@ -18,16 +18,13 @@ namespace Aw.Meta.Core.Coordination;
 /// <param name="logs">Reads the red steps' logs for their failing tests.</param>
 /// <param name="messages">The lanes' messages, where a reviewer's OK and a lane's ready notice are read.</param>
 /// <param name="addresses">Finds the reviewer lane's sender address, so its OK lines count under any session name.</param>
-public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCommands repo, ILogFiles logs, IMessageStore messages, LaneAddress addresses)
+/// <param name="sync">Syncs the meta's own transcript into the messages before they are read; null syncs nothing (tests only).</param>
+public sealed partial class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCommands repo, ILogFiles logs, IMessageStore messages, LaneAddress addresses, InboxSync? sync = null)
 {
     private const string Fields = "headRefOid,isDraft,title,state";
     private const int LogCharacters = 32 * 1024 * 1024;
 
-    /// <summary>Checks a pull request.</summary>
-    /// <param name="pr">The pull request number.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The checks, or an error from the store, git or gh.</returns>
-    public async ValueTask<Result<MergeAssessment>> Assess(int pr, CancellationToken cancellationToken)
+    private async ValueTask<Result<MergeAssessment>> AssessStored(int pr, CancellationToken cancellationToken)
     {
         var team = await config.Load(cancellationToken).ConfigureAwait(false);
         var history = await gates.History(pr, cancellationToken).ConfigureAwait(false);
