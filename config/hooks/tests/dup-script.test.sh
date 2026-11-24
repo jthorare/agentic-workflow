@@ -200,7 +200,8 @@ check "state: the folder 0700, the file 0600" "$(mode "$SD") $(mode "$SD/s30.jso
 check "state: version and policy" "$(st s30 '"\(.version) \(.policy) \(.session)"')" "1 duplicate-script/1 s30"
 check "state: no script text in it" "$(grep -c 'gh pr checks\|watch the PR' "$SD/s30.json")" "0"
 gate "$(bash_p '../evil' "$HEREDOC")"
-check "state: a bad session id writes nothing" "$(ls "$SD" | wc -l | tr -d ' ')" "1"
+check "state: a bad session id writes nothing (one session file, s30's)" "$(ls "$SD" | grep -vc '^index-')" "1"
+check "state: one catalog index cached" "$(ls "$SD" | grep -c '^index-')" "1"
 AW_JUDGE_CHILD=1 bash "$GATE" < <(bash_p s31 "$HEREDOC") > /dev/null 2>&1
 check "the judge child: nothing written" "$([ -e "$SD/s31.json" ] && echo yes || echo no)" "no"
 

@@ -207,7 +207,7 @@ catalog "$DA" "$(entry tk-status 'Show the toolkit status' '["status","health"]'
 catalog "$DB" "$(entry tk-status 'Show the toolkit status' '["status","health"]' '["true"]' any)" \
   "$WATCH_P"',"detect":{"all":["\\bgh\\s+pr\\s+checks","\\bsleep\\b"],"params":{"repo":"--repo\\s+([^\\s]+)"}}}'
 check "detect: a catalog without it validates" "$(bash "$CLI" validate "$DA" > /dev/null 2>&1; echo $?)" "0"
-check "detect: a catalog with it validates" "$(bash "$CLI" validate "$DB" 2>&1; echo $?)" "0"
+check "detect: a catalog with it validates" "$(bash "$CLI" validate "$DB" > /dev/null 2>&1; echo $?)" "0"
 # norm: the output with the catalog path made neutral and, for JSON, every detect key removed
 norm() {
   local o; o="$(sed "s#$WORK/detect-[ab]#X#g")"
@@ -230,7 +230,7 @@ for bad in '{"all":[]}:detect.all: must be a non-empty array of regexes' \
   catalog "$WORK/detect-bad/commands.json" "$WATCH_P"',"detect":'"$d"'}'
   out="$(bash "$CLI" validate "$WORK/detect-bad/commands.json" 2>&1)"; rc=$?
   check "detect: $d is a finding (exit 1)" "$rc" "1"
-  has "detect: $d names the field" "$out" "entries[1] (tk-pr): $msg"
+  has "detect: $d names the field" "$out" "entries[0] (tk-pr): $msg"
 done
 PW="$(jq -c '.entries[] | select(.id == "aw-pr-watch")' "$ROOT/config/commands.toolkit.json")"
 check "the toolkit has an aw-pr-watch entry" "$(jq -r .id <<< "$PW" 2> /dev/null)" "aw-pr-watch"
