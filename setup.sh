@@ -9,6 +9,7 @@
 #   ./setup.sh [--providers ...] --with-meta     # also install the /meta harness: aw-meta CLI, hooks, launcher (opt-in)
 #   ./setup.sh [--providers ...] --with-fleet    # also install the aw:fleet session-state hook for Sindri's session collector (opt-in)
 #   ./setup.sh [--providers ...] --no-tldraw     # skip the tldraw offline app (the canvas agents draw diagrams on)
+#   ./setup.sh [--providers ...] --with-mods     # also install the Claude Code mods in mods/ (pr-line, my-prs) through `claude plugin` (opt-in)
 #   ./setup.sh [--providers ...] --with-tmux     # also install the toolkit's tmux config to ~/.tmux.conf (opt-in; old file backed up)
 #   ./setup.sh [--providers ...] --with-tmux-restore  # --with-tmux plus session restore (TPM, tmux-resurrect, tmux-continuum)
 #   ./setup.sh --profile <web-app|ios|personal> --target <dir> [--dry-run]
@@ -142,6 +143,7 @@ AW_DRY_RUN=0
 WITH_SINDRI=0
 WITH_META=0
 WITH_FLEET=0
+WITH_MODS=0
 WITH_TLDRAW=1
 WITH_TMUX=0
 WITH_TMUX_RESTORE=0
@@ -155,6 +157,7 @@ while [ $# -gt 0 ]; do
     --with-meta) WITH_META=1; shift ;;
     --no-onyx) shift ;;
     --with-fleet) WITH_FLEET=1; shift ;;
+    --with-mods) WITH_MODS=1; shift ;;
     --no-tldraw) WITH_TLDRAW=0; shift ;;
     --with-tmux) WITH_TMUX=1; shift ;;
     --with-tmux-restore) WITH_TMUX=1; WITH_TMUX_RESTORE=1; shift ;;
@@ -573,6 +576,18 @@ if [ "$WITH_FLEET" = "1" ]; then
       bash "$SCRIPT_DIR/scripts/install-fleet.sh" --provider "$_p"
     fi
   done
+fi
+
+# --- Claude Code mods (opt-in: ./setup.sh --with-mods): mods/pr-line and mods/my-prs through `claude plugin marketplace add` and
+# `claude plugin install`. Once, not per provider (mods are Claude Code's). Fail-open: a failure warns and setup goes on. ---
+if [ "$WITH_MODS" = "1" ]; then
+  echo ""
+  echo "=== Claude Code mods ==="
+  if aw_dry; then
+    bash "$SCRIPT_DIR/scripts/install-mods.sh" --dry-run || echo "  WARN: mods: install-mods.sh failed (non-fatal)"
+  else
+    bash "$SCRIPT_DIR/scripts/install-mods.sh" || echo "  WARN: mods: install-mods.sh failed (non-fatal)"
+  fi
 fi
 
 # --- headroom, as a proxy wrapper only (no MCP server; it stays in AW_MCP_RETIRED above): installs the CLI when missing and the

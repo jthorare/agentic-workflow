@@ -22,5 +22,5 @@ internal static class SessionProblems
 
     internal static SessionProblem Source(string source) => new(source, SindriErrors.SessionSourceFailed.Code, $"The {source} source couldn't be read in the last pass");
 
-    internal static SessionProblem Overrun { get; } = new("collector", SindriErrors.SessionSourceFailed.Code, "A pass took longer than its 500 ms budget");
+    internal static SessionProblem Overrun { get; } = new("collector", SindriErrors.SessionSourceFailed.Code, "A pass took longer than its 500 ms budget") { IsOverrun = true };
 }

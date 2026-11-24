@@ -140,4 +140,28 @@ test_a_brief_naming_no_image_keeps_the_brief_scope_input_byte_identical() {
 
 test_a_brief_naming_no_image_keeps_the_brief_scope_input_byte_identical
 test_a_screenshot_named_in_the_goal_is_sent_to_brief_scope_as_an_image
+# #4308: a dispatch prompt over 128 KiB must still be judged and saved whole. As one jq argv string it failed exec: the
+# brief-scope input and the saved brief were empty.
+test_a_200kb_dispatch_prompt_is_still_judged_and_saved() {
+  local bin_dir out in; bin_dir="$(mktemp -d)"; in="$(mktemp)"
+  cat > "$bin_dir/judge" <<EOF
+#!/usr/bin/env bash
+if [ "\$1" = "brief-scope" ]; then
+  cat > "$bin_dir/scope-input.json"
+  echo '{"decision":"ready","confidence":0.9,"model":"claude-cli","reason_code":"model","id":"fixed-id"}'
+elif [ "\$1" = "brief" ] && [ "\$2" = "save" ]; then
+  cat > "$bin_dir/last-save.json"
+fi
+exit 0
+EOF
+  chmod +x "$bin_dir/judge"
+  jq -nc --rawfile p <(head -c 204800 /dev/zero | tr '\0' x) \
+    '{session_id:"s1",prompt_id:"p1",tool_use_id:"tu9",tool_input:{subagent_type:"lean-coder",description:"add X",prompt:$p}}' > "$in"
+  out="$(PATH="$bin_dir:$PATH" bash "$HOOK" < "$in")"
+  echo "$out" | jq -e '.hookSpecificOutput.permissionDecision == "allow"' > /dev/null || { echo "FAIL: expected allow for ready, got $out"; exit 1; }
+  [ "$(jq -r '.acceptanceCriteria | length' "$bin_dir/scope-input.json" 2>/dev/null)" = "204800" ] || { echo "FAIL: brief-scope must get the whole 200 KB prompt"; exit 1; }
+  [ "$(jq -r '.acceptanceCriteria | length' "$bin_dir/last-save.json" 2>/dev/null)" = "204800" ] || { echo "FAIL: the saved brief must hold the whole 200 KB prompt"; exit 1; }
+  echo "PASS: test_a_200kb_dispatch_prompt_is_still_judged_and_saved"
+}
+test_a_200kb_dispatch_prompt_is_still_judged_and_saved
 echo "All scope-gate tests passed."

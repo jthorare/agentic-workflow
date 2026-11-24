@@ -1,0 +1,26 @@
+{
+  "name": "pr-line",
+  "version": "0.1.0",
+  "description": "One line under the prompt with the PR for the session's branch: CI, bot reviews, threads, people, and the next ship step",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "bots": {
+      "type": "string",
+      "title": "Bot reviewers",
+      "description": "JSON: per repo (owner/name), the bot reviewers to wait on. Example: {\"acme/app\":[{\"name\":\"Lint bot\",\"reviewLogin\":\"lint-bot\"},{\"name\":\"Scan\",\"checkRun\":\"Scan\"}]}. Empty shows no bots column.",
+      "default": ""
+    },
+    "botCheckRuns": {
+      "type": "string",
+      "title": "Bot check runs",
+      "description": "Comma list of check-run names left out of the CI count (bots, deploy previews). A checkRun named under Bot reviewers is left out too.",
+      "default": ""
+    },
+    "stripPrefixes": {
+      "type": "string",
+      "title": "Check name prefixes to cut",
+      "description": "Comma list of prefixes cut from check names in the failing-CI text, e.g. ci/",
+      "default": ""
+    }
+  }
+}
