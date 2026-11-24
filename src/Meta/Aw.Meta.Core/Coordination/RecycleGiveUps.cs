@@ -46,6 +46,6 @@ public static class RecycleGiveUps
     private static IEnumerable<string> Others(string? stored, string lane) =>
         Lines(stored).Where(l => !l.StartsWith(lane + Separator, StringComparison.Ordinal));
 
-    private static IEnumerable<string> Lines(string? stored) =>
+    private static string[] Lines(string? stored) =>
         (stored ?? string.Empty).Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 }
