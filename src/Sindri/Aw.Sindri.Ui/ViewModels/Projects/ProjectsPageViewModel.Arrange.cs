@@ -34,9 +34,12 @@ internal sealed partial class ProjectsPageViewModel
     private List<ProjectGroupViewModel> BuildGroups(IReadOnlyList<ProjectCardView> rows)
     {
         var groups = new List<ProjectGroupViewModel>();
+        // the key names the grouping actually drawn: with the facts missing, Health and Repo draw the state groups (ProjectRows.Grouped), so those groups
+        // keep their folded state under either pick
+        var drawn = FactsMissing && Grouping is ProjectGrouping.Health or ProjectGrouping.Repo ? ProjectGrouping.State : Grouping;
         foreach (var planned in ProjectRows.Grouped(rows, Grouping, FactsMissing))
         {
-            var key = $"{Grouping}:{planned.Key}";
+            var key = $"{drawn}:{planned.Key}";
             if (!_groups.TryGetValue(key, out var group))
             {
                 group = _groups[key] = new ProjectGroupViewModel(planned.Heading);
