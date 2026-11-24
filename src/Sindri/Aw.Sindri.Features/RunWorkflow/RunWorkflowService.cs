@@ -20,7 +20,7 @@ namespace Aw.Sindri.Features.RunWorkflow;
 /// (SND-GRAPH-008) and pass the activation checks (their findings, SND-GRAPH-002, as activate refuses them). The run's id and row carry the revision it ran.
 /// </summary>
 /// <param name="workflows">The workflows and their revisions.</param>
-/// <param name="runs">The runs; the next manual occurrence comes from them.</param>
+/// <param name="runs">The runs; the next occurrence comes from their manual runs and re-runs.</param>
 /// <param name="starter">Starts, queues or skips the run.</param>
 /// <param name="launches">Which run launched a session; the loop guard (SND-GRAPH-109) reads it.</param>
 /// <param name="callers">The caller; its launch is the session the guard looks up.</param>
@@ -29,7 +29,7 @@ namespace Aw.Sindri.Features.RunWorkflow;
 internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, IGraphLaunchRuns launches, ICallerContextAccessor callers, TimeProvider clock, IWorkflowChecker checker)
     : IService<RunWorkflowRequest, RunWorkflowResponse>
 {
-    private const string TriggerKind = "manual";
+    private const string TriggerKind = WorkflowRunNumbers.Manual;
     private const int Page = 200;
     private const string SetupActor = "service:setup";
     private static readonly WorkflowSlug _helloSindri = WorkflowSlug.From("hello-sindri");
@@ -198,14 +198,14 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
 
     private async ValueTask<Result<RunWorkflowResponse>> Start(Trigger trigger, CancellationToken cancellationToken)
     {
-        var last = await runs.LatestOccurrence(trigger.Record.Id, TriggerKind, cancellationToken).ConfigureAwait(false);
-        if (last.IsError)
+        var next = await WorkflowRunNumbers.Next(runs, trigger.Record.Id, cancellationToken).ConfigureAwait(false);
+        if (next.IsError)
         {
-            return last.Error;
+            return next.Error;
         }
 
-        var occurrence = (last.Value ?? 0) + 1;
-        // why: two manual runs at once read the same latest number; the starter refuses the second with SND-GRAPH-100, which gets the next number once.
+        var occurrence = next.Value;
+        // why: manual runs and re-runs share one count (WorkflowRunNumbers), so a re-run's number is never the next manual one; two manual runs at once read the same number, and the starter refuses the second with SND-GRAPH-100, which gets the next number once.
         for (var attempt = 0; ; attempt++)
         {
             var request = new GraphStartRequest(trigger.Record.Id, trigger.Record.Slug, trigger.Revision.Revision, occurrence, trigger.Json, Concurrency(trigger.Revision.Spec.Concurrency));

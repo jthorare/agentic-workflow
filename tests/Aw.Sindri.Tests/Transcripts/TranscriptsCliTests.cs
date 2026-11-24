@@ -30,7 +30,7 @@ public sealed class TranscriptsCliTests : IDisposable
 
         Assert.Equal(0, run.Exit);
         var lines = run.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        Assert.Equal([RefOf("fork").Value, RefOf("main").Value], lines.Select(l => l[..19]), StringComparer.Ordinal);
+        Assert.Equal([RefOf("fork").Value, RefOf("main").Value], lines.Select(l => l[..23]), StringComparer.Ordinal);
         Assert.Contains("claude-code", lines[1], StringComparison.Ordinal);
         Assert.Contains("2 human turns", lines[1], StringComparison.Ordinal);
         Assert.Contains(StandardCorpus.Repo, lines[1], StringComparison.Ordinal);
@@ -89,6 +89,8 @@ public sealed class TranscriptsCliTests : IDisposable
     [InlineData("list --since")]
     [InlineData("list --provider copilot")]
     [InlineData("list --repo relative/dir")]
+    [InlineData("list --repo //")]
+    [InlineData("list --repo /")]
     [InlineData("list --verbose")]
     [InlineData("show")]
     [InlineData("show main.jsonl")]
@@ -132,7 +134,7 @@ public sealed class TranscriptsCliTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task Show_of_an_unknown_ref_exits_1_with_the_code()
     {
-        var run = await Run(fence: false, "show", "transcript:00000000");
+        var run = await Run(fence: false, "show", "transcript:000000000000");
 
         Assert.Equal(1, run.Exit);
         Assert.StartsWith(TranscriptsErrors.SessionNotFound.Code, run.Stderr, StringComparison.Ordinal);

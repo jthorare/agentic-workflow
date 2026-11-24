@@ -20,18 +20,17 @@ public sealed class GraphZoomTests
     [InlineData(25, 25)]
     public void Minus_goes_to_the_next_step_down(int from, int to) => Assert.Equal(to, GraphZoom.Previous(from));
 
+    [Theory]
+    [InlineData(1019, 666, 1.1, 1000, 744, false)]   // 16 steps at 1000 wide, two + clicks: 1121 x 733, scrolls sideways a little: no map (#4055)
+    [InlineData(1360, 432, 2.0, 1440, 728, false)]   // 16 steps at 200 % on 1440 x 728: 2720 x 864, under twice both ways
+    [InlineData(1360, 1132, 2.0, 1440, 728, true)]   // 40 steps at 200 %: 2264 px tall, over twice the 728 px canvas
+    [InlineData(1360, 1132, 0.86, 1440, 728, false)]  // 40 steps at Fit: 973 px tall, under twice
+    public void Minimap_shows_only_when_the_graph_is_over_twice_the_canvas_one_way(double width, double height, double zoom, double clipWidth, double clipHeight, bool shown) =>
+        Assert.Equal(shown, GraphZoom.MapShown(width, height, zoom, (clipWidth, clipHeight)));
+
     [Fact]
-    public void Minimap_shows_only_when_the_canvas_scrolls()
-    {
-        var fit = GraphFit.Compute(GraphFitTests.Release(0), GraphFitTests.CanvasWidth, GraphFitTests.CanvasHeight, 1.0);
-        var clip = (GraphFitTests.CanvasWidth, GraphFitTests.CanvasHeight);
-
-        Assert.False(GraphZoom.Scrolls(fit.Width, fit.Height, fit.Zoom, clip));   // hidden at Fit with no overflow
-
-        var twice = GraphZoom.Next(GraphZoom.Next((int)Math.Round(fit.Zoom * 100, MidpointRounding.AwayFromZero))) / 100.0;   // 98 -> 100 -> 110
-
-        Assert.True(GraphZoom.Scrolls(fit.Width, fit.Height, twice, clip));   // shown after two + clicks
-    }
+    public void A_graph_that_scrolls_a_little_gets_no_map_room_at_the_bottom() =>
+        Assert.Equal(0, GraphZoom.ClampPan((0, -500), (1019, 666), 1.1, (1000, 744)).Y, 3);   // 733 px tall in a 744 px canvas: no 144 px of map room, so no pan down
 
     [Fact]
     public void Scroll_extent_adds_map_height_plus_16_at_the_bottom_while_the_map_shows()
@@ -47,11 +46,12 @@ public sealed class GraphZoomTests
     public void Pan_cannot_go_past_the_extent_bottom_and_the_last_row_sits_above_the_map_at_the_end()
     {
         var fit = GraphFit.Compute(GraphFitTests.Release(21), GraphFitTests.CanvasWidth, GraphFitTests.CanvasHeight, 1.0);
+        const double zoom = 2;   // at Fit the 40 steps are under twice the canvas, so no map; at 200 % the map shows and its room counts
 
-        var (_, y) = GraphZoom.ClampPan((0, -100000), (fit.Width, fit.Height), fit.Zoom, _clip);
+        var (_, y) = GraphZoom.ClampPan((0, -100000), (fit.Width, fit.Height), zoom, _clip);
 
-        Assert.Equal(GraphFitTests.CanvasHeight - (fit.Height * fit.Zoom) - 144, y, 3);
-        Assert.True((fit.Height * fit.Zoom) + y <= GraphFitTests.CanvasHeight - 144 + 0.001, "the last row sits under the map at the end of the scroll");
+        Assert.Equal(GraphFitTests.CanvasHeight - (fit.Height * zoom) - 144, y, 3);
+        Assert.True((fit.Height * zoom) + y <= GraphFitTests.CanvasHeight - 144 + 0.001, "the last row sits under the map at the end of the scroll");
     }
 
     [Fact]

@@ -122,6 +122,17 @@ public sealed class TerminalFocusTests
     }
 
     [Fact]
+    public void F6_while_the_pane_is_connecting_is_not_swallowed_so_the_shell_can_cycle_its_regions()
+    {
+        var f = new TerminalFixture();
+        f.View.Open(TerminalFixture.Lane(), TerminalOpenIntent.Look);
+
+        var route = f.View.Route("F6");
+
+        Assert.Equal((TerminalKeyRoute.Page, TerminalSide.List), (route, f.View.Side));
+    }
+
+    [Fact]
     public void The_footer_changes_with_focus_and_names_the_chords_for_the_platform()
     {
         var linux = new TerminalFixture().Attached(TerminalFixture.Lane(), TerminalOpenIntent.Type);

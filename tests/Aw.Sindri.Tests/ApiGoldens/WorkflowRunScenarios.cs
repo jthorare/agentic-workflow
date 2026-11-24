@@ -10,7 +10,7 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
 /// The goldens of 'POST /sindri/workflows/{slug}/runs', 'POST /sindri/workflow-runs/{run}/cancel' (issue 2258, PR 6), 'POST /sindri/workflow-runs/{run}/nodes/{node}/answer' (PR 9)
-/// and 'POST /sindri/workflow-runs/{run}/seen' (Home spec §3.3, E1): the refusals, which need no Temporal
+/// 'POST /sindri/workflow-runs/{run}/seen' (Home spec §3.3, E1) and 'POST /sindri/workflow-runs/{run}/rerun' (#3204): the refusals, which need no Temporal
 /// server. A started run needs one, so its answer is pinned by the service tests. Each scenario seeds the workflow or run it needs through the host's stores.
 /// The takeover and handback of a 'run_agent' node (#2472) run on a host whose <see cref="IAgentNodeControl"/> is a <see cref="FakeAgentNodeControl"/>,
 /// so their success answers need no Temporal either.
@@ -27,6 +27,8 @@ internal static class WorkflowRunScenarios
     private const string HandBackSlug = "workflow-runs-run-nodes-node-handback";
     private const string SeenSlug = "workflow-runs-run-seen";
     private static readonly WorkflowRunId _failed = WorkflowRunId.Of(_slug, 1, 3);
+    private const string RerunSlug = "workflow-runs-run-rerun";
+    private const string RerunBody = "{\"fromNode\":\"start\"}";
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
@@ -37,6 +39,7 @@ internal static class WorkflowRunScenarios
         (TakeOverSlug, "taken-over"), (TakeOverSlug, "not-waiting"), (TakeOverSlug, "bad-id"), (TakeOverSlug, "not-found"), (TakeOverSlug, "already-ended"), (TakeOverSlug, "temporal-down"),
         (HandBackSlug, "handed-back"), (HandBackSlug, "not-taken-over"), (HandBackSlug, "not-waiting"),
         (SeenSlug, "marked"), (SeenSlug, "not-failed"), (SeenSlug, "not-found"), (SeenSlug, "session-refused"),
+        (RerunSlug, "bad-id"), (RerunSlug, "not-found"), (RerunSlug, "not-ended"), (RerunSlug, "unknown-step"),
     ];
 
     /// <summary>Whether the scenario runs on <see cref="Start"/>'s host (the takeover and handback routes).</summary>
@@ -77,9 +80,9 @@ internal static class WorkflowRunScenarios
     public static async Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
     {
         var human = Human(host.Token.Value);
-        if (string.Equals(slug, AnswerSlug, StringComparison.Ordinal))
+        if (Route(slug) is { } route)
         {
-            return await Answer(host, scenario, human, ct);
+            return await route(host, scenario, human, ct);
         }
 
         switch ((slug, scenario))
@@ -131,6 +134,35 @@ internal static class WorkflowRunScenarios
                 return await Ask(host, Post("/sindri/workflows/nope/runs", json: null, human));
         }
     }
+
+    // The routes with their own scenario method; null for the routes Body switches on itself.
+    private static Func<GoldenHost, string, (string Name, string Value)[], CancellationToken, Task<string>>? Route(string slug) => slug switch
+    {
+        AnswerSlug => Answer,
+        RerunSlug => Rerun,
+        _ => null,
+    };
+
+    // POST /sindri/workflow-runs/{run}/rerun: the refusals (a re-run that starts needs the Temporal worker): a bad id, an unknown run, a run that has not ended, a step its revision lacks.
+    private static async Task<string> Rerun(GoldenHost host, string scenario, (string Name, string Value)[] human, CancellationToken ct)
+    {
+        switch (scenario)
+        {
+            case "bad-id":
+                return await Ask(host, Post("/sindri/workflow-runs/not-a-run/rerun", RerunBody, human));
+            case "not-ended":
+                await QueuedRun(host, ct);
+                return await Ask(host, Post(RerunRoute(_queued), RerunBody, human));
+            case "unknown-step":
+                await Create(host, activate: true, ct);
+                await EndedRun(host, ct);
+                return await Ask(host, Post(RerunRoute(_ended), "{\"fromNode\":\"zzz\"}", human));
+            default:
+                return await Ask(host, Post(RerunRoute(_ended), RerunBody, human));
+        }
+    }
+
+    private static string RerunRoute(WorkflowRunId run) => $"/sindri/workflow-runs/{Uri.EscapeDataString(run.Value)}/rerun";
 
     private static async Task<string> Answer(GoldenHost host, string scenario, (string Name, string Value)[] human, CancellationToken ct)
     {

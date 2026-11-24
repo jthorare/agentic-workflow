@@ -177,4 +177,25 @@ public sealed class GraphFitTests
         Assert.Equal(60, after["b"].Height);
         Assert.Equal(before["b"].Y + 20, after["b"].Y, 3);
     }
+
+    // #4149: with the map shown, Fit keeps a 232 px gutter (the map's 200 px and its 16 px margins) free of cards on the right, so the map never covers one.
+    [Fact]
+    public void Forty_steps_at_1000_wrap_one_column_earlier_so_the_map_covers_no_card()
+    {
+        var fit = GraphFit.Compute(Chain(40), 950, 520, 1.0);   // the app's canvas at a 1000 x 800 window
+        var right = fit.Cards.Values.Max(c => c.X + c.Width) * fit.Zoom;
+        var bottom = fit.Cards.Values.Max(c => c.Y + c.Height) * fit.Zoom;
+
+        Assert.True(bottom > 2 * 520, "the fact needs the map shown");
+        Assert.Equal(2, fit.Columns);   // 3 at full width
+        Assert.True(right <= 950 - 232 + 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the cards end at x {right}, inside the map's 232 px gutter"));
+    }
+
+    [Fact]
+    public void Forty_steps_at_1280_already_leave_the_gutter_so_the_layout_keeps_three_columns()
+    {
+        var fit = GraphFit.Compute(Chain(40), 1230, 520, 1.0);   // the app's canvas at a 1280 x 800 window: the 3 columns end at x 876, under 1230 - 232 = 998
+
+        Assert.Equal(3, fit.Columns);
+    }
 }

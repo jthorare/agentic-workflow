@@ -36,6 +36,7 @@ internal sealed class ContextSourceHealth(ContextScopes scopes, IContextEngine e
         }
 
         var running = await IndexSyncRunTime.For(started, pauses, cancellationToken).ConfigureAwait(false);
-        return [.. progress.Value.Select(p => IndexSourceLook.Problem(p, running)).OfType<HealthProblem>()];
+        var (now, limit) = (started.Now(), IndexSourceLook.Limit(approved.Profile));
+        return [.. progress.Value.Select(p => IndexSourceLook.Problem(p, running, now, limit)).OfType<HealthProblem>()];
     }
 }

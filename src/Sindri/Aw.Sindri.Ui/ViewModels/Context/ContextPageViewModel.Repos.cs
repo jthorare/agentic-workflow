@@ -51,6 +51,7 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(IsZoomedIn));
         Whole.LeaveConcept();   // the concepts are another repo's now
         OpenedConceptId = null;
+        _conceptsRead = false;   // the other repo's concepts are not read yet, so its first event reads them before its whole map (#3792)
         Concepts.Reset();
         ChangedConcepts();
         return ShowFiles ? FileMap.Opened(cancellationToken) : OpenFirst(cancellationToken);
