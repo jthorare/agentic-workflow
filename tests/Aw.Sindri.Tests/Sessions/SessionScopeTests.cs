@@ -16,6 +16,7 @@ public sealed class SessionScopeTests
     private const string OtherHomeSocket = "/other/home/tmux/tmux-1000/sindri";   // socket kind 'sindri', another home's directory
     private const string OwnLaunch = "LCH-0123456789abcdef0123456789abcdef";
     private const string OtherLaunch = "LCH-fedcba9876543210fedcba9876543210";
+    private static readonly int[] _ownOnly = [411, 700];   // an array, not a collection expression: a span can't cross the await
 
     /// <summary>
     /// A claude on this home's socket (411), one on a lane socket (511), one on another home's 'sindri' socket (811), a plain foreign claude (600),
@@ -61,7 +62,7 @@ public sealed class SessionScopeTests
 
     [Fact, Trait("Lane", "unit")]
     public async Task Scope_own_lists_no_row_for_a_foreign_tmux_server_or_a_foreign_claude_process() =>
-        Assert.Equal([411, 700], await Pids(Box(Settings(SessionScope.Own))));
+        Assert.Equal(_ownOnly, await Pids(Box(Settings(SessionScope.Own))));
 
     [Fact, Trait("Lane", "unit")]
     public async Task Scope_own_gives_no_row_to_a_lane_socket_or_another_homes_sindri_socket()
@@ -86,5 +87,5 @@ public sealed class SessionScopeTests
 
     [Fact, Trait("Lane", "integration")]
     public async Task A_scope_typo_in_launcher_json_lists_no_foreign_row() =>
-        Assert.Equal([411, 700], await Pids(Box(LauncherConfigFileTests.LoadText("""{ "schema": 1, "sessions": { "scope": "onw" } }""").Sessions with { OwnTmuxDirectory = OwnDirectory })));
+        Assert.Equal(_ownOnly, await Pids(Box(LauncherConfigFileTests.LoadText("""{ "schema": 1, "sessions": { "scope": "onw" } }""").Sessions with { OwnTmuxDirectory = OwnDirectory })));
 }
