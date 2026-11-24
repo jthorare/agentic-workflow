@@ -329,7 +329,14 @@ take_lock() {
     rc=0; make_lock "$lk" || rc=$?
     if [ "$rc" = 0 ]; then break; fi
     if [ "$rc" = 2 ]; then die "could not make the publish lock $lk (mktemp or rename failed in $base)"; fi
-    if lock_stale "$lk"; then rm -rf "$lk"; continue; fi
+    if lock_stale "$lk"; then
+      # Test seam (scripts/tests/install-cs.test.sh, #4279): hold between "saw stale" and the takeover until the test says go.
+      if [ -n "${AW_INSTALL_CS_TEST_STALE_PAUSE:-}" ]; then
+        : > "$AW_INSTALL_CS_TEST_STALE_PAUSE.$$.seen"
+        until [ -e "$AW_INSTALL_CS_TEST_STALE_PAUSE.$$.go" ]; do sleep 0.1; done
+      fi
+      rm -rf "$lk"; continue
+    fi
     owner="$(cat "$lk/pid" 2> /dev/null || true)"
     say "waiting for another install-cs publish (pid ${owner:-?})"
     sleep 2
