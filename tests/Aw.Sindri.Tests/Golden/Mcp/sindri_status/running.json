@@ -76,6 +76,11 @@
         "lastRun": null
       },
       {
+        "name": "messages-retention",
+        "every": "24h",
+        "lastRun": null
+      },
+      {
         "name": "connection-refresh",
         "every": "5m",
         "lastRun": null
@@ -98,6 +103,16 @@
       {
         "name": "todo-note",
         "every": "24h",
+        "lastRun": null
+      },
+      {
+        "name": "home-runs",
+        "every": "1m",
+        "lastRun": null
+      },
+      {
+        "name": "home-lanes",
+        "every": "1m",
         "lastRun": null
       }
     ],
@@ -130,13 +145,13 @@
       "more": false,
       "lists": {
         "services": {
-          "total": 17,
+          "total": 20,
           "more": false
         }
       }
     }
   },
   "content": [
-    "sindri <build>, port <port>: running, health healthy, views fresh, 17 services"
+    "sindri <build>, port <port>: running, health healthy, views fresh, 20 services"
   ]
 }

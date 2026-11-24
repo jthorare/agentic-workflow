@@ -6,8 +6,8 @@ namespace Aw.Sindri.Features.ProjectFacts;
 /// <summary>Puts each card's truth on the page: ONE facts read for the union of every card's sources, then the pure build per card in memory.</summary>
 internal static class ProjectTruthPage
 {
-    /// <summary>The row the page carries when PRs are in scope but no GitHub login is known, so no PR can show as blocked on the owner (issue 3797).</summary>
-    internal static readonly ProjectFreshnessRow NoLogin = new("github-login", ProjectFreshnessState.Failing, "not known: connect GitHub or set review.login to see what is blocked on you", At: null);
+    /// <summary>The row the page carries when PRs are in scope but no GitHub login is known, so no PR can show as blocked on the owner (issue 3797). An unset setting is no failure, so the state is Ok: the hint shows on the freshness line and the line is not tinted (issue 4066).</summary>
+    internal static readonly ProjectFreshnessRow NoLogin = new("github-login", ProjectFreshnessState.Ok, "not known: connect GitHub or set review.login to see what is blocked on you", At: null);
 
     /// <summary>Attaches the truth to every card of the page.</summary>
     /// <param name="page">The page built from the owner state and Linear's facts.</param>

@@ -65,13 +65,22 @@ if [ "${1:-}" = "--run-one" ]; then
     echo "bash-tests: $suite populated a private NuGet cache in its sandbox HOME; keep NUGET_PACKAGES at the shared cache" >>"$out/$idx.log"
     [ "$rc" -ne 0 ] || rc=1
   fi
+  # Whatever a suite left at the top of its TMPDIR is a leak: its own cleanup should have removed it. The sandbox delete below hides it
+  # from the outer tmp-leak-check, so the runner names it here and fails the suite (#3262).
+  note=""
+  leaked="$(ls -A "$sandbox/tmp" 2>/dev/null | tr '\n' ' ')"
+  if [ -n "$leaked" ]; then
+    echo "bash-tests: $suite left in TMPDIR: $leaked" >>"$out/$idx.log"
+    [ "$rc" -ne 0 ] || rc=1
+    note="  (left files in TMPDIR)"
+  fi
   find "$sandbox" -delete 2>/dev/null
   secs=$((SECONDS - start))
   echo "$rc" >"$out/$idx.rc"; echo "$secs" >"$out/$idx.secs"
   if [ "$rc" -eq 0 ]; then
     printf 'PASS  %s  %s  %ss\n' "$mode" "$suite" "$secs"
   else
-    printf 'FAIL  %s  %s  %ss  exit %s\n' "$mode" "$suite" "$secs" "$rc"
+    printf 'FAIL  %s  %s  %ss  exit %s%s\n' "$mode" "$suite" "$secs" "$rc" "$note"
   fi
   exit 0
 fi

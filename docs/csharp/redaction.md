@@ -109,7 +109,8 @@ letters (the Kelvin sign for `k`); that only redacts more.
 | `anthropic-key`, `openai-key` | `sk-ant-…`, `sk-…`, `sk-proj-…` |
 | `aws-access-key` | `AKIA…` and `ASIA…` (STS) access key ids |
 | `github-token` | `ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_`, `github_pat_` |
-| `slack-token`, `stripe-key`, `google-api-key`, `linear-key`, `jwt` | `xox[abprs]-`, `sk_live_`/`rk_test_`…, `AIza…`, `lin_api_`/`lin_oauth_`, three-part `eyJ…` tokens of any length |
+| `slack-token`, `slack-app-token` | every Slack token: `xox[abceprs]-` (bot, user, cookie, config and refresh tokens), the rotating `xoxe.xoxp-` form whole, and the app-level `xapp-` |
+| `stripe-key`, `google-api-key`, `linear-key`, `jwt` | `sk_live_`/`rk_test_`…, `AIza…`, `lin_api_`/`lin_oauth_`, three-part `eyJ…` tokens of any length |
 | `google-oauth-token` | `ya29.…` access tokens, anywhere (so a dotted one in a lowercase pair is still caught) |
 | `basic-auth` | the credentials after `Authorization: Basic` (also `Proxy-Authorization`, and a quoted name or value as in a JSON, JS or Python header object) |
 | `bearer` | the token after `Bearer` (the word stays; the token may follow on the next line) |

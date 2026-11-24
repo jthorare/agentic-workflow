@@ -8,7 +8,9 @@
       "trigger": "manual",
       "startedAt": "2026-01-01T00:03:00.0000000Z",
       "endedAt": null,
-      "error": null
+      "error": null,
+      "seconds": null,
+      "result": null
     },
     {
       "id": "morning-check@1:2",
@@ -17,7 +19,9 @@
       "trigger": "schedule",
       "startedAt": "2026-01-01T00:02:00.0000000Z",
       "endedAt": null,
-      "error": "node 'agent' failed"
+      "error": "node 'agent' failed",
+      "seconds": null,
+      "result": "node 'agent' failed"
     },
     {
       "id": "morning-check@1:1",
@@ -26,7 +30,9 @@
       "trigger": "manual",
       "startedAt": "2026-01-01T00:01:00.0000000Z",
       "endedAt": null,
-      "error": null
+      "error": null,
+      "seconds": null,
+      "result": null
     }
   ],
   "more": false

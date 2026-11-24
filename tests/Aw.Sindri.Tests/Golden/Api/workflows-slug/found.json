@@ -61,5 +61,6 @@
       "summaryProblem": null,
       "kindTitle": "Run agent"
     }
-  ]
+  ],
+  "nextRunAt": null
 }
