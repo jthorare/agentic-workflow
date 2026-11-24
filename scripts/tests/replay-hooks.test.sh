@@ -161,7 +161,7 @@ check "env: AW_JUDGE_CS_BIN is the fake judge" "$(grep '^AW_JUDGE_CS_BIN=' "$ENV
 PAYLOAD='{"session_id":"s1","tool_name":"Bash","tool_input":{"command":"ls"}}'
 fx claude/judge/recorded "$(jq -n --argjson p "$PAYLOAD" '{events:[{n:1,hook:"PreToolUse",script:"asks-judge.sh",payload:$p}],
   judge:{verdicts:"verdicts/judge.jsonl"}, expect:[{event:1,decision:"deny",textContains:"the judge said deny"}]}')"
-KEY="$( { printf 'ask-check\n'; printf '%s' "$PAYLOAD" | jq -c .; } | { sha256sum 2>/dev/null || shasum -a 256; } | cut -d' ' -f1)"
+KEY="$( { printf 'ask-check\n'; printf '%s' "$PAYLOAD" | jq -jc .; } | { sha256sum 2>/dev/null || shasum -a 256; } | cut -d' ' -f1)"
 mkdir -p "$WORK/fx/claude/verdicts"
 {
   echo '{"header":{"question":"ask-check","model":"test","promptSha256":"0","judgeVersion":"test","recordedAt":"2026-11-24","source":"fresh"}}'
@@ -223,15 +223,20 @@ t1="$(sed -n 1p "$WF" 2>/dev/null | sed 's/.*now=//')"; t3="$(sed -n 2p "$WF" 2>
 check "world: advanceClock moved date +%s by a day" "$([ -n "$t1" ] && [ -n "$t3" ] && [ $((t3 - t1)) -ge 86400 ] && [ $((t3 - t1)) -lt 86500 ] && echo y)" "y"
 
 # --- Malformed stdin through block-destructive on every provider: never a crash, never a deny. ---
+# What each host really does, found by this harness: Codex's adapter turns a string tool_input into {command: …}, so
+# it is a readable ls (allow). Cursor's adapter fails open on a 2 MB payload (result-unparsable: the payload goes to jq
+# as one argument, past the kernel's per-argument limit), so that call is an abstain, not an allow.
 for p in claude codex cursor; do
   case $p in cursor) H=beforeShellExecution ;; *) H=PreToolUse ;; esac
-  fx "$p/malformed/all" "$(jq -n --arg h "$H" '{events:[
+  case $p in codex) X4=allow ;; *) X4=abstain ;; esac
+  case $p in cursor) X5=abstain ;; *) X5=allow ;; esac
+  fx "$p/malformed/all" "$(jq -n --arg h "$H" --arg x4 "$X4" --arg x5 "$X5" '{events:[
     {n:1,hook:$h,script:"block-destructive.sh",payloadRaw:""},
     {n:2,hook:$h,script:"block-destructive.sh",payloadRaw:"{\"tool_name\":\"Bash\",\"tool_in"},
     {n:3,hook:$h,script:"block-destructive.sh",payloadBase64:"//79/A=="},
     {n:4,hook:$h,script:"block-destructive.sh",payload:{session_id:"s1",hook_event_name:$h,tool_name:"Bash",tool_input:"ls"}},
     {n:5,hook:$h,script:"block-destructive.sh",padBytes:2097152,payload:{session_id:"s1",conversation_id:"s1",hook_event_name:$h,tool_name:"Bash",tool_input:{command:"ls"},command:"ls"}}],
-    expect:[{event:1,decision:"abstain"},{event:2,decision:"abstain"},{event:3,decision:"abstain"},{event:4,decision:"abstain"},{event:5,decision:"allow"}]}')"
+    expect:[{event:1,decision:"abstain"},{event:2,decision:"abstain"},{event:3,decision:"abstain"},{event:4,decision:$x4},{event:5,decision:$x5}]}')"
   run "$WORK/fx/$p/malformed" --out "$WORK/results.jsonl" --hooks-dir "$HOOKS"
   check "malformed $p: exit 0" "$RC" "0"
   check "malformed $p: every line passes" "$(jq -r .status "$WORK/results.jsonl" 2>/dev/null | sort -u | tr '\n' ' ')" "pass "
