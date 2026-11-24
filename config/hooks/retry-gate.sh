@@ -68,7 +68,8 @@ case "$KIND" in
     if [ -e "$RES" ]; then ACTION=clear
     else ACTION=deny; MSG="retry-guard: \`$RES\` does not exist (this exact call failed with \"No such file or directory\"). Create it or fix the path.$OVR_HINT"; fi ;;
   bad-args)
-    MSG="retry-guard: this exact call already failed with an argument error. Change the arguments (check \`${EXE:-the tool} --help\`) before running it again."
+    HELP="the tool's help"; [ -n "$EXE" ] && HELP="\`$EXE --help\`"
+    MSG="retry-guard: this exact call already failed with an argument error. Change the arguments (check $HELP) before running it again."
     if [ "$RG_TOOL" = Bash ]; then ACTION=deny; MSG="$MSG$OVR_HINT"; else ACTION=advise; fi ;;
   auth-expired)
     FIX="refresh the credentials for $RES"

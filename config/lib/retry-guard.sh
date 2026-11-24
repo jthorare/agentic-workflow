@@ -7,6 +7,8 @@
 RG_VERSION=1
 RG_POLICY="retry-guard/1"
 RG_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RG_LOCK=""
+RG_LOCKS_LOADED=""
 
 # rg_failopen <hook> <cause>: one HOOK-FAILOPEN line (config/lib/failopen.sh beside this file); logging only.
 rg_failopen() {
@@ -81,7 +83,7 @@ rg_auth_file() {
 # locks.sh's _lock_reclaim_dead when locks.sh sits beside this file.
 rg_lock() {
   local lk="$1.lock" i=0
-  if [ -z "${RG_LOCKS_LOADED:-}" ]; then
+  if [ -z "$RG_LOCKS_LOADED" ]; then
     if [ -f "$RG_LIB_DIR/locks.sh" ]; then . "$RG_LIB_DIR/locks.sh" 2> /dev/null; fi
     RG_LOCKS_LOADED=1
   fi
@@ -94,7 +96,7 @@ rg_lock() {
   RG_LOCK="$lk"
 }
 rg_unlock() {
-  [ -n "${RG_LOCK:-}" ] || return 0
+  [ -n "$RG_LOCK" ] || return 0
   rm -f "$RG_LOCK/pid" 2> /dev/null
   rmdir "$RG_LOCK" 2> /dev/null
   RG_LOCK=""

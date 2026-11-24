@@ -110,6 +110,7 @@ SERIAL=(
   "config/lib/tests/failopen.test.sh	runs hooks against hung and slow fake judges under a short watchdog (rc=hung) and checks the fail-open path within the hook's own timeout"
   "config/lib/tests/statusline.test.sh	asserts the statusline returns within 1 s while a 3 s scorer runs, then polls a 10 s deadline for the cache"
   "config/hooks/tests/fleet-state.test.sh	asserts every aw:fleet hook event runs under 100 ms (best of 5), which CPU contention from a parallel suite can turn into a false failure"
+  "config/hooks/tests/retry-guard.test.sh	asserts the retry gate's empty path has a median under 20 ms over 50 runs, which CPU contention from a parallel suite can turn into a false failure"
   "config/hooks/tests/sindri-nudge.test.sh	asserts the nudge gives up within a 300 ms budget (AW_SINDRI_NUDGE_BUDGET_MS) against a 5 s sleeping sindri"
   "config/hooks/tests/sindri-tasks.test.sh	asserts one prompt returns within 500 ms with no sindri on PATH, which CPU contention from a parallel suite can turn into a false failure"
   "config/lib/tests/prompt-sort.test.sh	asserts the hook gives up within a 600 ms budget (AW_PROMPT_SORT_BUDGET_MS) against a 5 s sleeping sorter"
