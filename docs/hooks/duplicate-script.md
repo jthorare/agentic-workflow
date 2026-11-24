@@ -41,7 +41,9 @@ another program. Those calls pass with no check.
 2. **Index.** Both catalogs are flattened once per revision (path, size and mtime of each) into
    `$AW_STATE_DIR/duplicate-script/index-<key>.json`. The repo's entry wins when an id is in both. No catalog: allow, plus a
    `HOOK-FAILOPEN` line `no-catalog`.
-3. **Match.** One jq run over the script text (a Write's content, the whole Bash command with any heredoc, or the `+` lines
+3. **Match.** A Bash call that is itself a commit, a tag, or a PR / issue / release write with a message or body flag
+   (`-m`, `-F`, `--message`, `--body`, `--body-file`, `--notes`) only sends text, so it is no candidate. One jq run over
+   the script text (a Write's content, the whole Bash command with any heredoc, or the `+` lines
    of the first `apply_patch` Add File section that is a script; at most 64 KiB). The payload is read from stdin, never
    passed as an argument, so a large one doesn't fail. For each entry:
    - **reuse:** the text runs the entry (its `argv[0]`, plus `argv[1]` when that is a word). The entry is skipped;
@@ -61,12 +63,15 @@ another program. Those calls pass with no check.
 
 ## Mode
 
-`ds_mode` in the lib:
-- When `config/lib/policy.sh` sits beside the lib, it calls `policy_mode duplicate-script/1`.
-- Until that file lands (the #4257 P0 PR), it reads `AW_POLICY_DUPLICATE_SCRIPT_1_MODE` directly. The read is marked
-  `# TODO(#4257)`.
+`ds_mode` in the lib calls `policy_mode duplicate-script/1` from `config/lib/policy.sh` (#4257). The installer ships
+`policy.sh` and `config/policy/interventions.json` beside the gate. The first source that is set decides:
+`AW_POLICY_DUPLICATE_SCRIPT_1_MODE`, then `$AW_STATE_DIR/policy/duplicate-script-1.mode`, then interventions.json (advisory).
 
-Only `block` turns block mode on. Unset or any other value is advisory.
+- `off`: the gate does nothing: no advice, no deny, no state write.
+- `advisory` (the default): unambiguous matches get the suggestion, uncertain ones advice once.
+- `block`: unambiguous matches are denied; uncertain ones still get advice only.
+
+An install older than `lib/policy.sh` reads the env var with the same rule.
 
 ## The exception
 
@@ -81,6 +86,7 @@ without a reason is denied again in block mode.
 - Block mode: the line `duplicate-script: blocked (policy duplicate-script/1, block mode).` first, on stderr.
 - Uncertain: ``duplicate-script: `<id>` may already do this (<purpose>): `aw-commands show <id>`. Shown once per session.``
 - Not installed: ``duplicate-script: `<id>` does this (<purpose>), but `<argv0>` is not on PATH: <first prerequisite>.``
+  On an uncertain match it says `may already do this`.
 
 The text holds only catalog fields and the param values found. It never quotes the script.
 

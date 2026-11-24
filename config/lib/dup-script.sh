@@ -20,17 +20,18 @@ ds_failopen() {
 ds_hash() { local h; if command -v sha256sum > /dev/null 2>&1; then h="$(printf '%s' "$1" | sha256sum)"; else h="$(printf '%s' "$1" | shasum -a 256)"; fi; printf '%s\n' "${h%% *}"; }
 ds_stat() { stat -c '%s.%Y' "$1" 2> /dev/null || stat -f '%z.%m' "$1" 2> /dev/null || echo 0; }
 
-# ds_mode: prints block or advisory. config/lib/policy.sh's policy_mode when that file sits beside this one.
+# ds_mode: prints off, advisory or block: policy_mode duplicate-script/1 from config/lib/policy.sh (#4257), which every
+# installer ships beside this lib. The env var read is only for an install that predates lib/policy.sh, with the same
+# rule: off and block as given, anything else advisory.
 ds_mode() {
   local m=""
-  if [ -f "$DS_LIB_DIR/policy.sh" ]; then
-    . "$DS_LIB_DIR/policy.sh" 2> /dev/null
-    command -v policy_mode > /dev/null 2>&1 && m="$(policy_mode "$DS_POLICY" 2> /dev/null)"
+  if [ -f "$DS_LIB_DIR/policy.sh" ] && . "$DS_LIB_DIR/policy.sh" 2> /dev/null && command -v policy_mode > /dev/null 2>&1; then
+    m="$(policy_mode "$DS_POLICY" 2> /dev/null)"
   else
-    # TODO(#4257): policy_mode — read the variable directly until config/lib/policy.sh (the P0 PR) is merged.
     m="${AW_POLICY_DUPLICATE_SCRIPT_1_MODE:-}"
+    m="${m//[[:space:]]/}"
   fi
-  if [ "$m" = block ]; then echo block; else echo advisory; fi
+  case "$m" in off | block) echo "$m" ;; *) echo advisory ;; esac
 }
 
 # ds_catalogs <cwd>: sets DS_REPO_CAT (the first .agentic-workflow/commands.json walking up from cwd) and DS_TK_CAT
@@ -102,8 +103,14 @@ ds_match() {
           | [.secs[] | {path, body: (.body | join("\n"))}
              | select((.path | test("\\.(sh|bash|py|mjs|js)$")) or (.body | startswith("#!")))][0]) // {path: "", body: ""}
        else null end) as $patch
+    # A Bash call that is itself a commit, a tag or a PR / issue / release write with a message or body flag only sends
+    # text (its heredoc is the message), so it is no candidate: pr/ci/checks words in a commit message are no watcher.
+    | (($in.command // "") | tostring
+       | test("^\\s*(cd\\s+\\S+\\s*&&\\s*)?(git(\\s+-C\\s+\\S+)?\\s+(commit|tag)|gh\\s+(pr|issue|release)\\s+(create|comment|edit|review))\\b")
+         and test("(^|\\s)(-m|-F|--message|--file|--body|--body-file|--notes|--notes-file)(\\s|=|$)")) as $msgonly
     | (if $tool == "Write" then ($in.content // $in.contents // $in.text // "")
        elif $tool == "apply_patch" then $patch.body
+       elif $msgonly then ""
        else ($in.command // "") end | tostring | .[0:65536]) as $text
     | (if $tool == "Write" then ($in.file_path // $in.path // $in.target_file // "" | tostring)
        elif $tool == "apply_patch" then $patch.path else "" end) as $path
@@ -187,6 +194,8 @@ ds_main() {
   DS_STATE_ROOT="${AW_STATE_DIR:-${HOME:-}/.agentic-workflow}"
   DS_DIR="$DS_STATE_ROOT/duplicate-script"
   DS_FILE="$DS_DIR/$DS_SID.json"
+  mode="$(ds_mode)"
+  [ "$mode" = off ] && return 0   # off: no advice, no deny, nothing written
   umask 077
   cwd="$(printf '%s' "$input" | jq -r 'if type == "object" then (.cwd // "") else error("x") end' 2> /dev/null)" \
     || { ds_failopen input-unparsable; return 0; }
@@ -210,7 +219,8 @@ ds_main() {
   if ! command -v "$argv0" > /dev/null 2>&1; then
     if jq -e --arg k "ni:$id" '.advised[$k] != null' "$DS_FILE" > /dev/null 2>&1; then return 0; fi
     ds_update '.advised["ni:" + $id] = $iso | .counters.notInstalled += 1' --arg id "$id" || ds_failopen state-write
-    ds_advise "duplicate-script: \`$id\` does this ($purpose), but \`$argv0\` is not on PATH: ${prereq:-install it}."
+    if [ "$kind" = unambiguous ]; then msg="does this"; else msg="may already do this"; fi
+    ds_advise "duplicate-script: \`$id\` $msg ($purpose), but \`$argv0\` is not on PATH: ${prereq:-install it}."
     return 0
   fi
 
@@ -226,7 +236,6 @@ ds_main() {
 
   msg="duplicate-script: this script redoes \`$id\` ($purpose). Run it instead: \`$inv\` (\`aw-commands show $id\`). If it can't do what you need, add \`# aw-dup-ok: <why>\` and go on."
   [ "$mark" = true ] && msg="$msg An \`# aw-dup-ok:\` exception needs a reason after the colon; this one is empty."
-  mode="$(ds_mode)"
   # Advice only, in any mode, where the host's payload is not verified yet (meta, 2026-11-24): Codex apply_patch and
   # Cursor Write. A probe that captures real payloads lifts it.
   case "${AW_PROVIDER:-claude}:$tool" in

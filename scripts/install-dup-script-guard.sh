@@ -8,7 +8,7 @@
 #   codex   PreToolUse .* (the adapter maps shell to Bash; apply_patch keeps its name and gets advice only)
 #   cursor  preToolUse (Shell and Write; Write gets advice only). beforeShellExecution is left out: Cursor fires
 #           preToolUse for Shell too, and a second gate would count each suggestion twice.
-# The gate needs lib/dup-script.sh and lib/failopen.sh beside it, and finds the toolkit catalog that install-cs ships at
+# The gate needs lib/dup-script.sh, lib/failopen.sh, lib/policy.sh and policy/interventions.json beside it, and finds the toolkit catalog that install-cs ships at
 # $AW_STATE_DIR/bin/cs/current/commands.json.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -51,5 +51,9 @@ else
   aw_hooks_stage
 fi
 cp "$SCRIPT_DIR/config/lib/dup-script.sh" "$AW_HOOKS_INSTALL_DIR/lib/dup-script.sh"
+# The mode reader (#4257) and the repo's policy file, laid out as policy.sh looks for it: <hooks>/policy/ beside lib/.
+cp "$SCRIPT_DIR/config/lib/policy.sh" "$AW_HOOKS_INSTALL_DIR/lib/policy.sh"
+mkdir -p "$AW_HOOKS_INSTALL_DIR/policy"
+cp "$SCRIPT_DIR/config/policy/interventions.json" "$AW_HOOKS_INSTALL_DIR/policy/interventions.json"
 aw_hook_set "$EVENT" aw:dup-script-gate dup-script-gate.sh "$MATCHER"
 echo "  dup-script: dup-script-gate ($WHERE) installed for $AW_PROVIDER in $AW_HOOKS_CONFIG"
