@@ -22,10 +22,11 @@ internal static class GraphZoom
     /// <summary>The right gutter kept free of cards while the map shows (#4149): the map's width and its margin on both sides.</summary>
     internal const double MapGutter = MapWidth + (2 * MapMargin);
 
-    /// <summary>The map's gutter on a canvas this wide (#4191).</summary>
+    /// <summary>The map's gutter on a canvas this wide (#4191): <see cref="MapGutter"/>, but never over half the canvas, so the cards always keep half of it and a
+    /// zoom step about the centre from the right limit stays inside the scroll range. Fit and the scroll extent both use it.</summary>
     /// <param name="clipWidth">The canvas clip's width.</param>
     /// <returns>The gutter's width.</returns>
-    internal static double MapGutterFor(double clipWidth) => Math.Min(MapGutter, clipWidth);   // red stub: no half-canvas cap yet
+    internal static double MapGutterFor(double clipWidth) => Math.Min(MapGutter, clipWidth / 2);
 
     /// <summary>The zoom steps of + and -, in percent.</summary>
     internal static IReadOnlyList<int> Ladder { get; } = [25, 33, 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200];
@@ -74,7 +75,7 @@ internal static class GraphZoom
     /// <param name="clipWidth">The canvas clip's width.</param>
     /// <returns>The scroll extent's width.</returns>
     internal static double ExtentWidth(double worldWidth, double zoom, bool mapShown, double clipWidth) =>
-        (worldWidth * zoom) + (mapShown ? Math.Min(MapGutter, clipWidth / 2) : 0);
+        (worldWidth * zoom) + (mapShown ? MapGutterFor(clipWidth) : 0);
 
     /// <summary>Holds a pan inside the scroll extent: the world at this zoom, plus the map's height and margin at the bottom while the map shows; no pan past it, and none at all along an axis that fits.</summary>
     /// <param name="pan">Where the world's origin sits in the canvas.</param>
