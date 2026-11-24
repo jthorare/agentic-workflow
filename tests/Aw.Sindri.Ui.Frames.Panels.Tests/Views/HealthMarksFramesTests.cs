@@ -15,7 +15,7 @@ namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>
 /// The System page's Code index and Views cards draw a mark beside their word (#4331), as Control plane and Context index do: the green check for "ok" and
-/// "Up to date", the attention mark for "needs a look" and "Stalled", at 1000 and 1280. Each frame is saved before the checks, so the same file run on a
+/// "Up to date", the attention mark for "needs a look" and the red ✕ for "Stalled", at 1000 and 1280. Each frame is saved before the checks, so the same file run on a
 /// tree without #4331 writes the before frames and fails on the missing mark.
 /// </summary>
 [Lane(TestLane.Integration)]
@@ -70,12 +70,12 @@ public sealed class HealthMarksFramesTests : FrameHost
     [Theory]
     [InlineData(1000)]
     [InlineData(1280)]
-    public Task Needs_a_look_and_stalled_draw_the_attention_mark(double width) => OnUi(async () =>
+    public Task Needs_a_look_draws_the_attention_mark_and_stalled_the_red_cross(double width) => OnUi(async () =>
     {
         var window = await Shown(CodeIndex("stale", needsLook: true), "stalled", Labels.ViewsStalled, width);
         FrameFile.Save(window, string.Create(CultureInfo.InvariantCulture, $"health-marks-look-{width}"));
 
         AssertMark(window, "CodeIndexGlyph", StateGlyph.Warning, "Brush.Attention");
-        AssertMark(window, "ViewsGlyph", StateGlyph.Warning, "Brush.Attention");
+        AssertMark(window, "ViewsGlyph", StateGlyph.Down, "Brush.Error");
     });
 }

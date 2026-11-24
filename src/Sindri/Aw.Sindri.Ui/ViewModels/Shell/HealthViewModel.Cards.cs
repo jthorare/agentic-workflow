@@ -22,7 +22,7 @@ internal sealed partial class HealthViewModel
         ViewsGlyph = views switch
         {
             null => StateGlyph.None,
-            { Stalled: true } => StateGlyph.Warning,
+            { Stalled: true } => StateGlyph.Down,
             { Rebuilding: true } => StateGlyph.None,
             _ => StateGlyph.Ok,
         };

@@ -232,7 +232,7 @@
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Classes="section-title head-title" Text="{Binding ViewsCardName}" AutomationProperties.Name="{Binding ViewsCardName}" />
-                <!-- #4331: the word's mark, as the Control plane card's: the ok check for Up to date, the attention mark for Stalled. -->
+                <!-- #4331: the word's mark, as the Control plane card's: the ok check for Up to date, the red ✕ for Stalled. -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
                   <icons:StateIcon x:Name="ViewsGlyph" Glyph="{Binding ViewsGlyph}" IsVisible="{Binding HasViewsGlyph}" VerticalAlignment="Center" />
                   <TextBlock x:Name="ViewsWordText" Classes="body-strong head-word" Text="{Binding ViewsWord}" AutomationProperties.Name="{Binding ViewsWord}" />

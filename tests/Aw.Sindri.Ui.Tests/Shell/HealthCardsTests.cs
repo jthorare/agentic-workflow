@@ -56,7 +56,7 @@ public sealed class HealthCardsTests
         await system.Show();
 
         Assert.Equal(Labels.ViewsStalled, system.Vm.ViewsWord);
-        Assert.Equal((StateGlyph.Warning, true), (system.Vm.ViewsGlyph, system.Vm.HasViewsGlyph));
+        Assert.Equal((StateGlyph.Down, true), (system.Vm.ViewsGlyph, system.Vm.HasViewsGlyph));
         Assert.Equal("RebuildViews", system.Vm.ViewsFix!.Action);
     }
 
