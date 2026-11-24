@@ -77,7 +77,7 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
 
         var restored = RerunPlan.Restored(spec, from, rows.Value);
         var refused = LoopRefusal(spec, from) ?? UpstreamRefusal(spec, from, restored);
-        return refused is { } error ? error : Split(record, spec, restored, rows.Value);
+        return refused is { } error ? error : Split(record, spec, from, restored, rows.Value);
     }
 
     // why: a step inside a for_each body runs once per item; restoring the loop's own row and then running one body step alone would skip the loop. The owner re-runs from the for_each step.
@@ -103,15 +103,24 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
             : SindriErrors.GraphRerunUpstreamNotDone.With($"'{missing[0].Value}' comes before '{from.Value}' and did not succeed in that run; re-run from '{missing[0].Value}' instead");
     }
 
-    private static Result<Plan> Split(WorkflowRecord record, GraphSpec spec, IReadOnlyList<NodeId> restored, IReadOnlyList<NodeRun> rows)
+    private static Result<Plan> Split(WorkflowRecord record, GraphSpec spec, NodeId from, IReadOnlyList<NodeId> restored, IReadOnlyList<NodeRun> rows)
     {
         var cut = rows.FirstOrDefault(r => restored.Contains(r.NodeId) && r.Truncated);
         if (cut is not null)
         {
-            return SindriErrors.GraphOutputTruncated.With($"the output of '{cut.NodeId.Value}' was cut at 64 KB in that run, so it can't be restored; re-run from '{cut.NodeId.Value}' instead");
+            return SindriErrors.GraphOutputTruncated.With(CutAdvice(spec, from, cut.NodeId));
         }
 
         return new Plan(record, spec, restored, [.. spec.Nodes.Select(static n => n.Id).Where(id => !restored.Contains(id))], [.. rows.Where(r => restored.Contains(r.NodeId))]);
+    }
+
+    // why: re-running from a cut step restores the chosen step's inputs only when the cut step comes before it; a cut step on a side branch can't be fixed that way, and the advice would run neither
+    private static string CutAdvice(GraphSpec spec, NodeId from, NodeId cut)
+    {
+        var head = $"the output of '{cut.Value}' was cut at 64 KB in that run, so it can't be restored; ";
+        return RerunPlan.Before(spec, from).Contains(cut)
+            ? head + $"re-run from '{cut.Value}' instead"
+            : head + $"'{cut.Value}' does not come before '{from.Value}', so re-running from '{cut.Value}' would not run '{from.Value}'";
     }
 
     private async ValueTask<Result<RerunWorkflowRunResponse>> Start(RerunWorkflowRunRequest request, WorkflowRun source, Plan plan, JsonObject? input, CancellationToken cancellationToken)
