@@ -216,6 +216,41 @@ public sealed class GraphCanvasRelayoutTests
             + " and came back at " + back.X.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + ", " + back.Y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture));
     }
 
+    // Review's nit on #4143: 40 steps at 1440 x 728 (4 columns, cards to 1365 x 1132) cross the 2x line between 125 % (1415 px tall, under 1456: no map) and
+    // 150 % (1698 px, over: map and its room). From the bottom right limit at 125 % (-266, -687), one step in lands at about (-463, -897), inside the 150 %
+    // range with the map's room, and one step out comes back to the start.
+    [Fact]
+    public async Task One_zoom_step_in_and_one_out_across_the_map_line_return_to_the_start_pan()
+    {
+        var graph = await ChainGraph.Of(40);
+
+        var (start, back) = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = graph };
+            var window = new Window { Content = canvas, Width = 1440, Height = 728 };
+            window.Show();
+            Settle(window);
+            try
+            {
+                canvas.Zoom = 1.25;
+                Settle(window);
+                var world = canvas.World;
+                var (x, y) = GraphZoom.ClampPan((-1e6, -1e6), (world.Right, world.Bottom), 1.25, (canvas.Bounds.Width, canvas.Bounds.Height));
+                canvas.Pan = new Point(x, y);
+                var from = canvas.Pan;
+                canvas.ZoomIn();
+                canvas.ZoomOut();
+                return (from, canvas.Pan);
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.True(Math.Abs(back.X - start.X) <= 0.5 && Math.Abs(back.Y - start.Y) <= 0.5, "the pan did not come back after crossing the map line");
+    }
+
     // At Fit, then at 200 % from pan y -50: one wheel down, wheel up to the top edge, one more wheel up. Also the pan y after each zoom step, for the failure message.
     private static (bool AtFit, double Mid, bool TookDown, double AfterDown, double AtTop, bool TookAtTop, string Path) WheelSteps(WorkflowGraphViewModel graph)
     {
