@@ -90,8 +90,23 @@ ds_match() {
     if type != "object" then error("not an object") else . end
     | (.tool_name // "") as $tool
     | (.tool_input // {}) as $in
-    | (if $tool == "Write" then ($in.content // "") else ($in.command // "") end | tostring | .[0:65536]) as $text
-    | (if $tool == "Write" then ($in.file_path // "" | tostring) else "" end) as $path
+    # Codex apply_patch: the first Add File section that is a script (by its extension or a shebang); its + lines are the text.
+    # The patch is whichever string of tool_input holds it (the field name is unverified, as in trait-check).
+    | (if $tool == "apply_patch" then
+         ([$in | .. | strings | select(contains("*** Add File:"))][0] // "" | split("\n")
+          | reduce .[] as $l ({cur: null, secs: []};
+              if ($l | startswith("*** Add File: ")) then .secs += [{path: ($l | ltrimstr("*** Add File: ")), body: []}] | .cur = (.secs | length - 1)
+              elif ($l | startswith("*** ")) then .cur = null
+              elif .cur != null and ($l | startswith("+")) then .secs[.cur].body += [($l | ltrimstr("+"))]
+              else . end)
+          | [.secs[] | {path, body: (.body | join("\n"))}
+             | select((.path | test("\\.(sh|bash|py|mjs|js)$")) or (.body | startswith("#!")))][0]) // {path: "", body: ""}
+       else null end) as $patch
+    | (if $tool == "Write" then ($in.content // $in.contents // $in.text // "")
+       elif $tool == "apply_patch" then $patch.body
+       else ($in.command // "") end | tostring | .[0:65536]) as $text
+    | (if $tool == "Write" then ($in.file_path // $in.path // $in.target_file // "" | tostring)
+       elif $tool == "apply_patch" then $patch.path else "" end) as $path
     | ($path | split("/") | last // "" | sub("\\.(sh|bash|py|mjs|js)$"; "")) as $pbase
     | ($text | ascii_downcase) as $low
     | ([$low | scan("[a-z0-9][a-z0-9-]*")] | unique) as $words
@@ -103,7 +118,7 @@ ds_match() {
         | ($e.argv[0] | split("/") | last) as $a0
         | ([$a0] + (if (($e.argv[1] // "-") | test("^[-{]")) then [] else [$e.argv[1]] end) | map(esc) | join("\\s+")) as $runre
         | ($a0 | sub("\\.(sh|bash|py|mjs|js)$"; "")) as $a0base
-        | if $tool == "Write" and $pbase != "" and $pbase == $a0base then {kind: "canonical"}
+        | if ($tool == "Write" or $tool == "apply_patch") and $pbase != "" and $pbase == $a0base then {kind: "canonical"}
           elif ($text | test("(^|[\\s;|&(`$])" + $runre + "($|[\\s;|&)])")) then {kind: "reuse"}
           else
             (if $e.detect != null and ($e.detect.all | all(. as $r | $text | test($r; "i"))) then true else false end) as $det
@@ -212,6 +227,13 @@ ds_main() {
   msg="duplicate-script: this script redoes \`$id\` ($purpose). Run it instead: \`$inv\` (\`aw-commands show $id\`). If it can't do what you need, add \`# aw-dup-ok: <why>\` and go on."
   [ "$mark" = true ] && msg="$msg An \`# aw-dup-ok:\` exception needs a reason after the colon; this one is empty."
   mode="$(ds_mode)"
+  # Advice only, in any mode, where the host's payload is not verified yet (meta, 2026-11-24): Codex apply_patch and
+  # Cursor Write. A probe that captures real payloads lifts it.
+  case "${AW_PROVIDER:-claude}:$tool" in
+    codex:apply_patch | cursor:Write)
+      if [ "$mode" = block ]; then msg="$msg Block mode gives advice only for $tool on ${AW_PROVIDER} until a probe captures its payload."; fi
+      mode=advisory ;;
+  esac
   if [ "$mode" = block ]; then
     ds_update '.counters.denies += 1 | .counters.suggestions += 1' || ds_failopen state-write
     printf 'duplicate-script: blocked (policy %s, block mode).\n%s\n' "$DS_POLICY" "$msg" >&2

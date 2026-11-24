@@ -4,9 +4,21 @@ Before an agent writes or runs a script that redoes a helper the command catalog
 helper with its exact invocation (issue 4221, section 3). Hook: `config/hooks/dup-script-gate.sh`, with the work after its
 pre-filter in `config/lib/dup-script.sh`. Policy: `duplicate-script/1`.
 
-This first part covers Claude Code's PreToolUse `Bash` and `Write`. Codex `apply_patch`, Cursor, the installer, running a
-scratch script and the prompt to register a new helper come in later parts of the issue. Until a part installs it, the hook
-is in the tree but registered nowhere.
+It covers Claude Code's PreToolUse `Bash` and `Write`, Codex's shell and `apply_patch`, and Cursor's `preToolUse` Shell and
+Write (through the adapters). `scripts/install-dup-script-guard.sh` registers it; every provider's `install.sh` runs it.
+Running a scratch script and the prompt to register a new helper come in a later part of the issue.
+
+## Coverage
+
+| Host | Event | Shell | Script write | Block mode denies |
+|---|---|---|---|---|
+| Claude Code | PreToolUse `Bash\|Write` | `Bash` | `Write` (`file_path`, `content`) | both |
+| Codex | PreToolUse `.*` | the shell, mapped to `Bash` | `apply_patch`: its `*** Add File:` sections | the shell only; `apply_patch` gets advice only (**unverified: no captured payload**) |
+| Cursor | `preToolUse` | `Shell`, mapped to `Bash` | `Write` (`file_path`/`path`/`target_file`, `content`/`contents`/`text`) | the shell only; Write gets advice only (**unverified: no captured payload**) |
+
+Not covered: Claude `Edit`/`MultiEdit` (fragments, not whole scripts), Cursor `beforeShellExecution` (left out so a Shell call
+is checked once), `bash -c "$(curl ...)"`, `eval`, a script built over several calls, and a file written at runtime by
+another program. Those calls pass with no check.
 
 ## What it reads
 
@@ -24,12 +36,14 @@ is in the tree but registered nowhere.
 
 1. **Pre-filter.** Pure bash on the raw payload: no jq, no git, no file read. A Bash call goes on only with a heredoc (`<<`), a
    `while`/`until` loop with `sleep`, or output sent to a `.sh`/`.bash`/`.py` file. A Write goes on only with a shebang or a
-   script extension (`.sh .bash .py .mjs .js`). Every other call exits 0.
+   script extension (`.sh .bash .py .mjs .js`), and a Codex `apply_patch` only with an `*** Add File:` section. Every other
+   call exits 0.
 2. **Index.** Both catalogs are flattened once per revision (path, size and mtime of each) into
    `$AW_STATE_DIR/duplicate-script/index-<key>.json`. The repo's entry wins when an id is in both. No catalog: allow, plus a
    `HOOK-FAILOPEN` line `no-catalog`.
-3. **Match.** One jq run over the script text (a Write's content, or the whole Bash command, heredoc included; at most
-   64 KiB). For each entry:
+3. **Match.** One jq run over the script text (a Write's content, the whole Bash command with any heredoc, or the `+` lines
+   of the first `apply_patch` Add File section that is a script; at most 64 KiB). The payload is read from stdin, never
+   passed as an argument, so a large one doesn't fail. For each entry:
    - **reuse:** the text runs the entry (its `argv[0]`, plus `argv[1]` when that is a word). The entry is skipped;
    - **canonical:** a Write to the entry's own entrypoint (same base name). The call is no duplicate;
    - **unambiguous:** every `detect.all` regex matches and every required param is found. The invocation is filled in;

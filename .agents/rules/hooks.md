@@ -85,6 +85,7 @@ All hook scripts live in `config/hooks/`:
 | `meta-lane-gate.sh` | UserPromptSubmit, Stop (Codex); sessionStart, postToolUse, stop (Cursor) | — |
 | `session-id-report.sh` | SessionStart (Codex); sessionStart (Cursor) | — |
 | `fleet-state.sh` | SessionStart, UserPromptSubmit, PermissionRequest, Notification, PostToolUse, Stop, SessionEnd (Claude; Codex and Cursor in CO-1b) | PostToolUse: `.*` |
+| `dup-script-gate.sh` | PreToolUse (`scripts/install-dup-script-guard.sh`, every provider; Cursor `preToolUse`) | `Bash\|Write` (Codex `.*`) |
 
 Each provider's `install-hooks.sh` installs them by copying, not symlinking, so they survive repo moves. Claude Code's copies go to `~/.claude/hooks/`, and Codex and Cursor copies go to `~/.agentic-workflow/hooks/`. The script then registers the command in that provider's hook config, wrapped by the adapter for Codex and Cursor.
 

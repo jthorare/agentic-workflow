@@ -165,6 +165,7 @@ RESULT="$(jq -nc \
              and (($raw.tool_input // null) | type) == "object"
            then {updated_input: (($raw.tool_input) + $h.updatedInput)} else {} end)
         + (if ($o.systemMessage // "") != "" then {user_message: $o.systemMessage} else {} end)
+        + (if ($h.additionalContext // "") != "" then {agent_message: $h.additionalContext} else {} end)
       end
     elif $ev == "beforeSubmitPrompt" then
       if $rc == 2 or ($o.decision // "") == "block" then

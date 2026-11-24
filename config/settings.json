@@ -64,6 +64,15 @@
             "command": "~/.claude/hooks/detect-secrets.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/dup-script-gate.sh # aw:dup-script-gate"
+          }
+        ]
       }
     ],
     "SessionStart": [
