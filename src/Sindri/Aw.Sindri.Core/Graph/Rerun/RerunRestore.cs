@@ -105,12 +105,13 @@ internal sealed class RerunRestore
         return Dead(id) ? Keep.Skipped : Keep.Run;
     }
 
-    // why: a taken step's branch comes from its own row (RerunPlan.Branches); a branching step whose row does not say runs again, so the walk never guesses a branch
+    // why: a taken step's branch comes from its own row (RerunPlan.Branches); a branching step whose whole row does not say runs again, so the walk never guesses a branch.
+    // A row cut at 64 KB is kept with no branch, so the service refuses the re-run (SND-GRAPH-108) instead of running the step again: an ask_owner would ask the owner a second time.
     private Keep Read(NodeId id, List<NodeRun> mine)
     {
         if (RerunPlan.Branches(_nodes[id], mine) is not { } branches)
         {
-            return Keep.Run;
+            return mine.Exists(static r => r.Truncated) ? Keep.Ran : Keep.Run;
         }
 
         _branches[id] = branches;
