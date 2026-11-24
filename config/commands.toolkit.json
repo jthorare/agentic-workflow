@@ -4,7 +4,7 @@
   "entries": [
     {
       "id": "heavy",
-      "purpose": "Run a build, test or other expensive command under the box-wide heavy slot so jobs don't overload the machine",
+      "purpose": "Run a build, test or other expensive command under the box-wide heavy slot so jobs don't overload the machine: append the command and its arguments after heavy, as separate words",
       "terms": [
         "dotnet",
         "build",
@@ -15,18 +15,10 @@
       ],
       "run": {
         "argv": [
-          "heavy",
-          "{command}"
+          "heavy"
         ],
         "cwd": "any"
       },
-      "params": [
-        {
-          "name": "command",
-          "required": true,
-          "description": "the command and its arguments, as separate words after heavy"
-        }
-      ],
       "prerequisites": [
         "heavy on PATH (scripts/install-cs.sh --link)"
       ],

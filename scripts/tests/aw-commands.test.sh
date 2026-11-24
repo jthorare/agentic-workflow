@@ -160,6 +160,9 @@ out="$(cd "$ROOT" && AW_COMMANDS_TOOLKIT="$ROOT/config/commands.toolkit.json" ba
 check "this repo's catalogs validate" "$rc" "0"
 [ "$rc" = 0 ] || echo "$out" | head -20
 check "the toolkit catalog validates on its own" "$(bash "$CLI" validate "$ROOT/config/commands.toolkit.json" > /dev/null 2>&1; echo $?)" "0"
+# heavy runs "$@", so a placeholder holding "dotnet build -warnaserror" would be one program name (exit 127): the command is appended.
+check "the toolkit's heavy entry is bare heavy, the command appended" "$(cd "$ROOT" && AW_COMMANDS_TOOLKIT="$ROOT/config/commands.toolkit.json" bash "$CLI" show heavy --json | jq -c '[.invocation, .missing]')" '[["heavy"],[]]'
+check "no seed entry packs a command line into one placeholder" "$(jq -r '[.entries[] | select([.params[]?.description] | any(test("arguments|separate words"))) | .id] | join(",")' "$ROOT/config/commands.toolkit.json" "$ROOT/.agentic-workflow/commands.json" | tr -d '\n')" ""
 AJV_DIR=""
 for d in "$ROOT/scripts/node_modules" "$(git -C "$ROOT" worktree list --porcelain 2> /dev/null | sed -n '1s/^worktree //p')/scripts/node_modules"; do
   [ -d "$d/ajv" ] && { AJV_DIR="$d"; break; }
