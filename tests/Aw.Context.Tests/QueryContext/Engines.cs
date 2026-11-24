@@ -125,7 +125,7 @@ internal static class Engines
         var exports = new FakeExportStore(clock);
         var reader = new FakeMapFileReader();
         var admin = new MapAdmin(new PreviewMapService(reader), new ImportMapService(reader, store, Fills(answers), clock), new ExportMapService(store, exports, clock),
-            new ShowMapStatusService(store), new CheckMapService(store), new MapHealthChecks(new CheckRetentionService(store, exports, clock, new Features.RunBacktest.UnconfiguredBacktest()), new CheckStoreService(new FakeStoreFiles()), new RunUpkeepService(new FakeStoreUpkeep())), new PurgeMapService(store, exports, clock));
+            new ShowMapStatusService(store, scrubbers), new CheckMapService(store), new MapHealthChecks(new CheckRetentionService(store, exports, clock, new Features.RunBacktest.UnconfiguredBacktest()), new CheckStoreService(new FakeStoreFiles()), new RunUpkeepService(new FakeStoreUpkeep())), new PurgeMapService(store, exports, clock));
         var review = new MapReview(new ReviewQueueService(store, scrubbers), new ReviewMapService(store, new FakeCurrentUser(), clock), new ReviewHistoryService(store), new ExportReviewService(store, scrubbers, new FakeReviewFileStore(), clock),
             new PreviewReviewFileService(new FakeReviewFileStore()), new ApplyReviewFileService(store, new FakeReviewFileStore(), new FakeCurrentUser(), clock), new PromoteMapService(store, Fills(answers), clock));
         return new ContextMap(admin, review, new MapProposals(Build(clock, store), new ProposeFromScopeService(store, store, clock), new GetProposalsService(store, store, scrubbers)), Publishing(store, concepts), new CleanMapService(store, scrubbers, new FakeModelPort(), new FakeCurrentUser(), clock),

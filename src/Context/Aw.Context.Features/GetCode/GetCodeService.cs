@@ -42,7 +42,7 @@ internal sealed class GetCodeService(MapReader reader, LensBasisReader bases, Co
             return read.Error;
         }
 
-        var basis = await bases.For(read.Value, settings.Value, request.Scope, request.Draft, cancellationToken).ConfigureAwait(false);
+        var basis = (await bases.For(read.Value, settings.Value, request.Scope, request.Draft, cancellationToken).ConfigureAwait(false)) with { ChoiceLabel = new MapText(built.Value).ChoiceLabel };
         var graphHalf = CodeLensBuilder.Build(basis, read.Value.Graph, anchors, walk ?? WalkOptions.Serial);
         if (graphHalf.IsError)
         {

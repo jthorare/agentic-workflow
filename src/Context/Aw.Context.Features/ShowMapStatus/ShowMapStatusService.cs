@@ -5,13 +5,14 @@ using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Overrides;
 using Aw.Context.Core.Roles;
+using Aw.Context.Core.Trust;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 
 namespace Aw.Context.Features.ShowMapStatus;
 
 /// <summary>The current version, its counts, its orphaned overrides and how many earlier versions are kept; a session sees its repo's scope only. With an anchor it also gives the coverage of that node's own scope, from the function the lenses use.</summary>
-internal sealed class ShowMapStatusService(IGraphStore store) : IService<ShowMapStatusRequest, MapStatusView>
+internal sealed class ShowMapStatusService(IGraphStore store, IScrubberFactory scrubbers) : IService<ShowMapStatusRequest, MapStatusView>
 {
     public async ValueTask<Result<MapStatusView>> Handle(ShowMapStatusRequest request, CancellationToken cancellationToken)
     {
@@ -35,7 +36,7 @@ internal sealed class ShowMapStatusService(IGraphStore store) : IService<ShowMap
         }
 
         var (shown, applied, layer) = (visible.Value.Graph, visible.Value.Applied, visible.Value.Overrides);
-        var coverage = request.Anchor is { } name ? Coverage(applied, name, request.Scope.Repos) : Results.Success<LensCoverage?>(value: null);
+        var coverage = request.Anchor is { } name ? Coverage(applied, name, request.Scope) : Results.Success<LensCoverage?>(value: null);
         if (coverage.IsError)
         {
             return coverage.Error;
@@ -87,9 +88,16 @@ internal sealed class ShowMapStatusService(IGraphStore store) : IService<ShowMap
     private static ContextRepoName? ScopedTo(ContextCaller caller) => caller.Kind == ContextCallerKind.Session ? caller.Repo : null;
 
     // The coverage of the anchor's own scope over the map as a caller reads it (overrides applied, a pending proposal not part of the current map): the lenses' record.
-    private static Result<LensCoverage?> Coverage(GraphSnapshot applied, string anchor, IReadOnlyList<ContextRepo> repos)
+    // A refusal's choice labels are scrubbed like every answer's (#4196).
+    private Result<LensCoverage?> Coverage(GraphSnapshot applied, string anchor, ContextScope scope)
     {
-        var node = AnchorMatch.Resolve(applied, anchor, repos);
+        var built = SettingsReader.Read(scope.Settings).Bind(s => scrubbers.For(s.ExtraPatterns));
+        if (built.IsError)
+        {
+            return built.Error;
+        }
+
+        var node = AnchorMatch.Resolve(applied, anchor, scope.Repos, label: new MapText(built.Value).ChoiceLabel);
         return node.IsError ? node.Error : Results.Success<LensCoverage?>(LensCoverageBuilder.ForAnchor(applied, node.Value.Key));
     }
 

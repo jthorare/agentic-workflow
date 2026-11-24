@@ -36,7 +36,7 @@ internal sealed class GetHistoryService(MapReader reader, HistoryPipeline pipeli
         }
 
         using var band = FillBands.Start(FillBands.History);
-        var view = await pipeline.Run(new HistoryInputs(read.Value, request.Window, request.Read.Draft), anchors, settings.Value, request.Scope, cancellationToken).ConfigureAwait(false);
+        var view = await pipeline.Run(new HistoryInputs(read.Value, request.Window, request.Read.Draft) { ChoiceLabel = new MapText(built.Value).ChoiceLabel }, anchors, settings.Value, request.Scope, cancellationToken).ConfigureAwait(false);
         return view.Map(v => HistoryTexts.Clean(v, new MapText(built.Value, FencePolicies.For(request.Scope.Caller))));
     }
 }

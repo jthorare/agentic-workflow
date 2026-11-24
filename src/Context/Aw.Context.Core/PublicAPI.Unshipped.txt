@@ -2437,6 +2437,8 @@ Aw.Context.Core.Lenses.LensBasis
 Aw.Context.Core.Lenses.LensBasis.<Clone>$() -> Aw.Context.Core.Lenses.LensBasis!
 Aw.Context.Core.Lenses.LensBasis.AsOf.get -> System.DateTimeOffset
 Aw.Context.Core.Lenses.LensBasis.AsOf.init -> void
+Aw.Context.Core.Lenses.LensBasis.ChoiceLabel.get -> System.Func<string!, string!>?
+Aw.Context.Core.Lenses.LensBasis.ChoiceLabel.init -> void
 Aw.Context.Core.Lenses.LensBasis.Cascade.get -> Aw.Context.Core.Engine.CascadeOptions!
 Aw.Context.Core.Lenses.LensBasis.Cascade.init -> void
 Aw.Context.Core.Lenses.LensBasis.Deconstruct(out string! Map, out bool Draft, out System.DateTimeOffset AsOf) -> void
@@ -8253,7 +8255,7 @@ static Aw.Context.Core.Walks.BoundedParallel.MapSync<TIn, TOut>(System.Collectio
 static Aw.Context.Core.Walks.WalkOptions.Of(int degree) -> Aw.Context.Core.Walks.WalkOptions!
 static Aw.Context.Core.Walks.WalkOptions.Serial.get -> Aw.Context.Core.Walks.WalkOptions!
 static Aw.Context.Core.Code.CodeLensBuilder.Build(Aw.Context.Core.Lenses.LensBasis! basis, Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<string!>! anchors, Aw.Context.Core.Walks.WalkOptions! walk) -> Aw.Kernel.Result<Aw.Context.Core.Code.CodeView!>!
-static Aw.Context.Core.History.HistoryLens.Resolve(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<string!>! anchors, Aw.Context.Core.Walks.WalkOptions! walk) -> Aw.Kernel.Result<Aw.Context.Core.History.HistoryScope!>!
+static Aw.Context.Core.History.HistoryLens.Resolve(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<string!>! anchors, Aw.Context.Core.Walks.WalkOptions! walk, System.Func<string!, string!>? label) -> Aw.Kernel.Result<Aw.Context.Core.History.HistoryScope!>!
 static Aw.Context.Core.History.HistoryLens.Coverage(Aw.Context.Core.History.HistoryScope! scope, Aw.Context.Core.Lenses.LensBasis! basis, Aw.Context.Core.Walks.WalkOptions! walk) -> Aw.Context.Core.Lenses.LensCoverage!
 Aw.Context.Core.Engine.RepoRole
 Aw.Context.Core.Engine.RepoRole.<Clone>$() -> Aw.Context.Core.Engine.RepoRole!

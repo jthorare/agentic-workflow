@@ -10,16 +10,17 @@ internal static class AnchorSet
 {
     /// <summary>
     /// The anchors that resolve (de-duplicated by node) and the values that don't (as given). An ambiguous name refuses the call; with nothing resolved the first miss is the answer.
-    /// The names are resolved one after another; each anchor's scope (its cascade) is then built over <paramref name="walk"/>'s cores and the scopes come back in the order the anchors were given.
+    /// The names are resolved one after another; each anchor's scope (its cascade) is then built over the reach's walk cores and the scopes come back in the order the anchors were given.
+    /// A refusal's choice labels go through the reach's label scrubber (#4196).
     /// </summary>
-    internal static Result<(List<LensScope> Scopes, List<string> Missing)> Resolve(GraphSnapshot graph, IReadOnlyList<string> given, int depth, CascadeOptions? options, WalkOptions walk)
+    internal static Result<(List<LensScope> Scopes, List<string> Missing)> Resolve(GraphSnapshot graph, IReadOnlyList<string> given, AnchorReach reach)
     {
         var picked = new List<GraphNode>();
         var missing = new List<string>();
         Error? first = null;
         foreach (var raw in given)
         {
-            var node = AnchorMatch.Resolve(graph, raw);
+            var node = AnchorMatch.Resolve(graph, raw, label: reach.Label);
             if (node.IsSuccess)
             {
                 if (!picked.Exists(n => n.Key.Value == node.Value.Key.Value))
@@ -39,7 +40,7 @@ internal static class AnchorSet
             first ??= node.Error;
         }
 
-        var scopes = ScopesOf(graph, picked, depth, options, walk);
+        var scopes = ScopesOf(graph, picked, reach.Depth, reach.Options, reach.Walk);
         return scopes.Count == 0 && first is { } none ? none : (scopes, missing);
     }
 

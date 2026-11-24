@@ -16,14 +16,15 @@ public static class HistoryLens
     /// <param name="graph">The graph the caller may see.</param>
     /// <param name="anchors">Node keys, aliases or labels.</param>
     /// <returns>The scope; an anchor that names no node goes to 'MissingAnchors'. None resolving is SND-CONTEXT-003, an ambiguous name 037, no anchor at all SND-CONTEXT-006.</returns>
-    public static Result<HistoryScope> Resolve(GraphSnapshot graph, IReadOnlyList<string> anchors) => Resolve(graph, anchors, WalkOptions.Serial);
+    public static Result<HistoryScope> Resolve(GraphSnapshot graph, IReadOnlyList<string> anchors) => Resolve(graph, anchors, WalkOptions.Serial, label: null);
 
     /// <summary>Resolves the anchors as above, running the per-anchor walks over <paramref name="walk"/>'s cores; the answer is the same at any degree.</summary>
     /// <param name="graph">The graph the caller may see.</param>
     /// <param name="anchors">Node keys, aliases or labels.</param>
     /// <param name="walk">How many anchors' walks may run at once.</param>
+    /// <param name="label">The answer's scrubber for a refusal's choice labels (MapText.ChoiceLabel, #4196), or null to leave them as stored.</param>
     /// <returns>The scope, or the same errors as above.</returns>
-    public static Result<HistoryScope> Resolve(GraphSnapshot graph, IReadOnlyList<string> anchors, WalkOptions walk)
+    public static Result<HistoryScope> Resolve(GraphSnapshot graph, IReadOnlyList<string> anchors, WalkOptions walk, Func<string, string>? label)
     {
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentNullException.ThrowIfNull(anchors);
@@ -34,7 +35,7 @@ public static class HistoryLens
             return refused;
         }
 
-        var resolved = AnchorSet.Resolve(graph, distinct, depth: 0, options: null, walk);
+        var resolved = AnchorSet.Resolve(graph, distinct, new AnchorReach(Depth: 0, Options: null, walk, label));
         if (resolved.IsError)
         {
             return resolved.Error;

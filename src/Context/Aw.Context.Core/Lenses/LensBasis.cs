@@ -33,4 +33,7 @@ public sealed record LensBasis(string Map, bool Draft, DateTimeOffset AsOf)
 
     /// <summary>The repos in scope, for the globs they demote (<see cref="DemotedCode"/>); a subgraph read leaves out the demoted code nodes depth expansion alone would reach. Empty demotes nothing.</summary>
     public IReadOnlyList<ContextRepo> Repos { get; init; } = [];
+
+    /// <summary>The answer's scrubber for a "Did you mean" choice label (MapText.ChoiceLabel), so a refusal's choices are cleaned like a question's suggestions (#4196); null leaves them as stored.</summary>
+    public Func<string, string>? ChoiceLabel { get; init; }
 }

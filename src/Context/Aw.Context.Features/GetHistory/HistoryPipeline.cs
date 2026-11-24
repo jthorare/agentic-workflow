@@ -24,7 +24,7 @@ internal sealed class HistoryPipeline(LensBasisReader bases, IIntentStore intent
 
     internal async ValueTask<Result<HistoryView>> Run(HistoryInputs inputs, IReadOnlyList<string> anchors, ContextSettings settings, ContextScope scope, CancellationToken cancellationToken)
     {
-        var resolved = HistoryLens.Resolve(inputs.Map.Graph, anchors, _walk);
+        var resolved = HistoryLens.Resolve(inputs.Map.Graph, anchors, _walk, inputs.ChoiceLabel);
         if (resolved.IsError)
         {
             return resolved.Error;

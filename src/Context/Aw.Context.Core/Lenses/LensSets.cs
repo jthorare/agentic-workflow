@@ -26,7 +26,7 @@ internal static class LensSets
             return tooMany;
         }
 
-        var resolved = AnchorSet.Resolve(graph, distinct, depth, basis.Cascade, walk);
+        var resolved = AnchorSet.Resolve(graph, distinct, new AnchorReach(depth, basis.Cascade, walk, basis.ChoiceLabel));
         if (resolved.IsError)
         {
             return resolved.Error;

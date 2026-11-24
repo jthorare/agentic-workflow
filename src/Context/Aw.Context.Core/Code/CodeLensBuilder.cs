@@ -27,7 +27,7 @@ public static class CodeLensBuilder
         ArgumentNullException.ThrowIfNull(basis);
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentNullException.ThrowIfNull(anchors);
-        var resolved = AnchorSet.Resolve(graph, [.. anchors.Distinct(StringComparer.Ordinal)], depth: 0, options: null, walk);
+        var resolved = AnchorSet.Resolve(graph, [.. anchors.Distinct(StringComparer.Ordinal)], new AnchorReach(Depth: 0, Options: null, walk, basis.ChoiceLabel));
         if (resolved.IsError)
         {
             return resolved.Error;

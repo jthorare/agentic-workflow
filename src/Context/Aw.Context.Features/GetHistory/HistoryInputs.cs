@@ -10,4 +10,8 @@ namespace Aw.Context.Features.GetHistory;
 /// <param name="Map">The map the caller sees.</param>
 /// <param name="Window">The window.</param>
 /// <param name="Draft">True when the draft is read.</param>
-internal sealed record HistoryInputs(VisibleMap Map, HistoryWindow Window, bool Draft);
+internal sealed record HistoryInputs(VisibleMap Map, HistoryWindow Window, bool Draft)
+{
+    /// <summary>The answer's scrubber for a refusal's choice labels (MapText.ChoiceLabel, #4196); null leaves them as stored.</summary>
+    public Func<string, string>? ChoiceLabel { get; init; }
+}

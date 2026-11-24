@@ -45,7 +45,7 @@ internal sealed class GetScopeGraphService(MapReader reader, LensBasisReader bas
         }
 
         var cascade = QueryRules.CascadeFor(hops.Value, settings.Value);
-        var basis = (await bases.For(read.Value, settings.Value, request.Scope, query.Read.Draft, cancellationToken).ConfigureAwait(false)) with { Cascade = cascade };
+        var basis = (await bases.For(read.Value, settings.Value, request.Scope, query.Read.Draft, cancellationToken).ConfigureAwait(false)) with { Cascade = cascade, ChoiceLabel = new MapText(built.Value).ChoiceLabel };
         var lenses = LensesBuilder.BuildSet(basis, read.Value.Graph, anchors, depth, read.Value.Conflicts);
         var text = new MapText(built.Value, FencePolicies.For(request.Scope.Caller));
         return lenses.Map(v => ScopeGraphBuilder.Build(query, LensTexts.Clean(v, text), read.Value.Graph, cascade.Hops, text));
