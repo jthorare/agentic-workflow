@@ -87,7 +87,7 @@ public sealed class RunNowStartTimeoutTests : IDisposable
 
         _f.Clock.Advance(TimeSpan.FromSeconds(10));
 
-        Assert.Equal("Retry, or open Health if it keeps happening.", page.Runs.Rows[0].DidNotStartHint);
+        Assert.Equal("Retry, or open System if it keeps happening.", page.Runs.Rows[0].DidNotStartHint);
     }
 
     // Leaving the page stops the start deadline: coming back to the workflow shows no Starting row that would never time out.

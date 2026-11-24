@@ -107,7 +107,7 @@ public sealed class RunDetailStartTimeoutTests : IDisposable
 
         _f.Clock.Advance(TimeSpan.FromSeconds(10));
 
-        Assert.Equal("Retry, or open Health if it keeps happening.", page.Run.DidNotStartHint);
+        Assert.Equal("Retry, or open System if it keeps happening.", page.Run.DidNotStartHint);
     }
 
     // After the page was left, the run's deadline is gone, so opening the run again must not read Starting with no timer behind it: it is an unknown run.
