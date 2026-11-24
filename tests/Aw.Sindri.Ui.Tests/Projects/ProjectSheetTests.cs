@@ -25,6 +25,26 @@ public sealed class ProjectSheetTests
         Assert.Equal([ProjectSheetFixture.Attached], _f.Server.ProjectsRead);
     }
 
+    // Issue 4124: a project the page draws no row for (another view, a hidden or finished one, a link before any read) still has its notes edit box.
+    [Fact]
+    public async Task A_sheet_with_no_page_row_edits_its_notes_through_a_card_of_its_own()
+    {
+        var sheet = await _f.Opened(ProjectSheetFixture.Attached, Token);
+
+        Assert.Equal((true, false, ProjectSheetFixture.Attached), (sheet.HasNotesCard, sheet.ShowsReadOnlyNotes, sheet.NotesCard?.Id));
+    }
+
+    [Fact]
+    public async Task The_sheets_own_notes_card_stays_when_the_page_has_no_row_for_it_later_either()
+    {
+        var sheet = await _f.Opened(ProjectSheetFixture.Attached, Token);
+        var own = sheet.NotesCard;
+
+        sheet.EditNotesWith(null);
+
+        Assert.Same(own, sheet.NotesCard);
+    }
+
     [Fact]
     public async Task A_led_key_with_a_slash_travels_as_one_escaped_segment_and_is_read_whole()
     {
