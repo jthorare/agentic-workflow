@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Media;
@@ -128,5 +129,47 @@ public sealed class GraphStageTests
         Assert.True(r.Scrolls, "the fact needs a canvas that scrolls");
         Assert.False(r.Map, "a map shows for a graph that scrolls only a little");
         Assert.False(r.Panel, "the map's panel shows for a graph that scrolls only a little");
+    }
+
+    [Fact]
+    public async Task At_1000_wide_forty_steps_with_the_map_keep_every_card_clear_of_its_panel_at_rest_and_at_125_percent()
+    {
+        var graph = await Chain(40);   // 1000 x 520 canvas, like the app at 1000 x 800: the 40 steps are over twice its height, so the map shows (#4149)
+
+        var (atRest, at125) = await OnUi(() =>
+        {
+            var stage = new GraphStage { Graph = graph };
+            var window = new Window { Content = stage, Width = 1000, Height = 576 };   // 576 = 520 canvas + the 56 px band
+            window.Show();
+            Settle(window);
+            try
+            {
+                var rest = Covered(stage, graph);
+                for (var i = 0; i < 4; i++)
+                {
+                    stage.Canvas.ZoomIn();   // 86 -> 90 -> 100 -> 110 -> 125 %
+                }
+
+                Settle(window);
+                return (rest, Covered(stage, graph));
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.True(atRest.Shown, "the fact needs the map shown at Fit");
+        Assert.True(atRest.Under.Length == 0, "at Fit the map panel covers " + string.Join(", ", atRest.Under));
+        Assert.True(at125.Shown, "the fact needs the map shown at 125 %");
+        Assert.True(at125.Under.Length == 0, "at 125 % the map panel covers " + string.Join(", ", at125.Under));
+    }
+
+    // Whether the map shows, and the cards whose rectangle meets the map panel's, both in the canvas's coordinates.
+    private static (bool Shown, string[] Under) Covered(GraphStage stage, WorkflowGraphViewModel graph)
+    {
+        var at = stage.MapPanel.TranslatePoint(default, stage.Canvas) ?? default;
+        var panel = new Rect(at, stage.MapPanel.Bounds.Size);
+        return (stage.MapPanel.IsVisible, [.. graph.Nodes.Where(n => stage.Canvas.NodeRect(n.Id) is { } card && card.Intersects(panel)).Select(n => n.Id)]);
     }
 }

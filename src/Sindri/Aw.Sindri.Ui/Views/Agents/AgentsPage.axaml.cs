@@ -192,6 +192,7 @@ internal sealed partial class AgentsPage : UserControl
     private void OnFocusMoved(object? sender, RoutedEventArgs e)
     {
         _focusWasHere = e.Source is Visual source && this.IsVisualAncestorOf(source);
+        DropSideWhenFocusLeavesPane(e);
         if (!_focusWasHere && TopLevel.GetTopLevel(this)?.DataContext is ViewModels.Shell.ShellViewModel { IsSheetOpen: false })
         {
             Page?.ClearSelection();

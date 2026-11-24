@@ -31,7 +31,8 @@ internal sealed class TempRoots : IDisposable
         new(TranscriptProvider.Cursor, Cursor),
     ];
 
-    public FileTranscriptCorpus Corpus() => new(new TranscriptsSettings(Roots), new TranscriptFileReader(Redactor.Default));
+    public FileTranscriptCorpus Corpus(IReadOnlyList<WorktreeRoot>? worktreeRoots = null) =>
+        new(new TranscriptsSettings(Roots) { WorktreeRoots = worktreeRoots ?? [] }, new TranscriptFileReader(Redactor.Default));
 
     /// <summary>Writes a file under the root (directories made) and sets its write time.</summary>
     public string Write(string relative, DateTimeOffset writtenAt, params string[] lines)

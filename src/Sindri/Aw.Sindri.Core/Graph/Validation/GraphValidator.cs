@@ -52,7 +52,7 @@ public sealed partial class GraphValidator(GraphValidationContext context)
     {
         if (spec.Result is { } result && !structure.Has(result.Value))
         {
-            found.Add(new GraphFinding("GRAPH-RESULT-001", GraphSeverity.Error, [], "result", $"'result' names node '{result.Value}', which does not exist", "name the node whose output is the run's result, or remove 'result'"));
+            found.Add(new GraphFinding("GRAPH-RESULT-001", GraphSeverity.Error, [], "result", $"'result' names node '{result.Value}', which does not exist", "name the node whose output is the run's result, or clear 'result' with the set_meta op and result \"\" (removing the result node needs that op in the same batch)"));
         }
     }
 

@@ -343,6 +343,18 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
+              <!-- #4012: while the count is above 0, each problem's sentence and code, one wrapped line each, and a link to the Agents page. -->
+              <ItemsControl x:Name="AgentsProblems" ItemsSource="{Binding AgentsProblemLines}" IsVisible="{Binding HasAgentsProblems}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="shell:AgentProblemLine">
+                    <TextBlock Classes="body" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text}">
+                      <Run Text="{Binding Text}" /><Run Classes="subtle" Text=" · " /><Run Classes="subtle" Text="{Binding Code}" />
+                    </TextBlock>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Button x:Name="AgentsLink" Classes="row-title" IsVisible="{Binding HasAgentsProblems}" Click="OnOpenAgents" Content="{Binding AgentsLinkText}"
+                      AutomationProperties.Name="{Binding AgentsLinkText}" />
             </StackPanel>
           </Border>
         </Border>

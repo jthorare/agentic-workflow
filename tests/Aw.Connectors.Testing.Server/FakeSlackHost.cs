@@ -124,15 +124,20 @@ public sealed class FakeSlackHost : IAsyncDisposable
             _ = request.Headers.TryAddWithoutValidation("User-Agent", agent);
         }
 
-        if (incoming.ContentType is { Length: > 0 } type)
+        if (HasBody(incoming))
         {
             using var reader = new StreamReader(incoming.Body, Encoding.UTF8);
             request.Content = new StringContent(await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false), Encoding.UTF8);
-            request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(type);
+            // why: no Content-Type stays none, so the fake reads the body as form fields the way Slack does
+            request.Content.Headers.ContentType = incoming.ContentType is { Length: > 0 } type ? MediaTypeHeaderValue.Parse(type) : null;
         }
 
         return request;
     }
+
+    // A body with or without a Content-Type: a length above 0, or chunked (no length).
+    private static bool HasBody(HttpRequest incoming)
+        => incoming.ContentLength is > 0 || (incoming.ContentLength is null && incoming.Headers.TransferEncoding.Count > 0) || incoming.ContentType is { Length: > 0 };
 
     private static async Task Write(HttpResponseMessage answer, HttpResponse response, CancellationToken cancellationToken)
     {

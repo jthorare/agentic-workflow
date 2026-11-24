@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "policies": {
+    "retry-guard/1": {
+      "mode": "advisory",
+      "description": "The retry guard (#4248): a failed tool call repeated with nothing changed. Advisory until replay evidence meets the promotion criteria (#4257, docs/hooks/replay.md).",
+      "promotion": {
+        "minCapturedCases": 40,
+        "minCasesPerScenario": 5,
+        "minProviders": 2,
+        "scenarios": [
+          "retry-intentional",
+          "retry-changed-prereq",
+          "retry-transient",
+          "polling",
+          "auth-expired",
+          "research-no-edit",
+          "verify-no-edit",
+          "scope-exception",
+          "malformed-payload",
+          "judge-unavailable",
+          "state-reset"
+        ],
+        "noWrongBlockScenarios": [
+          "retry-intentional",
+          "retry-changed-prereq",
+          "polling",
+          "research-no-edit",
+          "verify-no-edit",
+          "scope-exception"
+        ],
+        "minDenyCaughtPercent": 80,
+        "allPassScenarios": [
+          "judge-unavailable",
+          "malformed-payload"
+        ],
+        "minAdvisoryDays": 14,
+        "advisoryDaysOwnerCanShorten": true,
+        "wouldDenyReviewSample": 20
+      },
+      "evidence": null
+    },
+    "duplicate-script/1": {
+      "mode": "advisory",
+      "description": "The duplicate-script gate (#4221): a script that redoes a command-catalog helper gets the helper's invocation. Advisory until replay evidence meets the promotion criteria (#4257, docs/hooks/replay.md).",
+      "promotion": {
+        "minCapturedCases": 40,
+        "minCasesPerScenario": 5,
+        "minProviders": 2,
+        "scenarios": [
+          "duplicate-script",
+          "malformed-payload",
+          "state-reset"
+        ],
+        "noWrongBlockScenarios": [
+          "duplicate-script"
+        ],
+        "minDenyCaughtPercent": 80,
+        "allPassScenarios": [
+          "malformed-payload"
+        ],
+        "minAdvisoryDays": 14,
+        "advisoryDaysOwnerCanShorten": true,
+        "wouldDenyReviewSample": 20
+      },
+      "evidence": null
+    }
+  }
+}

@@ -64,6 +64,24 @@
             "command": "~/.claude/hooks/detect-secrets.sh"
           }
         ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/retry-gate.sh # aw:retry-gate"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/dup-script-gate.sh # aw:dup-script-gate"
+          }
+        ]
       }
     ],
     "SessionStart": [
@@ -80,6 +98,28 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/prism-context.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/retry-record.sh # aw:retry-record"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/retry-record.sh # aw:retry-record"
           }
         ]
       }

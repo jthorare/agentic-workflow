@@ -34,6 +34,8 @@ internal sealed partial class HealthPage : UserControl
 
     private void OnOpenSetup(object? sender, RoutedEventArgs e) => (DataContext as HealthViewModel)?.RequestSetup();
 
+    private void OnOpenAgents(object? sender, RoutedEventArgs e) => (DataContext as HealthViewModel)?.RequestAgents();
+
     private void OnViewJob(object? sender, RoutedEventArgs e)
     {
         if (sender is Control { DataContext: ServiceRowViewModel row })
