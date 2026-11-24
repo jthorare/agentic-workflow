@@ -35,12 +35,14 @@ public sealed class ConceptAnswerFills(Func<ContextScope, CancellationToken, Tas
         }
     }
 
-    /// <summary>Cancels the fills without waiting (a container disposed synchronously calls this).</summary>
+    /// <summary>Cancels the fills without waiting (a container disposed synchronously calls this), then disposes the source.</summary>
     public void Dispose()
     {
         if (Stop(out _))
         {
             _stopping.Cancel();
+            // why: safe while a fill still runs: it holds a token that is already cancelled, and Start never reads Token once stopped; Report reads only IsCancellationRequested, which a disposed source still answers
+            _stopping.Dispose();
         }
     }
 

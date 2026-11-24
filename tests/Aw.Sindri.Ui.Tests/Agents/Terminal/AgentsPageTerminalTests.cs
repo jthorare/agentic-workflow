@@ -192,4 +192,48 @@ public sealed class AgentsPageTerminalTests
 
         Assert.Equal(("Paste too big to send", string.Empty, 1), (notice, page.Terminal.ControlLine, socket.Sent.Count));
     }
+
+    // A page whose pane fitted before any row opened, then opens a row on the in-memory connector and waits for ready's size message (or just the connect when it sends none).
+    private async Task<FakeTerminalConnector> OpenAfterFit(int cols, int rows, bool sends = true)
+    {
+        var socket = new FakeTerminalConnector { Script = [Ready], StaysOpen = true };
+        var page = new AgentsPageViewModel(_f.Server, _f.Clipboard, _f.Clock, _f.Catalog, connector: socket);
+        page.SetShown(shown: true);
+        await page.Refresh(AgentsPageFixture.Url, Token);
+        _ = await page.FitPane(cols, rows);
+        var key = page.Groups.SelectMany(g => g.Rows).First(r => r.Row.Host.Pane is { Length: > 0 }).Ref;
+        Assert.True(page.OpenTerminalByKey(key));
+        for (var i = 0; i < 200 && (sends ? socket.Sent.Count : socket.Opens.Count) == 0; i++)
+        {
+            await Task.Delay(10, Token);
+        }
+
+        return socket;
+    }
+
+    [Fact]
+    public async Task A_new_session_opens_with_the_stored_fit_and_sends_it_after_ready()
+    {
+        var socket = await OpenAfterFit(100, 50);
+
+        Assert.Equal([(100, 50)], socket.Opens.Select(o => (o.Cols, o.Rows)));
+        Assert.Equal([TerminalSocketMessages.Size(100, 50)], socket.Sent);
+    }
+
+    [Fact]
+    public async Task A_stored_fit_under_the_servers_floor_opens_the_next_hello_at_the_floor()
+    {
+        var socket = await OpenAfterFit(10, 3);
+
+        Assert.Equal([(20, 5)], socket.Opens.Select(o => (o.Cols, o.Rows)));
+        Assert.Equal([TerminalSocketMessages.Size(20, 5)], socket.Sent);
+    }
+
+    [Fact]
+    public async Task A_fit_of_zero_is_not_stored_so_the_next_hello_opens_at_the_default()
+    {
+        var socket = await OpenAfterFit(0, 0, sends: false);
+
+        Assert.Equal([(120, 36)], socket.Opens.Select(o => (o.Cols, o.Rows)));
+    }
 }
