@@ -53,7 +53,7 @@ public sealed class NodeCardOpenFileTests
         Assert.Equal(Labels.ContextNodePanelOpenFile, card.OpenFileText);
         Assert.Equal(Labels.ContextNodePanelOpenFileName, card.OpenFileName);
 
-        await card.OpenFile(Token);
+        await card.OpenLocalFile(Token);
 
         Assert.Equal([Path], launcher.Opened, StringComparer.Ordinal);
         Assert.False(card.LaunchFailed);
@@ -66,7 +66,7 @@ public sealed class NodeCardOpenFileTests
 
         Assert.False(card.HasOpenFile);
 
-        await card.OpenFile(Token);
+        await card.OpenLocalFile(Token);
 
         Assert.Empty(launcher.Opened);
     }
@@ -76,7 +76,7 @@ public sealed class NodeCardOpenFileTests
     {
         var (card, launcher) = await Open(OnDisk, onMachine: false);
 
-        await card.OpenFile(Token);
+        await card.OpenLocalFile(Token);
 
         Assert.Empty(launcher.Opened);
         Assert.True(card.LaunchFailed);

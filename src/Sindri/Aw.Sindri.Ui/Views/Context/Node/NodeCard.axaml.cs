@@ -20,5 +20,5 @@ internal sealed partial class NodeCard : UserControl
 
     private void OnCopyPath(object? sender, RoutedEventArgs e) => _ = (DataContext as NodeCardViewModel)?.CopyPath();
 
-    private void OnOpenFile(object? sender, RoutedEventArgs e) => _ = (DataContext as NodeCardViewModel)?.OpenFile();
+    private void OnOpenFile(object? sender, RoutedEventArgs e) => _ = (DataContext as NodeCardViewModel)?.OpenLocalFile();
 }
