@@ -13,7 +13,7 @@ public interface IDeviceSignIn
     /// <param name="client">The OAuth app's client id (<see cref="OAuthClientIds"/>).</param>
     /// <param name="scopes">The scopes; empty takes the preset's defaults.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The code to show; SND-SETUP-013 when the provider refuses the app, SND-CONN-012 for an answer of the wrong shape.</returns>
+    /// <returns>The code to show; SND-SETUP-013 when the provider blocks the app, SND-SETUP-014 when it doesn't take the client id, SND-CONN-012 for an answer of the wrong shape.</returns>
     public ValueTask<Result<DeviceAuthorization>> Start(ConnectionPreset preset, string client, IReadOnlyList<string> scopes, CancellationToken cancellationToken);
 
     /// <summary>Polls the token endpoint at the provider's interval (slower after slow_down) until the owner approves, denies or the code expires.</summary>
@@ -21,6 +21,6 @@ public interface IDeviceSignIn
     /// <param name="client">The same client id as <see cref="Start"/>.</param>
     /// <param name="authorization">What <see cref="Start"/> returned.</param>
     /// <param name="cancellationToken">Cancels the polling (the owner's Cancel).</param>
-    /// <returns>The tokens; SND-CONN-003 when the code expired, SND-CONN-009 when the owner denied, SND-SETUP-013 when the provider refuses the app, SND-CONN-012 for an answer of the wrong shape.</returns>
+    /// <returns>The tokens; SND-CONN-003 when the code expired, SND-CONN-009 when the owner denied, SND-SETUP-013 when the provider blocks the app, SND-SETUP-014 when it doesn't take the client id, SND-CONN-012 for an answer of the wrong shape.</returns>
     public ValueTask<Result<TokenSet>> Complete(ConnectionPreset preset, string client, DeviceAuthorization authorization, CancellationToken cancellationToken);
 }

@@ -16,7 +16,8 @@ namespace Aw.Sindri.Features.ConnectAccount;
 /// <param name="profile">Writes `review.credential` and clears `setup.skipAccounts`.</param>
 /// <param name="connections">The Connections page's rows.</param>
 /// <param name="time">Stamps the connection row.</param>
-internal sealed class ConnectAccountService(ICallerContextAccessor callers, IGitHubCliLogin gh, AccountProfileWrites profile, IConnectionStore connections, TimeProvider time)
+/// <param name="device">GitHub's device flow, for a box with no gh login.</param>
+internal sealed class ConnectAccountService(ICallerContextAccessor callers, IGitHubCliLogin gh, AccountProfileWrites profile, IConnectionStore connections, TimeProvider time, DeviceAccountSignIn device)
     : IService<ConnectAccountRequest, ConnectAccountResponse>
 {
     private const string GitHub = "github";
@@ -39,9 +40,10 @@ internal sealed class ConnectAccountService(ICallerContextAccessor callers, IGit
             return SindriErrors.InvalidInput.With($"'{request.Provider}' is not an account Sindri connects: github, linear or slack");
         }
 
+        _ = device.Cancel();   // every connect ends a device sign-in in progress, so a late yes never writes github:default next to the answer this call gives
         if (await gh.Login(cancellationToken).ConfigureAwait(false) is not { } login)
         {
-            return SindriErrors.InvalidInput.With("No gh login on this box, and Sign in to GitHub isn't built yet (fix: run gh auth login, then connect GitHub again)");
+            return await device.Start(callers.Current?.Actor ?? "unknown", cancellationToken).ConfigureAwait(false);   // no gh login: Sindri's own OAuth app, through the device flow (decision 13)
         }
 
         var written = await profile.GitHub(GitHubCliCredential.Command, cancellationToken).ConfigureAwait(false);
