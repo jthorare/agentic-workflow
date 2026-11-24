@@ -186,4 +186,14 @@ test_the_budget_is_wall_clock_over_the_whole_script() {
   echo "PASS: test_the_budget_is_wall_clock_over_the_whole_script"
 }
 test_the_budget_is_wall_clock_over_the_whole_script
+# #4308: a prompt over 128 KiB must still be sorted. As one jq argv string it failed exec and the hook exited 0 silently.
+test_a_200kb_prompt_is_still_sorted() {
+  local bin out in; bin="$(make_fake_judge)"; in="$(mktemp)"
+  jq -nc --rawfile p <(head -c 204800 /dev/zero | tr '\0' x) '{session_id:"s1",prompt:$p}' > "$in"
+  out="$(env PATH="$bin:$PATH" FAKE_LOG="$bin/calls.log" FAKE_MODE=context AW_PROMPT_SORT_BUDGET_MS=30000 "$BASH_BIN" "$HOOK" < "$in")"
+  [ "$out" = "Prompt sorter note: state Goal and Verify." ] || { echo "FAIL: expected the context on stdout for a 200 KB prompt, got: $(printf '%s' "$out" | head -c 200)"; exit 1; }
+  [ "$(grep '^STDIN:' "$bin/calls.log" | sed 's/^STDIN: //' | jq -r '.prompt | length')" = "204800" ] || { echo "FAIL: the judge must get the whole 200 KB prompt"; exit 1; }
+  echo "PASS: test_a_200kb_prompt_is_still_sorted"
+}
+test_a_200kb_prompt_is_still_sorted
 echo "All prompt-sort hook tests passed."
