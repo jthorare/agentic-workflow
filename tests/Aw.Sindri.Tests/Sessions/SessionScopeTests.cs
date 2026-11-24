@@ -2,6 +2,7 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Features.Sessions;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Testing.Launch;
 using static Aw.Sindri.Tests.Sessions.SessionData;
 
 namespace Aw.Sindri.Tests.Sessions;
@@ -43,10 +44,10 @@ public sealed class SessionScopeTests
             .With(LaneSocket, new TmuxServerView([new TmuxPane(510, "lane", 0, 0, "%0")], []))
             .With(OtherHomeSocket, new TmuxServerView([new TmuxPane(810, "other", 0, 0, "%0")], []));
         var sockets = new FakeUnixSockets(new Dictionary<long, string> { [880001] = OwnSocket, [880002] = LaneSocket, [880003] = OtherHomeSocket });
-        var hosts = new SessionHosts(table, sockets, tmux, new FakeTeamNames(), new FakeTerminalNames());
         var launches = new FakeLaunchFiles();
         launches.Open(LaunchId.From(OwnLaunch));
-        return new CollectorHarness(settings, table, hosts: hosts, launches: launches);
+        var hosts = new SessionHosts(table, sockets, tmux, new FakeTeamNames(), new FakeTerminalNames(), launches);
+        return new CollectorHarness(settings, table, hosts: hosts);
     }
 
     private static SessionSettings Settings(SessionScope? scope) =>
@@ -59,10 +60,8 @@ public sealed class SessionScopeTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Scope_own_lists_no_row_for_a_foreign_tmux_server_or_a_foreign_claude_process()
-    {
+    public async Task Scope_own_lists_no_row_for_a_foreign_tmux_server_or_a_foreign_claude_process() =>
         Assert.Equal([411, 700], await Pids(Box(Settings(SessionScope.Own))));
-    }
 
     [Fact, Trait("Lane", "unit")]
     public async Task Scope_own_gives_no_row_to_a_lane_socket_or_another_homes_sindri_socket()
@@ -86,10 +85,6 @@ public sealed class SessionScopeTests
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task A_scope_typo_in_launcher_json_lists_no_foreign_row()
-    {
-        var settings = LauncherConfigFileTests.LoadText("""{ "schema": 1, "sessions": { "scope": "onw" } }""").Sessions with { OwnTmuxDirectory = OwnDirectory };
-
-        Assert.Equal([411, 700], await Pids(Box(settings)));
-    }
+    public async Task A_scope_typo_in_launcher_json_lists_no_foreign_row() =>
+        Assert.Equal([411, 700], await Pids(Box(LauncherConfigFileTests.LoadText("""{ "schema": 1, "sessions": { "scope": "onw" } }""").Sessions with { OwnTmuxDirectory = OwnDirectory })));
 }

@@ -97,15 +97,32 @@ internal static class IsolatedLauncherRead
             return section;
         }
 
-        var isObject = element.ValueKind == JsonValueKind.Object;
-        var scope = isObject && element.TryGetProperty("scope", out var written) ? written : (JsonElement?)null;
-        var scopeText = scope is { ValueKind: JsonValueKind.String } text ? text.GetString() : null;
-        var unknownScope = scope is not null && (scopeText is null || LauncherConfigFile.ScopeOf(scopeText) is null);
+        return Fallback(element, problems);
+    }
+
+    /// <summary>What a bad 'sessions' section leaves: the defaults, except an explicit "enabled": false and any 'scope' but "all" still hold.</summary>
+    private static SessionsSection? Fallback(JsonElement element, List<string> problems)
+    {
+        var (written, scope) = WrittenScope(element);
+        var unknownScope = written && (scope is null || LauncherConfigFile.ScopeOf(scope) is null);
         problems.Add(unknownScope ? "sessions.scope is 'all' or 'own' (SND-LAUNCH-011); 'own' is used" : "sessions isn't valid; the defaults are used");
-        var stayOff = isObject && element.TryGetProperty("enabled", out var enabled) && enabled.ValueKind == JsonValueKind.False;
-        var stayOwn = scope is not null && !string.Equals(scopeText, "all", StringComparison.Ordinal);   // a typo never widens the scope: anything but an explicit "all" holds as "own"
+        var stayOff = IsFalse(element, "enabled");
+        var stayOwn = written && !string.Equals(scope, "all", StringComparison.Ordinal);   // a typo never widens the scope: anything but an explicit "all" holds as "own"
         return stayOff || stayOwn ? new SessionsSection { Enabled = stayOff ? false : null, Scope = stayOwn ? "own" : null } : null;
     }
+
+    private static (bool Written, string? Text) WrittenScope(JsonElement section)
+    {
+        if (section.ValueKind != JsonValueKind.Object || !section.TryGetProperty("scope", out var value))
+        {
+            return (false, null);
+        }
+
+        return (true, value.ValueKind == JsonValueKind.String ? value.GetString() : null);
+    }
+
+    private static bool IsFalse(JsonElement section, string name) =>
+        section.ValueKind == JsonValueKind.Object && section.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.False;
 
     private static List<AgentEntry> Agents(byte[] builtins, byte[] user, JsonElement root, List<string> problems, List<DroppedEntry> dropped)
     {
