@@ -41,6 +41,23 @@ internal sealed class NodeSectionViewModel
     /// <summary>Gets a value indicating whether the rows carry a mark.</summary>
     public bool HasMark => Mark.Length > 0;
 
+    /// <summary>Gets a value indicating whether a failed section has a Retry button (#3060).</summary>
+    public bool CanRetry => IsFailed && Retrier is not null;
+
+    /// <summary>Gets the Retry button's words.</summary>
+    public string RetryText { get; } = Labels.ContextWholeRetry;
+
+    /// <summary>Gets the Retry button's accessible name ("Read Why again").</summary>
+    public string RetryName => Labels.ContextNodePanelSectionRetryName(Heading);
+
+    /// <summary>Reads this section again (the Retry button); the rest of the panel is not read again.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>When the panel shows the section's answer or its failure.</returns>
+    internal Task Retry(CancellationToken cancellationToken = default) => Retrier is { } retry ? retry(cancellationToken) : Task.CompletedTask;
+
+    // The read a failed section's Retry runs; null for a section that cannot be read again.
+    private Func<CancellationToken, Task>? Retrier { get; init; }
+
     /// <summary>A section with its rows, or its empty line when there are none.</summary>
     internal static NodeSectionViewModel Of(string heading, IReadOnlyList<NodeEdgeRowViewModel> rows, string emptyText, string mark = "") => new(heading, rows, emptyText, mark, string.Empty, isLoading: false);
 

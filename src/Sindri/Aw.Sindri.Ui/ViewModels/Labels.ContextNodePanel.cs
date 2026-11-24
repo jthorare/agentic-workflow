@@ -18,6 +18,11 @@ internal static partial class Labels
     /// <summary>The failed panel's Retry button, for a screen reader (#3060).</summary>
     internal const string ContextNodePanelRetryName = "Read this item again";
 
+    /// <summary>A failed section's Retry button, for a screen reader (#3060).</summary>
+    /// <param name="heading">The section's heading.</param>
+    /// <returns>"Read Why again".</returns>
+    internal static string ContextNodePanelSectionRetryName(string heading) => "Read " + heading + " again";
+
     /// <summary>The heading over the links.</summary>
     internal const string ContextNodePanelLinks = "Linked to";
 
