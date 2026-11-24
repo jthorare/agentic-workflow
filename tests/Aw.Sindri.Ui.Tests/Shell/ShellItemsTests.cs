@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
@@ -34,9 +35,11 @@ public sealed class ShellItemsTests
         return shell;
     }
 
+    // A wall-clock bound, not a count of 5 ms sleeps: under a loaded box the queue's re-read after an event took past the old 2 s (#4314).
     private static async Task Until(Func<bool> condition)
     {
-        for (var i = 0; i < 400 && !condition(); i++)
+        var waited = Stopwatch.StartNew();
+        while (!condition() && waited.Elapsed < TimeSpan.FromSeconds(15))
         {
             await Task.Delay(5, Token);
         }
