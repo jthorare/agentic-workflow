@@ -27,8 +27,33 @@ internal static class GraphFit
     internal static GraphFitResult Compute(GraphFitInput input, double canvasWidth, double canvasHeight, double textScale)
     {
         ArgumentNullException.ThrowIfNull(input);
+        var fit = FitAt(input, canvasWidth, canvasHeight, textScale, 100);
+
+        // #4149: while the map shows, no card column may sit under it. A layout that reaches into the map's gutter wraps again at the width left of it; that only
+        // makes the graph taller, so the map still shows and nothing flips back. A layout that already leaves the gutter free is kept.
+        // The narrower wrap never fits at a larger zoom (narrower and taller), so its ladder starts at the first fit's zoom, not at 100 % (#4191).
+        return NeedsGutter(fit, canvasWidth, canvasHeight) ? FitAt(input, canvasWidth - GraphZoom.MapGutterFor(canvasWidth), canvasHeight, textScale, Percent(fit.Zoom)) : fit;
+    }
+
+    private static bool NeedsGutter(GraphFitResult fit, double canvasWidth, double canvasHeight)
+    {
+        if (fit.Cards.Count == 0)
+        {
+            return false;
+        }
+
+        var right = fit.Cards.Values.Max(c => c.X + c.Width);
+        var bottom = fit.Cards.Values.Max(c => c.Y + c.Height);
+        return GraphZoom.MapShown(right, bottom, fit.Zoom, (canvasWidth, canvasHeight)) && (right * fit.Zoom) > canvasWidth - GraphZoom.MapGutterFor(canvasWidth) + 0.5;
+    }
+
+    private static int Percent(double zoom) => (int)Math.Round(zoom * 100, MidpointRounding.AwayFromZero);
+
+    // The largest zoom from startPercent down to the 12 px floor at which the layout wrapped at this width fits the canvas.
+    private static GraphFitResult FitAt(GraphFitInput input, double canvasWidth, double canvasHeight, double textScale, int startPercent)
+    {
         var floor = Floor(textScale);
-        var percent = 100;
+        var percent = startPercent;
         while (true)
         {
             var zoom = percent / 100.0;

@@ -21,7 +21,7 @@ public sealed class ReviewMergeTests
 
     private int _next;
 
-    private CheckMergeService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages));
+    private CheckMergeService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages, new LaneAddress(_world.LaneFiles, _world.LaneSessions, _world.Sessions)));
 
     // The team file as the reader sees it: the reviewer lane under "review", an optional key.
     private async Task Team(bool withReview = true)
