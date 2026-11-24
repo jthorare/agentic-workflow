@@ -135,6 +135,19 @@ public sealed class ConnectionTilesTests
     }
 
     [Fact]
+    public async Task A_Slack_token_connect_names_the_slack_preset_so_the_Slack_feed_finds_the_row()
+    {
+        var page = await _f.Shown();
+        var tile = page.Tiles.Single(t => t.Id == "slack");
+        await tile.Connect(Token);
+        tile.Token.Text = "pasted-test-value";
+
+        await _f.Drive(tile.Connect(Token));
+
+        Assert.Equal(("slack", "rest"), (_f.Server.LastAddConnection!.Preset, _f.Server.LastAddConnection.Kind));
+    }
+
+    [Fact]
     public async Task A_connected_tile_shows_the_account_and_Disconnect_removes_the_connection()
     {
         _f.SeedThree();
