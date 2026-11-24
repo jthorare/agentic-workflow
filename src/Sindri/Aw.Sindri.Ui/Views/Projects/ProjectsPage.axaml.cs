@@ -23,6 +23,7 @@ internal sealed partial class ProjectsPage : UserControl
             Resize(Bounds.Width);
             Watch();
         };
+        ProjectsRows.LayoutUpdated += (_, _) => UpdateStickyHead();   // a fold or a new read moves the heads without a scroll
         AddHandler(ProjectRow.OpenEvent, OnOpen);
         AddHandler(GotFocusEvent, OnRowFocused, RoutingStrategies.Bubble, handledEventsToo: true);
         AddHandler(KeyDownEvent, OnRowKey, RoutingStrategies.Bubble);
@@ -172,8 +173,16 @@ internal sealed partial class ProjectsPage : UserControl
             }
         }
 
-        ProjectsStickyHead.DataContext = current;
-        ProjectsStickyHead.IsVisible = current is not null;
+        // Runs on every layout pass: change nothing when the group in view is the same, so the pass this causes ends the loop.
+        if (!ReferenceEquals(ProjectsStickyHead.DataContext, current))
+        {
+            ProjectsStickyHead.DataContext = current;
+        }
+
+        if (ProjectsStickyHead.IsVisible != (current is not null))
+        {
+            ProjectsStickyHead.IsVisible = current is not null;
+        }
     }
 
     private void OnGroupHead(object? sender, RoutedEventArgs e)
