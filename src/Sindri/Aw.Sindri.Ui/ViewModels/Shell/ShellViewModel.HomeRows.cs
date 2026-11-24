@@ -34,6 +34,7 @@ internal sealed partial class ShellViewModel
 
         IsHomeRows = rows;
         Changed(nameof(IsHomeRows), nameof(IsHomeShown), nameof(IsHomeRowsShown), nameof(IsPagesShown));
+        ShowNavCounts();
         if (rows && Health.ApiUrl() is { } url)
         {
             await ReadHomeRows(url, CancellationToken.None).ConfigureAwait(true);
@@ -70,5 +71,7 @@ internal sealed partial class ShellViewModel
         {
             HomeRows.Add(more, now);
         }
+
+        ShowHomeCounts();
     }
 }

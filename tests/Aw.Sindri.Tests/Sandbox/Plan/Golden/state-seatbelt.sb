@@ -99,6 +99,10 @@
 (allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/spool/probe"))
 ; context-guard writes digests; a Step can't read other sessions' excerpts
 (allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/spool/digests"))
+; retry-record writes, and retry-gate reads, the session's failed calls; a Step starts with none
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/spool/retry-guard"))
+; dup-script-gate (lib/dup-script.sh) records its matches and exceptions per session
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/spool/duplicate-script"))
 ; other launches' session homes are absent
 (deny file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app-sessions"))
 ; the session home's launches link resolves here; session-id-report and the turn-ended marker write to it

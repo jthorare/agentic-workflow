@@ -22,7 +22,7 @@ internal sealed partial class NodeCardViewModel
     /// <summary>Opens the node's file on this machine with the editor (the launcher's file open).</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>When the system answered.</returns>
-    internal async Task OpenFile(CancellationToken cancellationToken = default)
+    internal async Task OpenLocalFile(CancellationToken cancellationToken = default)
     {
         if (_localPath is { Length: > 0 } path)
         {

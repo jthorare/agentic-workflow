@@ -134,7 +134,7 @@ public sealed class MessagesStoreTests : IDisposable
         var window = await _home.Store.Window(Harbor, before: null, after: null, limit: 10, Cancel);
 
         Assert.True(window.IsSuccess, window.IsError ? window.Error.Message : null);
-        Assert.Equal<(string, string?)>([("U0ADA", "Ada Moss"), ("U0LEE", null)], window.Value.Lines.Select(static l => (l.Author, l.AuthorName)));   // an empty display name falls back to the real name
+        Assert.Equal([("U0ADA", "Ada Moss"), ("U0LEE", null)], window.Value.Lines.Select(static l => (l.Author, l.AuthorName)));   // an empty display name falls back to the real name
     }
 
     [Fact]

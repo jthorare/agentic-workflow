@@ -32,7 +32,7 @@
   </UserControl.Styles>
 
   <!-- The Files view (F3 spec 1 §2): one folder at a time, 36 px rows, a suggested row hatched. A folder opens; a file is a row. -->
-  <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="8">
+  <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="8">
     <Grid ColumnDefinitions="*,Auto">
       <!-- The path as a breadcrumb: "~" is the top of the repo; every level but the last is a link, the last is where you are. -->
       <ctl:CrumbTrail x:Name="FilesCrumbs" Crumbs="{Binding Crumbs}" Navigated="OnCrumb" VerticalAlignment="Center" AutomationProperties.Name="{Binding CrumbsName}" />
@@ -48,7 +48,11 @@
       <TextBlock Grid.Column="3" Classes="eyebrow" Text="{Binding SymbolsHeading}" TextTrimming="CharacterEllipsis" />
     </Grid>
 
-    <Panel Grid.Row="3">
+    <!-- The note line follows the last row (#3862): the dock panel takes only the height its rows and note need, from the top of the
+         star row. The note is measured first, so a long list gets what is left and scrolls, with the note still in view under it. -->
+    <DockPanel Grid.Row="3" VerticalAlignment="Top">
+    <TextBlock x:Name="FilesNote" DockPanel.Dock="Bottom" Classes="caption subtle" Text="{Binding Note}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" Margin="8,8,8,0" />
+    <Panel>
       <!-- Rows are 36 px and built as they scroll into view; a plain StackPanel would build every row of a big folder. -->
       <ScrollViewer x:Name="FileScroll" IsVisible="{Binding HasRows}" HorizontalScrollBarVisibility="Disabled">
       <ItemsControl x:Name="FileRows" ctl:ResultListKeys.Arrows="True" ItemsSource="{Binding Rows}">
@@ -91,7 +95,6 @@
         <TextBlock Classes="body" Text="{Binding Problem}" TextWrapping="Wrap" />
       </Border>
     </Panel>
-
-    <TextBlock x:Name="FilesNote" Grid.Row="4" Classes="caption subtle" Text="{Binding Note}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" Margin="8,0" />
+    </DockPanel>
   </Grid>
 </UserControl>

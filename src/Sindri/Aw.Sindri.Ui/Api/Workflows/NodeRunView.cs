@@ -4,7 +4,7 @@ namespace Aw.Sindri.Ui.Api.Workflows;
 
 /// <summary>One execution of one node of a run.</summary>
 /// <param name="Node">The node id.</param>
-/// <param name="ItemIndex">The item's position, 0 for a node that runs once; a for_each node has one per item.</param>
+/// <param name="ItemIndex">The item's position counted from 1, or 0 for a node that runs once and for a collect's own row; a for_each node has one per item.</param>
 /// <param name="Status">running, waiting, succeeded, failed, skipped or cancelled (read as a string).</param>
 /// <param name="Input">The interpolated config the block got, or null.</param>
 /// <param name="Output">What the block produced, or null.</param>
