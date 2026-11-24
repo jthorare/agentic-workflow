@@ -31,8 +31,10 @@ internal static class GraphFit
 
         // #4149: while the map shows, no card column may sit under it. A layout that reaches into the map's gutter wraps again at the width left of it; that only
         // makes the graph taller, so the map still shows and nothing flips back. A layout that already leaves the gutter free is kept.
-        // The narrower wrap never fits at a larger zoom (narrower and taller), so its ladder starts at the first fit's zoom, not at 100 % (#4191).
-        return NeedsGutter(fit, canvasWidth, canvasHeight) ? FitAt(input, canvasWidth - GraphZoom.MapGutterFor(canvasWidth), canvasHeight, textScale, Percent(fit.Zoom)) : fit;
+        // The narrower wrap never fits at a larger zoom (narrower and taller), so its ladder starts at the first fit's zoom, not at 100 % (#4191). That holds while
+        // GraphZoom.MapShowsPast is over 1: NeedsGutter needs the map shown, the map shows only past MapShowsPast times the canvas at the fit's zoom, and FitAt
+        // returns above its floor only when the graph fits inside 1 times the canvas, so a fit that needs the gutter already stopped at the floor (#4214).
+        return NeedsGutter(fit, canvasWidth, canvasHeight) ? FitAt(input, Math.Max(1, canvasWidth - GraphZoom.MapGutterFor(canvasWidth)), canvasHeight, textScale, Percent(fit.Zoom)) : fit;
     }
 
     private static bool NeedsGutter(GraphFitResult fit, double canvasWidth, double canvasHeight)
