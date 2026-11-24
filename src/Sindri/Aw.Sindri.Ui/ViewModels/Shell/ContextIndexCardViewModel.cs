@@ -62,12 +62,7 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
     {
         if (read.IsError)
         {
-            Lines = [];
-            Backlog = null;
-            OnChanged(nameof(HasBacklog));
-            Word = string.Empty;
-            Glyph = StateGlyph.None;
-            Show(Labels.ContextIndexUnreadable);
+            ApplyUnreadable();
             return;
         }
 
@@ -75,10 +70,25 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
         Backlog = BacklogOf(concepts);
         OnChanged(nameof(HasBacklog));
         Lines = sources.Count == 0 ? [] : [.. sources.Select(Line).Concat(ConceptLines(concepts, Backlog is not null)).Concat(StoreLines(store)).Select(t => new ContextIndexLine(t))];
-        var fine = sources.All(static s => !s.NeedsLook) && concepts?.Code is null && (store is null || Is(store.State, "ok"));
-        Word = sources.Count == 0 ? string.Empty : fine ? Labels.CodeIndexOk : Labels.CodeIndexNeedsLook;
-        Glyph = sources.Count == 0 ? StateGlyph.None : fine ? StateGlyph.Ok : StateGlyph.Warning;
+        SetMark(sources.Count == 0, sources.All(static s => !s.NeedsLook) && concepts?.Code is null && (store is null || Is(store.State, "ok")));
         Show(sources.Count == 0 ? Labels.ContextIndexNone : string.Empty);
+    }
+
+    private void ApplyUnreadable()
+    {
+        Lines = [];
+        Backlog = null;
+        OnChanged(nameof(HasBacklog));
+        Word = string.Empty;
+        Glyph = StateGlyph.None;
+        Show(Labels.ContextIndexUnreadable);
+    }
+
+    // The card's word and mark: none without sources, Ok when every source, the concepts and the store read fine, else needs a look.
+    private void SetMark(bool empty, bool fine)
+    {
+        Word = empty ? string.Empty : fine ? Labels.CodeIndexOk : Labels.CodeIndexNeedsLook;
+        Glyph = empty ? StateGlyph.None : fine ? StateGlyph.Ok : StateGlyph.Warning;
     }
 
     private void Show(string message)
