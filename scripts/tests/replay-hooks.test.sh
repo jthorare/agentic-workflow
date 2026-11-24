@@ -224,19 +224,18 @@ check "world: advanceClock moved date +%s by a day" "$([ -n "$t1" ] && [ -n "$t3
 
 # --- Malformed stdin through block-destructive on every provider: never a crash, never a deny. ---
 # What each host really does, found by this harness: Codex's adapter turns a string tool_input into {command: …}, so
-# it is a readable ls (allow). Cursor's adapter fails open on a 2 MB payload (result-unparsable: the payload goes to jq
-# as one argument, past the kernel's per-argument limit), so that call is an abstain, not an allow.
+# it is a readable ls (allow). A 2 MB payload is a plain allow on every provider: Cursor's adapter used to fail open
+# on it (the payload went to jq as one argument, past the kernel's per-argument limit); #4300 moved it to stdin.
 for p in claude codex cursor; do
   case $p in cursor) H=beforeShellExecution ;; *) H=PreToolUse ;; esac
   case $p in codex) X4=allow ;; *) X4=abstain ;; esac
-  case $p in cursor) X5=abstain ;; *) X5=allow ;; esac
-  fx "$p/malformed/all" "$(jq -n --arg h "$H" --arg x4 "$X4" --arg x5 "$X5" '{events:[
+  fx "$p/malformed/all" "$(jq -n --arg h "$H" --arg x4 "$X4" '{events:[
     {n:1,hook:$h,script:"block-destructive.sh",payloadRaw:""},
     {n:2,hook:$h,script:"block-destructive.sh",payloadRaw:"{\"tool_name\":\"Bash\",\"tool_in"},
     {n:3,hook:$h,script:"block-destructive.sh",payloadBase64:"//79/A=="},
     {n:4,hook:$h,script:"block-destructive.sh",payload:{session_id:"s1",hook_event_name:$h,tool_name:"Bash",tool_input:"ls"}},
     {n:5,hook:$h,script:"block-destructive.sh",padBytes:2097152,payload:{session_id:"s1",conversation_id:"s1",hook_event_name:$h,tool_name:"Bash",tool_input:{command:"ls"},command:"ls"}}],
-    expect:[{event:1,decision:"abstain"},{event:2,decision:"abstain"},{event:3,decision:"abstain"},{event:4,decision:$x4},{event:5,decision:$x5}]}')"
+    expect:[{event:1,decision:"abstain"},{event:2,decision:"abstain"},{event:3,decision:"abstain"},{event:4,decision:$x4},{event:5,decision:"allow"}]}')"
   run "$WORK/fx/$p/malformed" --out "$WORK/results.jsonl" --hooks-dir "$HOOKS"
   check "malformed $p: exit 0" "$RC" "0"
   check "malformed $p: every line passes" "$(jq -r .status "$WORK/results.jsonl" 2>/dev/null | sort -u | tr '\n' ' ')" "pass "

@@ -277,7 +277,7 @@ Report exit codes:
 | `research-no-edit` | Many reads and greps, zero edits | `allow` |
 | `verify-no-edit` | Repeated test or build runs, zero edits | `allow` |
 | `scope-exception` | An exception the brief accepts | `allow` |
-| `malformed-payload` | Empty, not JSON, cut short, no `tool_name`, wrong `tool_input` type, 2 MB, bad UTF-8 | `abstain` |
+| `malformed-payload` | Empty, not JSON, cut short, no `tool_name`, wrong `tool_input` type, bad UTF-8; a valid 2 MB payload | `abstain`; the 2 MB one is read like any other (`allow` for a readable `ls`) |
 | `unsupported-hook` | An event the host has no mapping for | `allow` or `advise`, `unsupported: true` |
 | `judge-unavailable` | No recorded answer; the shim says unavailable | `abstain`, text "judge unavailable", never `deny` |
 | `redaction` | A planted `ghp_` token in the command and output | The token is absent from state, results and report |
