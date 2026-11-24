@@ -94,7 +94,7 @@ internal static class WholeMapBandDrill
         var moved = nodes.Select(n => n with { Rect = n.Rect with { X = n.Rect.X + Dx(n.AreaIndex) } }).ToList();
         var areaOf = nodes.ToDictionary(n => n.Key, n => n.AreaIndex, StringComparer.Ordinal);
         var shifted = edges.Select(e => e with { X1 = e.X1 + Dx(areaOf[e.From]), X2 = e.X2 + Dx(areaOf[e.To]) }).ToList();
-        var width = WholeMapLayout.WorldWidth((2 * WholeMapLayout.Margin) + (Math.Max(1, kept.Count) * WholeMapLayout.ColumnPitch) - WholeMapLayout.ColumnGutter);
+        var width = (2 * WholeMapLayout.Margin) + (Math.Max(1, kept.Count) * WholeMapLayout.ColumnPitch) - WholeMapLayout.ColumnGutter;
         var bands = geometry.Bands
             .Select(b => b with { Meta = Meta(nodes, b.Band) })
             .Where(b => b.Band == band || b.Band == alsoKeep || nodes.Exists(n => NodeBands.Of(n.Kind) == b.Band))
