@@ -14,7 +14,7 @@
       <StackPanel x:Name="AgentsHeadRegion" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock Classes="page-title" Text="Agents" AutomationProperties.Name="Agents" />
         <!-- #3082: while someone is asking, the head is a link (Tab, Enter) to the first row of Needs you. -->
-        <Button x:Name="AgentsHeadLink" Classes="link" Padding="0" VerticalAlignment="Center" IsEnabled="{Binding HasAsking}" Click="OnHeadLink">
+        <Button x:Name="AgentsHeadLink" Classes="link" Padding="0" VerticalAlignment="Center" IsEnabled="{Binding HasAsking}" Click="OnHeadLink" AutomationProperties.Name="Go to Needs you">
           <Border x:Name="AgentsHeadName" AutomationProperties.Name="{Binding HeadName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" VerticalAlignment="Center">
             <TextBlock x:Name="AgentsHead" Classes="caption subtle" Text="{Binding Head}" AutomationProperties.AccessibilityView="Raw" />
           </Border>
