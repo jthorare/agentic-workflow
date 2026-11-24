@@ -101,15 +101,16 @@ public sealed class RunDetailViewModelTests
     }
 
     // #4082: a collect step has its own row (index 0, its result) beside one row per item; it read "gather · 4 items" and "Item 1 of 4" on its own result.
+    // #4341: that row then had only a status pill; it reads "Result" so it doesn't look like a missing label.
     [Fact]
-    public async Task A_collect_node_shows_its_own_result_unlabelled_and_its_items_counted_from_one()
+    public async Task A_collect_node_titles_its_own_result_row_and_counts_its_items_from_one()
     {
         var run = await OpenedWithItems(own: true, items: 3);
 
         var group = Group(run, "agent");
         Assert.Equal(("agent · 3 items", true), (group.HeaderText, group.IsForEach));
-        Assert.Equal([string.Empty, "Item 1 of 3", "Item 2 of 3", "Item 3 of 3"], group.Runs.Select(r => r.TitleText), StringComparer.Ordinal);
-        Assert.Equal((false, "agent, succeeded"), (group.Runs[0].HasTitle, group.Runs[0].Name));
+        Assert.Equal(["Result", "Item 1 of 3", "Item 2 of 3", "Item 3 of 3"], group.Runs.Select(r => r.TitleText), StringComparer.Ordinal);
+        Assert.Equal((true, "Result, succeeded"), (group.Runs[0].HasTitle, group.Runs[0].Name));
     }
 
     [Fact]
