@@ -8,17 +8,18 @@ using Aw.Sindri.Core.Connections;
 namespace Aw.Sindri.Infrastructure.Connections.GitHub;
 
 /// <summary>
-/// <see cref="IGitHubAccount"/> over the Connections page: the first connected 'github' connection (by name) is the account, else one that needs sign-in, else none.
+/// <see cref="IGitHubAccount"/> over the Connections page: the newest connected 'github' connection whose token reads (<see cref="ConnectionCredentials.Newest"/>; a gh login's `github:gh` row through its `command:` credential), else the newest connected one, else one that needs sign-in, else none.
 /// The login is the 'login' of GET https://api.github.com/user sent with the connection's token (https only, api.github.com only, no redirect followed). It is kept per connection until
 /// the connection's refresh or update time changes; a failed call gives a null login with the reason (<see cref="GitHubLoginMiss"/>) and is not asked again for a minute. The token is in no error, log or exception.
 /// </summary>
 /// <param name="store">The Connections page's rows.</param>
-/// <param name="secrets">Reads a connection's tokens.</param>
 /// <param name="presets">The presets (the GitHub probe URL).</param>
 /// <param name="http">The HTTP client; it must not follow redirects on its own.</param>
 /// <param name="clock">The clock.</param>
-internal sealed class GitHubConnectionAccount(IConnectionStore store, IConnectionSecrets secrets, IConnectionPresetCatalog presets, HttpClient http, TimeProvider clock) : IGitHubAccount
+/// <param name="credentials">Reads the picked connection's token: a gh login's `command:` credential or the secret pointer (first-run spec decision 14).</param>
+internal sealed class GitHubConnectionAccount(IConnectionStore store, IConnectionPresetCatalog presets, HttpClient http, TimeProvider clock, IConnectionCredentials credentials) : IGitHubAccount
 {
+
     private const string Host = "api.github.com";
     private const string Preset = "github";
     private static readonly TimeSpan _retryAfter = TimeSpan.FromMinutes(1);
@@ -33,8 +34,9 @@ internal sealed class GitHubConnectionAccount(IConnectionStore store, IConnectio
             return listed.Error;
         }
 
-        var github = listed.Value.Where(static c => string.Equals(c.Preset, Preset, StringComparison.Ordinal)).OrderBy(static c => c.Name.ToString(), StringComparer.Ordinal).ToList();
-        if (github.FirstOrDefault(static c => c.Status == ConnectionStatus.Connected) is { } connected)
+        var github = ConnectionCredentials.Newest(listed.Value.Where(static c => string.Equals(c.Preset, Preset, StringComparison.Ordinal))).ToList();
+        var live = github.Where(static c => c.Status == ConnectionStatus.Connected).ToList();
+        if ((live.Find(c => credentials.TokenOf(c) is { Length: > 0 }) ?? live.FirstOrDefault()) is { } connected)
         {
             var known = await Login(connected, cancellationToken).ConfigureAwait(false);
             return new GitHubAccount(GitHubAccountState.Connected, connected.Name.ToString(), known.Login, known.Miss);
@@ -74,8 +76,7 @@ internal sealed class GitHubConnectionAccount(IConnectionStore store, IConnectio
             : (null, GitHubLoginMiss.SignIn);
     }
 
-    private string? Token(Connection connection) =>
-        connection.SecretPointer is { } pointer && secrets.Read(pointer) is { IsSuccess: true } tokens ? tokens.Value.AccessToken : null;
+    private string? Token(Connection connection) => credentials.TokenOf(connection);
 
     private async ValueTask<(string? Login, GitHubLoginMiss Miss)> Send(Uri uri, string accessToken, CancellationToken cancellationToken)
     {

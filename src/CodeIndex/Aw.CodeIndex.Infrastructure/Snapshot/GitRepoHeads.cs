@@ -11,13 +11,12 @@ namespace Aw.CodeIndex.Infrastructure.Snapshot;
 
 /// <summary>
 /// Where each checkout is (spec §6.1), read with git only: 'git rev-parse HEAD', then 'git merge-base --is-ancestor' against
-/// the first of origin/HEAD, main, master, origin/main, origin/master that exists, local refs only and never a fetch. That
-/// ref's commit is the default tip: the first index of a repo that is off its default branch builds from it (#3181).
+/// the first default ref that exists (DefaultBranchRefs: origin/HEAD, main, origin/main, master, origin/master), local refs only and
+/// never a fetch. That ref's commit is the default tip: the first index of a repo that is off its default branch builds from it (#3181).
 /// </summary>
 internal sealed class GitRepoHeads : IRepoHeads
 {
     private static readonly TimeSpan _timeout = TimeSpan.FromMinutes(2);
-    private static readonly string[] _defaultRefs = ["refs/remotes/origin/HEAD", "refs/heads/main", "refs/heads/master", "refs/remotes/origin/main", "refs/remotes/origin/master"];
 
     /// <inheritdoc />
     public async ValueTask<Result<IReadOnlyList<RepoHead>>> Heads(IReadOnlyList<CodeIndexRepo> repos, CancellationToken cancellationToken)
@@ -55,7 +54,12 @@ internal sealed class GitRepoHeads : IRepoHeads
         }
 
         var tip = await DefaultTip(repo.Path, cancellationToken).ConfigureAwait(false);
-        if (tip.IsError || tip.Value is not { } found)
+        if (tip.IsError)
+        {
+            return new RepoHead(repo.Name, Head: null, OnDefaultBranch: false);   // git failed or timed out: unread, never "no main or origin/main" (#3928)
+        }
+
+        if (tip.Value is not { } found)
         {
             return new RepoHead(repo.Name, sha, OnDefaultBranch: false);
         }
@@ -74,7 +78,7 @@ internal sealed class GitRepoHeads : IRepoHeads
     /// <summary>The first default ref that exists and its commit, or null when the checkout has none of them.</summary>
     private static async ValueTask<Result<DefaultRef?>> DefaultTip(string repo, CancellationToken cancellationToken)
     {
-        foreach (var name in _defaultRefs)
+        foreach (var name in DefaultBranchRefs.InOrder)
         {
             var resolved = await Run(repo, cancellationToken, "rev-parse", "--verify", "--quiet", name + "^{commit}").ConfigureAwait(false);
             if (resolved.IsError)
@@ -82,12 +86,17 @@ internal sealed class GitRepoHeads : IRepoHeads
                 return resolved.Error;
             }
 
-            if (resolved.Value.Exit == 0 && CommitSha.TryFrom(resolved.Value.Stdout.Trim(), out var tip))
+            if (resolved.Value.Exit == 1)
             {
-                return new DefaultRef(name, tip);
+                continue;   // no such ref: try the next
             }
 
-            // no such ref: try the next
+            if (resolved.Value.Exit != 0 || !CommitSha.TryFrom(resolved.Value.Stdout.Trim(), out var tip))
+            {
+                return Failed("rev-parse", resolved.Value.Exit);   // git failed: not the same as "no default ref" (#3928)
+            }
+
+            return new DefaultRef(name, tip);
         }
 
         return Results.Success<DefaultRef?>(value: null);
@@ -104,8 +113,6 @@ internal sealed class GitRepoHeads : IRepoHeads
             _ => Failed("merge-base", ancestor.Value.Exit),
         };
     }
-
-    private sealed record DefaultRef(string Name, CommitSha Tip);
 
     private static async ValueTask<Result<(int Exit, string Stdout)>> Run(string repo, CancellationToken cancellationToken, params string[] args)
     {
@@ -160,4 +167,6 @@ internal sealed class GitRepoHeads : IRepoHeads
 
     private static Error Failed(string verb, int exit) =>
         CodeIndexErrors.RepoNotFound.With(string.Create(CultureInfo.InvariantCulture, $"git {verb} exited {exit}"));
+
+    private sealed record DefaultRef(string Name, CommitSha Tip);
 }

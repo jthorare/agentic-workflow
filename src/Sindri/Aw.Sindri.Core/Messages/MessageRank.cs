@@ -13,15 +13,43 @@ public readonly record struct MessageRank(MessageClass Class, int Blocks, Messag
     public static MessageRank Of(ThreadRow row)
     {
         ArgumentNullException.ThrowIfNull(row);
-        throw MessageStubs.NotBuilt("MessageRank.Of", "M1b");
+        return new MessageRank(row.Class, row.Blocks, row.Newest, row.Conversation);
     }
 
-    /// <summary>The rows in Needs reply order.</summary>
+    /// <summary>Orders two ranks the Needs reply way: the higher class, then more blocks, then the one waiting longer, then the conversation id.</summary>
+    /// <param name="left">One rank.</param>
+    /// <param name="right">The other.</param>
+    /// <returns>Negative when <paramref name="left"/> comes first, zero when they tie, positive when <paramref name="right"/> comes first.</returns>
+    public static int Compare(MessageRank left, MessageRank right)
+    {
+        var byClass = right.Class.CompareTo(left.Class);
+        if (byClass != 0)
+        {
+            return byClass;
+        }
+
+        var byBlocks = right.Blocks.CompareTo(left.Blocks);
+        if (byBlocks != 0)
+        {
+            return byBlocks;
+        }
+
+        var byTime = MessageTs.Compare(left.Newest, right.Newest);
+        return byTime != 0 ? byTime : string.CompareOrdinal(left.Conversation, right.Conversation);
+    }
+
+    /// <summary>The rows in Needs reply order. Two threads of one conversation that tie on every key keep a fixed order by row key.</summary>
     /// <param name="rows">The rows.</param>
     /// <returns>The rows, first to answer first.</returns>
     public static IReadOnlyList<ThreadRow> Order(IEnumerable<ThreadRow> rows)
     {
         ArgumentNullException.ThrowIfNull(rows);
-        throw MessageStubs.NotBuilt("MessageRank.Order", "M1b");
+        var ranked = rows.Select(static row => (Row: row, Rank: Of(row))).ToList();
+        ranked.Sort(static (left, right) =>
+        {
+            var byRank = Compare(left.Rank, right.Rank);
+            return byRank != 0 ? byRank : string.CompareOrdinal(left.Row.Key, right.Row.Key);
+        });
+        return ranked.ConvertAll(static r => r.Row);
     }
 }

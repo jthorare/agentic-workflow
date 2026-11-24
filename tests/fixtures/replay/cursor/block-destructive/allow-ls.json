@@ -1,0 +1,43 @@
+{
+  "schema": "aw-replay-fixture/1",
+  "id": "cursor/block-destructive/allow-ls",
+  "provider": "cursor",
+  "scenario": "block-destructive",
+  "verified": "captured",
+  "source": {
+    "hostVersion": "cursor 2026.09.02",
+    "capturedAt": null,
+    "sanitizedBy": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  },
+  "policy": "block-destructive/1",
+  "notes": "Payload copied from config/hooks/tests/fixtures/cursor/ (cursor_version 2026.09.02).",
+  "events": [
+    {
+      "n": 1,
+      "hook": "beforeShellExecution",
+      "script": "block-destructive.sh",
+      "payload": {
+        "conversation_id": "cu-1",
+        "generation_id": "g-1",
+        "hook_event_name": "beforeShellExecution",
+        "workspace_roots": [
+          "/tmp"
+        ],
+        "command": "ls",
+        "cwd": "/tmp",
+        "sandbox": false
+      }
+    }
+  ],
+  "judge": null,
+  "expect": [
+    {
+      "event": 1,
+      "decision": "allow",
+      "reasonCode": null,
+      "textContains": null
+    }
+  ]
+}

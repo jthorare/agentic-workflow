@@ -86,8 +86,13 @@ internal sealed class SessionDiscovery(IProcessTable processes, IClaudeSessionRe
 
         candidates.AddRange(found.Where(f => !live.ContainsKey(f.Process.Pid)).Select(f => FromProcess(f, hooks, pass)));
         var sources = hosts.ForPass(pass);
-        return new Discovered([.. candidates.Select(c => c with { Host = SessionHosts.Detect(sources, byPid, c) })], problems, Good: true) { Unknown = unknown };
+        var detected = candidates.Select(c => c with { Host = SessionHosts.Detect(sources, byPid, c) });
+        var ownLaunches = OwnLaunches();
+        return new Discovered([.. detected.Where(c => SessionScopeRules.Lists(settings.Scope, c.Host, c.Environment, settings.OwnTmuxDirectory, ownLaunches))], problems, Good: true) { Unknown = unknown };
     }
+
+    /// <summary>This home's launch records, read once per pass and only under scope 'own'.</summary>
+    private IReadOnlySet<LaunchId> OwnLaunches() => settings.Scope == SessionScope.All ? new HashSet<LaunchId>() : hosts.OwnLaunches();
 
     /// <summary>A process whose environment can't be read is unknown, never "not a judge child": it is left out of this pass and its previous state is kept.</summary>
     private bool IsJudgeChild(ProcessEntry process, SourcePass pass, HashSet<(int Pid, long StartTicks)> unknown)

@@ -7,6 +7,7 @@ using Aw.Sindri.Features.Sessions;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Infrastructure.Sessions;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Testing.Launch;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Sessions;
@@ -26,7 +27,7 @@ public sealed class SnapshotHostsTests
         var catalog = new AgentCatalog(LauncherConfigFile.Read(SessionFixtures.Builtins(), """{ "schema": 1 }"""u8.ToArray()).Value.Agents);
         var providers = catalog.All.Select(static a => a.Id).ToList();
         var table = new ProcProcessTable(SessionFixtures.Proc, SessionFixtures.OwnUid);
-        var hosts = new SessionHosts(table, new UnixSockets(SessionFixtures.Proc), tmux, new FakeTeamNames(new TeamNames("t1", ["api"])), TerminalProcessNames.Embedded());
+        var hosts = new SessionHosts(table, new UnixSockets(SessionFixtures.Proc), tmux, new FakeTeamNames(new TeamNames("t1", ["api"])), TerminalProcessNames.Embedded(), new FakeLaunchFiles());
         var discovery = new SessionDiscovery(table, new ClaudeSessionRecords(SessionFixtures.ClaudeSessions),
             new FleetStateFiles(fleet.Root, providers, pruning: false), catalog, SessionSettings.Defaults, hosts, clock);
         var observer = new SessionObserver(new TranscriptFiles("/nonexistent-fixture-root/home"), new PassThroughScrubber(), new SessionRepos(new FakeRepoLocator(), new InMemoryProfiles(), clock));

@@ -21,7 +21,8 @@ public sealed class NodeKindTitleTests
 
     private static async Task<IReadOnlyList<NodeSummary>> Summaries()
     {
-        var workflows = new InMemoryWorkflowStore(new FakeTimeProvider());
+        var clock = new FakeTimeProvider();
+        var workflows = new InMemoryWorkflowStore(clock);
         var catalog = GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"));
         var spec = new GraphSpec(Version: 1, "Flagged", Description: null, Concurrency: null, Resources: null,
             Nodes:
@@ -33,7 +34,7 @@ public sealed class NodeKindTitleTests
             Edges: []);
         _ = (await workflows.Create(_id, _slug, spec, "owner", Token)).Value;
 
-        var shown = await new GetWorkflowService(workflows, catalog).Handle(new GetWorkflowRequest(_slug), Token);
+        var shown = await new GetWorkflowService(workflows, catalog, clock).Handle(new GetWorkflowRequest(_slug), Token);
 
         Assert.True(shown.IsSuccess);
         return shown.Value.Summaries!;

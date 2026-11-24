@@ -253,6 +253,8 @@ static Aw.Kernel.ErrorExtensions.ReservedNames.get -> System.Collections.Generic
 Aw.Kernel.ErrorExtensions.Equals(Aw.Kernel.ErrorExtensions? other) -> bool
 override Aw.Kernel.ErrorExtensions.Equals(object? obj) -> bool
 override Aw.Kernel.ErrorExtensions.GetHashCode() -> int
+Aw.Kernel.DefaultBranchRefs
+static Aw.Kernel.DefaultBranchRefs.InOrder.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Kernel.PathRules
 static Aw.Kernel.PathRules.AbsolutePathProblem(string? path) -> string?
 Aw.Kernel.Dates.DueSplit

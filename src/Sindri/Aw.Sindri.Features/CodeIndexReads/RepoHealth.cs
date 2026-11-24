@@ -12,11 +12,14 @@ namespace Aw.Sindri.Features.CodeIndexReads;
 /// layer's progress as a percent. Counts and words only.
 /// </summary>
 /// <param name="Repo">The repo.</param>
-/// <param name="State">missing, damaged, ok, stale (the head moved past the index), building (a build job runs), waiting (a failed build holds the next one) or queued (no index yet, the head is on the default branch or the checkout has a default-branch tip to build from, and code-index-main-move is not paused, so it starts the first build on its next tick; #3342, #3399, #3181).</param>
+/// <param name="State">missing, damaged, ok, stale (the head moved past the index), building (a build job runs), waiting (a failed build holds the next one) queued (no index yet, the head is on the default branch or the checkout has a default-branch tip to build from, and code-index-main-move is not paused, so it starts the first build on its next tick; #3342, #3399, #3181) or unbuildable (no index yet, the head off its default branch and no default branch to build from, so no first build can ever run; #3187).</param>
 /// <param name="EmbeddingsPercent">The share of embeddable symbols that have a vector, or null when the layer states no count.</param>
-/// <param name="Waiting">'retrying in N min' while the state is waiting, else null.</param>
+/// <param name="Waiting">What the next build waits for: 'retrying in N min' while the state is waiting, <see cref="QueuedWords"/> while it is queued and needs no look (#3515), else null.</param>
 public sealed record RepoHealth(string Repo, string State, int? EmbeddingsPercent, string? Waiting)
 {
+    /// <summary>The waiting words of a queued repo (#3515): code-index-main-move ticks every minute and starts the first build on its next tick.</summary>
+    public const string QueuedWords = "the first build starts on code-index-main-move's next tick";
+
     /// <summary>How long this serve has read the repo as queued, or null when it isn't queued; set by RepoHealths from its <see cref="QueuedClock"/>. Internal, so it isn't in the API answer (#3440).</summary>
     internal TimeSpan? QueuedFor { get; init; }
 
@@ -122,7 +125,11 @@ public sealed record RepoHealth(string Repo, string State, int? EmbeddingsPercen
     private static bool Moved(RepoStatus status, IndexRepoHead? live) => live?.Head is { } head && head != status.Commit;
 
     private static string Word(string? waiting, bool missing, bool behind, IndexRepoHead? live) =>
-        waiting is not null ? "waiting" : missing ? (FirstBuildComes(live) ? "queued" : "missing") : behind ? "stale" : "ok";
+        waiting is not null ? "waiting" : missing ? MissingWord(live) : behind ? "stale" : "ok";
+
+    // A missing index: queued when a first build comes, unbuildable when none ever can (off the default branch, no default tip; #3187), else missing.
+    private static string MissingWord(IndexRepoHead? live) =>
+        FirstBuildComes(live) ? "queued" : live is { Head: not null, OnDefaultBranch: false, DefaultTip: null } ? "unbuildable" : "missing";
 
     // why: off the default branch the first build runs at the default branch's tip (#3181), so a repo with one is queued too
     private static bool FirstBuildComes(IndexRepoHead? live) => live is { Head: not null } && (live.OnDefaultBranch || live.DefaultTip is not null);

@@ -23,6 +23,9 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
     /// <summary>The workflow's slug.</summary>
     public string Slug { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>When the open workflow's schedule fires next (#3758): from its last good workflow read (#4188, #4208), else from its list row at open. The graph's Schedule card shows it.</summary>
+    internal DateTimeOffset? NextRunAt { get; set; }
+
     /// <summary>The workflow's name.</summary>
     public string Title { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -118,7 +121,7 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
         }
 
         // An edit made a revision newer than the live one: the graph draws that one (#3303), so a second read asks for it.
-        var newest = detail.IsSuccess && detail.Value.ActiveRevision is { } active && active < detail.Value.LatestRevision ? await api.WorkflowNewest(url, slug, cancellationToken).ConfigureAwait(true) : detail;
+        var newest = detail.IsSuccess && detail.Value.ActiveRevision is { } active && active < detail.Value.LatestRevision ? await _api.WorkflowNewest(url, slug, cancellationToken).ConfigureAwait(true) : detail;
         if (read != _reads)
         {
             return;
@@ -127,13 +130,18 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
         Land(detail, newest, runs);
     }
 
+    // Every good read brings the time Sindri serves now, also none (#4188, #4208): an active workflow with no next run draws no chip. The stored time (the
+    // list row's at open) is kept only when the read failed.
+    private DateTimeOffset? NextFrom(Result<WorkflowView> detail) => detail.IsSuccess ? detail.Value.NextRunAt : NextRunAt;
+
     // What the two reads said: the line under the name and the graph from the workflow's read, the list (or "off", or the failure) from the runs read.
     private void Land(Result<WorkflowView> detail, Result<WorkflowView> newest, Result<WorkflowRunList> runs)
     {
         IsReading = false;
         DetailText = detail.IsSuccess ? Detail(detail.Value) : string.Empty;
         var drawn = newest.IsSuccess ? newest : detail;   // the newest revision when it was read; else the live one
-        (Shown, Graph) = detail.IsSuccess ? (detail.Value, drawn.IsSuccess ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(drawn.Value)) : Graph) : (Shown, Graph);
+        NextRunAt = NextFrom(detail);
+        (Shown, Graph) = detail.IsSuccess ? (detail.Value, drawn.IsSuccess ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(drawn.Value) { NextRunAt = NextRunAt, Clock = _clock }) : Graph) : (Shown, Graph);
         if (runs.IsSuccess)
         {
             CanRun = true;
