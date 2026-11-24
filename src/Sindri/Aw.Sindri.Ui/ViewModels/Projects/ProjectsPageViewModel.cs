@@ -91,7 +91,26 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
     public bool ShowsWide { get; private set => Set(ref field, value); } = true;
 
     /// <summary>True when the page is wide enough for the words Sort and Group in the bar's two menu buttons; narrower, the buttons show only their values.</summary>
-    public bool ShowsBarLabels { get; private set => Set(ref field, value); } = true;
+    public bool ShowsBarLabels
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(SearchPlaceholder));
+        }
+    } = true;
+
+    /// <summary>The search box's width in px as laid out (0 before the first layout); the placeholder falls back to the shortest word when the box is too narrow.</summary>
+    internal double SearchBoxWidth { get; private set; }
+
+    /// <summary>The search box was laid out at a new width.</summary>
+    /// <param name="width">The width in px.</param>
+    internal void SetSearchBoxWidth(double width)
+    {
+        SearchBoxWidth = width;
+        OnChanged(nameof(SearchPlaceholder));
+    }
 
     /// <summary>The last read's failure line; empty when the last read worked.</summary>
     public string Error { get; private set => Set(ref field, value); } = string.Empty;
