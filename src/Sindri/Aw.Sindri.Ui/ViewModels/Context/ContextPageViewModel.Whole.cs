@@ -141,6 +141,11 @@ internal sealed partial class ContextPageViewModel
                 (IsBuilding, _buildJob, _servedBuilding, _notReady, NoMap) = (false, null, false, MapNotReadyView.None, false);   // the build the answer named is done: the map is here
                 ChangedStates();
             }
+            else if (NoMap)
+            {
+                NoMap = false;   // a map is here: an earlier no-map answer with no building facts must not keep the No map body over it (#3046)
+                ChangedStates();
+            }
 
             if (!HasStack)
             {
