@@ -88,4 +88,16 @@ public sealed class SessionScopeTests
     [Fact, Trait("Lane", "integration")]
     public async Task A_scope_typo_in_launcher_json_lists_no_foreign_row() =>
         Assert.Equal(_ownOnly, await Pids(Box(LauncherConfigFileTests.LoadText("""{ "schema": 1, "sessions": { "scope": "onw" } }""").Sessions with { OwnTmuxDirectory = OwnDirectory })));
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_scope_typo_says_own_is_in_force_4252()
+    {
+        var box = Box(LauncherConfigFileTests.LoadText("""{ "schema": 1, "sessions": { "scope": "onw" } }""").Sessions with { OwnTmuxDirectory = OwnDirectory });
+
+        _ = await box.Pass();
+
+        var problem = Assert.Single(box.Snapshot.Current!.Problems, static p => p.Code == "SND-LAUNCH-011");
+        Assert.Contains("only sessions this Sindri started are listed", problem.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("default settings", problem.Text, StringComparison.Ordinal);
+    }
 }

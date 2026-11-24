@@ -126,6 +126,15 @@ public sealed class LauncherConfigFileTests
     }
 
     [Fact, Trait("Lane", "integration")]
+    public void Null_scope_reads_as_own_with_a_problem_row_4252()
+    {
+        var sessions = LoadText("""{ "schema": 1, "sessions": { "scope": null } }""").Sessions;
+
+        Assert.Equal(SessionScope.Own, sessions.Scope);
+        Assert.Contains("SND-LAUNCH-011", sessions.ConfigProblem, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public void A_sessions_scope_sets_this_homes_own_tmux_directory_under_the_home()
     {
         var load = LoadText("""{ "schema": 1, "sessions": { "scope": "own" } }""");
