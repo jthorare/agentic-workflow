@@ -238,6 +238,74 @@ public sealed class CollectorSourceTimeoutTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task The_third_overrun_in_a_row_puts_the_lists_age_in_the_problem_row_4244()
+    {
+        var fake = new FakeProcessTable();
+        using var table = new StuckTable(fake);
+        var c = new CollectorHarness(processes: table);
+        _ = fake.With(Proc(10, 1, "claude", argv0: "claude"), cwd: "/w/api");
+        _ = await c.Pass();
+        var fullPassAt = c.Now;
+        table.BlockReads = true;
+
+        var firstPass = c.Pass(_budget);
+        await table.Tables.Reached(2);
+        c.Base.Clock.Advance(_budget);
+        _ = await firstPass;
+        Assert.Equal(SessionProblems.Overrun.Text, Assert.Single(c.Snapshot.Current!.Problems).Text);   // 1 overrun: today's text
+
+        c.Base.Clock.Advance(TimeSpan.FromSeconds(10));
+        _ = await c.Pass(_budget);
+        Assert.Equal(SessionProblems.Overrun.Text, Assert.Single(c.Snapshot.Current.Problems).Text);   // 2 overruns: today's text
+
+        c.Base.Clock.Advance(TimeSpan.FromSeconds(10));
+        _ = await c.Pass(_budget);
+        table.Release();
+
+        var snapshot = c.Snapshot.Current;
+        var age = c.Now - snapshot.ObservedAt;   // what /sessions serves as AsOf, against the clock at the pass
+        Assert.Equal(fullPassAt, snapshot.ObservedAt);
+        var problem = Assert.Single(snapshot.Problems);
+        Assert.Equal(SessionProblems.OverrunAfter(3, age).Text, problem.Text);
+        Assert.Contains("21 s old", problem.Text, StringComparison.Ordinal);
+        Assert.Equal(SessionProblems.Overrun.Code, problem.Code);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_pass_in_time_after_overruns_resets_the_count_and_the_lists_time_4244()
+    {
+        var fake = new FakeProcessTable();
+        using var table = new StuckTable(fake);
+        var c = new CollectorHarness(processes: table);
+        _ = fake.With(Proc(10, 1, "claude", argv0: "claude"), cwd: "/w/api");
+        _ = await c.Pass();
+        table.BlockReads = true;
+
+        var firstPass = c.Pass(_budget);
+        await table.Tables.Reached(2);
+        c.Base.Clock.Advance(_budget);
+        _ = await firstPass;
+        for (var i = 0; i < 2; i++)
+        {
+            c.Base.Clock.Advance(TimeSpan.FromSeconds(5));
+            _ = await c.Pass(_budget);
+        }
+
+        Assert.Equal(3, c.Snapshot.Current!.ConsecutiveOverruns);
+        table.Release();
+        await c.Discovery.AbandonedSettled();
+        table.BlockReads = false;
+        c.Base.Clock.Advance(TimeSpan.FromSeconds(5));
+        var recovered = await c.Pass(_budget);
+
+        var snapshot = c.Snapshot.Current;
+        Assert.True(recovered.Good);
+        Assert.Equal(0, snapshot.ConsecutiveOverruns);
+        Assert.Equal(c.Now, snapshot.ObservedAt);
+        Assert.Empty(snapshot.Problems);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_full_pending_queue_drops_the_oldest_and_logs_once_then_again_after_it_drains_and_overflows_again()
     {
         var log = new ListLogger<CollectSessionsService>();

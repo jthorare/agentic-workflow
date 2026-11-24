@@ -23,4 +23,16 @@ internal static class SessionProblems
     internal static SessionProblem Source(string source) => new(source, SindriErrors.SessionSourceFailed.Code, $"The {source} source couldn't be read in the last pass");
 
     internal static SessionProblem Overrun { get; } = new("collector", SindriErrors.SessionSourceFailed.Code, "A pass took longer than its 500 ms budget");
+
+    /// <summary>Passes in a row that must overrun before the row says how old the list is (#4244); one or two keep the plain <see cref="Overrun"/> sentence.</summary>
+    internal const int OverrunsBeforeAge = 3;
+
+    /// <summary>The overrun row after <paramref name="passes"/> in a row (#4244): from the 3rd it names the list's age, the time since the last full pass, which is the snapshot's ObservedAt.</summary>
+    internal static SessionProblem OverrunAfter(int passes, TimeSpan age) =>
+        passes < OverrunsBeforeAge
+            ? Overrun
+            : new("collector", SindriErrors.SessionSourceFailed.Code, $"The agent list is {Age(age)} old: the last {passes} passes ran out of time.");
+
+    private static string Age(TimeSpan age) =>
+        age < TimeSpan.FromMinutes(2) ? $"{(int)age.TotalSeconds} s" : $"{(int)age.TotalMinutes} min";
 }
