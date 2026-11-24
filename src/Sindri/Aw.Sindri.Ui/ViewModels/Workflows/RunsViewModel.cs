@@ -125,13 +125,16 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         Land(detail, newest, runs);
     }
 
+    // Every read brings the time Sindri serves now; the list row's (set at open) only while the read sends none (#4188).
+    private DateTimeOffset? NextFrom(Result<WorkflowView> detail) => detail.IsSuccess ? detail.Value.NextRunAt ?? NextRunAt : NextRunAt;
+
     // What the two reads said: the line under the name and the graph from the workflow's read, the list (or "off", or the failure) from the runs read.
     private void Land(Result<WorkflowView> detail, Result<WorkflowView> newest, Result<WorkflowRunList> runs)
     {
         IsReading = false;
         DetailText = detail.IsSuccess ? Detail(detail.Value) : string.Empty;
         var drawn = newest.IsSuccess ? newest : detail;   // the newest revision when it was read; else the live one
-        NextRunAt = detail.IsSuccess ? detail.Value.NextRunAt ?? NextRunAt : NextRunAt;   // every read brings the time Sindri serves now; the list row's only when it sends none (#4188)
+        NextRunAt = NextFrom(detail);
         (Shown, Graph) = detail.IsSuccess ? (detail.Value, drawn.IsSuccess ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(drawn.Value) { NextRunAt = NextRunAt, Clock = clock }) : Graph) : (Shown, Graph);
         if (runs.IsSuccess)
         {
