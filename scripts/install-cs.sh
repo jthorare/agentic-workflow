@@ -270,8 +270,9 @@ reclaim_scratch() {
     [ -n "$tree" ] && [ "$d" = "$tree" ] && continue
     rm -rf "$d"
   done
-  # make_lock's temp folder of a killed run. A live run's is a few ms old, so only one older than 60 s goes.
-  for d in "$base"/.lock-new.*; do
+  # make_lock's temp folder, or take_over's renamed stale lock, of a killed run. A live run's is a few ms old, so only
+  # one older than 60 s goes.
+  for d in "$base"/.lock-new.* "$base"/.lock-dead.*; do
     [ -d "$d" ] || continue
     [ -n "$(find "$d" -maxdepth 0 -mmin +1 2> /dev/null)" ] || continue
     rm -rf "$d"
@@ -320,7 +321,25 @@ lock_stale() {
   [ -d "$lk" ] && [ -n "$(find "$lk" -maxdepth 0 -mmin +1 2> /dev/null)" ]
 }
 
-# Wait for the publish lock and take it; a stale lock (lock_stale) is taken over. $lock is set only once the lock is
+# Takes over the stale lock $1; 0 when this call removed it (#4279). Two waiters can both see one stale lock, and if each
+# removed it, the second would remove the first one's new lock and both would publish. So the takeover runs under a second
+# lock, .lock-takeover (a plain mkdir, held for milliseconds), and checks again under it: only a lock that is still stale is
+# renamed aside to .lock-dead.<pid> (one rename, so one waiter moves it) and removed. A loser goes back to waiting.
+take_over() {
+  local lk="$1" mx="$base/.lock-takeover" dead="$base/.lock-dead.$$" rc=1
+  if ! mkdir "$mx" 2> /dev/null; then
+    # One older than 60 s was left by a run killed while it held it; the next takeover gets it.
+    if [ -n "$(find "$mx" -maxdepth 0 -mmin +1 2> /dev/null)" ]; then rmdir "$mx" 2> /dev/null; fi
+    return 1
+  fi
+  if lock_stale "$lk" && rename_dir "$lk" "$dead"; then
+    rm -rf "$dead"; rc=0
+  fi
+  rmdir "$mx" 2> /dev/null
+  return "$rc"
+}
+
+# Wait for the publish lock and take it; a stale lock (lock_stale) is taken over (take_over). $lock is set only once the lock is
 # this run's, so a run that ends while it waits never removes the holder's lock in its EXIT trap (#4247).
 take_lock() {
   local lk="$base/.lock" owner rc
@@ -335,7 +354,7 @@ take_lock() {
         : > "$AW_INSTALL_CS_TEST_STALE_PAUSE.$$.seen"
         until [ -e "$AW_INSTALL_CS_TEST_STALE_PAUSE.$$.go" ]; do sleep 0.1; done
       fi
-      rm -rf "$lk"; continue
+      if take_over "$lk"; then continue; fi
     fi
     owner="$(cat "$lk/pid" 2> /dev/null || true)"
     say "waiting for another install-cs publish (pid ${owner:-?})"
@@ -350,8 +369,7 @@ reclaim_unlocked() {
   local lk="$base/.lock"
   mkdir -p "$base" "$cache"
   if ! make_lock "$lk"; then
-    lock_stale "$lk" || return 0
-    rm -rf "$lk"
+    lock_stale "$lk" && take_over "$lk" || return 0
     make_lock "$lk" || return 0
   fi
   lock="$lk"
