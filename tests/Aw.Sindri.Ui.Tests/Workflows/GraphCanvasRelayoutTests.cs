@@ -91,9 +91,9 @@ public sealed class GraphCanvasRelayoutTests
         var r = await OnUi(() => WheelSteps(graph));
 
         Assert.False(r.AtFit, "the canvas took the wheel while the whole graph fits");
-        Assert.Equal(-100, r.Mid, 3);
+        Assert.Equal(-50, r.Mid, 3);
         Assert.True(r.TookDown, $"the canvas left a wheel down to the page while it can scroll down (pan y after each zoom step: {r.Path})");
-        Assert.Equal(-148, r.AfterDown, 3);   // one 48 px step down
+        Assert.Equal(-98, r.AfterDown, 3);   // one 48 px step down
         Assert.Equal(0, r.AtTop, 3);
         Assert.False(r.TookAtTop, "the canvas took a wheel up at its top edge instead of leaving it to the page");
     }
@@ -135,7 +135,8 @@ public sealed class GraphCanvasRelayoutTests
     {
         var graph = await Release();
 
-        // 1440 x 728, Fit 100 %, pan y 0, cards to y 432. Keeping the centre (y 364) gives pan y 0, 0, -64, -135.3, -206.6; the clamp's stale value gave -280 (#4033).
+        // 1440 x 728, Fit 100 %, pan y 0, cards to y 432 and x 1360. At 200 % that is 2720 x 864, under twice the canvas, so no map and no map room (#4055): y pans only
+        // past 728, in [728 - 432 z, 0]. Keeping the centre (y 364) gives pan y 0, 0, 0 (648 fits at 150 %), -28 (the 175 % floor), -84; the clamp's stale value once gave -280 (#4033).
         var (zoomedIn, inPath, zoomedOut) = await OnUi(() =>
         {
             var canvas = new GraphCanvas { Graph = graph };
@@ -165,7 +166,7 @@ public sealed class GraphCanvasRelayoutTests
             }
         });
 
-        Assert.True(Math.Abs(zoomedIn - -206.6) <= 0.5, $"after five zoom steps in, pan y went {inPath}, not 0, 0, -64, -135.3, -206.6");
+        Assert.True(Math.Abs(zoomedIn - -84) <= 0.5, $"after five zoom steps in, pan y went {inPath}, not 0, 0, 0, -28, -84");
         Assert.Equal(0, zoomedOut, 3);
     }
 
@@ -177,6 +178,8 @@ public sealed class GraphCanvasRelayoutTests
     // 1.25 R >= 362 > 300: x always scrolls; 16 cards are far taller than 205 px, so 1.25 H + 144 > 400 and y scrolls. With R = 290 and H = 432 (a
     // guess for H, from the five-steps fact's 'cards to y 432'): p0 = (-62.5, -284), in = (-87.5, -380.8), old out x = 300/2 - (150 + 62.5) * 0.8333 = -27.1
     // (35 px off), old out y = -203.3 (80 px off), new out = p0 exactly. Both axes fail under the old order when R > 0.4 cw = 120 and H > 45. The limit itself can return: the 150 % extent is wider on both axes, so the step in never clamps.
+    // #4055: at 300 wide the 16 cards wrap to one column (Fit stops at the 86 % floor): about 327 x 1828 in the world, so at 125 % and 150 % the world is over
+    // twice the 400 px canvas on height, the map shows and its 144 px of room is part of p0, as above. The limit comes from GraphZoom.ClampPan either way.
     [Fact]
     public async Task One_zoom_step_in_and_one_out_at_125_percent_return_to_the_start_pan_at_the_bottom_right_limit()
     {
@@ -213,7 +216,42 @@ public sealed class GraphCanvasRelayoutTests
             + " and came back at " + back.X.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + ", " + back.Y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture));
     }
 
-    // At Fit, then at 200 % from pan y -100: one wheel down, wheel up to the top edge, one more wheel up. Also the pan y after each zoom step, for the failure message.
+    // Review's nit on #4143: 40 steps at 1440 x 728 (4 columns, cards to 1365 x 1132) cross the 2x line between 125 % (1415 px tall, under 1456: no map) and
+    // 150 % (1698 px, over: map and its room). From the bottom right limit at 125 % (-266, -687), one step in lands at about (-463, -897), inside the 150 %
+    // range with the map's room, and one step out comes back to the start.
+    [Fact]
+    public async Task One_zoom_step_in_and_one_out_across_the_map_line_return_to_the_start_pan()
+    {
+        var graph = await ChainGraph.Of(40);
+
+        var (start, back) = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = graph };
+            var window = new Window { Content = canvas, Width = 1440, Height = 728 };
+            window.Show();
+            Settle(window);
+            try
+            {
+                canvas.Zoom = 1.25;
+                Settle(window);
+                var world = canvas.World;
+                var (x, y) = GraphZoom.ClampPan((-1e6, -1e6), (world.Right, world.Bottom), 1.25, (canvas.Bounds.Width, canvas.Bounds.Height));
+                canvas.Pan = new Point(x, y);
+                var from = canvas.Pan;
+                canvas.ZoomIn();
+                canvas.ZoomOut();
+                return (from, canvas.Pan);
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.True(Math.Abs(back.X - start.X) <= 0.5 && Math.Abs(back.Y - start.Y) <= 0.5, "the pan did not come back after crossing the map line");
+    }
+
+    // At Fit, then at 200 % from pan y -50: one wheel down, wheel up to the top edge, one more wheel up. Also the pan y after each zoom step, for the failure message.
     private static (bool AtFit, double Mid, bool TookDown, double AfterDown, double AtTop, bool TookAtTop, string Path) WheelSteps(WorkflowGraphViewModel graph)
     {
         var canvas = new GraphCanvas { Graph = graph };
@@ -228,12 +266,12 @@ public sealed class GraphCanvasRelayoutTests
             var path = new List<double>();
             for (var i = 0; i < 8; i++)
             {
-                canvas.ZoomIn();   // to 200 %: the chain is 432 px tall, 864 at 200 % plus the map's 144, over a 728 px canvas
+                canvas.ZoomIn();   // to 200 %: the chain is 432 px tall, 864 at 200 %, over a 728 px canvas (under twice, so no map and no map room: #4055)
                 path.Add(canvas.Pan.Y);
             }
 
             Settle(window);
-            canvas.Pan = new Point(canvas.Pan.X, -100);   // inside [-280, 0]
+            canvas.Pan = new Point(canvas.Pan.X, -50);   // inside [-136, 0] (and inside the old [-280, 0])
             var mid = canvas.Pan.Y;
             var tookDown = canvas.Wheel(down, KeyModifiers.None, new Point(200, 200));
             var afterDown = canvas.Pan.Y;

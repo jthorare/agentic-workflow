@@ -24,7 +24,7 @@ internal static class WorkflowReadScenarios
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
         ("workflows", "list-empty"), ("workflows", "list-two"), ("workflows", "list-include-archived"),
-        ("workflows-slug", "found"), ("workflows-slug", "not-found"),
+        ("workflows-slug", "found"), ("workflows-slug", "found-schedule"), ("workflows-slug", "not-found"),
         ("workflows-slug", "found-latest"), ("workflows-slug", "revision-not-found"), ("workflows-slug", "revision-invalid"),
         ("workflows-slug-runs", "list-empty"), ("workflows-slug-runs", "list-three"),
         ("workflow-runs-run", "running"), ("workflow-runs-run", "finished"), ("workflow-runs-run", "not-found"),
@@ -60,7 +60,7 @@ internal static class WorkflowReadScenarios
                 await Create(host, _weekly, _weeklySlug, "Weekly report", activate: false, ct);
                 _ = (await host.App.Services.GetRequiredService<IWorkflowStore>().Archive(_weekly, ct)).Value;
                 return await Ask(host, Get("/sindri/workflows?includeArchived=true", human));
-            case ("workflows-slug", "found") or ("workflows-slug", "found-latest") or ("workflows-slug", "revision-not-found") or ("workflows-slug", "revision-invalid"):
+            case ("workflows-slug", not "not-found"):
                 return await SlugRead(host, scenario, human, ct);
             case ("workflows-slug", "not-found"):
                 return await Ask(host, Get("/sindri/workflows/nope", human));
@@ -79,6 +79,14 @@ internal static class WorkflowReadScenarios
     // GET /sindri/workflows/{slug}[?revision=N|latest] on the Morning check workflow (active at 1); every scenario but "revision-invalid" saves revision 2 first.
     private static async Task<string> SlugRead(GoldenHost host, string scenario, (string Name, string Value)[] human, CancellationToken ct)
     {
+        if (string.Equals(scenario, "found-schedule", StringComparison.Ordinal))
+        {
+            // an active weekday 7:00 UTC schedule: the clock reads Thu 1 Jan 2026 00:00 UTC, so nextRunAt is 07:00 that day, the value the list row shows (#3756)
+            _ = (await host.App.Services.GetRequiredService<IWorkflowStore>().Create(_morning, _morningSlug, ScheduleSpec("Morning check"), "owner", ct)).Value;
+            _ = (await host.App.Services.GetRequiredService<IWorkflowStore>().Activate(_morning, 1, ct)).Value;
+            return await Ask(host, Get($"/sindri/workflows/{_morningSlug.Value}", human));
+        }
+
         await Create(host, _morning, _morningSlug, "Morning check", activate: true, ct);
         if (!string.Equals(scenario, "revision-invalid", StringComparison.Ordinal))
         {
@@ -133,6 +141,9 @@ internal static class WorkflowReadScenarios
                 new GraphNode(NodeId.From("agent"), "run_agent", "Check the repos", new JsonObject { ["prompt"] = "Look for drift" }),
             ],
             Edges: [new GraphEdge(NodeId.From("start"), Output: null, NodeId.From("agent"))]);
+
+    private static GraphSpec ScheduleSpec(string name) =>
+        Spec(name) with { Nodes = [new GraphNode(NodeId.From("start"), "schedule", Title: null, new JsonObject { ["cron"] = "0 7 * * 1-5", ["timezone"] = "UTC" }), Spec(name).Nodes[1]] };
 
     private static async Task Create(GoldenHost host, WorkflowId id, WorkflowSlug slug, string name, bool activate, CancellationToken ct)
     {

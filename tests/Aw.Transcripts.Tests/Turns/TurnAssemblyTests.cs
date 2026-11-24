@@ -5,7 +5,7 @@ namespace Aw.Transcripts.Tests.Turns;
 
 public sealed class TurnAssemblyTests
 {
-    private static readonly SessionRef _session = SessionRef.From("transcript:0a1b2c3d");
+    private static readonly SessionRef _session = SessionRef.From("transcript:0a1b2c3d4e5f");
     private static readonly DateTimeOffset _t = new(2026, 11, 1, 10, 0, 0, TimeSpan.Zero);
 
     [Fact, Trait("Lane", "unit")]
@@ -20,7 +20,7 @@ public sealed class TurnAssemblyTests
             new(6, _t.AddSeconds(4), EntryKind.Human, "next", []),
         ]);
 
-        Assert.Equal(["transcript:0a1b2c3d#1 Human go", "transcript:0a1b2c3d#2 Assistant one\ntwo Read,Edit", "transcript:0a1b2c3d#6 Human next"],
+        Assert.Equal(["transcript:0a1b2c3d4e5f#1 Human go", "transcript:0a1b2c3d4e5f#2 Assistant one\ntwo Read,Edit", "transcript:0a1b2c3d4e5f#6 Human next"],
             turns.Select(t => $"{t.Ref.Value} {t.Role} {t.Text}{(t.Tools.Count > 0 ? " " + string.Join(',', t.Tools) : "")}"), StringComparer.Ordinal);
         Assert.Equal(_t.AddSeconds(1), turns[1].At);
     }

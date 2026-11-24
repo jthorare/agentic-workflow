@@ -95,8 +95,9 @@ internal sealed class DelegateService(IMetaConfig config, RepoCommands repo, ILa
     }
 
     // Best effort: the lane the issue moved off is told once. A non-Claude lane gets the line through lane-send's delivery; a Claude lane
-    // (also one whose record now names Claude) gets it back for the meta to send with SendMessage. SendMessage can't reach a non-Claude
-    // lane, so when its delivery fails or the lane can't act on it, only the problem comes back. A failed notice never fails the delegate.
+    // (also one whose record now names Claude, or that has no record now) gets it back for the meta to send with SendMessage.
+    // SendMessage can't reach a non-Claude lane, so when its delivery fails, the lane can't act on it or its record can't be read, only
+    // the problem comes back. A failed notice never fails the delegate.
     private async ValueTask<(string? From, string? Notice, string? Problem)> Moved(Delegation previous, Delegation now, TimeSpan confirm, CancellationToken cancellationToken)
     {
         var text = $"FYI: {now.Marker} moved to lane {now.Lane}; it is no longer yours.";
@@ -106,11 +107,12 @@ internal sealed class DelegateService(IMetaConfig config, RepoCommands repo, ILa
         }
 
         var record = await files.Record(previous.Lane, cancellationToken).ConfigureAwait(false);
-        if (record.IsError || record.Value is null)
+        if (record.IsError)
         {
-            return (previous.Session, null, record.IsError ? $"its lane record could not be read ({record.Error.Code}: {record.Error.Message})" : $"lane {previous.Lane} has no lane record now");
+            return (previous.Session, null, $"its lane record could not be read ({record.Error.Code}: {record.Error.Message})");
         }
 
+        // No record, or one that names Claude: Handle treats that lane as a Claude lane, so it gets the line back too (#4106).
         if (record.Value is not { IsNonClaude: true, Agent: { } agent } found)
         {
             return (previous.Session, text, null);

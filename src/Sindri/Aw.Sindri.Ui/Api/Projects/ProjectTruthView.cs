@@ -7,10 +7,12 @@ namespace Aw.Sindri.Ui.Api.Projects;
 /// <param name="TotalItems">Every item linked to the project, cancelled ones left out.</param>
 /// <param name="RunningAgents">Live agent sessions in the project's repos that are running or asking.</param>
 /// <param name="Health">The health Sindri derives from the PRs; null when no PR is open.</param>
+/// <param name="BlockedOnYou">True when one of the project's PRs waits on the owner (issue 3797); null from a server that doesn't serve it yet.</param>
 internal sealed record ProjectTruthView(
     IReadOnlyList<ProjectTruthPrView> OpenPrs,
     int OpenItems,
     int DoneItems,
     int TotalItems,
     int RunningAgents,
-    ProjectTruthHealthView? Health);
+    ProjectTruthHealthView? Health,
+    bool? BlockedOnYou = null);

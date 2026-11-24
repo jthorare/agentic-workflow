@@ -212,7 +212,7 @@ packages:
     projectPrefix: Aw.Sindri
     src: src/Sindri
     bins: [sindri, sindri-code-runner]
-    db: [sindri-app/ledger.db, sindri-app/views.db]
+    db: [sindri-app/ledger.db, sindri-app/views.db, sindri-app/messages.db]
     files: [sindri-app/control.json, sindri-app/auth/human.token, fleet]
     namespace: sindri
     routes: [/sindri/]
