@@ -111,7 +111,7 @@ public sealed class CodeIndexMainMoveServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_repo_off_its_default_branch_that_has_an_index_starts_nothing_until_main_moves_gh3181()
+    public async Task A_repo_off_its_default_branch_that_has_an_index_starts_nothing_until_the_checkout_is_back_on_the_default_branch_gh3181()
     {
         _ = _rig.Index.WithIndex(CodeIndexJobsRig.Demo, CodeIndexJobsRig.Old);
         _ = _rig.Heads.With(CodeIndexJobsRig.Demo, CodeIndexJobsRig.New, onDefaultBranch: false, defaultTip: CodeIndexJobsRig.New);

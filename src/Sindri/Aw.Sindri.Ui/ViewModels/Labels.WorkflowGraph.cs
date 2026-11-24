@@ -39,6 +39,12 @@ internal static partial class Labels
     internal static string WfGraphUnplaced(IReadOnlyList<string> ids) =>
         string.Create(global::System.Globalization.CultureInfo.InvariantCulture, $"{ids.Count} {(ids.Count == 1 ? "node has" : "nodes have")} no position: {string.Join(", ", ids)}");
 
+    /// <summary>A workflow card's tooltip (#4203): its title and its full settings line, which the card cuts when it is long.</summary>
+    /// <param name="title">The card's line 1.</param>
+    /// <param name="line">The card's settings line.</param>
+    /// <returns>The words.</returns>
+    internal static string WfCardTip(string title, string line) => title + " \u00b7 " + line;
+
     /// <summary>The Schedule card's chip for a workflow that is on (#3758): the next run in local time, "next 7:00" within the next 24 hours, else "next Mon 7:00".</summary>
     /// <param name="local">The next run in the viewer's time zone.</param>
     /// <param name="soon">True when it is within the next 24 hours.</param>
