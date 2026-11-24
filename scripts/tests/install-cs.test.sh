@@ -693,4 +693,34 @@ check "a full disk while publishing sindri-ui exits 1" "$drc" "1"
 has "a full disk names the disk, not only the compiler" "$diskout" "the disk is full (No space left on device) while publishing sindri-ui"
 has "a full disk still names the binary that failed" "$diskout" "publishing sindri-ui failed"
 
+# #4247: a lock folder without a pid, left by a run killed between its mkdir and its pid write, made every later publish wait
+# forever. An old one (mtime over 60 s) is taken over; a fresh one may still be a run about to write its pid, so it is waited for.
+mkdir -p "$B/.lock"; touch_ago "$B/.lock" "5 minutes ago"
+bump "<!-- old pidless lock -->"
+lockout="$(timeout 60 bash "$INSTALL" --publish 2>&1)"; lrc=$?
+check "an old lock without a pid: the publish ends and exits 0" "$lrc" "0"
+check "an old lock without a pid: the lock is released after" "$([ -e "$B/.lock" ] && echo yes || echo no)" "no"
+
+mkdir -p "$B/.lock"
+bump "<!-- fresh pidless lock -->"
+: > "$FAKE_LOG"
+lockout="$(timeout 4 bash "$INSTALL" --publish 2>&1)"; lrc=$?
+check "a fresh lock without a pid: the publish is still waiting" "$lrc" "124"
+has "a fresh lock without a pid: the publish says it waits" "$lockout" "waiting for another install-cs publish"
+check "a fresh lock without a pid: nothing is published" "$(pubs)" ""
+check "a fresh lock without a pid stays" "$([ -d "$B/.lock" ] && echo yes || echo no)" "yes"
+rmdir "$B/.lock" 2> /dev/null
+
+# A waiter that ends (Ctrl-C, a kill) must not remove the holder's lock: its EXIT trap removes only a lock it took (#4247).
+sleep 300 & holder=$!
+mkdir -p "$B/.lock"; echo "$holder" > "$B/.lock/pid"
+bump "<!-- held lock -->"
+bash "$INSTALL" --publish > "$WORK/waiter.log" 2>&1 & waiter=$!
+for _ in $(seq 1 100); do grep -q "waiting for another install-cs publish" "$WORK/waiter.log" && break; sleep 0.1; done
+kill -TERM "$waiter" 2> /dev/null; wait "$waiter" 2> /dev/null
+check "a waiter killed by a signal: the holder's lock folder stays" "$([ -d "$B/.lock" ] && echo yes || echo no)" "yes"
+check "a waiter killed by a signal: the lock still names the holder" "$(cat "$B/.lock/pid" 2> /dev/null)" "$holder"
+kill "$holder" 2> /dev/null; wait "$holder" 2> /dev/null
+find "$B/.lock" -delete 2> /dev/null
+
 [ "$fail" = 0 ] && echo "all install-cs tests passed" || { echo "install-cs tests FAILED"; exit 1; }
