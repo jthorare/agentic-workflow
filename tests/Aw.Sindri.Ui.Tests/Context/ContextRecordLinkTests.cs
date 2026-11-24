@@ -72,6 +72,21 @@ public sealed class ContextRecordLinkTests
     }
 
     [Fact]
+    public async Task Try_again_on_the_card_repeats_the_refused_launch()
+    {
+        var (card, launcher) = await Open(Lenses(LinearUrl, cited: true));
+        launcher.Refuse = true;
+        await card.OpenRecord(Token);
+        Assert.True(card.CanRetryLaunch);   // why: the card's line said what failed and offered no way to try again (#3060)
+        launcher.Refuse = false;
+
+        await card.RetryLaunch(Token);
+
+        Assert.Equal((false, false), (card.LaunchFailed, card.CanRetryLaunch));
+        Assert.Equal([LinearUrl], launcher.Opened);
+    }
+
+    [Fact]
     public async Task A_cited_record_with_no_permalink_says_no_link_and_has_no_button()
     {
         var (card, launcher) = await Open(Lenses(permalink: null, cited: true));

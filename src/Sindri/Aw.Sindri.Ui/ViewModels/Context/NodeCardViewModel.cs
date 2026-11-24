@@ -127,6 +127,20 @@ internal sealed partial class NodeCardViewModel(ContextPorts ports) : Observable
     /// <summary>"Couldn't open the link" and the link to copy; empty until a launch fails.</summary>
     public string LaunchFailedText => Launch.FailedText;
 
+    /// <summary>True when the refused launch can be tried again (the "Try again" button, #3060).</summary>
+    public bool CanRetryLaunch => Launch.CanRetry;
+
+    /// <summary>The "Try again" button's words.</summary>
+    public string RetryLaunchText { get; } = Labels.ContextPagesRetry;
+
+    /// <summary>The "Try again" button's accessible name.</summary>
+    public string RetryLaunchName { get; } = Labels.ContextLaunchRetryName;
+
+    /// <summary>Repeats the launch the system refused.</summary>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>When the system answered.</returns>
+    internal Task RetryLaunch(CancellationToken cancellationToken = default) => Launch.Retry(cancellationToken);
+
     /// <summary>Opens the record at its source through the launcher.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>When the system answered.</returns>

@@ -62,6 +62,21 @@ public sealed class NodePanelLaunchTests
     }
 
     [Fact]
+    public async Task Try_again_repeats_the_refused_launch_and_clears_the_line_when_it_works()
+    {
+        var (page, launcher) = await Open();
+        launcher.Refuse = true;
+        await page.Whole.Panel.OpenSource(Token);
+        Assert.True(page.Whole.Panel.CanRetryLaunch);   // why: the line said what failed and offered no way to try again (#3060)
+        launcher.Refuse = false;
+
+        await page.Whole.Panel.RetryLaunch(Token);
+
+        Assert.Equal((false, false), (page.Whole.Panel.LaunchFailed, page.Whole.Panel.CanRetryLaunch));
+        Assert.Equal([Link], launcher.Opened, StringComparer.Ordinal);
+    }
+
+    [Fact]
     public async Task A_launch_that_works_after_a_refused_one_clears_the_line()
     {
         var (page, launcher) = await Open();

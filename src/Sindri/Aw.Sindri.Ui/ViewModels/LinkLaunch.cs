@@ -21,6 +21,17 @@ internal sealed class LinkLaunch(Func<ILauncher> launcher) : ObservableObject
     /// <summary>The line to show (and copy from) after a refused launch; empty otherwise.</summary>
     public string FailedText { get; private set; } = string.Empty;
 
+    /// <summary>True when the refused launch can be tried again (a link or a file the system said no to; not a failed copy) (#3060).</summary>
+    public bool CanRetry => Failed && Again is not null;
+
+    /// <summary>Repeats the last launch the system refused (the "Try again" button).</summary>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>True when the system opened it this time.</returns>
+    public Task<bool> Retry(CancellationToken cancellationToken) => Again is { } again ? again(cancellationToken) : Task.FromResult(false);
+
+    // The last launch, to repeat; null when there is none to repeat.
+    private Func<CancellationToken, Task<bool>>? Again { get; set; }
+
     /// <summary>Hands a web link to the system.</summary>
     /// <param name="uri">The link.</param>
     /// <param name="cancellationToken">Cancels the request.</param>
