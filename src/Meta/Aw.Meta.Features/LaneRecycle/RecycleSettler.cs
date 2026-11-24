@@ -14,6 +14,9 @@ namespace Aw.Meta.Features.LaneRecycle;
 /// <param name="addresses">Finds the socket of the session the lane runs now; null to match the lane by name only.</param>
 internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, TimeProvider clock, ObligationEventWriter? obligations = null, LaneAddress? addresses = null)
 {
+    /// <summary>Gets a value indicating whether the settler can match the lane by its socket (it was given a <see cref="LaneAddress"/>).</summary>
+    internal bool MatchesBySocket => addresses is not null;
+
     // The lane's open messages from before this run that ask for this recycle (a `DIGEST READY` line, or one naming this digest) are answered by it: dismiss them like `inbox-dismiss`.
     internal async ValueTask<Result<IReadOnlyList<string>>> Settle(RecyclePlan plan, DateTimeOffset started, CancellationToken cancellationToken)
     {
