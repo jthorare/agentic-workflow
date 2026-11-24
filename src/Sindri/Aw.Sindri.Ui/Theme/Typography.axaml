@@ -70,12 +70,16 @@
     <Setter Property="FontWeight" Value="{DynamicResource Type.Button.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
   </Style>
+  <!-- Code reads as typed (#4087): JetBrains Mono joins "=>", "<=" and "!=" into one glyph through its 'calt' and 'liga'
+       features, so the mono and kbd styles turn both off (TextBox.typed-field does the same in ControlStyles). A feature
+       list is parsed from text when the XAML compiles, so it is a setter, not a DynamicResource token. -->
   <Style Selector="TextBlock.mono">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Mono}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.Mono.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Mono.LineHeight}" />
     <Setter Property="FontWeight" Value="{DynamicResource Type.Mono.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
+    <Setter Property="FontFeatures" Value="-calt, -liga" />
   </Style>
   <!-- A type selector matches the exact type, so the copyable mono text (a model trace) needs its own. -->
   <Style Selector="SelectableTextBlock.mono">
@@ -84,6 +88,7 @@
     <Setter Property="LineHeight" Value="{DynamicResource Type.Mono.LineHeight}" />
     <Setter Property="FontWeight" Value="{DynamicResource Type.Mono.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
+    <Setter Property="FontFeatures" Value="-calt, -liga" />
   </Style>
   <Style Selector="TextBlock.kbd">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Mono}" />
@@ -92,6 +97,7 @@
     <Setter Property="FontWeight" Value="{DynamicResource Type.Kbd.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+    <Setter Property="FontFeatures" Value="-calt, -liga" />
   </Style>
   <!-- A mono heading (an id as the sheet's title): DetailTitle's size and weight in the mono family. Declared after
        .mono, so its size wins over .mono's (Avalonia applies same-priority styles in order). -->
@@ -101,12 +107,6 @@
     <Setter Property="LineHeight" Value="{DynamicResource Type.DetailTitle.LineHeight}" />
     <Setter Property="FontWeight" Value="{DynamicResource Type.DetailTitle.Weight}" />
     <Setter Property="LetterSpacing" Value="-0.24" />
-  </Style>
-  <!-- Code reads as typed (#4087): JetBrains Mono joins "=>", "<=" and "!=" into one glyph through its 'calt' and 'liga'
-       features, so every mono text turns both off here (TextBox.typed-field does the same in ControlStyles). A feature list
-       is parsed from text when the XAML compiles, so it is a setter, not a DynamicResource token. -->
-  <Style Selector="TextBlock.mono, SelectableTextBlock.mono, TextBlock.kbd">
-    <Setter Property="FontFeatures" Value="-calt, -liga" />
   </Style>
   <!-- Buttons whose content is a plain string: their text is a Button step, not Fluent's fixed 14. -->
   <Style Selector="Button">
