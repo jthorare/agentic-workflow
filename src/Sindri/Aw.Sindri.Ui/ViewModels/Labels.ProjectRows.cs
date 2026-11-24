@@ -124,14 +124,8 @@ internal static partial class Labels
     /// <summary>The search field's placeholder.</summary>
     internal const string ProjectsSearchPlaceholder = "Search name, note, lead";
 
-    /// <summary>The search field's placeholder under <see cref="ProjectsBarLabelsFrom"/>: the long one would not fit.</summary>
+    /// <summary>The search field's placeholder under <see cref="ProjectsBarLabelsFrom"/>: the long one would not fit; the window is at least 1000 wide (Size.WindowMinWidth), where the box is wide enough for it, so no shorter fallback exists.</summary>
     internal const string ProjectsSearchPlaceholderShort = "Search projects";
-
-    /// <summary>The search field's placeholder when even the short one would not fit its box.</summary>
-    internal const string ProjectsSearchPlaceholderTiny = "Search";
-
-    /// <summary>The box width (px) the short placeholder needs: its words at caption size plus the field's padding (8 left, 64 right for the count).</summary>
-    internal const double ProjectsSearchShortNeeds = 170;
 
     /// <summary>The search field's accessible name.</summary>
     internal const string ProjectsSearchName = "Search projects";
