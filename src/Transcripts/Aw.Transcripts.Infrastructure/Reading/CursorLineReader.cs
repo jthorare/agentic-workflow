@@ -25,6 +25,14 @@ internal sealed class CursorLineReader(bool subagent, DateTimeOffset clock, Func
             return;
         }
 
+        // A user or assistant line with no readable content, or a line with neither such a role nor a type, is of an unknown shape.
+        var spoken = string.Equals(row.Role, "user", StringComparison.Ordinal) || string.Equals(row.Role, "assistant", StringComparison.Ordinal);
+        if ((spoken && !ContentBlocks.IsReadable(row.Message?.Content)) || (!spoken && row.Type is null))
+        {
+            file.SkippedLines++;
+            return;
+        }
+
         var content = ContentBlocks.Read(row.Message?.Content);
         var entry = row.Role switch
         {

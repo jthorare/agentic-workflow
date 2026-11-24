@@ -1,0 +1,74 @@
+using System.Globalization;
+using System.Text.Json;
+using Aw.Sindri.Core.Home;
+using Aw.Sindri.Infrastructure.Processes;
+
+namespace Aw.Sindri.Infrastructure.Home;
+
+/// <summary>
+/// <see cref="IMetaTeamReader"/> over the aw-meta program (AW_SINDRI_AW_META, else 'aw-meta' on the PATH), run through <see cref="IToolRunner"/> with an argument list and no shell:
+/// 'lanes-context --json', 'status --json', 'usage --json' and 'team-list --json'. 'lanes-context' and 'usage' exit 1 when something needs attention and still print JSON, so exit 0
+/// and 1 both parse stdout; a missing program, a timeout, any other exit or JSON that does not parse makes the whole read unavailable (home spec §8, 'lanes-unavailable').
+/// 'team-list' is optional: without it the read has no repository directory.
+/// </summary>
+/// <param name="runner">Runs aw-meta.</param>
+/// <param name="environment">Reads AW_SINDRI_AW_META.</param>
+internal sealed class AwMetaTeamReader(IToolRunner runner, Func<string, string?> environment) : IMetaTeamReader
+{
+    /// <summary>The environment variable naming the aw-meta program.</summary>
+    internal const string ProgramVariable = "AW_SINDRI_AW_META";
+
+    private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(20);
+
+    // why: the order Parse reads them in; team-list is optional and read after
+    private static readonly string[] _required = ["lanes-context", "status", "usage"];
+
+    // why: each aw-meta call blocks for up to the timeout and the scheduler runs a service inline, so the read leaves the caller's thread
+    public async ValueTask<MetaTeamRead> Read(CancellationToken cancellationToken) =>
+        await Task.Run(() => ReadBlocking(cancellationToken), cancellationToken).ConfigureAwait(false);
+
+    private MetaTeamRead ReadBlocking(CancellationToken cancellationToken)
+    {
+        var program = environment(ProgramVariable) is { Length: > 0 } set ? set : "aw-meta";
+        var answers = new List<string>();
+        foreach (var command in _required)
+        {
+            var (output, problem) = Run(program, command, cancellationToken);
+            if (problem is not null)
+            {
+                return MetaTeamRead.NotAvailable(problem);
+            }
+
+            answers.Add(output);
+        }
+
+        var (teamList, teamProblem) = Run(program, "team-list", cancellationToken);
+        return Parse(answers, teamProblem is null ? teamList : null);
+    }
+
+    private static MetaTeamRead Parse(List<string> answers, string? teamList)
+    {
+        try
+        {
+            return AwMetaJson.Parse(answers[0], answers[1], answers[2], teamList);
+        }
+        catch (Exception e) when (e is JsonException or InvalidOperationException or FormatException or KeyNotFoundException)   // boundary: aw-meta's JSON is outside text; a shape this build doesn't know is 'unavailable', never a crash
+        {
+            return MetaTeamRead.NotAvailable($"aw-meta printed JSON this build can't read ({e.GetType().Name})");
+        }
+    }
+
+    private (string Output, string? Problem) Run(string program, string command, CancellationToken cancellationToken)
+    {
+        var run = runner.Run(program, [command, "--json"], _timeout, options: null, cancellationToken);
+        return run.Outcome switch
+        {
+            ToolOutcome.Missing => ("", $"{program} is not on the PATH (set {ProgramVariable} or install aw-meta)"),
+            ToolOutcome.TimedOut => ("", $"aw-meta {command} ran past {_timeout.TotalSeconds.ToString(CultureInfo.InvariantCulture)} s"),
+            ToolOutcome.Exited when run.ExitCode is 0 or 1 => (run.Output, null),
+            ToolOutcome.Exited => ("", string.Create(CultureInfo.InvariantCulture, $"aw-meta {command} exited {run.ExitCode}")),
+            ToolOutcome.Cancelled => ("", $"aw-meta {command} was cancelled"),
+            _ => ("", $"aw-meta {command} ended with an outcome this build does not know"),
+        };
+    }
+}

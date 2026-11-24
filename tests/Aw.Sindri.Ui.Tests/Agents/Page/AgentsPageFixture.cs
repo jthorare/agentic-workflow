@@ -51,8 +51,9 @@ internal sealed class AgentsPageFixture
         return list;
     }
 
+    /// <summary>The golden's own row for this provider prefix: rows a test adds are appended, so the first match stays the golden's.</summary>
     internal static JsonObject Row(JsonNode list, string prefix) =>
-        list["sessions"]!.AsArray().Select(r => r!.AsObject()).Single(r => ((string)r["ref"]!).StartsWith(prefix, StringComparison.Ordinal)); // why: every row has a ref
+        list["sessions"]!.AsArray().Select(r => r!.AsObject()).First(r => ((string)r["ref"]!).StartsWith(prefix, StringComparison.Ordinal)); // why: every row has a ref; First, because a test that adds a row with the same prefix appends it after the golden's own
 
     internal static void Remove(JsonNode list, string prefix)
     {

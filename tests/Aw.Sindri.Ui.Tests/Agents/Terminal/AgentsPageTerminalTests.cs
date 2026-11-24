@@ -1,8 +1,8 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Terminal;
-using Aw.Sindri.Ui.Tests.Agents.Page;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Agents.Page;
 using Aw.Sindri.Ui.ViewModels.Agents;
 
 namespace Aw.Sindri.Ui.Tests.Agents.Terminal;
@@ -124,7 +124,7 @@ public sealed class AgentsPageTerminalTests
     public async Task Opening_by_key_puts_focus_in_the_pane_for_a_row_that_is_drawn_and_refuses_one_that_is_not()
     {
         var page = await _f.Shown(Token);
-        var key = page.Groups.SelectMany(g => g.Rows).Select(r => r.Ref).First();
+        var key = page.Groups.SelectMany(g => g.Rows).First(r => r.Row.Host.Pane is { Length: > 0 }).Ref;
 
         var opened = page.OpenTerminalByKey(key);
         var ghost = page.OpenTerminalByKey("sindri-nothere");
@@ -136,10 +136,10 @@ public sealed class AgentsPageTerminalTests
 
     private const string Ready = "{\"t\":\"ready\",\"v\":1,\"host\":{\"socket\":\"s\",\"session\":\"x\",\"pane\":\"%0\"}}";
 
-    // A page with a pane open on a row that has one, its socket the in-memory connector.
-    private async Task<(AgentsPageViewModel Page, FakeTerminalConnector Socket)> WithOpenPane()
+    // A page with a pane open on a row that has one, its socket the in-memory connector. The socket closes after its script unless staysOpen: a paste that must go out needs a live socket.
+    private async Task<(AgentsPageViewModel Page, FakeTerminalConnector Socket)> WithOpenPane(bool staysOpen = false)
     {
-        var socket = new FakeTerminalConnector { Script = [Ready] };
+        var socket = new FakeTerminalConnector { Script = [Ready], StaysOpen = staysOpen };
         var page = new AgentsPageViewModel(_f.Server, _f.Clipboard, _f.Clock, _f.Catalog, connector: socket);
         page.SetShown(shown: true);
         await page.Refresh(AgentsPageFixture.Url, Token);
@@ -165,7 +165,7 @@ public sealed class AgentsPageTerminalTests
     [Fact]
     public async Task A_short_paste_through_the_page_goes_out_as_one_paste_message_and_leaves_the_line_empty()
     {
-        var (page, socket) = await WithOpenPane();
+        var (page, socket) = await WithOpenPane(staysOpen: true);
 
         _ = await page.SendPanePaste("echo hi");
         for (var i = 0; i < 200 && socket.Sent.Count == 0; i++)
@@ -180,7 +180,7 @@ public sealed class AgentsPageTerminalTests
     [Fact]
     public async Task A_short_paste_after_a_too_big_one_clears_the_notice()
     {
-        var (page, socket) = await WithOpenPane();
+        var (page, socket) = await WithOpenPane(staysOpen: true);
         _ = await page.SendPanePaste(new string('a', 300 * 1024));
         var notice = page.Terminal.ControlLine;
 
@@ -191,5 +191,49 @@ public sealed class AgentsPageTerminalTests
         }
 
         Assert.Equal(("Paste too big to send", string.Empty, 1), (notice, page.Terminal.ControlLine, socket.Sent.Count));
+    }
+
+    // A page whose pane fitted before any row opened, then opens a row on the in-memory connector and waits for ready's size message (or just the connect when it sends none).
+    private async Task<FakeTerminalConnector> OpenAfterFit(int cols, int rows, bool sends = true)
+    {
+        var socket = new FakeTerminalConnector { Script = [Ready], StaysOpen = true };
+        var page = new AgentsPageViewModel(_f.Server, _f.Clipboard, _f.Clock, _f.Catalog, connector: socket);
+        page.SetShown(shown: true);
+        await page.Refresh(AgentsPageFixture.Url, Token);
+        _ = await page.FitPane(cols, rows);
+        var key = page.Groups.SelectMany(g => g.Rows).First(r => r.Row.Host.Pane is { Length: > 0 }).Ref;
+        Assert.True(page.OpenTerminalByKey(key));
+        for (var i = 0; i < 200 && (sends ? socket.Sent.Count : socket.Opens.Count) == 0; i++)
+        {
+            await Task.Delay(10, Token);
+        }
+
+        return socket;
+    }
+
+    [Fact]
+    public async Task A_new_session_opens_with_the_stored_fit_and_sends_it_after_ready()
+    {
+        var socket = await OpenAfterFit(100, 50);
+
+        Assert.Equal([(100, 50)], socket.Opens.Select(o => (o.Cols, o.Rows)));
+        Assert.Equal([TerminalSocketMessages.Size(100, 50)], socket.Sent);
+    }
+
+    [Fact]
+    public async Task A_stored_fit_under_the_servers_floor_opens_the_next_hello_at_the_floor()
+    {
+        var socket = await OpenAfterFit(10, 3);
+
+        Assert.Equal([(20, 5)], socket.Opens.Select(o => (o.Cols, o.Rows)));
+        Assert.Equal([TerminalSocketMessages.Size(20, 5)], socket.Sent);
+    }
+
+    [Fact]
+    public async Task A_fit_of_zero_is_not_stored_so_the_next_hello_opens_at_the_default()
+    {
+        var socket = await OpenAfterFit(0, 0, sends: false);
+
+        Assert.Equal([(120, 36)], socket.Opens.Select(o => (o.Cols, o.Rows)));
     }
 }
