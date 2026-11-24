@@ -135,6 +135,9 @@ cp "$DIR/install-cs.sh" "$REPO/scripts/"
 cp "$DIR/lib/sindri-build-inputs.sh" "$DIR/lib/sindri-open-runs.sh" "$REPO/scripts/lib/"
 printf '#!/usr/bin/env bash\n[ "${1:-}" = --expensive ] && shift\nexec "$@"\n' > "$REPO/scripts/heavy.sh"; chmod +x "$REPO/scripts/heavy.sh"
 printf '#!/bin/sh\necho "reserve-stub $*"\n' > "$REPO/scripts/meta-gate-reserve.sh"; chmod +x "$REPO/scripts/meta-gate-reserve.sh"
+printf '#!/bin/sh\necho "pr-watch-stub $*"\n' > "$REPO/scripts/aw-pr-watch.sh"; chmod +x "$REPO/scripts/aw-pr-watch.sh"
+printf '#!/bin/sh\necho "aw-commands-stub $*"\n' > "$REPO/scripts/aw-commands.sh"; chmod +x "$REPO/scripts/aw-commands.sh"
+mkdir -p "$REPO/config"; echo '{"version":1,"entries":[]}' > "$REPO/config/commands.toolkit.json"
 printf '#!/bin/sh\necho "aw-run-stub $*"\n' > "$REPO/scripts/aw-run.sh"; chmod +x "$REPO/scripts/aw-run.sh"
 printf '{"sdk":{"version":"%s"}}\n' "$FAKE_SDK" > "$REPO/global.json"
 echo a > "$REPO/src/Sindri/Aw.Sindri.Host/a.cs"; echo b > "$REPO/src/Judge/b.cs"
@@ -181,6 +184,7 @@ check "dry run writes no state" "$([ -e "$AW_STATE_DIR" ] && echo yes || echo no
 check "dry run publishes nothing" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "0"
 has "dry run says it would link heavy through current" "$out" "[dry-run] would link $AW_STATE_DIR/bin-r1b/heavy -> $AW_STATE_DIR/bin/cs/current/heavy"
 has "dry run says it would link meta-gate-reserve through current" "$out" "[dry-run] would link $AW_STATE_DIR/bin-r1b/meta-gate-reserve -> $AW_STATE_DIR/bin/cs/current/meta-gate-reserve"
+has "dry run says it would link aw-pr-watch through current" "$out" "[dry-run] would link $CLAUDE_LOCAL_BIN/aw-pr-watch -> $AW_STATE_DIR/bin/cs/current/aw-pr-watch when the build has it"
 
 # --- link before any build ---
 out="$(bash "$INSTALL" --link 2>&1)"; rc=$?
@@ -203,6 +207,11 @@ check "the build carries heavy, executable" "$([ -x "$B/$S1/heavy" ] && echo yes
 check "the build's heavy is scripts/heavy.sh" "$(cmp -s "$B/$S1/heavy" "$REPO/scripts/heavy.sh" && echo same || echo differs)" "same"
 check "the build carries meta-gate-reserve, executable" "$([ -x "$B/$S1/meta-gate-reserve" ] && echo yes || echo no)" "yes"
 check "the build's meta-gate-reserve is scripts/meta-gate-reserve.sh" "$(cmp -s "$B/$S1/meta-gate-reserve" "$REPO/scripts/meta-gate-reserve.sh" && echo same || echo differs)" "same"
+check "the build carries aw-pr-watch, executable" "$([ -x "$B/$S1/aw-pr-watch" ] && echo yes || echo no)" "yes"
+check "the build's aw-pr-watch is scripts/aw-pr-watch.sh" "$(cmp -s "$B/$S1/aw-pr-watch" "$REPO/scripts/aw-pr-watch.sh" && echo same || echo differs)" "same"
+check "--publish leaves the aw-pr-watch link alone" "$([ -e "$CLAUDE_LOCAL_BIN/aw-pr-watch" ] || [ -L "$CLAUDE_LOCAL_BIN/aw-pr-watch" ] && echo yes || echo no)" "no"
+check "the build's aw-commands is scripts/aw-commands.sh, executable" "$([ -x "$B/$S1/aw-commands" ] && cmp -s "$B/$S1/aw-commands" "$REPO/scripts/aw-commands.sh" && echo same || echo differs)" "same"
+check "the build carries the toolkit catalog as commands.json" "$(cmp -s "$B/$S1/commands.json" "$REPO/config/commands.toolkit.json" && echo same || echo differs)" "same"
 check "the build carries aw-run, executable" "$([ -x "$B/$S1/aw-run" ] && echo yes || echo no)" "yes"
 check "the build's aw-run is scripts/aw-run.sh" "$(cmp -s "$B/$S1/aw-run" "$REPO/scripts/aw-run.sh" && echo same || echo differs)" "same"
 check "--publish leaves the meta-gate-reserve link alone" "$([ -e "$AW_STATE_DIR/bin-r1b/meta-gate-reserve" ] || [ -L "$AW_STATE_DIR/bin-r1b/meta-gate-reserve" ] && echo yes || echo no)" "no"
@@ -246,7 +255,21 @@ check "the resolved meta-gate-reserve is scripts/meta-gate-reserve.sh" "$(cmp -s
 check "the old real meta-gate-reserve moved to meta-gate-reserve.pre-repo" "$(sh "$MR.pre-repo")" "old-reserve"
 check "a second --link adds no other file" "$(ls "$AW_STATE_DIR/bin-r1b" | tr '\n' ' ')" "heavy heavy.pre-repo meta-gate-reserve meta-gate-reserve.pre-repo "
 check "the linked meta-gate-reserve runs" "$("$MR" --show)" "reserve-stub --show"
+PW="$CLAUDE_LOCAL_BIN/aw-pr-watch"
+check "aw-pr-watch links through current" "$(readlink "$PW")" "$B/current/aw-pr-watch"
+check "aw-pr-watch resolves into the build dir" "$(readlink -f "$PW")" "$(cd "$B/$S1" && pwd -P)/aw-pr-watch"
+case "$(readlink -f "$PW")" in "$REPO"/*) r=repo ;; *) r=outside ;; esac
+check "aw-pr-watch never resolves into the repo" "$r" "outside"
+check "the linked aw-pr-watch runs" "$("$PW" --help)" "pr-watch-stub --help"
+# aw-pr-watch is optional: a build without it still links, and writes no aw-pr-watch link
+mv "$B/$S1/aw-pr-watch" "$B/$S1/aw-pr-watch.away"; mv "$PW" "$WORK/pw-link.away"
+out="$(bash "$INSTALL" --link 2>&1)"; rc=$?
+check "--link of a build without aw-pr-watch still exits 0" "$rc" "0"
+check "...and writes no aw-pr-watch link" "$([ -e "$PW" ] || [ -L "$PW" ] && echo yes || echo no)" "no"
+mv "$B/$S1/aw-pr-watch.away" "$B/$S1/aw-pr-watch"; mv "$WORK/pw-link.away" "$PW"
 check "the linked heavy runs its command" "$("$HV" --expensive echo ran)" "ran"
+check "aw-commands links through current" "$(readlink "$CLAUDE_LOCAL_BIN/aw-commands")" "$B/current/aw-commands"
+check "the linked aw-commands runs" "$("$CLAUDE_LOCAL_BIN/aw-commands" list)" "aw-commands-stub list"
 check "aw-run links through current" "$(readlink "$CLAUDE_LOCAL_BIN/aw-run")" "$B/current/aw-run"
 check "the linked aw-run runs" "$("$CLAUDE_LOCAL_BIN/aw-run" -- x)" "aw-run-stub -- x"
 mv "$B/$S1/heavy" "$B/$S1/heavy.away"
@@ -264,7 +287,7 @@ check "...current unchanged" "$(readlink "$B/current")" "$S1"
 check "...meta-gate-reserve link unchanged" "$(readlink "$MR")" "$B/current/meta-gate-reserve"
 mv "$B/$S1/meta-gate-reserve.away" "$B/$S1/meta-gate-reserve"
 check "current is a symlink to the stamp" "$(readlink "$B/current")" "$S1"
-check "the six wrappers and the aw-run link, not sindri-ui" "$(ls "$CLAUDE_LOCAL_BIN" | tr '\n' ' ')" "aw-packets aw-readiness aw-run bugfix-state judge sindri ui-evidence "
+check "the six wrappers and the aw-commands, aw-pr-watch and aw-run links, not sindri-ui" "$(ls "$CLAUDE_LOCAL_BIN" | tr '\n' ' ')" "aw-commands aw-packets aw-pr-watch aw-readiness aw-run bugfix-state judge sindri ui-evidence "
 check "the TS judge wrapper was replaced" "$(grep -c ts-wrapper "$CLAUDE_LOCAL_BIN/judge")" "0"
 check "no temp file left in the bin dir" "$(ls -A "$CLAUDE_LOCAL_BIN" | grep -c '^\.')" "0"
 envline="$(cd / && AW_STATE_DIR="$WORK/other" "$CLAUDE_LOCAL_BIN/sindri" env)"
@@ -384,6 +407,7 @@ has "not a git checkout: the sentence" "$out" "can only be published from a git 
 # rows stage stubs, so this one stages the REAL scripts into the miniature checkout, publishes, and runs them from the build.
 mkdir -p "$REPO/config/lib"
 cp "$DIR/heavy.sh" "$REPO/scripts/heavy.sh"; cp "$DIR/meta-gate-reserve.sh" "$REPO/scripts/meta-gate-reserve.sh"
+cp "$DIR/aw-pr-watch.sh" "$REPO/scripts/aw-pr-watch.sh"
 cp "$DIR/../config/lib/"*.sh "$REPO/config/lib/"
 g add -A; ccommit -m "real heavy and meta-gate-reserve"
 bash "$INSTALL" --publish > /dev/null 2>&1; check "staged-scripts: the publish with the real scripts exits 0" "$?" "0"
@@ -398,6 +422,9 @@ check "staged heavy runs from its build folder alone: no 'No such file' (heavy-c
 check "staged meta-gate-reserve runs from its build folder alone: exit 0" "$rc" "0"
 check "staged meta-gate-reserve runs from its build folder alone: no 'command not found'" "$(grep -c 'command not found' "$errf")" "0"
 check "staged meta-gate-reserve runs from its build folder alone: no 'No such file'" "$(grep -c 'No such file' "$errf")" "0"
+(cd / && AW_STATE_DIR="$SCR" timeout 20 "$SB/aw-pr-watch" --help > /dev/null 2> "$errf"); rc=$?
+check "staged aw-pr-watch runs from its build folder alone: --help exits 0" "$rc" "0"
+check "staged aw-pr-watch runs from its build folder alone: nothing on stderr" "$(wc -c < "$errf" | tr -d ' ')" "0"
 
 
 # --- the toolkit SDK package (PR 15) ---
@@ -475,7 +502,7 @@ rm -f "$CLAUDE_LOCAL_BIN"/*
 out="$(FAKE_PACK_FAIL=1 bash "$INSTALL" 2>&1)"; rc=$?
 check "a failed pack in the default publish + link exits 0" "$rc" "0"
 has "a failed pack warns and names the step" "$out" "warning: packing the toolkit SDK failed; the next install retries"
-check "a failed pack still links the wrappers" "$(ls "$CLAUDE_LOCAL_BIN" | tr '\n' ' ')" "aw-packets aw-readiness aw-run bugfix-state judge sindri ui-evidence "
+check "a failed pack still links the wrappers" "$(ls "$CLAUDE_LOCAL_BIN" | tr '\n' ' ')" "aw-commands aw-packets aw-pr-watch aw-readiness aw-run bugfix-state judge sindri ui-evidence "
 check "a failed pack leaves the feed as it was" "$(ls "$FEED" | tr '\n' ' ')" "$before"
 check "a failed pack leaves the stamp as it was" "$(cat "$FEED/.sdk-stamp")" "$stamp_before"
 out="$(bash "$INSTALL" --link 2>&1)"

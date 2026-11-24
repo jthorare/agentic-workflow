@@ -47,7 +47,7 @@ Put provider-specific parsing in the adapter, not the canonical hook. The one ex
 
 | Hook | Outputs |
 |------|---------|
-| `git-context.sh` | Current branch, last 5 commits, working tree status |
+| `git-context.sh` | Current branch, last 5 commits, working tree status, and one `Commands: N in .agentic-workflow/commands.json; find one with: aw-commands search <words>` line when the repo has a command catalog (#4221; nothing without jq or for a file that isn't JSON) |
 | `prism-context.sh` | One-line warning if prism-mcp dashboard at `PRISM_DASHBOARD_PORT` (default 7180) is unreachable; silent on success |
 | `sindri-nudge.sh` | One line when the session's repo is not in the approved sindri profile; silent otherwise; bounded by `AW_SINDRI_NUDGE_BUDGET_MS` |
 

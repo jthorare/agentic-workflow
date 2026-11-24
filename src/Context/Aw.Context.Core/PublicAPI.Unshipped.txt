@@ -6044,7 +6044,7 @@ static Aw.Context.Core.Extract.RepoFile.operator ==(Aw.Context.Core.Extract.Repo
 static Aw.Context.Core.Graph.AffectedNode.operator !=(Aw.Context.Core.Graph.AffectedNode? left, Aw.Context.Core.Graph.AffectedNode? right) -> bool
 static Aw.Context.Core.Graph.AffectedNode.operator ==(Aw.Context.Core.Graph.AffectedNode? left, Aw.Context.Core.Graph.AffectedNode? right) -> bool
 static Aw.Context.Core.Graph.AnchorMatch.FromText(Aw.Context.Core.Graph.GraphSnapshot! graph, string! question, Aw.Context.Core.Graph.IAliasPins? pins = null) -> Aw.Context.Core.Graph.TextAnchors!
-static Aw.Context.Core.Graph.AnchorMatch.Resolve(Aw.Context.Core.Graph.GraphSnapshot! graph, string! name, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>? repos = null, Aw.Context.Core.Graph.IAliasPins? pins = null) -> Aw.Kernel.Result<Aw.Context.Core.Graph.GraphNode!>!
+static Aw.Context.Core.Graph.AnchorMatch.Resolve(Aw.Context.Core.Graph.GraphSnapshot! graph, string! name, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>? repos = null, Aw.Context.Core.Graph.IAliasPins? pins = null, System.Func<string!, string!>? label = null) -> Aw.Kernel.Result<Aw.Context.Core.Graph.GraphNode!>!
 static Aw.Context.Core.Graph.Cascade.Affects(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey anchor, int depth) -> Aw.Context.Core.Graph.CascadeResult!
 static Aw.Context.Core.Graph.Cascade.Affects(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey anchor, int depth, Aw.Context.Core.Engine.CascadeOptions! options) -> Aw.Context.Core.Graph.CascadeResult!
 static Aw.Context.Core.Graph.Cascade.OwnsHops(System.Collections.Generic.IReadOnlyList<string!>! path) -> int
@@ -7288,6 +7288,7 @@ static Aw.Context.Core.Search.MapSearchRules.CheckLimit(int? limit) -> Aw.Kernel
 static Aw.Context.Core.Search.MapSearchRules.Terms(string? q) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
 Aw.Context.Core.Facade.IContextLenses.Search(Aw.Context.Core.Search.MapSearchQuery! query, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Search.MapSearchView!>!>
 Aw.Context.Core.Map.MapText.Cleaned(string! text, bool singleLine) -> string!
+Aw.Context.Core.Map.MapText.ChoiceLabel(string! label) -> string!
 Aw.Context.Core.Lenses.LensItem.Repo.get -> string?
 Aw.Context.Core.Lenses.LensItem.Repo.init -> void
 Aw.Context.Core.Lenses.LensFile.Repo.get -> string?
@@ -12494,7 +12495,7 @@ static Aw.Context.Core.Engine.AnchorChoice.operator !=(Aw.Context.Core.Engine.An
 static Aw.Context.Core.Engine.AnchorChoice.operator ==(Aw.Context.Core.Engine.AnchorChoice? left, Aw.Context.Core.Engine.AnchorChoice? right) -> bool
 Aw.Context.Core.Results.ContextResult.Suggestions.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.AnchorChoice!>?
 Aw.Context.Core.Results.ContextResult.Suggestions.init -> void
-static Aw.Context.Core.Graph.AnchorMatch.Choices(System.Collections.Generic.IEnumerable<Aw.Context.Core.Graph.GraphNode!>! nodes) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.AnchorChoice!>!
+static Aw.Context.Core.Graph.AnchorMatch.Choices(System.Collections.Generic.IEnumerable<Aw.Context.Core.Graph.GraphNode!>! nodes, System.Func<string!, string!>? label = null) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.AnchorChoice!>!
 static Aw.Context.Core.ContextErrors.IsMissedDeadline(Aw.Kernel.Error! error) -> bool
 static Aw.Context.Core.ContextErrors.MissedDeadline(string! source) -> Aw.Kernel.Error!
 Aw.Context.Core.Extract.MapBuildFiles
