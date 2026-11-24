@@ -210,6 +210,34 @@ public sealed class CollectorSourceTimeoutTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Overrun_passes_in_a_row_say_how_old_the_list_is_4244()
+    {
+        var fake = new FakeProcessTable();
+        using var table = new StuckTable(fake);
+        var c = new CollectorHarness(processes: table);
+        _ = fake.With(Proc(10, 1, "claude", argv0: "claude"), cwd: "/w/api");
+        _ = await c.Pass();
+        var fullPassAt = c.Now;
+        table.BlockReads = true;
+
+        var firstPass = c.Pass(_budget);
+        await table.Tables.Reached(2);
+        c.Base.Clock.Advance(_budget);
+        _ = await firstPass;
+        for (var i = 0; i < 2; i++)
+        {
+            c.Base.Clock.Advance(TimeSpan.FromSeconds(5));
+            _ = await c.Pass(_budget);   // still blocked: not started again
+        }
+
+        table.Release();
+
+        var snapshot = c.Snapshot.Current!;
+        Assert.Equal(fullPassAt, snapshot.ObservedAt);   // the list is the last full pass's
+        Assert.Equal(3, snapshot.ConsecutiveOverruns);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_full_pending_queue_drops_the_oldest_and_logs_once_then_again_after_it_drains_and_overflows_again()
     {
         var log = new ListLogger<CollectSessionsService>();

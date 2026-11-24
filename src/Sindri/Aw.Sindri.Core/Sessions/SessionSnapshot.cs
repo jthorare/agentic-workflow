@@ -8,6 +8,9 @@ namespace Aw.Sindri.Core.Sessions;
 public sealed record SessionSnapshot(
     IReadOnlyList<ObservedSession> Sessions, IReadOnlyList<EndedSession> RecentlyEnded, IReadOnlyList<SessionProblem> Problems, DateTimeOffset ObservedAt)
 {
+    /// <summary>How many passes in a row kept the previous list because the process table overran (#4244); 0 after a full pass. <see cref="ObservedAt"/> is then the last full pass.</summary>
+    public int ConsecutiveOverruns { get; init; }
+
     /// <summary>The last 20 state changes of each live session in this Sindri run, oldest first (collector spec CA-2).</summary>
     public IReadOnlyDictionary<SessionRef, IReadOnlyList<SessionStateEntry>> History { get; init; } = new Dictionary<SessionRef, IReadOnlyList<SessionStateEntry>>();
 }

@@ -7980,6 +7980,8 @@ Aw.Sindri.Core.Sessions.SessionRow.Worktree.get -> string?
 Aw.Sindri.Core.Sessions.SessionRow.Worktree.init -> void
 Aw.Sindri.Core.Sessions.SessionSnapshot.History.get -> System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Sessions.SessionRef, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.SessionStateEntry!>!>!
 Aw.Sindri.Core.Sessions.SessionSnapshot.History.init -> void
+Aw.Sindri.Core.Sessions.SessionSnapshot.ConsecutiveOverruns.get -> int
+Aw.Sindri.Core.Sessions.SessionSnapshot.ConsecutiveOverruns.init -> void
 Aw.Sindri.Core.Sessions.SessionStateEntry
 Aw.Sindri.Core.Sessions.SessionStateEntry.<Clone>$() -> Aw.Sindri.Core.Sessions.SessionStateEntry!
 Aw.Sindri.Core.Sessions.SessionStateEntry.At.get -> System.DateTimeOffset
