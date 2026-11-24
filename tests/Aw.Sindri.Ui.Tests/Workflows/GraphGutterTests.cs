@@ -7,6 +7,7 @@ namespace Aw.Sindri.Ui.Tests.Workflows;
 [Lane(TestLane.Unit)]
 public sealed class GraphGutterTests
 {
+    // The proof of the cap: the rows at 400 and 300 fail without it.
     [Theory]
     [InlineData(1000, 232)]   // 200 + 2 x 16
     [InlineData(464, 232)]
@@ -15,8 +16,9 @@ public sealed class GraphGutterTests
     public void The_gutter_is_the_map_and_its_margins_but_never_over_half_the_canvas(double canvas, double gutter) =>
         Assert.Equal(gutter, GraphZoom.MapGutterFor(canvas), 3);
 
+    // A guard, not the proof: under 464 px the 290 px cards are one column with or without the cap, so this passes either way (#4214).
     [Fact]
-    public void Fit_on_a_400_px_canvas_with_the_map_shown_leaves_the_cards_at_least_half_the_width()
+    public void Guard_fit_on_a_400_px_canvas_with_the_map_shown_leaves_the_cards_at_least_half_the_width()
     {
         var fit = GraphFit.Compute(GraphFitTests.Chain(40), 400, 520, 1.0);
         var right = fit.Cards.Values.Max(c => c.X + c.Width) * fit.Zoom;
