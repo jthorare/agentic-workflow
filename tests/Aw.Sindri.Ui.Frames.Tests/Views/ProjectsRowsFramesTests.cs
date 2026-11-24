@@ -35,7 +35,7 @@ public sealed class ProjectsRowsFramesTests : FrameHost
     };
 
     // The mixed golden with truth: Checkout rewrite off track (and a long name), Kitchen CI not checked, Mobile app no open PRs.
-    private static string Served(bool factsMissing)
+    private static string Served(bool factsMissing, int extraRows = 0)
     {
         var list = JsonNode.Parse(GoldenFiles.Api("projects", "mixed"))!;   // why: the golden is a JSON document
         var projects = list["projects"]!.AsArray();
@@ -43,6 +43,14 @@ public sealed class ProjectsRowsFramesTests : FrameHost
         projects[0]!["truth"] = Truth(factsMissing ? null : "offTrack");
         projects[1]!["truth"] = Truth(factsMissing ? null : "unknown");
         projects[2]!["truth"] = Truth(level: null);
+        for (var i = 0; i < extraRows; i++)   // more projects with no open PRs, so the list is taller than the window and scrolls
+        {
+            var more = JsonNode.Parse(projects[2]!.ToJsonString())!;
+            more["id"] = "prj_" + (100 + i).ToString("D26", CultureInfo.InvariantCulture);
+            more["name"] = "Extra project " + i.ToString(CultureInfo.InvariantCulture);
+            projects.Add(more);
+        }
+
         if (factsMissing)
         {
             list["freshness"]!.AsArray().Add(new JsonObject { ["source"] = "sindri", ["state"] = "failing", ["text"] = "SND-REVIEWS-012: reviews.db is locked", ["at"] = null });
@@ -51,9 +59,9 @@ public sealed class ProjectsRowsFramesTests : FrameHost
         return list.ToJsonString();
     }
 
-    private async Task<(Window Window, ShellViewModel Shell)> OnProjects(int width, int height, bool factsMissing = false)
+    private async Task<(Window Window, ShellViewModel Shell)> OnProjects(int width, int height, bool factsMissing = false, int extraRows = 0)
     {
-        Server.ProjectsAnswer = new RouteAnswer(HttpStatusCode.OK, Served(factsMissing));
+        Server.ProjectsAnswer = new RouteAnswer(HttpStatusCode.OK, Served(factsMissing, extraRows));
         var (window, shell) = await Connected(width: width, height: height);
         shell.Projects.SetView(ViewModels.Projects.ProjectView.All);   // why: the golden's finished and hidden cards carry blockedOnYou, so an unpicked view opens on Needs me, which has no row here
         shell.GoTo(PageId.Projects);
@@ -122,5 +130,25 @@ public sealed class ProjectsRowsFramesTests : FrameHost
         }
 
         Assert.True(Right(Named<TextBox>(window, "ProjectsSearch"), window) <= Left(Named<Button>(window, "ProjectsSort"), window), "the search box runs under Sort");
+    });
+
+    // Issue 4153: a scrolled list keeps the current group's head under the column heads; at the top the real head shows and no copy does.
+    [Fact]
+    public Task A_scrolled_list_sticks_the_current_groups_head_under_the_column_heads() => OnUi(async () =>
+    {
+        var (window, shell) = await OnProjects(1000, 700, extraRows: 20);
+        var scroll = Named<ScrollViewer>(window, "ProjectsScroll");
+        var sticky = Named<Button>(window, "ProjectsStickyHead");
+        Assert.False(sticky.IsEffectivelyVisible, "a second copy of the head shows at scroll 0");
+
+        scroll.Offset = new Vector(0, scroll.Extent.Height);
+        Settle(window);
+
+        var last = shell.Projects.Groups[^1];
+        Assert.True(sticky.IsEffectivelyVisible, "no head sticks while the list is scrolled");
+        Assert.Equal((last.Heading, last.Count.ToString(CultureInfo.InvariantCulture)), (Named<TextBlock>(window, "ProjectsStickyHeading").Text, Named<TextBlock>(window, "ProjectsStickyCount").Text));
+        var heads = Named<Border>(window, "ProjectsColumnHeads");
+        var gap = (sticky.TranslatePoint(default, window)?.Y ?? double.NaN) - (heads.TranslatePoint(new Point(0, heads.Bounds.Height), window)?.Y ?? double.NaN);
+        Assert.True(Math.Abs(gap) <= 0.5, string.Create(CultureInfo.InvariantCulture, $"the sticky head is {gap} px from the column heads"));
     });
 }
