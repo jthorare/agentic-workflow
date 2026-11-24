@@ -1,0 +1,6 @@
+gutter-40-1000-fit zoom=86% canvas="unread" minimapVisible=true
+gutter-40-1000-125 zoom=125% canvas="unread" minimapVisible=true
+gutter-40-1280-fit zoom=86% canvas="unread" minimapVisible=true
+gutter-40-1440-fit zoom=86% canvas="unread" minimapVisible=unread
+gutter-40-1440-110 zoom=110% canvas="unread" minimapVisible=unread
+gutter-40-1440-125 zoom=125% canvas="unread" minimapVisible=true
