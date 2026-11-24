@@ -125,3 +125,22 @@ test('the same branch name open in two repos shows only the session repo PR', as
 test('a session with no remote shows no line', async ($, on) => {
   expect(await drawn($, on, null)).toBeUndefined()
 })
+
+test('the line says (stale) when the last gh poll failed', async ($, on) => {
+  const clock = mock.clock(on)
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('session.cwd', () => ({ value: '/' }))
+  let calls = 0
+  const ok = ghAndGit('frn-1-sample')
+  on('process.run', (h: unknown, e: { readonly argv: readonly string[] }) => {
+    if (e.argv.includes('graphql') && ++calls > 1) {
+      return { value: { exitCode: 1, stdout: '', stderr: 'rate limited', isStdoutTruncated: false, isStderrTruncated: false } }
+    }
+    return ok(h, e)
+  })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  await clock.advance(61_000)
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' } as never)
+  expect(await ui.find({ type: 'Text', text: /\(stale\)/ })).toBeDefined()
+  await ui.unmount()
+})

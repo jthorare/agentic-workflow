@@ -41,7 +41,7 @@ function repoOf(remote: string): string | null {
   return m ? `${m[1]}/${m[2]}` : null
 }
 
-async function refreshBranch($: EngineInterface): Promise<string | null> {
+async function lookUpBranch($: EngineInterface): Promise<string | null> {
   const cwd = await $.session.cwd()
   const res = await $.process.run(['git', 'branch', '--show-current'], { cwd, timeoutMs: 5_000 })
   const name = res.exitCode === 0 ? res.stdout.trim() : ''
@@ -56,6 +56,16 @@ async function refreshBranch($: EngineInterface): Promise<string | null> {
   if ((await read($, sessionBranch)) !== branch) await update($, sessionBranch, () => branch)
   if ((await read($, sessionRepo)) !== repo) await update($, sessionRepo, () => repo)
   return branch
+}
+
+// git missing or the directory gone: no branch, so no line and no poll, instead of a throw inside a timer or hook.
+async function refreshBranch($: EngineInterface): Promise<string | null> {
+  try {
+    return await lookUpBranch($)
+  } catch {
+    if ((await read($, sessionBranch)) !== null) await update($, sessionBranch, () => null)
+    return null
+  }
 }
 
 // The PR of this session: same repo and same branch.
@@ -151,6 +161,8 @@ export const register: Register = on => {
     if (branch === null) return hint
     const row = await sessionRow($, branch)
     if (!row) return hint
+    // gh failed on the last poll (missing, logged out, rate-limited): these rows are old, so say so.
+    const isStale = (await read($, snapshot)).error !== null
     const { Box, Text } = $.ui.resolve(e)
     return (
       <Box flexDirection="column">
@@ -167,6 +179,7 @@ export const register: Register = on => {
             {'   -> '}
             {row.next}
           </Text>
+          {isStale && <Text dimColor>{'   (stale)'}</Text>}
         </Text>
       </Box>
     )
