@@ -112,6 +112,15 @@ check "AW_STATE_DIR unset -> reads ~/.agentic-workflow/policy" \
 # Sourcing under set -e and calling with a bad id never kills the caller.
 check "set -eu caller survives a bad id" \
   "$(env AW_STATE_DIR="$STATE" bash -c 'set -eu; . "$1"; policy_mode "../x" >/dev/null; echo alive' _ "$TREE/lib/policy.sh" 2>/dev/null)" "alive"
+# A broken policy file makes jq exit non-zero: a set -eu caller still survives and reads advisory.
+printf '{"policies":' > "$TREE/policy/interventions.json"
+no_mode_file
+check "set -eu caller survives a broken JSON file" \
+  "$(env -u AW_POLICY_RETRY_GUARD_1_MODE AW_STATE_DIR="$STATE" bash -c 'set -eu; . "$1"; m="$(policy_mode retry-guard/1)"; policy_mode retry-guard/1 >/dev/null; echo "alive $m"' _ "$TREE/lib/policy.sh" 2>/dev/null)" "alive advisory"
+json advisory null
+# No AW_STATE_DIR and no HOME: a set -u caller survives and reads the JSON.
+check "set -u caller with HOME and AW_STATE_DIR unset survives" \
+  "$(env -u HOME -u AW_STATE_DIR -u AW_POLICY_RETRY_GUARD_1_MODE bash -c 'set -eu; . "$1"; policy_mode retry-guard/1 >/dev/null; echo alive' _ "$TREE/lib/policy.sh" 2>/dev/null)" "alive"
 
 # Never writes: the state dir (without a policy dir) and the tree are the same before and after every kind of call.
 EMPTY_STATE="$WORK/empty-state"
