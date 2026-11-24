@@ -7,13 +7,13 @@ function pr(over: Record<string, unknown>) {
   return {
     number: 1,
     title: 'fix(schedule): sample (FRN-1)',
-    url: 'https://github.com/vitalizecare/web-app/pull/1',
+    url: 'https://github.com/example-org/app/pull/1',
     isDraft: false,
     mergeable: 'MERGEABLE',
     headRefName: 'other-branch',
     headRefOid: HEAD,
     reviewDecision: 'REVIEW_REQUIRED',
-    repository: { nameWithOwner: 'vitalizecare/web-app' },
+    repository: { nameWithOwner: 'example-org/app' },
     autoMergeRequest: null,
     mergeQueueEntry: null,
     commits: { nodes: [{ commit: { statusCheckRollup: { contexts: { nodes: [
@@ -23,7 +23,7 @@ function pr(over: Record<string, unknown>) {
     ] } } } }] },
     reviewThreads: { nodes: [] },
     latestReviews: { nodes: [
-      { state: 'COMMENTED', author: { __typename: 'Bot', login: 'vitalize-agent' }, commit: { oid: HEAD } },
+      { state: 'COMMENTED', author: { __typename: 'Bot', login: 'review-bot' }, commit: { oid: HEAD } },
     ] },
     reviewRequests: { nodes: [] },
     ...over,

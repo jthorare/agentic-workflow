@@ -2,9 +2,10 @@ import { atom, read, update } from 'claude-code'
 import type { ElementTable, EngineInterface, Register } from 'claude-code'
 
 import type { Person, PrRow, Snapshot } from '../types'
-import { QUERY, toRows } from './rows'
+import { BOTS, QUERY, toRows } from './rows'
 import type { ThreadMemory } from './rows'
 
+const HOME_REPO = Object.keys(BOTS)[0]
 const PANE = 'my-prs'
 const POLL_MS = 60_000
 const EMPTY: Snapshot = { rows: [], updatedAt: null, error: null }
@@ -204,7 +205,7 @@ export const register: Register = on => {
           <Box flexDirection="column" marginTop={1}>
             <Text wrap="wrap">
               <Link href={row.url}>#{row.number}</Link> {row.title}
-              {row.repo === 'vitalizecare/web-app' ? '' : ` (${row.repo})`}
+              {row.repo === HOME_REPO ? '' : ` (${row.repo})`}
             </Text>
             {rowLines({ Text }, row, '  ')}
           </Box>

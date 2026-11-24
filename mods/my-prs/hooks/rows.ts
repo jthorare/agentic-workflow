@@ -25,10 +25,10 @@ export const QUERY = `query {
   }
 }`
 
-// Bot reviewers the ship sequence waits on, per repo.
-const BOTS: Record<string, { name: string; reviewLogin?: string; checkRun?: string }[]> = {
-  'vitalizecare/web-app': [
-    { name: 'vitalize-agent', reviewLogin: 'vitalize-agent' },
+// Bot reviewers the ship sequence waits on, per repo. Edit for your own repos; the first repo is the pane's home repo.
+export const BOTS: Record<string, { name: string; reviewLogin?: string; checkRun?: string }[]> = {
+  'example-org/app': [
+    { name: 'review-bot', reviewLogin: 'review-bot' },
     { name: 'Bugbot', checkRun: 'Cursor Bugbot' },
   ],
 }
