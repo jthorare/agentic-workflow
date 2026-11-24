@@ -17,7 +17,8 @@
 # Only the binaries whose inputs changed are published (#3041). Each binary has its own input set: the project dirs of its project and
 # of every project it references (the ProjectReference closure), the root build files, and the few files outside src/ that the
 # projects embed (scripts/lib/sindri-build-inputs.sh). A build keeps the hash of each binary's inputs (inputs/<name>.sha256), the
-# top-level files its publish made (inputs/<name>.files) and the commit it was made at (inputs/<name>.rev). A publish compares each
+# top-level files its publish made (inputs/<name>.files), the commit it was made at (inputs/<name>.rev) and the git pathspecs its
+# inputs come from (inputs/<name>.paths, which aw-meta health compares with origin/main, #4249). A publish compares each
 # hash with the one in the build `current` names; a binary that matches is copied from that build (`install-cs: reusing judge from
 # <stamp>`) in the same order as a publish, so the first file of a name still wins (sindri-ui's libSkiaSharp.so). The stamp still
 # covers everything, so a change to scripts/heavy.sh alone makes a new build dir whose binaries are all copies. --rebuild, a first
@@ -241,9 +242,8 @@ project_dirs() { # project_dirs <csproj, relative to the checkout>: the project 
   done
   printf '%s\n' $dirs
 }
-input_hash() { # input_hash <csproj>: the hash of one binary's inputs, made as the stamp is: SDK, platform, the files and their git hashes
-  local list d specs=("${ROOT_BUILD_INPUTS[@]}")
-  list="$(mktemp "${TMPDIR:-/tmp}/install-cs-bin.XXXXXX")"
+input_specs() { # input_specs <csproj>: the git pathspecs one binary's inputs come from, one per line, each once (#4249 keeps them as inputs/<name>.paths)
+  local d specs=("${ROOT_BUILD_INPUTS[@]}")
   for d in $(project_dirs "$1"); do
     specs+=("$d")
     case "$d" in
@@ -251,6 +251,12 @@ input_hash() { # input_hash <csproj>: the hash of one binary's inputs, made as t
       src/Judge | src/Judge/*) specs+=("${JUDGE_EXTRA_INPUTS[@]}") ;;
     esac
   done
+  printf '%s\n' "${specs[@]}" | awk '!seen[$0]++'
+}
+input_hash() { # input_hash <csproj>: the hash of one binary's inputs, made as the stamp is: SDK, platform, the files and their git hashes
+  local list s specs=()
+  list="$(mktemp "${TMPDIR:-/tmp}/install-cs-bin.XXXXXX")"
+  while IFS= read -r s; do specs+=("$s"); done < <(input_specs "$1")
   # A git that dies here (killed under memory pressure) stops the publish with a message; it never ends the script silently (#3218).
   git -C "$root" ls-files -z --cached --others --exclude-standard -- "${specs[@]}" > "$list.z" \
     || { rm -f "$list" "$list.z"; die "git ls-files failed while hashing the inputs of $1 (git ended with an error; run it again)"; }
@@ -466,6 +472,7 @@ publish() {
     if [ -n "$from" ]; then
       have="$(cat "$from/inputs/$name.sha256" 2> /dev/null || true)"
       if [ "$have" = "$want" ] && [ -f "$from/inputs/$name.files" ] && reuse "$name" "$from"; then
+        input_specs "$proj" > "$stage/inputs/$name.paths"
         say "reusing $name from $cur"
         return 0
       fi
@@ -485,6 +492,8 @@ publish() {
     done
     printf '%s\n' "$want" > "$stage/inputs/$name.sha256"
     printf '%s\n' "$revision" > "$stage/inputs/$name.rev"
+    # The pathspecs the hash was made over, so aw-meta health can ask origin/main whether they changed since $revision (#4249).
+    input_specs "$proj" > "$stage/inputs/$name.paths"
     rm -rf "$out"
   }
   # reuse <name> <build dir>: pub()'s merge, from the files the earlier publish of <name> left in <build dir> (never moved: the
