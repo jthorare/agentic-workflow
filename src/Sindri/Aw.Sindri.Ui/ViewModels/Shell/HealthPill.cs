@@ -11,6 +11,9 @@ internal sealed class HealthPill : ObservableObject
     // The views' own problems (stalled, replaying): the shell's banner says them once, and the pill's word is the state.
     private static readonly HashSet<string> _viewsCodes = new(["SND-VIEW-001", "SND-API-010"], StringComparer.Ordinal);
 
+    // The control plane's own problems (the views, the running build): only these keep the Control plane card's word off Healthy (#4035).
+    private static readonly HashSet<string> _processCodes = new(["SND-VIEW-001", "SND-API-010", "SND-BUILD-001"], StringComparer.Ordinal);
+
     /// <summary>The state's glyph (§11.3): ✓ running, ⌛ stale, ✕ not running or unreadable; none while connecting.</summary>
     public StateGlyph Glyph
     {
@@ -96,10 +99,12 @@ internal sealed class HealthPill : ObservableObject
     {
         var normal = NormalWord(health, profile);
         (Glyph, Word, Age) = Words(state, age, normal);
-        (ProcessGlyph, ProcessWord, _) = Words(state, age, NormalWord(health, profile with { Unreadable = false }));
+        var own = Own(health);
+        (ProcessGlyph, ProcessWord, _) = Words(state, age, NormalWord(own, profile with { Unreadable = false }));
         Problems = state == ShellState.Normal && health is not null ? string.Join(" · ", health.Problems.Where(p => !_viewsCodes.Contains(p.Code)).Select(p => p.Clause ?? p.Text)) : string.Empty;
         Text = string.Join(" · ", ((string[])[Word, Age, Problems]).Where(t => t.Length > 0));
-        ProcessText = string.Join(" · ", ((string[])[ProcessWord, Age, Problems]).Where(t => t.Length > 0));
+        var ownProblems = state == ShellState.Normal && own is not null ? string.Join(" · ", own.Problems.Where(p => !_viewsCodes.Contains(p.Code)).Select(p => p.Clause ?? p.Text)) : string.Empty;
+        ProcessText = string.Join(" · ", ((string[])[ProcessWord, Age, ownProblems]).Where(t => t.Length > 0));
         IsHealthy = state == ShellState.Normal && normal.Healthy;
         var stale = state == ShellState.Stale;
         if (stale != IsStale)
@@ -141,6 +146,12 @@ internal sealed class HealthPill : ObservableObject
             _ => (StateGlyph.Ok, Labels.Running, true),
         };
     }
+
+    // The health the Control plane card reads: a degraded word with no problem of the control plane's own is healthy there; stalled and rebuilding keep their words.
+    private static HealthView? Own(HealthView? health) =>
+        health is not null && string.Equals(health.Word, "degraded", StringComparison.Ordinal) && !health.Problems.Any(p => _processCodes.Contains(p.Code))
+            ? health with { Word = "healthy", Problems = [] }
+            : health;
 
     private static bool IsHealthyWord(HealthView? health) => health is null || string.Equals(health.Word, "healthy", StringComparison.Ordinal);
 

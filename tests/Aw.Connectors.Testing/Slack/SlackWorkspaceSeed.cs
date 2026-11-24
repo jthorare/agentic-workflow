@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Connectors.Core.Slack;
 
 namespace Aw.Connectors.Testing.Slack;
@@ -62,6 +63,34 @@ public static class SlackWorkspaceSeed
 
     /// <summary>The private channel's message, from <see cref="Lee"/>.</summary>
     public const string PrivateTs = "1763690000.000100";
+
+    /// <summary>The seeded conversations' ids, in the order 'users.conversations' lists them.</summary>
+    public static IReadOnlyList<string> ConversationIds { get; } = [DirectMessage, GroupMessage, General, Private];
+
+    /// <summary>The ts of the newest of the older messages <see cref="AddOlderMessages"/> adds: every one is older than the seeded messages.</summary>
+    public const string OlderNewestTs = "1763600000.000100";
+
+    /// <summary>
+    /// Adds <paramref name="count"/> top-level messages to <paramref name="conversation"/>, one a minute back from <see cref="OlderNewestTs"/>, all from
+    /// <see cref="Lee"/>: a history a reader must page back through, so with a history 429 storm it ends with a gap (messages spec §5.3, W10).
+    /// </summary>
+    /// <param name="server">The fake.</param>
+    /// <param name="conversation">The conversation's id.</param>
+    /// <param name="count">How many messages.</param>
+    /// <returns>The fake.</returns>
+    public static FakeSlackServer AddOlderMessages(FakeSlackServer server, string conversation, int count)
+    {
+        ArgumentNullException.ThrowIfNull(server);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+        for (var i = 0; i < count; i++)
+        {
+            var ts = (1763600000 - (i * 60)).ToString(CultureInfo.InvariantCulture) + ".000100";
+            var text = "Older message " + (count - i).ToString(CultureInfo.InvariantCulture) + " of " + count.ToString(CultureInfo.InvariantCulture) + ".";
+            _ = server.Add(conversation, Message(ts, "Lee Sample", text), Lee);
+        }
+
+        return server;
+    }
 
     /// <summary>Seeds <paramref name="server"/> with the workspace.</summary>
     /// <param name="server">The fake.</param>
