@@ -50,14 +50,15 @@ const SEARCH = { data: { search: { nodes: [
   pr({ number: 104, headRefName: 'frn-1-sample', reviewThreads: { nodes: [{ isResolved: false }] } }),
 ] } } }
 
-function ghAndGit(branch: string) {
+function ghAndGit(branch: string, origin: string | null = 'https://github.com/example-org/app.git', search: unknown = SEARCH) {
   return (_: unknown, e: { readonly argv: readonly string[] }) => {
-    const stdout = e.argv.includes('graphql')
-      ? JSON.stringify(SEARCH)
-      : e.argv[0] === 'git'
-        ? `${branch}\n`
-        : JSON.stringify(REQUIRED)
-    return { value: { exitCode: 0, stdout, stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }
+    const done = (stdout: string, exitCode = 0) => ({
+      value: { exitCode, stdout, stderr: '', isStdoutTruncated: false, isStderrTruncated: false },
+    })
+    if (e.argv.includes('graphql')) return done(JSON.stringify(search))
+    if (e.argv[0] === 'git' && e.argv[1] === 'remote') return origin === null ? done('', 2) : done(`${origin}\n`)
+    if (e.argv[0] === 'git') return done(`${branch}\n`)
+    return done(JSON.stringify(REQUIRED))
   }
 }
 
@@ -95,4 +96,32 @@ test('nothing extra shows under the prompt on main', async ($, on) => {
   const ui = await $.ui.mount({ ...BAND, surface: 'terminal' } as never)
   expect(await ui.find({ type: 'Text', text: /->/ })).toBeUndefined()
   await ui.unmount()
+})
+
+const TWO_REPOS = { data: { search: { nodes: [
+  // Most recently updated first: the other repo's PR on the same branch name comes first.
+  pr({ number: 7, headRefName: 'shared-name', repository: { nameWithOwner: 'other-org/lib' },
+    reviewThreads: { nodes: [{ isResolved: false }, { isResolved: false }] } }),
+  pr({ number: 8, headRefName: 'shared-name', reviewThreads: { nodes: [{ isResolved: false }] } }),
+] } } }
+
+async function drawn($: any, on: any, origin: string | null) {
+  mock.clock(on)
+  on('session.start', (_: unknown, e: { cwd: string }) => ({ cwd: e.cwd }))
+  on('session.cwd', () => ({ value: '/' }))
+  on('process.run', ghAndGit('shared-name', origin, TWO_REPOS))
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' } as never)
+  const text = (await ui.find({ type: 'Text', text: /->/ }))?.text
+  await ui.unmount()
+  return text
+}
+
+test('the same branch name open in two repos shows only the session repo PR', async ($, on) => {
+  // example-org/app has 1 open thread; other-org/lib (listed first) has 2.
+  expect(await drawn($, on, 'git@github.com:example-org/app.git')).toBe('CI ✓   bots ✓✓   threads 1 •   -> reply to 1 thread')
+})
+
+test('a session with no remote shows no line', async ($, on) => {
+  expect(await drawn($, on, null)).toBeUndefined()
 })

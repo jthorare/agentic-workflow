@@ -30,6 +30,6 @@ export type Snapshot = {
 
 declare module 'claude-code' {
   interface PluginState {
-    'pr-line': { snapshot: Shaped<Snapshot>; branch: string | null }
+    'pr-line': { snapshot: Shaped<Snapshot>; branch: string | null; repo: string | null }
   }
 }

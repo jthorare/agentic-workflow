@@ -10,6 +10,9 @@ const EMPTY: Snapshot = { rows: [], updatedAt: null, error: null }
 const snapshot = atom({ plugin: 'pr-line', key: 'snapshot' } as const, EMPTY, { shape: 'snapshot-2' })
 // The git branch the session's directory is on; the line shows the open PR for it.
 const sessionBranch = atom({ plugin: 'pr-line', key: 'branch' } as const, null)
+// The GitHub repo (owner/name) of the session directory's origin remote. A PR matches only on repo AND branch,
+// because the search spans every repo and the same branch name can be open in several.
+const sessionRepo = atom({ plugin: 'pr-line', key: 'repo' } as const, null)
 const MIN_GAP_MS = 15_000
 
 const MARKS: Record<Person['mark'], string> = { approved: '✓', changes: '✗', requested: '?' }
@@ -30,13 +33,35 @@ let lastPollAt = 0
 const required: Record<string, string[]> = {}
 let inFlight: Promise<void> | null = null
 
+// owner/name from the https, scp-style ssh and ssh:// forms of a GitHub remote URL; null for any other host.
+function repoOf(remote: string): string | null {
+  // Drop the scheme and any user part, then expect github.com followed by ':' (scp style) or '/'.
+  const hostAndPath = remote.trim().replace(/^[a-z+]+:\/\//i, '').replace(/^[^/]*@/, '')
+  const m = /^github\.com[:/]([^/]+)\/([^/]+?)(?:\.git)?\/?$/.exec(hostAndPath)
+  return m ? `${m[1]}/${m[2]}` : null
+}
+
 async function refreshBranch($: EngineInterface): Promise<string | null> {
   const cwd = await $.session.cwd()
   const res = await $.process.run(['git', 'branch', '--show-current'], { cwd, timeoutMs: 5_000 })
   const name = res.exitCode === 0 ? res.stdout.trim() : ''
-  const branch = name === '' || name === 'main' || name === 'master' ? null : name
+  let branch = name === '' || name === 'main' || name === 'master' ? null : name
+  let repo: string | null = null
+  if (branch !== null) {
+    const remote = await $.process.run(['git', 'remote', 'get-url', 'origin'], { cwd, timeoutMs: 5_000 })
+    repo = remote.exitCode === 0 ? repoOf(remote.stdout) : null
+    // No GitHub origin: no PR can be this session's, so there is no line and no poll.
+    if (repo === null) branch = null
+  }
   if ((await read($, sessionBranch)) !== branch) await update($, sessionBranch, () => branch)
+  if ((await read($, sessionRepo)) !== repo) await update($, sessionRepo, () => repo)
   return branch
+}
+
+// The PR of this session: same repo and same branch.
+async function sessionRow($: EngineInterface, branch: string): Promise<PrRow | undefined> {
+  const repo = await read($, sessionRepo)
+  return (await read($, snapshot)).rows.find(r => r.repo === repo && r.branch === branch)
 }
 
 async function requiredChecks($: EngineInterface, repo: string): Promise<string[]> {
@@ -104,8 +129,7 @@ export const register: Register = on => {
     const before = await read($, sessionBranch)
     const branch = await refreshBranch($)
     if (branch === null) return result
-    const snap = await read($, snapshot)
-    const hasRow = snap.rows.some(r => r.branch === branch)
+    const hasRow = (await sessionRow($, branch)) !== undefined
     if (branch !== before || (!hasRow && (await $.clock.now()) - lastPollAt > MIN_GAP_MS)) void poll($)
     return result
   })
@@ -115,7 +139,7 @@ export const register: Register = on => {
     const hint = await next(e)
     const branch = await read($, sessionBranch)
     if (branch === null) return hint
-    const row = (await read($, snapshot)).rows.find(r => r.branch === branch)
+    const row = await sessionRow($, branch)
     if (!row) return hint
     const { Box, Text } = $.ui.resolve(e)
     return (
