@@ -32,8 +32,11 @@ internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, Tim
             return all.Error;
         }
 
-        // A lane recycled before sends under its digest title, so its socket finds it too (#4108). After the /clear the lane's
-        // Claude keeps its process, so the new session sends from the socket the old one did.
+        // A lane recycled before sends under its digest title, so its socket finds it too (#4108). Find runs after the /clear.
+        // It reads the session id under the lane's tmux session; when that read fails, it reads the lane record, which the
+        // runner already rewrote to the new id. The lane's Claude keeps its process over /clear, so the new session sends from
+        // the socket the old one did. The match holds over /clear only: after a process restart or an account switch, the
+        // old message sits under the old socket and matches by name only, the same limit as merge-check.
         var address = addresses is null ? null : await addresses.Find(plan.Team, plan.Lane, cancellationToken).ConfigureAwait(false);
         var now = clock.GetUtcNow();
         var reason = string.Create(CultureInfo.InvariantCulture, $"settled by lane-recycle {plan.Lane} at {now.UtcDateTime:yyyy-MM-dd HH:mm:ss}Z");
