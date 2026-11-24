@@ -32,6 +32,12 @@ internal static partial class WholeMapLayout
         return bands;
     }
 
+    /// <summary>How wide a lane's heading may run (#3998): from where it starts to the lane's right end, less the margin; never under 80.</summary>
+    /// <param name="laneRight">The lane's right end, in world units (the world's width).</param>
+    /// <param name="start">Where the heading starts, after the band's title.</param>
+    /// <returns>The width the heading may take.</returns>
+    internal static double LaneMetaWidth(double laneRight, double start) => throw new NotSupportedException();
+
     private static Dictionary<WholeBand, string> KindMeta(IEnumerable<KeyValuePair<string, int>> kinds) =>
         NodeBands.ByBand(kinds.GroupBy(k => k.Key, StringComparer.Ordinal).Select(g => new KeyValuePair<string, int>(g.Key, g.Sum(k => k.Value))))
             .ToDictionary(b => b.Key, b => NodeBands.Meta(b.Value));
