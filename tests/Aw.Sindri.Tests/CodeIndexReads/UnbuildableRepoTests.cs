@@ -1,6 +1,8 @@
 using Aw.CodeIndex.Core.Facade;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Values;
+using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Features.CodeIndexReads;
 using IndexRepoHead = Aw.CodeIndex.Core.Model.RepoHead;
 using RepoName = Aw.CodeIndex.Core.Values.RepoName;
@@ -43,5 +45,19 @@ public sealed class UnbuildableRepoTests
         var health = Health(new IndexRepoHead(_repo, _head, OnDefaultBranch: false)).Unqueued(buildServiceActive: false);
 
         Assert.Equal(("unbuildable", false), (health.State, health.Paused));
+    }
+
+    // #4091: a hand-started build failed on the repo, so it is in backoff; paused, no retry comes, and none could build it anyway.
+    [Fact, Trait("Lane", "unit")]
+    public void A_failed_build_in_backoff_over_an_unbuildable_repo_reads_unbuildable_with_no_retry_while_paused()
+    {
+        var failed = new JobRow(JobId.From($"JOB-{1:x32}"), JobKind.From("BuildCodeIndex"), JobKey.From("index:demo"), Item: null, Repo: null, Service: null, JobState.Failed,
+            "human", _now.AddSeconds(-15), _now.AddSeconds(-10), [], Rounds: 0, Summary: null, Code: null, Result: null, CancelledBy: null, Sequence: 1);
+        var waiting = RepoHealth.Of(Missing(), new IndexRepoHead(_repo, _head, OnDefaultBranch: false), [failed], _now);
+
+        var health = waiting.Unqueued(buildServiceActive: false);
+
+        Assert.Equal("waiting", waiting.State);
+        Assert.Equal(("unbuildable", (string?)null, false), (health.State, health.Waiting, health.Paused));
     }
 }
