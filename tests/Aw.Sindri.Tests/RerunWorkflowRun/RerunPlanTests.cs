@@ -104,13 +104,13 @@ public sealed class RerunPlanTests
     [InlineData("{\"result\":true}", "true")]
     [InlineData("{\"result\":false}", "false")]
     public void A_condition_took_the_branch_of_its_stored_result(string output, string branch)
-        => Assert.Equal([branch], RerunPlan.Branches(Node("a", "condition"), [Row("a", NodeRunStatus.Succeeded, output)])!, StringComparer.Ordinal);
+        => Assert.Equal([branch], RerunPlan.Branches(Node("a", "condition"), [Row("a", NodeRunStatus.Succeeded, output)]), StringComparer.Ordinal);
 
     [Theory]
     [InlineData("{\"answer\":\"yes\",\"answeredBy\":\"human:app\"}", "answered")]
     [InlineData("{\"answer\":\"\",\"answeredBy\":\"timeout\"}", "timeout")]
     public void An_ask_owner_took_answered_or_timeout_by_who_answered(string output, string branch)
-        => Assert.Equal([branch], RerunPlan.Branches(Node("ask", "ask_owner"), [Row("ask", NodeRunStatus.Succeeded, output)])!, StringComparer.Ordinal);
+        => Assert.Equal([branch], RerunPlan.Branches(Node("ask", "ask_owner"), [Row("ask", NodeRunStatus.Succeeded, output)]), StringComparer.Ordinal);
 
     [Theory]
     [InlineData("condition", null)]
@@ -122,7 +122,7 @@ public sealed class RerunPlanTests
 
     [Fact]
     public void Any_other_step_took_out()
-        => Assert.Equal(["out"], RerunPlan.Branches(Node("a"), [Row("a", NodeRunStatus.Succeeded, "{\"status\":200}")])!, StringComparer.Ordinal);
+        => Assert.Equal(["out"], RerunPlan.Branches(Node("a"), [Row("a", NodeRunStatus.Succeeded, "{\"status\":200}")]), StringComparer.Ordinal);
 
     [Fact]
     public void A_re_run_from_a_step_on_a_branch_the_source_did_not_take_takes_that_branch_on_purpose()

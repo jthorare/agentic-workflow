@@ -121,6 +121,12 @@ jobs:
           fi
       - name: Rule records name real checks
         run: node scripts/check-rules.mjs
+      - name: Sindri MCP tool examples match the last-known tools/list golden
+        # Here, not in the Bash tests job: a C# PR that changes a tool's schema (and its golden) runs only the .NET
+        # job and this one, and a skill PR that adds an `mcp: sindri/<tool>` call runs this one too (issue 4249).
+        run: |
+          npm ci --prefix scripts --ignore-scripts --no-audit --no-fund
+          node scripts/check-tool-examples.mjs
       - name: Prose on the changed Markdown (Vale, scripts/check-prose.sh)
         # Only hits on added lines fail, so a PR never inherits an old file's slop (issue 2919). The base is the PR's
         # base, the merge group's base, or the pushed range's start; a run with no base (a dispatch, a new branch)
