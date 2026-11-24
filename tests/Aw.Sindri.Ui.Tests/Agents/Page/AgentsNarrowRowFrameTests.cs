@@ -51,10 +51,20 @@ public sealed class AgentsNarrowRowFrameTests : FrameHost
         {
             Assert.False(Named<TextBlock>(row, "SessionRowProvider").IsEffectivelyVisible);
             var title = Named<TextBlock>(row, "SessionRowTitle");
-            Assert.True(title.Bounds.Width >= LeastTitleWidth, $"the title is {title.Bounds.Width.ToString(CultureInfo.InvariantCulture)} px wide");
+            // Readable = shown whole (the button hugs short text, so it can be under 110 px) or given at least 110 px (a long title is trimmed, never squeezed to a few characters).
+            var whole = UntrimmedWidth(title);
+            Assert.True(
+                whole <= title.Bounds.Width + 0.5 || title.Bounds.Width >= LeastTitleWidth,
+                $"the title is {title.Bounds.Width.ToString(CultureInfo.InvariantCulture)} px wide for {whole.ToString(CultureInfo.InvariantCulture)} px of text");
             Assert.Same(TextTrimming.PrefixCharacterEllipsis, title.TextTrimming);   // 8 characters, the ellipsis, then the tail
         });
     });
+
+    private static double UntrimmedWidth(TextBlock title)
+    {
+        using var layout = new TextLayout(title.Text ?? string.Empty, new Typeface(title.FontFamily, title.FontStyle, title.FontWeight), title.FontSize, foreground: null);
+        return layout.Width;
+    }
 
     [Fact]
     public Task Without_the_pane_the_title_still_ends_with_the_ellipsis() => OnUi(async () =>
