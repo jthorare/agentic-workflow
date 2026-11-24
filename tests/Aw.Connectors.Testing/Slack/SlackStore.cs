@@ -29,12 +29,16 @@ internal sealed class SlackStore
     /// <summary>The user id that wrote the message with <paramref name="ts"/> in <paramref name="channelId"/>.</summary>
     public string UserOf(string channelId, string ts) => _users.TryGetValue((channelId, ts), out var user) ? user : SampleUser;
 
-    /// <summary>Top-level messages with ts at or after <paramref name="oldest"/> and before <paramref name="latest"/> (when given), newest first; a root carries the reply count the store holds and its own ts as thread_ts.</summary>
-    public List<SlackMessage> Top(string channelId, string? oldest, string? latest = null)
+    /// <summary>
+    /// Top-level messages between <paramref name="oldest"/> and <paramref name="latest"/> (when given), newest first; a root carries the reply count the store
+    /// holds and its own ts as thread_ts. Like Slack's 'conversations.history', both bounds are exclusive unless <paramref name="inclusive"/> ("Include messages
+    /// with oldest or latest timestamps in results").
+    /// </summary>
+    public List<SlackMessage> Top(string channelId, string? oldest, string? latest = null, bool inclusive = false)
     {
         var all = All(channelId);
         return [.. all
-            .Where(m => (m.ThreadTs is null || m.ThreadTs == m.Ts) && (oldest is null || string.CompareOrdinal(Pad(m.Ts), Pad(oldest)) >= 0) && (latest is null || string.CompareOrdinal(Pad(m.Ts), Pad(latest)) < 0))
+            .Where(m => (m.ThreadTs is null || m.ThreadTs == m.Ts) && After(m.Ts, oldest, inclusive) && Before(m.Ts, latest, inclusive))
             .OrderByDescending(static m => Pad(m.Ts), StringComparer.Ordinal)
             .Select(m =>
             {
@@ -72,6 +76,18 @@ internal sealed class SlackStore
 
         var order = string.CompareOrdinal(Pad(ts), Pad(oldest));
         return order > 0 || (inclusive && order == 0);
+    }
+
+    /// <summary>Slack's ts order: true when <paramref name="ts"/> is before <paramref name="latest"/> (or equal and inclusive), or when there is no bound.</summary>
+    public static bool Before(string ts, string? latest, bool inclusive)
+    {
+        if (latest is null)
+        {
+            return true;
+        }
+
+        var order = string.CompareOrdinal(Pad(ts), Pad(latest));
+        return order < 0 || (inclusive && order == 0);
     }
 
     /// <summary>The ts as a fixed-width key that sorts in time order.</summary>

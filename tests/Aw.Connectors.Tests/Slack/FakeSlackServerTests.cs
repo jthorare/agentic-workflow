@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json.Nodes;
 using Aw.Connectors.Testing.Slack;
 using static Aw.Connectors.Testing.Slack.SlackWorkspaceSeed;
@@ -297,4 +298,65 @@ public sealed class FakeSlackServerTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task A_method_the_fake_does_not_serve_still_fails_the_run()
         => _ = await Assert.ThrowsAsync<InvalidOperationException>(() => Call("chat.postMessage"));
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Conversations_history_bounds_are_exclusive_unless_inclusive()
+    {
+        var bounded = "conversations.history?channel=" + DirectMessage + "&oldest=" + DmAnsweredTs + "&latest=" + DmWaitingTs;
+
+        var (_, exclusive) = await Call(bounded);
+        var (_, inclusive) = await Call(bounded + "&inclusive=true");
+
+        Assert.Equal([DmMyAnswerTs], Values(exclusive, "messages", "ts"), StringComparer.Ordinal);
+        Assert.Equal([DmWaitingTs, DmMyAnswerTs, DmAnsweredTs], Values(inclusive, "messages", "ts"), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_request_without_a_token_answers_not_authed_and_a_token_field_is_enough()
+    {
+        using var bare = await _client.GetAsync(new Uri("https://slack.com/api/auth.test"), Ct);
+        using var field = await _client.GetAsync(new Uri("https://slack.com/api/users.info?token=" + Token + "&user=" + Pat), Ct);
+
+        var refused = JsonNode.Parse(await bare.Content.ReadAsStringAsync(Ct))!;
+        Assert.Equal(HttpStatusCode.OK, bare.StatusCode);
+        Assert.Equal("not_authed", refused["error"]!.GetValue<string>());
+        Assert.Equal(Pat, JsonNode.Parse(await field.Content.ReadAsStringAsync(Ct))!["user"]!["id"]!.GetValue<string>());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Users_list_pages_the_seeded_people_by_id()
+    {
+        var (_, first) = await Call("users.list?limit=3");
+        var cursor = first["response_metadata"]!["next_cursor"]!.GetValue<string>();
+        var (_, second) = await Call("users.list?limit=3&cursor=" + cursor);
+
+        Assert.Equal([Me, Pat, Lee], Values(first, "members", "id"), StringComparer.Ordinal);
+        Assert.Equal([Kim, Bot], Values(second, "members", "id"), StringComparer.Ordinal);
+        Assert.Empty(second["response_metadata"]!["next_cursor"]!.GetValue<string>());
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("users.conversations?limit=many", "invalid_limit")]
+    [InlineData("users.list?limit=0", "invalid_limit")]
+    [InlineData("conversations.history?channel=" + DirectMessage + "&limit=-5", "invalid_limit")]
+    [InlineData("conversations.history?channel=" + DirectMessage + "&cursor=garbage", "invalid_cursor")]
+    [InlineData("users.list?cursor=off", "invalid_cursor")]
+    public async Task A_bad_limit_or_cursor_answers_slacks_error_not_a_crash(string call, string error)
+    {
+        var (response, body) = await Call(call);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.False(body["ok"]!.GetValue<bool>());
+        Assert.Equal(error, body["error"]!.GetValue<string>());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_body_without_a_content_type_is_read_as_form_fields()
+    {
+        using var body = new ByteArrayContent(Encoding.UTF8.GetBytes("user=" + Pat));
+
+        var (_, answer) = await Call("users.info", body);
+
+        Assert.Equal(Pat, answer["user"]!["id"]!.GetValue<string>());
+    }
 }
