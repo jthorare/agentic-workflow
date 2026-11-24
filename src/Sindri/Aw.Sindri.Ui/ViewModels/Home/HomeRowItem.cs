@@ -79,8 +79,8 @@ internal sealed partial class HomeRowItem : IRowItem
         var subject = Fact(row, Object);
         var id = subject is not null && DisplayId.IsMatch(subject) ? subject : string.Empty;
         var facts = new Dictionary<string, RowFact>(StringComparer.Ordinal);
-        Put(facts, Why, RowFactKind.Chip, Fact(row, Why));
-        Put(facts, Object, RowFactKind.Text, id.Length > 0 ? row.Repo : subject);   // why: the id already leads the row, so the object column names the place (spec §7.1 "kind and place only")
+        Put(facts, Why, RowFactKind.Text, WhyText(row));
+        Put(facts, Object, RowFactKind.Ref, ObjectText(row, subject, id.Length > 0));
         Put(facts, From, RowFactKind.Person, Fact(row, From));
         return new HomeRowItem(row)
         {
@@ -98,6 +98,33 @@ internal sealed partial class HomeRowItem : IRowItem
     // #3120, ENG-412, r-0412: the ids the row shows in mono before its title.
     [GeneratedRegex(@"^(#\d+|[A-Z][A-Z0-9]*-\d+|r-\d+)$", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex DisplayId { get; }
+
+    // "blocks N" (#3733 frames, spec §7.1): the why cell says it only when the row blocks 2 or more; under that it says the kind's reason word.
+    [GeneratedRegex(@"^blocks (?<n>\d+)$", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex BlocksCount { get; }
+
+    private static string? WhyText(HomeRowView row)
+    {
+        var why = Fact(row, Why);
+        if (why is null || !BlocksCount.IsMatch(why))
+        {
+            return why;
+        }
+
+        var blocks = int.Parse(BlocksCount.Match(why).Groups["n"].ValueSpan, System.Globalization.CultureInfo.InvariantCulture);
+        return blocks >= 2 ? why : Labels.HomeReason(row.Kind) ?? why;
+    }
+
+    // The object cell names the kind and the place (spec §7.1 "kind and place only"): a row whose id leads it names its repo, a session row its session.
+    private static string? ObjectText(HomeRowView row, string? subject, bool hasId)
+    {
+        if (hasId)
+        {
+            return string.IsNullOrEmpty(row.Repo) ? null : Labels.HomeObjectRepo(row.Repo);
+        }
+
+        return !string.IsNullOrEmpty(subject) && string.Equals(HomeSplits.GrammarKind(row.Kind), "session", StringComparison.Ordinal) ? Labels.HomeObjectSession(subject) : subject;
+    }
 
     private static string? Fact(HomeRowView row, string kind) => row.Facts.FirstOrDefault(f => string.Equals(f.Kind, kind, StringComparison.Ordinal))?.Text;
 

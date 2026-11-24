@@ -14,6 +14,9 @@ internal sealed class HomeRowsViewModel : ObservableObject
     /// <summary>What a screen reader says for the tabs as a whole.</summary>
     public static string TabsName => Labels.HomeTabsName;
 
+    /// <summary>The page's title.</summary>
+    public static string Title => Labels.HomeTitle;
+
     /// <summary>The header's tabs, each with its open count.</summary>
     public IReadOnlyList<HomeTab> Tabs
     {
@@ -77,11 +80,14 @@ internal sealed class HomeRowsViewModel : ObservableObject
         var open = _rows.Where(IsOpen).ToList();
         Tabs = [.. HomeSplits.InOrder.Select(s => new HomeTab(s, HomeSplits.Label(s), open.Count(r => HomeSplits.Holds(s, r.Row.Kind)), s == Split))];
         var shown = open.Where(r => HomeSplits.Holds(Split, r.Row.Kind)).ToList();
-        Groups = [.. new[] { Group(Labels.HomeNeedsYouGroup, shown, "needs-you"), Group(Labels.HomeMovingGroup, shown, "moving") }.OfType<HomeRowGroup>()];
+        // An empty tab keeps the Needs you head with its 0 (#3733 frame tab-messages-empty): the tab's one line sits under it.
+        Groups = shown.Count == 0
+            ? [new HomeRowGroup(Labels.HomeNeedsYouGroup, [])]
+            : [.. new[] { Group(Labels.HomeNeedsYouGroup, shown, "needs-you"), Group(Labels.HomeMovingGroup, shown, "moving") }.OfType<HomeRowGroup>()];
         EmptyLine = shown.Count > 0 ? null : HomeSplits.EmptyLine(Split);
     }
 
-    // A group with no row under the split is not listed: the split's one empty line says why.
+    // On a tab that holds rows, a group with no row under the split is not listed.
     private static HomeRowGroup? Group(string heading, List<HomeRowItem> shown, string group)
     {
         var rows = shown.Where(r => string.Equals(r.Row.Group, group, StringComparison.Ordinal)).ToList();

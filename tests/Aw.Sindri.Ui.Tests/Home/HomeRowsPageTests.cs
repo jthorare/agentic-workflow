@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Text;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -73,6 +75,13 @@ public sealed class HomeRowsPageTests
         var list = page.GetVisualDescendants().OfType<RowList>().Single();
         Assert.True(list.IsVisible);
         Assert.Equal(6, list.RealizedRowCount);
+        var title = page.GetVisualDescendants().OfType<TextBlock>().Single(t => string.Equals(t.Name, "HomeRowsTitle", StringComparison.Ordinal));
+        Assert.Equal("Home", title.Text);
+        Assert.True(title.Bounds.Right <= Tabs(page)[0].TranslatePoint(default, page)!.Value.X, "the title sits left of the tabs, in the one header row");
+        Assert.All(list.GetVisualDescendants().OfType<Row>().Where(r => r.IsVisible && r.DataContext is HomeRowItem), r => Assert.Empty(r.Layout.Chips));   // the why cell is plain text
+        var titles = list.GetVisualDescendants().OfType<Row>().Where(r => r.IsVisible && r.DataContext is HomeRowItem { Id.Length: 0 }).Select(r => r.Layout.TitleRect.X).ToList();
+        Assert.NotEmpty(titles);
+        Assert.All(titles, x => Assert.Equal(52, x, 0.5));   // a row with no id starts its title on the text edge
     });
 
     [Fact]
@@ -98,6 +107,13 @@ public sealed class HomeRowsPageTests
 
         var line = page.GetVisualDescendants().OfType<TextBlock>().Single(t => string.Equals(t.Name, "HomeEmptyLine", StringComparison.Ordinal));
         Assert.Equal((true, "Nothing in Work"), (line.IsVisible, line.Text));
-        Assert.False(page.GetVisualDescendants().OfType<RowList>().Single().IsVisible);
+        var list = page.GetVisualDescendants().OfType<RowList>().Single();
+        Assert.True(list.IsVisible);
+        Assert.Equal(0, list.RealizedRowCount);
+        var head = Assert.Single(list.GetVisualDescendants().OfType<RowGroupHeader>(), h => h.IsVisible && h.Group is not null);   // the Needs you head stays, with its 0
+        Assert.Contains("0", head.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text), StringComparer.Ordinal);
+        var at = line.TranslatePoint(default, page)!.Value;
+        var headEnd = head.TranslatePoint(new Point(0, head.Bounds.Height), page)!.Value.Y;
+        Assert.True(Math.Abs(at.X - 52) <= 0.5 && at.Y >= headEnd - 0.5, string.Create(CultureInfo.InvariantCulture, $"the line is at {at.X},{at.Y}; the head ends at {headEnd}"));
     });
 }

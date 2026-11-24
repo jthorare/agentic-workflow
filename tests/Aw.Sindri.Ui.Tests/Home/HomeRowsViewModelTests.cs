@@ -64,7 +64,8 @@ public sealed class HomeRowsViewModelTests
 
         home.Select(HomeSplit.Work);
 
-        Assert.Empty(home.Groups);
+        Assert.Empty(Assert.Single(home.Groups).Rows);   // the Needs you head stays, with no row
+        Assert.Equal("Needs you", home.Groups[0].Heading);
         Assert.Equal("Nothing in Work", home.EmptyLine);
     }
 
@@ -86,8 +87,8 @@ public sealed class HomeRowsViewModelTests
         Assert.Equal("#3120", row.Id);
         Assert.Equal("Review requested: PR 3120", row.Title);
         Assert.Equal("pr", row.Kind);
-        Assert.Equal(new RowFact(RowFactKind.Chip, "blocks 2"), row.Facts[HomeRowItem.Why]);
-        Assert.Equal(new RowFact(RowFactKind.Text, "demo"), row.Facts[HomeRowItem.Object]);
+        Assert.Equal(new RowFact(RowFactKind.Text, "blocks 2"), row.Facts[HomeRowItem.Why]);
+        Assert.Equal(new RowFact(RowFactKind.Ref, "repo demo"), row.Facts[HomeRowItem.Object]);
         Assert.Equal(new RowFact(RowFactKind.Person, "Sam"), row.Facts[HomeRowItem.From]);
         Assert.Equal("1h 40m", row.Age);
         Assert.Null(row.WaitsOn);
@@ -101,8 +102,18 @@ public sealed class HomeRowsViewModelTests
         Assert.Equal(string.Empty, row.Id);
         Assert.Equal("session", row.Kind);
         Assert.Equal(RowGlyph.NeedsYou, RowGlyphs.For(row.Kind, row.StateClass, row.StateKey));
-        Assert.Equal(new RowFact(RowFactKind.Text, "meta"), row.Facts[HomeRowItem.Object]);
+        Assert.Equal(new RowFact(RowFactKind.Ref, "session meta"), row.Facts[HomeRowItem.Object]);
         Assert.Equal(new RowFact(RowFactKind.Person, "lane meta"), row.Facts[HomeRowItem.From]);
+    }
+
+    [Fact]
+    public void The_why_cell_says_blocks_N_from_2_up_and_the_reason_word_under_that()
+    {
+        var rows = Shown().Groups[0].Rows;
+
+        Assert.Equal(new RowFact(RowFactKind.Text, "blocks 2"), rows.Single(r => r.Key == "gh:ready:jthorare/agentic-workflow#3099").Facts[HomeRowItem.Why]);
+        Assert.Equal(new RowFact(RowFactKind.Text, "ready"), rows.Single(r => r.Key == "gh:ready:jthorare/agentic-workflow#3101").Facts[HomeRowItem.Why]);   // served as "blocks 1"
+        Assert.Equal(new RowFact(RowFactKind.Text, "DM"), rows.Single(r => r.Row.Kind == "dm").Facts[HomeRowItem.Why]);
     }
 
     [Fact]
