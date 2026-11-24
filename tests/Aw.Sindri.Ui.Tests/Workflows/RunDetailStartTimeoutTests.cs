@@ -12,6 +12,7 @@ namespace Aw.Sindri.Ui.Tests.Workflows;
 public sealed class RunDetailStartTimeoutTests : IDisposable
 {
     private const string NewRun = "morning-check@1:4";
+    private const string SecondRun = "morning-check@1:5";
 
     private readonly InlineUiContext _ui = new();   // the timer's callback runs on the thread that advances the fake clock
     private readonly WorkflowsFixture _f = new();
@@ -28,6 +29,10 @@ public sealed class RunDetailStartTimeoutTests : IDisposable
         Assert.Equal((true, NewRun, "Starting"), (page.IsRun, page.Run.Id, page.Run.ChipWord));
         return page;
     }
+
+    // The second Run now (Retry) is answered with a different run id, so a page left on the old run shows.
+    private void ServeASecondStart() =>
+        _f.Server.StartWorkflowRunAnswer = new RouteAnswer(HttpStatusCode.OK, $$"""{"run":"{{SecondRun}}","status":"started","reason":null}""");
 
     private void ServeTheNewRun()
     {
@@ -74,10 +79,25 @@ public sealed class RunDetailStartTimeoutTests : IDisposable
         _f.Clock.Advance(TimeSpan.FromSeconds(10));
         Assert.True(page.Run.DidNotStart);
 
+        ServeASecondStart();
         await page.RetryStart(page.Run.Id, Token);
 
         Assert.Equal([Slug, Slug], _f.Server.StartedWorkflows);
-        Assert.Equal(("Starting", false), (page.Run.ChipWord, page.Run.DidNotStart));
+        Assert.Equal((SecondRun, "Starting", false), (page.Run.Id, page.Run.ChipWord, page.Run.DidNotStart));
+    }
+
+    // #3707 one Retry later: the second run never lands either, so the page has to say so on the NEW run, with Retry again.
+    [Fact]
+    public async Task A_second_run_that_never_lands_also_says_it_did_not_start_on_the_new_run()
+    {
+        var page = await OnTheRunPage();
+        _f.Clock.Advance(TimeSpan.FromSeconds(10));
+        ServeASecondStart();
+        await page.RetryStart(page.Run.Id, Token);
+
+        _f.Clock.Advance(TimeSpan.FromSeconds(10));
+
+        Assert.Equal((SecondRun, true, "Starting"), (page.Run.Id, page.Run.DidNotStart, page.Run.ChipWord));
     }
 
     [Fact]
