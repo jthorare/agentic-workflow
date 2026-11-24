@@ -64,6 +64,10 @@
 # The meta gate's slot reserve works the same way: scripts/meta-gate-reserve.sh is copied into each build as <build>/meta-gate-reserve
 # (mode 755, part of the stamp, checked by verify), --link points $AW_STATE_DIR/bin-r1b/meta-gate-reserve at
 # bin/cs/current/meta-gate-reserve, refuses a build without it, and moves a real file there to meta-gate-reserve.pre-repo.
+# The command catalog reader (#4221) too: scripts/aw-commands.sh is copied into each build as <build>/aw-commands and
+# config/commands.toolkit.json as <build>/commands.json (the toolkit catalog it reads from its own folder), both part of the
+# stamp, and --link points <link dir>/aw-commands (~/.local/bin by default) at bin/cs/current/aw-commands, moving a real file
+# there to aw-commands.pre-repo. A tree without scripts/aw-commands.sh ships neither and gets no link.
 #
 # The toolkit SDK (src/Toolkit/Aw.Sindri.Toolkit, package id Aw.Sindri.Toolkit): after the publish step (also when the build is
 # current) it is `dotnet pack`ed from a copy of the sources into the folder feed $AW_SINDRI_SDK_FEED (default
@@ -121,7 +125,7 @@ commit="$(git -C "$root" rev-parse --verify -q HEAD 2> /dev/null || true)"
 [ -n "$commit" ] || die "the C# binaries can only be published from a git checkout"
 # shellcheck source=lib/sindri-build-inputs.sh
 source "$here/lib/sindri-build-inputs.sh"
-PATHSPECS=("${SINDRI_BUILD_PATHSPECS[@]}" src/Evidence src/BugFix src/Readiness scripts/heavy.sh scripts/meta-gate-reserve.sh config/lib/heavy-config.sh)
+PATHSPECS=("${SINDRI_BUILD_PATHSPECS[@]}" src/Evidence src/BugFix src/Readiness scripts/heavy.sh scripts/meta-gate-reserve.sh scripts/aw-commands.sh config/commands.toolkit.json config/lib/heavy-config.sh)
 sha256() { shasum -a 256 2> /dev/null || sha256sum; }
 # hash_list <list> <header line>...: sha256 (16 hex) of the header lines, the file list and git's hash of each listed file. A git that
 # dies (killed under memory pressure) stops the script with a message; piped into sha256 it ended the script silently (#3218).
@@ -476,6 +480,12 @@ publish() {
   fi
 
   install -m 755 "$tree/scripts/meta-gate-reserve.sh" "$stage/meta-gate-reserve" || die "staging scripts/meta-gate-reserve.sh failed"
+  if [ -f "$tree/scripts/aw-commands.sh" ]; then
+    install -m 755 "$tree/scripts/aw-commands.sh" "$stage/aw-commands" || die "staging scripts/aw-commands.sh failed"
+    if [ -f "$tree/config/commands.toolkit.json" ]; then
+      install -m 644 "$tree/config/commands.toolkit.json" "$stage/commands.json" || die "staging config/commands.toolkit.json failed"
+    fi
+  fi
 
   # 3. "Install didn't take": each binary answers its state-free call, in a scratch state dir and with no inherited environment.
   verify "$stage" "$revision" "$tree/scripts/heavy.sh" "$tree/scripts/meta-gate-reserve.sh"
@@ -583,6 +593,7 @@ link() {
   if [ "$dry" = 1 ]; then
     say "[dry-run] would link $heavy -> $base/current/heavy"
     say "[dry-run] would link $reserve -> $base/current/meta-gate-reserve"
+    say "[dry-run] would link $link_dir/aw-commands -> $base/current/aw-commands (when the build carries aw-commands)"
     say "[dry-run] would point $base/current at $stamp, write wrappers for ${BINARIES[*]} into $link_dir, and run ui-evidence install-browser"
     return 0
   fi
@@ -603,6 +614,7 @@ link() {
   say "current -> $stamp"
   link_through_current heavy "$heavy"
   link_through_current meta-gate-reserve "$reserve"
+  if [ -x "$base/$stamp/aw-commands" ]; then link_through_current aw-commands "$link_dir/aw-commands"; fi
   for b in "${BINARIES[@]}"; do write_wrapper "$b"; done
   say "wrappers in $link_dir: ${BINARIES[*]}"
   case ":$PATH:" in *":$link_dir:"*) ;; *) warn "$link_dir is not on your PATH" ;; esac
