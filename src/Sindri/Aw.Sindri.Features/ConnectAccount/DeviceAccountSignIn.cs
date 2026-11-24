@@ -3,22 +3,21 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.OAuth;
 using Aw.Sindri.Core.Profile;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features.ConnectAccount;
 
 /// <summary>
 /// GitHub's device flow for the accounts step (first-run spec decision 13, §4.2): picks the client id (`setup.oauth.github`, else the shipped one), asks GitHub for a code, answers `code` at once and polls in
-/// the background. One sign-in runs at a time: a new start or <see cref="Cancel"/> ends the one before. On GitHub's yes, <see cref="DeviceAccountStore"/> stores the token in a fresh scope. No client id, or an
+/// the background. One sign-in runs at a time: a new start or <see cref="Cancel"/> ends the one before. On GitHub's yes, <paramref name="save"/> stores the token. No client id, or an
 /// app GitHub refuses, answers `token-needed` with SND-SETUP-014 or -013 as the reason. The device code and the token stay in memory and the secret store only.
 /// </summary>
 /// <param name="device">The device-flow sign-in.</param>
 /// <param name="presets">The github preset.</param>
 /// <param name="profiles">The live profile's `setup.oauth`.</param>
-/// <param name="scopes">A scope for the background write.</param>
+/// <param name="save">Stores GitHub's yes (<see cref="DeviceAccountStore"/>, in a scope of its own that the registration opens).</param>
 /// <param name="logger">Logs a failed poll by its code only; null logs nothing.</param>
-internal sealed partial class DeviceAccountSignIn(IDeviceSignIn device, IConnectionPresetCatalog presets, IProfileSource profiles, IServiceScopeFactory scopes, ILogger<DeviceAccountSignIn>? logger = null) : IDisposable
+internal sealed partial class DeviceAccountSignIn(IDeviceSignIn device, IConnectionPresetCatalog presets, IProfileSource profiles, DeviceAccountSave save, ILogger<DeviceAccountSignIn>? logger = null) : IDisposable
 {
     private const string Provider = "github";
     private readonly Lock _gate = new();
@@ -107,7 +106,7 @@ internal sealed partial class DeviceAccountSignIn(IDeviceSignIn device, IConnect
         try
         {
             var tokens = await device.Complete(preset, client, authorization, cancellationToken).ConfigureAwait(false);
-            var stored = tokens.IsError ? Results.Failure<Unit>(tokens.Error) : await Store(tokens.Value, client, actor, cancellationToken).ConfigureAwait(false);
+            var stored = tokens.IsError ? Results.Failure<Unit>(tokens.Error) : await save(tokens.Value, client, actor, cancellationToken).ConfigureAwait(false);
             if (stored.IsError && logger is not null)
             {
                 LogFailed(logger, stored.Error.Code);
@@ -116,15 +115,6 @@ internal sealed partial class DeviceAccountSignIn(IDeviceSignIn device, IConnect
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             // the owner's Cancel or a newer code: the sign-in ends with nothing stored
-        }
-    }
-
-    private async ValueTask<Result<Unit>> Store(TokenSet tokens, string client, string actor, CancellationToken cancellationToken)
-    {
-        var scope = scopes.CreateAsyncScope();
-        await using (scope.ConfigureAwait(false))
-        {
-            return await scope.ServiceProvider.GetRequiredService<DeviceAccountStore>().Save(tokens, client, actor, cancellationToken).ConfigureAwait(false);
         }
     }
 

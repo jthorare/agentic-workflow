@@ -10,7 +10,6 @@ using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.ConnectAccount;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.ConnectAccount;
 
@@ -35,7 +34,7 @@ internal sealed class ConnectAccountRig
     public FakeConnectionSecrets Secrets { get; } = new();
 
     /// <summary>Gets the one device flow every service of this rig shares, as the singleton is in the host.</summary>
-    public DeviceAccountSignIn Flow => field ??= new(Device, new FakeConnectionPresets(GitHubPreset), Profiles, Scopes());
+    public DeviceAccountSignIn Flow => field ??= new(Device, new FakeConnectionPresets(GitHubPreset), Profiles, Save);
 
     public AccountProfileWrites ProfileWrites() => new(Writer, new AcceptingParser(), Initializer, new FakeShippedEffects(), Profiles);
 
@@ -43,11 +42,9 @@ internal sealed class ConnectAccountRig
 
     public ConnectAccountService Service() => new(Slice.Callers, Gh, ProfileWrites(), Connections, Slice.Clock, Flow);
 
-    // The background write's scope: the same store, secrets and profile writer the test reads, an open command gate.
-    private IServiceScopeFactory Scopes() => new ServiceCollection()
-        .AddSingleton<IConnectionStore>(Connections).AddSingleton<IConnectionSecrets>(Secrets).AddSingleton<ICommandGate>(new OpenGate())
-        .AddScoped(_ => Events()).AddScoped(_ => ProfileWrites()).AddScoped<DeviceAccountStore>()
-        .BuildServiceProvider().GetRequiredService<IServiceScopeFactory>();
+    // The background write: the same store, secrets and profile writer the test reads, an open command gate.
+    private ValueTask<Result<Unit>> Save(TokenSet tokens, string client, string actor, CancellationToken cancellationToken) =>
+        new DeviceAccountStore(Connections, Secrets, new OpenGate(), Events(), ProfileWrites()).Save(tokens, client, actor, cancellationToken);
 
     private sealed class OpenGate : ICommandGate
     {
