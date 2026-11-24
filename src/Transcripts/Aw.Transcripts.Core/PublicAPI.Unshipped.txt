@@ -138,6 +138,16 @@ Aw.Transcripts.Core.Turns.TurnKey
 Aw.Transcripts.Core.Turns.TurnRole
 Aw.Transcripts.Core.Turns.TurnRole.Assistant = 1 -> Aw.Transcripts.Core.Turns.TurnRole
 Aw.Transcripts.Core.Turns.TurnRole.Human = 0 -> Aw.Transcripts.Core.Turns.TurnRole
+Aw.Transcripts.Core.WorktreeRoot
+Aw.Transcripts.Core.WorktreeRoot.<Clone>$() -> Aw.Transcripts.Core.WorktreeRoot!
+Aw.Transcripts.Core.WorktreeRoot.Deconstruct(out string! Root, out string! MainCheckout) -> void
+Aw.Transcripts.Core.WorktreeRoot.Equals(Aw.Transcripts.Core.WorktreeRoot? other) -> bool
+Aw.Transcripts.Core.WorktreeRoot.MainCheckout.get -> string!
+Aw.Transcripts.Core.WorktreeRoot.MainCheckout.init -> void
+Aw.Transcripts.Core.WorktreeRoot.Root.get -> string!
+Aw.Transcripts.Core.WorktreeRoot.Root.init -> void
+Aw.Transcripts.Core.WorktreeRoot.WorktreeRoot(string! Root, string! MainCheckout) -> void
+Aw.Transcripts.Core.WorktreeRoots
 override Aw.Transcripts.Core.Refs.SessionRef.Equals(object? obj) -> bool
 override Aw.Transcripts.Core.Refs.SessionRef.GetHashCode() -> int
 override Aw.Transcripts.Core.Refs.SessionRef.ToString() -> string!
@@ -165,6 +175,9 @@ override Aw.Transcripts.Core.Turns.TranscriptEntry.ToString() -> string!
 override Aw.Transcripts.Core.Turns.TranscriptTurn.Equals(object? obj) -> bool
 override Aw.Transcripts.Core.Turns.TranscriptTurn.GetHashCode() -> int
 override Aw.Transcripts.Core.Turns.TranscriptTurn.ToString() -> string!
+override Aw.Transcripts.Core.WorktreeRoot.Equals(object? obj) -> bool
+override Aw.Transcripts.Core.WorktreeRoot.GetHashCode() -> int
+override Aw.Transcripts.Core.WorktreeRoot.ToString() -> string!
 static Aw.Transcripts.Core.Prompts.CursorPrompt.Body(string! text) -> string!
 static Aw.Transcripts.Core.Prompts.CursorPrompt.Timestamp(string! text) -> System.DateTimeOffset?
 static Aw.Transcripts.Core.Prompts.PromptText.IsTyped(string! text) -> bool
@@ -207,6 +220,9 @@ static Aw.Transcripts.Core.Turns.TurnAssembler.Assemble(Aw.Transcripts.Core.Refs
 static Aw.Transcripts.Core.Turns.TurnDedupe.CanHoldOriginals(Aw.Transcripts.Core.Turns.FileSpan! candidate, System.DateTimeOffset candidateWrittenAt, Aw.Transcripts.Core.Turns.FileSpan! target) -> bool
 static Aw.Transcripts.Core.Turns.TurnDedupe.Own(System.Collections.Generic.IReadOnlyList<string!>! ownKeys, System.Collections.Generic.IEnumerable<System.Collections.Generic.IReadOnlyList<string!>!>! earlierKeys) -> System.Collections.Generic.IReadOnlyList<bool>!
 static Aw.Transcripts.Core.Turns.TurnKey.Of(Aw.Transcripts.Core.Turns.TranscriptTurn! turn) -> string!
+static Aw.Transcripts.Core.WorktreeRoot.operator !=(Aw.Transcripts.Core.WorktreeRoot? left, Aw.Transcripts.Core.WorktreeRoot? right) -> bool
+static Aw.Transcripts.Core.WorktreeRoot.operator ==(Aw.Transcripts.Core.WorktreeRoot? left, Aw.Transcripts.Core.WorktreeRoot? right) -> bool
+static Aw.Transcripts.Core.WorktreeRoots.MainCheckoutOf(System.Collections.Generic.IReadOnlyList<Aw.Transcripts.Core.WorktreeRoot!>! roots, string! cwd) -> string?
 static readonly Aw.Transcripts.Core.TranscriptsErrors.AmbiguousRef -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Transcripts.Core.TranscriptsErrors.Invalid -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Transcripts.Core.TranscriptsErrors.SessionNotFound -> Aw.Kernel.ErrorDefinition!

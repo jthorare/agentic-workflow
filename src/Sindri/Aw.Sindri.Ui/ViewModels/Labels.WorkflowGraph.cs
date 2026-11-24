@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Aw.Sindri.Ui.ViewModels;
 
 /// <summary>The app's own copy (<see cref="Labels"/>, continued): the read-only workflow graph (#2258 PR 17 part 2). Never a served sentence.</summary>
@@ -42,4 +44,11 @@ internal static partial class Labels
     /// <param name="line">The card's settings line.</param>
     /// <returns>The words.</returns>
     internal static string WfCardTip(string title, string line) => title + " \u00b7 " + line;
+
+    /// <summary>The Schedule card's chip for a workflow that is on (#3758): the next run in local time, "next 7:00" within the next 24 hours, else "next Mon 7:00".</summary>
+    /// <param name="local">The next run in the viewer's time zone.</param>
+    /// <param name="soon">True when it is within the next 24 hours.</param>
+    /// <returns>The chip's words.</returns>
+    internal static string WfNextRun(DateTimeOffset local, bool soon) =>
+        "next " + local.ToString(soon ? "H:mm" : "ddd H:mm", CultureInfo.InvariantCulture);
 }
