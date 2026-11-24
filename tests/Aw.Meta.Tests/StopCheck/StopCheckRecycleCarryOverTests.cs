@@ -1,4 +1,6 @@
+using System.Globalization;
 using Aw.Meta.Core.Ids;
+using Aw.Meta.Core.Obligations;
 using Aw.Meta.Features.StopCheck;
 using Aw.Meta.Testing;
 
@@ -35,13 +37,13 @@ public sealed class StopCheckRecycleCarryOverTests
         var stop = await MetaStops();
 
         Assert.False(stop.Blocked);
-        var open = Assert.Single(stop.Open);
+        var reply = Assert.Single(stop.Open, o => o.Kind == ObligationKind.Reply);
         Assert.NotNull(stop.Warning);
-        Assert.Contains("pending recycle", stop.Warning, StringComparison.Ordinal);
-        Assert.Contains("1 open obligation carries over", stop.Warning, StringComparison.Ordinal);
-        Assert.Contains(open.Summary, stop.Warning, StringComparison.Ordinal);
+        Assert.Contains("letting the turn end for the pending recycle", stop.Warning, StringComparison.Ordinal);
+        Assert.Contains(stop.Open.Count == 1 ? "1 open obligation carries over" : string.Create(CultureInfo.InvariantCulture, $"{stop.Open.Count} open obligations carry over"), stop.Warning, StringComparison.Ordinal);
+        Assert.Contains(reply.Summary, stop.Warning, StringComparison.Ordinal);
         Assert.True((await _world.Beats.Last("meta", CancellationToken.None)).Value?.Stopped ?? false);
-        Assert.Single((await MetaStops()).Open);   // nothing was cleared: the next stop-check still sees it
+        Assert.Single((await MetaStops()).Open, o => o.Kind == ObligationKind.Reply);   // nothing was cleared: the next stop-check still sees it
     }
 
     [Fact, Trait("Lane", "unit")]
