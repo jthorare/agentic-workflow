@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Input;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.Views.Workflows;
@@ -75,6 +76,12 @@ internal sealed partial class GraphCanvas
         _fitPending = true;
         FitIfPending();
     }
+
+    /// <summary>The tooltip for the card under a point (#4203): the card's title and its full settings line, which the card may cut; null off the cards.</summary>
+    /// <param name="point">A point in this control.</param>
+    /// <returns>The tooltip's words, or null.</returns>
+    internal string? TipAt(Point point) =>
+        NodeAt(point) is { } id && Graph?.Nodes.FirstOrDefault(n => string.Equals(n.Id, id, StringComparison.Ordinal)) is { } node ? Labels.WfCardTip(node.Title, node.Line) : null;
 
     /// <summary>Centres the canvas on a point of the world (the minimap's press).</summary>
     /// <param name="world">The point.</param>

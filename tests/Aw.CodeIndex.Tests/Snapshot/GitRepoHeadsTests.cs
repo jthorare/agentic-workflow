@@ -70,6 +70,23 @@ public sealed class GitRepoHeadsTests
     }
 
     [Fact]
+    public async Task A_stale_local_master_never_wins_over_origin_main_gh3928()
+    {
+        using var repo = new GitRepoBuilder().WithFile("a.cs", "class A {}").Build();
+        var stale = repo.Head;
+        _ = repo.Git("branch", "-q", "master", stale.Value);
+        var onMain = repo.Commit("main moved on");
+        _ = repo.Git("update-ref", "refs/remotes/origin/main", onMain.Value);
+        _ = repo.Git("checkout", "-q", "-b", "feature");
+        _ = repo.Commit("feature work");
+        _ = repo.Git("branch", "-q", "-D", "main");
+
+        var heads = await _heads.Heads([repo.AsRepo()], TestContext.Current.CancellationToken);
+
+        Assert.Equal(onMain, Assert.Single(heads.Value).DefaultTip);   // origin/main comes before master in DefaultBranchRefs
+    }
+
+    [Fact]
     public async Task A_checkout_with_only_origin_main_is_on_the_default_branch_at_its_tip_gh3181()
     {
         using var repo = new GitRepoBuilder().WithFile("a.cs", "class A {}").Build();

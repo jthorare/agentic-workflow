@@ -50,7 +50,7 @@ internal sealed partial class GraphCanvas : Control
 
     static GraphCanvas()
     {
-        AffectsRender<GraphCanvas>(GraphProperty, ZoomProperty, PanProperty);
+        AffectsRender<GraphCanvas>(GraphProperty, ZoomProperty, PanProperty, TextScaleProperty);
         FocusableProperty.OverrideDefaultValue<GraphCanvas>(defaultValue: true);
         ClipToBoundsProperty.OverrideDefaultValue<GraphCanvas>(defaultValue: true);
         _ = ZoomProperty.Changed.AddClassHandler<GraphCanvas>((canvas, _) =>
@@ -169,11 +169,14 @@ internal sealed partial class GraphCanvas : Control
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
+        var at = e.GetPosition(this);
         if (_panFrom is { } from)
         {
-            var at = e.GetPosition(this);
             PanTo(new Point(_panStart.X + (at.X - from.X), _panStart.Y + (at.Y - from.Y)));
+            return;
         }
+
+        ToolTip.SetTip(this, TipAt(at));   // the card's full settings line, which the card may cut (#4203); none off the cards
     }
 
     /// <inheritdoc/>
