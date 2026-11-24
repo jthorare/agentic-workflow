@@ -44,8 +44,13 @@ internal sealed partial class AgentsPageViewModel
     /// <returns>True when a size message went out.</returns>
     internal Task<bool> FitPane(int cols, int rows)
     {
-        _fit = (cols, rows);
-        return _session?.FitSize(cols, rows, CancellationToken.None) ?? Task.FromResult(false);
+        if (TerminalSession.Bounded(cols, rows) is not { } size)
+        {
+            return Task.FromResult(false);   // no real fit (zero or less): keep the last one
+        }
+
+        _fit = size;   // clamped to what the server accepts, so the next hello never opens with a size it would refuse
+        return _session?.FitSize(size.Cols, size.Rows, CancellationToken.None) ?? Task.FromResult(false);
     }
 
     /// <summary>The terminal view's state.</summary>
