@@ -1,7 +1,9 @@
 import type { Person, PrRow, Tone } from '../types'
 
+// first: 100 is the most one GraphQL search page returns, and this reads one page. Past 100 open PRs the oldest-updated
+// ones are not listed: a session branch whose PR fell off the page shows no line, and the pane shows 100 rows.
 export const QUERY = `query {
-  search(query: "is:pr is:open author:@me archived:false sort:updated-desc", type: ISSUE, first: 30) {
+  search(query: "is:pr is:open author:@me archived:false sort:updated-desc", type: ISSUE, first: 100) {
     nodes {
       ... on PullRequest {
         number title url isDraft mergeable headRefName headRefOid reviewDecision
