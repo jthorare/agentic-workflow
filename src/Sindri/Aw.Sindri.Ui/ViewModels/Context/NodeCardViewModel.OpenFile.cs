@@ -1,3 +1,5 @@
+using Aw.Sindri.Ui.Api.Context;
+
 namespace Aw.Sindri.Ui.ViewModels.Context;
 
 /// <summary>
@@ -26,6 +28,13 @@ internal sealed partial class NodeCardViewModel
         {
             _ = await Launch.OpenPath(path, cancellationToken).ConfigureAwait(true);
         }
+    }
+
+    // The file the node read serves: a path only when the source is a file in a checkout on this machine (and the caller a person).
+    private void TakeFile(NodeView view)
+    {
+        _localPath = view.Node.Source?.Path;
+        OnChanged(nameof(HasOpenFile));
     }
 
     // A new node, or a closed card, has no file until the node read serves one.

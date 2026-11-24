@@ -169,6 +169,7 @@ internal sealed partial class NodeCardViewModel(ContextPorts ports) : Observable
         {
             Connected = [.. read.Value.Out.Select(e => Row(map, e.To, e)).Concat(read.Value.In.Select(e => Row(map, e.From, e)))];
             NoneConnected = Connected.Count == 0;
+            TakeFile(read.Value);
         }
         else
         {
