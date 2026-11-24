@@ -24,6 +24,8 @@ public sealed partial class MergeReadiness(IMetaConfig config, IGateStore gates,
     private const string Fields = "headRefOid,isDraft,title,state";
     private const int LogCharacters = 32 * 1024 * 1024;
 
+    private readonly InboxSync? _sync = sync;
+
     private async ValueTask<Result<MergeAssessment>> AssessStored(int pr, CancellationToken cancellationToken)
     {
         var team = await config.Load(cancellationToken).ConfigureAwait(false);
