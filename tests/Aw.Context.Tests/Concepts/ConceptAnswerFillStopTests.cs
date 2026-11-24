@@ -39,4 +39,30 @@ public sealed class ConceptAnswerFillStopTests
 
         Assert.True(ended.Task.IsCompleted, "the container's dispose returned while the fill was still running");
     }
+
+    [Fact]
+    public async Task A_sync_dispose_cancels_a_running_fill_and_returns_without_waiting_for_it()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var started = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var ended = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var fills = new ConceptAnswerFills(async (scope, token) =>
+        {
+            started.SetResult(token);
+            await release.Task;   // why: ignores the token, so a dispose that waited for the fill would never return
+            ended.SetResult();
+        });
+        fills.Start(MapWorld.HumanVia(ContextClient.Http));
+        var token = await started.Task.WaitAsync(_patience, ct);
+
+#pragma warning disable MA0042 // why: the sync Dispose is the behavior under test
+        fills.Dispose();
+#pragma warning restore MA0042
+
+        Assert.True(token.IsCancellationRequested, "the sync dispose did not cancel the running fill");
+        Assert.False(ended.Task.IsCompleted, "the sync dispose waited for the fill");
+        release.SetResult();
+        await ended.Task.WaitAsync(_patience, ct);
+    }
 }
