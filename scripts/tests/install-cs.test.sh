@@ -69,7 +69,9 @@ case "${1:-}" in
     shift 2; out="" ver=""
     while [ $# -gt 0 ]; do case "$1" in -o) out="$2"; shift ;; -p:Version=*) ver="${1#*=}" ;; esac; shift; done
     an=no; [ -f src/Aw.Analyzers/Aw.Analyzers.csproj ] && an=yes
-    echo "pack version=$ver analyzers=$an" >> "$FAKE_LOG"
+    # lock=: whether an install-cs publish lock is held while the pack runs (another run's reclaim removes sdk-tree.* under it)
+    lk=no; [ -s "$AW_STATE_DIR/bin/cs/.lock/pid" ] && lk=yes
+    echo "pack version=$ver analyzers=$an lock=$lk" >> "$FAKE_LOG"
     [ -z "${FAKE_PACK_FAIL:-}" ] || { echo "boom packing" >&2; exit 1; }
     mkdir -p "$out"; : > "$out/Aw.Sindri.Toolkit.$ver.nupkg"; exit 0 ;;
   *) exit 0 ;;
@@ -649,6 +651,26 @@ check "a dead publish tree is removed" "$([ -d "$CACHE/tree.orphan" ] && echo ye
 check "a dead sdk tree is removed" "$([ -d "$CACHE/sdk-tree.orphan" ] && echo yes || echo no)" "no"
 check "a dead verify dir is removed" "$([ -d "$CACHE/verify.orphan" ] && echo yes || echo no)" "no"
 check "a dead stage is removed" "$([ -e "$B/.stage.dead" ] && echo yes || echo no)" "no"
+
+# A publish that has made the lock folder but not yet written its pid is live: a second run must not take the
+# lock over and remove that publish's scratch (review of #4243).
+mkdir -p "$B/.lock" "$CACHE/tree.starting" "$B/.stage.starting"
+diskout="$(bash "$INSTALL" --publish 2>&1)"
+check "a lock without a pid: the build is still reported current" "$(printf '%s\n' "$diskout" | grep -c '^install-cs: build .* is current$')" "1"
+check "a lock without a pid stays" "$([ -d "$B/.lock" ] && echo yes || echo no)" "yes"
+check "a lock without a pid: the starting publish keeps its tree" "$([ -d "$CACHE/tree.starting" ] && echo yes || echo no)" "yes"
+check "a lock without a pid: the starting publish keeps its stage" "$([ -e "$B/.stage.starting" ] && echo yes || echo no)" "yes"
+rmdir "$B/.lock" "$CACHE/tree.starting" "$B/.stage.starting" 2> /dev/null
+
+# The toolkit pack of a run whose build is current holds the lock, so a second run's reclaim leaves its sdk-tree
+# alone (review of #4243). An empty feed stamp makes this run pack.
+: > "$AW_SINDRI_HOME/sdk/packages/.sdk-stamp"
+: > "$FAKE_LOG"
+diskout="$(bash "$INSTALL" --publish 2>&1)"
+check "a current build that packs: nothing is published" "$(pubs)" ""
+check "a current build that packs: the pack holds the lock" "$(grep -c '^pack .* lock=yes$' "$FAKE_LOG" | tr -d ' ')" "1"
+check "a current build that packs: the lock is released after" "$([ -e "$B/.lock" ] && echo yes || echo no)" "no"
+check "a current build that packs: no sdk tree is left" "$(ls -d "$CACHE"/sdk-tree.* 2> /dev/null | wc -l | tr -d ' ')" "0"
 
 # The next binary must not be published beside the previous one's bin/ or its NativeAOT object file.
 echo "<!-- disk -->" >> "$REPO/Directory.Build.props"
