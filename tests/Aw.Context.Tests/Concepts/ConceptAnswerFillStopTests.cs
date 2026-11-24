@@ -39,4 +39,39 @@ public sealed class ConceptAnswerFillStopTests
 
         Assert.True(ended.Task.IsCompleted, "the container's dispose returned while the fill was still running");
     }
+
+    // Issue 4176: a container disposed with Dispose(), not DisposeAsync(), can't wait; it cancels the fill and returns while the fill is still ending.
+    [Fact]
+    public async Task Disposing_the_container_synchronously_cancels_a_running_fill_and_returns_without_waiting()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var cancelled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var never = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var services = new ServiceCollection();
+        _ = services.AddSingleton<IConceptAnswerFills>(_ => new ConceptAnswerFills(async (scope, token) =>
+        {
+            started.SetResult();
+            try
+            {
+                await never.Task.WaitAsync(token);
+            }
+            catch (OperationCanceledException)
+            {
+                cancelled.SetResult();
+                await release.Task;   // why: the fill keeps running after it saw the stop, so a dispose that waited for it would not return
+                throw;
+            }
+        }));
+        var provider = services.BuildServiceProvider();
+        provider.GetRequiredService<IConceptAnswerFills>().Start(MapWorld.HumanVia(ContextClient.Http));
+        await started.Task.WaitAsync(_patience, ct);
+
+        await Task.Run(provider.Dispose, ct).WaitAsync(_patience, ct);
+
+        await cancelled.Task.WaitAsync(_patience, ct);
+        Assert.False(release.Task.IsCompleted);
+        release.SetResult();   // the fill ends after its source was disposed: it reads only the token, which a disposed source still answers
+    }
 }
