@@ -18,9 +18,9 @@ internal sealed partial class ContextPageViewModel
     /// <summary>The served suggestions after a refusal, as choices (the anchors to pick).</summary>
     public IReadOnlyList<string> Choices { get; private set; } = [];
 
-    /// <summary>The <see cref="Choices"/> with their titles and kinds, as the "Did you mean" row draws them (#2809).</summary>
+    /// <summary>The <see cref="Choices"/> with their titles and kinds, as the "Did you mean" row draws them (#2809); a shared title also reads its key's path (#3124).</summary>
     public IReadOnlyList<ContextChoice> ChoiceRows =>
-        [.. Choices.Select(k => _choiceTitles.TryGetValue(k, out var known) ? known : new ContextChoice(k, k, string.Empty))];
+        ContextChoice.WithPaths([.. Choices.Select(k => _choiceTitles.TryGetValue(k, out var known) ? known : new ContextChoice(k, k, string.Empty))]);
 
     // The titles and kinds the server sent with its suggestions (a refusal's 'choices', a question's 'suggestions'), by key (#2809).
     private readonly Dictionary<string, ContextChoice> _choiceTitles = new(StringComparer.Ordinal);

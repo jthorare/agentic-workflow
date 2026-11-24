@@ -140,9 +140,14 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="ctx:ContextChoice">
                 <Button Tag="{Binding Key}" Click="OnPick" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding Key}">
-                  <!-- The title trims; the kind tag keeps its width, so it stays drawn whole. -->
+                  <!-- The title trims; the kind tag keeps its width, so it stays drawn whole. A title another choice shares is followed by its key's path,
+                       muted (#3124): up to Row.Col.Path wide, then cut in the middle, so its start and its end, where two paths differ, both stay drawn. -->
                   <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <TextBlock x:Name="ChoiceTitle" Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock x:Name="ChoiceTitle" Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                      <TextBlock x:Name="ChoicePath" Grid.Column="1" Classes="subtle" Text="{Binding PathText}" IsVisible="{Binding HasPath}"
+                                 MaxWidth="{StaticResource Row.Col.Path}" TextTrimming="PrefixCharacterEllipsis" />
+                    </Grid>
                     <TextBlock x:Name="ChoiceKind" Grid.Column="1" Classes="caption subtle" Text="{Binding Kind}" IsVisible="{Binding HasKind}" VerticalAlignment="Center" />
                   </Grid>
                 </Button>

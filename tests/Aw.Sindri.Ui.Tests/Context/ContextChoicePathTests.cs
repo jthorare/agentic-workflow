@@ -39,4 +39,19 @@ public sealed class ContextChoicePathTests
         // why: both rows read "layout:panes" and told apart only by the kind tag ("thing" means nothing to a person)
         Assert.Equal(["layout:panes, feature, tabs.pane-split", "layout:panes, thing, pane-split", "Grid layout, concept"], page.ChoiceRows.Select(c => c.Name), StringComparer.Ordinal);
     }
+
+    [Fact]
+    public async Task Only_a_shared_title_gets_a_path_and_every_key_stays()
+    {
+        var page = await Refused();
+
+        Assert.Equal(["tabs.pane-split", "pane-split", string.Empty], page.ChoiceRows.Select(c => c.Path), StringComparer.Ordinal);
+        Assert.Equal([" · tabs.pane-split", " · pane-split", string.Empty], page.ChoiceRows.Select(c => c.PathText), StringComparer.Ordinal);
+        Assert.Equal(new ContextChoice(Grid, "Grid layout", "concept"), page.ChoiceRows[2]);
+        Assert.Equal([Split, Pane, Grid], page.ChoiceRows.Select(c => c.Key), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void A_key_with_no_kind_reads_whole_as_its_path() =>
+        Assert.Equal(["plain", "other:plain"], ContextChoice.WithPaths([new ContextChoice("plain", "Same", string.Empty), new ContextChoice("x:other:plain", "Same", string.Empty)]).Select(c => c.Path), StringComparer.Ordinal);
 }

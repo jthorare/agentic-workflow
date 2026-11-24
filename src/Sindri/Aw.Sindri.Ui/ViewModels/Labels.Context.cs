@@ -56,6 +56,11 @@ internal static partial class Labels
     /// <summary>The suggested anchors' name.</summary>
     internal const string ContextSuggestions = "Did you mean";
 
+    /// <summary>A "Did you mean" choice's key path after a title another choice shares (#3124): " · tabs.pane-split", its leading space the gap after the title.</summary>
+    /// <param name="path">The key after its kind.</param>
+    /// <returns>The muted text after the title.</returns>
+    internal static string ContextChoicePath(string path) => " · " + path;
+
     /// <summary>The word for an untrusted label.</summary>
     internal const string ContextUntrusted = "untrusted";
 
