@@ -20,12 +20,13 @@ public sealed class AddStepExampleReferencesTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     // Add step of the block, placed after the step <after> when one is given (the selected step), on the "found" workflow or on it with "agent" renamed "tell".
-    private async Task<WorkflowsPageViewModel> AddedStep(string type, string? after = null, bool noAgent = false)
+    private async Task<WorkflowsPageViewModel> AddedStep(string type, string? after = null, bool noAgent = false, bool followedIsNotify = false)
     {
         _f.Server.WorkflowBlocksAnswer = RouteAnswer.Api("workflows-blocks", "listed");
         if (noAgent)
         {
-            _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, GoldenFiles.Api("workflows-slug", "found").Replace("\"agent\"", "\"tell\"", StringComparison.Ordinal));
+            var found = GoldenFiles.Api("workflows-slug", "found").Replace("\"agent\"", "\"tell\"", StringComparison.Ordinal);
+            _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, followedIsNotify ? found.Replace("\"run_agent\"", "\"notify\"", StringComparison.Ordinal) : found);   // a real notify has no outputs
         }
 
         var page = await _f.Shown(Token);
@@ -117,6 +118,14 @@ public sealed class AddStepExampleReferencesTests
         Assert.False(page.CanSave);   // "when" is required
         when.Text = "tell.ok";
         Assert.True(page.CanSave);
+    }
+
+    [Fact]
+    public async Task A_condition_after_a_step_with_no_outputs_keeps_the_step_id_and_the_examples_field()
+    {
+        var page = await AddedStep("condition", after: "tell", noAgent: true, followedIsNotify: true);   // example "agent.drifted"; "tell" is a notify, whose block has outputs {}
+
+        Assert.Equal("<step id>.drifted", Field(page, "when").Placeholder);   // nothing to name its field after (#4272)
     }
 
     [Fact]
