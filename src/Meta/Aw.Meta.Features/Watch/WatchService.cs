@@ -128,6 +128,7 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
             Failing = failing.IsSuccess && string.Equals(failing.Value, "1", StringComparison.Ordinal),
             // A compare-and-set like the snapshot's: a newer watch that wrote the flag meanwhile ends this one (#2564).
             KeepFailing = now => ownership.KeepFailing(now, cancellationToken),
+            Backoff = delay.Wait,
             MainMoved = async (sha, merged) => await board.RecordMain(sha, merged, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false),
             SeedMain = async sha => (await board.SeedMain(sha, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false)).Map(static _ => Unit.Value),
         };

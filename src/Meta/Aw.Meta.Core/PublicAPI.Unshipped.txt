@@ -2842,6 +2842,10 @@ Aw.Meta.Core.Merge.MergeFacts.MergeConflicts.get -> bool
 Aw.Meta.Core.Merge.MergeFacts.MergeConflicts.init -> void
 Aw.Meta.Core.Worktrees.WorktreeInspector.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Worktrees.WorktreeInspector!
 Aw.Meta.Core.Worktrees.WorktreeSweeper.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Worktrees.WorktreeSweeper!
+Aw.Meta.Core.Watch.TransientGhError
+const Aw.Meta.Core.Watch.TransientGhError.Retries = 3 -> int
+static Aw.Meta.Core.Watch.TransientGhError.Backoff(int attempt) -> System.TimeSpan
+static Aw.Meta.Core.Watch.TransientGhError.IsTransient(string! message) -> bool
 Aw.Meta.Core.Config.DelegationConfig
 Aw.Meta.Core.Config.DelegationConfig.<Clone>$() -> Aw.Meta.Core.Config.DelegationConfig!
 Aw.Meta.Core.Config.DelegationConfig.DelegationConfig(System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>? lanes = null) -> void
