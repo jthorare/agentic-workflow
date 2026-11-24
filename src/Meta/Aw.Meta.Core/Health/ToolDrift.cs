@@ -14,6 +14,7 @@ public sealed record ToolDrift(string Tool, DriftState State, string Detail)
     {
         DriftState.Current => "current",
         DriftState.Stale => "stale",
+        DriftState.Unknown => "unknown",
         _ => "unknown",
     };
 }
