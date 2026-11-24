@@ -178,7 +178,8 @@ The steps below apply to **PreToolUse hooks**. SessionStart hooks have different
 hook gets empty output and fails open: a padded `rm -rf` passed the Cursor adapter, and a long message skipped send-gate. Pipe the
 payload to `jq` on stdin and pass other big strings as `--rawfile name <(printf '%s' "$VAR")` (or `--slurpfile` for JSON). Keep `--arg`
 / `--argjson` for short values: ids, event names, paths, fixed reasons. Shell functions and builtins (`printf`, `echo`) are fine; the limit
-is on exec. A hook test for a new input path adds a 200 KB row.
+is on exec. A hook test for a new input path adds a 200 KB row. Short text a hook builds itself is exempt: `done-gate-annotate.sh`
+(fixed text plus the brief quote cut to 120 characters), `context-guard.sh`'s and `retry-gate.sh`'s `--arg m "$MSG"`.
 
 ## Probe Hook (cheap-agent-harness rollout step 0.5)
 
