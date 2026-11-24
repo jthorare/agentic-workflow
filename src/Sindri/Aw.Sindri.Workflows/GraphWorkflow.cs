@@ -35,6 +35,11 @@ internal sealed partial class GraphWorkflow
         {
             var spec = await Call((GraphRunActivities a) => a.LoadAsync(_run), detached: false).ConfigureAwait(true);
             await Call((GraphRunActivities a) => a.BeginAsync(_run), detached: false).ConfigureAwait(true);
+            // why: a run replays the activities its history holds; the patch keeps a run started before re-run from a step existed replaying without this call
+            var restored = Workflow.Patched("graph-rerun-1")
+                ? await Call((GraphRunActivities a) => a.RestoredAsync(_run), detached: false).ConfigureAwait(true)
+                : [];
+            Restore(spec, restored);
             return await Walk(spec).ConfigureAwait(true);
         }
         catch (Exception e) when (TemporalException.IsCanceledException(e))
