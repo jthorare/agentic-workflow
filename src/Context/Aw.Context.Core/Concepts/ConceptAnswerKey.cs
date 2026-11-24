@@ -17,7 +17,7 @@ internal static class ConceptAnswerKey
     // Bump this in the same change as anything that alters a kept answer for the same inputs: ConceptBuilder or ConceptGlossaryBuilder output, the row records or their JSON,
     // KeptConcepts' code paths, or a new input the answer reads (add that input to the key as well). Rows built the old way are then never answered again. Redaction rules need
     // no bump: their digest is part of the key.
-    private const string Format = "2";   // 2: near-duplicate suggestions fold into one row (issue 2975)
+    private const string Format = "1";
 
     /// <summary>The key of one concepts page.</summary>
     internal static string Concepts(ConceptAnswerBasis basis, ConceptsQuery query, ContextScope scope, string ruleset)

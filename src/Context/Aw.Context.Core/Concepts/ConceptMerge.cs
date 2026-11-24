@@ -2,7 +2,7 @@ namespace Aw.Context.Core.Concepts;
 
 /// <summary>
 /// Folds near-duplicate suggested concepts into one (issue 2975): two suggestions are one thing when they share most of their terms or most of their code files. "Most" is at least
-/// <see cref="MinShared"/> items and at least <see cref="MostShared"/> of the smaller set, so two concepts that share one common word ('tab') stay apart. The concept with the most
+/// <see cref="MinShared"/> items and at least <see cref="MostSharedPercent"/> percent of the smaller set, so two concepts that share one common word ('tab') stay apart. The concept with the most
 /// members leads (the earlier one on a tie) and keeps its place; every later suggestion that overlaps the lead itself joins it, and its name goes on the lead's "also" list. A pin
 /// never takes part: the owner decided it.
 /// </summary>
@@ -11,8 +11,8 @@ internal static class ConceptMerge
     /// <summary>The fewest shared terms or code files that can make two suggestions one.</summary>
     internal const int MinShared = 2;
 
-    /// <summary>The share of the smaller set two suggestions must have in common: 0.6 (3 of 5 terms).</summary>
-    internal const double MostShared = 0.6;
+    /// <summary>The share of the smaller set, in percent, two suggestions must have in common: 60 (3 of 5 terms; 10 of 17 is too few). Whole numbers, so the edge is exact.</summary>
+    internal const int MostSharedPercent = 60;
 
     /// <summary>Folds the concepts, in the order given.</summary>
     /// <param name="concepts">The concepts in answer order.</param>
@@ -52,7 +52,7 @@ internal static class ConceptMerge
     {
         var (left, right) = (a.ToHashSet(comparer), b.ToHashSet(comparer));
         var shared = left.Count(right.Contains);
-        return shared >= MinShared && shared >= MostShared * Math.Min(left.Count, right.Count);
+        return shared >= MinShared && shared * 100 >= MostSharedPercent * Math.Min(left.Count, right.Count);
     }
 
     private static List<string> Also(Dictionary<string, List<string>> taken, string id) => taken.TryGetValue(id, out var also) ? also : [];
