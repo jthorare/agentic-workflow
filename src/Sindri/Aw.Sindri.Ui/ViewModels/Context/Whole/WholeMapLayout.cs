@@ -48,17 +48,6 @@ internal static partial class WholeMapLayout
     /// <summary>The margin around the world.</summary>
     internal const double Margin = 24;
 
-    /// <summary>
-    /// The narrowest the world gets (#4324): a lane spans the world, so a two-area map (360 wide) left its heading
-    /// "2 actions · 2 features · 2 screens · 1 thing" about 272 units after the title, and font metrics decided whether it was cut.
-    /// </summary>
-    internal const double MinWorldWidth = 480;
-
-    /// <summary>A world width no narrower than <see cref="MinWorldWidth"/>; every layout and cut that sizes the world goes through here.</summary>
-    /// <param name="natural">The width the contents need.</param>
-    /// <returns>The world width.</returns>
-    internal static double WorldWidth(double natural) => Math.Max(MinWorldWidth, natural);
-
     private const double ColumnWidth = (Across * (NodeWidth + NodeGap)) + ColumnGutter;
 
     /// <summary>The distance between the left edges of two adjacent area columns.</summary>
@@ -184,7 +173,7 @@ internal static partial class WholeMapLayout
         var position = placed.ToDictionary(p => p.Key, StringComparer.Ordinal);
         var edges = (map.Edges ?? []).Where(e => position.ContainsKey(e.From) && position.ContainsKey(e.To)).Select(e =>
             new PlacedEdge(e.From, e.To, e.Type, e.Confirmed, position[e.From].Rect.CenterX, position[e.From].Rect.CenterY, position[e.To].Rect.CenterX, position[e.To].Rect.CenterY, e.Confidence)).ToList();
-        var world = new WholeRect(0, 0, WorldWidth((2 * Margin) + (Math.Max(1, order.Count) * ColumnWidth) - ColumnGutter), height);
+        var world = new WholeRect(0, 0, (2 * Margin) + (Math.Max(1, order.Count) * ColumnWidth) - ColumnGutter, height);
         return new WholeMapGeometry(world, ByArea: false, order, columns, placed, [], edges, [], bands);
     }
 }

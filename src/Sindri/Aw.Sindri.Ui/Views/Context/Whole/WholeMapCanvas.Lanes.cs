@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia.Media;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
@@ -51,6 +52,25 @@ internal sealed partial class WholeMapCanvas
     }
 
     private PlacedBand? Placed(WholeBand band) => Map?.Shown?.Bands.FirstOrDefault(b => b.Band == band);
+
+    /// <summary>The numbers behind <see cref="LaneMetaWhole"/>, for a test's failure message: the drawn width, the natural width and the room.</summary>
+    /// <param name="band">The band.</param>
+    /// <returns>"drawn D, natural N, room R", or empty when the band has no heading.</returns>
+    internal string LaneMetaNumbers(WholeBand band)
+    {
+        if (Map?.Shown is not { } geometry || Placed(band) is not { Meta.Length: > 0 } placed)
+        {
+            return string.Empty;
+        }
+
+        var muted = Brush("Brush.InkSubtle");
+        var size = LaneSize(WholeMapViewModel.UsesDots(Scale));
+        var title = LaneTitle(placed, size, Brush(BandAccent(band)));
+        var drawn = LaneMeta(geometry, placed, title, size, muted);
+        var whole = Text(placed.Meta, size * 0.9, muted, WideOpen);
+        var room = WholeMapLayout.LaneMetaWidth(geometry.World.Width, LaneMetaX(title));
+        return string.Create(CultureInfo.InvariantCulture, $"drawn {drawn.Width:0.#}, natural {whole.Width:0.#}, room {room:0.#}, title {title.WidthIncludingTrailingWhitespace:0.#}");
+    }
 
     private double LaneSize(bool dots) => dots ? LaneTitleSize / Math.Max(Scale, 0.25) : LaneTitleSize;
 

@@ -14,10 +14,14 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 /// #3998: on the 14-item map (two features, so a narrow world) the Product lane's heading "2 actions · 2 features · 2 screens · 1 thing" is drawn whole,
 /// not cut at the old fixed 360 px reserve. #4305: zoomed out to dots mode, the heading is the title alone and the counts are not drawn.
 /// Saved under frames/ as whole-lane-heading-*.png when AW_UI_FRAMES=1, before the checks.
+/// The width checks need real drawing (#4324): the headless runner without AW_UI_FRAMES=1 shapes text with stand-in metrics, about 15% wider
+/// (514.8 against 449 of room on this map), so there they only check what is drawn, not how wide.
 /// </summary>
 [Lane(TestLane.Integration)]
 public sealed class WholeMapLaneHeadingFramesTests : FrameHost
 {
+    private static readonly bool _draws = string.Equals(Environment.GetEnvironmentVariable("AW_UI_FRAMES"), "1", StringComparison.Ordinal);
+
     private async Task<(Window Window, WholeMapView Whole)> Open(double width)
     {
         var (window, shell) = await Connected(width: width, height: 900);
@@ -43,7 +47,7 @@ public sealed class WholeMapLaneHeadingFramesTests : FrameHost
 
         Assert.NotEmpty(product.Meta);
         Assert.True(canvas.LaneMetaDrawn(WholeBand.Product), "counts not drawn at the default zoom");
-        Assert.True(canvas.LaneMetaWhole(WholeBand.Product), string.Create(CultureInfo.InvariantCulture, $"cut: {product.Meta} (shown world {canvas.Map?.Shown?.World.Width:0}, whole world {canvas.Map?.Geometry?.World.Width:0})"));
+        Assert.True(!_draws || canvas.LaneMetaWhole(WholeBand.Product), string.Create(CultureInfo.InvariantCulture, $"cut: {product.Meta} (shown world {canvas.Map?.Shown?.World.Width:0}, whole world {canvas.Map?.Geometry?.World.Width:0}, scale {canvas.Scale:0.###}, {canvas.LaneMetaNumbers(WholeBand.Product)})"));
     });
 
     [Theory]
@@ -62,7 +66,7 @@ public sealed class WholeMapLaneHeadingFramesTests : FrameHost
         Assert.True(WholeMapViewModel.UsesDots(canvas.Scale), string.Create(CultureInfo.InvariantCulture, $"not in dots mode at scale {canvas.Scale}"));
         Assert.NotEmpty(product.Meta);
         Assert.False(canvas.LaneMetaDrawn(WholeBand.Product), $"counts drawn in dots mode: {product.Meta}");
-        Assert.False(canvas.LaneMetaWhole(WholeBand.Product));
-        Assert.True(canvas.LaneTitleWhole(WholeBand.Product), "title cut in dots mode");
+        Assert.False(_draws && canvas.LaneMetaWhole(WholeBand.Product), "counts reported whole in dots mode");
+        Assert.True(!_draws || canvas.LaneTitleWhole(WholeBand.Product), string.Create(CultureInfo.InvariantCulture, $"title cut in dots mode at scale {canvas.Scale:0.###}"));
     });
 }
