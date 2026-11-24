@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging;
 namespace Aw.Sindri.Tests.CodeIndexJobs;
 
 /// <summary>The 'code-index-main-move' service (code index spec §6.1): per repo, a build starts when the checkout moved along its default branch past the stored index.</summary>
-public sealed class CodeIndexMainMoveServiceTests
+public sealed partial class CodeIndexMainMoveServiceTests
 {
     private static readonly TimeSpan _minute = TimeSpan.FromMinutes(1);
     private readonly CodeIndexJobsRig _rig = new();
