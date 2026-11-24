@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -167,7 +168,7 @@ internal sealed partial class ProjectsPage : UserControl
         var best = double.NegativeInfinity;
         foreach (var head in ProjectsGroups.GetVisualDescendants().OfType<Button>())
         {
-            if (head is { Name: "ProjectsGroupHead", IsEffectivelyVisible: true, DataContext: ProjectGroupViewModel group } && head.TranslatePoint(default, ProjectsRows) is { Y: var y } && y < edge && y > best)
+            if (string.Equals(head.Name, "ProjectsGroupHead", StringComparison.Ordinal) && head is { IsEffectivelyVisible: true, DataContext: ProjectGroupViewModel group } && head.TranslatePoint(default, ProjectsRows) is { Y: var y } && y < edge && y > best)
             {
                 (current, best) = (group, y);
             }
