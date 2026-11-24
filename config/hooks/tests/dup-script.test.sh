@@ -205,6 +205,66 @@ check "state: one catalog index cached" "$(ls "$SD" | grep -c '^index-')" "1"
 AW_JUDGE_CHILD=1 bash "$GATE" < <(bash_p s31 "$HEREDOC") > /dev/null 2>&1
 check "the judge child: nothing written" "$([ -e "$SD/s31.json" ] && echo yes || echo no)" "no"
 
+# --- PR B: Codex and Cursor through their adapters (fixtures/<provider>/, plan fixtures 16-19) --------------------------
+FIX="$DIR/fixtures"
+CODEX="$HOOKS/adapters/codex.sh" CURSOR="$HOOKS/adapters/cursor.sh"
+reset
+OUT="$(bash "$CODEX" "$GATE" < "$FIX/codex/pretooluse-exec-watcher.json" 2> "$WORK/err")"; RC=$?
+check "16 codex shell watcher, advisory: exit 0" "$RC" "0"
+has "16 ...the suggestion as additionalContext" "$(ctx)" "Run it instead: \`$INV\`"
+check "16 ...recorded under the codex provider" "$(st codex-dup-1 '"\(.provider) \(.counters.wouldDeny)"')" "codex 1"
+OUT="$(AW_POLICY_DUPLICATE_SCRIPT_1_MODE=block bash "$CODEX" "$GATE" < "$FIX/codex/pretooluse-exec-watcher.json" 2> "$WORK/err")"; RC=$?
+check "16 codex shell watcher, block mode: denied (exit 2)" "$RC" "2"
+has "16 ...the reason on stderr" "$(cat "$WORK/err")" "Run it instead: \`$INV\`"
+
+OUT="$(bash "$CODEX" "$GATE" < "$FIX/codex/pretooluse-apply-patch-watcher.json" 2> "$WORK/err")"; RC=$?
+check "17 codex apply_patch Add File watcher: exit 0" "$RC" "0"
+has "17 ...the suggestion" "$(ctx)" "Run it instead: \`$INV\`"
+OUT="$(AW_POLICY_DUPLICATE_SCRIPT_1_MODE=block bash "$CODEX" "$GATE" < "$FIX/codex/pretooluse-apply-patch-watcher.json" 2> "$WORK/err")"; RC=$?
+check "17 ...block mode: advice only on this host (exit 0)" "$RC" "0"
+has "17 ...and the advice says why it isn't blocked" "$(ctx)" "advice only for apply_patch"
+OUT="$(bash "$CODEX" "$GATE" < "$FIX/codex/pretooluse-apply-patch-source.json" 2> /dev/null)"; RC=$?
+check "17 codex apply_patch of a source file: silent" "$RC:$OUT" "0:"
+
+OUT="$(bash "$CURSOR" "$GATE" < "$FIX/cursor/pretooluse-shell-watcher.json" 2> /dev/null)"
+check "18 cursor Shell watcher, advisory: allow" "$(jq -r .permission <<< "$OUT")" "allow"
+has "18 ...the suggestion as agent_message" "$(jq -r '.agent_message // empty' <<< "$OUT")" "Run it instead: \`$INV\`"
+OUT="$(AW_POLICY_DUPLICATE_SCRIPT_1_MODE=block bash "$CURSOR" "$GATE" < "$FIX/cursor/pretooluse-shell-watcher.json" 2> /dev/null)"
+check "18 cursor Shell watcher, block mode: deny" "$(jq -r .permission <<< "$OUT")" "deny"
+has "18 ...with the reason" "$(jq -r .agent_message <<< "$OUT")" "Run it instead: \`$INV\`"
+OUT="$(AW_POLICY_DUPLICATE_SCRIPT_1_MODE=block bash "$CURSOR" "$GATE" < "$FIX/cursor/pretooluse-write-watcher.json" 2> /dev/null)"
+check "19 cursor Write (fields unverified), block mode: allow" "$(jq -r .permission <<< "$OUT")" "allow"
+has "19 ...advice only on this host" "$(jq -r '.agent_message // empty' <<< "$OUT")" "advice only for Write on cursor"
+OUT="$(printf '%s' '{"conversation_id":"cursor-bad","hook_event_name":"preToolUse","tool_name":"Shell","tool_input":"{not json"}' | bash "$CURSOR" "$GATE" 2> /dev/null)"
+check "11 cursor, a preToolUse with broken tool_input: allow" "$(jq -r .permission <<< "$OUT" 2> /dev/null)" "allow"
+OUT="$(printf 'not json' | bash "$CODEX" "$GATE" 2> /dev/null)"; RC=$?
+check "11 codex, malformed payload: allowed, silent" "$RC:$OUT" "0:"
+# A 200 KB command, built from a file (an --arg that size is over the exec limit): the gate reads it from stdin.
+{ printf '#!/usr/bin/env bash\nwhile true; do gh pr checks 7 --repo acme/app; sleep 60; done\n# '; head -c 200000 /dev/zero | tr '\0' x; } > "$WORK/big.txt"
+jq -nc --rawfile c "$WORK/big.txt" '{session_id:"dup-big",hook_event_name:"PreToolUse",cwd:"/tmp",tool_name:"Bash",tool_input:{command:$c}}' > "$WORK/big.json"
+OUT="$(AW_POLICY_DUPLICATE_SCRIPT_1_MODE=block bash "$GATE" < "$WORK/big.json" 2> "$WORK/err")"; RC=$?
+check "a 200 KB command: still read, denied in block mode" "$RC" "2"
+
+# --- PR B: the installer --------------------------------------------------------------------------------------------------
+INST="$ROOT/scripts/install-dup-script-guard.sh"
+IH="$WORK/ihome"; mkdir -p "$IH/.claude" "$IH/.codex" "$IH/.cursor"; echo '{}' > "$IH/.claude/settings.json"
+for p in claude codex cursor; do
+  out="$(HOME="$IH" AW_STATE_DIR="$WORK/istate" bash "$INST" --provider "$p" 2>&1)"; rc=$?
+  check "install $p: exit 0" "$rc" "0"
+done
+check "install claude: PreToolUse Bash|Write entry" "$(jq -r '.hooks.PreToolUse[] | select(.hooks[].command | test("aw:dup-script-gate")) | .matcher' "$IH/.claude/settings.json")" "Bash|Write"
+check "install claude: the gate and its libs" "$(for f in dup-script-gate.sh lib/dup-script.sh lib/failopen.sh; do [ -f "$IH/.claude/hooks/$f" ] && echo y; done | wc -l | tr -d ' ')" "3"
+check "install codex: PreToolUse .* through the adapter" "$(jq -r '.hooks.PreToolUse[] | select(.hooks[].command | test("aw:dup-script-gate")) | "\(.matcher) \(.hooks[0].command | test("adapters/codex.sh"))"' "$IH/.codex/hooks.json")" ".* true"
+check "install cursor: preToolUse only (not beforeShellExecution)" "$(jq -r '[.hooks | to_entries[] | select(any(.value[]; .command | test("aw:dup-script-gate"))) | .key] | join(",")' "$IH/.cursor/hooks.json")" "preToolUse"
+check "install: the libs beside the shared hooks" "$([ -f "$WORK/istate/hooks/lib/dup-script.sh" ] && echo y)" "y"
+HOME="$IH" AW_STATE_DIR="$WORK/istate" bash "$INST" --provider claude > /dev/null 2>&1
+check "install claude twice: one entry" "$(jq '[.hooks.PreToolUse[] | select(.hooks[].command | test("aw:dup-script-gate"))] | length' "$IH/.claude/settings.json")" "1"
+out="$(HOME="$IH" AW_STATE_DIR="$WORK/istate" AW_DRY_RUN=1 bash "$INST" --provider codex 2>&1)"
+has "install --dry-run: says what it would do" "$out" "[dry-run] would install dup-script-gate"
+for p in claude codex cursor; do HOME="$IH" AW_STATE_DIR="$WORK/istate" bash "$INST" --provider "$p" --uninstall > /dev/null 2>&1; done
+check "uninstall: no entry left anywhere" "$(cat "$IH/.claude/settings.json" "$IH/.codex/hooks.json" "$IH/.cursor/hooks.json" | grep -c 'aw:dup-script-gate')" "0"
+check "the fresh-box settings.json names the gate" "$(jq -r '[.hooks.PreToolUse[] | select(.hooks[].command | test("aw:dup-script-gate")) | .matcher] | join(",")' "$ROOT/config/settings.json")" "Bash|Write"
+
 # --- latency of the no-match path ----------------------------------------------------------------------------------------
 reset
 bash_p s40 'git status --short' > "$WORK/plain.json"
