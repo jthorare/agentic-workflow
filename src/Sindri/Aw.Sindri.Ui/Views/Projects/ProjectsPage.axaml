@@ -94,9 +94,9 @@
           <TextBlock Classes="caption subtle" Text="{Binding SearchCount}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0" IsHitTestVisible="False" AutomationProperties.AccessibilityView="Raw" />
         </Panel>
       <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="{StaticResource Space.SM}" VerticalAlignment="Center">
-        <Button x:Name="ProjectsSort" AutomationProperties.Name="{Binding SortName}">
+        <Button x:Name="ProjectsSort" ToolTip.Tip="{Binding SortName}" AutomationProperties.Name="{Binding SortName}">
           <StackPanel Orientation="Horizontal" Spacing="6">
-            <TextBlock Classes="caption subtle" Text="{Binding SortLabel}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle" Text="{Binding SortLabel}" IsVisible="{Binding ShowsBarLabels}" VerticalAlignment="Center" />
             <TextBlock Classes="caption" Text="{Binding SortText}" VerticalAlignment="Center" />
             <TextBlock Classes="caption subtle" Text="▾" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
           </StackPanel>
@@ -118,9 +118,9 @@
             </MenuFlyout>
           </Button.Flyout>
         </Button>
-        <Button x:Name="ProjectsGroup" AutomationProperties.Name="{Binding GroupName}">
+        <Button x:Name="ProjectsGroup" ToolTip.Tip="{Binding GroupName}" AutomationProperties.Name="{Binding GroupName}">
           <StackPanel Orientation="Horizontal" Spacing="6">
-            <TextBlock Classes="caption subtle" Text="{Binding GroupLabel}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle" Text="{Binding GroupLabel}" IsVisible="{Binding ShowsBarLabels}" VerticalAlignment="Center" />
             <TextBlock Classes="caption" Text="{Binding GroupText}" VerticalAlignment="Center" />
             <TextBlock Classes="caption subtle" Text="▾" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
           </StackPanel>
