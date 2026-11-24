@@ -56,8 +56,8 @@ public sealed class WholeMapConceptListTests
     [Fact, Trait("Lane", "unit")]
     public void A_big_concept_answers_fifty_a_page_in_rank_order_with_the_most_linked_first()
     {
-        var first = Ask(Big()).Value;
-        var last = Ask(Big(), page: 5).Value;
+        var first = Ask(Big(), concept: "concept:big").Value;
+        var last = Ask(Big(), page: 5, concept: "concept:big").Value;
 
         Assert.Equal(50, first.Nodes!.Count);
         Assert.Equal((1, 5, 241), (first.ConceptList!.Page, first.ConceptList.Pages, first.ConceptList.Items));
@@ -68,11 +68,11 @@ public sealed class WholeMapConceptListTests
     [Fact, Trait("Lane", "unit")]
     public void The_pages_together_list_every_item_once_and_a_page_past_the_last_is_the_last()
     {
-        var keys = Enumerable.Range(1, 5).SelectMany(p => Ask(Big(), page: p).Value.Nodes!.Select(n => n.Key.Value)).ToList();
+        var keys = Enumerable.Range(1, 5).SelectMany(p => Ask(Big(), page: p, concept: "concept:big").Value.Nodes!.Select(n => n.Key.Value)).ToList();
 
         Assert.Equal(241, keys.Distinct(StringComparer.Ordinal).Count());
         Assert.Equal(241, keys.Count);
-        Assert.Equal(5, Ask(Big(), page: 99).Value.ConceptList!.Page);
+        Assert.Equal(5, Ask(Big(), page: 99, concept: "concept:big").Value.ConceptList!.Page);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -89,7 +89,7 @@ public static class WholeMapBuilder
         };
     }
 
-    // One area on its own: all its nodes in kind and key order, and the edges among them. Nothing is cut. With a concept's scope, only the area's nodes that scope holds.
+    // One area on its own: one page of its nodes, most linked first (see Paged), and the edges among them. With a concept's scope, only the area's nodes that scope holds.
     private static Result<WholeMapView> Opened(string key, HashSet<string>? scope, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, WholeMapRules Rules, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf, int Page) how)
     {
         var members = graph.Known.Values.Where(n => n.Key.Kind != NodeKind.Concept && how.Areas.ByNode[n.Key.Value].Area == key && (scope is null || scope.Contains(n.Key.Value))).ToList();
@@ -107,7 +107,7 @@ public static class WholeMapBuilder
         return overview with
         {
             Detail = WholeMapDetail.Nodes,
-            Nodes = Nodes(shown, how.Areas, how.Text, how.RepoOf),
+            Nodes = Ranked(shown, how.Areas, how.Text, how.RepoOf),
             Edges = Edges([.. inside.Where(e => shownKeys.Contains(e.From.Value) && shownKeys.Contains(e.To.Value))]),
             Area = new WholeMapAreaInfo(key, Truncated: page < pages, Counts(members, inside.Count)) { Page = page, Pages = pages },
             Counts = scope is null ? overview.Counts : Counts(members, inside.Count),
@@ -179,7 +179,7 @@ public static class WholeMapBuilder
         return overview with
         {
             Detail = WholeMapDetail.Nodes,
-            Nodes = Nodes(shown, how.Areas, how.Text, ask.RepoOf),
+            Nodes = Ranked(shown, how.Areas, how.Text, ask.RepoOf),
             Edges = Edges([.. inside.Where(e => shownKeys.Contains(e.From.Value) && shownKeys.Contains(e.To.Value))]),
             Counts = Counts(mine, inside.Count),
             ConceptList = list,
@@ -262,6 +262,10 @@ public static class WholeMapBuilder
             .Select(n => (Node: n, Area: AreaOf(areas, n)))
             .OrderBy(p => p.Area.Area, StringComparer.Ordinal).ThenBy(p => p.Node.Key.Kind).ThenBy(p => p.Node.Key.Value, StringComparer.Ordinal)
             .Select(p => Node(p.Node, p.Area, text, repoOf?.GetValueOrDefault(p.Node.Key.Value)))];
+
+    // A page Paged ranked, kept in its rank order: re-sorting it by area, kind and key would put the most linked node anywhere on the page (#3674).
+    private static List<WholeMapNode> Ranked(List<GraphNode> nodes, AreaIndex areas, MapText text, IReadOnlyDictionary<string, string?>? repoOf) =>
+        [.. nodes.Select(n => Node(n, AreaOf(areas, n), text, repoOf?.GetValueOrDefault(n.Key.Value)))];
 
     private static NodeArea AreaOf(AreaIndex areas, GraphNode node) => node.Key.Kind == NodeKind.Concept ? new NodeArea(AreaIndex.ConceptBandKey, []) : areas.ByNode[node.Key.Value];
 
