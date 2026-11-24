@@ -27,6 +27,11 @@
 # A publish while a control plane runs first checks for open agent runs (scripts/lib/sindri-open-runs.sh, #1000): it lists
 # them and asks go/wait/stop on a terminal, and stops without one unless AW_SINDRI_STOP_OK=1.
 # One publish at a time per state dir (a lock dir holding the owner's pid; a dead owner's lock is taken over).
+# A killed publish leaves tree.*, sdk-tree.*, verify.* and .stage.* (its EXIT trap never ran). The next publish
+# removes them while it holds the lock, including when the build is already current. The toolkit pack holds the same
+# lock, so its sdk-tree is never taken for a dead one. Between binaries the publish removes the
+# previous publish's bin/ and any NativeAOT .o, so the next object file (sindri-ui.o is the large one) is not written
+# beside them. A publish that dies with "No space left on device" says the disk is full.
 #
 # Binaries (all published from a copy of the sources, under the box-wide heavy slot when it exists, so the checkout's lock
 # files never change):
@@ -253,6 +258,82 @@ input_hash() { # input_hash <csproj>: the hash of one binary's inputs, made as t
   rm -f "$list"
 }
 
+# Dead scratch from a killed install-cs. Call only while this process holds $lock: another publish's tree is live
+# until that process exits. $tree and $stage, when set, belong to this process and stay.
+reclaim_scratch() {
+  local d
+  [ -d "$cache" ] || return 0
+  for d in "$cache"/tree.* "$cache"/sdk-tree.* "$cache"/verify.*; do
+    [ -d "$d" ] || continue
+    [ -n "$tree" ] && [ "$d" = "$tree" ] && continue
+    rm -rf "$d"
+  done
+  for d in "$base"/.stage.*; do
+    [ -e "$d" ] || continue
+    if [ -n "$stage" ] && { [ "$d" = "$stage" ] || [ "${d#"$stage".}" != "$d" ]; }; then continue; fi
+    rm -rf "$d"
+  done
+}
+
+# Wait for the publish lock and take it. A holder whose pid is dead loses the lock. A lock without a pid is a publish
+# between its mkdir and its pid write, so it is waited for like a live one.
+take_lock() {
+  local owner
+  mkdir -p "$base"
+  lock="$base/.lock"
+  until mkdir "$lock" 2> /dev/null; do
+    owner="$(cat "$lock/pid" 2> /dev/null || true)"
+    if [ -n "$owner" ] && ! kill -0 "$owner" 2> /dev/null; then rm -rf "$lock"; continue; fi
+    say "waiting for another install-cs publish (pid ${owner:-?})"
+    sleep 2
+  done
+  echo $$ > "$lock/pid"
+}
+
+# Take the publish lock if no install holds it, reclaim dead scratch, and release the lock. It never waits.
+# A live holder is left alone, and so is a lock without a pid (take_lock's rule). A dead holder's lock is taken over.
+reclaim_unlocked() {
+  local lk="$base/.lock" owner
+  mkdir -p "$base" "$cache"
+  if ! mkdir "$lk" 2> /dev/null; then
+    owner="$(cat "$lk/pid" 2> /dev/null || true)"
+    [ -n "$owner" ] || return 0
+    if kill -0 "$owner" 2> /dev/null; then return 0; fi
+    rm -rf "$lk"
+    mkdir "$lk" 2> /dev/null || return 0
+  fi
+  lock="$lk"
+  echo $$ > "$lock/pid"
+  reclaim_scratch
+  rm -rf "$lock"
+  lock=""
+}
+
+# The previous binary's bin/ and any NativeAOT .o. obj/ stays, so the next publish still compiles incrementally.
+# sindri-ui.o is written under obj/ during that binary's own publish, after the previous .o is gone.
+drop_earlier_outputs() {
+  [ -n "$tree" ] || return 0
+  rm -rf "$tree/artifacts/bin"
+  [ -d "$tree/artifacts" ] || return 0
+  find "$tree/artifacts" -type f -name '*.o' -exec rm -f {} +
+}
+
+# ilc reports ENOSPC as an IOException in the publish log. Name it before the compiler tail.
+publish_failed() { # publish_failed <binary> <log>
+  local kb vol
+  if grep -q "No space left on device" "$2"; then
+    kb="$(df -Pk "$cache" 2> /dev/null | awk 'NR==2 {print $4}')"
+    vol="$(df -Pk "$cache" 2> /dev/null | awk 'NR==2 {print $6}')"
+    if [ -n "$kb" ] && [ -n "$vol" ]; then
+      warn "the disk is full (No space left on device) while publishing $1; $((kb / 1024)) MB free on $vol. Free space, then re-run."
+    else
+      warn "the disk is full (No space left on device) while publishing $1. Free space on the volume that holds $cache, then re-run."
+    fi
+  fi
+  tail -20 "$2" >&2
+  die "publishing $1 failed (log: $2)"
+}
+
 # --- publish ---------------------------------------------------------------------------------------------------------
 publish() {
   # 1. The pinned SDK and temporal.
@@ -282,10 +363,12 @@ publish() {
 
   # 2. A build that exists for the stamp is only reported; a build a running serve executes is never replaced.
   if [ "$rebuild" = 1 ] && in_use "$stamp"; then
+    reclaim_unlocked
     say "the running control plane uses build $stamp; not rebuilding it (run sindri stop, then re-run)"
     return 0
   fi
   if [ "$rebuild" = 0 ] && built "$stamp"; then
+    reclaim_unlocked
     say "build $stamp is current"
     return 0
   fi
@@ -304,19 +387,15 @@ publish() {
     if [ -n "$guard_bin" ] && ! sindri_open_runs_guard "$guard_bin"; then exit 1; fi
   fi
 
-  mkdir -p "$base"
-  lock="$base/.lock"
-  until mkdir "$lock" 2> /dev/null; do
-    local owner
-    owner="$(cat "$lock/pid" 2> /dev/null || true)"
-    if [ -n "$owner" ] && ! kill -0 "$owner" 2> /dev/null; then rm -rf "$lock"; continue; fi
-    say "waiting for another install-cs publish (pid ${owner:-?})"
-    sleep 2
-  done
-  echo $$ > "$lock/pid"
-  if [ "$rebuild" = 0 ] && built "$stamp"; then say "build $stamp is current"; return 0; fi   # published while this one waited
+  take_lock
+  if [ "$rebuild" = 0 ] && built "$stamp"; then
+    reclaim_scratch
+    say "build $stamp is current"
+    return 0
+  fi   # published while this one waited
 
   mkdir -p "$cache"
+  reclaim_scratch
   local log="$cache/publish.log" pre=() when
   : > "$log"
   if [ -x "$heavy" ]; then pre=("$heavy" --expensive); fi
@@ -338,6 +417,7 @@ publish() {
   # or, when the hash of its inputs is the one in the current build, copy its files from there (the same order, the same rule)
   pub() {
     local name="$1" proj="$2" out f want have; shift 2
+    drop_earlier_outputs
     want="$(input_hash "$proj")"
     if [ -n "$from" ]; then
       have="$(cat "$from/inputs/$name.sha256" 2> /dev/null || true)"
@@ -349,7 +429,7 @@ publish() {
     out="$stage.$name"; rm -rf "$out"
     say "publishing $name"
     (cd "$tree" && ${pre[@]+"${pre[@]}"} dotnet publish "$proj" -c Release "${stampargs[@]}" "$@" -o "$out") < /dev/null >> "$log" 2>&1 \
-      || { tail -20 "$log" >&2; die "publishing $name failed (log: $log)"; }
+      || publish_failed "$name" "$log"
     [ -e "$out/$name" ] || die "the publish left no $name in $out (log: $log)"
     # Dot entries too: ui-evidence's Playwright driver is .playwright/, and without it every browser call fails.
     # The file list holds every top-level entry of the output (also those the stage already had), so a later copy can walk it.
@@ -577,6 +657,9 @@ pack_sdk() {
   export DOTNET_ROOT="${DOTNET_ROOT:-$HOME/.dotnet}"
   export PATH="$DOTNET_ROOT:$PATH"
   mkdir -p "$cache" "$sdk_feed"
+  # why: a run whose build was current released the lock, and another run's reclaim_scratch removes every sdk-tree.*
+  # it finds under the lock. The EXIT trap releases it.
+  [ -n "$lock" ] || take_lock
   local ptree version out="$cache/pack-sdk.log" pre=()
   ptree="$(mktemp -d "$cache/sdk-tree.XXXXXX")"
   version="0.1.0-local.$(date -u +%Y%m%d%H%M%S)"
