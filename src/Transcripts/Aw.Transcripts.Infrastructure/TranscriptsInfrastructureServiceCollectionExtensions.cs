@@ -24,11 +24,19 @@ public static class TranscriptsInfrastructureServiceCollectionExtensions
     /// <param name="services">The service collection.</param>
     /// <param name="roots">The transcript roots, one provider each.</param>
     /// <returns>The same collection.</returns>
-    public static IServiceCollection AddTranscriptsInfrastructure(this IServiceCollection services, IReadOnlyList<TranscriptRoot> roots)
+    public static IServiceCollection AddTranscriptsInfrastructure(this IServiceCollection services, IReadOnlyList<TranscriptRoot> roots) =>
+        services.AddTranscriptsInfrastructure(roots, []);
+
+    /// <summary>Adds the file-backed corpus over the given roots, mapping a gone worktree cwd to its main checkout by the host's pairs.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="roots">The transcript roots, one provider each.</param>
+    /// <param name="worktreeRoots">The host's (worktree root, main checkout) pairs; empty keeps a gone cwd as it is.</param>
+    /// <returns>The same collection.</returns>
+    public static IServiceCollection AddTranscriptsInfrastructure(this IServiceCollection services, IReadOnlyList<TranscriptRoot> roots, IReadOnlyList<WorktreeRoot> worktreeRoots)
     {
         services.TryAddSingleton<IRedactor>(Redactor.Default);
         return services
-            .AddSingleton(new TranscriptsSettings([.. roots]))
+            .AddSingleton(new TranscriptsSettings([.. roots]) { WorktreeRoots = [.. worktreeRoots] })
             .AddSingleton<TranscriptFileReader>()
             .AddSingleton<ITranscriptCorpus, FileTranscriptCorpus>();
     }

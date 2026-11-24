@@ -66,11 +66,13 @@
           <TextBlock x:Name="ProjectRowNameText" Classes="body" Foreground="{DynamicResource Brush.Ink}" Text="{Binding Name}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
         </Border>
         <Border Classes="col-reason" Margin="10,0,0,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
-          <StackPanel Orientation="Horizontal" IsVisible="{Binding ShowsFacts}">
+          <!-- A Grid, not a horizontal StackPanel: a StackPanel measures its children without a width limit, so the reason never trimmed (#4158). The reason column takes
+               what the name leaves and trims with an ellipsis; under 80 px (ProjectRow.axaml.cs) the words go and the dot says the level. -->
+          <Grid ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding ShowsFacts}">
             <Ellipse Classes="health" Classes.off="{Binding IsOffTrack}" Classes.risk="{Binding IsAtRisk}" Classes.unk="{Binding IsNotChecked}" Classes.ok="{Binding IsOnTrack}" IsVisible="{Binding HasHealth}" />
-            <TextBlock x:Name="ProjectRowReason" Classes="caption subtle" Text="{Binding HealthReason}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-            <TextBlock x:Name="ProjectRowMatchedInNote" Classes="caption" Foreground="{DynamicResource Brush.PrimaryHover}" Margin="8,0,0,0" Text="{Binding MatchedInNoteText}" IsVisible="{Binding MatchedInNote}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-          </StackPanel>
+            <TextBlock x:Name="ProjectRowReason" Grid.Column="1" Classes="caption subtle" Text="{Binding HealthReason}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+            <TextBlock x:Name="ProjectRowMatchedInNote" Grid.Column="2" Classes="caption" Foreground="{DynamicResource Brush.PrimaryHover}" Margin="8,0,0,0" Text="{Binding MatchedInNoteText}" IsVisible="{Binding MatchedInNote}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+          </Grid>
         </Border>
       </DockPanel>
 
@@ -80,7 +82,7 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="pvm:ProjectPrGlyph">
               <StackPanel Orientation="Horizontal" Spacing="5" ToolTip.Tip="{Binding Name}">
-                <Border Width="1" Height="12" Margin="2,0,2,0" Background="{DynamicResource Brush.InkTertiary}" IsVisible="{Binding AfterHairline}" VerticalAlignment="Center" />
+                <Border Width="1" Height="12" Margin="2,0,2,0" Background="{DynamicResource Brush.HairlineTertiary}" IsVisible="{Binding AfterHairline}" VerticalAlignment="Center" />
                 <Panel Width="14" Height="14" VerticalAlignment="Center">
                   <Panel IsVisible="{Binding IsCiRed}">
                     <Ellipse Fill="{DynamicResource Brush.Error}" />
@@ -99,7 +101,7 @@
                     <Ellipse Classes="ring" Stroke="{DynamicResource Brush.Success}" />
                     <Ellipse Width="4" Height="4" Fill="{DynamicResource Brush.Success}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                   </Panel>
-                  <Ellipse Classes="ring" Stroke="{DynamicResource Brush.InkTertiary}" StrokeDashArray="2,2" IsVisible="{Binding IsDraft}" />
+                  <Ellipse Classes="ring" Stroke="{DynamicResource Brush.InkSubtle}" StrokeDashArray="2,2" IsVisible="{Binding IsDraft}" />
                 </Panel>
                 <TextBlock Classes="caption" Foreground="{DynamicResource Brush.InkMuted}" Text="{Binding CountText}" VerticalAlignment="Center" />
               </StackPanel>

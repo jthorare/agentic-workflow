@@ -75,7 +75,7 @@ public sealed class CliWorkflowReadsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Wf_show_prints_the_revision_who_changed_it_and_the_graph()
+    public async Task Wf_show_prints_the_revision_who_changed_it_and_the_graph_and_no_next_run_line_when_none()
     {
         var spec = new GraphSpec(1, "Morning check", Description: null, Concurrency: null, Resources: null,
             Nodes: [new GraphNode(NodeId.From("start"), "manual", Title: null, []), new GraphNode(NodeId.From("agent"), "run_agent", "Check the repos", [])],
@@ -90,6 +90,20 @@ public sealed class CliWorkflowReadsTests : IDisposable
         Assert.Equal(
             "morning-check  Morning check\nshowing r1 (active r1); newest is r2, saved by session:s1 2026-11-08 09:30:00Z\nhash abc123\nnode start  manual\nnode agent  run_agent  Check the repos\nedge start -> agent\n",
             Text);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Wf_show_prints_the_next_run_when_there_is_one()
+    {
+        var spec = new GraphSpec(1, "Morning check", Description: null, Concurrency: null, Resources: null,
+            Nodes: [new GraphNode(NodeId.From("start"), "schedule", Title: null, new JsonObject { ["cron"] = "0 7 * * *", ["timezone"] = "UTC" })], Edges: []);
+        var shown = new GetWorkflowResponse(WorkflowId.From("WF-00000000000000000000000000000001"), _slug, "Morning check", Revision: 1, ActiveRevision: 1, LatestRevision: 1, ArchivedAt: null,
+            "owner", "owner", _at, "abc123", JsonNode.Parse(GraphJson.Write(spec))!, [], NextRunAt: new DateTimeOffset(2026, 11, 9, 7, 0, 0, TimeSpan.Zero));
+
+        var code = await Verbs(_up, new Api(HttpStatusCode.OK, Body(shown))).Show(["morning-check"], Token);
+
+        Assert.Equal(0, code);
+        Assert.Equal("morning-check  Morning check\nshowing r1 (active r1); newest is r1, saved by owner 2026-11-08 09:30:00Z\nnext run 2026-11-09 07:00:00Z\nhash abc123\nnode start  schedule\n", Text);
     }
 
     [Fact, Trait("Lane", "unit")]
