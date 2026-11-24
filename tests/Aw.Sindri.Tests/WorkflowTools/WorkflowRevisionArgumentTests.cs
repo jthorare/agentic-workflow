@@ -40,7 +40,7 @@ public sealed class WorkflowRevisionArgumentTests
         _ = await WorkflowReadTools.Call(WorkflowReadTools.Get, services, Arguments(("slug", "morning-check"), ("revision", 2)), Token);
 
         var asked = Assert.Single(reads.Asked);
-        Assert.Equal(("morning-check", (int?)2, false), (asked.Slug.Value, asked.Revision, asked.Newest));
+        Assert.Equal(("morning-check", 2, false), (asked.Slug.Value, asked.Revision, asked.Newest));
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public sealed class WorkflowRevisionArgumentTests
         _ = await WorkflowReadTools.Call(WorkflowReadTools.Get, services, Arguments(("slug", "morning-check"), ("revision", "latest")), Token);
 
         var asked = Assert.Single(reads.Asked);
-        Assert.Equal(((int?)null, true), (asked.Revision, asked.Newest));
+        Assert.Equal((null, true), (asked.Revision, asked.Newest));
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public sealed class WorkflowRevisionArgumentTests
         _ = await WorkflowReadTools.Call(WorkflowReadTools.Get, services, Arguments(("slug", "morning-check")), Token);
 
         var asked = Assert.Single(reads.Asked);
-        Assert.Equal(((int?)null, false), (asked.Revision, asked.Newest));
+        Assert.Equal((null, false), (asked.Revision, asked.Newest));
     }
 
     [Theory]
@@ -126,7 +126,7 @@ public sealed class WorkflowRevisionArgumentTests
 
         _ = await Host.Mcp.WorkflowTools.Call(Host.Mcp.WorkflowTools.Run, services, Arguments(("slug", "morning-check"), ("revision", 2)), Token);
 
-        Assert.Equal((int?)2, Assert.Single(runs.Asked).Revision);
+        Assert.Equal(2, Assert.Single(runs.Asked).Revision);
     }
 
     [Fact]
