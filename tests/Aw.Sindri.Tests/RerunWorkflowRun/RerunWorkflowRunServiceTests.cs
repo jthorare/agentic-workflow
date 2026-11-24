@@ -230,6 +230,28 @@ public sealed class RerunWorkflowRunServiceTests
     }
 
     [Fact]
+    public async Task A_cut_step_that_is_not_before_the_chosen_one_does_not_advise_re_running_from_it()
+    {
+        await EndedRun(extra: [Row("d", item: 0, output: "{\"cut\":", truncated: true)], replaceItem0Of: "d");
+
+        var result = await _service.Handle(new RerunWorkflowRunRequest(_source, "b", Input: null, "owner"), Token);
+
+        Assert.Equal(SindriErrors.GraphOutputTruncated.Code, result.Error.Code);
+        Assert.Contains("'d' does not come before 'b'", result.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("re-run from 'd' instead", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_cut_step_before_the_chosen_one_advises_re_running_from_it()
+    {
+        await EndedRun(extra: [Row("a", item: 0, output: "{\"cut\":", truncated: true)], replaceItem0Of: "a");
+
+        var result = await _service.Handle(new RerunWorkflowRunRequest(_source, "b", Input: null, "owner"), Token);
+
+        Assert.Contains("re-run from 'a' instead", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_deleted_workflow_s_run_can_not_be_re_run()
     {
         await EndedRun();
