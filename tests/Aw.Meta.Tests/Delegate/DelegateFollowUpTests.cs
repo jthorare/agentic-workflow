@@ -168,6 +168,24 @@ public sealed class DelegateFollowUpTests
         Assert.Contains("unreadable", result.Value.MovedProblem, StringComparison.Ordinal);
     }
 
+    // #4106: a lane with no record is a Claude lane to Handle, so the lane the issue moved off gets the line back to send it.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Moving_an_issue_off_a_lane_that_lost_its_lane_record_returns_the_moved_line_to_send_it()
+    {
+        await _d.Ready();
+        _ = _d.World.PutLane("api");
+        _ = await _d.World.Beats.Record("api", stopped: false, A.At(20), CancellationToken.None);
+        _ = await _d.Delegate(DelegateWorld.Request("api"));
+        _d.World.LaneFiles.Remove("api");
+        _ = _d.World.Runner.When("issue view 77", $$"""{"number":77,"title":"T","state":"OPEN","url":"{{DelegateWorld.Created}}"}""");
+
+        var response = await _d.Delegate(new DelegateRequest("ui", Title: null, What: null, Issue: 77));
+
+        Assert.Equal("t1-api", response.MovedFrom);
+        Assert.Equal("FYI: #77 moved to lane ui; it is no longer yours.", response.MovedNotice);
+        Assert.Null(response.MovedProblem);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task Delegating_again_to_the_same_lane_moves_nothing()
     {
