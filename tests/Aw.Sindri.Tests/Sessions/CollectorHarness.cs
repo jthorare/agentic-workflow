@@ -3,13 +3,15 @@ using Aw.Sindri.Core.Text;
 using Aw.Sindri.Features.Sessions;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Testing;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aw.Sindri.Tests.Sessions;
 
 /// <summary>The collector's ports in memory with the real services over them: one pass is <see cref="Pass"/>.</summary>
 internal sealed class CollectorHarness
 {
-    public CollectorHarness(SessionSettings? settings = null, IProcessTable? processes = null, ITextScrubber? scrubber = null, IClaudeSessionRecords? records = null, IFleetStates? fleet = null, Microsoft.Extensions.Logging.ILogger<CollectSessionsService>? logger = null, SessionHosts? hosts = null)
+    public CollectorHarness(SessionSettings? settings = null, IProcessTable? processes = null, ITextScrubber? scrubber = null, IClaudeSessionRecords? records = null, IFleetStates? fleet = null, ILogger<CollectSessionsService>? logger = null, SessionHosts? hosts = null)
     {
         Settings = settings ?? SessionSettings.Defaults;
         Processes = processes ?? Fake;
@@ -17,7 +19,7 @@ internal sealed class CollectorHarness
         Discovery = new SessionDiscovery(Processes, records ?? Records, fleet ?? Fleet, catalog, Settings, hosts ?? SessionHostData.None(Processes), Base.Clock);
         var repos = new SessionRepos(Locator, Base.Profiles, Base.Clock);
         Observer = new SessionObserver(Transcripts, scrubber ?? new PassThroughScrubber(), repos);
-        Service = new CollectSessionsService(Discovery, Observer, Memory, Snapshot, Base.Clock, logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<CollectSessionsService>.Instance);
+        Service = new CollectSessionsService(Discovery, Observer, Memory, Snapshot, Base.Clock, logger ?? NullLogger<CollectSessionsService>.Instance);
     }
 
     public SliceHarness Base { get; } = new();

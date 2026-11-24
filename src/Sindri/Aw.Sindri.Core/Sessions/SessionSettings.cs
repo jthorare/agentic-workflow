@@ -14,4 +14,10 @@ public sealed record SessionSettings(bool Enabled, int PollSeconds, IReadOnlyLis
 
     /// <summary>A launcher.json problem to show as a problem row, or null when the file read.</summary>
     public string? ConfigProblem { get; init; }
+
+    /// <summary>Which sessions discovery lists; <see cref="SessionScope.All"/> unless launcher.json says 'own'.</summary>
+    public SessionScope Scope { get; init; }
+
+    /// <summary>This home's own tmux directory (the home's 'tmux' folder, where a scratch home points TMUX_TMPDIR); under scope 'own' only sockets below it are Sindri's.</summary>
+    public string? OwnTmuxDirectory { get; init; }
 }
