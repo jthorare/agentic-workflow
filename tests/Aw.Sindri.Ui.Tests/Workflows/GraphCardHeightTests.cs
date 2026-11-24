@@ -5,6 +5,7 @@ using Avalonia.Headless;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 using Aw.Sindri.Ui.Views.Workflows;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
@@ -61,6 +62,11 @@ public sealed class GraphCardHeightTests
 
         Assert.Equal("Weekday run · " + Line, tip, StringComparer.Ordinal);
     }
+
+    // #4253: a card with no settings line (a step whose block has no name, so its line is empty) shows its title alone, not "title · ".
+    [Fact]
+    public void A_card_with_no_settings_line_has_its_title_alone_as_the_tooltip() =>
+        Assert.Equal("Step", Labels.WfCardTip("Step", string.Empty), StringComparer.Ordinal);
 
     // A Schedule card with the long line and a Notify card after it, as GET /sindri/workflows/{slug} serves them.
     private async Task<WorkflowGraphViewModel> Graph()
