@@ -16,8 +16,9 @@ document, so a change to a field here is a change to their contract: bump `versi
 `$AW_STATE_DIR/retry-guard/<session id>.json` (default `AW_STATE_DIR` is `~/.agentic-workflow`). The folder is 0700 and the
 file 0600. A session id must match `^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`, or the hooks write nothing.
 
-- Writers take the mkdir lock `<file>.lock` (`acquire_lock` from `config/lib/locks.sh`, 2 s). A writer writes the whole file
-  to `<file>.tmp.<pid>` and renames it over the file, so a reader never sees half a file. Readers take no lock.
+- Writers take the mkdir lock `<file>.lock` holding their pid (`rg_lock` in `config/lib/retry-guard.sh`: the lock
+  `config/lib/locks.sh` makes, retried every 50 ms for 2 s, a dead holder reclaimed). A writer writes the whole file to
+  `<file>.tmp.<pid>` and renames it over the file, so a reader never sees half a file. Readers take no lock.
 - turn-origin's 24 h sweep removes files older than a day, as it does for `judge/sessions`.
 - A file that does not parse, or has another `version`, is removed. The hook then logs one `HOOK-FAILOPEN` line (cause
   `state-unreadable`) and allows the call. The next failure starts a new file.
@@ -86,7 +87,7 @@ repeats. Any changed argument gives a new hash. The hooks store the hash, never 
 | `missing-exe` | `command not found`, `Exit code 127` | Deny while `command -v <exe>` still fails. Once it succeeds, clear the problem. |
 | `auth-expired` | `401`, `bad credentials`, `token expired`, `gh auth login`, `authentication required`, `not logged in` | Deny once while the auth file's mtime is unchanged and less than 10 min have passed. After that, advise. A changed mtime clears the problem. |
 | `bad-args` | `unknown flag`, `unknown option`, `unknown command`, `invalid option`, `unrecognized option`, `usage:`, `invalid argument` | Bash: deny. Other tools: advise only. |
-| `missing-path` | `No such file or directory` with a path in the text | Deny while the path still does not exist. Once it exists, clear the problem. |
+| `missing-path` | `No such file or directory` with a path in the text, or `File does not exist` from a tool with a `file_path` or `path` argument | Deny while the path still does not exist. Once it exists, clear the problem. |
 | `transient` | `timed out`, `timeout`, `could not resolve host`, `temporary failure in name resolution`, `connection reset`, `connection refused`, `HTTP 5xx`, `rate limit` | Never deny. Advise "wait N s" while `retryAfter` is in the future. |
 | `unknown` | anything else | Never deny. Advise from the 3rd identical failure on. |
 
@@ -134,7 +135,7 @@ Advice exits 0 with `{"hookSpecificOutput":{"hookEventName":"PreToolUse","additi
 | Provider | Failure input | Pre-tool deny |
 |---|---|---|
 | Claude Code | `PostToolUseFailure` (`error`, `is_interrupt`); `PostToolUse` clears | every tool (`PreToolUse .*`) |
-| Codex | `PostToolUse` whose shell `tool_response` text says `Exit code: N` or `Process exited with code N` with N not 0; the adapter maps it to `PostToolUseFailure` | every tool the Codex adapter maps |
+| Codex | `PostToolUse` whose shell `tool_response` says `Exit code: N` or `Process exited with code N`, or has an `exit_code`, with N not 0. The adapter keeps the event `PostToolUse` (other hooks see no change) and adds `aw_tool_failed: true` and `error` (the result text, 8 KiB at most) | every tool the Codex adapter maps |
 | Cursor | `postToolUseFailure` (`error_message`, `is_interrupt`); `postToolUse` clears | `preToolUse` and `beforeShellExecution`. Post-tool output is advice only (`additional_context`) |
 
 The adapters README holds the full table (`config/hooks/adapters/README.md`).

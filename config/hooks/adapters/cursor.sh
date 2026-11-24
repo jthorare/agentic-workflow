@@ -11,6 +11,8 @@
 #   beforeMCPExecution {tool_name, mcp_server_name, tool_input: "<json>"}
 #                                           -> PreToolUse, tool_name mcp__<server>__<tool>
 #   postToolUse {tool_output: "<json>"}     -> PostToolUse, tool_response
+#   postToolUseFailure {error_message, is_interrupt}
+#                                           -> PostToolUseFailure, error = error_message (the retry guard)
 #   beforeSubmitPrompt                      -> UserPromptSubmit
 #   sessionStart                            -> SessionStart
 #   stop {loop_count}                       -> Stop, stop_hook_active = loop_count > 0,
@@ -99,6 +101,13 @@ else
         | .tool_name = ("mcp__" + (($in.mcp_server_name // "unknown") | gsub("[^A-Za-z0-9_-]"; "_")) + "__" + ($in.tool_name // ""))
         | .tool_input = (($in.tool_input // {}) | jsonish)
         | .tool_response = (($in.result_json // null) | jsonish)
+      elif $ev == "postToolUseFailure" then
+        .hook_event_name = "PostToolUseFailure"
+        | .tool_input = ((.tool_input // {}) | jsonish)
+        | .error = (.error_message // .error // "" | tostring)
+        | .is_interrupt = (.is_interrupt // false)
+        | if .tool_name == "Shell" then .tool_name = "Bash"
+          elif .tool_name == "Task" then .tool_name = "Agent" else . end
       elif $ev == "postToolUse" then
         .hook_event_name = "PostToolUse"
         | .tool_input = ((.tool_input // {}) | jsonish)
@@ -165,6 +174,7 @@ RESULT="$(jq -nc \
              and (($raw.tool_input // null) | type) == "object"
            then {updated_input: (($raw.tool_input) + $h.updatedInput)} else {} end)
         + (if ($o.systemMessage // "") != "" then {user_message: $o.systemMessage} else {} end)
+        + (if ($h.additionalContext // "") != "" then {agent_message: $h.additionalContext} else {} end)
       end
     elif $ev == "beforeSubmitPrompt" then
       if $rc == 2 or ($o.decision // "") == "block" then

@@ -108,7 +108,7 @@ check "bad-args: the resource is the call hash" "$(st s-bad '.problems | to_entr
 check "bad-args: the hash is 64 hex" "$(st s-bad '.problems | keys[0] | test("^[0-9a-f]{64}$")')" "true"
 gate "$(pre s-bad Bash "$BAD")"
 check "bad-args: the same call is denied" "$RC" "2"
-has "bad-args: the deny says to change the arguments" "$ERR" "change the arguments"
+has "bad-args: the deny says to change the arguments" "$ERR" "Change the arguments"
 gate "$(pre s-bad Bash "$(bash_in 'git log --oneline')")"
 check "bad-args: a changed argument passes" "$RC:$OUT" "0:"
 record "$(success s-bad Bash "$BAD")"
