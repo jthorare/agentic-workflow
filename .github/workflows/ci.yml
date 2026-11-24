@@ -79,50 +79,11 @@ jobs:
           node-version-file: .nvmrc
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         if: env.CHANGED == 'true'
+        # The SDK stays for the suites that dotnet-build a tool themselves: forge-fixture and cutover-clean-ts (#4276).
         with:
           global-json-file: global.json
           cache: true
           cache-dependency-path: "**/packages.lock.json"
-      - name: Hash the judge and sindri build inputs
-        id: cs-key
-        if: env.CHANGED == 'true'
-        # The two publishes take ~5.5 min on macos-15 with or without the NuGet cache (#4133): they are compile-bound, so the
-        # published binaries are cached instead, keyed on every file the Sindri host publish reads (the list install-cs.sh
-        # and the aot-smoke use; it holds src/Judge and the judge's embedded images too) and on this workflow (the publish
-        # command lives here). A scripts-only change hits the cache and skips both publishes.
-        run: |
-          . scripts/lib/sindri-build-inputs.sh
-          h="$(git ls-files -s -- "${SINDRI_BUILD_PATHSPECS[@]}" .github/workflows/ci.yml | shasum -a 256 | cut -c1-40)"
-          echo "key=bash-cs-bin-v1-${RUNNER_OS}-${RUNNER_ARCH}-$h" >> "$GITHUB_OUTPUT"
-      - name: Restore the published judge and sindri
-        id: cs-bin
-        if: env.CHANGED == 'true'
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ runner.temp }}/cs-bin
-          key: ${{ steps.cs-key.outputs.key }}
-      - name: Publish the C# judge and sindri the suites call
-        if: env.CHANGED == 'true' && steps.cs-bin.outputs.cache-hit != 'true'
-        # The suites run the real binaries (hooks, installers, the nudge), never a TS build. Judge is the NativeAOT
-        # publish the hooks run; sindri is framework-dependent (the Temporal worker cannot be trimmed).
-        run: |
-          dotnet publish src/Judge/Aw.Judge.Host/Aw.Judge.Host.csproj -c Release -o "$RUNNER_TEMP/cs-bin/judge" -nologo -v quiet
-          dotnet publish src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj -c Release -o "$RUNNER_TEMP/cs-bin/sindri" -nologo -v quiet
-      - name: Save the published judge and sindri
-        # Saved right after the publish, so a run whose suites fail still leaves the binaries for the next push.
-        if: env.CHANGED == 'true' && steps.cs-bin.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ runner.temp }}/cs-bin
-          key: ${{ steps.cs-key.outputs.key }}
-      - name: Point the suites at the judge and sindri
-        if: env.CHANGED == 'true'
-        # The paths go to the later steps through GITHUB_ENV; scripts/ci/bash-tests.sh keeps them in every suite's environment.
-        # A restored cache must hold both binaries; a partial one fails here, not 20 min later in a suite.
-        run: |
-          test -x "$RUNNER_TEMP/cs-bin/judge/judge" && test -x "$RUNNER_TEMP/cs-bin/sindri/sindri"
-          echo "AW_JUDGE_CS_BIN=$RUNNER_TEMP/cs-bin/judge/judge" >> "$GITHUB_ENV"
-          echo "AW_SINDRI_CS_BIN=$RUNNER_TEMP/cs-bin/sindri/sindri" >> "$GITHUB_ENV"
       - name: Run every tracked bash test suite
         if: env.CHANGED == 'true'
         # The leak check fails the step when the run leaves a new aw-* or tmp.* entry in $TMPDIR (#3262); it deletes nothing.
@@ -160,6 +121,12 @@ jobs:
           fi
       - name: Rule records name real checks
         run: node scripts/check-rules.mjs
+      - name: Sindri MCP tool examples match the last-known tools/list golden
+        # Here, not in the Bash tests job: a C# PR that changes a tool's schema (and its golden) runs only the .NET
+        # job and this one, and a skill PR that adds an `mcp: sindri/<tool>` call runs this one too (issue 4249).
+        run: |
+          npm ci --prefix scripts --ignore-scripts --no-audit --no-fund
+          node scripts/check-tool-examples.mjs
       - name: Prose on the changed Markdown (Vale, scripts/check-prose.sh)
         # Only hits on added lines fail, so a PR never inherits an old file's slop (issue 2919). The base is the PR's
         # base, the merge group's base, or the pushed range's start; a run with no base (a dispatch, a new branch)
