@@ -13,8 +13,8 @@ internal sealed class NodeRunViewModel : ObservableObject
     internal NodeRunViewModel(NodeRunView run, int count, Func<NodeRunViewModel, bool, CancellationToken, Task>? control = null, Func<string, CancellationToken, Task>? edit = null, string nodeType = "")
     {
         (_control, _edit) = (control, edit);
-        HasTitle = count > 1 || run.ItemIndex > 0;
-        TitleText = HasTitle ? Labels.WfItemTitle(run.ItemIndex, count) : string.Empty;   // a node that runs once is named by its group's heading (#3307)
+        HasTitle = run.ItemIndex > 0 || count > 0;   // a node that runs once is named by the group's heading (#3307); a collect's own row reads "Result" (#4341)
+        TitleText = run.ItemIndex > 0 ? Labels.WfItemTitle(run.ItemIndex, count) : HasTitle ? Labels.WfCollectResultTitle : string.Empty;
         var (glyph, word) = Labels.WfChip(run.Status);
         Tone = RunStatus.Tone(run.Status);
         (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(run.Status));
@@ -106,10 +106,10 @@ internal sealed class NodeRunViewModel : ObservableObject
     /// <returns>A task that completes when the answer is shown.</returns>
     internal Task HandBack(CancellationToken cancellationToken) => _control?.Invoke(this, false, cancellationToken) ?? Task.CompletedTask;
 
-    /// <summary>"Item 2 of 3" for one item of a for_each node; empty for a node that runs once, which its group's heading names.</summary>
+    /// <summary>"Item 2 of 3" for one item of a for_each node, "Result" for a collect's own row; empty for a node that runs once, which its group's heading names.</summary>
     public string TitleText { get; }
 
-    /// <summary>True when the row shows its own title (an item of a for_each node).</summary>
+    /// <summary>True when the row shows its own title (an item of a for_each node, or a collect's own result).</summary>
     public bool HasTitle { get; }
 
     /// <summary>A code step's body as written, with real line breaks; empty for any other step.</summary>

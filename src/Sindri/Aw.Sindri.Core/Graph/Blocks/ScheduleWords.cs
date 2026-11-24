@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace Aw.Sindri.Core.Graph.Blocks;
 
-/// <summary>A daily or weekly cron in the Schedule presets' words (#4254): "every Thursday at 7:00", "every Monday and Wednesday at 7:00", "every weekday at 6:05", "every day at 7:00".</summary>
+/// <summary>A daily or weekly cron in the Schedule presets' words (#4254): "every Thursday at 7:00", "every Mon, Wed and Fri at 18:30" (short names past one day, so the card keeps the time, #4329), "every day but Sunday at 7:00", "every weekday at 6:05", "every day at 7:00".</summary>
 internal static class ScheduleWords
 {
     private static readonly string[] _dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -30,18 +30,25 @@ internal static class ScheduleWords
 
     private static string DayWords(bool[] days)
     {
-        var names = _weekOrder.Where(d => days[d]).Select(d => _dayNames[d]).ToList();
-        if (names.Count == 7)
+        var picked = _weekOrder.Where(d => days[d]).ToList();
+        if (picked.Count == 7)
         {
             return "every day";
         }
 
-        if (names.Count == 5 && !days[0] && !days[6])
+        if (picked.Count == 5 && !days[0] && !days[6])
         {
             return "every weekday";
         }
 
-        return names.Count == 1 ? "every " + names[0] : $"every {string.Join(", ", names.Take(names.Count - 1))} and {names[^1]}";
+        if (picked.Count == 6)
+        {
+            return "every day but " + _dayNames[Array.IndexOf(days, value: false)];
+        }
+
+        // why: the canvas card holds about 44 characters (#4329); full names for two or more days push the time off it
+        var names = picked.Select(d => _dayNames[d][..3]).ToList();
+        return picked.Count == 1 ? "every " + _dayNames[picked[0]] : $"every {string.Join(", ", names.Take(names.Count - 1))} and {names[^1]}";
     }
 
     // why: index 0 is Sunday; cron's 7 is Sunday too

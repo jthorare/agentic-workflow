@@ -230,7 +230,7 @@ Aw.Meta.Core.Coordination.MergeAssessment.Team.init -> void
 Aw.Meta.Core.Coordination.MergeQueueReader
 Aw.Meta.Core.Coordination.MergeReadiness
 Aw.Meta.Core.Coordination.MergeReadiness.Assess(int pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Coordination.MergeAssessment!>!>
-Aw.Meta.Core.Coordination.MergeReadiness.MergeReadiness(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.ILogFiles! logs, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Coordination.LaneAddress! addresses) -> void
+Aw.Meta.Core.Coordination.MergeReadiness.MergeReadiness(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.ILogFiles! logs, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Coordination.LaneAddress! addresses, Aw.Meta.Core.Coordination.InboxSync? sync = null) -> void
 Aw.Meta.Core.Coordination.MetaSession
 Aw.Meta.Core.Coordination.MetaSession.MetaSession(Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.ISessionDirectory! sessions) -> void
 Aw.Meta.Core.Coordination.MetaSession.Resolve(Aw.Meta.Core.Ids.SessionId session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Config.TeamConfig?>!>
@@ -243,7 +243,7 @@ Aw.Meta.Core.Coordination.LaneBeats.ClearGaveUp(string! lane, System.Threading.C
 Aw.Meta.Core.Coordination.RecycleGiveUps
 static Aw.Meta.Core.Coordination.RecycleGiveUps.With(string? stored, string! lane, System.DateTimeOffset at) -> string!
 static Aw.Meta.Core.Coordination.RecycleGiveUps.Without(string? stored, string! lane) -> string!
-static Aw.Meta.Core.Coordination.RecycleGiveUps.Line(string? stored) -> string?
+static Aw.Meta.Core.Coordination.RecycleGiveUps.Line(string? stored, System.Collections.Generic.IReadOnlyCollection<string!>! teamLanes) -> string?
 const Aw.Meta.Core.KvKeys.RecycleGaveUp = "recycle.gave-up" -> string!
 Aw.Meta.Core.Coordination.ObligationReader
 Aw.Meta.Core.Coordination.ObligationReader.ObligationReader(Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.ILaneStore! lanes, Aw.Meta.Core.Ports.IOwnerStore! owner, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Ports.IKeyValueStore! values) -> void
@@ -2842,6 +2842,10 @@ Aw.Meta.Core.Merge.MergeFacts.MergeConflicts.get -> bool
 Aw.Meta.Core.Merge.MergeFacts.MergeConflicts.init -> void
 Aw.Meta.Core.Worktrees.WorktreeInspector.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Worktrees.WorktreeInspector!
 Aw.Meta.Core.Worktrees.WorktreeSweeper.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Worktrees.WorktreeSweeper!
+Aw.Meta.Core.Watch.TransientGhError
+const Aw.Meta.Core.Watch.TransientGhError.Retries = 3 -> int
+static Aw.Meta.Core.Watch.TransientGhError.Backoff(int attempt) -> System.TimeSpan
+static Aw.Meta.Core.Watch.TransientGhError.IsTransient(string! message) -> bool
 Aw.Meta.Core.Config.DelegationConfig
 Aw.Meta.Core.Config.DelegationConfig.<Clone>$() -> Aw.Meta.Core.Config.DelegationConfig!
 Aw.Meta.Core.Config.DelegationConfig.DelegationConfig(System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>? lanes = null) -> void

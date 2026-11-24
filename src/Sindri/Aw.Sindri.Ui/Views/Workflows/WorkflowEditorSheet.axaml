@@ -44,6 +44,9 @@
               <Border Name="EditorFieldExample" IsVisible="{Binding HasExample}" AutomationProperties.Name="{Binding Example}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                 <TextBlock Classes="caption quiet" Text="{Binding Example}" FontFamily="{DynamicResource Font.Mono}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
               </Border>
+              <Border Name="EditorFieldNeed" IsVisible="{Binding HasNeed}" AutomationProperties.Name="{Binding NeedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                <TextBlock Classes="caption subtle" Text="{Binding NeedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+              </Border>
               <Border Name="EditorFieldError" IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding ErrorText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                 <TextBlock Classes="caption" Text="{Binding ErrorText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
               </Border>

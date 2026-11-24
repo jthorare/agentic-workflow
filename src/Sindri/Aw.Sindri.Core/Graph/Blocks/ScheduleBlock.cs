@@ -14,7 +14,7 @@ public sealed class ScheduleBlock : IGraphBlock
         ("0 7 * * 1-5", "Every weekday at 7:00", "every weekday at 7:00"),
         ("0 9 * * *", "Every day at 9:00", "every day at 9:00"),
         ("0 * * * *", "Every hour", "every hour"),
-        ("0 8 * * 1", "Mondays at 8:00", "on Mondays at 8:00"),
+        ("0 8 * * 1", "Every Monday at 8:00", "every Monday at 8:00"),
     ];
 
     // why: a fixed list of IANA ids, so the block listing is the same on every box (its API golden too); GetSystemTimeZones differs by OS and tzdata version

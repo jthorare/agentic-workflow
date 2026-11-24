@@ -69,4 +69,9 @@ internal static partial class Labels
     /// <param name="required">True when the field must have a value.</param>
     /// <returns>The words.</returns>
     internal static string WfFieldCaption(string name, bool required) => required ? name + " (required)" : name;
+
+    /// <summary>The line under a new step's first empty required field: why Save is off (#4330).</summary>
+    /// <param name="name">The field's caption, without "(required)".</param>
+    /// <returns>The words.</returns>
+    internal static string WfFieldNeededToSave(string name) => $"Fill in {name} to save.";
 }

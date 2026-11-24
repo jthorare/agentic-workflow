@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Text.Json.Nodes;
 using Aw.Sindri.Ui.Api.Workflows;
 
@@ -26,14 +27,19 @@ internal sealed partial class OpsEditor
         ClearRefusal();   // a refusal belongs to the save that caused it: the new step's sheet opens without it (#3999)
         _pending = new PendingStep(id, block.Type, after);
         Fields.Clear();
-        var example = block.ExampleConfig ?? default;   // the block's example settings: only ever a hint, never a value, so Save can't send a title nobody typed ("Drifted", #4272)
+        var example = block.ExampleConfig ?? default;   // the block's example settings: only ever a hint, never a value, so Save can't send a title nobody typed ("Drifted" before #4330, #4272)
         var steps = Upstream(after);   // the validator lets a step read only steps upstream of it (GRAPH-REF-003 a missing one, GRAPH-REF-001 one that runs later)
+        var near = HintStepOf(after);
         foreach (var field in block.Config)
         {
             var boolean = string.Equals(field.Type, "boolean", StringComparison.Ordinal);
-            var hint = ExampleReferences.Hint(block.Type, field.Name, EditorFieldText.Of(example, field), steps);   // a step the new one can't read shows as "<step id>" (#3944, #4272)
-            Fields.Add(new ConfigFieldViewModel(field, boolean && field.Required ? "false" : string.Empty, block.Type) { Placeholder = hint });   // why: a required check box shows a value, and the value it shows is the one sent; the block type gives a new Code step its code box (#3682)
+            var hint = ExampleReferences.Hint(block.Type, field.Name, EditorFieldText.Of(example, field), steps, near);   // a step the new one can't read shows as the step it follows, else "<step id>" (#3944, #4272, #4330)
+            var form = new ConfigFieldViewModel(field, boolean && field.Required ? "false" : string.Empty, block.Type) { Placeholder = hint };   // why: a required check box shows a value, and the value it shows is the one sent; the block type gives a new Code step its code box (#3682)
+            form.PropertyChanged += OnPendingFieldChanged;
+            Fields.Add(form);
         }
+
+        MarkNeeded();
 
         NodeHeading = Labels.WfEditorNewStep(block.Title);
         NodeIdLine = string.Empty;   // a new step has no id until it is saved
@@ -41,6 +47,37 @@ internal sealed partial class OpsEditor
         OnChanged(nameof(HasAdvancedFields));
         OnChanged(nameof(ShowsAdvanced));
         OnChanged(nameof(HasPendingStep));
+    }
+
+    // The step a new one follows, with its block's outputs, for the hint (#4330); null when it follows none.
+    private HintStep? HintStepOf(string? after)
+    {
+        if (after is null)
+        {
+            return null;
+        }
+
+        var type = Nodes.FirstOrDefault(n => string.Equals(n.Id, after, StringComparison.Ordinal))?.Type;
+        var block = Groups.SelectMany(static g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, type, StringComparison.Ordinal));
+        return new HintStep(after, block is null ? [] : [.. block.Outputs.Keys]);
+    }
+
+    private void OnPendingFieldChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(ConfigFieldViewModel.Text), StringComparison.Ordinal))
+        {
+            MarkNeeded();
+        }
+    }
+
+    // Says why a new step's Save is off: a line on its first empty required field, none once every required field has text (#4330).
+    private void MarkNeeded()
+    {
+        var first = _pending is null ? null : Fields.FirstOrDefault(static f => f.IsRequired && string.IsNullOrWhiteSpace(f.Text));
+        foreach (var field in Fields)
+        {
+            field.MarkNeeded(ReferenceEquals(field, first));
+        }
     }
 
     // True while FailureText is Sindri's refusal of an edit (or an unsure answer), not a failed read: closing the sheet drops the edit, so its refusal goes too (#3944).

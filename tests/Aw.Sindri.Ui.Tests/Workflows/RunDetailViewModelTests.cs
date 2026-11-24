@@ -105,27 +105,29 @@ public sealed class RunDetailViewModelTests
         Assert.False(whole.IsTruncated);
     }
 
+    // #4082: the server counts a for_each item from 1 (index 0 is a node's own row), so a body step read "Item 2 of 3" to "Item 4 of 3".
     [Fact]
     public async Task A_for_each_node_shows_its_items_grouped_under_the_node()
     {
-        var served = Golden("workflow-runs-run", "finished");
-        var nodes = served["nodes"]!.AsArray();
-        var agent = Node(served, "agent").ToJsonString();   // read once: after the first Add there are two "agent" rows and Single would throw
-        foreach (var index in new[] { 1, 2 })
-        {
-            var next = JsonNode.Parse(agent)!;
-            next["itemIndex"] = index;
-            nodes.Add(next);
-        }
-
-        _f.ServeRun(served);
-
-        var run = await _f.OpenedRun(Token);
+        var run = await OpenedWithItems(own: false, items: 3);
 
         var group = Group(run, "agent");
         Assert.Equal((2, "agent · 3 items", true), (run.Groups.Count, group.HeaderText, group.IsForEach));
         Assert.Equal(["Item 1 of 3", "Item 2 of 3", "Item 3 of 3"], group.Runs.Select(r => r.TitleText), StringComparer.Ordinal);
         _ = Assert.Single(Group(run, "start").Runs);
+    }
+
+    // #4082: a collect step has its own row (index 0, its result) beside one row per item; it read "gather · 4 items" and "Item 1 of 4" on its own result.
+    // #4341: that row then had only a status pill; it reads "Result" so it doesn't look like a missing label.
+    [Fact]
+    public async Task A_collect_node_titles_its_own_result_row_and_counts_its_items_from_one()
+    {
+        var run = await OpenedWithItems(own: true, items: 3);
+
+        var group = Group(run, "agent");
+        Assert.Equal(("agent · 3 items", true), (group.HeaderText, group.IsForEach));
+        Assert.Equal(["Result", "Item 1 of 3", "Item 2 of 3", "Item 3 of 3"], group.Runs.Select(r => r.TitleText), StringComparer.Ordinal);
+        Assert.Equal((true, "Result, succeeded"), (group.Runs[0].HasTitle, group.Runs[0].Name));
     }
 
     [Fact]
@@ -210,13 +212,7 @@ public sealed class RunDetailViewModelTests
     [Fact]
     public async Task Each_item_of_a_for_each_node_keeps_its_own_title()
     {
-        var served = Golden("workflow-runs-run", "finished");
-        var next = JsonNode.Parse(Node(served, "agent").ToJsonString())!;
-        next["itemIndex"] = 1;
-        served["nodes"]!.AsArray().Add(next);
-        _f.ServeRun(served);
-
-        var run = await _f.OpenedRun(Token);
+        var run = await OpenedWithItems(own: false, items: 2);
 
         Assert.All(Group(run, "agent").Runs, static r => Assert.True(r.HasTitle));
     }
@@ -263,6 +259,29 @@ public sealed class RunDetailViewModelTests
 
         var row = Group(run, "agent").Runs[0];
         Assert.Equal((false, string.Empty), (row.HasCode, row.CodeText));
+    }
+
+    // The golden run with "agent" as a loop step: one row per item (itemIndex counted from 1, as the server writes them), and its own row at 0 when it is a collect.
+    private async Task<RunDetailViewModel> OpenedWithItems(bool own, int items)
+    {
+        var served = Golden("workflow-runs-run", "finished");
+        var nodes = served["nodes"]!.AsArray();
+        var row = Node(served, "agent");
+        var text = row.ToJsonString();   // read once: after the first Add there are two "agent" rows and Single would throw
+        if (!own)
+        {
+            _ = nodes.Remove(row);
+        }
+
+        for (var index = 1; index <= items; index++)
+        {
+            var next = JsonNode.Parse(text)!;
+            next["itemIndex"] = index;
+            nodes.Add(next);
+        }
+
+        _f.ServeRun(served);
+        return await _f.OpenedRun(Token);
     }
 
     private static NodeGroupViewModel Group(RunDetailViewModel run, string node) => run.Groups.Single(g => g.Node == node);
