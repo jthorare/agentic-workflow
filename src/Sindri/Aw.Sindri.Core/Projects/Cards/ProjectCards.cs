@@ -213,6 +213,12 @@ public static class ProjectCards
             return $"{LinearToken.Missing}. Run {LinearToken.Connect} in your terminal to connect it.";
         }
 
+        // Linear never connected: nothing syncs and nothing failed, so a by-hand project gets no sentence at all.
+        if (!inputs.LinearConfigured)
+        {
+            return null;
+        }
+
         if (!snapshot.FirstReadDone)
         {
             return "Linear is still syncing. Projects you lead show up when it's done.";
@@ -220,13 +226,16 @@ public static class ProjectCards
 
         if (ledCount == 0 && inputs.Attached.Count == 0)
         {
-            return snapshot.Owner?.Name is { Length: > 0 } name
-                ? $"You don't lead any Linear projects as {name}. Attach one you drive, or add one by hand."
-                : "You don't lead any Linear projects. Attach one you drive, or add one by hand.";
+            return NoLedSentence(snapshot.Owner?.Name);
         }
 
         return null;
     }
+
+    private static string NoLedSentence(string? ownerName) =>
+        ownerName is { Length: > 0 } name
+            ? $"You don't lead any Linear projects as {name}. Attach one you drive, or add one by hand."
+            : "You don't lead any Linear projects. Attach one you drive, or add one by hand.";
 
     private static List<ProjectFreshnessRow> FreshnessRows(ProjectPageInputs inputs, DateTimeOffset now)
     {
