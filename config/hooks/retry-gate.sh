@@ -38,14 +38,14 @@ ROW="$(jq -r --arg h "$RG_HASH" --argjson v "$RG_VERSION" --arg p "$RG_POLICY" '
   if type != "object" then error("bad") elif .version != $v or .policy != $p then "old"
   elif (.problems[$h] // null) == null then "none"
   else .problems[$h] | [ "open", .kind, .resource, .exe, (.failures | tostring), (.denies | tostring),
-         (.advisories | tostring), (.lastAt | fromdate | tostring), .retryAfter, .authStamp ] | join("\u001f") end
+         (.advisories | tostring), ((.wouldDeny // 0) | tostring), (.lastAt | fromdate | tostring), .retryAfter, .authStamp ] | join("\u001f") end
 ' "$F" 2> /dev/null)" || {
   rm -f "$F"
   rg_failopen retry-gate state-unreadable
   exit 0
 }
 case "$ROW" in old | none) exit 0 ;; esac
-IFS=$'\x1f' read -r _ KIND RES EXE FAILS DENIES ADVS LAST_EPOCH RETRY_AFTER STAMP <<< "$ROW"
+IFS=$'\x1f' read -r _ KIND RES EXE FAILS DENIES ADVS WOULD LAST_EPOCH RETRY_AFTER STAMP <<< "$ROW"
 
 OVR_HINT=""
 [ "$RG_TOOL" = Bash ] && OVR_HINT=' To repeat it on purpose, end the command with `# aw-retry: <reason>`.'
@@ -77,7 +77,7 @@ case "$KIND" in
     AF="$(rg_auth_file "$RES")"
     NOW_STAMP=""; [ -n "$AF" ] && NOW_STAMP="$(rg_mtime "$AF")"
     if [ -n "$STAMP" ] && [ "$NOW_STAMP" != "$STAMP" ]; then ACTION=clear
-    elif [ "$DENIES" = 0 ] && [ $((RG_NOW - LAST_EPOCH)) -lt 600 ]; then
+    elif [ "$((DENIES + WOULD))" = 0 ] && [ $((RG_NOW - LAST_EPOCH)) -lt 600 ]; then
       ACTION=deny; MSG="retry-guard: the login for $RES looks expired (this exact call failed with an authentication error). To fix it, $FIX, then retry.$OVR_HINT"
     else
       ACTION=advise; MSG="retry-guard: this call failed with an authentication error for $RES. If it fails the same way, $FIX instead of retrying."
@@ -99,12 +99,27 @@ if [ "$ACTION" = deny ] && [ "$RG_OVR_MARK" = true ]; then
   MSG="$MSG An \`# aw-retry:\` override needs a reason after the colon (\`# aw-retry: <why this repeat is needed>\`); this one is empty, so the call is still denied."
 fi
 
+# Advisory by default (#4257): a would-be deny prints the same text as advice, exits 0 and counts counters.wouldDeny.
+# AW_POLICY_RETRY_GUARD_1_MODE=block turns the deny on; unset or any other value is advisory.
+MODE=advisory
+# TODO(#4257): policy_mode retry-guard/1 (config/lib/policy.sh) replaces this read.
+[ "${AW_POLICY_RETRY_GUARD_1_MODE:-}" = block ] && MODE=block
+[ "$ACTION" = deny ] && [ "$MODE" != block ] && ACTION=would-deny
+
 case "$ACTION" in
   none) exit 0 ;;
+  would-deny)
+    rg_update "$F" '
+      if .problems[$h] == null then . else
+        .problems[$h].wouldDeny = ((.problems[$h].wouldDeny // 0) + 1)
+        | .counters.wouldDeny = ((.counters.wouldDeny // 0) + 1)
+      end' --arg h "$RG_HASH" || rg_failopen retry-gate state-write
+    jq -nc --arg m "$MSG" '{hookSpecificOutput: {hookEventName: "PreToolUse", additionalContext: $m}}'
+    exit 0 ;;
   clear)
     rg_update "$F" '
       if .problems[$h] == null then . else
-        ((.problems[$h].denies + .problems[$h].advisories) > 0) as $seen
+        ((.problems[$h].denies + .problems[$h].advisories + (.problems[$h].wouldDeny // 0)) > 0) as $seen
         | del(.problems[$h]) | .counters.cleared += 1
         | if $seen then .counters.clearedAfterChange += 1 else . end
       end' --arg h "$RG_HASH" || rg_failopen retry-gate state-write

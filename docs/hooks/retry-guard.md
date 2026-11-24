@@ -48,6 +48,7 @@ file 0600. A session id must match `^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`, or the 
 | `failures` | integer | Identical failures recorded for this hash, 1 or more. |
 | `denies` | integer | Calls of this hash the gate denied. |
 | `advisories` | integer | Calls of this hash the gate allowed with advice. |
+| `wouldDeny` | integer | Calls of this hash the gate would have denied in advisory mode (the default; see "Mode"). |
 | `firstAt`, `lastAt` | string | UTC times of the first and the latest recorded failure. |
 | `retryAfter` | string | `transient` only: the earliest time a retry is not "too soon", or `""`. The wait doubles from 30 s per failure, up to 300 s. |
 | `authStamp` | string | `auth-expired` only: the mtime (epoch seconds) of the provider's auth file when the failure was recorded, or `""` when no auth file is known for the host. For `github.com` the file is `${GH_CONFIG_DIR:-~/.config/gh}/hosts.yml`. |
@@ -71,11 +72,12 @@ All integers, starting at 0.
 | Field | Counts |
 |---|---|
 | `failures` | Failures recorded (every kind). |
-| `denies` | Calls denied. |
+| `denies` | Calls denied (block mode only). |
+| `wouldDeny` | Calls the gate would have denied, allowed with the deny text as advice instead (advisory mode, the default). A replay with 0 wrong would-be denies is what lets the guard switch to block. |
 | `advisories` | Calls allowed with advice. |
 | `overrides` | Calls let through by `# aw-retry:`. |
 | `cleared` | Problems removed because the same call then succeeded, or because the gate saw the prerequisite change. |
-| `clearedAfterChange` | Of `cleared`: problems that had been denied or advised at least once before they cleared. Each one is a retry the guard avoided. |
+| `clearedAfterChange` | Of `cleared`: problems that had been denied, would-be denied or advised at least once before they cleared. Each one is a retry the guard avoided. |
 
 ## The call hash
 
@@ -95,6 +97,14 @@ repeats. Any changed argument gives a new hash. The hooks store the hash, never 
 | `unknown` | anything else | Never deny. Advise from the 3rd identical failure on. |
 
 The table is checked top to bottom: the first kind that matches wins. An interrupt (`is_interrupt: true`) is never recorded.
+
+## Mode
+
+The guard ships advisory (#4257). In advisory mode a call the table says to deny is allowed: the deny text goes out as
+advice (`additionalContext`, exit 0), and `wouldDeny` is counted on the problem and in `counters`. With
+`AW_POLICY_RETRY_GUARD_1_MODE=block` the gate denies as the table says (exit 2). Unset or any other value is advisory.
+The auth row's "deny once" counts a would-be deny as that one deny. A shared reader, `policy_mode retry-guard/1` in
+`config/lib/policy.sh`, replaces the variable later (#4257).
 
 The override: a Bash command that ends in `# aw-retry: <reason>` passes, and the gate records it in `overrides` with its
 reason. The reason is required. A marker with an empty or blank reason (`# aw-retry:`) is no override: the call is judged as
@@ -124,6 +134,7 @@ Advice exits 0 with `{"hookSpecificOutput":{"hookEventName":"PreToolUse","additi
       "failures": 1,
       "denies": 2,
       "advisories": 0,
+      "wouldDeny": 0,
       "firstAt": "2026-11-24T10:03:40Z",
       "lastAt": "2026-11-24T10:03:40Z",
       "retryAfter": "",
@@ -136,7 +147,7 @@ Advice exits 0 with `{"hookSpecificOutput":{"hookEventName":"PreToolUse","additi
   "overrides": [
     { "hash": "9e2f6a3d8c1b5e0f7a2d9c4b6e1f8a3d5c7b3b1f0c4e9a7d2b6c8e5f1a0d4c7b", "kind": "unknown", "reason": "polling the deploy", "at": "2026-11-24T10:01:02Z" }
   ],
-  "counters": { "failures": 4, "denies": 2, "advisories": 1, "overrides": 1, "cleared": 2, "clearedAfterChange": 1 }
+  "counters": { "failures": 4, "denies": 2, "wouldDeny": 0, "advisories": 1, "overrides": 1, "cleared": 2, "clearedAfterChange": 1 }
 }
 ```
 

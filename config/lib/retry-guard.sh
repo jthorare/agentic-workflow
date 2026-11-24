@@ -129,7 +129,7 @@ rg_update() {
       --arg sid "$RG_SID" --arg provider "${AW_PROVIDER:-claude}" "$@" '
       ($now | todate) as $iso
       | (. // {version: $v, policy: $p, session: $sid, provider: $provider, problems: {}, overrides: [],
-               counters: {failures: 0, denies: 0, advisories: 0, overrides: 0, cleared: 0, clearedAfterChange: 0}})
+               counters: {failures: 0, denies: 0, wouldDeny: 0, advisories: 0, overrides: 0, cleared: 0, clearedAfterChange: 0}})
       | .updatedAt = $iso
       | '"$prog" > "$tmp" 2> /dev/null && [ -s "$tmp" ] && mv -f "$tmp" "$f"; then
     rg_unlock; return 0

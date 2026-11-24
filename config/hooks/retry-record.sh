@@ -41,7 +41,7 @@ if [ "$FAILED" = 0 ]; then
   jq -e --arg h "$RG_HASH" '.problems[$h] != null' "$F" > /dev/null 2>&1 || exit 0
   rg_update "$F" '
     if .problems[$h] == null then . else
-      ((.problems[$h].denies + .problems[$h].advisories) > 0) as $seen
+      ((.problems[$h].denies + .problems[$h].advisories + (.problems[$h].wouldDeny // 0)) > 0) as $seen
       | del(.problems[$h])
       | .counters.cleared += 1
       | if $seen then .counters.clearedAfterChange += 1 else . end
@@ -124,6 +124,7 @@ rg_update "$F" '
       failures: $n,
       denies: (if $old != null and $old.kind == $kind then $old.denies else 0 end),
       advisories: (if $old != null and $old.kind == $kind then $old.advisories else 0 end),
+      wouldDeny: (if $old != null and $old.kind == $kind then ($old.wouldDeny // 0) else 0 end),
       firstAt: (if $old != null and $old.kind == $kind then $old.firstAt else $iso end),
       lastAt: $iso,
       retryAfter: (if $kind == "transient"

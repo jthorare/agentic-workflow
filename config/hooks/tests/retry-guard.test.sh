@@ -39,6 +39,9 @@ unset AW_JUDGE_CHILD AW_PROVIDER AW_HOOK_PROVIDER AW_RETRY_GUARD_NOW CURSOR_TRAN
 for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done   # a lane caller's AW_META_* would steer the adapters' lane hooks
 BIN="$WORK/bin"; mkdir -p "$BIN"
 export PATH="$BIN:$PATH"
+# The rows below expect today's deny path; the guard ships advisory (#4257), so they turn block mode on. The
+# "advisory default" section runs without it.
+export AW_POLICY_RETRY_GUARD_1_MODE=block
 RG="$AW_STATE_DIR/retry-guard"
 LOG="$AW_STATE_DIR/logs/failopen.log"
 mode() { stat -c %a "$1" 2> /dev/null || stat -f %Lp "$1"; }
@@ -318,6 +321,25 @@ bash "$HOOKS/adapters/cursor.sh" "$RECORD" < "$FIX/cursor/post-tool-use-failure-
 OUT="$(bash "$HOOKS/adapters/cursor.sh" "$GATE" < "$FIX/cursor/pretooluse-shell-timeout.json" 2> /dev/null)"
 check "cursor: a transient repeat is allowed" "$(printf '%s' "$OUT" | jq -r .permission)" "allow"
 has "cursor: ...with the advice as agent_message" "$(printf '%s' "$OUT" | jq -r '.agent_message // empty')" "wait 30 s"
+
+# --- the advisory default (#4257): a would-be deny is advice, exit 0, counters.wouldDeny +1 ------------------------------
+for mode in unset banana; do
+  reset
+  record "$(failure s-adv Bash "$CALL" 'aw-nosuch-tool: command not found')"
+  if [ "$mode" = unset ]; then
+    OUT="$(printf '%s' "$(pre s-adv Bash "$CALL")" | env -u AW_POLICY_RETRY_GUARD_1_MODE bash "$GATE" 2> "$WORK/err")"; RC=$?
+  else
+    OUT="$(printf '%s' "$(pre s-adv Bash "$CALL")" | AW_POLICY_RETRY_GUARD_1_MODE=banana bash "$GATE" 2> "$WORK/err")"; RC=$?
+  fi
+  check "advisory ($mode): a would-be deny exits 0" "$RC" "0"
+  check "advisory ($mode): nothing on stderr" "$(cat "$WORK/err")" ""
+  has "advisory ($mode): the deny text comes as advice" "$(ctx)" '`aw-nosuch-tool` is not installed'
+  check "advisory ($mode): counters.wouldDeny +1, denies 0" "$(st s-adv '"\(.counters.wouldDeny) \(.counters.denies) \(.problems[].wouldDeny)"')" "1 0 1"
+done
+printf '#!/bin/sh\necho 1.0\n' > "$BIN/aw-nosuch-tool"; chmod +x "$BIN/aw-nosuch-tool"
+OUT="$(printf '%s' "$(pre s-adv Bash "$CALL")" | env -u AW_POLICY_RETRY_GUARD_1_MODE bash "$GATE" 2> /dev/null)"
+check "advisory: a would-be deny that later clears counts as cleared after change" "$(st s-adv '"\(.counters.cleared) \(.counters.clearedAfterChange)"')" "1 1"
+unlink "$BIN/aw-nosuch-tool"
 
 # --- latency of the empty path ----------------------------------------------------------------------------------------------
 reset
