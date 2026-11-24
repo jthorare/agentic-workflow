@@ -17,6 +17,7 @@ internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher la
     private Uri? _url;
     private int _generation;
     private ProjectOne? _one;
+    private ProjectCardViewModel? _ownNotesCard;
 
     /// <summary>Asking to remove puts focus on Keep: the view moves it.</summary>
     internal event EventHandler? KeepFocusRequested;

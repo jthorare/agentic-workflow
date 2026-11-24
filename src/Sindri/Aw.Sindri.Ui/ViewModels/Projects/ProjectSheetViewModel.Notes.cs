@@ -29,7 +29,31 @@ internal sealed partial class ProjectSheetViewModel
 
     /// <summary>The shell opened the sheet on a project: its row on the page, or null.</summary>
     /// <param name="card">The page's row of the project.</param>
-    internal void EditNotesWith(ProjectCardViewModel? card) => NotesCard = card;
+    internal void EditNotesWith(ProjectCardViewModel? card) => NotesCard = card ?? _ownNotesCard;
+
+    // A project the page draws no row for (another view, a hidden one, no read yet): the sheet makes a card from what it read, so its notes still have an edit box.
+    private void KeepNotesCard(ProjectCardView served)
+    {
+        if (_ownNotesCard is { } own)
+        {
+            own.Update(served);
+        }
+        else if (NotesCard is null)
+        {
+            _ownNotesCard = new ProjectCardViewModel(served, _clock, Api, () => _url);
+            NotesCard = _ownNotesCard;
+        }
+    }
+
+    private void DropOwnNotesCard()
+    {
+        if (ReferenceEquals(NotesCard, _ownNotesCard))
+        {
+            NotesCard = null;
+        }
+
+        _ownNotesCard = null;
+    }
 
     private void NotesPlaceChanged()
     {

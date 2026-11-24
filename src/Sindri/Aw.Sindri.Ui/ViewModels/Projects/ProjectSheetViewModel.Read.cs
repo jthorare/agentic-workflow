@@ -43,6 +43,7 @@ internal sealed partial class ProjectSheetViewModel
         var keepPick = _one?.Project is { } drawn && string.Equals(drawn.Id, card.Id, StringComparison.Ordinal)
             && string.Equals(drawn.State, card.State, StringComparison.Ordinal);
         _one = one;
+        KeepNotesCard(card);
         Heading = card.Name;
         OriginChip = Labels.ProjectOriginChip(card.Origin);
         StateText = Labels.ProjectStateWord(card.State) + (card.StateSetByOwner ? " · " + Labels.ProjectSetByYou : string.Empty);
@@ -147,6 +148,7 @@ internal sealed partial class ProjectSheetViewModel
     private void Clear()
     {
         _one = null;
+        DropOwnNotesCard();
         (Heading, StateText, ProblemText, Note, SaveError, RemoveQuestion, Announcement) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         (OriginChip, HealthWord, LeadText, TargetText, IssuesText, PrsText, ActivityText, FinishedText, Description, Notes) = (null, null, null, null, null, null, null, null, null, null);
         (Links, Repos, SelectedState) = ([], [], null);
