@@ -181,4 +181,22 @@ public sealed class GraphCardLineTests
     [Fact]
     public void An_at_in_the_query_of_a_dotted_host_leaves_the_host() =>
         Assert.Equal("GET api.example.com/x", HttpLine("https://api.example.com/x?email=a@b.example"), StringComparer.Ordinal);
+
+    // #4195: three valid urls that keep a possible user and password on the card. They are the known cost of PastToken's host check: the one rule that
+    // would close them (no host check) also cuts registry.example.org/@scope/pkg. Pinned on purpose: don't "fix" them without that trade.
+
+    // Cost 1: a token with a '.' before its raw '/' looks like a dotted host ("k1.z2"), so the url stays whole.
+    [Fact]
+    public void A_dotted_token_before_a_raw_slash_reads_as_a_host() =>
+        Assert.Equal("GET k1.z2/x@host", HttpLine("https://k1.z2/x@host"), StringComparer.Ordinal);
+
+    // Cost 2: user "[a" and password ":1]/w" make "[a::1]", a valid IPv6 address followed by '/', so the url stays whole.
+    [Fact]
+    public void A_user_and_password_that_spell_an_address_before_a_slash_stay_whole() =>
+        Assert.Equal("GET [a::1]/w@host/x", HttpLine("https://" + string.Join(":", "[a", ":1]/w") + "@host/x"), StringComparer.Ordinal);
+
+    // Cost 3: the same address before a '?': the query is cut and the card shows the address.
+    [Fact]
+    public void A_user_and_password_that_spell_an_address_before_a_query_show_the_address() =>
+        Assert.Equal("GET [a::1]", HttpLine("https://" + string.Join(":", "[a", ":1]?w") + "@host/x"), StringComparer.Ordinal);
 }
