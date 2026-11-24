@@ -9,12 +9,60 @@ with the TypeScript packages at the switch, and no TS state is migrated.
 |-------|------|-------|---------------------|
 | Sindri ledger | `$AW_SINDRI_HOME/ledger.db` | `Aw.Sindri.Infrastructure` | `events`, `lease`, `outbox_commands`; Sindri is the only writer, hooks append to spool files instead (`docs/csharp/sindri.md` "State") |
 | Sindri views | `$AW_SINDRI_HOME/views.db` | the projector | `projector_state` and one `view_<name>(key, row_json, seq)` table per view; derived, rebuilt from the ledger by `sindri views rebuild` (`docs/csharp/sindri.md`) |
+| Sindri Messages | `$AW_SINDRI_HOME/messages.db` | `Aw.Sindri.Infrastructure` (`Messages/`) | Slack text: a cache plus owner state, never a view of the ledger, so `sindri views rebuild` does not touch it; its own migrations `Messages/Migrations/NNNN_*.sql` from 0001 (messages spec `docs/superpowers/specs/2026-11-12-sindri-messages-page-design.md` §8.1) |
 | Temporal dev server | `$AW_SINDRI_HOME/temporal.db` | the pinned `temporal` binary | Not ours; the workflow engine's history (`docs/csharp/sindri-graph.md`) |
 | Code index | per repo, under the Sindri home | `src/CodeIndex` | Symbols, callers and callees; derived data (`docs/csharp/code-index.md`) |
 | Context store | `$AW_SINDRI_HOME/context/context.db` | `Aw.Context.Infrastructure` | The graph, the intent layer, repo docs and the record store below; migrations `Store/Migrations/NNNN_*.sql` (spec `docs/superpowers/specs/2026-10-27-sindri-owned-index-design.md` §4) |
 | Judge decisions | `$AW_STATE_DIR/judge/decisions.sqlite` | `Aw.Judge.Infrastructure` | `decisions`, `decision_details`, `failures`, `briefs` (`docs/csharp/judge.md` "State") |
 
 `$AW_SINDRI_HOME` defaults to `$AW_STATE_DIR/sindri-app`.
+
+## Sindri Messages (`messages.db`)
+
+Migration 0001 (`messages`). Cache tables, rebuilt by a re-sync: `conversations`, `users`, `messages` and `messages_fts` (FTS5 over `messages.text`,
+external content, `unicode61 remove_diacritics 2`, kept in step by triggers). `thread_state` mixes owner columns (`follow`, `later`, `title_override`)
+with derived ones (`my_last_ts`, `newest_ts`, `newest_user`, `needs_reply`, `gist`, `gist_key`, `text_expired_at`). Owner state: `drafts` and the
+`outbox` rows not yet sent (`origin` and `created_at` serve the daily send cap). A thread is the pair (`conversation`, `thread_root`): a channel
+thread's root ts, or `''` for a DM or group DM, whose row is the conversation. No backup is taken before an upgrade: it would hold text that
+retention and purge never reach.
+
+```mermaid
+erDiagram
+    conversations ||--o{ messages : "conversation (cascade)"
+    messages ||--|| messages_fts : "id = rowid (triggers)"
+    conversations ||..o{ thread_state : "conversation (no FK: a search hit may flag an unfetched thread)"
+    conversations ||..o{ drafts : "conversation"
+    conversations ||..o{ outbox : "conversation"
+    messages {
+        int id PK
+        text conversation FK
+        text ts "UNIQUE with conversation"
+        text thread_root "root ts, or '' for a DM"
+        text text
+        int mine
+        int names_me
+    }
+    thread_state {
+        text conversation PK
+        text thread_ts PK
+        int later
+        int follow
+        int needs_reply
+        text gist
+        text text_expired_at
+        int rev
+    }
+    outbox {
+        text act_id PK
+        text origin
+        text created_at
+        text state
+    }
+```
+
+The nightly `messages-retention` pass deletes messages older than 30 days (`messages.retain.days`) and their FTS rows, except in a thread that is in
+Needs reply, snoozed (read from the ledger's `home.row.*` events) or has owner state; a kept thread keeps 20 messages around it, and any skip ends at
+180 days, when its `thread_state` row gets `text_expired_at`.
 
 ## Context store (`context.db`)
 

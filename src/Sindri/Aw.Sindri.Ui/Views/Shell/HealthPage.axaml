@@ -7,6 +7,7 @@
              xmlns:api="using:Aw.Sindri.Ui.Api"
              xmlns:ccontrols="using:Aw.Sindri.Ui.Views.Controls"
              xmlns:sandbox="using:Aw.Sindri.Ui.Views.Sandbox"
+             xmlns:views="using:Aw.Sindri.Ui.Views.Shell"
              x:Class="Aw.Sindri.Ui.Views.Shell.HealthPage"
              x:DataType="shell:HealthViewModel">
   <UserControl.Styles>
@@ -347,16 +348,22 @@
                   <DataTemplate x:DataType="shell:ServiceRowViewModel">
                     <StackPanel>
                       <!-- #4000: cadence and last run are columns of their own, each as wide as its widest row, so last run starts at
-                           one x on every row and one spacing token always parts it from the cadence. -->
-                      <Grid Classes="row data-row" ColumnSpacing="{StaticResource Space.XS}" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding What}">
+                           one x on every row. #4027: Space.XXS between columns plus last run's left margin (ServiceGapMargin) gives
+                           Space.SM (12) after the widest cadence where the card has room (1280 px) and Space.XS (8) where it hasn't
+                           (1000 px), so the 20-character names stay whole at text scale 1.3. Last run uses tabular figures, so its width
+                           never follows the clock's digits. A longer name ends in an ellipsis. The row's one tip is the name, then what
+                           the service does (#4047). -->
+                      <Grid Classes="row data-row" ColumnSpacing="{StaticResource Space.XXS}" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding Tip}">
                         <Grid.ColumnDefinitions>
                           <ColumnDefinition Width="*" />
                           <ColumnDefinition Width="Auto" SharedSizeGroup="SvcEvery" />
                           <ColumnDefinition Width="Auto" SharedSizeGroup="SvcLastRun" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Classes="body-strong" Margin="0,8,0,8" Text="{Binding Name}" AutomationProperties.Name="{Binding Name}" />
+                        <TextBlock Classes="body-strong" Margin="0,8,0,8" Text="{Binding Name}" TextTrimming="CharacterEllipsis"
+                                   AutomationProperties.Name="{Binding Name}" />
                         <TextBlock Grid.Column="1" Classes="body muted" Text="{Binding Every}" AutomationProperties.Name="{Binding Every}" />
-                        <TextBlock Grid.Column="2" Classes="body subtle" Text="{Binding LastRun}" AutomationProperties.Name="{Binding LastRun}" />
+                        <TextBlock Grid.Column="2" Classes="body subtle" FontFeatures="+tnum" Text="{Binding LastRun}" AutomationProperties.Name="{Binding LastRun}"
+                                   Margin="{Binding $parent[ItemsControl].Bounds.Width, Converter={x:Static views:ServiceGapMargin.Instance}}" />
                       </Grid>
                       <TextBlock Classes="body subtle" Classes.error="{Binding HasFailed}" TextWrapping="Wrap" IsVisible="{Binding HasWhy}" Text="{Binding Why}"
                                  AutomationProperties.Name="{Binding Why}" />
