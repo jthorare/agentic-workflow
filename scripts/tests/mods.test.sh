@@ -4,7 +4,8 @@
 #     `declare module` block (each plugin dir must stand alone, so the copies stay; this stops them drifting).
 #  2. With `claude` on PATH: `claude plugin validate` on each mod and on mods/ (the marketplace), `claude plugin test` per mod.
 #     Without it these print a SKIP line.
-#  3. install-mods.sh against a stub `claude`: no claude -> exit 0 with a note, --dry-run runs nothing, a first run adds the
+#  3. A run with no `claude` on PATH (this suite re-run with `--no-claude`, PATH=/usr/bin:/bin) prints SKIP and exits 0.
+#  4. install-mods.sh against a stub `claude`: no claude -> exit 0 with a note, --dry-run runs nothing, a first run adds the
 #     marketplace and installs both mods, a second run does neither.
 set -euo pipefail
 
@@ -105,6 +106,16 @@ fi
 
 out="$(run_install --scope nowhere)" && rc=0 || rc=$?
 if [ "$rc" -eq 2 ]; then ok "a bad --scope exits 2"; else fail "bad --scope exit $rc"; fi
+
+# --- the skip path: the suite itself, on a PATH with no claude (the --no-claude run does not nest again) ---
+if [ "${1:-}" != "--no-claude" ]; then
+  out="$(PATH="$SAFE_PATH" bash "$0" --no-claude 2>&1)" && rc=0 || rc=$?
+  if [ "$rc" -eq 0 ] && printf '%s\n' "$out" | grep -q 'SKIP claude is not on PATH'; then
+    ok "the suite prints SKIP and exits 0 when claude is missing"
+  else
+    fail "no-claude run (rc=$rc): $out"
+  fi
+fi
 
 echo ""
 echo "mods.test.sh: $PASS passed, $FAIL failed"
