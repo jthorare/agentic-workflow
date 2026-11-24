@@ -7,7 +7,7 @@ using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 namespace Aw.Sindri.Ui.Tests.Workflows;
 
 /// <summary>
-/// #4272: a new step's fields start empty; the block's example is only a hint. A hint never names a step the workflow lacks: that step id becomes "&lt;step id&gt;".
+/// #4272: a new step's fields start empty; the block's example is only a hint. A hint never names a step the new one can't read: that step id becomes "&lt;step id&gt;".
 /// The workflow served is the "found" golden with its "agent" step renamed "measure", so no step is called "agent".
 /// </summary>
 [Lane(TestLane.Unit)]
@@ -17,7 +17,7 @@ public sealed class AddStepStartsEmptyTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private async Task<WorkflowsPageViewModel> AddedStep(string type, bool withAgent)
+    private async Task<WorkflowsPageViewModel> AddedStep(string type, bool withAgent, string? after = null)
     {
         _f.Server.WorkflowBlocksAnswer = RouteAnswer.Api("workflows-blocks", "listed");
         if (!withAgent)
@@ -28,6 +28,11 @@ public sealed class AddStepStartsEmptyTests
 
         var page = await _f.Shown(Token);
         await page.OpenWorkflow(Slug, Token);
+        if (after is not null)
+        {
+            Assert.True(page.Runs.Graph!.SelectNode(after));   // the new step follows it, so it may read it (#4268)
+        }
+
         await page.GraphEdit.BeginAdd(Token);
         var block = page.GraphEdit.Groups.SelectMany(static g => g.Blocks).Single(b => string.Equals(b.Type, type, StringComparison.Ordinal));
         await page.GraphEdit.AddStep(block, Token);
@@ -61,9 +66,9 @@ public sealed class AddStepStartsEmptyTests
     }
 
     [Fact]
-    public async Task A_hint_keeps_a_step_the_workflow_has_and_the_field_still_starts_empty()
+    public async Task A_hint_keeps_a_step_the_new_one_follows_and_the_field_still_starts_empty()
     {
-        var page = await AddedStep("notify", withAgent: true);   // the "found" golden has a step "agent"
+        var page = await AddedStep("notify", withAgent: true, after: "agent");   // the "found" golden has a step "agent"
 
         var body = Field(page, "body");
 

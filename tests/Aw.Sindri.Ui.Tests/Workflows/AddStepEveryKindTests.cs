@@ -7,9 +7,10 @@ using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 namespace Aw.Sindri.Ui.Tests.Workflows;
 
 /// <summary>
-/// #3072: for every block the Add step menu offers (the API's own workflows-blocks golden), Add step then Save with nothing touched sends one add_node whose config is the block's example, unchanged.
-/// #3944: except a field whose example names a step the new one can't read ("{{triage.items}}"; nothing is selected here, so the new step follows no step and may read none):
-/// it opens empty and is not sent; a required one keeps Save off until it is typed. Which fields those are comes from the Ui's ExampleReferences, tied to Core's copies by
+/// #3072: for every block the Add step menu offers (the API's own workflows-blocks golden), the example is enough to fill a step: typing each required field's hint and pressing
+/// Save sends one add_node whose config is those example values. #4272: nothing is filled in for the person; every field opens empty with the example as its hint.
+/// #3944: a hint names no step the new one can't read (nothing is selected here, so the new step follows no step and may read none): such a step shows as "&lt;step id&gt;",
+/// and a required field with one gets typed text instead. Which references those are comes from the Ui's ExampleReferences, tied to Core's copies by
 /// ExampleReferencesCopyTests in Aw.Sindri.Tests.
 /// #3999 (qa on #3944): no field of a new step, as the sheet opens, names a step, read with a hand scan of every "{{" rather than the editor's pattern.
 /// The engine side (that each example passes GRAPH-CONFIG-001) is BlockExamplesAcceptedTests in Aw.Sindri.Tests: the Ui project has no reference to the engine's validator.
@@ -19,8 +20,6 @@ public sealed class AddStepEveryKindTests
 {
     private const string Typed = "typed by the person";
 
-    private static readonly HashSet<string> _none = new(StringComparer.Ordinal);
-
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     public static TheoryData<string> Kinds() =>
@@ -28,7 +27,7 @@ public sealed class AddStepEveryKindTests
 
     [Theory]
     [MemberData(nameof(Kinds))]
-    public async Task Save_with_the_example_untouched_sends_that_example_as_the_new_steps_settings(string type)
+    public async Task A_new_step_opens_empty_and_typing_its_required_hints_sends_the_example(string type)
     {
         var f = new WorkflowsFixture();
         f.Server.WorkflowBlocksAnswer = RouteAnswer.Api("workflows-blocks", "listed");
@@ -40,30 +39,36 @@ public sealed class AddStepEveryKindTests
         await page.GraphEdit.AddStep(block, Token);
         var example = block.ExampleConfig is { } raw ? JsonNode.Parse(raw.GetRawText()) as JsonObject ?? [] : [];
         var expected = new JsonObject();
-        foreach (var (name, value) in example)
+        foreach (var field in page.Editor.Fields)
         {
-            if (!ExampleReferences.NamesStepNotUpstream(type, name, Text(value), _none))
-            {
-                expected[name] = value?.DeepClone();
-                continue;
-            }
-
-            var field = page.Editor.Fields.Single(x => string.Equals(x.Name, name, StringComparison.Ordinal));
-            Assert.Equal(string.Empty, field.Text);   // the example names a step the workflow lacks
+            Assert.Equal(field.IsBoolean && field.IsRequired ? "false" : string.Empty, field.Text);   // #4272: no example goes in as a value
+            var named = Roots(field.Placeholder).Where(static r => !ExampleReferences.ScopeRoots.Contains(r)).ToList();
+            Assert.True(named.Count == 0, $"'{type}': the hint of '{field.Name}' names " + string.Join(", ", named));
             if (field.IsRequired)
             {
-                Assert.False(page.CanSave, $"'{type}': Save is on with the required '{name}' empty");
-                field.Text = Typed;
-                expected[name] = Typed;
+                expected[field.Name] = TypeRequired(field, example);
             }
         }
 
-        Assert.True(page.CanSave, $"'{type}': Save is off with the example untouched; empty required: " + string.Join(", ", page.Editor.Fields.Where(static x => x.IsRequired && string.IsNullOrWhiteSpace(x.Text)).Select(static x => x.Name)));
+        Assert.True(page.CanSave, $"'{type}': Save is off with every required field typed; empty required: " + string.Join(", ", page.Editor.Fields.Where(static x => x.IsRequired && string.IsNullOrWhiteSpace(x.Text)).Select(static x => x.Name)));
         await page.Save(Token);
 
         var sent = JsonNode.Parse(Assert.Single(f.Server.AppliedWorkflowOps).Ops)!.AsArray()[0]!;
         Assert.Equal(type, sent["type"]!.GetValue<string>());
         Assert.True(JsonNode.DeepEquals(expected, sent["config"] ?? new JsonObject()), $"'{type}': sent {sent["config"]} but expected {expected}");
+    }
+
+    // Types a required field's hint when it names no step (the example value is then what Save sends), else Typed; a required check box keeps its "false".
+    private static JsonNode? TypeRequired(ConfigFieldViewModel field, JsonObject example)
+    {
+        if (field.IsBoolean)
+        {
+            return false;
+        }
+
+        var fromExample = field.Placeholder.Length > 0 && !field.Placeholder.Contains(ExampleReferences.StepPlaceholder, StringComparison.Ordinal);
+        field.Text = fromExample ? field.Placeholder : Typed;
+        return fromExample ? example[field.Name]?.DeepClone() : Typed;
     }
 
     [Theory]
@@ -96,5 +101,4 @@ public sealed class AddStepEveryKindTests
         }
     }
 
-    private static string Text(JsonNode? value) => value is JsonValue v && v.TryGetValue<string>(out var s) ? s : value?.ToJsonString() ?? string.Empty;
 }

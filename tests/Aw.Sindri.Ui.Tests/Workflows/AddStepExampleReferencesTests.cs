@@ -7,8 +7,8 @@ using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 namespace Aw.Sindri.Ui.Tests.Workflows;
 
 /// <summary>
-/// #3944: Add step prefills the block's doc example, and some examples read steps of the doc page's graph ("{{triage.items}}"). A field whose example names a step the workflow
-/// can't read (it is not the step the new one follows, nor upstream of it) starts empty with the example as its hint; a reference to an upstream step, or to the trigger, stays.
+/// #3944: some block examples read steps of the doc page's graph ("{{triage.items}}"). Since #4272 every field of a new step starts empty with the example as its hint
+/// (AddStepStartsEmptyTests). A step the new one can't read (it is not the step the new one follows, nor upstream of it) shows in the hint as "&lt;step id&gt;"; an upstream step, or the trigger, stays.
 /// A condition's "when" names steps bare ("agent.drifted"), and those count too. A refused save is shown once, in the sheet.
 /// The workflow served is the "found" golden: start (manual) -> agent (run_agent); "no agent" is the same graph with "agent" renamed "tell".
 /// </summary>
@@ -45,34 +45,35 @@ public sealed class AddStepExampleReferencesTests
         page.Editor.Fields.Single(f => string.Equals(f.Name, name, StringComparison.Ordinal));
 
     [Fact]
-    public async Task A_new_step_leaves_a_field_empty_when_its_example_names_a_step_the_workflow_lacks()
+    public async Task A_new_step_hints_a_step_the_workflow_lacks_as_a_step_id()
     {
         var page = await AddedStep("code");   // example input "{{triage.items}}": the workflow has no "triage"
 
         var input = Field(page, "input");
 
         Assert.Equal(string.Empty, input.Text);
-        Assert.Equal("{{triage.items}}", input.Placeholder);
-        Assert.NotEmpty(Field(page, "code").Text);   // the rest of the example is still filled in
+        Assert.Equal("{{<step id>.items}}", input.Placeholder);
+        Assert.Equal(string.Empty, Field(page, "code").Text);   // #4272: no example goes in as a value
+        Assert.NotEmpty(Field(page, "code").Placeholder);
     }
 
     [Fact]
-    public async Task A_new_step_keeps_an_example_reference_to_the_step_it_follows()
+    public async Task A_new_step_hints_a_reference_to_the_step_it_follows_unchanged()
     {
         var page = await AddedStep("notify", after: "agent");   // example body "{{agent.summary}}": the new step goes after "agent"
 
         var body = Field(page, "body");
 
-        Assert.Equal("{{agent.summary}}", body.Text);
-        Assert.Equal(string.Empty, body.Placeholder);
+        Assert.Equal(string.Empty, body.Text);
+        Assert.Equal("{{agent.summary}}", body.Placeholder);
     }
 
     [Fact]
-    public async Task A_new_step_keeps_an_example_reference_to_the_trigger()
+    public async Task A_new_step_hints_a_reference_to_the_trigger_unchanged()
     {
         var page = await AddedStep("run_agent");   // example prompt "Check {{trigger.ref}} ..."
 
-        Assert.StartsWith("Check {{trigger.ref}}", Field(page, "prompt").Text, StringComparison.Ordinal);
+        Assert.StartsWith("Check {{trigger.ref}}", Field(page, "prompt").Placeholder, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -86,14 +87,14 @@ public sealed class AddStepExampleReferencesTests
     }
 
     [Fact]
-    public async Task A_new_step_leaves_a_reference_to_a_step_that_is_not_upstream_empty()
+    public async Task A_new_step_hints_a_step_that_is_not_upstream_as_a_step_id()
     {
         var page = await AddedStep("notify", after: "start");   // "agent" exists but runs after "start": the validator would say GRAPH-REF-001
 
         var body = Field(page, "body");
 
         Assert.Equal(string.Empty, body.Text);
-        Assert.Equal("{{agent.summary}}", body.Placeholder);
+        Assert.Equal("{{<step id>.summary}}", body.Placeholder);
     }
 
     [Fact]
@@ -105,32 +106,34 @@ public sealed class AddStepExampleReferencesTests
     }
 
     [Fact]
-    public async Task A_condition_opens_its_when_empty_when_it_names_a_step_the_workflow_lacks()
+    public async Task A_condition_hints_a_step_the_workflow_lacks_as_a_step_id()
     {
         var page = await AddedStep("condition", after: "tell", noAgent: true);   // example when "agent.drifted", bare: start -> tell has no "agent"
 
         var when = Field(page, "when");
 
         Assert.Equal(string.Empty, when.Text);
-        Assert.Equal("agent.drifted", when.Placeholder);
+        Assert.Equal("<step id>.drifted", when.Placeholder);
         Assert.False(page.CanSave);   // "when" is required
         when.Text = "tell.ok";
         Assert.True(page.CanSave);
     }
 
     [Fact]
-    public async Task A_condition_keeps_its_when_when_it_reads_the_step_it_follows()
+    public async Task A_condition_hints_its_when_unchanged_when_it_reads_the_step_it_follows()
     {
         var page = await AddedStep("condition", after: "agent");
 
-        Assert.Equal("agent.drifted", Field(page, "when").Text);
-        Assert.True(page.CanSave);
+        Assert.Equal(string.Empty, Field(page, "when").Text);   // #4272: the hint only
+        Assert.Equal("agent.drifted", Field(page, "when").Placeholder);
+        Assert.False(page.CanSave);
     }
 
     [Fact]
     public async Task A_refused_save_shows_once_while_the_sheet_is_open()
     {
         var page = await AddedStep("code");
+        Field(page, "code").Text = "return 1;";   // the required field, so Save reaches the server
         _f.Server.ApplyWorkflowOpsAnswer = RouteAnswer.Problem(HttpStatusCode.UnprocessableEntity, "SND-GRAPH-002", "GRAPH-REF-003 node 'code_1' field 'config.code': refused");
 
         await page.Save(Token);
@@ -145,6 +148,7 @@ public sealed class AddStepExampleReferencesTests
     public async Task A_closed_sheet_leaves_no_old_refusal_on_the_page()
     {
         var page = await AddedStep("code");
+        Field(page, "code").Text = "return 1;";   // the required field, so Save reaches the server
         _f.Server.ApplyWorkflowOpsAnswer = RouteAnswer.Problem(HttpStatusCode.UnprocessableEntity, "SND-GRAPH-002", "GRAPH-REF-003 node 'code_1' field 'config.code': refused");
         await page.Save(Token);
 

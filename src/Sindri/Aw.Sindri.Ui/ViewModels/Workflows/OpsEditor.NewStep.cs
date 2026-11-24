@@ -26,15 +26,13 @@ internal sealed partial class OpsEditor
         ClearRefusal();   // a refusal belongs to the save that caused it: the new step's sheet opens without it (#3999)
         _pending = new PendingStep(id, block.Type, after);
         Fields.Clear();
-        var example = block.ExampleConfig ?? default;   // the block's example settings: a step that opens complete saves untouched; a block with no example opens with its required fields empty
+        var example = block.ExampleConfig ?? default;   // the block's example settings: only ever a hint, never a value, so Save can't send a title nobody typed ("Drifted", #4272)
         var steps = Upstream(after);   // the validator lets a step read only steps upstream of it (GRAPH-REF-003 a missing one, GRAPH-REF-001 one that runs later)
         foreach (var field in block.Config)
         {
             var boolean = string.Equals(field.Type, "boolean", StringComparison.Ordinal);
-            var text = EditorFieldText.Of(example, field);
-            var foreign = ExampleReferences.NamesStepNotUpstream(block.Type, field.Name, text, steps);   // the example reads a step of the doc page's graph ("{{triage.items}}"): it starts empty, with the example as its hint (#3944)
-            var shown = foreign ? string.Empty : text;
-            Fields.Add(new ConfigFieldViewModel(field, shown.Length == 0 && boolean && field.Required ? "false" : shown) { Placeholder = foreign ? text : string.Empty });   // why: a required check box shows a value, and the value it shows is the one sent
+            var hint = ExampleReferences.Hint(block.Type, field.Name, EditorFieldText.Of(example, field), steps);   // a step the new one can't read shows as "<step id>" (#3944, #4272)
+            Fields.Add(new ConfigFieldViewModel(field, boolean && field.Required ? "false" : string.Empty) { Placeholder = hint });   // why: a required check box shows a value, and the value it shows is the one sent
         }
 
         NodeHeading = Labels.WfEditorNewStep(block.Title);

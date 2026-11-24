@@ -53,6 +53,7 @@ public sealed class StaleRefusalTests
     {
         var page = await Opened();
         await AddStep(page, "code");
+        page.Editor.Fields.Single(static f => string.Equals(f.Name, "code", StringComparison.Ordinal)).Text = "return 1;";   // the required field, so Save reaches Sindri (#4272: nothing is filled in)
         _f.Server.ApplyWorkflowOpsAnswer = Refused;
         await page.Save(Token);
         Assert.Contains("GRAPH-REF-003", page.Editor.FailureText, StringComparison.Ordinal);

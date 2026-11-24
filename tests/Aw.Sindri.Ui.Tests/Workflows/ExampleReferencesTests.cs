@@ -39,4 +39,17 @@ public sealed class ExampleReferencesTests
     [Fact]
     public void Another_field_of_a_condition_reads_only_braced_references() =>
         Assert.False(ExampleReferences.NamesStepNotUpstream("condition", "note", "agent.drifted", _tell));
+
+    // #4272: the hint a new step's field shows names the steps the new one can't read as "<step id>", and keeps the rest of the example.
+    [Theory]
+    [InlineData("notify", "body", "{{agent.summary}}", "{{<step id>.summary}}")]
+    [InlineData("notify", "body", "{{ agent.summary }} again", "{{ <step id>.summary }} again")]
+    [InlineData("notify", "body", "{{ tell.summary }} {{trigger.ref}}", "{{ tell.summary }} {{trigger.ref}}")]
+    [InlineData("notify", "title", "Drifted", "Drifted")]
+    [InlineData("condition", "when", "agent.drifted", "<step id>.drifted")]
+    [InlineData("condition", "when", "agent.drifted and tell.ok", "<step id>.drifted and tell.ok")]
+    [InlineData("condition", "when", "{{agent.x}} == true", "{{<step id>.x}} == true")]
+    [InlineData("condition", "note", "agent.drifted", "agent.drifted")]
+    public void A_hint_names_a_step_the_new_one_cant_read_as_a_step_id(string type, string field, string text, string hint) =>
+        Assert.Equal(hint, ExampleReferences.Hint(type, field, text, _tell));
 }
