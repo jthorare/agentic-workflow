@@ -1,0 +1,6 @@
+{
+  "name": "pr-line",
+  "version": "0.1.0",
+  "description": "One line under the prompt with the PR for the session's branch: CI, bot reviews, threads, people, and the next ship step",
+  "types": "./types/index.d.ts"
+}

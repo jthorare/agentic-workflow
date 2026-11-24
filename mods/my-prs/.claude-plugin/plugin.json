@@ -1,6 +1,6 @@
 {
   "name": "my-prs",
   "version": "0.1.0",
-  "description": "/prs opens a pane that lists your open PRs with CI, bot reviews, threads, people, and the next ship step",
+  "description": "/prs opens a pane on the side that lists your open PRs with CI, bot reviews, threads, people, and the next ship step",
   "types": "./types/index.d.ts"
 }

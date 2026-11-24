@@ -10,9 +10,6 @@ const PANE = 'my-prs'
 const POLL_MS = 60_000
 const EMPTY: Snapshot = { rows: [], updatedAt: null, error: null }
 const snapshot = atom({ plugin: 'my-prs', key: 'snapshot' } as const, EMPTY, { shape: 'snapshot-2' })
-// The git branch the session's directory is on; the band shows the open PR for it.
-const sessionBranch = atom({ plugin: 'my-prs', key: 'branch' } as const, null)
-const BAND_MIN_GAP_MS = 15_000
 
 const MARKS: Record<Person['mark'], string> = { approved: '✓', changes: '✗', requested: '?' }
 
@@ -59,19 +56,9 @@ function rowLines(ui: Pick<ElementTable, 'Text'>, row: PrRow, indent: string) {
 }
 
 let memory: ThreadMemory = {}
-let lastPollAt = 0
 const required: Record<string, string[]> = {}
 let inFlight: Promise<void> | null = null
 let isOpen = false
-
-async function refreshBranch($: EngineInterface): Promise<string | null> {
-  const cwd = await $.session.cwd()
-  const res = await $.process.run(['git', 'branch', '--show-current'], { cwd, timeoutMs: 5_000 })
-  const name = res.exitCode === 0 ? res.stdout.trim() : ''
-  const branch = name === '' || name === 'main' || name === 'master' ? null : name
-  if ((await read($, sessionBranch)) !== branch) await update($, sessionBranch, () => branch)
-  return branch
-}
 
 async function requiredChecks($: EngineInterface, repo: string): Promise<string[]> {
   if (required[repo]) return required[repo]
@@ -95,7 +82,6 @@ function poll($: EngineInterface): Promise<void> {
 }
 
 async function fetchRows($: EngineInterface): Promise<void> {
-  lastPollAt = await $.clock.now()
   try {
     const res = await $.process.run(['gh', 'api', 'graphql', '-f', `query=${QUERY}`], { timeoutMs: 30_000 })
     if (res.exitCode !== 0) {
@@ -125,53 +111,11 @@ export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     const started = await next(e)
     await $.command.register({ name: 'prs', description: 'Open the My PRs pane' })
-    // Polls while the pane is open or the session is on a branch other than main.
+    // Polls only while the pane is open.
     $.clock.every(POLL_MS, async () => {
-      const branch = await refreshBranch($)
-      if (isOpen || branch !== null) await poll($)
+      if (isOpen) await poll($)
     })
-    if ((await refreshBranch($)) !== null) void poll($)
     return started
-  })
-
-  // A turn can switch branch (a new worktree) or open the PR; look again without waiting for the timer.
-  on('turn.complete', async ($, e, next) => {
-    const result = await next(e)
-    const before = await read($, sessionBranch)
-    const branch = await refreshBranch($)
-    if (branch === null) return result
-    const snap = await read($, snapshot)
-    const hasRow = snap.rows.some(r => r.branch === branch)
-    if (branch !== before || (!hasRow && (await $.clock.now()) - lastPollAt > BAND_MIN_GAP_MS)) void poll($)
-    return result
-  })
-
-  // One line under the prompt. The PR number and title are left out: the hint line and status line show them.
-  on('ui.render', { component: 'PromptHint' }, async ($, e, next) => {
-    const hint = await next(e)
-    const branch = await read($, sessionBranch)
-    if (branch === null) return hint
-    const row = (await read($, snapshot)).rows.find(r => r.branch === branch)
-    if (!row) return hint
-    const { Box, Text } = $.ui.resolve(e)
-    return (
-      <Box flexDirection="column">
-        {hint}
-        <Text wrap="truncate-end">
-          <Text color={row.ci.state === 'fail' ? 'error' : row.ci.state === 'pass' ? 'success' : 'subtle'}>
-            {ciText(row.ci)}
-          </Text>
-          {row.bots !== null && `   bots ${row.bots.map(b => (b.isOnHead ? '✓' : '✗')).join('')}`}
-          {`   threads ${row.threads}`}
-          {row.isNewThread && <Text color="warning"> •</Text>}
-          {row.people.length > 0 && `   ${peopleText(row.people)}`}
-          <Text color={row.nextTone}>
-            {'   -> '}
-            {row.next}
-          </Text>
-        </Text>
-      </Box>
-    )
   })
 
   on('command.run', { command: 'prs' }, async $ => {
