@@ -2983,3 +2983,42 @@ Aw.Meta.Core.Coordination.LaneAddress.Find(string! team, string! lane, System.Th
 Aw.Meta.Core.Coordination.LaneAddress.LaneAddress(Aw.Meta.Core.Ports.ILaneFiles! files, Aw.Meta.Core.Ports.ILaneSessions! sessions, Aw.Meta.Core.Ports.ISessionDirectory! live) -> void
 Aw.Meta.Core.Lanes.LiveSession.Address.get -> string?
 Aw.Meta.Core.Lanes.LiveSession.Address.init -> void
+Aw.Meta.Core.Health.DriftState
+Aw.Meta.Core.Health.DriftState.Current = 1 -> Aw.Meta.Core.Health.DriftState
+Aw.Meta.Core.Health.DriftState.Stale = 2 -> Aw.Meta.Core.Health.DriftState
+Aw.Meta.Core.Health.DriftState.Unknown = 3 -> Aw.Meta.Core.Health.DriftState
+Aw.Meta.Core.Health.ToolDrift
+Aw.Meta.Core.Health.ToolDrift.<Clone>$() -> Aw.Meta.Core.Health.ToolDrift!
+Aw.Meta.Core.Health.ToolDrift.Deconstruct(out string! Tool, out Aw.Meta.Core.Health.DriftState State, out string! Detail) -> void
+Aw.Meta.Core.Health.ToolDrift.Detail.get -> string!
+Aw.Meta.Core.Health.ToolDrift.Detail.init -> void
+Aw.Meta.Core.Health.ToolDrift.Equals(Aw.Meta.Core.Health.ToolDrift? other) -> bool
+Aw.Meta.Core.Health.ToolDrift.Line() -> string!
+Aw.Meta.Core.Health.ToolDrift.State.get -> Aw.Meta.Core.Health.DriftState
+Aw.Meta.Core.Health.ToolDrift.State.init -> void
+Aw.Meta.Core.Health.ToolDrift.Tool.get -> string!
+Aw.Meta.Core.Health.ToolDrift.Tool.init -> void
+Aw.Meta.Core.Health.ToolDrift.ToolDrift(string! Tool, Aw.Meta.Core.Health.DriftState State, string! Detail) -> void
+override Aw.Meta.Core.Health.ToolDrift.Equals(object? obj) -> bool
+override Aw.Meta.Core.Health.ToolDrift.GetHashCode() -> int
+override Aw.Meta.Core.Health.ToolDrift.ToString() -> string!
+static Aw.Meta.Core.Health.ToolDrift.operator !=(Aw.Meta.Core.Health.ToolDrift? left, Aw.Meta.Core.Health.ToolDrift? right) -> bool
+static Aw.Meta.Core.Health.ToolDrift.operator ==(Aw.Meta.Core.Health.ToolDrift? left, Aw.Meta.Core.Health.ToolDrift? right) -> bool
+Aw.Meta.Core.Ports.IInstalledBuilds
+Aw.Meta.Core.Ports.IInstalledBuilds.Current(string! binary, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ports.InstalledBinary?>!>
+Aw.Meta.Core.Ports.InstalledBinary
+Aw.Meta.Core.Ports.InstalledBinary.<Clone>$() -> Aw.Meta.Core.Ports.InstalledBinary!
+Aw.Meta.Core.Ports.InstalledBinary.Deconstruct(out string! Revision, out System.Collections.Generic.IReadOnlyList<string!>? Inputs) -> void
+Aw.Meta.Core.Ports.InstalledBinary.Equals(Aw.Meta.Core.Ports.InstalledBinary? other) -> bool
+Aw.Meta.Core.Ports.InstalledBinary.Inputs.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Meta.Core.Ports.InstalledBinary.Inputs.init -> void
+Aw.Meta.Core.Ports.InstalledBinary.InstalledBinary(string! Revision, System.Collections.Generic.IReadOnlyList<string!>? Inputs) -> void
+Aw.Meta.Core.Ports.InstalledBinary.Revision.get -> string!
+Aw.Meta.Core.Ports.InstalledBinary.Revision.init -> void
+override Aw.Meta.Core.Ports.InstalledBinary.Equals(object? obj) -> bool
+override Aw.Meta.Core.Ports.InstalledBinary.GetHashCode() -> int
+override Aw.Meta.Core.Ports.InstalledBinary.ToString() -> string!
+static Aw.Meta.Core.Ports.InstalledBinary.operator !=(Aw.Meta.Core.Ports.InstalledBinary? left, Aw.Meta.Core.Ports.InstalledBinary? right) -> bool
+static Aw.Meta.Core.Ports.InstalledBinary.operator ==(Aw.Meta.Core.Ports.InstalledBinary? left, Aw.Meta.Core.Ports.InstalledBinary? right) -> bool
+const Aw.Meta.Core.KvKeys.HealthDriftKey = "health.drift.key" -> string!
+const Aw.Meta.Core.KvKeys.HealthDriftLines = "health.drift.lines" -> string!

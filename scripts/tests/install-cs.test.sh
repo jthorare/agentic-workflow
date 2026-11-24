@@ -194,6 +194,13 @@ check "one stamped build" "$(printf '%s' "$S1" | wc -c | tr -d ' ')" "16"
 for f in sindri sindri-code-runner sindri-ui judge aw-packets bugfix-state ui-evidence aw-readiness libe_sqlite3.so libSkiaSharp.so build-info; do
   check "build has $f" "$([ -e "$B/$S1/$f" ] && echo yes || echo no)" "yes"
 done
+# #4249: each binary's input pathspecs, so aw-meta health can ask origin/main whether its inputs changed since the build.
+for n in sindri sindri-code-runner sindri-ui judge aw-packets bugfix-state ui-evidence aw-readiness; do
+  check "the build records $n's input pathspecs" "$([ -s "$B/$S1/inputs/$n.paths" ] && echo yes || echo no)" "yes"
+done
+check "judge's pathspecs name its project folder" "$(grep -cx 'src/Judge/Aw.Judge.Host' "$B/$S1/inputs/judge.paths" 2> /dev/null)" "1"
+check "judge's pathspecs name the project it references" "$(grep -cx 'src/Aw.Kernel' "$B/$S1/inputs/judge.paths" 2> /dev/null)" "1"
+check "judge's pathspecs name each one once" "$(sort "$B/$S1/inputs/judge.paths" 2> /dev/null | uniq -d | wc -l | tr -d ' ')" "0"
 check "the build keeps ui-evidence's Playwright driver (a dot folder)" "$(cat "$B/$S1/.playwright/package/cli.js" 2>/dev/null)" "driver"
 check "eight publishes, each stamped with the commit" "$(grep -c "rev=$(g rev-parse HEAD)$" "$FAKE_LOG")" "8"
 check "the build carries heavy, executable" "$([ -x "$B/$S1/heavy" ] && echo yes || echo no)" "yes"
@@ -628,6 +635,7 @@ check "kernel change: the staged libSkiaSharp.so is still sindri-ui's" "$(grep -
 echo "core change" >> "$REPO/src/Sindri/Aw.Sindri.Core/C.cs"
 run_pl
 check "core change: only sindri and sindri-ui are published" "$(pubs)" "sindri sindri-ui "
+check "core change: a binary copied from the earlier build records its pathspecs too" "$([ -s "$B/$NB/inputs/judge.paths" ] && echo yes || echo no)" "yes"
 check "core change: all eight binaries are there" "$(have_all)" "yes"
 check "core change: the staged libSkiaSharp.so is still sindri-ui's" "$(grep -c fontconfig "$B/$NB/libSkiaSharp.so")" "1"
 

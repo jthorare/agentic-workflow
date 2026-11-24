@@ -18,6 +18,12 @@ public static class KvKeys
     /// <summary>The last health check's one-line summary.</summary>
     public const string HealthLast = "health.last";
 
+    /// <summary>What the last tool-drift comparison of aw-meta, judge and sindri was made from: origin/main's commit and each installed build's identity (#4249).</summary>
+    public const string HealthDriftKey = "health.drift.key";
+
+    /// <summary>That comparison's result, one "tool&lt;TAB&gt;state&lt;TAB&gt;detail" line per tool; reused while the key is unchanged.</summary>
+    public const string HealthDriftLines = "health.drift.lines";
+
     /// <summary>The pull requests the watch saw merged or closed on GitHub, comma separated; the merge queue leaves them out.</summary>
     public const string EndedPrs = "watch.ended-prs";
 
