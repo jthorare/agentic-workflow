@@ -85,4 +85,27 @@ public sealed class ContextCoverageFramesTests : FrameHost
     [InlineData(1000)]
     public Task A_stale_code_index_draws_function_names_as_partly_indexed_on_one_line(double width) =>
         Shows(NamesStale, "Searched all of Product and part of Why and Code. Function names are only partly indexed. " + NextStep, width, "stale");
+
+    // #4184: the longest sentence, about 150 characters: a reason clause and its next step. One line at 1280; at 1000 a second line is fine, as long as
+    // every word is drawn (nothing trimmed, nothing cut off by the page around it).
+    [Theory]
+    [InlineData(1280, 1)]
+    [InlineData(1000, 2)]
+    public Task A_reason_with_its_next_step_draws_whole_in_at_most_its_lines(double width, int lines) => OnUi(async () =>
+    {
+        var sentence = "Searched all of Product and part of Why and Code. Function names aren't indexed: no code index is set up for this repo. " + NextStep;
+        var (window, shell) = await Ask(node => node["bands"]!["code"]!["symbols"]!["reason"] = "not configured", width);
+        Frame(window, string.Create(CultureInfo.InvariantCulture, $"context-coverage-reason-{width:0}"), "f3-");
+
+        var coverage = Named<TextBlock>(window, "ContextCoverage");
+        var parent = coverage.GetVisualParent();
+        Assert.Equal(sentence, shell.Context.Coverage);
+        Assert.Equal(sentence, coverage.Text);
+        Assert.True(coverage.IsEffectivelyVisible, "the sentence is hidden");
+        Assert.InRange(coverage.TextLayout.TextLines.Count, 1, lines);
+        Assert.DoesNotContain(coverage.TextLayout.TextLines, static line => line.HasCollapsed);
+        Assert.True(coverage.Bounds.Height >= coverage.TextLayout.Height - 0.5, string.Create(CultureInfo.InvariantCulture, $"the text is {coverage.TextLayout.Height} tall in {coverage.Bounds.Height}"));
+        Assert.NotNull(parent);
+        Assert.True(coverage.Bounds.Bottom <= parent.Bounds.Height + 0.5 && coverage.Bounds.Right <= parent.Bounds.Width + 0.5, "the page around the sentence cuts it off");
+    });
 }
