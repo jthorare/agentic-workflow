@@ -1,7 +1,9 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.History;
+using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Tests.Map;
 
@@ -78,6 +80,16 @@ public sealed class AnchorChoiceScrubRestTests : IDisposable
         var lenses = await _world.Engine.LensesOf([Shared, "Restore"], MapRead.Current, depth: 0, Mcp, MapWorld.None);
 
         AssertScrubbed(lenses.Error, ContextErrors.AmbiguousAnchor.Code);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_scope_graph_of_an_unknown_name_lists_scrubbed_choices()
+    {
+        _ = await Import();
+
+        var graph = await _world.Engine.ScopeGraph(new ScopeGraphQuery([Unknown], MapRead.Current, new LensRange(0, Hops: null), Brief: null, MaxNodes: 400, MaxBytes: 300_000), Mcp, MapWorld.None);
+
+        AssertScrubbed(graph.Error, ContextErrors.UnknownAnchor.Code);
     }
 
     [Fact, Trait("Lane", "unit")]
