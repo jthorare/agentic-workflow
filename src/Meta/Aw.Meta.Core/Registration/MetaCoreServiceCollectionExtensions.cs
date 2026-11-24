@@ -43,6 +43,7 @@ public static class MetaCoreServiceCollectionExtensions
         .AddScoped<GateWorkspace>()
         .AddScoped<GateStepRunner>()
         .AddScoped<TrainSelection>()
+        .AddScoped<LaneAddress>()
         .AddScoped<MergeReadiness>()
         .AddScoped<MergeQueueReader>()
         .AddScoped<HeavyReservation>()

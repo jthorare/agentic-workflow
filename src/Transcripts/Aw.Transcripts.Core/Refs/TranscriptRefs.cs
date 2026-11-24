@@ -10,14 +10,14 @@ public static class TranscriptRefs
     /// <summary>The ref of one transcript file.</summary>
     /// <param name="provider">The provider that wrote it.</param>
     /// <param name="fileIdentity">The file's full path (what identifies it on this box).</param>
-    /// <returns>'transcript:' and the first 8 hex digits of SHA-256(wire name, newline, path).</returns>
+    /// <returns>'transcript:' and the first 12 hex digits of SHA-256(wire name, newline, path).</returns>
     public static SessionRef ForFile(TranscriptProvider provider, string fileIdentity)
     {
         ArgumentNullException.ThrowIfNull(fileIdentity);
         var bytes = Encoding.UTF8.GetBytes($"{TranscriptProviderNames.Of(provider)}\n{fileIdentity}");
         Span<byte> hash = stackalloc byte[SHA256.HashSizeInBytes];
         _ = SHA256.HashData(bytes, hash);
-        return SessionRef.From($"transcript:{Convert.ToHexStringLower(hash[..4])}");
+        return SessionRef.From($"transcript:{Convert.ToHexStringLower(hash[..6])}");
     }
 
     /// <summary>The ref of the turn that starts on <paramref name="line"/> of a session's file.</summary>

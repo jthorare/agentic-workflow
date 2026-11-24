@@ -30,7 +30,7 @@ public sealed class SymbolsColumnTests
     {
         var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false) with { Reason = "graph-off" });
 
-        Assert.Equal(("only C# files get names: the code graph is off for this repo", false), (column.Caption, column.Dimmed));
+        Assert.Equal(("from 7c3e1a2", "only C# files get names: the code graph is off for this repo", false), (column.Caption, column.EmptyReason, column.Dimmed));
         Assert.Equal("—", column.Cell("src/tabs/TabManager.ts"));
     }
 
@@ -39,7 +39,7 @@ public sealed class SymbolsColumnTests
     {
         var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false));
 
-        Assert.Equal(("none in these files", false), (column.Caption, column.Dimmed));
+        Assert.Equal(("from 7c3e1a2", "none in these files", false), (column.Caption, column.EmptyReason, column.Dimmed));
         Assert.Equal("—", column.Cell("src/tabs/TabManager.ts"));
     }
 
@@ -48,7 +48,7 @@ public sealed class SymbolsColumnTests
     {
         var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false, Row("src/a.cs", "Save")) with { Reason = "graph-off" });
 
-        Assert.Equal("from 7c3e1a2", column.Caption);
+        Assert.Equal(("from 7c3e1a2", null), (column.Caption, column.EmptyReason));
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public sealed class SymbolsColumnTests
     {
         var column = new SymbolsColumnViewModel(Served("stale", Asked, mismatch: true, Row("src/a.ts", "save")));
 
-        Assert.Equal(("from 7c3e1a2, not 1234567", true), (column.Caption, column.Dimmed));
+        Assert.Equal(("from 7c3e1a2", "from 7c3e1a2, not 1234567", true), (column.Caption, column.AsOfNote, column.Dimmed));
         Assert.Equal("save", column.Cell("src/a.ts"));
     }
 

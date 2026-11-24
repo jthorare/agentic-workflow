@@ -52,7 +52,7 @@ internal sealed class SindriProjectTruthFacts(IReviewFacts reviews, IReviewSumma
         var items = await Items(cancellationToken).ConfigureAwait(false);
         return items.IsError
             ? items.Error
-            : new ProjectTruthFacts(inScope, found, items.Value, Agents(union), await Owner(read.Value.Github?.LastCode, cancellationToken).ConfigureAwait(false));
+            : new ProjectTruthFacts(inScope, found, items.Value, Agents(union), inScope.Count == 0 ? null : await Owner(read.Value.Github?.LastCode, cancellationToken).ConfigureAwait(false));
     }
 
     // why: a login Sindri can't read only turns "blocked on you" off (the page says why); it never fails the truth read

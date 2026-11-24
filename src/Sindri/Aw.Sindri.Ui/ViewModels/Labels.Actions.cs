@@ -87,6 +87,7 @@ internal static partial class Labels
         ["CancelJob"] = "Cancel job",
         ["AnswerQuestion"] = "Answer question",
         ["CancelWorkflowRun"] = "Cancel workflow run",
+        ["RerunWorkflowRun"] = "Re-run workflow run from a step",
         ["MarkWorkflowRunSeen"] = "Mark run seen",
         ["ConnectMessages"] = "Connect Slack messages",
         ["MarkAllRead:read"] = "Mark all read",

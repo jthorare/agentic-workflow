@@ -55,6 +55,7 @@ internal static class ApiScenarios
         ["Toolkits"] = ToolkitScenarios.All,
         ["Home"] = HomeScenarios.All,
         ["WorkflowWrites"] = WorkflowWriteScenarios.All,
+        ["Links"] = LinkScenarios.All,
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>
@@ -103,9 +104,11 @@ internal static class ApiScenarios
             ? await GoldenHost.Start(temporary: true, ct)
             : await StartSessionOrPlain(slug, scenario, ct);
 
-    /// <summary>The host of a terminal-route, wrapped-session or cgroup scenario, else the plain golden host.</summary>
+    /// <summary>The host of a links-resolve, terminal-route, wrapped-session or cgroup scenario, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartSessionOrPlain(string slug, string scenario, CancellationToken ct) =>
-        AgentStartScenarios.NeedsLocator(slug, scenario)
+        LinkScenarios.Handles(slug, scenario)
+            ? await LinkScenarios.Start(scenario, ct)
+            : AgentStartScenarios.NeedsLocator(slug, scenario)
             ? await AgentStartScenarios.StartHost(scenario, ct)
             : WrapSessionScenarios.Handles(slug, scenario)
             ? await GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml)
@@ -247,6 +250,7 @@ internal static class ApiScenarios
         : ConnectionSignInScenarios.Handles(slug, scenario) ? () => ConnectionSignInScenarios.Body(host, scenario, ct)
         : ConnectionScenarios.Handles(slug, scenario) ? () => ConnectionScenarios.Body(host, slug, scenario, ct)
         : MemoryScenarios.Handles(slug, scenario) ? () => MemoryScenarios.Body(host, slug, scenario, ct)
+        : LinkScenarios.Handles(slug, scenario) ? () => LinkScenarios.Answer(host)
         : null;
 
 

@@ -158,7 +158,9 @@ public sealed class ContextMapViewModelTests
     {
         var node = GoldenFiles.Node("context-lenses", "map-tabs");
         edit(node);
-        return AwJson.Deserialize<LensesView>(Encoding.UTF8.GetBytes(node.ToJsonString()), SindriApiClient.Json).Value;
+        var read = AwJson.Deserialize<LensesView>(Encoding.UTF8.GetBytes(node.ToJsonString()), SindriApiClient.Json);
+        Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : string.Empty);
+        return read.Value;
     }
 
     [Theory]
