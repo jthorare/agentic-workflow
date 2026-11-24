@@ -84,11 +84,61 @@ public sealed class TerminalFitTests
     [InlineData(0, 36)]
     [InlineData(120, 0)]
     [InlineData(-1, 36)]
-    [InlineData(5, 2)]
-    public async Task A_size_of_zero_or_under_the_minimum_is_never_sent(int cols, int rows)
+    public async Task A_size_of_zero_or_less_is_never_sent(int cols, int rows)
     {
         var socket = await Play(s => _ = s.FitSize(cols, rows, Token));
 
         Assert.Empty(socket.Sent);
+    }
+
+    // The server refuses under 20x5 and over 400x200 (TmuxTerminalPaneSource.Resize), so the client sends the nearest size it accepts.
+    [Theory]
+    [InlineData(5, 2, 20, 5)]
+    [InlineData(10, 3, 20, 5)]
+    [InlineData(19, 36, 20, 36)]
+    [InlineData(120, 4, 120, 5)]
+    [InlineData(500, 36, 400, 36)]
+    [InlineData(120, 300, 120, 200)]
+    public async Task A_size_outside_the_servers_bounds_is_sent_clamped_to_them(int cols, int rows, int sentCols, int sentRows)
+    {
+        var socket = await Play(s => _ = s.FitSize(cols, rows, Token));
+
+        Assert.Equal([TerminalSocketMessages.Size(sentCols, sentRows)], socket.Sent);
+    }
+
+    [Fact]
+    public async Task Two_fits_that_clamp_to_the_same_size_send_once()
+    {
+        var socket = await Play(s =>
+        {
+            _ = s.FitSize(10, 3, Token);
+            _ = s.FitSize(15, 4, Token);
+        });
+
+        Assert.Equal([TerminalSocketMessages.Size(20, 5)], socket.Sent);
+    }
+
+    // The first send is in flight when the same size is fitted again: the second must see it as taken.
+    [Fact]
+    public async Task A_fit_landing_while_the_ready_send_is_in_flight_does_not_send_the_same_size_twice()
+    {
+        var f = new TerminalFixture();
+        f.View.Open(TerminalFixture.Lane("ideas"), TerminalOpenIntent.Look);
+        var socket = new FakeTerminalConnector { Script = [ReadyJson, FrameJson] };
+        var session = new TerminalSession(socket, f.View, _ => { });
+        var landed = false;
+        socket.BeforeSend = async message =>
+        {
+            if (!landed)
+            {
+                landed = true;
+                _ = await session.FitSize(100, 50, Token);
+            }
+        };
+        _ = session.FitSize(100, 50, Token);
+
+        await session.Run(new TerminalOpen(_api, "claude-code", "ideas", 120, 36), Token);
+
+        Assert.Equal([TerminalSocketMessages.Size(100, 50)], socket.Sent);
     }
 }
