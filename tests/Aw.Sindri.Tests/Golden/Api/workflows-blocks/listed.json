@@ -155,7 +155,7 @@
                 },
                 {
                   "value": "0 8 * * 1",
-                  "label": "Mondays at 8:00"
+                  "label": "Every Monday at 8:00"
                 }
               ],
               "advanced": false
