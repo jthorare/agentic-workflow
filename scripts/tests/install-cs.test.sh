@@ -474,7 +474,7 @@ rm -f "$CLAUDE_LOCAL_BIN"/*
 out="$(FAKE_PACK_FAIL=1 bash "$INSTALL" 2>&1)"; rc=$?
 check "a failed pack in the default publish + link exits 0" "$rc" "0"
 has "a failed pack warns and names the step" "$out" "warning: packing the toolkit SDK failed; the next install retries"
-check "a failed pack still links the wrappers" "$(ls "$CLAUDE_LOCAL_BIN" | tr '\n' ' ')" "aw-packets aw-readiness bugfix-state judge sindri ui-evidence "
+check "a failed pack still links the wrappers" "$(ls "$CLAUDE_LOCAL_BIN" | tr '\n' ' ')" "aw-commands aw-packets aw-readiness bugfix-state judge sindri ui-evidence "
 check "a failed pack leaves the feed as it was" "$(ls "$FEED" | tr '\n' ' ')" "$before"
 check "a failed pack leaves the stamp as it was" "$(cat "$FEED/.sdk-stamp")" "$stamp_before"
 out="$(bash "$INSTALL" --link 2>&1)"
