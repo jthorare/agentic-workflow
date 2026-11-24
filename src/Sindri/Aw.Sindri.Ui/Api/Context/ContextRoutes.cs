@@ -40,7 +40,7 @@ internal static class ContextRoutes
 
         if (query.Page > 1)
         {
-            parts.Add("page=" + query.Page.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            parts.Add("page=" + query.Page.ToString(CultureInfo.InvariantCulture));
         }
 
         if (query.PagesInNoConcept)
