@@ -82,12 +82,16 @@ public sealed class WorkflowsRunStartFailedFramesTests : FrameHost
         Clock.Advance(TimeSpan.FromSeconds(10));
         await Until(window, () => shell.Workflows.Run.DidNotStart, "the run page never timed out");
 
+        // The second Run now is answered with a different run id (as RunDetailStartTimeoutTests.ServeASecondStart does), so a page left on the old run shows.
+        Server.StartWorkflowRunAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, """{"run":"morning-check@1:5","status":"started","reason":null}""");
         ById<Button>(window, "RunPageStartRetry").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));   // Retry on the run page
         await Until(window, () => !shell.Workflows.Run.DidNotStart, "Retry never started a new run");
+        Assert.Equal("morning-check@1:5", shell.Workflows.Run.Id);
         Frame(window, window, "e-page-retry-starting");
 
         Clock.Advance(TimeSpan.FromSeconds(10));
         await Until(window, () => shell.Workflows.Run.DidNotStart, "the new run never timed out");
+        Assert.Equal("morning-check@1:5", shell.Workflows.Run.Id);
         var retry = ById<Button>(window, "RunPageStartRetry");
         Frame(window, retry, "f-page-retry-timeout");
         Assert.True(retry.IsEffectivelyVisible && retry.IsEnabled);
