@@ -24,7 +24,7 @@ internal sealed partial class SqliteMessagesStore(MessagesDatabase database, Tim
             return ValueTask.FromResult<Result<IReadOnlyList<string>>>(Array.Empty<string>());
         }
 
-        return InTransaction<IReadOnlyList<string>>(async session =>
+        return InTransaction(async session =>
         {
             var place = await FindPlace(session, conversation, cancellationToken).ConfigureAwait(false);
             if (place.IsError)
@@ -47,7 +47,7 @@ internal sealed partial class SqliteMessagesStore(MessagesDatabase database, Tim
     public ValueTask<Result<Unit>> PutConversation(StoredConversation conversation, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(conversation);
-        return InTransaction<Unit>(async session =>
+        return InTransaction(async session =>
         {
             var written = await Execute(session, new SqlStatement(MessagesSql.UpsertConversation, c => c
                 .Bind("$id", conversation.Conversation).Bind("$workspace", conversation.Workspace).Bind("$kind", KindText(conversation.Kind))
@@ -59,7 +59,7 @@ internal sealed partial class SqliteMessagesStore(MessagesDatabase database, Tim
     public ValueTask<Result<IReadOnlyList<string>>> PutMessages(IReadOnlyList<StoredMessage> messages, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(messages);
-        return InTransaction<IReadOnlyList<string>>(async session =>
+        return InTransaction(async session =>
         {
             var places = new Dictionary<string, Place>(StringComparer.Ordinal);
             var threads = new List<(Place Place, string Root)>();
@@ -102,7 +102,7 @@ internal sealed partial class SqliteMessagesStore(MessagesDatabase database, Tim
             return ValueTask.FromResult<Result<IReadOnlyList<string>>>(Array.Empty<string>());
         }
 
-        return InTransaction<IReadOnlyList<string>>(async session =>
+        return InTransaction(async session =>
         {
             var place = await FindPlace(session, conversation, cancellationToken).ConfigureAwait(false);
             if (place.IsError)
@@ -125,7 +125,7 @@ internal sealed partial class SqliteMessagesStore(MessagesDatabase database, Tim
     public ValueTask<Result<Unit>> PutThreadState(ThreadOwnerState state, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(state);
-        return InTransaction<Unit>(async session =>
+        return InTransaction(async session =>
         {
             var place = await FindPlace(session, state.Conversation, cancellationToken).ConfigureAwait(false);
             var root = place.IsSuccess && place.Value.IsDm ? DmRoot : state.Thread?.Value ?? DmRoot;
