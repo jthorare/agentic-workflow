@@ -27,7 +27,7 @@ public sealed class BlockFieldCaptionsTests
         Assert.Equal("Runs at", cron.Caption);
         Assert.False(cron.Advanced);
         Assert.Equal(
-            [("0 7 * * 1-5", "Every weekday at 7:00"), ("0 9 * * *", "Every day at 9:00"), ("0 * * * *", "Every hour"), ("0 8 * * 1", "Mondays at 8:00")],
+            [("0 7 * * 1-5", "Every weekday at 7:00"), ("0 9 * * *", "Every day at 9:00"), ("0 * * * *", "Every hour"), ("0 8 * * 1", "Every Monday at 8:00")],
             cron.Presets!.Select(static p => (p.Value, p.Label)));
         Assert.Null(cron.Choices);
     }
