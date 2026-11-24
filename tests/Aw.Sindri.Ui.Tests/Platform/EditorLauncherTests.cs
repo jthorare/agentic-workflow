@@ -5,7 +5,7 @@ using Aw.Sindri.Ui.Testing;
 namespace Aw.Sindri.Ui.Tests.Platform;
 
 /// <summary>A file opens in the configured editor, as an argv list with no shell, and falls back to the system default when none is set or it won't start (#3715),
-/// or when it is a terminal editor, which has no terminal to draw in here (#3836).</summary>
+/// or when every setting is a terminal editor, which has no terminal to draw in here (#3836); a terminal editor is skipped for the next setting (#4190).</summary>
 [Lane(TestLane.Unit)]
 public sealed class EditorLauncherTests
 {
@@ -60,8 +60,10 @@ public sealed class EditorLauncherTests
     [InlineData(null, null, "vim")]
     [InlineData(null, null, "/usr/bin/vim")]
     [InlineData(null, "emacs -nw", null)]
-    [InlineData("nvim", "code", null)]
+    [InlineData("nvim", null, null)]
+    [InlineData("nvim", "vim", "nano")]
     [InlineData(null, null, "nano")]
+    [InlineData(null, null, "Vim.exe")]
     public async Task A_terminal_editor_opens_the_file_with_the_system_default(string? configured, string? visual, string? editor)
     {
         var (launcher, inner, started) = Make(new EditorEnvironment(configured, visual, editor));
@@ -70,6 +72,20 @@ public sealed class EditorLauncherTests
 
         Assert.Empty(started);
         Assert.Equal([_file], inner.Opened, StringComparer.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("nvim", "code", null, "code")]
+    [InlineData("nvim", "emacs -nw", "code -w", "code")]
+    [InlineData(null, "nano", "/usr/bin/gvim -f", "/usr/bin/gvim")]
+    public async Task A_terminal_editor_is_skipped_for_the_next_setting(string? configured, string? visual, string? editor, string program)
+    {
+        var (launcher, inner, started) = Make(new EditorEnvironment(configured, visual, editor));
+
+        Assert.True(await launcher.OpenFile(_file, Token));
+
+        Assert.Equal(program, Assert.Single(started)[0], StringComparer.Ordinal);
+        Assert.Empty(inner.Opened);
     }
 
     [Theory]
