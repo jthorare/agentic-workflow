@@ -186,7 +186,7 @@ in-memory store and the SQLite adapter). Append-only, idempotent and fenced.
 
 S1 events and their keys: `process.started` (`process.started:<epoch>`), `process.stopped` (`process.stopped:<epoch>`),
 `service.heartbeat` (`service.heartbeat:<epoch>:<slot>`), and from API P1
-`command.handled` (`command.handled:<commandId>`; the command chain's audit row, see Command chain). It is flagged
+`command.handled` (`command.handled:<commandId>`, or `command.handled:<commandId>:final` for a self-audited command that didn't end accepted, #4024; the command chain's audit row, see Command chain). It is flagged
 non-public in `EventCatalog`, so the event stream never sends it and only a human's `GET /sindri/ledger` shows it (see Event stream). P4a's Temporal mirror adds
 seven mirrored types: `workflow.started`, `workflow.transition`, `workflow.refused`, `workflow.expired`, `workflow.shifted`,
 `workflow.notified` and `workflow.heavy` (a heavy-job slot taken or given up, LN-WF3; trigger `heavy.held` or `heavy.released`, no state change), each keyed `workflow:<workflow id>:<run id>:<activity id>[:<content hash>]` (the RecordEvent activity id;
@@ -447,7 +447,7 @@ Every command (`ICommand<T>`) and issue (`IIssue<T>`) is registered through `Add
 | # | Decorator | What it does |
 |---|---|---|
 | 1 | `CommandGate` | One command at a time, process-wide. A command that waits 5 s for the gate fails with `SND-API-009` (503) and writes nothing. Records `sindri.command.gate_wait` (seconds) |
-| 2 | `AuditingService` | After the rest of the chain ran, appends one `command.handled {commandId, command, class, caller, outcome, code?}` keyed `command.handled:<commandId>`, under the lease, with the caller's actor and correlation. Outcome: `accepted`; `refused` (`SND-AUTH-*`); `invalid` (an `invalid`-kind error); `failed` (any other error, with its code). A `sindri.command <action>` span and the `sindri.commands` counter carry class, caller and outcome |
+| 2 | `AuditingService` | After the rest of the chain ran, appends one `command.handled {commandId, command, class, caller, outcome, code?}` keyed `command.handled:<commandId>` (a self-audited command that didn't end accepted: `command.handled:<commandId>:final`, so it lands after the accepted row RestartProcess writes before its stop; readers take the last row of a command id), under the lease, with the caller's actor and correlation. Outcome: `accepted`; `refused` (`SND-AUTH-*`); `invalid` (an `invalid`-kind error); `failed` (any other error, with its code). A `sindri.command <action>` span and the `sindri.commands` counter carry class, caller and outcome |
 | 3 | `AuthorizingService` | Classifies the attempt (`ActionClassifier`) and checks the caller against the authorization table (`Authorization`, below) before validation. A refusal is `SND-AUTH-002`, and now has two causes only: the call has no caller context, or the row is `local` (a CLI-only verb, never through the API). Every other caller class may run every other action class (PR 2 of the agent-first spec); the profile and settings writes keep their own terminal refusals until the settings PR (#2374) |
 | 4 | `ValidatingService` (Kernel) | The slice's `IValidator` (`AcceptAllValidator<T>` when it has no rule) |
 
@@ -766,6 +766,8 @@ The DELETE ends a sign-in in progress, removes the `github:gh` and `github:defau
 | `SND-LINEAR-006` | A Linear edit, comment or new issue named an id the issue's team doesn't have, or an edit changed a field without sending the value it opened (400): "stateId isn't one of ENG's states (fix: read the lookups again and pick a state from them)", "title has no opened value (fix: send the value you opened with each field you change)" |
 | `SND-LINEAR-011` | A Linear write when Linear never confirmed them and the one re-read didn't find them (504, with `outcome: "unknown"` and `clientId`): "Linear didn't confirm the comment on ENG-12 (fix: retry; the same client id is never posted twice)" |
 | `SND-LINEAR-404` | The same read when the profile picks no Linear team (404): "Sindri has nothing stored for OPS yet" |
+| `SND-MSG-011` | The conversation or thread root is not in `messages.db` (404; CLI exit 1): the sync writes a conversation before its messages (messages spec §10) |
+| `SND-MSG-025` | `messages.db` is newer than this build, or damaged (503; CLI exit 1); the message keeps the store's own `AW-DATA-*` code; `sindri messages doctor`, and `purge` rebuilds the cache (messages spec §10) |
 | `SND-PROFILE-001` | No profile file |
 | `SND-PROFILE-002` | The profile doesn't parse or doesn't match the schema (file, key path, expected type, fix) |
 | `SND-PROFILE-004` | The profile file exists but can't be read (permissions or an I/O error; fix: `chmod 600 <path>`). Not "no profile": `sindri repo add` refuses it instead of writing a fresh profile over it, and the setup step shows it as failed |

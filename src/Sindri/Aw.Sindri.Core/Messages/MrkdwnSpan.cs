@@ -14,10 +14,10 @@ public sealed record MrkdwnSpan(MrkdwnKind Kind, string Text)
     private static readonly string[] _open = ["", "*", "_", "~", "`", "```", "", "<", "<@", "<#", "<!", ":", ""];
     private static readonly string[] _close = ["", "*", "_", "~", "`", "```", "", ">", ">", ">", ">", ":", ""];
 
-    /// <summary>Gets the spans inside a bold, italic, strike, quote or list span; empty for the rest, which write <see cref="MrkdwnSpan.Text"/>.</summary>
+    /// <summary>Gets the spans inside a bold, italic, strike, quote or list span; empty for the rest, which write <see cref="Text"/>.</summary>
     public IReadOnlyList<MrkdwnSpan> Children { get; init; } = [];
 
-    /// <summary>Gets what a link or mention points at: the URL, the user or channel id, or 'here' for a broadcast; null means <see cref="MrkdwnSpan.Text"/>.</summary>
+    /// <summary>Gets what a link or mention points at: the URL, the user or channel id, or 'here' for a broadcast; null means <see cref="Text"/>.</summary>
     public string? Target { get; init; }
 
     /// <summary>Gets the text after '|' in a link or mention ('&lt;url|label&gt;'); null when it has none.</summary>

@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Globalization;
 using System.Text.Json;
 
@@ -143,13 +144,40 @@ internal static class GraphCardLine
     private static string Host(string url)
     {
         var at = url.IndexOf("://", StringComparison.Ordinal);
-        var rest = at < 0 ? url : url[(at + 3)..];
+        var rest = PastPassword(at < 0 ? url : url[(at + 3)..]);
         var end = rest.IndexOfAny(['?', '#']);   // the query and the fragment never show: a key can sit in either (#4032)
         rest = end < 0 ? rest : rest[..end];
         var slash = rest.IndexOf('/', StringComparison.Ordinal);
         var user = (slash < 0 ? rest : rest[..slash]).LastIndexOf('@');   // user:password@ before the host, never an @ in the path
         return user < 0 ? rest : rest[(user + 1)..];
     }
+
+    // A url password never shows (#4063, #4156). The text before the last @ of the whole url is a user and password whenever it holds a ':', wherever that
+    // ':' sits: a raw /, ? or # in the user name or the password moves it past the first separator, so no separator is trusted to end the host. The card
+    // then keeps only what follows the last @, and no password reaches past its own @. The ':' inside a leading [IPv6 address] are the host's own.
+    // The cost, on purpose: host:8080/@name and host/a:b@c show the text after the @. A wrong host on an odd url is better than a password on screen.
+    private static string PastPassword(string rest)
+    {
+        var lastAt = rest.LastIndexOf('@');
+        var colon = lastAt < 0 ? -1 : rest.IndexOf(':', AfterAddress(rest));
+        return colon < 0 || colon > lastAt ? rest : rest[(lastAt + 1)..];
+    }
+
+    // The index after a leading [IPv6 address], or 0. Only hex digits, ':' and '.' with two or more ':' count as an address, so "[a:secret]" hides no ':'.
+    private static int AfterAddress(string rest)
+    {
+        var close = rest.StartsWith('[') ? rest.IndexOf(']', StringComparison.Ordinal) : -1;
+        if (close < 2)
+        {
+            return 0;
+        }
+
+        var inside = rest.AsSpan(1, close - 1);
+        var isAddress = inside.Count(':') >= 2 && !inside.ContainsAnyExcept(_addressChars);
+        return isAddress ? close + 1 : 0;
+    }
+
+    private static readonly SearchValues<char> _addressChars = SearchValues.Create("0123456789abcdefABCDEF:.");
 
     private static string? Str(JsonElement config, string name) =>
         config.ValueKind == JsonValueKind.Object && config.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is { } s && s.Trim().Length > 0 ? s.Trim() : null;
