@@ -62,6 +62,25 @@ def param_findings($p):
         nonempty("params[\($k)].description"; $v.description)
       end
   end;
+# detect (#4221 PR 2): optional; all = regexes that must all match, params = a regex with a capture group per declared param.
+def bad_re($r): (try ("" | test($r)) catch "bad") == "bad";
+def detect_findings($d; $names):
+  if $d == null then empty
+  elif ($d | type) != "object" then "detect: must be an object with all (and params)"
+  else (($d | unknown(["all","params"])) | "detect.\(.)"),
+    (if ($d.all | strs) and ($d.all | length) > 0
+     then $d.all | to_entries[] | select(.value | bad_re(.)) | "detect.all[\(.key)]: not a valid regex"
+     else "detect.all: must be a non-empty array of regexes" end),
+    (if $d.params == null then empty
+     elif ($d.params | type) != "object" then "detect.params: must be an object of param name to regex"
+     else $d.params | to_entries[] | .key as $n | .value as $r
+       | (if $names | index($n) then empty else "detect.params.\($n): \($n) is not a declared param" end),
+         (if ($r | type) != "string" or ($r | length) == 0 then "detect.params.\($n): must be a regex"
+          elif ($r | bad_re(.)) then "detect.params.\($n): not a valid regex"
+          elif ($r | test("(^|[^\\\\])\\((?!\\?)")) | not then "detect.params.\($n): needs one capture group"
+          else empty end)
+     end)
+  end;
 def argv_findings($argv; $cwd; $names; $w):
   $argv | to_entries[] | .key as $j | .value as $s
   | (if ($s | home) then "run.argv[\($j)]: an owner-home path; use a repo-relative path or a command on PATH" else empty end),
@@ -73,7 +92,7 @@ def entry_findings($i; $e; $first):
   | if ($e | type) != "object" then "\($w): must be an object"
     else (if ($e.run | type) == "object" then $e.run else {} end) as $run
       | [($e.params // [])[]? | objects | .name | strings] as $names
-      | ( ( ($e | unknown(["id","purpose","terms","run","params","prerequisites","effects","env","output","stop","owner","verified"])),
+      | ( ( ($e | unknown(["id","purpose","terms","run","params","prerequisites","effects","env","output","stop","owner","verified","detect"])),
             (if ($e.id | type) == "string" and ($e.id | test("^[a-z0-9][a-z0-9.-]{0,63}$")) then empty else "id: must be 1-64 lowercase letters, digits, . or -" end),
             (if ($e.id | type) == "string" and $first[$e.id] != $i then "id: duplicate of entries[\($first[$e.id])]" else empty end),
             (if ($e.purpose | type) == "string" and ($e.purpose | length) > 0 and ($e.purpose | length) <= 200 then empty else "purpose: must be a string of 1-200 characters" end),
@@ -82,6 +101,7 @@ def entry_findings($i; $e; $first):
             (if ($run.argv | strs) and ($run.argv | length) > 0 then empty else "run.argv: must be a non-empty array of strings" end),
             (if $run.cwd == "repo" or $run.cwd == "any" then empty else "run.cwd: must be repo or any" end),
             param_findings($e.params),
+            detect_findings($e.detect; $names),
             opt_strs("prerequisites"; $e.prerequisites),
             (if ["read-only","writes-local","writes-remote"] | index($e.effects) then empty else "effects: must be one of read-only, writes-local, writes-remote" end),
             opt_strs("env"; $e.env),
