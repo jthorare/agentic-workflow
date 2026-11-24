@@ -74,8 +74,10 @@ else
   [ -n "$TRANSCRIPT" ] || TRANSCRIPT="${CURSOR_TRANSCRIPT_PATH:-}"
   LAST_TEXT=""
   [ "$EVENT" = "stop" ] && LAST_TEXT="$(last_assistant_text "$TRANSCRIPT")"
+  # The last reply goes in through a pipe (--rawfile on a process substitution), never as an argument: one argv
+  # string past 128 KiB fails exec on Linux and the stop would fail open (#4300).
   PAYLOAD="$(printf '%s' "$RAW_INPUT" | jq -c \
-      --arg ev "$EVENT" --arg tp "$TRANSCRIPT" --arg last "$LAST_TEXT" \
+      --arg ev "$EVENT" --arg tp "$TRANSCRIPT" --rawfile last <(printf '%s' "$LAST_TEXT") \
       --arg pdir "${CURSOR_PROJECT_DIR:-}" '
     def jsonish: if type == "string" then (fromjson? // .) else . end;
     . as $in
@@ -146,10 +148,15 @@ OUT_JSON="$(aw_adapter_out_json)"
 MSG=""
 [ "$AW_RC" = "2" ] && MSG="$(aw_adapter_message)"
 
-RESULT="$(jq -nc \
-    --arg ev "$EVENT" --argjson rc "$AW_RC" --arg msg "$MSG" --arg text "$AW_OUT" \
-    --argjson out "$OUT_JSON" --argjson raw "$RAW_INPUT" --arg script "$(basename "$AW_ADAPTER_SCRIPT")" '
-  ($out // {}) as $o
+# The host payload comes in on stdin and the hook's output through pipes (--rawfile / --slurpfile on process
+# substitutions), never as arguments: a payload or a hook output past 128 KiB as one argv string fails exec on Linux,
+# the result is empty and the adapter would print its default allow (#4300). Only short values stay arguments.
+RESULT="$(printf '%s' "$RAW_INPUT" | jq -c \
+    --arg ev "$EVENT" --argjson rc "$AW_RC" --rawfile msg <(printf '%s' "$MSG") --rawfile text <(printf '%s' "$AW_OUT") \
+    --slurpfile outs <(printf '%s' "$OUT_JSON") --arg script "$(basename "$AW_ADAPTER_SCRIPT")" '
+  . as $raw
+  | $outs[0] as $out
+  | ($out // {}) as $o
   | ($o.hookSpecificOutput // {}) as $h
   | (if $rc == 2 then "deny" else ($h.permissionDecision // "allow") end) as $decision
   | (if $rc == 2 then (if $msg == "" then "Blocked by " + $script + "." else $msg end)
