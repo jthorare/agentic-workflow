@@ -18,7 +18,7 @@ namespace Aw.Meta.Features.Health;
 /// <param name="Heavy">The heavy-slot reservation the meta computed for the merge queue, with its staleness; null when none was computed or the team turned it off.</param>
 /// <param name="Builders">The builders per lane to run now.</param>
 /// <param name="Context">Each lane's context size; null when there is no team config or it could not be read.</param>
-/// <param name="Attention">Whether something needs acting on: an orphan still running, a missing lane or low memory.</param>
+/// <param name="Attention">Whether something needs acting on: an orphan still running, a missing lane, low memory, or an installed tool that is stale or can't be compared.</param>
 public sealed record HealthResponse(
     IReadOnlyList<ProcessGroup> Groups,
     int ProcessCount,
@@ -43,7 +43,10 @@ public sealed record HealthResponse(
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? OomPolicy { get; init; }
 
-    /// <summary>The warning when the installed heavy or meta-gate-reserve differs from origin/main's copy in the toolkit checkout (issue #3698); null otherwise. Never raises attention.</summary>
+    /// <summary>
+    /// Each installed tool (heavy, meta-gate-reserve, aw-meta, judge, sindri) compared with what origin/main would install (issues #3698,
+    /// #4249); null when there is no toolkit checkout. A stale or unknown tool raises attention.
+    /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? StaleScripts { get; init; }
+    public IReadOnlyList<ToolDrift>? Drift { get; init; }
 }

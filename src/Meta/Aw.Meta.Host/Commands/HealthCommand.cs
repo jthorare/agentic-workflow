@@ -4,7 +4,7 @@ using Aw.Meta.Features.Health;
 
 namespace Aw.Meta.Host.Commands;
 
-/// <summary>The 'health' command: exit 1 when an orphan is still running, a lane is missing or memory is low. Works without a team config (the lane check is then skipped).</summary>
+/// <summary>The 'health' command: exit 1 when an orphan is still running, a lane is missing, memory is low or an installed tool is stale or can't be compared. Works without a team config (the lane check is then skipped).</summary>
 internal static class HealthCommand
 {
     internal static CommandEntry Entry { get; } = new(
@@ -34,9 +34,22 @@ internal static class HealthCommand
                 .. HeavyLocks(health),
                 .. Adaptation(health),
                 .. health.OomPolicy is { } oom ? [$"oom policy: {oom}"] : Array.Empty<string>(),
-                .. health.StaleScripts is { } stale ? [$"stale scripts: {stale}"] : Array.Empty<string>(),
+                .. Drift(health),
                 health.Attention ? "HEALTH ATTENTION" : "HEALTH OK",
             ]);
+
+    // One line per tool that isn't current; one line naming them all when every one is.
+    private static IEnumerable<string> Drift(HealthResponse health)
+    {
+        if (health.Drift is not { } drift)
+        {
+            return [];
+        }
+
+        return drift.All(static d => d.State == DriftState.Current)
+            ? [$"drift: none ({string.Join(", ", drift.Select(static d => d.Tool))} current)"]
+            : drift.Where(static d => d.State != DriftState.Current).Select(static d => "drift: " + d.Line());
+    }
 
     private static string Memory(HealthResponse health)
     {

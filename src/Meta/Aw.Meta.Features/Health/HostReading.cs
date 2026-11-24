@@ -7,5 +7,5 @@ namespace Aw.Meta.Features.Health;
 /// <param name="Resources">Memory, swap and disk.</param>
 /// <param name="Locks">The taken heavy-job lock slots.</param>
 /// <param name="OomPolicy">The warning when systemd's DefaultOOMPolicy is known and is not continue; null otherwise.</param>
-/// <param name="StaleScripts">The warning when an installed heavy or meta-gate-reserve differs from origin/main's copy; null otherwise.</param>
-internal sealed record HostReading(HostSnapshot Snapshot, HostResources Resources, IReadOnlyList<HeavyLock> Locks, string? OomPolicy = null, string? StaleScripts = null);
+/// <param name="Drift">Each installed tool compared with what origin/main would install; null when there is no toolkit checkout.</param>
+internal sealed record HostReading(HostSnapshot Snapshot, HostResources Resources, IReadOnlyList<HeavyLock> Locks, string? OomPolicy = null, IReadOnlyList<ToolDrift>? Drift = null);

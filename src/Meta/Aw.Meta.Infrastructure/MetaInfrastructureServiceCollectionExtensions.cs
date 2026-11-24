@@ -50,6 +50,7 @@ public static class MetaInfrastructureServiceCollectionExtensions
             .AddScoped<ITeamCatalog>(sp => new FileTeamCatalog(settings.Layout, sp.GetRequiredService<ISessionDirectory>(), sp.GetRequiredService<JsonSerializerOptions>(), sp.GetRequiredService<TimeProvider>()))
             .AddHostAdapters(HostPlatform.Current, settings.StateDirectory, settings.HeavyLock)
             .AddSingleton<IBuildInfo, AssemblyBuildInfo>()
+            .AddSingleton<IInstalledBuilds>(new FileInstalledBuilds(SettingsFromEnvironment.CurrentBuild(environment)))
             .AddSingleton<IHeavyReserve>(new FileHeavyReserve(settings.StateDirectory))
             .AddSingleton<ILogFiles, FileLogFiles>()
             .AddSingleton<IWorktreeFiles>(_ => new DirectoryWorktreeFiles(environment))

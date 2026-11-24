@@ -62,8 +62,8 @@ internal sealed class HealthService(HostProbe probe, LaneCheck lanes, OrphanKill
         // Advisory: lanes whose context can't be measured are left out; a recycle verdict does not make the box unhealthy.
         var context = await lanes.Context(cancellationToken).ConfigureAwait(false);
         var response = new HealthResponse(
-            ProcessGroups.Group(processes), processes.Count, host.Resources, orphans, killed, HostRules.Duplicates(processes), missing, host.Locks, low, NeedsAttention(remaining, low, missing, standing), standing, advice.Value.Heavy, advice.Value.Builders, context)
-        { Consumer = await Consumer(cancellationToken).ConfigureAwait(false), OomPolicy = host.OomPolicy, StaleScripts = host.StaleScripts };
+            ProcessGroups.Group(processes), processes.Count, host.Resources, orphans, killed, HostRules.Duplicates(processes), missing, host.Locks, low, NeedsAttention(remaining, low, missing, standing, host.Drift), standing, advice.Value.Heavy, advice.Value.Builders, context)
+        { Consumer = await Consumer(cancellationToken).ConfigureAwait(false), OomPolicy = host.OomPolicy, Drift = host.Drift };
         var kept = await values.Set(KvKeys.HealthLast, Summary(response, remaining), cancellationToken).ConfigureAwait(false);
         return kept.IsError ? kept.Error : response;
     }
@@ -75,8 +75,9 @@ internal sealed class HealthService(HostProbe probe, LaneCheck lanes, OrphanKill
         return line.IsError ? null : line.Value.Line;
     }
 
-    private static bool NeedsAttention(int orphans, bool memoryLow, IReadOnlyList<string>? missingLanes, IReadOnlyList<Core.Lanes.LaneHealth>? standing) =>
-        orphans > 0 || memoryLow || missingLanes is { Count: > 0 } || standing?.Any(static l => l.Attention) == true;
+    // An installed tool that is stale, or that can't be compared, needs acting on: unknown is never healthy (#4249).
+    private static bool NeedsAttention(int orphans, bool memoryLow, IReadOnlyList<string>? missingLanes, IReadOnlyList<Core.Lanes.LaneHealth>? standing, IReadOnlyList<ToolDrift>? drift) =>
+        orphans > 0 || memoryLow || missingLanes is { Count: > 0 } || standing?.Any(static l => l.Attention) == true || drift?.Any(static d => d.State != DriftState.Current) == true;
 
     private string Summary(HealthResponse health, int orphans) => string.Create(
         CultureInfo.InvariantCulture,

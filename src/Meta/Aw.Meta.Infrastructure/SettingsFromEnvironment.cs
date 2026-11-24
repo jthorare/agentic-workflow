@@ -9,7 +9,7 @@ internal static class SettingsFromEnvironment
     internal static MetaSettings Read(Func<string, string?> environment)
     {
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var root = environment("AW_STATE_DIR") is { Length: > 0 } configured ? configured : Path.Combine(home, ".agentic-workflow");
+        var root = Root(environment, home);
         var metaRoot = Path.Combine(root, "meta");
         var selected = environment("AW_META_TEAM");
         var (state, layout) = TeamResolver.Resolve(metaRoot, selected);
@@ -25,6 +25,14 @@ internal static class SettingsFromEnvironment
             new MetaPaths(state, Path.Combine(state, "gates"), File.Exists(heavy) ? heavy : null, environment("AW_GH") is { Length: > 0 } gh ? gh : "gh", home, UserConfig(environment, home), Path.Combine(root, "bin-r1b", "meta-gate-reserve"), Toolkit(environment, home)),
             layout);
     }
+
+    // The build scripts/install-cs.sh linked as current: $AW_STATE_DIR/bin/cs/current (#4249).
+    internal static string CurrentBuild(Func<string, string?> environment) =>
+        Path.Combine(Root(environment, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)), "bin", "cs", "current");
+
+    // $AW_STATE_DIR, else ~/.agentic-workflow.
+    private static string Root(Func<string, string?> environment, string home) =>
+        environment("AW_STATE_DIR") is { Length: > 0 } configured ? configured : Path.Combine(home, ".agentic-workflow");
 
     // The toolkit checkout the scripts come from: $AW_TOOLKIT, else ~/.agentic-workflow/toolkit.
     private static string Toolkit(Func<string, string?> environment, string home) =>
