@@ -9,11 +9,9 @@ internal sealed partial class WorkflowGraphViewModel
     /// <summary>A node card's height in the world.</summary>
     internal const double CardHeight = 60;
 
-    /// <summary>A card's height when its settings line is longer than <see cref="SettingsWrapAt"/> characters and wraps to a second line.</summary>
+    /// <summary>A two-line card's height, for a layout given per-card heights (GraphFitInput). The canvas draws one settings line on every card, cut with an
+    /// ellipsis and whole in the card's tooltip, so it lays every card out <see cref="CardHeight"/> tall and a row's cards match (#4203).</summary>
     internal const double CardTallHeight = 80;
-
-    /// <summary>The settings line length above which a card is <see cref="CardTallHeight"/> tall.</summary>
-    internal const int SettingsWrapAt = 32;
 
     /// <summary>The gap between two columns of cards in a wrapped row.</summary>
     internal const double ColumnGap = 56;
@@ -47,7 +45,7 @@ internal sealed partial class WorkflowGraphViewModel
     internal double Relayout(double canvasWidth, double canvasHeight, double textScale)
     {
         RelayoutCount++;
-        var fit = GraphFit.Compute(new GraphFitInput(_layers, [.. Edges.Select(e => (e.From, e.To))], Heights()), canvasWidth, canvasHeight, textScale);
+        var fit = GraphFit.Compute(new GraphFitInput(_layers, [.. Edges.Select(e => (e.From, e.To))]), canvasWidth, canvasHeight, textScale);   // every card one line tall (#4203)
         foreach (var node in Nodes)
         {
             if (fit.Cards.TryGetValue(node.Id, out var card))
@@ -93,12 +91,9 @@ internal sealed partial class WorkflowGraphViewModel
             return Labels.WfState(active: false).Word.ToLowerInvariant();
         }
 
-        return NextRunAt is { } next
-            ? Labels.WfNextRun(TimeZoneInfo.ConvertTime(next, Clock.LocalTimeZone), soon: next - Clock.GetUtcNow() < TimeSpan.FromHours(24))
+        var now = Clock.GetUtcNow();
+        return NextRunAt is { } next && next > now   // a time at or before now is not next any more (#4188)
+            ? Labels.WfNextRun(TimeZoneInfo.ConvertTime(next, Clock.LocalTimeZone), soon: next - now < TimeSpan.FromHours(24))
             : null;
     }
-
-    // A card whose settings line is longer than SettingsWrapAt wraps it to a second line, so it is taller; the line is the card's line 2 (GraphCardLine.Settings).
-    private Dictionary<string, double> Heights() =>
-        Nodes.ToDictionary(n => n.Id, n => n.Line.Length > SettingsWrapAt ? CardTallHeight : CardHeight, StringComparer.Ordinal);
 }

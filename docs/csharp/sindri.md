@@ -728,6 +728,39 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 
 **Goldens.** `tests/Aw.Sindri.Tests/Golden/Mcp/<tool>/<scenario>.json`, plus `tools-list/default.json` (names, schemas, annotations; descriptions may be reworded and the golden re-recorded) and `errors/`. They sit outside `Golden/Api`, so the UI contract test doesn't enumerate them. The AOT smoke (`src/Sindri/aot-smoke`) lists the 28 tools and calls `sindri_queue`, `sindri_request`, `sindri_item` (`SND-CLI-003`) and `sindri_decide` (`SND-CONTEXT-023`); its profile names the repo `smoke`.
 
+## Accounts step (first-run spec §4.2, decisions 13-15a)
+
+`POST /sindri/setup/accounts/{provider}` (`ConnectAccount`) and `DELETE /sindri/setup/accounts/{provider}` (`DisconnectAccount`) are the owner's: a caller without the per-start human token gets `SND-AUTH-002`. Only `github` is built; `linear` and `slack` come with their sign-ins.
+
+The answer of both routes is one shape (`ConnectAccountResponse`); a field that doesn't apply is null:
+
+| Field | When | Meaning |
+|---|---|---|
+| `provider` | always | `github` |
+| `state` | always | `connected`, `code`, `token-needed` or `disconnected` |
+| `userCode` | `code` | the code the owner types at GitHub, such as `ABCD-1234` |
+| `verificationUri` | `code` | the page to type it on (`https://github.com/login/device`) |
+| `expiresAt` | `code` | when GitHub stops taking the code (from its `expires_in`) |
+| `reason` | `token-needed` | `SND-SETUP-014` (no client id, a wrong one, or an app with no Device Flow) or `SND-SETUP-013` (GitHub refused the app) |
+
+What the POST does, in order:
+
+1. With a gh login (`gh auth status --hostname github.com` passes), it sets `review.credential` to `command:gh auth token --hostname github.com`, writes the `github:gh` connection holding the same command, removes `setup.skipAccounts` and answers `connected`. No token is copied or stored. The first write creates the profile.
+2. With no gh login, it picks the client id (`setup.oauth.github`, else the preset's shipped `clientId`). With none it answers `token-needed` with `SND-SETUP-014`.
+3. It asks GitHub for a device code and answers `code` at once. A background poll then asks GitHub at its `interval` (slower after `slow_down`), with one last poll at the expiry. One sign-in runs at a time: a new POST ends the poll before it.
+
+How the background poll ends (none of these changes the answer already sent; the app follows the connection events and `GET /sindri/setup`):
+
+| End | What is written |
+|---|---|
+| GitHub says yes | the token, through the secret store only, as the OAuth connection `github:default`; `connection.signed-in`; `setup.skipAccounts` removed. `review.credential` stays unset: the forge's default `AW_FORGE_TOKEN` falls back to the connected github row |
+| the code expired (`SND-CONN-003`) | nothing; logged by code |
+| the owner denied (`SND-CONN-009`) | nothing; logged by code |
+| GitHub refused the app or the client id (`SND-SETUP-013`, `-014`) | nothing; logged by code |
+| cancelled (the DELETE, or a newer POST) | nothing, and nothing logged |
+
+The DELETE ends a sign-in in progress, removes the `github:gh` and `github:default` connections (the device token first, then the row, then `connection.removed`), removes `review.credential` only when it is the gh command, and answers `disconnected`. A GitHub connection added by hand on the Connections page stays. The device code and the token never reach a response, an event, the profile, a log or an error.
+
 ## Errors
 
 **Extension members (RFC 9457 §3.2).** A slice may attach typed members to its `Error` with `error.WithExtension(name, value, typeInfo)` (or a `JsonElement` built with its own source-generated type info; `Aw.Kernel.ErrorExtensions`). The names are camelCase, at most 64 characters and not `type`, `title`, `status`, `detail`, `instance` or `traceId` (a bad or repeated name throws `ArgumentException`: a bug in the slice). `HttpResults.Problem` writes them as top-level members of the ProblemDetails body in the order attached, after the standard ones (ASP.NET's `traceId` follows), and cleans every string in them (values, and member names inside objects) with `SafeText.Clean`: scrubbed, escaped, one line, at most 200 characters; sessions and the human get the same body. An error without extensions answers byte for byte as before. The writer caps each array at 100 items and ends it with a `"…(N more)"` string item, and gives object member names that clean to the same text a `~2`, `~3` suffix; a slice should still bound its own lists. The middleware refusals that carry an `Error` (read-your-writes, caller context) go through `ApiProblems.Write(context, error, status)` and carry them too. The CLI (`Output.Error`) and the UI client (`SindriApiClient.Refusal`) ignore them and use the code and message. Each code that uses them lists the members in its row below. Not carried over MCP tool errors or the event stream's 400 yet.

@@ -12,6 +12,6 @@ internal static class PullRequestsServiceCollectionExtensions
     /// <param name="environment">Reads an environment variable.</param>
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddPullRequests(this IServiceCollection services, Func<string, string?> environment) => services
-        .AddSingleton<IPullRequests>(sp => new ConfiguredPullRequests(sp.GetRequiredService<IApprovedProfile>(), environment, sp.GetRequiredService<TimeProvider>()))
+        .AddSingleton<IPullRequests>(sp => new ConfiguredPullRequests(sp.GetRequiredService<IApprovedProfile>(), ForgeEnvironment.WithConnection(environment, sp.GetRequiredService<Core.Connections.IConnectionCredentials>()), sp.GetRequiredService<TimeProvider>()))   // a device-flow connect writes no credential: the connected github row backs AW_FORGE_TOKEN
         .AddScoped<IDoctorChecks>(sp => new ForgeDoctorChecks(sp.GetRequiredService<IApprovedProfile>(), sp.GetRequiredService<IPullRequests>(), environment, TimeSpan.FromSeconds(5)));
 }

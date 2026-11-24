@@ -25,13 +25,13 @@ internal sealed partial class ShellViewModel : ObservableObject
     private static readonly string[] _stateProperties =
     [
         nameof(State), nameof(IsVersionMismatch), nameof(IsChromeVisible), nameof(IsNotRunning), nameof(IsNotRunningPanel), nameof(IsConnecting),
-        nameof(IsUnreadable), nameof(IsNotRespondingBanner), nameof(IsPageVisible), nameof(IsInboxShown), nameof(IsPagesShown), nameof(IsSheetShown), nameof(IsEdgeTabShown), nameof(IsNavigationEnabled),
+        nameof(IsUnreadable), nameof(IsNotRespondingBanner), nameof(IsPageVisible), nameof(IsInboxShown), nameof(IsPagesShown), nameof(IsHomeRowsShown), nameof(IsSheetShown), nameof(IsEdgeTabShown), nameof(IsNavigationEnabled),
     ];
 
     private static readonly string[] _pageProperties =
     [
         nameof(CurrentPage), nameof(PageName), nameof(SelectedNav), nameof(IsHome), nameof(IsProjects), nameof(IsWork), nameof(IsContext),
-        nameof(IsAgents), nameof(IsSystem), nameof(IsReviews), nameof(IsConnections), nameof(IsJobs), nameof(IsMemory), nameof(IsResources), nameof(IsWorkflows), nameof(IsSettings), nameof(IsNotRunningPanel), nameof(IsPageVisible), nameof(IsHomeShown), nameof(IsInboxShown), nameof(IsPagesShown),
+        nameof(IsAgents), nameof(IsSystem), nameof(IsReviews), nameof(IsConnections), nameof(IsJobs), nameof(IsMemory), nameof(IsResources), nameof(IsWorkflows), nameof(IsSettings), nameof(IsNotRunningPanel), nameof(IsPageVisible), nameof(IsHomeShown), nameof(IsInboxShown), nameof(IsPagesShown), nameof(IsHomeRowsShown),
     ];
 
     private readonly Preferences _store;
@@ -95,6 +95,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         WireQuickAddToasts();
         InitLinear();
         Health.Follow(ReadQueue);
+        Health.Follow(ReadHomeRows);
         Health.Follow(Item.Refresh);
         FollowSystemCards();
     }

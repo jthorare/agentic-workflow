@@ -86,6 +86,8 @@ for a in "$@"; do [ "$prev" = "--json" ] && out="$a"; [ "$prev" = "--case" ] && 
 [ -z "$name" ] || echo "$name" >>"$d/cases.txt"
 [ -z "$name" ] || ls "$PWD/evals/mocks" 2>/dev/null | grep -v '\.md$' | tr '\n' ' ' >"$d/mocks.$name.txt"
 [ ! -f "$d/sleep" ] || sleep "$(cat "$d/sleep")"
+# hold: wait (up to 30 s) until the test creates release, so a signal is known to land while this call runs
+if [ -f "$d/hold" ]; then for _ in $(seq 1 300); do [ ! -f "$d/release" ] || break; sleep 0.1; done; fi
 # a refused call (#2044) writes a results file with no cases at all and exits 0
 if [ -f "$d/empty-result" ] && [ -n "$out" ]; then mkdir -p "$(dirname "$out")"; echo '{"cases": [], "costUsd": 0, "partial": false}' >"$out"; exit 0; fi
 # a call refused with no cases (#2045): the real CLI writes cases: [] and spends nothing
@@ -832,12 +834,15 @@ S="$(find "$STATE" -maxdepth 4 -type d -name 'stage-*-behaviour' | head -1)"
 if [ -n "$S" ] && [ -d "$S/evals/mocks/playwright" ] && [ -d "$S/evals/mocks/xcodebuildmcp" ] && [ ! -e "$S/evals/.mocks-off" ]; then
   ok "after the call the kept stage has every mock dir back"
 else fail "kept stage mocks: $(ls -a "$S/evals" "$S/evals/mocks" 2>&1 | tr '\n' ' ')"; fi
-mkrepo; mkclaude; mkresult 1 true 1; echo 30 >"$BIN/sleep"
+# The stub holds its call until the test writes release: the TERM lands mid-call every time, and bash runs the script's TERM trap
+# once the held call returns (it defers a trap until its foreground child exits), so exit 130 proves the trap ran.
+mkrepo; mkclaude; mkresult 1 true 1; : >"$BIN/hold"
 (cd "$REPO" && exec env -i PATH="$BIN:$PATH" HOME="$TMPROOT/home" TERM=dumb LANG=C.UTF-8 AW_STATE_DIR="$STATE" bash scripts/skill-evals.sh --skills alpha --kind routing --keep-temp >/dev/null 2>&1) &
 LIVE_PID=$!
 for _ in $(seq 1 100); do [ -s "$BIN/cases.txt" ] && break; sleep 0.1; done
-kill -TERM "$LIVE_PID" 2>/dev/null || true; wait "$LIVE_PID" 2>/dev/null || true; LIVE_PID=""
+kill -TERM "$LIVE_PID" 2>/dev/null || true; : >"$BIN/release"; KRC=0; wait "$LIVE_PID" 2>/dev/null || KRC=$?; LIVE_PID=""
 S="$(find "$STATE" -maxdepth 4 -type d -name 'stage-*-routing' | head -1)"
+[ "$KRC" = 130 ] && ok "the TERM mid-call ends the run through its trap (exit 130)" || fail "killed run exit $KRC, want 130"
 if [ -s "$BIN/cases.txt" ] && [ -n "$S" ] && [ -d "$S/evals/mocks/playwright" ] && [ -d "$S/evals/mocks/xcodebuildmcp" ] && [ ! -e "$S/evals/.mocks-off" ]; then
   ok "a run killed mid-call puts the mock dirs back (the trap)"
 else fail "killed run's stage: cases=$(cat "$BIN/cases.txt" 2>/dev/null) $(ls -a "$S/evals" "$S/evals/mocks" 2>&1 | tr '\n' ' ')"; fi

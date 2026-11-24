@@ -114,6 +114,7 @@ bash scripts/tests/sindri-ui-fixture.test.sh
 bash scripts/tests/sindri-ui-fixture-prs.test.sh   # the Projects fixture seeds the GitHub repos and three open PRs with their relates links, once (#1908)
 bash scripts/tests/sindri-ui-fixture-reviews.test.sh   # the reviews fixture: review.login and workflow.forge in the profile, the PR built in a forge world inside the home (stub aw-forge-fake), its Context record, serve restarted on the forge state, idempotent, down
 bash scripts/tests/forge-fixture.test.sh    # scripts/forge-fixture.sh over the real aw-forge-fake (dotnet build once): the PR babysitter's fixture PR set, every variant, the guard, --github refusals and dry run
+bash scripts/tests/slack-fixture.test.sh    # scripts/slack-fixture.sh with a stub host on loopback (AW_SLACK_FAKE; no dotnet build): the guard, the marker and its port, the owner-only fixture token file, the slack:messages row, a repeat up, down removes only its own, and Fixture_seed_never_touches_the_keychain (stub security and secret-tool record any call)
 bash scripts/tests/cutover-clean-ts.test.sh   # scripts/cutover-clean-ts.sh on a scratch box: what the TS install left, removed and nothing else; its last case runs the real bugfix-state (needs dotnet, or BUGFIX_STATE_BIN)
 bash scripts/tests/cutover-prove.test.sh      # the switch proof: setup.sh on a scratch box, the C# binaries linked, the TS wrappers gone
 bash scripts/tests/install-cs.test.sh         # scripts/install-cs.sh: publish, link, the wrappers, the stamps, the running-serve guard
@@ -125,6 +126,7 @@ bash scripts/tests/agent-token.test.sh
 bash scripts/tests/signal-suites-ignored-hup.test.sh   # agent-token.test.sh, formal-verify-tlc.test.sh and meta-launch.test.sh started with SIGHUP ignored (a `nohup` gate) all pass: each wrapper resets every signal it sends (#2377, #2566)
 bash scripts/tests/ci-changed-areas.test.sh
 bash scripts/tests/ci-bash-tests.test.sh
+bash scripts/tests/ci-runner-parity.test.sh   # the macos-15 runner's conditions on any box (#2534, #2584, #2757): scans the suites for forms bash 3.2 or BSD tools reject, then reruns them with BSD-style sed, touch, find and wc, without setsid and timeout, with TMPDIR behind a symlink and without /proc/meminfo; where a faked condition is native (macOS), that part prints SKIP, since bash-tests.sh already ran the suite there (#4133)
 bash scripts/tests/tmp-leak-check.test.sh   # scripts/ci/tmp-leak-check.sh: a new aw-* or tmp.* entry the command leaves is named and exits 1, a clean command exits 0, the command's own exit code wins, old entries are ignored, nothing is deleted, usage exits 2 (#3262)
 bash scripts/tests/ci-lane-budgets.test.sh
 bash scripts/tests/tmux-isolation.test.sh   # scripts/ci/tmux-isolation.sh: no test runs a tmux outside scripts/test-tmux.sh, -L, -S or AW_TMUX

@@ -133,6 +133,35 @@ public sealed class ConceptChangeTimesTests : IDisposable
         Assert.Equal(heads, _reader.HeadReads);
     }
 
+    // #4144: the scope's second repo has no checkout; its failed HEAD read stands for FailedHeadFor, so close requests start git for it once.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Reads_close_together_read_a_repo_without_a_checkout_once()
+    {
+        await Filled();
+        var failed = _reader.UnreadableReads;
+
+        _ = await Scheduling();
+        _ = await Scheduling();
+
+        Assert.Equal(failed, _reader.UnreadableReads);
+    }
+
+    // #4144: a repo cloned after a failed read is read again once the failure is FailedHeadFor old, well before HeadFor; the good read is then cached.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_repo_cloned_after_a_failed_read_is_read_again_after_the_failure_window()
+    {
+        await Filled();
+        var failed = _reader.UnreadableReads;
+        _reader.Cloned = true;
+        _world.Clock.Advance(ConceptChangeTimes.FailedHeadFor + TimeSpan.FromSeconds(1));
+
+        _ = await Scheduling();
+        _ = await Scheduling();
+
+        Assert.True(ConceptChangeTimes.FailedHeadFor + TimeSpan.FromSeconds(1) < ConceptChangeTimes.HeadFor, "the failure window must end well before the success cache");
+        Assert.Equal((failed + 1, 1), (_reader.UnreadableReads, _reader.ClonedReads));
+    }
+
     /// <summary>The fixture repo reader with a HEAD a test moves.</summary>
     private sealed class MovableHead : IRepoReader
     {
@@ -140,15 +169,31 @@ public sealed class ConceptChangeTimesTests : IDisposable
 
         public string Current { get; set; } = MapWorld.Head;
 
-        /// <summary>HEAD reads of the fixture repo. The scope's second repo has no checkout: its failed read is never cached, so it is left out of the count.</summary>
+        /// <summary>HEAD reads of the fixture repo. The scope's second repo has no checkout; its reads are counted in <see cref="UnreadableReads"/>.</summary>
         public int HeadReads { get; private set; }
+
+        /// <summary>HEAD reads of the repo with no checkout, failed or (once <see cref="Cloned"/>) answered.</summary>
+        public int UnreadableReads { get; private set; }
+
+        /// <summary>The reads of the repo with no checkout that answered, once it was cloned.</summary>
+        public int ClonedReads { get; private set; }
+
+        /// <summary>Whether the repo with no checkout has been cloned since: its HEAD then reads as <see cref="Current"/>.</summary>
+        public bool Cloned { get; set; }
 
         public async ValueTask<Result<string>> Head(ContextRepo repo, CancellationToken cancellationToken)
         {
             var known = await _inner.Head(repo, cancellationToken);
             if (known.IsError)
             {
-                return known;
+                UnreadableReads++;
+                if (!Cloned)
+                {
+                    return known;
+                }
+
+                ClonedReads++;
+                return Current;
             }
 
             HeadReads++;

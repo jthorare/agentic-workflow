@@ -26,7 +26,13 @@
 # alive, its command line naming the build dir): that one is neither pruned nor rebuilt (it says to run `sindri stop`).
 # A publish while a control plane runs first checks for open agent runs (scripts/lib/sindri-open-runs.sh, #1000): it lists
 # them and asks go/wait/stop on a terminal, and stops without one unless AW_SINDRI_STOP_OK=1.
-# One publish at a time per state dir (a lock dir holding the owner's pid; a dead owner's lock is taken over).
+# One publish at a time per state dir (a lock dir holding the owner's pid, made in one rename; a dead owner's lock, and
+# a pidless one older than 60 s, is taken over).
+# A killed publish leaves tree.*, sdk-tree.*, verify.* and .stage.* (its EXIT trap never ran). The next publish
+# removes them while it holds the lock, including when the build is already current. The toolkit pack holds the same
+# lock, so its sdk-tree is never taken for a dead one. Between binaries the publish removes the
+# previous publish's bin/ and any NativeAOT .o, so the next object file (sindri-ui.o is the large one) is not written
+# beside them. A publish that dies with "No space left on device" says the disk is full.
 #
 # Binaries (all published from a copy of the sources, under the box-wide heavy slot when it exists, so the checkout's lock
 # files never change):
@@ -144,9 +150,10 @@ status="$(git -C "$root" status --porcelain -- "${PATHSPECS[@]}" 2> /dev/null)" 
 if [ -n "$status" ]; then dirty="-dirty"; fi
 revision="$commit$dirty"
 
-lock="" stage="" tree=""
+lock="" lock_new="" stage="" tree=""
 cleanup() {
   rm -f "$inputs"
+  if [ -n "$lock_new" ]; then rm -rf "$lock_new"; fi
   if [ -n "$stage" ]; then rm -rf "$stage" "$stage".*; fi
   if [ -n "$tree" ]; then rm -rf "$tree"; fi
   if [ -n "$lock" ]; then rm -rf "$lock"; fi
@@ -253,6 +260,124 @@ input_hash() { # input_hash <csproj>: the hash of one binary's inputs, made as t
   rm -f "$list"
 }
 
+# Dead scratch from a killed install-cs. Call only while this process holds $lock: another publish's tree is live
+# until that process exits. $tree and $stage, when set, belong to this process and stay.
+reclaim_scratch() {
+  local d
+  [ -d "$cache" ] || return 0
+  for d in "$cache"/tree.* "$cache"/sdk-tree.* "$cache"/verify.*; do
+    [ -d "$d" ] || continue
+    [ -n "$tree" ] && [ "$d" = "$tree" ] && continue
+    rm -rf "$d"
+  done
+  # make_lock's temp folder of a killed run. A live run's is a few ms old, so only one older than 60 s goes.
+  for d in "$base"/.lock-new.*; do
+    [ -d "$d" ] || continue
+    [ -n "$(find "$d" -maxdepth 0 -mmin +1 2> /dev/null)" ] || continue
+    rm -rf "$d"
+  done
+  for d in "$base"/.stage.*; do
+    [ -e "$d" ] || continue
+    if [ -n "$stage" ] && { [ "$d" = "$stage" ] || [ "${d#"$stage".}" != "$d" ]; }; then continue; fi
+    rm -rf "$d"
+  done
+}
+
+# Renames folder $1 to $2 in one rename(2), which fails when $2 is a folder with anything in it. GNU mv has -T for
+# that; BSD mv (macOS) has no -T and would move $1 into $2, so perl's rename does it there.
+rename_dir() {
+  if mv --version > /dev/null 2>&1; then
+    mv -T "$1" "$2" 2> /dev/null
+  else
+    perl -e 'rename($ARGV[0], $ARGV[1]) or exit 1' "$1" "$2" 2> /dev/null
+  fi
+}
+
+# Makes the publish lock $1 in one step (#4247): a temp folder holding this pid is renamed to $1, so no lock is ever
+# seen without its pid. rename(2) replaces an empty folder, so an existing $1 (a pidless lock of an older install-cs)
+# is checked for first. Exit 1 when $1 exists, 2 when the lock could not be made at all.
+make_lock() {
+  local lk="$1"
+  [ ! -e "$lk" ] || return 1
+  lock_new="$(mktemp -d "$base/.lock-new.XXXXXX")" || return 2
+  echo $$ > "$lock_new/pid" || { rm -rf "$lock_new"; lock_new=""; return 2; }
+  if rename_dir "$lock_new" "$lk"; then lock_new=""; return 0; fi
+  rm -rf "$lock_new"; lock_new=""
+  if [ -e "$lk" ]; then return 1; fi
+  return 2
+}
+
+# Whether lock $1 may be taken over: its pid is dead, or it has no pid and is older than 60 s. A lock without a pid
+# comes from an older install-cs killed between its mkdir and its pid write; a fresh one may still be such a run, so
+# it is waited for like a live one.
+lock_stale() {
+  local lk="$1" owner
+  owner="$(cat "$lk/pid" 2> /dev/null || true)"
+  if [ -n "$owner" ]; then
+    ! kill -0 "$owner" 2> /dev/null
+    return
+  fi
+  [ -d "$lk" ] && [ -n "$(find "$lk" -maxdepth 0 -mmin +1 2> /dev/null)" ]
+}
+
+# Wait for the publish lock and take it; a stale lock (lock_stale) is taken over. $lock is set only once the lock is
+# this run's, so a run that ends while it waits never removes the holder's lock in its EXIT trap (#4247).
+take_lock() {
+  local lk="$base/.lock" owner rc
+  mkdir -p "$base"
+  while :; do
+    rc=0; make_lock "$lk" || rc=$?
+    if [ "$rc" = 0 ]; then break; fi
+    if [ "$rc" = 2 ]; then die "could not make the publish lock $lk (mktemp or rename failed in $base)"; fi
+    if lock_stale "$lk"; then rm -rf "$lk"; continue; fi
+    owner="$(cat "$lk/pid" 2> /dev/null || true)"
+    say "waiting for another install-cs publish (pid ${owner:-?})"
+    sleep 2
+  done
+  lock="$lk"
+}
+
+# Take the publish lock if no install holds it, reclaim dead scratch, and release the lock. It never waits.
+# A live holder and a fresh lock without a pid are left alone; a stale lock (lock_stale) is taken over.
+reclaim_unlocked() {
+  local lk="$base/.lock"
+  mkdir -p "$base" "$cache"
+  if ! make_lock "$lk"; then
+    lock_stale "$lk" || return 0
+    rm -rf "$lk"
+    make_lock "$lk" || return 0
+  fi
+  lock="$lk"
+  reclaim_scratch
+  rm -rf "$lock"
+  lock=""
+}
+
+# The previous binary's bin/ and any NativeAOT .o. obj/ stays, so the next publish still compiles incrementally.
+# sindri-ui.o is written under obj/ during that binary's own publish, after the previous .o is gone.
+drop_earlier_outputs() {
+  [ -n "$tree" ] || return 0
+  rm -rf "$tree/artifacts/bin"
+  [ -d "$tree/artifacts" ] || return 0
+  find "$tree/artifacts" -type f -name '*.o' -exec rm -f {} +
+}
+
+# ilc reports ENOSPC as an IOException in the publish log. Name it before the compiler tail.
+publish_failed() { # publish_failed <binary> <log>
+  local kb vol
+  if grep -q "No space left on device" "$2"; then
+    kb="$(df -Pk "$cache" 2> /dev/null | awk 'NR==2 {print $4}')"
+    vol="$(df -Pk "$cache" 2> /dev/null | awk 'NR==2 {print $6}')"
+    if [ -n "$kb" ] && [ -n "$vol" ]; then
+      warn "the disk is full (No space left on device) while publishing $1; $((kb / 1024)) MB free on $vol. Free space, then re-run."
+    else
+      warn "the disk is full (No space left on device) while publishing $1. Free space on the volume that holds $cache, then re-run."
+    fi
+  fi
+  tail -20 "$2" >&2
+  die "publishing $1 failed (log: $2)"
+}
+
 # --- publish ---------------------------------------------------------------------------------------------------------
 publish() {
   # 1. The pinned SDK and temporal.
@@ -282,10 +407,12 @@ publish() {
 
   # 2. A build that exists for the stamp is only reported; a build a running serve executes is never replaced.
   if [ "$rebuild" = 1 ] && in_use "$stamp"; then
+    reclaim_unlocked
     say "the running control plane uses build $stamp; not rebuilding it (run sindri stop, then re-run)"
     return 0
   fi
   if [ "$rebuild" = 0 ] && built "$stamp"; then
+    reclaim_unlocked
     say "build $stamp is current"
     return 0
   fi
@@ -304,19 +431,15 @@ publish() {
     if [ -n "$guard_bin" ] && ! sindri_open_runs_guard "$guard_bin"; then exit 1; fi
   fi
 
-  mkdir -p "$base"
-  lock="$base/.lock"
-  until mkdir "$lock" 2> /dev/null; do
-    local owner
-    owner="$(cat "$lock/pid" 2> /dev/null || true)"
-    if [ -n "$owner" ] && ! kill -0 "$owner" 2> /dev/null; then rm -rf "$lock"; continue; fi
-    say "waiting for another install-cs publish (pid ${owner:-?})"
-    sleep 2
-  done
-  echo $$ > "$lock/pid"
-  if [ "$rebuild" = 0 ] && built "$stamp"; then say "build $stamp is current"; return 0; fi   # published while this one waited
+  take_lock
+  if [ "$rebuild" = 0 ] && built "$stamp"; then
+    reclaim_scratch
+    say "build $stamp is current"
+    return 0
+  fi   # published while this one waited
 
   mkdir -p "$cache"
+  reclaim_scratch
   local log="$cache/publish.log" pre=() when
   : > "$log"
   if [ -x "$heavy" ]; then pre=("$heavy" --expensive); fi
@@ -338,6 +461,7 @@ publish() {
   # or, when the hash of its inputs is the one in the current build, copy its files from there (the same order, the same rule)
   pub() {
     local name="$1" proj="$2" out f want have; shift 2
+    drop_earlier_outputs
     want="$(input_hash "$proj")"
     if [ -n "$from" ]; then
       have="$(cat "$from/inputs/$name.sha256" 2> /dev/null || true)"
@@ -349,7 +473,7 @@ publish() {
     out="$stage.$name"; rm -rf "$out"
     say "publishing $name"
     (cd "$tree" && ${pre[@]+"${pre[@]}"} dotnet publish "$proj" -c Release "${stampargs[@]}" "$@" -o "$out") < /dev/null >> "$log" 2>&1 \
-      || { tail -20 "$log" >&2; die "publishing $name failed (log: $log)"; }
+      || publish_failed "$name" "$log"
     [ -e "$out/$name" ] || die "the publish left no $name in $out (log: $log)"
     # Dot entries too: ui-evidence's Playwright driver is .playwright/, and without it every browser call fails.
     # The file list holds every top-level entry of the output (also those the stage already had), so a later copy can walk it.
@@ -577,6 +701,9 @@ pack_sdk() {
   export DOTNET_ROOT="${DOTNET_ROOT:-$HOME/.dotnet}"
   export PATH="$DOTNET_ROOT:$PATH"
   mkdir -p "$cache" "$sdk_feed"
+  # why: a run whose build was current released the lock, and another run's reclaim_scratch removes every sdk-tree.*
+  # it finds under the lock. The EXIT trap releases it.
+  [ -n "$lock" ] || take_lock
   local ptree version out="$cache/pack-sdk.log" pre=()
   ptree="$(mktemp -d "$cache/sdk-tree.XXXXXX")"
   version="0.1.0-local.$(date -u +%Y%m%d%H%M%S)"
