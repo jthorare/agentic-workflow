@@ -205,7 +205,7 @@ check "the build's meta-gate-reserve is scripts/meta-gate-reserve.sh" "$(cmp -s 
 check "the build carries aw-pr-watch, executable" "$([ -x "$B/$S1/aw-pr-watch" ] && echo yes || echo no)" "yes"
 check "the build's aw-pr-watch is scripts/aw-pr-watch.sh" "$(cmp -s "$B/$S1/aw-pr-watch" "$REPO/scripts/aw-pr-watch.sh" && echo same || echo differs)" "same"
 check "--publish leaves the aw-pr-watch link alone" "$([ -e "$CLAUDE_LOCAL_BIN/aw-pr-watch" ] || [ -L "$CLAUDE_LOCAL_BIN/aw-pr-watch" ] && echo yes || echo no)" "no"
-check "--publish leaves the meta-gate-reserve link alone""$([ -e "$AW_STATE_DIR/bin-r1b/meta-gate-reserve" ] || [ -L "$AW_STATE_DIR/bin-r1b/meta-gate-reserve" ] && echo yes || echo no)" "no"
+check "--publish leaves the meta-gate-reserve link alone" "$([ -e "$AW_STATE_DIR/bin-r1b/meta-gate-reserve" ] || [ -L "$AW_STATE_DIR/bin-r1b/meta-gate-reserve" ] && echo yes || echo no)" "no"
 check "--publish leaves the heavy link alone" "$([ -e "$AW_STATE_DIR/bin-r1b/heavy" ] || [ -L "$AW_STATE_DIR/bin-r1b/heavy" ] && echo yes || echo no)" "no"
 check "--publish leaves current alone" "$([ -e "$B/current" ] && echo yes || echo no)" "no"
 check "--publish writes no wrapper" "$(ls "$CLAUDE_LOCAL_BIN" | wc -l | tr -d ' ')" "0"
