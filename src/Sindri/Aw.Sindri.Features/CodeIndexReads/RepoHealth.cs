@@ -20,6 +20,11 @@ public sealed record RepoHealth(string Repo, string State, int? EmbeddingsPercen
     /// <summary>The waiting words of a queued repo (#3515): code-index-main-move ticks every minute and starts the first build on its next tick.</summary>
     public const string QueuedWords = "the first build starts on code-index-main-move's next tick";
 
+    /// <summary>The waiting words of a repo queued behind another repo's running first build (the first-builds queue, #3322): code-index-main-move builds one first index at a time.</summary>
+    /// <param name="holder">The repo whose first build runs.</param>
+    /// <returns>The words.</returns>
+    public static string QueuedBehindWords(string holder) => $"the first build starts after {holder}'s first build";
+
     /// <summary>How long this serve has read the repo as queued, or null when it isn't queued; set by RepoHealths from its <see cref="QueuedClock"/>. Internal, so it isn't in the API answer (#3440).</summary>
     internal TimeSpan? QueuedFor { get; init; }
 

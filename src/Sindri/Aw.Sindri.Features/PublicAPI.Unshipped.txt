@@ -2968,6 +2968,7 @@ Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Repo.init -> void
 const Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Later = "later" -> string!
 const Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Ok = "ok" -> string!
 const Aw.Sindri.Features.CodeIndexReads.RepoHealth.QueuedWords = "the first build starts on code-index-main-move's next tick" -> string!
+static Aw.Sindri.Features.CodeIndexReads.RepoHealth.QueuedBehindWords(string! holder) -> string!
 const Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Pending = "pending" -> string!
 override Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest.Equals(object? obj) -> bool
 override Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest.GetHashCode() -> int
