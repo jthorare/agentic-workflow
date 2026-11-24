@@ -84,7 +84,7 @@ checks() {
 }
 reviews() { printf '%s\n' "${2:-[]}" > "$S/reviews.$1.json"; }
 watch() { bash "$SCRIPT" --repo acme/app --pr 7 "$@"; }
-LOCK="$AW_STATE_DIR/pr-watch/acme-app-7/lock"
+LOCK="$AW_STATE_DIR/pr-watch/acme/app/7/lock"
 mode() { stat -c %a "$1" 2> /dev/null || stat -f %Lp "$1"; }
 
 # --- 1. pending -> success -> merged: the snapshot once, then only the changes ---------------------------------------
@@ -208,8 +208,10 @@ rm -rf "$AW_STATE_DIR"
 scen restart
 pull 1 open false; checks 1 1 "$(run_json build completed '"success"')"; reviews 1
 watch --once > /dev/null 2>&1
-SD="$AW_STATE_DIR/pr-watch/acme-app-7"
+SD="$AW_STATE_DIR/pr-watch/acme/app/7"
 check "state: the folder is 0700" "$(mode "$SD")" "700"
+check "state: every level is 0700 (pr-watch, owner, name, N)" \
+  "$(mode "$AW_STATE_DIR/pr-watch") $(mode "$AW_STATE_DIR/pr-watch/acme") $(mode "$AW_STATE_DIR/pr-watch/acme/app") $(mode "$SD")" "700 700 700 700"
 bad=""; for f in "$SD"/*; do [ -f "$f" ] && [ "$(mode "$f")" != 600 ] && bad="$bad $(basename "$f"):$(mode "$f")"; done
 check "state: every file is 0600" "${bad:-none}" "none"
 check "state: the snapshot file exists" "$([ -s "$SD/snapshot" ] && echo yes || echo no)" "yes"
@@ -265,7 +267,9 @@ check "dead holder: the lock is gone after" "$([ -e "$LOCK" ] && echo held || ec
 
 # --- 13. usage and --help -----------------------------------------------------------------------------------------------
 for args in "" "--repo acme/app" "--pr 7" "--repo acme --pr 7" "--repo acme/app --pr x" "--repo acme/app --pr 7 --interval -1" \
-  "--repo acme/app --pr 7 --deadline soon" "--repo acme/app --pr 7 --bogus"; do
+  "--repo acme/app --pr 7 --deadline soon" "--repo acme/app --pr 7 --bogus" \
+  "--repo ../app --pr 7" "--repo acme/.. --pr 7" "--repo ./app --pr 7" "--repo acme/. --pr 7" "--repo /app --pr 7" \
+  "--repo acme/ --pr 7"; do
   # shellcheck disable=SC2086
   rc=0; bash "$SCRIPT" $args > /dev/null 2>&1 || rc=$?
   check "usage: '$args' exits 2" "$rc" "2"
@@ -273,6 +277,28 @@ done
 out="$(bash "$SCRIPT" --help 2>&1)"; rc=$?
 check "--help exits 0" "$rc" "0"
 for code in "0 " "2 " "3 " "4 " "5 " "130" "143"; do has "--help documents exit $code" "$out" "  $code"; done
+
+rm -rf "$AW_STATE_DIR"
+out="$(bash "$SCRIPT" --repo acme/.. --pr 7 2>&1)"
+has "usage: a .. part is named in the refusal" "$out" "must not be empty, . or .."
+check "usage: a .. part writes no state" "$([ -e "$AW_STATE_DIR" ] && echo yes || echo no)" "no"
+
+# --- 13b. repos whose old flat folder names collided get their own locks -----------------------------------------------
+# acme-x/app#7 and acme/x-app#7 were both pr-watch/acme-x-app-7 before the folder was nested.
+rm -rf "$AW_STATE_DIR"
+scen collide
+pull 1 open false; checks 1 0; reviews 1
+bash "$SCRIPT" --repo acme-x/app --pr 7 --interval 1 --deadline 20s > "$WORK/bg.out" 2>&1 &
+bgpid=$!
+L1="$AW_STATE_DIR/pr-watch/acme-x/app/7/lock"
+for _ in $(seq 1 50); do [ -s "$L1/pid" ] && break; sleep 0.1; done
+check "collide: acme-x/app#7 holds its own lock" "$(cat "$L1/pid" 2> /dev/null)" "$bgpid"
+out="$(bash "$SCRIPT" --repo acme/x-app --pr 7 --once 2>&1)"; rc=$?
+check "collide: acme/x-app#7 runs beside it (exit 0, not 3)" "$rc" "0"
+has "collide: acme/x-app#7 prints its own snapshot" "$out" "acme/x-app#7: open"
+check "collide: acme/x-app#7 has its own folder" "$([ -s "$AW_STATE_DIR/pr-watch/acme/x-app/7/snapshot" ] && echo yes || echo no)" "yes"
+check "collide: acme-x/app#7's lock is untouched" "$(cat "$L1/pid" 2> /dev/null)" "$bgpid"
+kill -TERM "$bgpid"; wait "$bgpid" 2> /dev/null; bgpid=""
 
 # --- 14. --json -------------------------------------------------------------------------------------------------------
 rm -rf "$AW_STATE_DIR"

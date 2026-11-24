@@ -5,7 +5,7 @@
 # Each poll reads the PR (state, head sha, mergeable state, comment counts), the check runs of its head sha and its
 # reviews, and turns them into a snapshot of "key: value" rows. The first snapshot is printed whole (under 30 lines:
 # at most 20 check rows); after that only a changed row prints, one line each. The last snapshot is kept under
-# $AW_STATE_DIR/pr-watch/<owner>-<name>-<N>/ (folder 0700, files 0600), so a restart that sees the same snapshot prints
+# $AW_STATE_DIR/pr-watch/<owner>/<name>/<N>/ (every folder 0700, files 0600), so a restart that sees the same snapshot prints
 # "unchanged since <time>" once.
 #
 # One watcher per PR: the lock folder <state>/lock is made in one rename(2) with the pid inside (the make_lock pattern
@@ -31,7 +31,7 @@ edits or says the PR is ready to merge.
 Output: the first snapshot whole, then one line per changed row. Zero check runs prints "no checks reported", never a
 pass. A read that lost a page prints "incomplete". A restart on the same snapshot prints "unchanged since <time>".
 
-State: $AW_STATE_DIR/pr-watch/<owner>-<name>-<N>/ (default AW_STATE_DIR is ~/.agentic-workflow).
+State: $AW_STATE_DIR/pr-watch/<owner>/<name>/<N>/ (default AW_STATE_DIR is ~/.agentic-workflow).
 AW_PR_WATCH_BACKOFF: base seconds between the 3 tries of a failed read (default 2: waits 2 s, then 4 s).
 
 Exit codes:
@@ -71,6 +71,11 @@ case "$repo" in
   *) bad_usage "--repo must be OWNER/NAME, got: $repo" ;;
 esac
 case "$repo" in *[!A-Za-z0-9._/-]*) bad_usage "--repo must be OWNER/NAME, got: $repo" ;; esac
+owner="${repo%%/*}" name="${repo#*/}"
+# Each part is a folder under pr-watch/, so "", "." and ".." are refused: they would name another folder.
+for part in "$owner" "$name"; do
+  case "$part" in "" | . | ..) bad_usage "--repo parts must not be empty, . or .., got: $repo" ;; esac
+done
 case "$pr" in "" | *[!0-9]* | 0) bad_usage "--pr must be a positive number, got: $pr" ;; esac
 case "$interval" in "" | *[!0-9]*) bad_usage "--interval must be whole seconds, got: $interval" ;; esac
 case "$deadline" in
@@ -85,12 +90,11 @@ case "$backoff" in "" | *[!0-9]*) backoff=2 ;; esac
 command -v jq > /dev/null 2>&1 || { echo "aw-pr-watch: jq is not installed" >&2; exit 1; }
 command -v gh > /dev/null 2>&1 || { echo "aw-pr-watch: gh is not installed" >&2; exit 1; }
 
-owner="${repo%%/*}" name="${repo#*/}"
 label="$repo#$pr"
 umask 077
 root="${AW_STATE_DIR:-$HOME/.agentic-workflow}/pr-watch"
-dir="$root/$owner-$name-$pr"
-mkdir -p "$dir" 2> /dev/null && chmod 700 "$root" "$dir" 2> /dev/null \
+dir="$root/$owner/$name/$pr"
+mkdir -p "$dir" 2> /dev/null && chmod 700 "$root" "$root/$owner" "$root/$owner/$name" "$dir" 2> /dev/null \
   || { echo "aw-pr-watch: could not make the state folder $dir" >&2; exit 1; }
 
 # --- the lock ------------------------------------------------------------------------------------------------------------
