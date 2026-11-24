@@ -157,7 +157,7 @@ public sealed partial class SteeringMinerRunTests
             return new JsonObject { ["merges"] = new JsonArray(merge) }.ToJsonString();
         }
 
-        [GeneratedRegex("transcript:[0-9a-f]{8}#[0-9]+", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+        [GeneratedRegex("transcript:[0-9a-f]{12}#[0-9]+", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
         private static partial Regex RefPattern { get; }
     }
 }
