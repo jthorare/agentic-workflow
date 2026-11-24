@@ -131,6 +131,7 @@ SERIAL=(
   "scripts/tests/heavy-pgid-race.test.sh	bounds each case at 10 s against a 1 s slow setsid/perl stub and the watchdog's 5 s group wait; a loaded machine shifts it (#2799)"
   "scripts/tests/ci-runner-parity.test.sh	runs heavy-cap-reserve.test.sh (timing-bound, see its row) under a stripped PATH and without /proc/meminfo; in the parallel pool its wrapper row timed out once in 6 runs (#2584)"
   "scripts/tests/readiness-baseline.test.sh	asserts a 200 ms gh timeout (READINESS_GH_TIMEOUT_MS) fires against a 3 s stub and is reported as the timeout, not a parse error"
+  "scripts/tests/aw-pr-watch.test.sh	sends INT and TERM to a polling watcher and asserts a 2 s deadline stops it within 6 s; a loaded machine shifts both"
 )
 
 if [ "${BASH_TESTS_EXCLUDED+set}" = set ]; then
