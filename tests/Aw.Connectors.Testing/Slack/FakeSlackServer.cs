@@ -395,7 +395,7 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
 
     private HttpResponseMessage UsersList(Dictionary<string, string> query)
     {
-        var (page, next) = Slice<SlackUserSeed>(query, [.. _users.Values.OrderBy(static u => u.Id, StringComparer.Ordinal)], u => SlackUserJson.Of(u, Identity.TeamId));
+        var (page, next) = Slice(query, [.. _users.Values.OrderBy(static u => u.Id, StringComparer.Ordinal)], u => SlackUserJson.Of(u, Identity.TeamId));
         return Json(new JsonObject { ["ok"] = true, ["members"] = page, ["response_metadata"] = new JsonObject { ["next_cursor"] = next } });
     }
 
