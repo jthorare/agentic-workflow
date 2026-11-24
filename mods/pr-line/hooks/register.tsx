@@ -64,17 +64,27 @@ async function sessionRow($: EngineInterface, branch: string): Promise<PrRow | u
   return (await read($, snapshot)).rows.find(r => r.repo === repo && r.branch === branch)
 }
 
+// The repo's required check names. Only a successful call is cached: a failed or timed-out one returns [] for this
+// poll and is asked again on the next, so a rate-limited first call can't hide a required check for the session.
 async function requiredChecks($: EngineInterface, repo: string): Promise<string[]> {
   if (required[repo]) return required[repo]
-  const res = await $.process.run([
-    'gh',
-    'api',
-    `repos/${repo}/rules/branches/main`,
-    '--jq',
-    '[.[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context]',
-  ])
-  required[repo] = res.exitCode === 0 ? (JSON.parse(res.stdout || '[]') as string[]) : []
-  return required[repo]
+  try {
+    const res = await $.process.run(
+      [
+        'gh',
+        'api',
+        `repos/${repo}/rules/branches/main`,
+        '--jq',
+        '[.[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context]',
+      ],
+      { timeoutMs: 10_000 },
+    )
+    if (res.exitCode !== 0) return []
+    required[repo] = JSON.parse(res.stdout || '[]') as string[]
+    return required[repo]
+  } catch {
+    return []
+  }
 }
 
 // A second caller waits on the poll already running instead of starting another.
