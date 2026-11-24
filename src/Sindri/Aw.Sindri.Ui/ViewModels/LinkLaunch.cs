@@ -39,7 +39,7 @@ internal sealed class LinkLaunch(Func<ILauncher> launcher) : ObservableObject
     public async Task<bool> Open(Uri uri, CancellationToken cancellationToken)
     {
         var opened = await launcher().OpenUri(uri, cancellationToken).ConfigureAwait(true);
-        Record(opened, Labels.LaunchFailed(uri.AbsoluteUri));
+        Note(opened, Labels.LaunchFailed(uri.AbsoluteUri), ct => Open(uri, ct));
         return opened;
     }
 
@@ -51,24 +51,41 @@ internal sealed class LinkLaunch(Func<ILauncher> launcher) : ObservableObject
     {
         var system = launcher();
         var opened = await system.OpenFile(path, cancellationToken).ConfigureAwait(true);
-        Record(opened, system.FileExists(path) ? Labels.NoAppOpens(Path.GetExtension(path)) : Labels.FileNotOnMachine);
+        Note(opened, system.FileExists(path) ? Labels.NoAppOpens(Path.GetExtension(path)) : Labels.FileNotOnMachine, ct => OpenPath(path, ct));
         return opened;
     }
 
     /// <summary>Records an answer the caller got without launching (a path the app refuses to open).</summary>
     /// <param name="opened">True when the file opened.</param>
     /// <param name="failedText">The line to show when it did not.</param>
-    public void Record(bool opened, string failedText)
+    public void Record(bool opened, string failedText) => Note(opened, failedText, again: null);   // nothing was launched, so there is nothing to try again
+
+    // The answer, the line, and the launch "Try again" repeats (null when there is none).
+    private void Note(bool opened, string failedText, Func<CancellationToken, Task<bool>>? again)
     {
-        (Failed, FailedText) = opened ? (false, string.Empty) : (true, failedText);
+        if (opened)
+        {
+            (Failed, FailedText, Again) = (false, string.Empty, null);
+        }
+        else
+        {
+            (Failed, FailedText, Again) = (true, failedText, again);
+        }
+
         OnChanged(nameof(Failed));
         OnChanged(nameof(FailedText));
+        OnChanged(nameof(CanRetry));
     }
 
     /// <summary>Makes an owner that exposes LaunchFailed and LaunchFailedText raise their change notifications when this helper's change.</summary>
     /// <param name="onChanged">The owner's change-notification method.</param>
     public void Forward(Action<string> onChanged) =>
-        PropertyChanged += (_, e) => onChanged(string.Equals(e.PropertyName, nameof(Failed), StringComparison.Ordinal) ? "LaunchFailed" : "LaunchFailedText");
+        PropertyChanged += (_, e) => onChanged(e.PropertyName switch
+        {
+            nameof(Failed) => "LaunchFailed",
+            nameof(CanRetry) => "CanRetryLaunch",
+            _ => "LaunchFailedText",
+        });
 
     /// <summary>Clears the line (another subject was opened).</summary>
     public void Reset() => Record(opened: true, string.Empty);

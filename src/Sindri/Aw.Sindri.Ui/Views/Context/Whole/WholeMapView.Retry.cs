@@ -9,6 +9,8 @@ internal sealed partial class WholeMapView
 {
     private void OnNodePanelRetry(object? sender, RoutedEventArgs e) => _ = _map?.Panel.Retry();
 
+    private void OnNodePanelLaunchRetry(object? sender, RoutedEventArgs e) => _ = _map?.Panel.RetryLaunch();
+
     private void OnNodeSectionRetry(object? sender, RoutedEventArgs e)
     {
         if (sender is Control { DataContext: NodeSectionViewModel section })
