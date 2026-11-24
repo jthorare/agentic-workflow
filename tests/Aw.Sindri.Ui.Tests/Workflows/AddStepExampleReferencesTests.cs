@@ -8,7 +8,7 @@ namespace Aw.Sindri.Ui.Tests.Workflows;
 
 /// <summary>
 /// #3944: some block examples read steps of the doc page's graph ("{{triage.items}}"). Since #4272 every field of a new step starts empty with the example as its hint
-/// (AddStepStartsEmptyTests). A step the new one can't read (it is not the step the new one follows, nor upstream of it) shows in the hint as "&lt;step id&gt;"; an upstream step, or the trigger, stays.
+/// (AddStepStartsEmptyTests). A step the new one can't read (it is not the step the new one follows, nor upstream of it) shows in the hint as the step it follows, or "&lt;step id&gt;" when it follows none (#4330); an upstream step, or the trigger, stays.
 /// A condition's "when" names steps bare ("agent.drifted"), and those count too. A refused save is shown once, in the sheet.
 /// The workflow served is the "found" golden: start (manual) -> agent (run_agent); "no agent" is the same graph with "agent" renamed "tell".
 /// </summary>
@@ -87,14 +87,14 @@ public sealed class AddStepExampleReferencesTests
     }
 
     [Fact]
-    public async Task A_new_step_hints_a_step_that_is_not_upstream_as_a_step_id()
+    public async Task A_new_step_hints_a_step_that_is_not_upstream_as_the_step_it_follows_with_one_of_its_outputs()
     {
-        var page = await AddedStep("notify", after: "start");   // "agent" exists but runs after "start": the validator would say GRAPH-REF-001
+        var page = await AddedStep("notify", after: "start");   // "agent" exists but runs after "start": the validator would say GRAPH-REF-001; the hint names "start" and its first output (#4330)
 
         var body = Field(page, "body");
 
         Assert.Equal(string.Empty, body.Text);
-        Assert.Equal("{{<step id>.summary}}", body.Placeholder);
+        Assert.Equal("{{start.payload}}", body.Placeholder);   // a manual trigger has no "summary": its first output stands in
     }
 
     [Fact]
@@ -106,14 +106,14 @@ public sealed class AddStepExampleReferencesTests
     }
 
     [Fact]
-    public async Task A_condition_hints_a_step_the_workflow_lacks_as_a_step_id()
+    public async Task A_condition_hints_a_step_the_workflow_lacks_as_the_step_it_follows()
     {
-        var page = await AddedStep("condition", after: "tell", noAgent: true);   // example when "agent.drifted", bare: start -> tell has no "agent"
+        var page = await AddedStep("condition", after: "tell", noAgent: true);   // example when "agent.drifted", bare: start -> tell has no "agent"; "tell" is the renamed run_agent, whose outputs include "drifted"
 
         var when = Field(page, "when");
 
         Assert.Equal(string.Empty, when.Text);
-        Assert.Equal("<step id>.drifted", when.Placeholder);
+        Assert.Equal("tell.drifted", when.Placeholder);
         Assert.False(page.CanSave);   // "when" is required
         when.Text = "tell.ok";
         Assert.True(page.CanSave);
