@@ -42,7 +42,8 @@ internal static partial class TsExports
         }
     }
 
-    // export * from 'x' (a star) and export * as Ns from 'x' (a namespace; a later one of the same name wins, as TS reports the clash anyway)
+    // export * from 'x' (a star) and export * as Ns from 'x' (a namespace; a later one of the same name wins, as TS reports the clash anyway); the type-only
+    // forms 'export type * from' and 'export type * as Ns from' re-export the same names, so they count the same (issue 4043)
     private static (Dictionary<string, string> Namespaces, List<string> Stars) StarsOf(string clean)
     {
         var namespaces = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -85,6 +86,6 @@ internal static partial class TsExports
     [GeneratedRegex("\\bexport\\s*(?<t>type\\s+)?\\{(?<names>[^}]*)\\}(?:\\s*from\\s*(?<q>[\"'])(?<s>[^\"'\\r\\n]+)\\k<q>)?", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex List { get; }
 
-    [GeneratedRegex("\\bexport\\s*\\*\\s*(?:as\\s+(?<ns>[\\w$]+)\\s*)?from\\s*(?<q>[\"'])(?<s>[^\"'\\r\\n]+)\\k<q>", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex("\\bexport\\s*(?:type\\s+)?\\*\\s*(?:as\\s+(?<ns>[\\w$]+)\\s*)?from\\s*(?<q>[\"'])(?<s>[^\"'\\r\\n]+)\\k<q>", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Star { get; }
 }

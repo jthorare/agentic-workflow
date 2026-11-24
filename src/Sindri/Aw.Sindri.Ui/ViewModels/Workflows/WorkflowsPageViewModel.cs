@@ -190,7 +190,9 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     {
         SetLevel(Level.Runs);
         CloseEditor();
-        var name = Rows.FirstOrDefault(r => string.Equals(r.Slug, slug, StringComparison.Ordinal))?.NameText ?? slug;
+        var row = Rows.FirstOrDefault(r => string.Equals(r.Slug, slug, StringComparison.Ordinal));
+        var name = row?.NameText ?? slug;
+        Runs.NextRunAt = row?.NextRunAt;   // the Schedule card's next-run chip (#3758)
         if (_url is not { } url)
         {
             return Task.CompletedTask;

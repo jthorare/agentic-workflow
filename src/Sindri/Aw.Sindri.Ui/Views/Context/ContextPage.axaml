@@ -65,7 +65,7 @@
     </Style>
   </UserControl.Styles>
 
-  <!-- The Context page (F3 spec 1 §2): the head, a control row (the search box, Map or Files, coverage), and the stage, which
+  <!-- The Context page (F3 spec 1 §2): the head, a control row (the search box, Map or Files), the coverage sentence under it, and the stage, which
        is the pannable map. The hosts below are the seams the later stages fill: the lens stack is the stage, the node card and the
        sources are the inspector, the review and the file map are the Files view. -->
   <Grid RowDefinitions="Auto,Auto,*" RowSpacing="{StaticResource Size.PanelGap}">
@@ -93,10 +93,10 @@
       </Border>
     </Grid>
 
-    <!-- The control row (#3677): the question box takes the row, with the repo and the Map or Files switch to its right and the coverage sentence after them. No label: the box's placeholder and name say Ask a question. -->
+    <!-- The control row (#3677): the question box takes the row, with the repo and the Map or Files switch to its right. The coverage sentence has its own full-width line under the row (#3900). No label: the box's placeholder and name say Ask a question. -->
     <!-- Bound to the page's width: the page scrolls, so a star column would otherwise shrink to what the box wants and leave the row short of the view switch (as ContextChoices does).
          Gaps are left margins on each control, not ColumnSpacing: Grid spacing stays between columns whose control is hidden, so a hidden clear button, note and repo picker left 48 px of empty row. -->
-    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto" MinHeight="{StaticResource Size.TopBar}" HorizontalAlignment="Left" Width="{Binding $parent[UserControl].Bounds.Width}">
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" MinHeight="{StaticResource Size.TopBar}" HorizontalAlignment="Left" Width="{Binding $parent[UserControl].Bounds.Width}">
       <Grid ColumnDefinitions="*,Auto,Auto" VerticalAlignment="Center" Margin="0,0,0,8">
         <TextBox x:Name="AnchorBox" KeyDown="OnAnchorKey" MinWidth="220" Text="{Binding AnchorText, Mode=TwoWay}" PlaceholderText="{Binding AnchorHint}"
                  AutomationProperties.Name="{Binding AnchorLabel}" />
@@ -113,8 +113,6 @@
           <RadioButton x:Name="ViewFilesButton" GroupName="ContextView" Classes="segment" IsChecked="{Binding ShowFiles, Mode=TwoWay}" Content="{Binding ViewFilesWord}" AutomationProperties.Name="{Binding ViewFilesWord}" />
         </StackPanel>
       </Border>
-      <TextBlock x:Name="ContextCoverage" Grid.Column="3" Classes="caption subtle" Text="{Binding Coverage}" IsVisible="{Binding HasCoverage}" TextWrapping="Wrap" MaxWidth="420"
-                 VerticalAlignment="Center" Margin="16,0,0,8" AutomationProperties.Name="{Binding Coverage}" />
     </Grid>
 
     <Grid Grid.Row="2" RowDefinitions="Auto,*,Auto" RowSpacing="8">
@@ -152,6 +150,9 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
+        <!-- The coverage sentence on its own line under the control row, as wide as the page: in a 420 px column beside the controls its last words wrapped alone (#3900). -->
+        <TextBlock x:Name="ContextCoverage" Classes="caption subtle" Text="{Binding Coverage}" IsVisible="{Binding HasCoverage}" TextWrapping="Wrap"
+                   AutomationProperties.Name="{Binding Coverage}" />
         <TextBlock x:Name="ConceptsNote" Classes="caption subtle" Text="{Binding Concepts.Note}" ToolTip.Tip="{Binding Concepts.NoteTip}" IsVisible="{Binding Concepts.HasNote}" TextWrapping="Wrap"
                    AutomationProperties.Name="{Binding Concepts.Note}" />
         <StackPanel x:Name="ContextAnswerFiles" IsVisible="{Binding HasAnswerFiles}" Spacing="4" AutomationProperties.Name="{Binding AnswerFilesName}">

@@ -1,4 +1,5 @@
 using Aw.Context.Core.Concepts;
+using Aw.Context.Core.WholeMap;
 
 namespace Aw.Context.Infrastructure.ConceptAnswers;
 
@@ -18,6 +19,7 @@ namespace Aw.Context.Infrastructure.ConceptAnswers;
 /// <param name="Code">The view's error code, null for an answer.</param>
 /// <param name="Next">The next page's cursor, null on the last page.</param>
 /// <param name="PagesInNoConcept">The view's count of pages in no concept, or null.</param>
+/// <param name="Repos">The repos the map holds nodes of (#3696), or null in a body kept before them.</param>
 internal sealed record StoredConcepts(
     int ApiVersion,
     string? Repo,
@@ -29,16 +31,17 @@ internal sealed record StoredConcepts(
     IReadOnlyDictionary<string, IReadOnlyList<string>> CodePaths,
     string? Code = null,
     string? Next = null,
-    int? PagesInNoConcept = null)
+    int? PagesInNoConcept = null,
+    IReadOnlyList<WholeMapRepo>? Repos = null)
 {
     /// <summary>The body for a kept answer.</summary>
     internal static StoredConcepts Of(KeptConcepts kept)
     {
         var view = kept.View;
-        return new(view.ApiVersion, view.Repo, view.MapVersion, view.State, view.Concepts, view.Other, view.Links, kept.Code, view.Code, view.Next, view.PagesInNoConcept);
+        return new(view.ApiVersion, view.Repo, view.MapVersion, view.State, view.Concepts, view.Other, view.Links, kept.Code, view.Code, view.Next, view.PagesInNoConcept, view.Repos);
     }
 
     /// <summary>The kept answer this body holds.</summary>
     internal KeptConcepts Kept() =>
-        new(new ConceptsView(ApiVersion, Repo, MapVersion, State, Code, Concepts, Other, Links, Next) { PagesInNoConcept = PagesInNoConcept }, CodePaths);
+        new(new ConceptsView(ApiVersion, Repo, MapVersion, State, Code, Concepts, Other, Links, Next) { PagesInNoConcept = PagesInNoConcept, Repos = Repos }, CodePaths);
 }

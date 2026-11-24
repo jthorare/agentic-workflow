@@ -105,6 +105,7 @@
       "pollSeconds",
       "providers",
       "tmuxSockets",
+      "scope",
       "claudeSessionsDir"
     ]
   },
@@ -615,6 +616,13 @@
           },
           "uniqueItems": true,
           "description": "Extra absolute tmux socket paths to read besides the ones found from processes; default []."
+        },
+        "scope": {
+          "enum": [
+            "all",
+            "own"
+          ],
+          "description": "Which sessions discovery lists: all (default) or own, only sessions on Sindri's own tmux sockets and sessions Sindri launched."
         },
         "claudeSessionsDir": {
           "type": "string",

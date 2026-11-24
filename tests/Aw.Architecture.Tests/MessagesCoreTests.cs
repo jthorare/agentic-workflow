@@ -14,13 +14,16 @@ public sealed class MessagesCoreTests
 
     private static readonly string[] _allowed = ["System.", "Microsoft.CodeAnalysis.", "Aw.Kernel.", Namespace + "."];
 
+    // one type by its exact name: the error catalogue (its Messages codes, SND-MSG-*), so a bad ts is a Result, never a throw (M1b review)
+    private const string ErrorCatalogue = "Aw.Sindri.Core.SindriErrors";
+
     [Fact]
     public void Core_messages_uses_only_the_bcl_the_kernel_and_itself()
     {
         var edges = Production.Edges.Where(static e => TypeNames.NamespaceOf(e.Origin) == Namespace).ToList();
 
         Assert.NotEmpty(edges);   // why: the rule must not pass for want of the namespace
-        Verify.None(edges.Where(static e => !_allowed.Any(a => e.Target.FullName.StartsWith(a, StringComparison.Ordinal)))
+        Verify.None(edges.Where(static e => !string.Equals(e.Target.FullName, ErrorCatalogue, StringComparison.Ordinal) && !_allowed.Any(a => e.Target.FullName.StartsWith(a, StringComparison.Ordinal)))
             .Select(static e => new Violation(RuleId, e.Text, "keep Core.Messages pure: move the dependency behind a port, or widen this rule's list in review")));
     }
 }

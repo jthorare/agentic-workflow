@@ -10,4 +10,7 @@ internal sealed class PausedServices(params ServiceName[] names) : IServicePause
 {
     public ValueTask<Result<IReadOnlySet<ServiceName>>> Paused(CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success<IReadOnlySet<ServiceName>>(new HashSet<ServiceName>(names)));
+
+    public ValueTask<Result<DateTimeOffset?>> ResumedAt(ServiceName service, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success<DateTimeOffset?>(value: null));
 }

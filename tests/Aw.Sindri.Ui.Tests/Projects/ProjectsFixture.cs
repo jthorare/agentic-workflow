@@ -21,12 +21,23 @@ internal sealed class ProjectsFixture
 
     internal void Serve(JsonNode list) => Server.ProjectsAnswer = new RouteAnswer(HttpStatusCode.OK, list.ToJsonString());
 
-    internal ProjectsPageViewModel Page() => new(Server, Clock);
-
-    /// <summary>A page that is shown and has read the list once.</summary>
-    internal async Task<ProjectsPageViewModel> Shown(CancellationToken token)
+    /// <summary>A page on the Projects (All) view. The goldens serve blockedOnYou, so a page whose view the owner never picked opens on Needs me with no rows; <paramref name="defaultView"/> keeps the page bare for the tests about that default.</summary>
+    internal ProjectsPageViewModel Page(bool defaultView = false)
     {
-        var page = Page();
+        var page = new ProjectsPageViewModel(Server, Clock);
+        if (!defaultView)
+        {
+            page.SetView(ProjectView.All);
+        }
+
+        return page;
+    }
+
+    /// <summary>A page that is shown and has read the list once, on the Projects view unless <paramref name="defaultView"/>. Grouped by state unless asked otherwise: the goldens carry health and PR lists, so grouped by health the cards would sit in groups the state tests do not expect.</summary>
+    internal async Task<ProjectsPageViewModel> Shown(CancellationToken token, ProjectGrouping grouping = ProjectGrouping.State, bool defaultView = false)
+    {
+        var page = Page(defaultView);
+        page.SetGrouping(grouping);
         page.SetShown(shown: true);
         await page.Refresh(Url, token);
         return page;

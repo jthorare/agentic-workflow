@@ -42,7 +42,8 @@ internal sealed class RowGroupHeader : Border
         _ = SetValue(BackgroundProperty, Brushes.Transparent, Avalonia.Data.BindingPriority.Style);   // a border with no fill is not hit-testable: the padding left of the chevron would swallow the click. Style priority, so the sticky copy's template fill (Canvas) wins
         Focusable = true;   // the cursor can stand on a header: Left folds, Right unfolds
         _chevron.HorizontalAlignment = HorizontalAlignment.Center;
-        _chevronBox = new Border { Name = "PART_Chevron", Width = ChevronBox, Height = ChevronBox, Background = Brushes.Transparent, Cursor = new Cursor(StandardCursorType.Hand), Child = _chevron };
+        // #3733 frames: the 28 px box hangs 9 px into the inset, so the chevron centres on x 29 and the heading starts at x 42.
+        _chevronBox = new Border { Margin = new Thickness(-9, 0, -1, 0), Name = "PART_Chevron", Width = ChevronBox, Height = ChevronBox, Background = Brushes.Transparent, Cursor = new Cursor(StandardCursorType.Hand), Child = _chevron };
         _count.Margin = new Thickness(6, 0, 0, 0);
         _summary.HorizontalAlignment = HorizontalAlignment.Right;
         _summary.TextAlignment = TextAlignment.Right;

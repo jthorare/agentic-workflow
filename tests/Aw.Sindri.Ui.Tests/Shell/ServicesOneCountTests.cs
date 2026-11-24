@@ -19,8 +19,8 @@ public sealed class ServicesOneCountTests
 
         await system.Show(A.Status(profile: Invalid));
 
-        Assert.Equal(("17 scheduled", 17, true), (system.Vm.ServicesScheduled, system.Vm.ServiceCard.Count, system.Vm.HasServices));
-        Assert.Equal(Labels.ServicesProfileWontLoadKeepsLast, system.Vm.ServicesNote);   // the fixture's 17 rows hold profile services
+        Assert.Equal(("20 scheduled", 20, true), (system.Vm.ServicesScheduled, system.Vm.ServiceCard.Count, system.Vm.HasServices));
+        Assert.Equal(Labels.ServicesProfileWontLoadKeepsLast, system.Vm.ServicesNote);   // the fixture's 20 rows hold profile services
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public sealed class ServicesOneCountTests
     {
         var system = new SystemTestHarness();
 
-        await system.Show(A.Status() with { Services = [] });   // the status counts none, the services read lists 17
+        await system.Show(A.Status() with { Services = [] });   // the status counts none, the services read lists 20
 
         Assert.True(system.Vm.HasServices);
         Assert.Equal(string.Empty, system.Vm.ServicesNote);

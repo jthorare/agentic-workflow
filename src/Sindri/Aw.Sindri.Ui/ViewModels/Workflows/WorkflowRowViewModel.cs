@@ -8,6 +8,7 @@ internal sealed class WorkflowRowViewModel : ObservableObject
     internal WorkflowRowViewModel(WorkflowRowView row, TimeProvider clock)
     {
         Slug = row.Slug;
+        NextRunAt = row.NextRunAt;
         NameText = row.Name;
         IdText = string.Equals(row.Slug, row.Name, StringComparison.Ordinal) ? string.Empty : row.Slug;
         IsActive = row.ActiveRevision is not null;
@@ -25,6 +26,9 @@ internal sealed class WorkflowRowViewModel : ObservableObject
 
     /// <summary>The name commands use.</summary>
     public string Slug { get; }
+
+    /// <summary>When the workflow's schedule fires next, as the list serves it; null when none is known (#3758).</summary>
+    internal DateTimeOffset? NextRunAt { get; }
 
     /// <summary>The name for people.</summary>
     public string NameText { get; }

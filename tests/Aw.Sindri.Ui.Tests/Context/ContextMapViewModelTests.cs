@@ -158,7 +158,9 @@ public sealed class ContextMapViewModelTests
     {
         var node = GoldenFiles.Node("context-lenses", "map-tabs");
         edit(node);
-        return AwJson.Deserialize<LensesView>(Encoding.UTF8.GetBytes(node.ToJsonString()), SindriApiClient.Json).Value;
+        var read = AwJson.Deserialize<LensesView>(Encoding.UTF8.GetBytes(node.ToJsonString()), SindriApiClient.Json);
+        Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : string.Empty);
+        return read.Value;
     }
 
     [Theory]
@@ -174,7 +176,7 @@ public sealed class ContextMapViewModelTests
     {
         var map = Map(node => node["bands"]!["code"]!["symbols"]!["reason"] = reason);   // the golden's symbols are unavailable
 
-        Assert.EndsWith(" " + why, map.Coverage, StringComparison.Ordinal);
+        Assert.EndsWith(" " + why + " See Code index on the System page.", map.Coverage, StringComparison.Ordinal);   // the reason, then where to look (#4122)
         Assert.Equal(string.Equals(why, Labels.ContextMapNamesNotIndexed, StringComparison.Ordinal) ? Labels.ContextMapNamesDetail : why, NamesDetail.For(new SymbolsView("unavailable", reason, [])));
     }
 }

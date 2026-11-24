@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using Aw.Kernel;
 using Aw.Redaction;
 using Aw.Transcripts.Core;
@@ -30,7 +31,7 @@ internal sealed class TranscriptFileReader(IRedactor redactor)
                     number++;
                     if (!string.IsNullOrWhiteSpace(line))
                     {
-                        reader.Read(number, line, parsed);
+                        ReadLine(reader, number, line, parsed);
                     }
                 }
             }
@@ -41,6 +42,19 @@ internal sealed class TranscriptFileReader(IRedactor redactor)
         }
 
         return parsed;
+    }
+
+    // A pattern that runs out of time on one hostile line (Cursor's prompt and timestamp patterns, 1 s) skips that line, never the file or the list.
+    private static void ReadLine(ILineReader reader, int number, string line, ParsedFile parsed)
+    {
+        try
+        {
+            reader.Read(number, line, parsed);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            parsed.SkippedLines++;
+        }
     }
 
     private ILineReader LineReader(TranscriptFile file) => file.Provider switch
