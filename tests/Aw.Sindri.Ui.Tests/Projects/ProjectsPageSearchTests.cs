@@ -56,6 +56,42 @@ public sealed class ProjectsPageSearchTests
     }
 
     [Fact]
+    public async Task Search_text_stays_and_still_filters_when_the_view_changes()
+    {
+        var page = await _f.Shown(Token, ProjectGrouping.None);
+        page.SearchText = "KITCHEN";
+
+        page.SetView(ProjectView.MyWork);
+
+        Assert.Equal("KITCHEN", page.SearchText);
+        Assert.Equal(["Kitchen"], Rows(page), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task Search_text_is_cleared_when_the_page_is_left()
+    {
+        var page = await _f.Shown(Token, ProjectGrouping.None);
+        page.SearchText = "KITCHEN";
+
+        page.SetShown(shown: false);
+        page.SetShown(shown: true);
+        await page.CatchUp;
+
+        Assert.Equal((string.Empty, false, 3), (page.SearchText, page.IsSearching, Rows(page).Count));
+    }
+
+    [Fact]
+    public async Task A_search_that_matches_nothing_in_another_view_shows_the_search_empty_state()
+    {
+        var page = await _f.Shown(Token, ProjectGrouping.None);
+        page.SearchText = "xyz";
+
+        page.SetView(ProjectView.MyWork);
+
+        Assert.Equal((true, "No project matches “xyz”"), (page.IsSearchEmpty, page.SearchEmptyTitle));
+    }
+
+    [Fact]
     public async Task Slash_asks_for_the_search_field_and_the_field_shows_its_own_keys()
     {
         var page = await _f.Shown(Token, ProjectGrouping.None);
