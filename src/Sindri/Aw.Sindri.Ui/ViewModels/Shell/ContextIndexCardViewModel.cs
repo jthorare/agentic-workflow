@@ -28,6 +28,9 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
     /// <summary>The state in a word at the heading's right: "ok" or "needs a look"; empty with no lines.</summary>
     public string Word { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The mark beside <see cref="Word"/> (#4129): the ok check, the attention mark for "needs a look", none with no lines.</summary>
+    public StateGlyph Glyph { get; private set => Set(ref field, value); } = StateGlyph.None;
+
     /// <summary>The embedding backlog as a bar: records with a vector against all of them; null unless both counts are known and there is at least one record.</summary>
     public ContextBacklog? Backlog { get; private set => Set(ref field, value); }
 
@@ -63,6 +66,7 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
             Backlog = null;
             OnChanged(nameof(HasBacklog));
             Word = string.Empty;
+            Glyph = StateGlyph.None;
             Show(Labels.ContextIndexUnreadable);
             return;
         }
@@ -73,6 +77,7 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
         Lines = sources.Count == 0 ? [] : [.. sources.Select(Line).Concat(ConceptLines(concepts, Backlog is not null)).Concat(StoreLines(store)).Select(t => new ContextIndexLine(t))];
         var fine = sources.All(static s => !s.NeedsLook) && concepts?.Code is null && (store is null || Is(store.State, "ok"));
         Word = sources.Count == 0 ? string.Empty : fine ? Labels.CodeIndexOk : Labels.CodeIndexNeedsLook;
+        Glyph = sources.Count == 0 ? StateGlyph.None : fine ? StateGlyph.Ok : StateGlyph.Warning;
         Show(sources.Count == 0 ? Labels.ContextIndexNone : string.Empty);
     }
 
