@@ -17,13 +17,6 @@ internal static partial class Labels
     /// <summary>The map breadcrumb's accessible name.</summary>
     internal const string ContextMapCrumbsName = "Where you are on the map";
 
-    /// <summary>What a feature cut at the cap shows.</summary>
-    /// <param name="shown">How many items are drawn.</param>
-    /// <param name="total">How many the feature holds.</param>
-    /// <returns>"Showing 500 of 640 items; the rest are not shown."</returns>
-    internal static string ContextWholeAreaTruncated(int shown, int total) =>
-        string.Create(CultureInfo.InvariantCulture, $"Showing {shown} of {total} items; the rest are not shown.");
-
     /// <summary>The paging line over an open area's list.</summary>
     /// <param name="page">The page on screen.</param>
     /// <param name="pages">How many pages there are.</param>

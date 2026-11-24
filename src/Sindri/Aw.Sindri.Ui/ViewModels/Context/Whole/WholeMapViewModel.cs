@@ -226,7 +226,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
         Answer = answer;
         (ListLoading, IsListFailed) = (false, false);
         Geometry = null;   // the list draws from the answer now; the canvas follows once its layout is done, off the UI thread
-        Stage = WholeDrillIn.StageFor(answer.Nodes?.Count ?? 0);
+        Stage = opened.Pages > 1 ? WholeStage.List : WholeDrillIn.StageFor(answer.Nodes?.Count ?? 0);   // every page of a paged area is the list: the pager lives there, so a short last page keeps its way back
         (AreaKey, AreaPage, AreaPages) = (opened.Key, opened.Page, opened.Pages);
         ForgetHighlight();
         var label = answer.Areas.FirstOrDefault(a => string.Equals(a.Key, opened.Key, StringComparison.Ordinal))?.Label ?? opened.Key;

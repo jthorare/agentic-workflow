@@ -81,6 +81,7 @@ internal sealed partial class ContextPageViewModel
         }
 
         var generation = _openGeneration;   // a first read or a repo switch that begins while this one is in flight makes its answer stale (#3697)
+        _listRead++;   // an area page or concept list still being read is for the map being replaced
         Whole.Loading();
         ChangedWhole();
         try

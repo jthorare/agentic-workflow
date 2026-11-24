@@ -35,6 +35,22 @@ public sealed class WholeDrillInStageTests
     }
 
     [Fact]
+    public void A_short_last_page_of_a_paged_area_stays_the_list_with_its_pager_and_the_bracket_key_goes_back()
+    {
+        var map = new WholeMapViewModel(() => _utc);
+        map.Show(WholeMapLayoutTests.Draft("areas-over-budget"));
+        var asked = new List<int>();
+        map.AreaPageRequested += (_, e) => asked.Add(e.Value);
+        var last = Area(10);
+
+        map.ShowArea(last with { Area = last.Area! with { Page = 2, Pages = 2, Counts = last.Area!.Counts with { Nodes = 60 } } });
+
+        Assert.Equal((WholeStage.List, true, true), (map.Stage, map.ShowAreaList, map.CanPreviousPage));   // why: the pager sits on the list, so a canvas here strands page 2
+        Assert.True(map.PageKey(next: false));
+        Assert.Equal([1], asked);
+    }
+
+    [Fact]
     public async Task A_click_draws_the_list_from_the_answer_first_and_the_canvas_after_the_layout()
     {
         var map = new WholeMapViewModel(() => _utc);

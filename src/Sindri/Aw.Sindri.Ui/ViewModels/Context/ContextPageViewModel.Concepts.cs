@@ -47,6 +47,7 @@ internal sealed partial class ContextPageViewModel
         }
 
         var generation = ++_openGeneration;
+        _listRead++;   // an area page still being read is for the map being left (a repo switch, a first read)
         if (Whole.IsLoading)
         {
             Whole.Quiet();   // an older whole-map read still in flight is dropped when it ends, so it must not leave "Reading the map" behind

@@ -102,10 +102,10 @@ internal sealed partial class WholeMapViewModel
         FitRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>The scales the stage allows for a map whose whole fits at <paramref name="fit"/>: out to <see cref="WholeDrillIn.MinZoom"/> (50%, never lower: #3674, whatever the fit), in to <see cref="MaxScale"/>.</summary>
-    /// <param name="fit">The scale that shows the whole world.</param>
+    /// <summary>The scales the stage allows, whatever scale fits the whole map: out to <see cref="WholeDrillIn.MinZoom"/> (50%, never lower and never higher: #3674), in to <see cref="MaxScale"/>.</summary>
+    /// <param name="_">The scale that shows the whole world; the range does not depend on it.</param>
     /// <returns>The smallest and the largest scale.</returns>
-    internal static (double Min, double Max) ZoomLimits(double fit) => (Math.Max(WholeDrillIn.MinZoom, Math.Min(fit, 0)), MaxScale);
+    internal static (double Min, double Max) ZoomLimits(double _) => (WholeDrillIn.MinZoom, MaxScale);
 
     /// <summary>Whether Zoom in can act.</summary>
     /// <param name="scale">The zoom now.</param>
