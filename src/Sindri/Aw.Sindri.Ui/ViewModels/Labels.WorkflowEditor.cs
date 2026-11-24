@@ -73,5 +73,5 @@ internal static partial class Labels
     /// <summary>The line under a new step's first empty required field: why Save is off (#4330).</summary>
     /// <param name="name">The field's caption, without "(required)".</param>
     /// <returns>The words.</returns>
-    internal static string WfFieldNeeded(string name) => $"Fill in {name} to save.";
+    internal static string WfFieldNeededToSave(string name) => $"Fill in {name} to save.";
 }

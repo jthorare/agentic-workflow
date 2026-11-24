@@ -113,5 +113,5 @@ internal sealed class ConfigFieldViewModel : ObservableObject
 
     /// <summary>Shows or clears the "why Save is off" line.</summary>
     /// <param name="needed">True on the first empty required field of a new step.</param>
-    internal void MarkNeeded(bool needed) => NeedText = needed ? Labels.WfFieldNeeded(_label) : string.Empty;
+    internal void MarkNeeded(bool needed) => NeedText = needed ? Labels.WfFieldNeededToSave(_label) : string.Empty;
 }
