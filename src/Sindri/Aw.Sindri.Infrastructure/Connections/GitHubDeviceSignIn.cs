@@ -20,7 +20,8 @@ internal sealed class GitHubDeviceSignIn(HttpClient http, TimeProvider clock) : 
     private const string DeviceGrant = "urn:ietf:params:oauth:grant-type:device_code";
     private static readonly TimeSpan _slowDownStep = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan _defaultInterval = TimeSpan.FromSeconds(5);
-    private static readonly string[] _appRefused = ["device_flow_disabled", "unauthorized_client", "incorrect_client_credentials", "unsupported_grant_type"];
+    private static readonly string[] _appBlocked = ["unauthorized_client"];
+    private static readonly string[] _clientWrong = ["device_flow_disabled", "incorrect_client_credentials", "unsupported_grant_type"];
 
     /// <inheritdoc />
     public async ValueTask<Result<DeviceAuthorization>> Start(ConnectionPreset preset, string client, IReadOnlyList<string> scopes, CancellationToken cancellationToken)
@@ -50,12 +51,13 @@ internal sealed class GitHubDeviceSignIn(HttpClient http, TimeProvider clock) : 
         var interval = authorization.Interval;
         while (true)
         {
-            if (clock.GetUtcNow() + interval > authorization.ExpiresAt)
+            var left = authorization.ExpiresAt - clock.GetUtcNow();
+            if (left <= TimeSpan.Zero)
             {
                 return Expired();
             }
 
-            await Task.Delay(interval, clock, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(interval < left ? interval : left, clock, cancellationToken).ConfigureAwait(false);   // the last poll lands on the expiry, so a yes in the final seconds still counts
             var answer = await Post(endpoint, [new("client_id", client), new("device_code", authorization.DeviceCode), new("grant_type", DeviceGrant)], cancellationToken).ConfigureAwait(false);
             if (answer.IsError)
             {
@@ -131,11 +133,18 @@ internal sealed class GitHubDeviceSignIn(HttpClient http, TimeProvider clock) : 
         }
     }
 
-    // GitHub's own error code, from a fixed word list, says why; its description text is not echoed.
-    private static Error Refused(string? error) =>
-        error is not null && _appRefused.Contains(error, StringComparer.Ordinal)
-            ? SindriErrors.SetupOauthBlocked.With($"GitHub refused Sindri's app ({error}). Paste a token instead (fix: sindri setup connect github --token-env NAME)")
+    // GitHub's own error code, from a fixed word list, says why; its description text is not echoed. A wrong client id or an app without Device Flow is the owner's app setup (SND-SETUP-014's family), not an org block.
+    private static Error Refused(string? error)
+    {
+        if (error is not null && _appBlocked.Contains(error, StringComparer.Ordinal))
+        {
+            return SindriErrors.SetupOauthBlocked.With($"GitHub refused Sindri's app ({error}). Paste a token instead (fix: sindri setup connect github --token-env NAME)");
+        }
+
+        return error is not null && _clientWrong.Contains(error, StringComparer.Ordinal)
+            ? SindriErrors.SetupNoClientId.With($"GitHub doesn't take this client id ({error}): the id in setup.oauth.github is wrong or the app has no Device Flow. Paste a token instead (fix: sindri setup connect github --token-env NAME)")
             : SindriErrors.ConnectionProviderChanged.With("GitHub's sign-in answered with an error Sindri doesn't know");
+    }
 
     private static Error Expired() => SindriErrors.ConnectionSignInTimeout.With("The code expired before GitHub saw it (fix: get a new code)");
 
