@@ -71,7 +71,7 @@ internal static partial class WholeMapLayout
             var (from, to) = (tiles.First(t => string.Equals(t.Key, e.From, StringComparison.Ordinal)).Rect, tiles.First(t => string.Equals(t.Key, e.To, StringComparison.Ordinal)).Rect);
             return new PlacedAreaEdge(e.From, e.To, e.Type, e.Count, e.Confirmed, from.CenterX, Margin / 2, to.CenterX, Margin / 2);
         }).ToList();
-        var world = new WholeRect(0, 0, (2 * Margin) + (Math.Max(1, order.Count) * (OverviewWidth + ColumnGutter)) - ColumnGutter, height);
+        var world = new WholeRect(0, 0, Math.Max(MinWorldWidth, (2 * Margin) + (Math.Max(1, order.Count) * (OverviewWidth + ColumnGutter)) - ColumnGutter), height);
         return new WholeMapGeometry(world, ByArea: true, order, [], [], tiles, [], edges, extents);
     }
 

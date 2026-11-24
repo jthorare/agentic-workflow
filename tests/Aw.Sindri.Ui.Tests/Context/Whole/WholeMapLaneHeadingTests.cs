@@ -22,5 +22,13 @@ public sealed class WholeMapLaneHeadingTests
     }
 
     [Fact]
+    public void The_two_feature_map_is_never_narrower_than_the_world_floor()
+    {
+        var world = WholeMapLayout.Place(WholeMapLayoutTests.Draft("nodes-small")).World.Width;
+
+        Assert.True(world >= WholeMapLayout.MinWorldWidth, string.Create(CultureInfo.InvariantCulture, $"{world} < {WholeMapLayout.MinWorldWidth}"));
+    }
+
+    [Fact]
     public void A_lane_too_narrow_for_its_heading_still_gives_80() => Assert.Equal(80, WholeMapLayout.LaneMetaWidth(100, 90));
 }
