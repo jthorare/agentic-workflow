@@ -82,7 +82,10 @@ Limits. The real launcher keeps its sockets in tmux's default folder today, so u
 counts only through its launch record. The check reads this home's launch files once per pass, and an unreadable folder
 means no launched row. Paths are compared as text; a symlinked home folder is not resolved.
 
-An unknown value fails closed. `"scope": "onw"`, or any value but `"all"` in a `sessions` section that is otherwise
+A scratch home's launcher.json is read from `AW_LAUNCHER_CONFIG`, else from the state directory (`AW_STATE_DIR`), never
+from `AW_SINDRI_HOME`. A scratch home that should list only its own sessions must set `AW_LAUNCHER_CONFIG` to its own file.
+
+An unknown value fails closed. `"scope": null` counts as an unknown value. `"scope": "onw"`, or any value but `"all"` in a `sessions` section that is otherwise
 invalid, is read as `own` and shows a problem row (`SND-LAUNCH-011`, 'sessions.scope is 'all' or 'own''). A launcher.json
 that is not valid JSON or has no `"schema": 1` still gives the defaults (`all`).
 

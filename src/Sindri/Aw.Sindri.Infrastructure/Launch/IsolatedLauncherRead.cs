@@ -92,7 +92,7 @@ internal static class IsolatedLauncherRead
         }
 
         var section = Section<SessionsSection>(element);
-        if (section is not null && LauncherConfigFile.Sessions(section) is null)
+        if (section is not null && LauncherConfigFile.Sessions(section) is null && !ScopeIsNull(element))
         {
             return section;
         }
@@ -110,6 +110,10 @@ internal static class IsolatedLauncherRead
         var stayOwn = written && !string.Equals(scope, "all", StringComparison.Ordinal);   // a typo never widens the scope: anything but an explicit "all" holds as "own"
         return stayOff || stayOwn ? new SessionsSection { Enabled = stayOff ? false : null, Scope = stayOwn ? "own" : null } : null;
     }
+
+    /// <summary>An explicit "scope": null; the typed read can't tell it from an absent key, and it reads like any other wrong value (own, SND-LAUNCH-011).</summary>
+    private static bool ScopeIsNull(JsonElement section) =>
+        section.ValueKind == JsonValueKind.Object && section.TryGetProperty("scope", out var value) && value.ValueKind == JsonValueKind.Null;
 
     private static (bool Written, string? Text) WrittenScope(JsonElement section)
     {

@@ -18,7 +18,10 @@ internal static class SessionProblems
 
     internal static SessionProblem TestOverride { get; } = new("collector", SindriErrors.SessionsTestOverride.Code, "A test override is set in this run: the sessions shown may be fixtures");
 
-    internal static SessionProblem Launcher { get; } = new("launcher.json", SindriErrors.LauncherInvalid.Code, "launcher.json isn't valid; the built-in agents and default settings are used");
+    /// <summary>The launcher.json problem row; the text says which scope is in force, because a scope typo holds as 'own', never the defaults.</summary>
+    internal static SessionProblem Launcher(SessionScope scope) => new("launcher.json", SindriErrors.LauncherInvalid.Code, scope == SessionScope.Own
+        ? "launcher.json isn't valid; the built-in agents are used and only sessions this Sindri started are listed (scope: own)"
+        : "launcher.json isn't valid; the built-in agents and default settings are used");
 
     internal static SessionProblem Source(string source) => new(source, SindriErrors.SessionSourceFailed.Code, $"The {source} source couldn't be read in the last pass");
 
