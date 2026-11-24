@@ -16,6 +16,16 @@ FAILS=0
 bad() { FAILS=$((FAILS + 1)); echo "FAIL: $1"; }
 ok()  { echo "PASS: $1"; }
 
+# On macOS (the CI runner) a condition parts 2-4 fake can be the box's own, and scripts/ci/bash-tests.sh already runs every suite
+# below in its pool on that same PATH and TMPDIR scheme. A rerun under the faked condition then repeats that run: ~7 min of the
+# serial phase on the runner (#4133). Each native_* is true only when the condition is real here, checked at run time; anything
+# else (Linux, a GNU tool first on PATH, a timeout on PATH) keeps the rerun.
+darwin() { [ "$(uname -s)" = Darwin ]; }
+native_bsd_tools() { darwin && ! sed --version > /dev/null 2>&1 && ! touch --version > /dev/null 2>&1 && ! find --version > /dev/null 2>&1; }
+native_no_setsid_timeout() { darwin && ! command -v setsid > /dev/null 2>&1 && ! command -v timeout > /dev/null 2>&1 && ! command -v gtimeout > /dev/null 2>&1; }
+native_linked_tmp_bsd_wc() { local t="${TMPDIR:-/tmp}"; darwin && ! wc --version > /dev/null 2>&1 && [ "$(cd "$t" && pwd -P)" != "$(cd "$t" && pwd -L)" ]; }
+native_skip() { echo "SKIP: $1 (native on this box; bash-tests.sh runs the suite itself)"; }
+
 # scan LABEL ERE: no non-comment line of FILES matches ERE
 scan() {
   local label="$1" re="$2" hits
@@ -54,6 +64,7 @@ SH
 chmod +x "$SHIM/sed" "$SHIM/touch" "$SHIM/find"
 
 for s in scripts/tests/check-skill-requires.test.sh scripts/tests/check-skill-blocks.test.sh scripts/tests/eval-av-fakes.test.sh config/hooks/tests/meta-hooks.test.sh scripts/tests/meta-start-lock-guard.test.sh; do
+  if native_bsd_tools; then native_skip "$s with BSD-style sed, touch and find"; continue; fi
   if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX PATH="$SHIM:$PATH" bash "$s" 2>&1)"; then
     ok "$s passes with BSD-style sed, touch and find"
   else
@@ -73,6 +84,7 @@ for d in "${path_dirs[@]}"; do
   done
 done
 for s in scripts/tests/heavy.test.sh scripts/tests/install-cs.test.sh; do
+  if native_no_setsid_timeout; then native_skip "$s without setsid and timeout on PATH"; continue; fi
   if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX PATH="$NOTOOLS" bash "$s" 2>&1)"; then
     ok "$s passes without setsid and timeout on PATH"
   else
@@ -115,7 +127,9 @@ chmod +x "$WCSHIM/wc"
 # 4b. /var -> /private/var: mktemp -d under a symlinked TMPDIR, as macOS's /var/folders is (skill-evals: "AW_DIR differs"),
 #     with a wc that pads its count as BSD's does (5e).
 LINKTMP="$(mktemp -u "${TMPDIR:-/tmp}/parity-linktmp.XXXXXX")"; REALTMP="$(mktemp -d)"; ln -s "$REALTMP" "$LINKTMP"
-if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX TMPDIR="$LINKTMP" PATH="$WCSHIM:$PATH" bash scripts/tests/skill-evals.test.sh 2>&1)"; then
+if native_linked_tmp_bsd_wc; then
+  native_skip "skill-evals.test.sh with TMPDIR behind a symlink and BSD wc's padded counts"
+elif out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX TMPDIR="$LINKTMP" PATH="$WCSHIM:$PATH" bash scripts/tests/skill-evals.test.sh 2>&1)"; then
   ok "skill-evals.test.sh passes with TMPDIR behind a symlink (macOS /var -> /private/var) and BSD wc's padded counts"
 else
   bad "skill-evals.test.sh fails with TMPDIR behind a symlink (macOS /var -> /private/var) and BSD wc's padded counts"
@@ -124,7 +138,9 @@ fi
 command rm -f "$LINKTMP" "$WCSHIM/wc"; rmdir "$REALTMP" "$WCSHIM" 2> /dev/null
 # 4c. heavy-cap-reserve on a PATH without timeout: test-portable.sh's fallback timeout must not leave its sleep holding
 #     the caller's stdout ("reserve 1, both slots busy, timeout 2 gives up inside 6 s": got "none slow 10s").
-if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX PATH="$NOTOOLS" bash scripts/tests/heavy-cap-reserve.test.sh 2>&1)"; then
+if native_no_setsid_timeout; then
+  native_skip "heavy-cap-reserve.test.sh without setsid and timeout on PATH"
+elif out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX PATH="$NOTOOLS" bash scripts/tests/heavy-cap-reserve.test.sh 2>&1)"; then
   ok "heavy-cap-reserve.test.sh passes without setsid and timeout on PATH"
 else
   bad "heavy-cap-reserve.test.sh fails without setsid and timeout on PATH"
