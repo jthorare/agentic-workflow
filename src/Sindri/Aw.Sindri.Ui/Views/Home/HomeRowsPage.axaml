@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:hvm="using:Aw.Sindri.Ui.ViewModels.Home"
+             xmlns:rows="using:Aw.Sindri.Ui.Views.Controls.Rows"
+             x:Class="Aw.Sindri.Ui.Views.Home.HomeRowsPage"
+             x:DataType="hvm:HomeRowsViewModel">
+  <!-- Home as rows (home spec §7.1, U1; #3733 frames): one 48 px header with the title and the five tabs as pills with their open counts (the Projects page's
+       header), then the selected tab's rows in the API's ranked order, grouped Needs you and Moving. A tab with no rows keeps the Needs you head with its 0
+       and shows its one plain line under it (§7.3). The list scrolls itself. Tokens only. -->
+  <UserControl.Styles>
+    <!-- The tabs: one segmented control; the tab shown sits on Surface3 with its word in ink. A pill is 24 px: the 18 px caption line and 3 px above and below
+         (#3733 frame); the word (weight 500) and its count share that line, so they share a baseline. -->
+    <Style Selector="ToggleButton.home-tab">
+      <Setter Property="MinHeight" Value="0" />
+      <Setter Property="Padding" Value="10,3" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
+    </Style>
+    <Style Selector="ToggleButton.home-tab /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="Transparent" /></Style>
+    <Style Selector="ToggleButton.home-tab:checked /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="{DynamicResource Brush.Surface3}" /></Style>
+    <Style Selector="ToggleButton.home-tab:pointerover /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="{DynamicResource Brush.Surface2}" /></Style>
+    <Style Selector="ToggleButton.home-tab:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="{DynamicResource Brush.Surface3}" /></Style>
+    <Style Selector="ToggleButton.home-tab TextBlock.tab-word">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+      <Setter Property="FontWeight" Value="{DynamicResource Type.BodyStrong.Weight}" />
+    </Style>
+    <Style Selector="ToggleButton.home-tab:checked TextBlock.tab-word"><Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" /></Style>
+  </UserControl.Styles>
+  <Grid x:Name="HomeRows" RowDefinitions="48,*" Background="{DynamicResource Brush.Canvas}">
+    <Border x:Name="HomeRowsHeader" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Brush.Hairline}" Padding="{StaticResource Row.Inset.Thickness}">
+      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <TextBlock x:Name="HomeRowsTitle" Classes="section-title" Text="{x:Static hvm:HomeRowsViewModel.Title}" VerticalAlignment="Center" AutomationProperties.Name="{x:Static hvm:HomeRowsViewModel.Title}" />
+        <ItemsControl x:Name="HomeTabs" Margin="16,0,0,0" ItemsSource="{Binding Tabs}" VerticalAlignment="Center" AutomationProperties.Name="{x:Static hvm:HomeRowsViewModel.TabsName}"
+                      AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Tab">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="2" /></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="hvm:HomeTab">
+              <ToggleButton Classes="home-tab" IsChecked="{Binding IsSelected, Mode=OneWay}" Click="OnTab" AutomationProperties.Name="{Binding Name}"
+                            AutomationProperties.ControlTypeOverride="TabItem">
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                  <TextBlock Classes="caption tab-word" Text="{Binding Label}" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBlock Classes="caption subtle" Text="{Binding CountText}" AutomationProperties.AccessibilityView="Raw" />
+                </StackPanel>
+              </ToggleButton>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <rows:RowList x:Name="HomeRowList" Grid.Row="1" ItemsSource="{Binding Groups}" Columns="{x:Static hvm:HomeRowsViewModel.Columns}" />
+    <!-- The empty tab's line: where the first row would be (8 px list padding, the 28 px Needs you head, then centred in a 32 px row), on the rows' text edge (inset 24 + glyph 16 + gap 12 = 52), in body ink. -->
+    <TextBlock x:Name="HomeEmptyLine" Grid.Row="1" Classes="body" Margin="52,42,24,0" VerticalAlignment="Top" Text="{Binding EmptyLine}"
+               IsVisible="{Binding EmptyLine, Converter={x:Static ObjectConverters.IsNotNull}}" AutomationProperties.Name="{Binding EmptyLine}" />
+  </Grid>
+</UserControl>
