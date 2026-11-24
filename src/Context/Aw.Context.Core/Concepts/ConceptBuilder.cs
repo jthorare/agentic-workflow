@@ -34,14 +34,14 @@ public static class ConceptBuilder
 
         var (known, edges) = Known(graph);
         var index = ConceptIndex.Of(known, edges);
-        var matching = index.Concepts.Where(n => Matches(index, n, query.Q)).ToList();
+        var folded = Fold(index, [.. index.Concepts.Where(n => Matches(index, n, query.Q))]);
         var (offset, size) = slice.Value;
-        var page = matching.Skip(offset).Take(size).ToList();
+        var page = folded.Skip(offset).Take(size).ToList();
         var end = offset + page.Count;
         var other = new ConceptOther(NodeKey.From(ConceptKeys.Other), OtherName, Size(index, index.MembersOf(ConceptKeys.Other)));
         var pages = PageReader.ByConcept(graph);
-        var rows = page.Select(n => Row(index, n, text, pins, pages.GetValueOrDefault(n.Key.Value)) with { LastChanged = LastChanged(index, n, basis.Changed) }).ToList();
-        return new ConceptsView(1, basis.Repo, basis.MapVersion, index.Concepts.Count == 0 ? ConceptStates.Empty : ConceptStates.Ok, Code: null, rows, other, Links(index, edges, page), ConceptPages.Next(basis.MapVersion, end, matching.Count)) { PagesInNoConcept = PagesInNoConcept.Of(graph).Count };
+        var rows = page.Select(f => Row(index, f.Node, text, pins, pages.GetValueOrDefault(f.Node.Key.Value)) with { LastChanged = LastChanged(index, f.Node, basis.Changed), Also = AlsoNames(f.Also, text) }).ToList();
+        return new ConceptsView(1, basis.Repo, basis.MapVersion, index.Concepts.Count == 0 ? ConceptStates.Empty : ConceptStates.Ok, Code: null, rows, other, Links(index, edges, [.. page.Select(f => f.Node)]), ConceptPages.Next(basis.MapVersion, end, folded.Count)) { PagesInNoConcept = PagesInNoConcept.Of(graph).Count };
     }
 
     /// <summary>The repo-relative paths of the code files behind the concepts of one page: what the caller asks git for before <see cref="Build"/>.</summary>
@@ -63,11 +63,25 @@ public static class ConceptBuilder
         var (known, edges) = Known(graph);
         var index = ConceptIndex.Of(known, edges);
         var (offset, size) = slice.Value;
-        var page = index.Concepts.Where(n => Matches(index, n, query.Q)).Skip(offset).Take(size);
+        var page = Fold(index, [.. index.Concepts.Where(n => Matches(index, n, query.Q))]).Skip(offset).Take(size).Select(f => f.Node);
         return [.. page.SelectMany(n => index.CodeKeysOf(index.MembersOf(n.Key.Value))).Select(CodePath).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
     }
 
     private static string CodePath(string codeKey) => codeKey[CodeKeyPrefix.Length..];
+
+    // Near-duplicate suggestions become one row that names the others (issue 2975, ConceptMerge); a pin (a human node, or source 'override') never merges, so Build and CodePaths fold alike.
+    private static List<(GraphNode Node, List<GraphNode> Also)> Fold(ConceptIndex index, List<GraphNode> matching)
+    {
+        var byId = matching.ToDictionary(n => n.Key.Value, StringComparer.Ordinal);
+        var traits = matching.Select(n => new ConceptTraits(n.Key.Value, ConceptTermsAttribute.Of(n), [.. index.CodeKeysOf(index.MembersOf(n.Key.Value)).Distinct(StringComparer.Ordinal)], index.MembersOf(n.Key.Value).Count, Owned(n))).ToList();
+        return [.. ConceptMerge.Fold(traits).Select(f => (byId[f.Id], f.Also.Select(a => byId[a]).ToList()))];
+    }
+
+    private static bool Owned(GraphNode node) => node.Provenance == Provenance.Human || string.Equals(NodeAttributes.String(node, "source"), "override", StringComparison.Ordinal);
+
+    // The names of the suggestions a row took in, cleaned like the row's own; null (left out of the answer) when it took none.
+    private static List<string>? AlsoNames(List<GraphNode> also, MapText text) =>
+        also.Count == 0 ? null : [.. also.Select(n => text.Label(n.Label, TrustPolicy.ForNode(n, n.Provenance == Provenance.Human)))];
 
     /// <summary>The repo-relative paths of each concept's code files, by concept id: what a kept answer stores so its rows' last change can be laid over them on every read (issue 3676).</summary>
     /// <param name="concepts">The concepts of the page.</param>

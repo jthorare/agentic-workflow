@@ -32,6 +32,10 @@ public sealed record ConceptRow(NodeKey Id, string Name, string Summary, string 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<string>? Aliases { get; init; }
 
+    /// <summary>The names of the near-duplicate suggestions this one took in (issue 2975), whose rows are left out of the answer; null (left out of the answer) when it took none.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<string>? Also { get; init; }
+
     /// <summary>The newest change time among the code files of the concept's features (from git); null (left out of the answer) when none is known.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public DateTimeOffset? LastChanged { get; init; }
