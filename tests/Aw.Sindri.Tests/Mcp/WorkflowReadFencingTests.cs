@@ -72,6 +72,9 @@ public sealed class WorkflowReadFencingTests : IAsyncLifetime
         AssertFenced(leaves, "spec.resources.sandbox", Fence);
         AssertFenced(leaves, "spec.resources.database", Fence);
         AssertEverywhereFenced(leaves);
+
+        // #3756: the tool carries the next run time unfenced, a date and no text; this workflow runs by hand, so it has none
+        Assert.Equal(JsonValueKind.Null, result.StructuredContent!.Value.GetProperty("nextRunAt").ValueKind);
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
