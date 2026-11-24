@@ -12,5 +12,5 @@ internal sealed partial class NodePanelViewModel
     /// <summary>Reads the failed node again (the Retry button).</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>When the panel shows the answer or the failure.</returns>
-    internal Task Retry(CancellationToken cancellationToken = default) => cancellationToken.IsCancellationRequested ? Task.FromCanceled(cancellationToken) : Task.CompletedTask;
+    internal Task Retry(CancellationToken cancellationToken = default) => IsFailed && Key is { } key ? Open(key, cancellationToken) : Task.CompletedTask;
 }

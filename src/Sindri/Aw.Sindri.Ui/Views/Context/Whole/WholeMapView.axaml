@@ -183,6 +183,7 @@
             <StackPanel Spacing="8">
               <TextBlock x:Name="WholeNodeLoading" Classes="caption subtle" Text="{Binding LoadingText}" IsVisible="{Binding IsLoading}" />
               <TextBlock x:Name="WholeNodeFailed" Classes="caption" Text="{Binding FailedText}" IsVisible="{Binding IsFailed}" />
+              <Button x:Name="WholeNodeRetry" Classes="panel-action" Content="{Binding RetryText}" IsVisible="{Binding IsFailed}" Click="OnNodePanelRetry" HorizontalAlignment="Left" AutomationProperties.Name="{Binding RetryName}" />
               <StackPanel Spacing="2" IsVisible="{Binding HasSource}">
                 <TextBlock x:Name="WholeNodeSource" Classes="body" Text="{Binding SourceText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding SourceText}" />
                 <Button x:Name="WholeNodeOpenFile" Classes="panel-action" Content="{Binding OpenFileText}" IsVisible="{Binding HasOpenFile}" Click="OnNodePanelOpenFile" HorizontalAlignment="Left" AutomationProperties.Name="{Binding OpenFileName}" />
