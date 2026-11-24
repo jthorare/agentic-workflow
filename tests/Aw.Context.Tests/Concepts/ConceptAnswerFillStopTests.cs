@@ -56,7 +56,9 @@ public sealed class ConceptAnswerFillStopTests
         fills.Start(MapWorld.HumanVia(ContextClient.Http));
         var token = await started.Task.WaitAsync(_patience, ct);
 
+#pragma warning disable MA0042 // why: the sync Dispose is the behavior under test
         fills.Dispose();
+#pragma warning restore MA0042
 
         Assert.True(token.IsCancellationRequested, "the sync dispose did not cancel the running fill");
         Assert.False(ended.Task.IsCompleted, "the sync dispose waited for the fill");
