@@ -21,4 +21,8 @@ internal sealed class SourceSyncClock
     /// <summary>How long serve has run.</summary>
     /// <returns>The time since serve started.</returns>
     internal TimeSpan Running() => _clock.GetUtcNow() - _start;
+
+    /// <summary>The time now, on the same clock.</summary>
+    /// <returns>The time now.</returns>
+    internal DateTimeOffset Now() => _clock.GetUtcNow();
 }

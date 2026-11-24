@@ -70,13 +70,32 @@ internal sealed partial class WorkflowGraphViewModel
         return fit.Zoom;
     }
 
-    /// <summary>The chip at the right end of a card's title line: "off" on the Schedule card of a workflow that is off; null for every other card (no next-run time is served yet).</summary>
+    /// <summary>When the workflow's schedule fires next, from the list's row (#3758); null when none is known.</summary>
+    internal DateTimeOffset? NextRunAt { get; set; }
+
+    /// <summary>The clock and time zone the next-run chip reads (the page's clock; a test sets a fake one).</summary>
+    internal TimeProvider Clock { get; set; } = TimeProvider.System;
+
+    /// <summary>The chip at the right end of a card's title line, on the Schedule card only: "off" for a workflow that is off; for one that is on, its next run
+    /// in the clock's local time ("next 7:00" within 24 hours, else "next Mon 7:00"), or nothing while no next run is known (#3758).</summary>
     /// <param name="node">The card.</param>
-    /// <returns>The chip's word, or null for none.</returns>
+    /// <returns>The chip's words, or null for none.</returns>
     internal string? ChipFor(GraphNodeViewModel node)
     {
         ArgumentNullException.ThrowIfNull(node);
-        return _isOff && string.Equals(node.Type, "schedule", StringComparison.Ordinal) ? Labels.WfState(active: false).Word.ToLowerInvariant() : null;
+        if (!string.Equals(node.Type, "schedule", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        if (_isOff)
+        {
+            return Labels.WfState(active: false).Word.ToLowerInvariant();
+        }
+
+        return NextRunAt is { } next
+            ? Labels.WfNextRun(TimeZoneInfo.ConvertTime(next, Clock.LocalTimeZone), soon: next - Clock.GetUtcNow() < TimeSpan.FromHours(24))
+            : null;
     }
 
     // A card whose settings line is longer than SettingsWrapAt wraps it to a second line, so it is taller; the line is the card's line 2 (GraphCardLine.Settings).
