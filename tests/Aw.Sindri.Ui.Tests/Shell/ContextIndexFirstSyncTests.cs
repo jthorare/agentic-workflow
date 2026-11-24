@@ -31,4 +31,19 @@ public sealed class ContextIndexFirstSyncTests
         Assert.Equal(["linear: first sync, 12400 records so far · last commit 1 min ago", "slack: first sync, 0 records so far · nothing committed yet"], card.Lines.Select(l => l.Text), StringComparer.Ordinal);
         Assert.Equal(Labels.CodeIndexOk, card.Word);
     }
+
+    [Fact]
+    public async Task A_source_reading_its_stored_records_again_reads_reading_again_not_first_sync()
+    {
+        var commit = _clock.GetUtcNow().AddMinutes(-1);
+        _server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK,
+            $$"""{"sources":[{"source":"linear","phase":"recent","usable":true,"complete":false,"lastSync":"{{commit:O}}","lastCode":null,"reReading":3200,"pull":"running","records":3200,"lastCommit":"{{commit:O}}","needsLook":false}]}""");
+        var card = new ContextIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        // why: after migration 0020 Linear's issues go back to the recent phase with their rows stored; that is a re-read, not a first pass (#4084)
+        Assert.Equal(["linear: reading again, 3200 records · last commit 1 min ago"], card.Lines.Select(l => l.Text), StringComparer.Ordinal);
+        Assert.Equal(Labels.CodeIndexOk, card.Word);
+    }
 }
