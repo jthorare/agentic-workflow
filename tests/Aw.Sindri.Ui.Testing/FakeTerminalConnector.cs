@@ -9,6 +9,7 @@ internal sealed class FakeTerminalConnector : ITerminalConnector
 {
     private readonly List<string> _sent = [];
     private readonly List<string> _connected = [];
+    private readonly List<TerminalOpen> _opens = [];
 
     /// <summary>The server messages to play, in order; defaults to the fixture's.</summary>
     public IReadOnlyList<string>? Script { get; set; }
@@ -30,6 +31,12 @@ internal sealed class FakeTerminalConnector : ITerminalConnector
 
     /// <summary>Every client message sent through any link, in order.</summary>
     public IReadOnlyList<string> Sent => _sent;
+
+    /// <summary>Runs before each client message is recorded, so a test can act while a send is in flight (a fit landing mid-send).</summary>
+    public Func<string, Task>? BeforeSend { get; set; }
+
+    /// <summary>Every open request a connect carried, in order (the size a hello opens with).</summary>
+    public IReadOnlyList<TerminalOpen> Opens => _opens;
 
     /// <summary>Every session connected, provider/id.</summary>
     public IReadOnlyList<string> Connected => _connected;
@@ -59,6 +66,7 @@ internal sealed class FakeTerminalConnector : ITerminalConnector
         }
 
         _connected.Add(open.Provider + "/" + open.Id);
+        _opens.Add(open);
         return Task.FromResult<ITerminalLink?>(new Link(this));
     }
 
@@ -92,10 +100,15 @@ internal sealed class FakeTerminalConnector : ITerminalConnector
             CloseCode = owner.EndsWith ?? 1001;
         }
 
-        public Task<bool> Send(string json, CancellationToken cancellationToken)
+        public async Task<bool> Send(string json, CancellationToken cancellationToken)
         {
+            if (owner.BeforeSend is { } before)
+            {
+                await before(json).ConfigureAwait(true);
+            }
+
             owner._sent.Add(json);
-            return Task.FromResult(true);
+            return true;
         }
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;

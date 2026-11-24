@@ -6,6 +6,9 @@ public static class KvKeys
     /// <summary>When the watch last polled (ISO 8601); absent until a watch has run.</summary>
     public const string WatchHeartbeat = "watch.heartbeat";
 
+    /// <summary>The lanes whose recycle waiter gave up since they last recycled, one "lane|time" line each (#4264); `status` shows them as an ATTENTION line.</summary>
+    public const string RecycleGaveUp = "recycle.gave-up";
+
     /// <summary>The stop-check loop guard's last open set.</summary>
     public const string StopFingerprint = "stopcheck.fingerprint";
 

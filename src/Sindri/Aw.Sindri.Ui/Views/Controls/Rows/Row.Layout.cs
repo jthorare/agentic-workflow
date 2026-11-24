@@ -17,7 +17,7 @@ internal sealed partial class Row
             Prepare(item, size);
             var m = MetricsNow();
             var title = Built(Title);
-            var titleX = _slots.TitleX + Built(Id).Width + TitleGap;
+            var titleX = _slots.TitleX + IdSpan(Built(Id));
             return new RowLayout(
                 item.Id,
                 item.Title,

@@ -30,8 +30,18 @@ public sealed class SymbolsColumnTests
     {
         var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false) with { Reason = "graph-off" });
 
-        Assert.Equal(("only C# files get names: the code graph is off for this repo", false), (column.Caption, column.Dimmed));
+        // #3862: the heading names a commit while the note says "off"; the sentence says the C# names are the index's, the rest wait on the graph.
+        Assert.Equal(("from 7c3e1a2", "C# names come from the index. Other languages need the code graph, which is off for this repo (index.graph.enabled in the profile).", "C# names come from the index. Other languages need the code graph, which is off for this repo (index.graph.enabled in the profile).", false), (column.Caption, column.EmptyReason, column.NoRowTip, column.Dimmed));
         Assert.Equal("—", column.Cell("src/tabs/TabManager.ts"));
+    }
+
+    // #3862: a graph layer that is down is not one the profile turned off; the words name the other fix.
+    [Fact]
+    public void An_ok_index_with_the_graph_down_and_no_rows_says_graphify_is_missing_or_failed()
+    {
+        var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false) with { Reason = "graph-unavailable" });
+
+        Assert.Equal(("from 7c3e1a2", "C# names come from the index. Other languages need the code graph, which did not build: graphify is missing or failed (sindri doctor says which).", "C# names come from the index. Other languages need the code graph, which did not build: graphify is missing or failed (sindri doctor says which)."), (column.Caption, column.EmptyReason, column.NoRowTip));
     }
 
     [Fact]
@@ -39,7 +49,7 @@ public sealed class SymbolsColumnTests
     {
         var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false));
 
-        Assert.Equal(("none in these files", false), (column.Caption, column.Dimmed));
+        Assert.Equal(("from 7c3e1a2", "none in these files", false), (column.Caption, column.EmptyReason, column.Dimmed));
         Assert.Equal("—", column.Cell("src/tabs/TabManager.ts"));
     }
 
@@ -48,7 +58,7 @@ public sealed class SymbolsColumnTests
     {
         var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false, Row("src/a.cs", "Save")) with { Reason = "graph-off" });
 
-        Assert.Equal("from 7c3e1a2", column.Caption);
+        Assert.Equal(("from 7c3e1a2", null), (column.Caption, column.EmptyReason));
     }
 
     [Fact]
@@ -64,7 +74,7 @@ public sealed class SymbolsColumnTests
     {
         var column = new SymbolsColumnViewModel(Served("stale", Asked, mismatch: true, Row("src/a.ts", "save")));
 
-        Assert.Equal(("from 7c3e1a2, not 1234567", true), (column.Caption, column.Dimmed));
+        Assert.Equal(("from 7c3e1a2", "from 7c3e1a2, not 1234567", true), (column.Caption, column.AsOfNote, column.Dimmed));
         Assert.Equal("save", column.Cell("src/a.ts"));
     }
 

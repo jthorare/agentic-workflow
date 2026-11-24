@@ -11,6 +11,8 @@
 #   beforeMCPExecution {tool_name, mcp_server_name, tool_input: "<json>"}
 #                                           -> PreToolUse, tool_name mcp__<server>__<tool>
 #   postToolUse {tool_output: "<json>"}     -> PostToolUse, tool_response
+#   postToolUseFailure {error_message, is_interrupt}
+#                                           -> PostToolUseFailure, error = error_message (the retry guard)
 #   beforeSubmitPrompt                      -> UserPromptSubmit
 #   sessionStart                            -> SessionStart
 #   stop {loop_count}                       -> Stop, stop_hook_active = loop_count > 0,
@@ -74,8 +76,10 @@ else
   [ -n "$TRANSCRIPT" ] || TRANSCRIPT="${CURSOR_TRANSCRIPT_PATH:-}"
   LAST_TEXT=""
   [ "$EVENT" = "stop" ] && LAST_TEXT="$(last_assistant_text "$TRANSCRIPT")"
+  # The last reply goes in through a pipe (--rawfile on a process substitution), never as an argument: one argv
+  # string past 128 KiB fails exec on Linux and the stop would fail open (#4300).
   PAYLOAD="$(printf '%s' "$RAW_INPUT" | jq -c \
-      --arg ev "$EVENT" --arg tp "$TRANSCRIPT" --arg last "$LAST_TEXT" \
+      --arg ev "$EVENT" --arg tp "$TRANSCRIPT" --rawfile last <(printf '%s' "$LAST_TEXT") \
       --arg pdir "${CURSOR_PROJECT_DIR:-}" '
     def jsonish: if type == "string" then (fromjson? // .) else . end;
     . as $in
@@ -99,6 +103,13 @@ else
         | .tool_name = ("mcp__" + (($in.mcp_server_name // "unknown") | gsub("[^A-Za-z0-9_-]"; "_")) + "__" + ($in.tool_name // ""))
         | .tool_input = (($in.tool_input // {}) | jsonish)
         | .tool_response = (($in.result_json // null) | jsonish)
+      elif $ev == "postToolUseFailure" then
+        .hook_event_name = "PostToolUseFailure"
+        | .tool_input = ((.tool_input // {}) | jsonish)
+        | .error = (.error_message // .error // "" | tostring)
+        | .is_interrupt = (.is_interrupt // false)
+        | if .tool_name == "Shell" then .tool_name = "Bash"
+          elif .tool_name == "Task" then .tool_name = "Agent" else . end
       elif $ev == "postToolUse" then
         .hook_event_name = "PostToolUse"
         | .tool_input = ((.tool_input // {}) | jsonish)
@@ -146,10 +157,15 @@ OUT_JSON="$(aw_adapter_out_json)"
 MSG=""
 [ "$AW_RC" = "2" ] && MSG="$(aw_adapter_message)"
 
-RESULT="$(jq -nc \
-    --arg ev "$EVENT" --argjson rc "$AW_RC" --arg msg "$MSG" --arg text "$AW_OUT" \
-    --argjson out "$OUT_JSON" --argjson raw "$RAW_INPUT" --arg script "$(basename "$AW_ADAPTER_SCRIPT")" '
-  ($out // {}) as $o
+# The host payload comes in on stdin and the hook's output through pipes (--rawfile / --slurpfile on process
+# substitutions), never as arguments: a payload or a hook output past 128 KiB as one argv string fails exec on Linux,
+# the result is empty and the adapter would print its default allow (#4300). Only short values stay arguments.
+RESULT="$(printf '%s' "$RAW_INPUT" | jq -c \
+    --arg ev "$EVENT" --argjson rc "$AW_RC" --rawfile msg <(printf '%s' "$MSG") --rawfile text <(printf '%s' "$AW_OUT") \
+    --slurpfile outs <(printf '%s' "$OUT_JSON") --arg script "$(basename "$AW_ADAPTER_SCRIPT")" '
+  . as $raw
+  | $outs[0] as $out
+  | ($out // {}) as $o
   | ($o.hookSpecificOutput // {}) as $h
   | (if $rc == 2 then "deny" else ($h.permissionDecision // "allow") end) as $decision
   | (if $rc == 2 then (if $msg == "" then "Blocked by " + $script + "." else $msg end)
@@ -165,6 +181,7 @@ RESULT="$(jq -nc \
              and (($raw.tool_input // null) | type) == "object"
            then {updated_input: (($raw.tool_input) + $h.updatedInput)} else {} end)
         + (if ($o.systemMessage // "") != "" then {user_message: $o.systemMessage} else {} end)
+        + (if ($h.additionalContext // "") != "" then {agent_message: $h.additionalContext} else {} end)
       end
     elif $ev == "beforeSubmitPrompt" then
       if $rc == 2 or ($o.decision // "") == "block" then

@@ -1,0 +1,8 @@
+{
+  "provider": "github",
+  "state": "token-needed",
+  "userCode": null,
+  "verificationUri": null,
+  "expiresAt": null,
+  "reason": "SND-SETUP-014"
+}
