@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Features.ConnectAccount;
@@ -75,13 +76,26 @@ public sealed class ConnectAccountTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Without_a_gh_login_github_is_refused_and_nothing_is_written()
+    public async Task ConnectAccount_returns_the_user_code_and_verification_url_for_github_when_no_gh_login_exists()
+    {
+        _rig.OwnerApp("Iv1.owner-app");
+
+        var result = await ConnectGitHubAsOwner();
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        Assert.Equal(new ConnectAccountResponse("github", "code", "ABCD-1234", "https://github.com/login/device", KnownInstants.Epoch.AddMinutes(15)), result.Value);
+        Assert.Equal(["Iv1.owner-app"], _rig.Device.Clients);
+        Assert.Equal((0, 0), (_rig.Writer.Calls.Count, _rig.Connections.Rows.Count));   // nothing is written until GitHub says yes
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Without_a_gh_login_or_a_client_id_github_answers_token_needed_with_setup_014()
     {
         var result = await ConnectGitHubAsOwner();
 
-        Assert.True(result.IsError);
-        Assert.Equal(SindriErrors.InvalidInput.Code, result.Error.Code);
-        Assert.Contains("gh auth login", result.Error.Message, StringComparison.Ordinal);
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        Assert.Equal(new ConnectAccountResponse("github", "token-needed", Reason: SindriErrors.SetupNoClientId.Code), result.Value);
+        Assert.Empty(_rig.Device.Clients);
         Assert.Equal((0, 0), (_rig.Writer.Calls.Count, _rig.Connections.Rows.Count));
     }
 

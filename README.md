@@ -158,6 +158,7 @@ The setup script:
 - Configures `prism-mcp` (persistent memory, downloaded on first use) with its Mind Palace dashboard at `http://localhost:7180` (`PRISM_DASHBOARD_PORT`). The `prism-context.sh` session-start hook warns if the dashboard is unreachable; `/prismStatus` runs a full health check
 - Installs rtk
 - Installs [tldraw offline](https://github.com/tldraw/tldraw-offline), a local whiteboard agents can drive to draw diagrams (`brew install --cask tldraw` on macOS, the pinned AppImage on Linux; skip with `--no-tldraw`). Its agent skills come from the app: open it and choose **Develop → Install Agent Skills** (setup prints this until a provider has the skill), and keep the app open while an agent draws
+- Opt-in (`./setup.sh --with-mods`, or `scripts/install-mods.sh [--dry-run]`): installs the Claude Code mods in `mods/` (`pr-line`, a PR status line under the prompt, and `my-prs`, a `/prs` pane) through `claude plugin`; their options (bot reviewers, check prefixes, home repo) are set with `claude plugin configure <mod>`
 - **Claude Code only:** copies `settings.json`, installs the statusline and shell integration, and adds plugin marketplaces and plugins
 
 ## Contents

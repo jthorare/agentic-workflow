@@ -51,6 +51,7 @@ internal static partial class Labels
         ["SkipSetupStep"] = "Skip a setup step",
         ["RestartProcess"] = "Restart Sindri",
         ["ConnectAccount"] = "Connect an account",
+        ["DisconnectAccount"] = "Disconnect an account",
         ["ChangeLinearIssue"] = "Edit Linear issue",
         ["SendReviewFix"] = "Send review fix",
         ["CommentLinearIssue"] = "Comment on Linear issue",
