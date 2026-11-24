@@ -67,15 +67,14 @@ public sealed class ContextMapFramesTests : FrameHost
     });
 
     [Fact]
-    public Task The_control_row_holds_the_anchor_box_the_view_switch_and_the_coverage_sentence() => OnUi(async () =>
+    public Task The_control_row_holds_the_anchor_box_and_the_view_switch_and_an_exact_hit_shows_no_coverage_sentence() => OnUi(async () =>
     {
         var (window, shell) = await Open(1440, 900);
 
         Assert.True(Visible(window, "AnchorBox"));
         Assert.False(Visible(window, "StartingPoints"));
-        var coverage = Named<TextBlock>(window, "ContextCoverage");
-        Assert.Equal(shell.Context.Coverage, coverage.Text);
-        Assert.Equal(shell.Context.HasCoverage, coverage.IsVisible);
+        Assert.Equal(string.Empty, shell.Context.Coverage);   // a typed anchor is an exact hit; the sentence in its three states is ContextCoverageFramesTests
+        Assert.False(Visible(window, "ContextCoverage"));
         Assert.False(Visible(window, "ContextAsOf"));
         Assert.False(Visible(window, "WholeMapBack"));
         Assert.True(Named<RadioButton>(window, "ViewMapButton").IsChecked);

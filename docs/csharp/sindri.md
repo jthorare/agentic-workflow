@@ -744,6 +744,8 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-LINEAR-006` | A Linear edit, comment or new issue named an id the issue's team doesn't have, or an edit changed a field without sending the value it opened (400): "stateId isn't one of ENG's states (fix: read the lookups again and pick a state from them)", "title has no opened value (fix: send the value you opened with each field you change)" |
 | `SND-LINEAR-011` | A Linear write when Linear never confirmed them and the one re-read didn't find them (504, with `outcome: "unknown"` and `clientId`): "Linear didn't confirm the comment on ENG-12 (fix: retry; the same client id is never posted twice)" |
 | `SND-LINEAR-404` | The same read when the profile picks no Linear team (404): "Sindri has nothing stored for OPS yet" |
+| `SND-MSG-011` | The conversation or thread root is not in `messages.db` (404; CLI exit 1): the sync writes a conversation before its messages (messages spec §10) |
+| `SND-MSG-025` | `messages.db` is newer than this build, or damaged (503; CLI exit 1); the message keeps the store's own `AW-DATA-*` code; `sindri messages doctor`, and `purge` rebuilds the cache (messages spec §10) |
 | `SND-PROFILE-001` | No profile file |
 | `SND-PROFILE-002` | The profile doesn't parse or doesn't match the schema (file, key path, expected type, fix) |
 | `SND-PROFILE-004` | The profile file exists but can't be read (permissions or an I/O error; fix: `chmod 600 <path>`). Not "no profile": `sindri repo add` refuses it instead of writing a fresh profile over it, and the setup step shows it as failed |

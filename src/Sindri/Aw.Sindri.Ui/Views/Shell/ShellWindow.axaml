@@ -37,6 +37,10 @@
     <Style Selector="TextBlock.live-region.live">
       <Setter Property="AutomationProperties.LiveSetting" Value="Polite" />
     </Style>
+    <!-- A page that pins its own head and scrolls its own rows (Projects) gets the viewport's height: the pages' scroller stops scrolling while it shows. -->
+    <Style Selector="ScrollViewer#Pages.fixed-page">
+      <Setter Property="VerticalScrollBarVisibility" Value="Disabled" />
+    </Style>
   </Window.Styles>
 
   <Panel>
@@ -209,7 +213,7 @@
             </Border>
 
             <!-- The pages (§3.3), each shown by the view model's page flag. -->
-            <ScrollViewer x:Name="Pages" IsVisible="{Binding IsPagesShown}">
+            <ScrollViewer x:Name="Pages" IsVisible="{Binding IsPagesShown}" Classes.fixed-page="{Binding IsProjects}">
               <Panel x:Name="PageContent" Classes="page-content" Classes.edge="{Binding IsEdgeTabShown}">
                 <views:HomePage x:Name="HomePage" IsVisible="{Binding IsHomeShown}" />
                 <!-- Projects (Projects page spec §7): the owner's projects in state groups. -->

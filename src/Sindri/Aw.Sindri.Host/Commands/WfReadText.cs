@@ -38,6 +38,11 @@ internal static class WfReadText
         var text = new StringBuilder();
         _ = text.Append(CultureInfo.InvariantCulture, $"{answer.Slug.Value}  {answer.Name}\n");
         _ = text.Append(CultureInfo.InvariantCulture, $"showing r{answer.Revision} ({Active(answer.ActiveRevision)}); newest is r{answer.LatestRevision}, saved by {answer.ChangedBy} {Time(answer.ChangedAt)}\n");
+        if (answer.NextRunAt is { } next)
+        {
+            _ = text.Append(CultureInfo.InvariantCulture, $"next run {Time(next)}\n");
+        }
+
         _ = text.Append(CultureInfo.InvariantCulture, $"hash {answer.SpecHash}\n");
         foreach (var node in Items(answer.Spec, "nodes"))
         {

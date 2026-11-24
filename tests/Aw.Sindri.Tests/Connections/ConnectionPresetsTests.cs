@@ -20,8 +20,9 @@ public sealed class ConnectionPresetsTests
         Assert.Equal(_shipped, presets.Value.Select(static p => p.Key), StringComparer.Ordinal);
     }
 
+    // first-run spec decision 15a: only github and linear ship Sindri's own OAuth app id (a client id is not a secret); no preset ships a secret
     [Fact]
-    public void No_shipped_preset_carries_a_client_id_or_a_secret()
+    public void No_shipped_preset_carries_a_secret_and_only_github_and_linear_carry_a_client_id()
     {
         var files = Directory.GetFiles(PresetsFolder(), "*.json");
 
@@ -30,8 +31,31 @@ public sealed class ConnectionPresetsTests
         {
             using var json = JsonDocument.Parse(File.ReadAllText(file));
             var keys = json.RootElement.EnumerateObject().Select(static p => p.Name).ToList();
-            Assert.DoesNotContain(keys, static k => k.Contains("client", StringComparison.OrdinalIgnoreCase) || k.Contains("secret", StringComparison.OrdinalIgnoreCase));
+            var name = Path.GetFileNameWithoutExtension(file);
+            string[] clientKeys = string.Equals(name, "github", StringComparison.Ordinal) || string.Equals(name, "linear", StringComparison.Ordinal) ? ["clientId"] : [];
+            Assert.DoesNotContain(keys, static k => k.Contains("secret", StringComparison.OrdinalIgnoreCase));
+            Assert.Equal(clientKeys, keys.Where(static k => k.Contains("client", StringComparison.OrdinalIgnoreCase)), StringComparer.Ordinal);
         }
+    }
+
+    [Fact]
+    public void The_github_preset_has_the_device_endpoint_and_ships_no_client_id_until_the_owner_registers_the_app()
+    {
+        var github = new EmbeddedConnectionPresets().Find("github");
+
+        Assert.NotNull(github);
+        Assert.Equal(("https://github.com/login/device/code", string.Empty), (github.DeviceCodeUrl, github.ShippedClient));
+    }
+
+    [Fact]
+    public void A_plain_http_device_endpoint_is_refused()
+    {
+        var parsed = ConnectionPresets.Parse("""
+            {"id":"x","displayName":"X","kind":"oauth","authorizeUrl":"https://x/a","tokenUrl":"https://x/t","defaultScopes":[],"hostGroup":"x","loopbackAllowed":true,"signInNote":"n","deviceCodeUrl":"http://x/d"}
+            """);
+
+        Assert.True(parsed.IsError);
+        Assert.Contains("deviceCodeUrl", parsed.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact]

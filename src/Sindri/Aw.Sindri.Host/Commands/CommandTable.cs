@@ -150,6 +150,7 @@ internal static partial class CommandTable
         ["wf", "validate", .. var rest] => await WfValidateCommand.Run(rest, services, output, ct).ConfigureAwait(false),   // in process: reads the graph file, never starts or contacts serve
         ["wf", "run", .. var rest] => await WfRunCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "cancel", .. var rest] => await WfRunCommand.Cancel(rest, desk, output, ct).ConfigureAwait(false),
+        ["wf", "rerun", .. var rerunArgs] => await WfRerunCommand.Run(rerunArgs, desk, output, ct).ConfigureAwait(false),
         ["wf", "seen", .. var rest] => await WfSeenCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "takeover", .. var rest] => await WfAgentNodeCommand.TakeOver(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "handback", .. var rest] => await WfAgentNodeCommand.HandBack(rest, desk, output, ct).ConfigureAwait(false),
