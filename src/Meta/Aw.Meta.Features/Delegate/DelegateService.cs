@@ -67,6 +67,8 @@ internal sealed class DelegateService(IMetaConfig config, RepoCommands repo, ILa
     // A non-Claude lane (target set) gets the message through lane-send's delivery now; a Claude lane's send stays owed.
     private async ValueTask<Result<DelegateResponse>> Deliver(Delegation delegation, LaneTarget? target, TimeSpan confirm, CancellationToken cancellationToken)
     {
+        var before = await ledger.All(cancellationToken).ConfigureAwait(false);
+        var previous = before.IsSuccess ? before.Value.LastOrDefault(d => d.Issue == delegation.Issue && !string.Equals(d.Lane, delegation.Lane, StringComparison.OrdinalIgnoreCase)) : null;
         string? problem = null;
         if (target is not null)
         {
@@ -83,9 +85,44 @@ internal sealed class DelegateService(IMetaConfig config, RepoCommands repo, ILa
         var state = delegation.Delivered ? DelegationState.Sent : DelegationState.Owed;
         var line = LogLine.Event(LogKind.Note, delegation.At, $"delegated {delegation.Marker} to lane {delegation.Lane} ({DelegationView.Name(state)}): {delegation.Title} {delegation.Url}");
         var appended = await log.Append(line, cancellationToken).ConfigureAwait(false);
-        return appended.IsError
-            ? Retry(appended.Error, delegation)
-            : new DelegateResponse(DelegationView.Name(state), DelegationView.Of(delegation, state), []) { SendProblem = problem, LogLine = line };
+        if (appended.IsError)
+        {
+            return Retry(appended.Error, delegation);
+        }
+
+        var (movedFrom, movedNotice, movedProblem) = previous is null ? default : await Moved(previous, delegation, confirm, cancellationToken).ConfigureAwait(false);
+        return new DelegateResponse(DelegationView.Name(state), DelegationView.Of(delegation, state), []) { SendProblem = problem, LogLine = line, MovedFrom = movedFrom, MovedNotice = movedNotice, MovedProblem = movedProblem };
+    }
+
+    // Best effort: the lane the issue moved off is told once. A non-Claude lane gets the line through lane-send's delivery; a Claude lane
+    // (also one whose record now names Claude, or that has no record now) gets it back for the meta to send with SendMessage.
+    // SendMessage can't reach a non-Claude lane, so when its delivery fails, the lane can't act on it or its record can't be read, only
+    // the problem comes back. A failed notice never fails the delegate.
+    private async ValueTask<(string? From, string? Notice, string? Problem)> Moved(Delegation previous, Delegation now, TimeSpan confirm, CancellationToken cancellationToken)
+    {
+        var text = $"FYI: {now.Marker} moved to lane {now.Lane}; it is no longer yours.";
+        if (previous.Claude)
+        {
+            return (previous.Session, text, null);
+        }
+
+        var record = await files.Record(previous.Lane, cancellationToken).ConfigureAwait(false);
+        if (record.IsError)
+        {
+            return (previous.Session, null, $"its lane record could not be read ({record.Error.Code}: {record.Error.Message})");
+        }
+
+        // No record, or one that names Claude: Handle treats that lane as a Claude lane, so it gets the line back too (#4106).
+        if (record.Value is not { IsNonClaude: true, Agent: { } agent } found)
+        {
+            return (previous.Session, text, null);
+        }
+
+        var team = previous.Session[..^(previous.Lane.Length + 1)];
+        var told = await delivery.Deliver(new LaneTarget(team, previous.Lane, found, agent), text, confirm, cancellationToken).ConfigureAwait(false);
+        return told.IsError ? (previous.Session, null, $"{told.Error.Code}: {told.Error.Message}")
+            : told.Value.Attention is { } attention ? (previous.Session, null, $"the line waits in its inbox, but lane {previous.Lane} is {attention}")
+            : (previous.Session, null, null);
     }
 
     // Delivered only when the lane can act on it. A message stored for a lane whose hooks can't pick it up (launch-only, or its hooks
@@ -126,14 +163,21 @@ internal sealed class DelegateService(IMetaConfig config, RepoCommands repo, ILa
     private static IReadOnlyList<string> Keywords(TeamConfig team, string lane) =>
         team.Delegation.Lanes.FirstOrDefault(p => string.Equals(p.Key, lane, StringComparison.OrdinalIgnoreCase)).Value ?? [];
 
+    // Only an open issue is delegated: a closed one is done, and gh issue view also shows a pull request by its number.
+    private static string? Refusal(IssueRef issue) =>
+        issue.Url.Contains("/pull/", StringComparison.Ordinal) ? string.Create(CultureInfo.InvariantCulture, $"#{issue.Number} is a pull request: delegate an issue")
+        : !issue.IsOpen ? string.Create(CultureInfo.InvariantCulture, $"#{issue.Number} is closed: reopen it or delegate an open issue")
+        : null;
+
     private async ValueTask<Result<IssueRef>> Issue(TeamConfig team, DelegateRequest request, string lane)
     {
         if (request.Issue is { } number)
         {
             var viewed = await repo.Gh(team.Repo, "issue", "view", number.ToString(CultureInfo.InvariantCulture), "--json", "number,title,state,url").ConfigureAwait(false);
             return viewed.IsError ? viewed.Error
-                : GhIssues.View(viewed.Value) is { } found ? found
-                : MetaErrors.CommandFailed.With("gh issue view printed something unexpected");
+                : GhIssues.View(viewed.Value) is not { } found ? MetaErrors.CommandFailed.With("gh issue view printed something unexpected")
+                : Refusal(found) is { } why ? MetaErrors.Invalid.With(why)
+                : found;
         }
 
         // why: the validator refuses a request with no issue that lacks a title or a text.

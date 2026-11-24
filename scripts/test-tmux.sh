@@ -25,14 +25,15 @@ if ! command -v tmux > /dev/null 2>&1; then
 fi
 unset TMUX AW_META_TEAM AW_META_DIR AW_META_LANE AW_META_LANE_PID AW_META_LANE_AGENT AW_META_LANE_PROC AW_SINDRI_CHILD AW_SINDRI_LAUNCH AW_LAUNCHER_CONFIG
 _tt_real="$(type -P tmux)"
-AW_TEST_TMUX_DIR="$(cd "$(mktemp -d)" && pwd -P)"   # physical path: tmux resolves its socket dir through symlinks
-export TMUX_TMPDIR="$AW_TEST_TMUX_DIR/tmux"
-mkdir -p "$TMUX_TMPDIR" "$AW_TEST_TMUX_DIR/bin"
 case "${AW_TEST_TMUX:-}" in
   "") AW_TEST_TMUX="t1-$$-$RANDOM" ;;
   *[!a-z0-9-]*) echo "test-tmux: AW_TEST_TMUX '$AW_TEST_TMUX' must be lowercase letters, digits and dashes" >&2; return 2 2> /dev/null || exit 2 ;;
 esac
 case "$AW_TEST_TMUX" in default) echo "test-tmux: AW_TEST_TMUX must not be 'default'" >&2; return 2 2> /dev/null || exit 2 ;; esac
+# The temp dir comes after the name checks, so a refused name leaves nothing behind (#3262).
+AW_TEST_TMUX_DIR="$(cd "$(mktemp -d)" && pwd -P)"   # physical path: tmux resolves its socket dir through symlinks
+export TMUX_TMPDIR="$AW_TEST_TMUX_DIR/tmux"
+mkdir -p "$TMUX_TMPDIR" "$AW_TEST_TMUX_DIR/bin"
 export AW_TEST_TMUX AW_TEST_TMUX_DIR
 
 printf '%s\n' '#!/usr/bin/env bash' \

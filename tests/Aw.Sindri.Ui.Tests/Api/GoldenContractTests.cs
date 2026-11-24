@@ -199,6 +199,7 @@ public sealed class GoldenContractTests
         "workflows-validate",   // #2258 PR 8b: validate is the CLI's; ops and activate are read above
         "home-rank-id",   // GET /sindri/home/rank/{id}: the explain data is the CLI's `home rank --explain` and the home_rank MCP tool; the row's why chip reads the rank inside the row
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
+        "links-resolve",   // QUERY /sindri/links/resolve (messages spec §9.3, M1g): the conversation's link rows read it with their view (M1l)
         "messages-lists-id", "messages-status", "messages-conversations", "messages-conversations-id-messages", "messages-threads-id-id", "messages-search",   // messages spec §8.2 (M1s): M1f records these goldens; M1k and M1l move the ones the page reads to _read with their views
     };
 

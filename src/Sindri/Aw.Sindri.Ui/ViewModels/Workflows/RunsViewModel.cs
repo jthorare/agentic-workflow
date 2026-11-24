@@ -19,6 +19,9 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <summary>The workflow's slug.</summary>
     public string Slug { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>When the open workflow's schedule fires next, from its list row (#3758): the graph's Schedule card shows it.</summary>
+    internal DateTimeOffset? NextRunAt { get; set; }
+
     /// <summary>The workflow's name.</summary>
     public string Title { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -128,7 +131,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         IsReading = false;
         DetailText = detail.IsSuccess ? Detail(detail.Value) : string.Empty;
         var drawn = newest.IsSuccess ? newest : detail;   // the newest revision when it was read; else the live one
-        (Shown, Graph) = detail.IsSuccess ? (detail.Value, drawn.IsSuccess ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(drawn.Value)) : Graph) : (Shown, Graph);
+        (Shown, Graph) = detail.IsSuccess ? (detail.Value, drawn.IsSuccess ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(drawn.Value) { NextRunAt = NextRunAt, Clock = clock }) : Graph) : (Shown, Graph);
         if (runs.IsSuccess)
         {
             CanRun = true;

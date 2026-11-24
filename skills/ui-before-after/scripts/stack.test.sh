@@ -2,6 +2,12 @@
 # Tests for stack.sh against a stub worktree, so no real dev stack starts.
 set -u
 
+# Temp-dir cleanup (#3262): every mktemp this suite makes is recorded and removed when it exits.
+__aw_tmp_reg="$(command mktemp)"
+mktemp() { local p; p="$(command mktemp "$@")" || return; printf '%s\n' "$p" >>"$__aw_tmp_reg"; printf '%s\n' "$p"; }
+__aw_tmp_clean() { local rc=$? p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null || true; rm -rf "$p" || true; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; exit "$rc"; }
+trap __aw_tmp_clean EXIT
+
 STACK="$(cd "$(dirname "$0")" && pwd)/stack.sh"
 FAILURES=0
 
@@ -24,10 +30,10 @@ release_port_lock() {
 claim_port_block() {
   # test-ports: ok: the slot is only a starting point; the block is claimed under an mkdir lock and checked free with lsof (#2596)
   local slot=$(($$ % PORT_BLOCKS)) i base lock p free
-  mkdir -p "$PORT_LOCKS"
   for ((i = 0; i < PORT_BLOCKS; i++)); do
     base=$((20000 + ((slot + i) % PORT_BLOCKS) * 8))
     lock="$PORT_LOCKS/$base"
+    mkdir -p "$PORT_LOCKS"   # per try: a run that ends removes the dir once it is empty
     mkdir "$lock" 2>/dev/null || continue
     echo $$ >"$lock/pid"
     free=1
@@ -50,7 +56,8 @@ PORT=$(claim_port_block) || {
   echo "FAIL: no free block of 7 ports"
   exit 1
 }
-trap 'release_port_lock "$PORT_LOCKS/$PORT"' EXIT
+# The exit trap frees this run's block, removes the lock dir once no other run holds a block in it, then the temp dirs (exit code kept).
+trap 'rc=$?; release_port_lock "$PORT_LOCKS/$PORT"; rmdir "$PORT_LOCKS" 2>/dev/null; (exit "$rc"); __aw_tmp_clean' EXIT
 
 # stack.sh starts Storybook with `bun run dev`. The CI runner has no bun, so a stub runs the stub worktree's
 # package.json script with sh; any other bun command fails loudly.

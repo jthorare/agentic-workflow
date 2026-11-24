@@ -170,7 +170,14 @@ internal sealed partial class TerminalView : UserControl
     {
         if (DataContext is TerminalViewViewModel vm)
         {
-            _ = await vm.PressInterrupt(CancellationToken.None).ConfigureAwait(true);
+            try
+            {
+                _ = await vm.PressInterrupt(CancellationToken.None).ConfigureAwait(true);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidOperationException or OperationCanceledException)
+            {
+                // the interrupt failed (a socket that went away): an async void must not throw on the UI thread
+            }
         }
     }
 #pragma warning restore MA0155

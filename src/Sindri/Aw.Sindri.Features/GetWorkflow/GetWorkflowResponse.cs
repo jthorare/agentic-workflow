@@ -18,6 +18,7 @@ namespace Aw.Sindri.Features.GetWorkflow;
 /// <param name="Spec">The shown revision's graph, the stored document; GraphJson.Parse reads it back.</param>
 /// <param name="Positions">Where each node of the graph is drawn.</param>
 /// <param name="Summaries">The line each node shows on the canvas, one per node, built from its config.</param>
+/// <param name="NextRunAt">When the active schedule next runs, the same value as the list row; null when it is off, archived, run by hand or by an event (issue 3756).</param>
 internal sealed record GetWorkflowResponse(
     WorkflowId Id,
     WorkflowSlug Slug,
@@ -32,4 +33,5 @@ internal sealed record GetWorkflowResponse(
     string SpecHash,
     JsonNode Spec,
     IReadOnlyList<NodePosition> Positions,
-    IReadOnlyList<NodeSummary>? Summaries = null);
+    IReadOnlyList<NodeSummary>? Summaries = null,
+    DateTimeOffset? NextRunAt = null);

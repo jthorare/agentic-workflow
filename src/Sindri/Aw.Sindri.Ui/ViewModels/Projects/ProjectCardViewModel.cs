@@ -100,9 +100,15 @@ internal sealed partial class ProjectCardViewModel : ObservableObject
 
     // Records compare their list members by reference, so a new serving of the same project is never equal; compare the lists by their items.
     private static bool Same(ProjectCardView kept, ProjectCardView served) =>
-        kept == (served with { Repos = kept.Repos, Links = kept.Links })
+        kept == (served with { Repos = kept.Repos, Links = kept.Links, Truth = kept.Truth })
         && kept.Repos.SequenceEqual(served.Repos, StringComparer.Ordinal)
-        && kept.Links.SequenceEqual(served.Links);
+        && kept.Links.SequenceEqual(served.Links)
+        && SameTruth(kept.Truth, served.Truth);
+
+    private static bool SameTruth(ProjectTruthView? kept, ProjectTruthView? served) =>
+        kept is null || served is null
+            ? kept == served
+            : kept == (served with { OpenPrs = kept.OpenPrs }) && kept.OpenPrs.SequenceEqual(served.OpenPrs);
 
     // A finished project (done or canceled) has no health: the word and the dot mean nothing once it is over.
     private bool IsFinished => string.Equals(Card.State, "done", StringComparison.Ordinal) || string.Equals(Card.State, "canceled", StringComparison.Ordinal) || string.Equals(Card.State, "cancelled", StringComparison.Ordinal);
@@ -136,6 +142,7 @@ internal sealed partial class ProjectCardViewModel : ObservableObject
         Footer = Parts();
         OnChanged(nameof(FooterText));
         AccessibleName = Spoken();
+        DeriveRow();
     }
 
     private static string? Face(string? note)
