@@ -36,11 +36,11 @@ internal static class CoverageWords
         // Only "ok" and "stale" mean the names were searched. Any other state (today "unavailable"; a later one such as "building") reads as not
         // searched, and NamesDetail.Sentence gives the reason's words, or "aren't indexed yet" when it has none.
         var stale = string.Equals(symbols.State, "stale", StringComparison.Ordinal);
-        var names = ok ? null : stale ? Labels.ContextMapNamesStale : NamesDetail.Sentence(symbols);
+        var names = ok ? null : stale ? new NamesNote(Labels.ContextMapNamesStale) : NamesDetail.Sentence(symbols);
         return Compose(areas, names, missing: !ok && !stale);
     }
 
-    private static string Compose(Areas areas, string? names, bool missing)
+    private static string Compose(Areas areas, NamesNote? names, bool missing)
     {
         var parts = new List<string>();
         if (areas.Searched.Count > 0 || areas.Partly.Count > 0)
@@ -60,8 +60,11 @@ internal static class CoverageWords
 
         if (names is not null)
         {
-            parts.Add(names);   // why the function names were not searched in full (#3777)
-            parts.Add(Labels.ContextMapNamesNextStep);   // and where to look (#4122)
+            parts.Add(names.Words);   // why the function names were not searched in full (#3777)
+            if (names.CardFixes)
+            {
+                parts.Add(Labels.ContextMapNamesNextStep);   // and where to look (#4122); a reason that card can't fix ends here (#4184)
+            }
         }
 
         return string.Join(' ', parts);
