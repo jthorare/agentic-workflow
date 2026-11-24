@@ -167,6 +167,13 @@ public sealed partial class SindriApp : Application, IDisposable
             TodoNoteCard = shell.TodoNoteCard,
         };
         shell.SettingFilterRequested += (_, e) => settings.Filter = e.Value;   // a palette Settings entry (#3362)
+        settings.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(SettingsViewModel.HomeAsRows), StringComparison.Ordinal))
+            {
+                _ = shell.ShowHomeAsRows(settings.HomeAsRows);   // Settings' switch changes Home at once (home spec §7.1, U1)
+            }
+        };
         try
         {
             await settings.Load(CancellationToken.None).ConfigureAwait(true);
