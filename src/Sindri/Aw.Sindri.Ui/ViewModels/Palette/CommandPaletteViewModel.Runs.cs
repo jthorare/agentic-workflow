@@ -151,7 +151,9 @@ internal sealed partial class CommandPaletteViewModel
     }
 
     // The entries the palette runs itself, with no send: each closes it. They have no page, so the page case can't take them.
-    private bool RunsHere(PaletteEntry entry)
+    private bool RunsHere(PaletteEntry entry) => RunsTodoOrStop(entry) || RunsOpener(entry);
+
+    private bool RunsTodoOrStop(PaletteEntry entry)
     {
         switch (entry)
         {
@@ -163,9 +165,23 @@ internal sealed partial class CommandPaletteViewModel
                 Close();
                 _goTo(PageId.System);
                 return true;
+            default:
+                return false;
+        }
+    }
+
+    private bool RunsOpener(PaletteEntry entry)
+    {
+        switch (entry)
+        {
             case { Control.Action: "CreateItem" }:
                 // The form's or dialog's own control sends it; it opens first, so the window hands the palette's opener on to it.
                 CreateItem?.Invoke();
+                Close();
+                return true;
+            case { Control.Action: "AttachProject" }:
+                // The Add project sheet opens the way the Projects page's button opens it, then the palette closes, like Create item.
+                AddProject?.Invoke();
                 Close();
                 return true;
             case { Id: PaletteEntry.NewTodoId }:

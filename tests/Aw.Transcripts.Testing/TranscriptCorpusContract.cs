@@ -128,7 +128,7 @@ public abstract class TranscriptCorpusContract
     {
         var (corpus, _) = await CreateStandard(_none);
 
-        var read = await corpus.ReadSession(SessionRef.From("transcript:00000000"), _none);
+        var read = await corpus.ReadSession(SessionRef.From("transcript:000000000000"), _none);
 
         Expect.That(read.IsError && read.Error.Code == TranscriptsErrors.SessionNotFound.Code, "a ref no file has is AW-TRANSCRIPTS-002");
     }

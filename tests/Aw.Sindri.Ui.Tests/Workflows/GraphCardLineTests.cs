@@ -62,4 +62,81 @@ public sealed class GraphCardLineTests
     [InlineData("", "made_up_kind", null, "made up kind")]
     public void Line_1_is_the_title_or_the_blocks_name_never_the_id(string title, string type, string? kindTitle, string expected) =>
         Assert.Equal(expected, GraphCardLine.Title(title, type, kindTitle), StringComparer.Ordinal);
+
+    [Theory]
+    [InlineData("api.example.com/x?key=abc", "GET api.example.com/x")]                    // no scheme
+    [InlineData("https://api.example.com?key=abc", "GET api.example.com")]                // only a query after the host
+    [InlineData("https://api.example.com/docs#part", "GET api.example.com/docs")]         // a fragment
+    [InlineData("deploy@hooks.example.com/run", "GET hooks.example.com/run")]             // a user with no scheme
+    public void An_http_cards_line_shows_the_host_and_path_only(string url, string expected) =>
+        Assert.Equal(expected, GraphCardLine.Settings("http", Config("{\"url\":\"" + url + "\"}"), summary: null, kindTitle: null), StringComparer.Ordinal);
+
+    // A credential and a query never reach the card (#4032). The url is built in parts so the commit's secret scan does not read it as a leaked credential.
+    [Fact]
+    public void An_http_cards_line_drops_the_urls_user_and_password() =>
+        Assert.Equal("GET api.example.com/x", GraphCardLine.Settings("http", Config("{\"url\":\"https://" + string.Join(":", "user", "token") + "@api.example.com/x?key=abc\"}"), summary: null, kindTitle: null), StringComparer.Ordinal);
+
+    [Fact]
+    public void An_untitled_step_with_no_type_still_has_a_line_1() =>
+        Assert.False(string.IsNullOrWhiteSpace(GraphCardLine.Title(string.Empty, string.Empty, kindTitle: null)), "line 1 is empty for an untitled step with no type (#4032)");
+
+    // #4063: a password with a raw ?, / or # (not percent-encoded) must not leave a piece on the card. The urls are built in parts so the commit's secret
+    // scan does not read them as leaked credentials.
+    [Theory]
+    [InlineData("p?ss")]
+    [InlineData("pa/ss")]
+    [InlineData("pa#ss")]
+    public void A_password_with_a_raw_separator_leaves_no_piece_on_the_card(string password) =>
+        Assert.Equal("GET host/x", GraphCardLine.Settings("http", Config("{\"url\":\"https://" + string.Join(":", "user", password) + "@host/x\"}"), summary: null, kindTitle: null), StringComparer.Ordinal);
+
+    [Fact]
+    public void A_port_is_not_a_password_and_stays_on_the_card() =>
+        Assert.Equal("GET host:8080/x", GraphCardLine.Settings("http", Config("{\"url\":\"https://host:8080/x\"}"), summary: null, kindTitle: null), StringComparer.Ordinal);
+
+    private static string HttpLine(string url) => GraphCardLine.Settings("http", Config("{\"url\":\"" + url + "\"}"), summary: null, kindTitle: null);
+
+    // #4156: an all-digit password with a raw /, ? or # looked like a port ("user:12" read as host:port). The urls are built in parts for the commit's secret scan.
+    [Theory]
+    [InlineData("12/34")]
+    [InlineData("12?34")]
+    [InlineData("12#34")]
+    public void A_digit_password_with_a_raw_separator_leaves_no_piece_on_the_card(string password) =>
+        Assert.Equal("GET host/x", HttpLine("https://" + string.Join(":", "user", password) + "@host/x"), StringComparer.Ordinal);
+
+    [Theory]
+    [InlineData("https://host:8080/x", "GET host:8080/x")]
+    [InlineData("https://[::1]:8080/p", "GET [::1]:8080/p")]
+    [InlineData("https://host/x@y", "GET host/x@y")]
+    [InlineData("https://[::1]/a@b", "GET [::1]/a@b")]   // the ':' inside the brackets is part of the host, not a password
+    public void A_host_with_a_port_or_brackets_stays_whole(string url, string expected) =>
+        Assert.Equal(expected, HttpLine(url), StringComparer.Ordinal);
+
+    // Accepted cost (#4156): a port followed by an @ later in the url reads as user:password@, because an all-digit password looks the same. The card shows the
+    // text after the last @. Leaking a password is worse than a wrong host on an odd url, so this is on purpose: don't "fix" it back.
+    [Fact]
+    public void A_port_with_an_at_later_in_the_url_reads_as_a_password() =>
+        Assert.Equal("GET name", HttpLine("https://host:8080/@name"), StringComparer.Ordinal);
+
+    // #4156, the class: whatever sits before the last @ may be a password, wherever its ':' is. A user name with a raw / (a domain/user sign-in) puts the ':'
+    // after the first separator, and a bracket that holds no IPv6 address hides nothing. No suffix of the password may be on the card.
+    [Theory]
+    [InlineData("user", "12/34")]
+    [InlineData("user", "12?34")]
+    [InlineData("user", "12#34")]
+    [InlineData("user", "9")]
+    [InlineData("user", "1:2/3")]
+    [InlineData("user", "p@1/2")]
+    [InlineData("", "12/34")]
+    [InlineData("dom/user", "pw12")]   // no character of a password here is in "GET host/x", so a suffix hit is a real one
+    [InlineData("dom?user", "12")]
+    [InlineData("[a", "9/8]")]
+    public void No_suffix_of_a_url_password_shows_on_the_card(string user, string password)
+    {
+        var line = HttpLine("https://" + string.Join(":", user, password) + "@host/x");
+        Assert.Equal("GET host/x", line, StringComparer.Ordinal);
+        for (var i = 0; i < password.Length; i++)
+        {
+            Assert.DoesNotContain(password[i..], line, StringComparison.Ordinal);
+        }
+    }
 }

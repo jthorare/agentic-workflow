@@ -46,7 +46,11 @@ internal sealed class AuditingService<TRequest, TResponse>(IService<TRequest, TR
         }
 
         // The command has run: its row is written even when a stop cancelled the request meanwhile, so no effect goes unaudited.
-        var recorded = await audit.Record(caller, row, outcome, result.IsError ? result.Error.Code : null, CancellationToken.None).ConfigureAwait(false);
+        // A self-audited command may have written its accepted row already (RestartProcess, #4024): any other outcome goes under the ':final' key, so it isn't a replay of that row.
+        var code = result.IsError ? result.Error.Code : null;
+        var recorded = row.SelfAudited
+            ? await audit.RecordFinal(caller, row, outcome, code, CancellationToken.None).ConfigureAwait(false)
+            : await audit.Record(caller, row, outcome, code, CancellationToken.None).ConfigureAwait(false);
         if (recorded.IsSuccess)
         {
             return result;

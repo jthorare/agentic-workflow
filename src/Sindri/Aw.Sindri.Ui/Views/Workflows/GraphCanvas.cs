@@ -84,11 +84,12 @@ internal sealed partial class GraphCanvas : Control
         set => SetValue(TextScaleProperty, value);
     }
 
-    /// <summary>Gets or sets where the world's origin sits in this control.</summary>
+    /// <summary>Gets or sets where the world's origin sits in this control. The value stored is already held inside the scroll extent (GraphZoom.ClampPan),
+    /// so a later zoom's re-coerce has no unclamped value to bring back (#4033, #4063), whoever writes the pan.</summary>
     internal Point Pan
     {
         get => GetValue(PanProperty);
-        set => SetValue(PanProperty, value);
+        set => SetValue(PanProperty, HeldPan(value));
     }
 
     /// <summary>A node's card in this control's coordinates, after pan and zoom.</summary>
@@ -171,7 +172,7 @@ internal sealed partial class GraphCanvas : Control
         if (_panFrom is { } from)
         {
             var at = e.GetPosition(this);
-            Pan = new Point(_panStart.X + (at.X - from.X), _panStart.Y + (at.Y - from.Y));
+            PanTo(new Point(_panStart.X + (at.X - from.X), _panStart.Y + (at.Y - from.Y)));
         }
     }
 
@@ -206,14 +207,14 @@ internal sealed partial class GraphCanvas : Control
         {
             var (dx, dy) = modifiers.HasFlag(KeyModifiers.Shift) && Math.Abs(delta.X) < 1e-9 ? (delta.Y, 0d) : (delta.X, delta.Y);
             var before = Pan;
-            Pan = new Point(Pan.X + (dx * WheelStep), Pan.Y + (dy * WheelStep));
+            PanTo(new Point(Pan.X + (dx * WheelStep), Pan.Y + (dy * WheelStep)));
             return Pan != before;
         }
 
         // Zoom about the pointer: the world point under it stays under it.
         var world = ToWorld(at);
         Zoom *= Math.Pow(ZoomStep, delta.Y);
-        Pan = new Point(at.X - (world.X * Zoom), at.Y - (world.Y * Zoom));
+        PanTo(new Point(at.X - (world.X * Zoom), at.Y - (world.Y * Zoom)));
         return true;
     }
 
@@ -264,7 +265,7 @@ internal sealed partial class GraphCanvas : Control
         if (old is null || graph is null || !string.Equals(old.Slug, graph.Slug, StringComparison.Ordinal))
         {
             Zoom = 1;
-            Pan = _defaultPan;
+            PanTo(_defaultPan);
             _fitPending = true;
         }
 
