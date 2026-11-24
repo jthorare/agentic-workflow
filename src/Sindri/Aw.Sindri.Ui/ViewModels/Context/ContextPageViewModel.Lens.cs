@@ -83,6 +83,12 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
+        if (Whole.AreasTitled(AnchorText.Trim()) is { Count: > 0 } titled)
+        {
+            ShowTitledAreas(titled);   // a tile's own title is the match, before any question is asked (#3084)
+            return;
+        }
+
         if (await Resolve(api, words, generation, cancellationToken).ConfigureAwait(true) is not var (anchors, fromQuestion, suggested))
         {
             return;

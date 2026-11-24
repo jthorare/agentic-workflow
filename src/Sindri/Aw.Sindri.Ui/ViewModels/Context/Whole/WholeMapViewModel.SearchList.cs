@@ -3,6 +3,8 @@ namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 /// <summary>A search on the overview's area tiles (<see cref="WholeMapViewModel"/>, continued; #3674): the tiles give way to the matches as the ranked list, 50 a page, through the area list's pager. Esc or an empty box goes back to the tiles.</summary>
 internal sealed partial class WholeMapViewModel
 {
+    private const string AreaKind = "area";   // a match that is an area tile, found by its title, not an item of the map
+
     private IReadOnlyList<MapSearchHit>? _hits;
     private (IReadOnlyList<MapSearchHit> Source, int Page, IReadOnlyList<MapItemViewModel> Rows)? _hitRows;
 
@@ -26,12 +28,21 @@ internal sealed partial class WholeMapViewModel
         OnChanged(nameof(NoMatches));
     }
 
+    /// <summary>The overview's areas whose title holds the text (any case), largest first, as matches the list shows as tiles: Enter opens the area (#3084).</summary>
+    /// <param name="text">The typed text.</param>
+    /// <returns>The matches; empty when the stage is neither the area tiles nor a search's list.</returns>
+    internal IReadOnlyList<MapSearchHit> AreasTitled(string text) =>
+        text.Length == 0 || !SearchesAsList || Answer is not { Areas: { Count: > 0 } areas }
+            ? []
+            : [.. CardsOf(areas).Where(c => c.Label.Contains(text, StringComparison.OrdinalIgnoreCase)).Select(c => new MapSearchHit(c.Key, AreaKind, c.Label, c.Key))];
+
     // The rows of the page on screen, built once per page.
     private IReadOnlyList<MapItemViewModel> SearchRows(IReadOnlyList<MapSearchHit> hits)
     {
         if (_hitRows is not { } have || !ReferenceEquals(have.Source, hits) || have.Page != AreaPage)
         {
-            IReadOnlyList<MapItemViewModel> rows = [.. hits.Skip((AreaPage - 1) * WholeDrillIn.ListPageSize).Take(WholeDrillIn.ListPageSize).Select(h => new MapItemViewModel(h.Key, h.Label, Labels.ContextMapItemName(h.Label, h.Kind), IsTile: false))];
+            IReadOnlyList<MapItemViewModel> rows = [.. hits.Skip((AreaPage - 1) * WholeDrillIn.ListPageSize).Take(WholeDrillIn.ListPageSize)
+                .Select(h => new MapItemViewModel(h.Key, h.Label, Labels.ContextMapItemName(h.Label, h.Kind), IsTile: string.Equals(h.Kind, AreaKind, StringComparison.Ordinal)))];
             _hitRows = have = (hits, AreaPage, rows);
         }
 

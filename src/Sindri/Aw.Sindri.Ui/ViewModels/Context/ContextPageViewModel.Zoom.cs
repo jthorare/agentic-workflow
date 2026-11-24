@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api.Context;
+using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.ViewModels.Context;
 
@@ -50,6 +51,18 @@ internal sealed partial class ContextPageViewModel
         Head = Whole.Head;
         ChangedWhole();
         OnChanged(nameof(IsZoomedIn));
+    }
+
+    // The area tiles whose title holds the typed text are the search's list; a miss line from an earlier search goes with it.
+    private void ShowTitledAreas(IReadOnlyList<MapSearchHit> titled)
+    {
+        Whole.ShowSearchList(titled);
+        Problem = string.Empty;
+        Choices = [];
+        Head = Whole.Head;
+        ChangedWhole();
+        OnChanged(nameof(IsZoomedIn));
+        Refresh();
     }
 
     // By feature: where the answer's nodes sit is read with locate=, every feature they touch is opened with area= (eight reads at once, most-touched first, until the drawn nodes pass a soft guard), and any left over are counted.
