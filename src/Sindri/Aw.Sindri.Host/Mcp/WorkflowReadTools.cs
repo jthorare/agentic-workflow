@@ -151,7 +151,8 @@ internal static class WorkflowReadTools
         {
             JsonValueKind.Number => raw.GetRawText(),
             JsonValueKind.String => raw.GetString(),
-            _ => ContextErrors.McpArgumentsInvalid.With($"'revision' must be a whole number or 'latest' (fix: call {Get} with {{\"slug\": \"morning-check\", \"revision\": 2}})"),
+            JsonValueKind.Undefined or JsonValueKind.Object or JsonValueKind.Array or JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null or _ =>
+                ContextErrors.McpArgumentsInvalid.With($"'revision' must be a whole number or 'latest' (fix: call {Get} with {{\"slug\": \"morning-check\", \"revision\": 2}})"),
         };
     }
 
