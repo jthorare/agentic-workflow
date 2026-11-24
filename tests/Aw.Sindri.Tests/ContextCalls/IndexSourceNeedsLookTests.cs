@@ -85,6 +85,31 @@ public sealed class IndexSourceNeedsLookTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_source_is_not_flagged_right_after_index_sync_resumes_from_a_long_pause_3909()
+    {
+        var row = await Status(NeverSynced(), Started(TimeSpan.FromMinutes(40)), new ResumedService(IndexSyncService.ServiceId, _now.AddMinutes(39)));
+
+        Assert.False(row.NeedsLook);
+        Assert.Null(row.LookWords);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_source_is_flagged_16_minutes_after_index_sync_resumes_3909()
+    {
+        var row = await Status(NeverSynced(), Started(TimeSpan.FromMinutes(56)), new ResumedService(IndexSyncService.ServiceId, _now.AddMinutes(40)));
+
+        Assert.Equal((true, "linear hasn't finished a sync in 15 minutes"), (row.NeedsLook, row.LookWords));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_resume_before_serve_started_leaves_the_count_at_serve_start_3909()
+    {
+        var row = await Status(NeverSynced(), Started(TimeSpan.FromMinutes(14)), new ResumedService(IndexSyncService.ServiceId, _now.AddHours(-3)));
+
+        Assert.False(row.NeedsLook);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_first_pass_under_a_30_minute_index_sync_that_committed_20_minutes_ago_needs_no_look_4035()
     {
         var backfilling = Source() with { Phase = SyncPhase.Backfill, Complete = false, Pull = "idle", Records = 12_400, LastSync = _now.AddMinutes(20), LastCommit = _now.AddMinutes(20) };

@@ -13,13 +13,34 @@ internal sealed class ViewServicePauses(IViewReader reader, IProjectorStatus sta
 {
     public async ValueTask<Result<IReadOnlySet<ServiceName>>> Paused(CancellationToken cancellationToken)
     {
+        if (Untrusted() is { } refused)
+        {
+            return refused;
+        }
+
+        var rows = await reader.List<ServiceRow>(ViewNames.Services, cancellationToken).ConfigureAwait(false);
+        return rows.IsError ? rows.Error : Results.Success<IReadOnlySet<ServiceName>>(rows.Value.Where(static r => r.Paused).Select(static r => r.Name).ToHashSet());
+    }
+
+    public async ValueTask<Result<DateTimeOffset?>> ResumedAt(ServiceName service, CancellationToken cancellationToken)
+    {
+        if (Untrusted() is { } refused)
+        {
+            return refused;
+        }
+
+        var row = await reader.Get<ServiceRow>(ViewNames.Services, service.Value, cancellationToken).ConfigureAwait(false);
+        return row.IsError ? row.Error : Results.Success(row.Value?.ResumedAt);
+    }
+
+    private Error? Untrusted()
+    {
         if (status.Current is { Stalled: true } or { Rebuilding: true } or { Starting: true })
         {
             return status.Current.Stalled ? SindriErrors.ViewsStalled.With(status.Current.StalledPhrase())
                 : SindriErrors.ViewsRebuilding.With(status.Current.Starting ? "the services view is still loading" : "the services view is being rebuilt");
         }
 
-        var rows = await reader.List<ServiceRow>(ViewNames.Services, cancellationToken).ConfigureAwait(false);
-        return rows.IsError ? rows.Error : Results.Success<IReadOnlySet<ServiceName>>(rows.Value.Where(static r => r.Paused).Select(static r => r.Name).ToHashSet());
+        return null;
     }
 }
