@@ -1,5 +1,6 @@
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
@@ -17,6 +18,14 @@ public sealed class WorkflowsRunStartFailedFramesTests : FrameHost
     private static T ById<T>(Window window, string id)
         where T : Control =>
         window.GetVisualDescendants().OfType<T>().First(c => AutomationProperties.GetAutomationId(c) == id);
+
+    // The frame: the element is scrolled into view first (the runs list sits under the graph), then the window is saved as frames/s3702-<name>.png (AW_UI_FRAMES=1).
+    private static void Frame(Window window, Control inView, string name)
+    {
+        inView.BringIntoView();
+        window.UpdateLayout();
+        FrameFile.Save(window, "s3702-" + name);
+    }
 
     private async Task<(Window Window, Aw.Sindri.Ui.ViewModels.Shell.ShellViewModel Shell)> AfterRunNow()
     {
@@ -43,6 +52,7 @@ public sealed class WorkflowsRunStartFailedFramesTests : FrameHost
         var text = ById<TextBlock>(window, "RunDidNotStart");
         var retry = ById<Button>(window, "RunStartRetry");
 
+        Frame(window, retry, "b-row-timeout");
         Assert.Equal("The run didn't start.", text.Text);
         Assert.True(text.IsEffectivelyVisible && retry.IsEffectivelyVisible && retry.IsEnabled);
         Assert.Equal("Retry", retry.Content);
@@ -58,9 +68,28 @@ public sealed class WorkflowsRunStartFailedFramesTests : FrameHost
         var text = ById<TextBlock>(window, "RunPageDidNotStart");
         var retry = ById<Button>(window, "RunPageStartRetry");
 
+        Frame(window, retry, "c-runpage-timeout");
         Assert.Equal("The run didn't start.", text.Text);
         Assert.True(text.IsEffectivelyVisible && retry.IsEffectivelyVisible && retry.IsEnabled);
         Assert.Equal("Retry", retry.Content);
         Assert.False(Visible(window, "RunCancel"), "Cancel is offered for a run the server never saw");
+    });
+
+    [Fact]
+    public Task Retry_on_the_run_page_starts_a_new_run_that_says_Starting_and_then_says_it_did_not_start_too() => OnUi(async () =>
+    {
+        var (window, shell) = await AfterRunNow();
+        Clock.Advance(TimeSpan.FromSeconds(10));
+        await Until(window, () => shell.Workflows.Run.DidNotStart, "the run page never timed out");
+
+        ById<Button>(window, "RunPageStartRetry").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));   // Retry on the run page
+        await Until(window, () => !shell.Workflows.Run.DidNotStart, "Retry never started a new run");
+        Frame(window, window, "e-page-retry-starting");
+
+        Clock.Advance(TimeSpan.FromSeconds(10));
+        await Until(window, () => shell.Workflows.Run.DidNotStart, "the new run never timed out");
+        var retry = ById<Button>(window, "RunPageStartRetry");
+        Frame(window, retry, "f-page-retry-timeout");
+        Assert.True(retry.IsEffectivelyVisible && retry.IsEnabled);
     });
 }
