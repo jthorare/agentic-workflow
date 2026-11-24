@@ -31,10 +31,10 @@ internal sealed class BuildDriftCheck(ToolkitGit git, IInstalledBuilds builds, I
         foreach (var name in _binaries)
         {
             var record = await builds.Current(name, cancellationToken).ConfigureAwait(false);
-            parts.Add(name + "=" + (record.IsSuccess && record.Value is { } built ? built.Revision + "/" + (built.Inputs is { } inputs ? string.Join(",", inputs) : "(no pathspecs)") : "(none)"));
+            parts.Add(name + "=" + (record.IsSuccess && record.Value is { } built ? built.Revision + "/" + (built.Inputs is { } inputs ? string.Join(',', inputs) : "(no pathspecs)") : "(none)"));
         }
 
-        return string.Join(";", parts);
+        return string.Join(';', parts);
     }
 
     /// <summary>Compares each tool.</summary>
