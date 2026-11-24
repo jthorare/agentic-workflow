@@ -1,3 +1,5 @@
+using Aw.Sindri.Ui.Api.Projects;
+
 namespace Aw.Sindri.Ui.ViewModels.Projects;
 
 /// <summary>

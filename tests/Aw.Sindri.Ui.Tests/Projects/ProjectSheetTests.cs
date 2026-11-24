@@ -40,7 +40,7 @@ public sealed class ProjectSheetTests
         var sheet = await _f.Opened(ProjectSheetFixture.Attached, Token);
         var own = sheet.NotesCard;
 
-        sheet.EditNotesWith(null);
+        sheet.EditNotesWith(card: null);
 
         Assert.Same(own, sheet.NotesCard);
     }
