@@ -63,7 +63,10 @@ internal static class BuiltinRules
         new("aws-access-key", Start + "A(?:KIA|SIA)[0-9A-Z]{16}" + End, Gate: new(Exact("AKIA", "ASIA"))),
         new("github-token", Start + "(?:gh[pousr]_[A-Za-z0-9_]{30,}|github_pat_[A-Za-z0-9_]{22,})",
             Gate: new(Exact("ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_"))),
-        new("slack-token", Start + "xox[abprs]-[A-Za-z0-9-]{10,}", Gate: new(Exact("xox"))),
+        // Every Slack token shape (messages spec §11): bot, user, cookie, config and refresh tokens (xoxb-, xoxp-, xoxc-, xoxe-, ...), the
+        // rotating form 'xoxe.xoxp-' whole, and the app-level token 'xapp-'.
+        new("slack-token", Start + "(?:xoxe\\.)?xox[abceprs]-[A-Za-z0-9-]{10,}", Gate: new(Exact("xox"))),
+        new("slack-app-token", Start + "xapp-[A-Za-z0-9-]{10,}", Gate: new(Exact("xapp-"))),
         new("stripe-key", Start + "[sr]k_(?:live|test)_[A-Za-z0-9]{16,}", Gate: new(Exact("k_live_", "k_test_"))),
         new("google-api-key", Start + "AIza[0-9A-Za-z_-]{35}" + End, Gate: new(Exact("AIza"))),
         new("linear-key", Start + "lin_(?:api|oauth)_[A-Za-z0-9]{32,}", Gate: new(Exact("lin_api_", "lin_oauth_"))),

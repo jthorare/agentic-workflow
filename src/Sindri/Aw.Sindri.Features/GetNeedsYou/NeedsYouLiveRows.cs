@@ -16,6 +16,9 @@ internal sealed class NeedsYouLiveRows(SetupNotices setup, IWorkflowRunStore run
     public async ValueTask<IReadOnlyList<NeedsYouRow>> Read(CancellationToken cancellationToken) =>
         [.. await SetupRows(cancellationToken).ConfigureAwait(false), .. await FailedRunRows(runs, scrubber, cancellationToken).ConfigureAwait(false)];
 
+    /// <summary>The most failed-run rows one read shows, the newest first.</summary>
+    internal const int FailedRunLimit = 200;
+
     /// <summary>The rows of the live runs that ended failed and are unseen (Home spec 2026-11-12 §3.2, E1).</summary>
     /// <param name="runs">The run store.</param>
     /// <param name="scrubber">Scrubs the text a row shows.</param>
@@ -25,7 +28,7 @@ internal sealed class NeedsYouLiveRows(SetupNotices setup, IWorkflowRunStore run
     {
         ArgumentNullException.ThrowIfNull(runs);
         ArgumentNullException.ThrowIfNull(scrubber);
-        var failed = await runs.FailedUnseen(cancellationToken).ConfigureAwait(false);
+        var failed = await runs.FailedUnseen(FailedRunLimit, cancellationToken).ConfigureAwait(false);
         return failed.IsError ? [] : [.. failed.Value.Select(run => NeedsYouRows.ForRunFailed(run, scrubber)).Where(static r => r.IsSuccess).Select(static r => r.Value)];
     }
 

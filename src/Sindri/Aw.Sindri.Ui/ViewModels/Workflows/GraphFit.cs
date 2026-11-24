@@ -27,6 +27,28 @@ internal static class GraphFit
     internal static GraphFitResult Compute(GraphFitInput input, double canvasWidth, double canvasHeight, double textScale)
     {
         ArgumentNullException.ThrowIfNull(input);
+        var fit = FitAt(input, canvasWidth, canvasHeight, textScale);
+
+        // #4149: while the map shows, no card column may sit under it. A layout that reaches into the map's gutter wraps again at the width left of it; that only
+        // makes the graph taller, so the map still shows and nothing flips back. A layout that already leaves the gutter free is kept.
+        return NeedsGutter(fit, canvasWidth, canvasHeight) ? FitAt(input, Math.Max(1, canvasWidth - GraphZoom.MapGutter), canvasHeight, textScale) : fit;
+    }
+
+    private static bool NeedsGutter(GraphFitResult fit, double canvasWidth, double canvasHeight)
+    {
+        if (fit.Cards.Count == 0)
+        {
+            return false;
+        }
+
+        var right = fit.Cards.Values.Max(c => c.X + c.Width);
+        var bottom = fit.Cards.Values.Max(c => c.Y + c.Height);
+        return GraphZoom.MapShown(right, bottom, fit.Zoom, (canvasWidth, canvasHeight)) && (right * fit.Zoom) > canvasWidth - GraphZoom.MapGutter + 0.5;
+    }
+
+    // The largest zoom from 100 % down to the 12 px floor at which the layout wrapped at this width fits the canvas.
+    private static GraphFitResult FitAt(GraphFitInput input, double canvasWidth, double canvasHeight, double textScale)
+    {
         var floor = Floor(textScale);
         var percent = 100;
         while (true)

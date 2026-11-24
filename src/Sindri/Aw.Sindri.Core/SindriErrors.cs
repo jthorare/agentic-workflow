@@ -288,6 +288,7 @@ public static partial class SindriErrors
         ToolkitNotBuilt, ToolkitTestsFailed, ToolkitManifestInvalid, ToolkitProcessDied, ToolkitPaused, ToolkitCallTimedOut, ToolkitToolUnknown, ToolkitSandboxUnavailable, ToolkitNotFound, ToolkitNameInvalid, ToolkitToolFailed, ToolkitExists, ToolkitCreateFailed,
         .. EveryTodo(),
         .. EveryHome(),
+        .. EveryMessages(),
         .. EveryAgentStart(),
     ];
 }

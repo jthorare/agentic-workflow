@@ -127,6 +127,7 @@
     <Project Path="tests/Aw.CodeIndex.Testing/Aw.CodeIndex.Testing.csproj" />
     <Project Path="tests/Aw.Connectors.Tests/Aw.Connectors.Tests.csproj" />
     <Project Path="tests/Aw.Connectors.Testing/Aw.Connectors.Testing.csproj" />
+    <Project Path="tests/Aw.Connectors.Testing.Server/Aw.Connectors.Testing.Server.csproj" />
     <Project Path="tests/Aw.Embeddings.Tests/Aw.Embeddings.Tests.csproj" />
     <Project Path="tests/Aw.Embeddings.Testing/Aw.Embeddings.Testing.csproj" />
     <Project Path="tests/Aw.Sindri.Toolkit.Testing/Aw.Sindri.Toolkit.Testing.csproj" />

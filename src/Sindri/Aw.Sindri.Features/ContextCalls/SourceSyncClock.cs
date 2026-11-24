@@ -31,4 +31,8 @@ internal sealed class SourceSyncClock
         var since = _clock.GetUtcNow() - from;
         return since < TimeSpan.Zero ? TimeSpan.Zero : since;
     }
+
+    /// <summary>The time now, on the same clock.</summary>
+    /// <returns>The time now.</returns>
+    internal DateTimeOffset Now() => _clock.GetUtcNow();
 }

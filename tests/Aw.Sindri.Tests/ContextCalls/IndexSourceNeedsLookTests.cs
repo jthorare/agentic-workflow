@@ -2,6 +2,7 @@ using Aw.Context.Core.Map;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Testing;
@@ -108,6 +109,16 @@ public sealed class IndexSourceNeedsLookTests
         Assert.False(row.NeedsLook);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_first_pass_under_a_30_minute_index_sync_that_committed_20_minutes_ago_needs_no_look_4035()
+    {
+        var backfilling = Source() with { Phase = SyncPhase.Backfill, Complete = false, Pull = "idle", Records = 12_400, LastSync = _now.AddMinutes(20), LastCommit = _now.AddMinutes(20) };
+
+        var row = await Status(backfilling, Started(TimeSpan.FromMinutes(40)), new NoPauses(), SliceHarness.ProfileOf("thor", ("index-sync", "30m")));
+
+        Assert.False(row.NeedsLook);
+    }
+
     private static SourceProgress NeverSynced() => Source() with { LastSync = null, Pull = "running", Records = 0 };
 
     private static SourceSyncClock Started(TimeSpan ago)
@@ -118,9 +129,9 @@ public sealed class IndexSourceNeedsLookTests
         return started;
     }
 
-    private async Task<IndexSourceRow> Status(SourceProgress source, SourceSyncClock started, IServicePauses pauses)
+    private async Task<IndexSourceRow> Status(SourceProgress source, SourceSyncClock started, IServicePauses pauses, LoadedProfile? profile = null)
     {
-        _ = await _h.Profiles.Save(SliceHarness.Profile("5m"), Ct);
+        _ = await _h.Profiles.Save(profile ?? SliceHarness.Profile("5m"), Ct);
         _index.Standing = [source];
         using var caller = _h.Callers.EnterService("test");
 
