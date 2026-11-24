@@ -76,23 +76,30 @@ internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands rep
         }
 
         // Unlike "gh pr merge", an exit 0 of "gh stack merge" is not proof the pull request merged (it may have been accepted for a later merge): read it again before recording.
-        if (view.Value.Stacked && await StillOpen(repoDirectory, request.Pr).ConfigureAwait(false) is { } open)
+        if (view.Value.Stacked && await NotMerged(repoDirectory, request.Pr).ConfigureAwait(false) is { } notMerged)
         {
-            return open;
+            return notMerged;
         }
 
         return await Recorded(await recorder.Record(request, assessed, pull, await MainSha(repoDirectory, request.Pr).ConfigureAwait(false), cancellationToken).ConfigureAwait(false), assessed, cancellationToken).ConfigureAwait(false);
     }
 
     // Null when the pull request reads MERGED; otherwise the refusal (AW-META-012), which records nothing.
-    private async ValueTask<Error?> StillOpen(string repoDirectory, int pr)
+    private async ValueTask<Error?> NotMerged(string repoDirectory, int pr)
     {
         var now = await repo.View(repoDirectory, pr, "state").ConfigureAwait(false);
-        return now.IsError
-            ? now.Error
-            : now.Value.State == PrState.Merged
-                ? null
-                : MetaErrors.CommandFailed.With($"gh stack merge #{pr.ToString(CultureInfo.InvariantCulture)} exited 0 but the pull request is still open; nothing is recorded, run merge-run again when it has merged");
+        if (now.IsError)
+        {
+            return now.Error;
+        }
+
+        var number = pr.ToString(CultureInfo.InvariantCulture);
+        return now.Value.State switch
+        {
+            PrState.Merged => null,
+            PrState.Closed => MetaErrors.CommandFailed.With($"gh stack merge #{number} exited 0 but the pull request was closed without merging; nothing is recorded"),
+            PrState.Open or _ => MetaErrors.CommandFailed.With($"gh stack merge #{number} exited 0 but the pull request is still open; nothing is recorded, run merge-run again when it has merged"),
+        };
     }
 
     // GitHub refuses a stacked pull request on the plain merge call: "gh stack merge" merges the stack up to it (or enqueues it behind a merge queue). Without the extension a stacked pull request is refused before anything runs.
