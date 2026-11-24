@@ -23,7 +23,7 @@ internal sealed class GetMessageThreadService(IMessagesStore store, ICallerConte
         }
 
         var found = thread.Value;
-        return MessageReadFilter.ShowsText(callers.Current)
+        return MessageReadAccess.ShowsText(callers.Current)
             ? new GetMessageThreadResponse(found.Root, found.Replies, found.Row)
             : new GetMessageThreadResponse(MessageReadFilter.WithoutText(found.Root), [.. found.Replies.Select(MessageReadFilter.WithoutText)],
                 found.Row is { } row ? MessageReadFilter.WithoutText(row) : null);

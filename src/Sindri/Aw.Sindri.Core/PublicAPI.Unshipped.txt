@@ -25328,10 +25328,11 @@ static Aw.Sindri.Core.Messages.StoredThread.operator ==(Aw.Sindri.Core.Messages.
 Aw.Sindri.Core.Messages.MessageLine.AuthorName.get -> string?
 Aw.Sindri.Core.Messages.MessageLine.AuthorName.init -> void
 Aw.Sindri.Core.Messages.MessageReadFilter
-static Aw.Sindri.Core.Messages.MessageReadFilter.ShowsText(Aw.Sindri.Core.Commands.CallerContext? caller) -> bool
 static Aw.Sindri.Core.Messages.MessageReadFilter.WithoutText(Aw.Sindri.Core.Messages.MessageLine! line) -> Aw.Sindri.Core.Messages.MessageLine!
 static Aw.Sindri.Core.Messages.MessageReadFilter.WithoutText(Aw.Sindri.Core.Messages.ThreadRow! row) -> Aw.Sindri.Core.Messages.ThreadRow!
 Aw.Sindri.Core.Messages.IMessagesStore.Rows(Aw.Sindri.Core.Messages.MessageList list, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.ThreadRow!>!>!>
 Aw.Sindri.Core.Messages.IMessagesStore.Conversations(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Messages.ConversationSummary!>!>!>
 Aw.Sindri.Core.Messages.IMessagesStore.Window(string! conversation, Aw.Sindri.Core.Messages.MessageTs? before, Aw.Sindri.Core.Messages.MessageTs? after, int limit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Messages.ConversationWindow!>!>
 Aw.Sindri.Core.Messages.IMessagesStore.Thread(string! conversation, Aw.Sindri.Core.Messages.MessageTs thread, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Messages.StoredThread!>!>
+Aw.Sindri.Core.Commands.MessageReadAccess
+static Aw.Sindri.Core.Commands.MessageReadAccess.ShowsText(Aw.Sindri.Core.Commands.CallerContext? caller) -> bool

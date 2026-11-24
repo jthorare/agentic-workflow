@@ -30,7 +30,7 @@ internal sealed class GetConversationMessagesService(IMessagesStore store, ICall
             return window.Error;
         }
 
-        var lines = MessageReadFilter.ShowsText(callers.Current) ? window.Value.Lines : [.. window.Value.Lines.Select(MessageReadFilter.WithoutText)];
+        var lines = MessageReadAccess.ShowsText(callers.Current) ? window.Value.Lines : [.. window.Value.Lines.Select(MessageReadFilter.WithoutText)];
         return new GetConversationMessagesResponse(request.Conversation, lines, window.Value.Gaps);
     }
 }

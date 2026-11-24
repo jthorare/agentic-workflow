@@ -22,7 +22,7 @@ internal sealed class ListConversationsService(IMessagesStore store, ICallerCont
             return conversations.Error;
         }
 
-        var names = MessageReadFilter.ShowsText(callers.Current);
+        var names = MessageReadAccess.ShowsText(callers.Current);
         var query = string.IsNullOrWhiteSpace(request.Query) ? null : request.Query.Trim();
         var rows = conversations.Value
             .Where(c => (request.Starred is not { } starred || c.Starred == starred) && (query is null || c.Name.Contains(query, StringComparison.OrdinalIgnoreCase)))

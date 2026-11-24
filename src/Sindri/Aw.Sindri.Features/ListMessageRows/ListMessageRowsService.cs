@@ -44,7 +44,7 @@ internal sealed class ListMessageRowsService(IMessagesStore store, ICallerContex
         var limit = Math.Clamp(request.Limit, 1, MaxLimit);
         var page = all.Skip(start).Take(limit).ToList();
         var next = start + page.Count < all.Count && page.Count > 0 ? page[^1].Key : null;
-        var shown = MessageReadFilter.ShowsText(callers.Current) ? page : [.. page.Select(MessageReadFilter.WithoutText)];
+        var shown = MessageReadAccess.ShowsText(callers.Current) ? page : [.. page.Select(MessageReadFilter.WithoutText)];
         return new ListMessageRowsResponse(request.List, shown, all.Count, next);
     }
 
