@@ -35,19 +35,19 @@ public sealed class AnchorChoiceScrubTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task An_unknown_name_lists_its_choices_with_scrubbed_labels()
     {
-        await Import();
+        _ = await Import();
 
         var shown = await _world.Engine.ShowNode("tab groups zzz", MapWorld.HumanVia(ContextClient.Mcp), MapWorld.None);
 
         Assert.Equal(ContextErrors.UnknownAnchor.Code, shown.Error.Code);
-        Assert.Contains(Scrubbed, ChoiceLabels(shown.Error));
+        Assert.Contains(Scrubbed, ChoiceLabels(shown.Error), StringComparer.Ordinal);
         Assert.All(ChoiceLabels(shown.Error), l => Assert.DoesNotContain(FakeScrubber.Secret, l, StringComparison.Ordinal));
     }
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_name_shared_by_two_nodes_lists_its_choices_with_scrubbed_labels()
     {
-        await Import();
+        _ = await Import();
 
         var shown = await _world.Engine.ShowNode("Tab groups " + FakeScrubber.Secret, MapWorld.HumanVia(ContextClient.Mcp), MapWorld.None);
 
@@ -58,12 +58,12 @@ public sealed class AnchorChoiceScrubTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task A_question_lists_its_suggestions_with_the_same_scrubbed_labels()
     {
-        await Import();
+        _ = await Import();
 
         var result = (await _world.Engine.Query(new ContextQuery("restore tab groups"), MapWorld.HumanVia(ContextClient.Mcp), MapWorld.None)).Value;
 
         var labels = (result.Suggestions ?? []).Select(s => s.Label).ToList();
-        Assert.Contains(Scrubbed, labels);
+        Assert.Contains(Scrubbed, labels, StringComparer.Ordinal);
         Assert.All(labels, l => Assert.DoesNotContain(FakeScrubber.Secret, l, StringComparison.Ordinal));
     }
 }
