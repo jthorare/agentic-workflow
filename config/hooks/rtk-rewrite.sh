@@ -4,7 +4,7 @@
 # If the command STARTS with a rewrite pattern, outputs ONE JSON document with updatedInput (#3778).
 # The match is on the start of the whole command, not on each line: a heredoc script followed by a `git diff` line is not a git
 # command. The rest of a multi-line command stays as it was. Claude Code reads stdout as one JSON document, so the encoder
-# (jq -n --arg) never emits one object per line.
+# (jq -n --rawfile) never emits one object per line.
 # Safety hooks run first — this runs 4th in the Bash chain after all safety checks.
 
 INPUT=$(cat)
@@ -41,5 +41,5 @@ esac
 [ -z "$REWRITTEN" ] && exit 0
 
 # Output updated input JSON for Claude Code to apply
-jq -n --arg c "$REWRITTEN" '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "allow", updatedInput: {command: $c}}}'
+jq -n --rawfile c <(printf '%s' "$REWRITTEN") '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "allow", updatedInput: {command: $c}}}'
 exit 0

@@ -128,7 +128,7 @@ internal sealed partial class ContextPageViewModel
         if (read.IsSuccess)
         {
             Whole.Show(read.Value);
-            NoteRepos(read.Value);
+            NoteRepos(read.Value.Repos);
             if (OpenedConceptId is { } opened)
             {
                 await MarkSuggestedSeen(opened).ConfigureAwait(true);

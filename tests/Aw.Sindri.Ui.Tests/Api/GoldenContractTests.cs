@@ -177,12 +177,14 @@ public sealed class GoldenContractTests
     {
         "stop",
         "toolkits", "toolkits-build", "toolkits-name-start", "toolkits-name-stop", "toolkits-name-pause", "toolkits-name-resume", "toolkits-name-calls",   // agent-first PR 16c: the app has no Toolkits page; the CLI's `toolkit` verbs and the toolkit_* MCP tools call these
+        "workflow-runs-run-rerun",   // #3204: POST /workflow-runs/{run}/rerun, 'sindri wf rerun' and the workflow_rerun MCP tool; its goldens are refusals (ProblemDetails) until the run page's Re-run button reads it
         "workflow-runs-run-nodes-node-answer",   // #2425: POST .../nodes/{node}/answer, the engine's answer to an ask_owner question; the app calls it once the Needs-you question row has its answer form (UI lane)
         "todos-id",   // the app never calls GET /sindri/todos/{id}; the CLI's `todo show` does
         "todos-keep", "todos-keep-undo", "todos-hold-apply", "todos-hold-undo",   // the picks (todo Ph3b): the conflict and hold rows that call them are ui's Ph4
         "workflow-instances", "workflow-instance", "workflow-instance-fact", "workflow-status", "workflow-recipe", "workflow-recipes", "workflow-recipes-id-stats", "workflow-instances-start", "workflow-recipes-approve-all",   // the app has no Recipes or workflow-instance pages (the Workflows page reads only workflows, workflows-slug, workflows-slug-runs and workflow-runs-run); these routes stay served until the backend PR removes them
         "workflow-challenges-app",   // q93: the app asks for no challenge any more; the route stays served until api removes it
         "setup-repos",   // POST /setup/repos (Add repo): the app's call and the job's progress are U3's (SO-U3)
+        "setup-accounts",   // POST and DELETE /setup/accounts/github (first-run P5, #3321): the question 1 screen (first-run P11) reads the answer; its shape is docs/csharp/sindri.md "Accounts step"
         "context-concepts-id-members",   // GET /sindri/context/concepts/{id}/members: the band reads sizes from the concepts answer, never a concept's member list
         "context-eval", "context-map-proposals", "context-query", "context-history", "context-subgraph", "context-search",   // not U9's: eval, proposals (U13) and the query routes are read by the phases that call them
         "items",   // GET /items (the list) is never called; POST /items' created* goldens are read (see the loop)
@@ -199,6 +201,7 @@ public sealed class GoldenContractTests
         "todos-note-import",   // POST /todos/note/import (todo Ph3b): dry-run, imported and the stale 409; the app's Import and start syncing reads it with its own view once the card's golden contract lists it
         "home-rank-id",   // GET /sindri/home/rank/{id}: the explain data is the CLI's `home rank --explain` and the home_rank MCP tool; the row's why chip reads the rank inside the row
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
+        "links-resolve",   // QUERY /sindri/links/resolve (messages spec §9.3, M1g): the conversation's link rows read it with their view (M1l)
         "messages-lists-id", "messages-status", "messages-conversations", "messages-conversations-id-messages", "messages-threads-id-id", "messages-search",   // messages spec §8.2 (M1s): M1f records these goldens; M1k and M1l move the ones the page reads to _read with their views
     };
 

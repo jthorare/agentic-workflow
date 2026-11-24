@@ -6,6 +6,7 @@ using Aw.CodeIndex.Core.Ports;
 using Aw.CodeIndex.Core.Values;
 using Aw.CodeIndex.Testing;
 using Aw.Sindri.Core.Doctor;
+using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.CodeIndexJobs;
 using Aw.Sindri.Tests.Server;
@@ -121,6 +122,18 @@ public sealed class CodeIndexDoctorTests
         Assert.Equal(CheckState.Warn, row.State);
         Assert.DoesNotContain("first build queued", row.Detail, StringComparison.Ordinal);
         Assert.Contains("no main or origin/main", row.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_running_first_build_reads_as_building_even_with_no_main_or_origin_main_gh3928()
+    {
+        var running = new JobRow(Core.Ids.JobId.From($"JOB-{1:x32}"), Core.Ids.JobKind.From("BuildCodeIndex"), Core.Ids.JobKey.From("index:demo"), Item: null, Core.Ids.RepoName.From("demo"), Service: null, JobState.Running,
+            "service:code-index", _now.AddMinutes(-1), EndedAt: null, [], 0, Summary: null, Code: null, Result: null, CancelledBy: null, Sequence: 1);
+
+        var row = CodeIndexDoctor.Rows(new([new RepoStatus(_repo, IndexState.Missing, Commit: null, BuiltAt: null, [], Counts: null)], [new IndexRepoHead(_repo, _new, OnDefaultBranch: false, DefaultTip: null)], [running]), _now)
+            .Single(static c => c.Name == "code-index:demo");
+
+        Assert.Equal((CheckState.Warn, "building the first index"), (row.State, row.Detail));
     }
 
     [Fact, Trait("Lane", "unit")]

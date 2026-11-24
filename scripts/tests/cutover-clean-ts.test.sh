@@ -319,9 +319,11 @@ if [ -z "$BF_BIN" ]; then
   if ! command -v dotnet > /dev/null 2>&1; then
     bad "dotnet is needed to build the real bugfix-state (or set BUGFIX_STATE_BIN)"
   else
-    mkdir -p "$WORK/bf-bin"
-    if HOME="$REAL_HOME" NUGET_PACKAGES="${NUGET_PACKAGES:-$REAL_HOME/.nuget/packages}" \
-        dotnet build "$REPO_ROOT/src/BugFix/Aw.BugFix.Host" -c Release -o "$WORK/bf-bin" -nologo -v q > "$WORK/bf-build.log" 2>&1; then
+    # The build's own temp dirs (NuGetScratch, MSBuild's) go under $WORK/bf-tmp, so the suite's trap removes them (#3262). No build
+    # server outlives the build: a reused compiler server would keep that deleted dir as its TMPDIR.
+    mkdir -p "$WORK/bf-bin" "$WORK/bf-tmp"
+    if HOME="$REAL_HOME" NUGET_PACKAGES="${NUGET_PACKAGES:-$REAL_HOME/.nuget/packages}" TMPDIR="$WORK/bf-tmp" \
+        dotnet build "$REPO_ROOT/src/BugFix/Aw.BugFix.Host" -c Release -o "$WORK/bf-bin" -nologo -v q --disable-build-servers > "$WORK/bf-build.log" 2>&1; then
       BF_BIN="dotnet $WORK/bf-bin/bugfix-state.dll"
     else
       bad "dotnet build of bugfix-state failed"; tail -20 "$WORK/bf-build.log"
@@ -331,7 +333,8 @@ fi
 if [ -n "$BF_BIN" ]; then
   D8="$WORK/realbf"; seed "$D8"; use "$D8"
   export AW_LOG_LEVEL=none
-  bf() { (cd "$D8/bfrepo" && $BF_BIN "$@"); }
+  mkdir -p "$WORK/bf-tmp"
+  bf() { (cd "$D8/bfrepo" && TMPDIR="$WORK/bf-tmp" $BF_BIN "$@"); }   # its runtime's temp files go with $WORK too (#3262)
   BFSTATE="$D8/state/myrepo-slug/bugfix/real1"
   mkdir -p "$D8/bfrepo/src"; printf 'drop cookie\n' > "$D8/bfrepo/src/app.txt"
   git -C "$D8/bfrepo" -c advice.ignoredHook=false init -q -b main

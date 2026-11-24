@@ -1,0 +1,31 @@
+{
+  "conversation": "C0HARBOR",
+  "lines": [
+    {
+      "ts": "1767771000.000100",
+      "author": "U0ADA",
+      "text": "<@U0JOI> review the fare table PR?",
+      "thread": "1767771000.000100",
+      "replies": 1,
+      "partial": false,
+      "authorName": null
+    },
+    {
+      "ts": "1767772000.000100",
+      "author": "U0LEE",
+      "text": "lunch Friday",
+      "thread": null,
+      "replies": 0,
+      "partial": false,
+      "authorName": null
+    }
+  ],
+  "gaps": [
+    {
+      "conversation": "C0HARBOR",
+      "after": "1767771000.000100",
+      "before": "1767772000.000100",
+      "missing": 12
+    }
+  ]
+}

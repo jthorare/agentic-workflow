@@ -1,0 +1,301 @@
+{
+  "$schema": "../schemas/repo-config/commands.schema.json",
+  "version": 1,
+  "entries": [
+    {
+      "id": "heavy",
+      "purpose": "Run a build, test or other expensive command under the box-wide heavy slot so jobs don't overload the machine: append the command and its arguments after heavy, as separate words",
+      "terms": [
+        "dotnet",
+        "build",
+        "test",
+        "slot",
+        "lock",
+        "queue"
+      ],
+      "run": {
+        "argv": [
+          "heavy"
+        ],
+        "cwd": "any"
+      },
+      "prerequisites": [
+        "heavy on PATH (scripts/install-cs.sh --link)"
+      ],
+      "effects": "writes-local",
+      "env": [
+        "AW_STATE_DIR"
+      ],
+      "output": "the command's own output and exit code; heavy waits for a free slot first",
+      "stop": "ends when the command ends; heavy --light <command> skips the box-wide slot, heavy --expensive <command> forces it",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    },
+    {
+      "id": "sindri-status",
+      "purpose": "Show whether the Sindri control plane is running and its summary",
+      "terms": [
+        "sindri",
+        "status",
+        "control plane",
+        "running",
+        "health"
+      ],
+      "run": {
+        "argv": [
+          "sindri",
+          "status"
+        ],
+        "cwd": "any"
+      },
+      "prerequisites": [
+        "sindri on PATH"
+      ],
+      "effects": "read-only",
+      "env": [
+        "AW_SINDRI_HOME"
+      ],
+      "output": "one summary; --json for one object; exit 1 when it isn't running",
+      "stop": "exits at once",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    },
+    {
+      "id": "sindri-doctor",
+      "purpose": "Run Sindri's health checks: lease, ledger, views, profile, api, temporal and context",
+      "terms": [
+        "sindri",
+        "doctor",
+        "health",
+        "checks",
+        "diagnose"
+      ],
+      "run": {
+        "argv": [
+          "sindri",
+          "doctor"
+        ],
+        "cwd": "any"
+      },
+      "prerequisites": [
+        "sindri on PATH"
+      ],
+      "effects": "read-only",
+      "env": [
+        "AW_SINDRI_HOME"
+      ],
+      "output": "one ok, warn or fail line per check with its fix; --json for one object",
+      "stop": "exits at once; runs without the control plane",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    },
+    {
+      "id": "sindri-agents",
+      "purpose": "List every live agent session on the box (provider, state, repo)",
+      "terms": [
+        "sindri",
+        "agents",
+        "sessions",
+        "running",
+        "who"
+      ],
+      "run": {
+        "argv": [
+          "sindri",
+          "agents"
+        ],
+        "cwd": "any"
+      },
+      "prerequisites": [
+        "sindri on PATH"
+      ],
+      "effects": "read-only",
+      "output": "one line per session; --json for one object; --provider, --state and --repo filter",
+      "stop": "exits at once; never starts the control plane",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    },
+    {
+      "id": "aw-meta-status",
+      "purpose": "Show what the meta session owes, the merge queue, the owner queue and the lane map",
+      "terms": [
+        "meta",
+        "status",
+        "obligations",
+        "merge queue",
+        "lanes",
+        "owner queue"
+      ],
+      "run": {
+        "argv": [
+          "aw-meta",
+          "status"
+        ],
+        "cwd": "any"
+      },
+      "prerequisites": [
+        "aw-meta on PATH (scripts/install-meta.sh)",
+        "a team config (aw-meta team-init)"
+      ],
+      "effects": "read-only",
+      "env": [
+        "AW_STATE_DIR"
+      ],
+      "output": "the status text; --json for one object; exit 1 while anything is owed",
+      "stop": "exits at once",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    },
+    {
+      "id": "aw-meta-health",
+      "purpose": "Check the meta team's box: memory, disk, lane sessions and orphaned processes",
+      "terms": [
+        "meta",
+        "health",
+        "memory",
+        "disk",
+        "orphans",
+        "lanes"
+      ],
+      "run": {
+        "argv": [
+          "aw-meta",
+          "health"
+        ],
+        "cwd": "any"
+      },
+      "prerequisites": [
+        "aw-meta on PATH (scripts/install-meta.sh)",
+        "a team config (aw-meta team-init)"
+      ],
+      "effects": "writes-local",
+      "env": [
+        "AW_STATE_DIR"
+      ],
+      "output": "HEALTH OK or HEALTH ATTENTION and one line per finding; --json for one object; exit 1 on attention",
+      "stop": "exits at once; records its summary for aw-meta status; --kill-orphans also stops orphaned processes",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    },
+    {
+      "id": "aw-meta-watch",
+      "purpose": "Wait for the next team event (mail, a merge, a stalled lane) and print it, instead of writing a polling loop",
+      "terms": [
+        "meta",
+        "watch",
+        "wait",
+        "event",
+        "poll",
+        "wake",
+        "mail",
+        "watcher"
+      ],
+      "run": {
+        "argv": [
+          "aw-meta",
+          "watch",
+          "--until-event"
+        ],
+        "cwd": "any"
+      },
+      "prerequisites": [
+        "aw-meta on PATH (scripts/install-meta.sh)",
+        "a team config (aw-meta team-init)"
+      ],
+      "effects": "writes-local",
+      "env": [
+        "AW_STATE_DIR"
+      ],
+      "output": "one line per event; --json for objects",
+      "stop": "exits on the first event; --for <dur> bounds the wait (for example 29m); --interval <s> sets the poll",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    },
+    {
+      "id": "aw-pr-watch",
+      "purpose": "Watch one pull request (state, head, checks, reviews) and print only what changes, read-only, instead of writing a polling loop",
+      "terms": [
+        "pr",
+        "pull request",
+        "watch",
+        "watcher",
+        "poll",
+        "checks",
+        "ci",
+        "merged",
+        "review",
+        "status"
+      ],
+      "run": {
+        "argv": [
+          "aw-pr-watch",
+          "--repo",
+          "{repo}",
+          "--pr",
+          "{pr}"
+        ],
+        "cwd": "any"
+      },
+      "params": [
+        {
+          "name": "repo",
+          "required": true,
+          "description": "the repository, OWNER/NAME"
+        },
+        {
+          "name": "pr",
+          "required": true,
+          "description": "the pull request number"
+        }
+      ],
+      "prerequisites": [
+        "aw-pr-watch on PATH (scripts/install-cs.sh)",
+        "gh logged in (gh auth status)"
+      ],
+      "effects": "read-only",
+      "env": [
+        "AW_STATE_DIR",
+        "AW_PR_WATCH_BACKOFF"
+      ],
+      "output": "the first snapshot (under 30 lines), then one line per change; --json for objects",
+      "stop": "exits 0 on merged or closed, 4 at --deadline (default 120 min), 5 after 3 failed reads; --once polls once",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-24"
+      },
+      "detect": {
+        "all": [
+          "\\bgh\\s+(pr\\s+(view|checks|status)|api\\s+[^\\s]*pulls)",
+          "\\b(while|until)\\b",
+          "\\bsleep\\b"
+        ],
+        "params": {
+          "repo": "(?:--repo|-R)[\\s=]+([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)|repos/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/pulls",
+          "pr": "gh\\s+pr\\s+(?:view|checks|status)\\s+([0-9]+)|pulls/([0-9]+)|--pr[\\s=]+([0-9]+)"
+        }
+      }
+    }
+  ]
+}

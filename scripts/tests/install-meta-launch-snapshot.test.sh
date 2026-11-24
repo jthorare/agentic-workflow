@@ -14,7 +14,7 @@ command -v tmux > /dev/null || { echo "ok - skipped: tmux not installed"; exit 0
 AW_TEST_TMUX=t1
 . "$DIR/test-tmux.sh" || exit 2
 WORK="$(mktemp -d)"
-trap 'rm -r "$WORK"' EXIT
+trap 'ttmux_cleanup; rm -r "$WORK"' EXIT   # this trap replaces the helper's, so it stops the private tmux server and deletes its dir too
 for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done   # the caller may be a meta session: its team config and bin must not reach the stubs
 export HOME="$WORK/home" AW_STATE_DIR="$WORK/state" AW_SKIP_BUILD=1 CLAUDE_LOCAL_BIN="$WORK/linkbin"
 unset CLAUDE_DIR AW_DRY_RUN AW_HOOKS_DIR CODEX_HOOKS_FILE CODEX_HOME CURSOR_HOOKS_FILE CLAUDE_SETTINGS_FILE CLAUDE_HOOKS_DIR AW_HOOK_ADAPTER_FLAGS SETTINGS_FILE TOOLKIT_DIR AW_LAUNCHER_CONFIG

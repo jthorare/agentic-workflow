@@ -38,5 +38,9 @@ internal static class SetupRows
         new(ActionId.From("ConnectAccount"), typeof(ConnectAccountRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/setup/accounts/{provider}", ShellRows.Form("sindri setup connect <provider>"), "pending:FR5"),
+        // the owner's: undoes the accounts step's GitHub writes (the github:gh and github:default rows, the gh review.credential) and ends a device sign-in in progress. Pending with ConnectAccount until the question 1 screen (P11) draws it
+        new(ActionId.From("DisconnectAccount"), typeof(DisconnectAccountRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
+            NeedsTerminal: false, SelfAudited: false, Destructive: true, ReadsViews: false, Shortcut: null,
+            "DELETE", "/sindri/setup/accounts/{provider}", ShellRows.Form("sindri setup disconnect <provider>"), "pending:FR5"),
     ];
 }

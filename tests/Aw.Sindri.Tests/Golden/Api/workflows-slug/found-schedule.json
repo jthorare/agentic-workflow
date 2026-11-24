@@ -1,0 +1,69 @@
+{
+  "id": "WF-00000000000000000000000000000001",
+  "slug": "morning-check",
+  "name": "Morning check",
+  "revision": 1,
+  "activeRevision": 1,
+  "latestRevision": 1,
+  "archivedAt": null,
+  "createdBy": "owner",
+  "changedBy": "owner",
+  "changedAt": "2026-01-01T00:00:00.0000000Z",
+  "specHash": "sha256:bc17176032e30206a2e369276737582c357b3d938f6bf55b8772123c178255cb",
+  "spec": {
+    "version": 1,
+    "name": "Morning check",
+    "description": "Checks the repos every morning",
+    "nodes": [
+      {
+        "id": "start",
+        "type": "schedule",
+        "config": {
+          "cron": "0 7 * * 1-5",
+          "timezone": "UTC"
+        }
+      },
+      {
+        "id": "agent",
+        "type": "run_agent",
+        "title": "Check the repos",
+        "config": {
+          "prompt": "Look for drift"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "start",
+        "to": "agent"
+      }
+    ]
+  },
+  "positions": [
+    {
+      "node": "start",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "node": "agent",
+      "x": 280,
+      "y": 0
+    }
+  ],
+  "summaries": [
+    {
+      "node": "start",
+      "summary": "Runs every weekday at 7:00, UTC",
+      "summaryProblem": null,
+      "kindTitle": "Schedule"
+    },
+    {
+      "node": "agent",
+      "summary": "Run agent",
+      "summaryProblem": null,
+      "kindTitle": "Run agent"
+    }
+  ],
+  "nextRunAt": "2026-01-01T07:00:00.0000000Z"
+}

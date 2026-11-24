@@ -7,7 +7,7 @@ using Aw.Sindri.Features.SkipSetupStep;
 namespace Aw.Sindri.Host.Endpoints;
 
 /// <summary>
-/// The first-run routes (first-run spec §7, A1, A4, A8): POST /sindri/setup/skip, POST /sindri/restart (202 with the old serve's RestartProcessResponse), POST /sindri/setup/accounts/{provider}
+/// The first-run routes (first-run spec §7, A1, A4, A8): POST /sindri/setup/skip, POST /sindri/restart (202 with the old serve's RestartProcessResponse), POST and DELETE /sindri/setup/accounts/{provider}
 /// and GET /sindri/runs/open.
 /// </summary>
 internal static class FirstRunEndpoints
@@ -23,6 +23,8 @@ internal static class FirstRunEndpoints
         });
         _ = group.MapPost("/setup/accounts/{provider}", static async (string provider, IService<ConnectAccountRequest, ConnectAccountResponse> service, CancellationToken ct)
             => (await service.Handle(new ConnectAccountRequest(provider), ct).ConfigureAwait(false)).ToHttpResult());
+        _ = group.MapDelete("/setup/accounts/{provider}", static async (string provider, IService<DisconnectAccountRequest, ConnectAccountResponse> service, CancellationToken ct)
+            => (await service.Handle(new DisconnectAccountRequest(provider), ct).ConfigureAwait(false)).ToHttpResult());
         return group;
     }
 

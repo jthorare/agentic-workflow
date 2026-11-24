@@ -1,0 +1,8 @@
+{
+  "provider": "github",
+  "state": "code",
+  "userCode": "ABCD-1234",
+  "verificationUri": "https://github.com/login/device",
+  "expiresAt": "2026-01-01T00:15:00.0000000Z",
+  "reason": null
+}
