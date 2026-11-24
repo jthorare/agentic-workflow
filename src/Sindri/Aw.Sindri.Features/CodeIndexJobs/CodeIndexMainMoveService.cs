@@ -20,6 +20,8 @@ namespace Aw.Sindri.Features.CodeIndexJobs;
 /// job of key 'index:&lt;repo&gt;' as itself, through the command chain. Each repo is decided on its own by <see cref="MainMoveDecision"/> (a running build first, then nothing when the index is at the head, then the
 /// backoff after failures in a row). A layer that became buildable
 /// (found by the facade's probe) starts a layers-only build at the same commit. Embeddings are not this service's: the 'code-index-embed' service finishes them (spec §6.3). A repo on a feature branch starts nothing and is named in the summary, except its first build, which runs at the default branch's tip (#3181).
+/// First builds queue (first-run spec gap 8, #3322): a repo with no index starts its first build only while no other repo's first build runs, in the profile's order, so the first map comes as early as
+/// one repo allows; the rest are named "first build queued behind &lt;repo&gt;" and start one a tick as each ends or fails (a failed one backs off and lets the next go). Rebuilds of indexed repos never wait.
 /// Three failed builds in a row for a repo that still needs one fail the run (needs-you 'failure:service:code-index-main-move'). A tick reads the heads, the stored index heads and the jobs once.
 /// </summary>
 /// <param name="scopes">The profile's scope and the caller.</param>
@@ -66,10 +68,10 @@ internal sealed partial class CodeIndexMainMoveService(CodeIndexJobScopes scopes
         }
 
         var (live, recorded, builds, buildable) = read.Value;
-        var tally = new Tally();
+        var tally = new Tally { FirstBuild = FirstBuildRunning(live, recorded, builds) };
         foreach (var head in live)
         {
-            var step = await Step(head, recorded, builds, buildable, cancellationToken).ConfigureAwait(false);
+            var step = await Step(head, recorded, builds, buildable, tally, cancellationToken).ConfigureAwait(false);
             if (step.IsError)
             {
                 return step.Error;
@@ -116,15 +118,20 @@ internal sealed partial class CodeIndexMainMoveService(CodeIndexJobScopes scopes
     private static bool Settled(IReadOnlyList<JobRow> builds, string repo, DateTimeOffset now) =>
         !builds.Any(j => IndexJobs.IsOf(j, repo) && (j.State == JobState.Running || (j.EndedAt is { } ended && now < ended + _hold)));
 
-    private async ValueTask<Result<RepoStep>> Step(IndexRepoHead head, IReadOnlyList<RecordedHead> recorded, IReadOnlyList<JobRow> builds, HashSet<string> buildable, CancellationToken cancellationToken)
+    private async ValueTask<Result<RepoStep>> Step(IndexRepoHead head, IReadOnlyList<RecordedHead> recorded, IReadOnlyList<JobRow> builds, HashSet<string> buildable, Tally tally, CancellationToken cancellationToken)
     {
-        var stored = recorded.FirstOrDefault(h => h.Repo == head.Repo)?.Commit;
+        var stored = Stored(recorded, head);
         if (BuildCommit(head, stored) is not { } commit)
         {
             return new RepoStep(Elsewhere: true);
         }
 
         var repo = head.Repo.Value;
+        if (stored is null && tally.FirstBuild is { } holder && !string.Equals(holder, repo, StringComparison.Ordinal))
+        {
+            return new RepoStep(Queued: true);
+        }
+
         var (action, failing) = Decide(repo, commit, stored, [.. builds.Where(j => IndexJobs.IsOf(j, repo))], buildable.Contains(repo));
         if (action != MainMoveAction.Start)
         {
@@ -132,13 +139,26 @@ internal sealed partial class CodeIndexMainMoveService(CodeIndexJobScopes scopes
         }
 
         var response = await start.Handle(new BuildCodeIndexRequest(repo, commit.Value), cancellationToken).ConfigureAwait(false);
-        if (response.IsError)
+        if (response.IsError && response.Error.Code != SindriErrors.JobConflict.Code)
         {
-            return response.Error.Code != SindriErrors.JobConflict.Code ? response.Error : Conflict(response.Error);
+            return response.Error;
         }
 
-        return new RepoStep(Started: true, Failing: failing);
+        // a started first build, or one already running (409), holds the queue for the rest of the tick
+        if (stored is null)
+        {
+            tally.FirstBuild = repo;
+        }
+
+        return response.IsError ? Conflict(response.Error) : new RepoStep(Started: true, Failing: failing);
     }
+
+    private static CommitSha? Stored(IReadOnlyList<RecordedHead> recorded, IndexRepoHead head) => recorded.FirstOrDefault(h => h.Repo == head.Repo)?.Commit;
+
+    // The repo, first in the profile's order, whose first build (no stored index yet) is running, or null: it holds every other first build back.
+    private static string? FirstBuildRunning(IReadOnlyList<IndexRepoHead> live, IReadOnlyList<RecordedHead> recorded, IReadOnlyList<JobRow> builds) =>
+        live.Where(h => Stored(recorded, h) is null).Select(static h => h.Repo.Value)
+            .FirstOrDefault(r => builds.Any(j => j.State == JobState.Running && IndexJobs.IsOf(j, r)));
 
     // The commit to build at: the head on the default branch; off it, the default branch's tip, only for a repo with no index yet, so the checkout isn't touched (#3181). Later builds wait for main to move.
     private static CommitSha? BuildCommit(IndexRepoHead head, CommitSha? stored) =>
@@ -179,7 +199,7 @@ internal sealed partial class CodeIndexMainMoveService(CodeIndexJobScopes scopes
 
     private sealed record Reads(IReadOnlyList<IndexRepoHead> Live, IReadOnlyList<RecordedHead> Recorded, IReadOnlyList<JobRow> Builds, HashSet<string> Buildable);
 
-    private readonly record struct RepoStep(bool Started = false, bool Elsewhere = false, bool Failing = false);
+    private readonly record struct RepoStep(bool Started = false, bool Elsewhere = false, bool Failing = false, bool Queued = false);
 
     private sealed class Tally
     {
@@ -188,6 +208,11 @@ internal sealed partial class CodeIndexMainMoveService(CodeIndexJobScopes scopes
         internal List<string> Elsewhere { get; } = [];
 
         internal List<string> Failing { get; } = [];
+
+        internal List<string> Queued { get; } = [];
+
+        // The repo whose first build runs or started this tick (#3322).
+        internal string? FirstBuild { get; set; }
 
         internal void Add(string repo, RepoStep step)
         {
@@ -205,6 +230,11 @@ internal sealed partial class CodeIndexMainMoveService(CodeIndexJobScopes scopes
             {
                 Failing.Add(repo);
             }
+
+            if (step.Queued)
+            {
+                Queued.Add(repo);
+            }
         }
 
         internal string? Summary()
@@ -218,6 +248,11 @@ internal sealed partial class CodeIndexMainMoveService(CodeIndexJobScopes scopes
             if (Elsewhere.Count > 0)
             {
                 notes.Add("not on trunk, left out: " + string.Join(", ", Elsewhere));
+            }
+
+            if (Queued.Count > 0)
+            {
+                notes.Add($"first build queued behind {FirstBuild}: " + string.Join(", ", Queued));
             }
 
             return notes.Count == 0 ? null : string.Join("; ", notes);

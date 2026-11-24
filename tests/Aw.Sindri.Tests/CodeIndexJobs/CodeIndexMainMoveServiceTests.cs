@@ -146,6 +146,7 @@ public sealed partial class CodeIndexMainMoveServiceTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_running_build_of_the_repo_holds_the_start_and_another_repos_does_not()
     {
+        _ = _rig.Index.WithIndex(CodeIndexJobsRig.Other, CodeIndexJobsRig.Old);   // a rebuild of other's: a first build of it would queue demo's (#3322)
         _ = _rig.Heads.With(CodeIndexJobsRig.Demo, CodeIndexJobsRig.New, onDefaultBranch: true);
         _rig.Job("other", JobState.Running, TimeSpan.Zero);
         _ = await Run();
