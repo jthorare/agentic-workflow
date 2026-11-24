@@ -174,6 +174,12 @@ The steps below apply to **PreToolUse hooks**. SessionStart hooks have different
 4. Register it in each `providers/<name>/install-hooks.sh` (or a `scripts/install-*.sh --provider` lever installer) via `aw_hook_set`; skip providers whose hook system lacks the event and record it in the `config/hooks/adapters/README.md` mapping table
 5. Document it in this file and in AGENTS.md's `config/` directory comment
 
+**Never put payload-sized text on argv** (#4300, #4308). Linux caps one argument (and one env string) at 128 KiB. Past it, exec fails, the
+hook gets empty output and fails open: a padded `rm -rf` passed the Cursor adapter, and a long message skipped send-gate. Pipe the
+payload to `jq` on stdin and pass other big strings as `--rawfile name <(printf '%s' "$VAR")` (or `--slurpfile` for JSON). Keep `--arg`
+/ `--argjson` for short values: ids, event names, paths, fixed reasons. Shell functions and builtins (`printf`, `echo`) are fine; the limit
+is on exec. A hook test for a new input path adds a 200 KB row.
+
 ## Probe Hook (cheap-agent-harness rollout step 0.5)
 
 `probe-log.sh <Event>` appends raw hook stdin to `~/.agentic-workflow/probe/<Event>.jsonl`. It prints nothing and always exits 0. `scripts/probe.sh on|off|status` installs and removes it on `UserPromptSubmit`, `Stop`, `SubagentStop`, `TeammateIdle`, `SubagentStart`, `PermissionRequest`, `Notification`, `SessionStart`, `SessionEnd`, and `PreToolUse`/`PostToolUse` (matcher `Agent|SendMessage`). The last four are the aw:fleet hook's events (a payload change shows up in the probe log first); `tests/fixtures/fleet-input/` holds real scrubbed payloads of them. Every probe command ends in `# aw:probe`, and `config/lib/merge-hook.sh` only ever touches commands with its own tag. `scripts/probe.sh --provider codex|cursor on|off|status` installs the Codex/Cursor equivalents (no TeammateIdle; Cursor entries use the adapter's `--raw` mode) and logs to `probe/<provider>/`.
