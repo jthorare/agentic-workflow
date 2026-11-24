@@ -57,7 +57,9 @@ internal static class TsWorkspace
             : new PackageSubpath(key.Name[..star], key.Name[(star + 1)..], Wild: true, targets, blocked);
     }
 
-    // a null target, or conditions and fallbacks that are all null: Node refuses the subpath (an empty object or array is no target at all, not a block)
+    // a null target, or conditions and fallbacks that are all null: Node refuses the subpath (an empty object or array is no target at all, not a block).
+    // An approximation: conditions are read all or nothing, with no import/require context. Node blocks '{"import": null, "default": "./x.ts"}' for an
+    // import, but here it is not blocked and resolves to './x.ts' (issue 4095).
     private static bool Blocks(JsonElement value) => value.ValueKind switch
     {
         JsonValueKind.Null => true,

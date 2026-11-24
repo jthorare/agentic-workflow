@@ -92,6 +92,8 @@ case "$proj" in
 esac
 echo "$name rev=$rev" >> "$FAKE_LOG"
 [ "${FAKE_FAIL:-}" != "$name" ] || { echo "boom publishing $name" >&2; exit 1; }
+# FAKE_SLOW_SECS: each publish takes this long, so a holder keeps its lock while a test moves another run.
+[ -z "${FAKE_SLOW_SECS:-}" ] || sleep "$FAKE_SLOW_SECS"
 # FAKE_ENOSPC=<binary>: ilc ran out of disk writing that binary's object file.
 [ "${FAKE_ENOSPC:-}" != "$name" ] || { echo "EXEC : error : No space left on device : '/tmp/${name}.o'" >&2; exit 1; }
 # FAKE_TRACK_DISK=1: the previous publish left artifacts/bin and a NativeAOT .o in this tree. The real
@@ -721,5 +723,29 @@ check "a waiter killed by a signal: the holder's lock folder stays" "$([ -d "$B/
 check "a waiter killed by a signal: the lock still names the holder" "$(cat "$B/.lock/pid" 2> /dev/null)" "$holder"
 kill "$holder" 2> /dev/null; wait "$holder" 2> /dev/null
 find "$B/.lock" -delete 2> /dev/null
+
+# #4279: two waiters that both saw one stale lock. The first takes it over and publishes; the second must not remove the
+# first one's new lock and publish beside it. The test seam holds each waiter between "saw stale" and the takeover, so the
+# first is let go, holds the lock (each publish takes 0.5 s), and only then is the second let go.
+mkdir -p "$B/.lock"; touch_ago "$B/.lock" "5 minutes ago"
+bump "<!-- two waiters on one stale lock -->"
+: > "$FAKE_LOG"
+P="$WORK/stale-pause"
+AW_INSTALL_CS_TEST_STALE_PAUSE="$P" FAKE_SLOW_SECS=0.5 bash "$INSTALL" --publish > "$WORK/w1.log" 2>&1 & w1=$!
+AW_INSTALL_CS_TEST_STALE_PAUSE="$P" FAKE_SLOW_SECS=0.5 bash "$INSTALL" --publish > "$WORK/w2.log" 2>&1 & w2=$!
+for _ in $(seq 1 100); do [ -e "$P.$w1.seen" ] && [ -e "$P.$w2.seen" ] && break; sleep 0.1; done
+check "two waiters: both saw the stale lock" "$([ -e "$P.$w1.seen" ] && [ -e "$P.$w2.seen" ] && echo yes || echo no)" "yes"
+: > "$P.$w1.go"
+for _ in $(seq 1 100); do [ "$(cat "$B/.lock/pid" 2> /dev/null)" = "$w1" ] && break; sleep 0.1; done
+check "two waiters: the first holds the lock" "$(cat "$B/.lock/pid" 2> /dev/null)" "$w1"
+: > "$P.$w2.go"
+wait "$w1"; r1=$?; wait "$w2"; r2=$?
+check "two waiters: the first exits 0" "$r1" "0"
+check "two waiters: the second exits 0" "$r2" "0"
+# A run that starts publishing beside another can also lose its tree to the other's scratch reclaim, so count the runs
+# that started, not only the publishes that finished.
+check "two waiters: exactly one run started publishing" "$(cat "$WORK/w1.log" "$WORK/w2.log" | grep -c '^install-cs: publishing sindri$')" "1"
+check "two waiters: exactly one publish ran" "$(grep -c '^sindri rev=' "$FAKE_LOG")" "1"
+check "two waiters: the lock is released after" "$([ -e "$B/.lock" ] && echo yes || echo no)" "no"
 
 [ "$fail" = 0 ] && echo "all install-cs tests passed" || { echo "install-cs tests FAILED"; exit 1; }
