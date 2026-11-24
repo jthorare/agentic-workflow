@@ -11022,6 +11022,10 @@ static readonly Aw.Context.Core.ContextErrors.PagePreviewInvalid -> Aw.Kernel.Er
 static readonly Aw.Context.Core.ContextErrors.MapBuildWaitTimedOut -> Aw.Kernel.ErrorDefinition!
 Aw.Context.Core.Concepts.ConceptsView.PagesInNoConcept.get -> int?
 Aw.Context.Core.Concepts.ConceptsView.PagesInNoConcept.init -> void
+Aw.Context.Core.Concepts.ConceptsView.Repos.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapRepo!>?
+Aw.Context.Core.Concepts.ConceptsView.Repos.init -> void
+Aw.Context.Core.Concepts.ConceptRead.Repos.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapRepo!>!
+Aw.Context.Core.Concepts.ConceptRead.Repos.init -> void
 Aw.Context.Core.Audience.RecordMask
 static Aw.Context.Core.Audience.RecordMask.Allowed(Aw.Context.Core.Engine.ContextSettings! settings, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos, Aw.Context.Core.Engine.ContextCallerKind caller, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.HashSet<Aw.Context.Core.Records.AudienceKey>!>!>
 static Aw.Context.Core.Audience.RecordMask.Linked(Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>!
