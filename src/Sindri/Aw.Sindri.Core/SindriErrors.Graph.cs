@@ -110,4 +110,10 @@ public static partial class SindriErrors
     public static readonly ErrorDefinition GraphNotBuilt = new("SND-GRAPH-119", ErrorKind.Unavailable, "That part of workflows is not built yet");
     /// <summary>SND-GRAPH-131: a node reads a field of a node that failed and continued (onFailure 'continue'); the reader fails instead of reading nothing.</summary>
     public static readonly ErrorDefinition GraphReferenceToContinuedFailure = new("SND-GRAPH-131", ErrorKind.Invalid, "A reference reads a node that failed and continued");
+
+    /// <summary>SND-GRAPH-125: a re-run from a step needs a run that has ended; this one is still queued, running or waiting (Workflows page spec §7.3, P7).</summary>
+    public static readonly ErrorDefinition GraphRerunNotEnded = new("SND-GRAPH-125", ErrorKind.Conflict, "That run has not ended, so it can't be re-run from a step");
+
+    /// <summary>SND-GRAPH-126: a step before the chosen one has no succeeded output to restore (it failed, was cancelled or never ran), so a re-run from the chosen step would feed it nothing.</summary>
+    public static readonly ErrorDefinition GraphRerunUpstreamNotDone = new("SND-GRAPH-126", ErrorKind.Conflict, "A step before the chosen one did not succeed");
 }

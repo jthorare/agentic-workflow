@@ -208,6 +208,8 @@ Words from the first-run spec (`docs/superpowers/specs/2026-11-12-sindri-first-r
 | `SND-GRAPH-122` | An `http` node's request was refused before it was sent: host not on `workflow.http.hosts`, an address that is this machine, plain http, or a credential header |
 | `SND-GRAPH-123` | An `http` node's request got no acceptable answer: status outside `expect`, a redirect loop, an answer over 1 MB, or a network failure |
 | `SND-GRAPH-124` | A `workflow_result` node found no result: the run is not that workflow's, is not finished, or the workflow has no succeeded run |
+| `SND-GRAPH-125` | A re-run from a step was asked of a run that has not ended (queued, running or waiting): wait for it to end or cancel it first |
+| `SND-GRAPH-126` | A re-run from a step was refused: a step before the chosen one failed, never ran, or was skipped only because the run halted, so it has no output to restore; re-run from that step instead |
 | `SND-GRAPH-130` | No question waits at that node |
 | `SND-GRAPH-131` | A reference reads a node that failed and continued |
 | `SND-GRAPH-132` | The setup service ran a workflow other than the hello-sindri one it made, or ran it a second time |
