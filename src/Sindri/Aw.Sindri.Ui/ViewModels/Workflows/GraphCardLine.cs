@@ -183,7 +183,7 @@ internal static class GraphCardLine
     private static bool LooksLikeHost(string head)
     {
         var address = AfterAddress(head);
-        var colon = address > 0 ? address : head.IndexOf(':');
+        var colon = address > 0 ? address : head.IndexOf(':', StringComparison.Ordinal);
         var name = colon < 0 ? head : head[..colon];
         var port = colon < 0 ? string.Empty : head[colon..];
         var portOk = port.Length == 0 || (port.Length > 1 && port[0] == ':' && !port.AsSpan(1).ContainsAnyExcept(_digits));
