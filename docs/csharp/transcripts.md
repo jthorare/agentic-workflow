@@ -48,7 +48,10 @@ from the cwd to the nearest `.git`:
 1. A `.git` directory: that directory's parent is the repo.
 2. A `.git` file (`gitdir: <dir>`): the worktree's git dir names the main git dir in its `commondir` file. The main
    git dir's parent is the repo.
-3. A cwd that no longer exists, or that sits in no repo, stays as it is.
+3. A cwd that no longer exists, under one of the host's worktree roots, belongs to that root's main checkout. The
+   host passes `(worktree root -> main checkout)` pairs to `AddTranscriptsInfrastructure(roots, worktreeRoots)`; the
+   longest root that holds the cwd wins, by whole path segments. The library guesses no pair: with none, step 4 applies.
+4. Any other cwd that no longer exists, or that sits in no repo, stays as it is.
 
 ## A turn
 

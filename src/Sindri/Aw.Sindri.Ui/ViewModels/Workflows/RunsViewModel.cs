@@ -19,7 +19,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <summary>The workflow's slug.</summary>
     public string Slug { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>When the open workflow's schedule fires next, from its list row (#3758): the graph's Schedule card shows it.</summary>
+    /// <summary>When the open workflow's schedule fires next (#3758): from its last good workflow read (#4188, #4208), else from its list row at open. The graph's Schedule card shows it.</summary>
     internal DateTimeOffset? NextRunAt { get; set; }
 
     /// <summary>The workflow's name.</summary>
@@ -125,12 +125,17 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         Land(detail, newest, runs);
     }
 
+    // Every good read brings the time Sindri serves now, also none (#4188, #4208): an active workflow with no next run draws no chip. The stored time (the
+    // list row's at open) is kept only when the read failed.
+    private DateTimeOffset? NextFrom(Result<WorkflowView> detail) => detail.IsSuccess ? detail.Value.NextRunAt : NextRunAt;
+
     // What the two reads said: the line under the name and the graph from the workflow's read, the list (or "off", or the failure) from the runs read.
     private void Land(Result<WorkflowView> detail, Result<WorkflowView> newest, Result<WorkflowRunList> runs)
     {
         IsReading = false;
         DetailText = detail.IsSuccess ? Detail(detail.Value) : string.Empty;
         var drawn = newest.IsSuccess ? newest : detail;   // the newest revision when it was read; else the live one
+        NextRunAt = NextFrom(detail);
         (Shown, Graph) = detail.IsSuccess ? (detail.Value, drawn.IsSuccess ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(drawn.Value) { NextRunAt = NextRunAt, Clock = clock }) : Graph) : (Shown, Graph);
         if (runs.IsSuccess)
         {

@@ -93,8 +93,9 @@ internal sealed partial class WorkflowGraphViewModel
             return Labels.WfState(active: false).Word.ToLowerInvariant();
         }
 
-        return NextRunAt is { } next
-            ? Labels.WfNextRun(TimeZoneInfo.ConvertTime(next, Clock.LocalTimeZone), soon: next - Clock.GetUtcNow() < TimeSpan.FromHours(24))
+        var now = Clock.GetUtcNow();
+        return NextRunAt is { } next && next > now   // a time at or before now is not next any more (#4188)
+            ? Labels.WfNextRun(TimeZoneInfo.ConvertTime(next, Clock.LocalTimeZone), soon: next - now < TimeSpan.FromHours(24))
             : null;
     }
 
