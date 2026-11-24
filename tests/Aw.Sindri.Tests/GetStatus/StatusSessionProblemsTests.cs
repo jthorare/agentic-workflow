@@ -88,4 +88,16 @@ public sealed class StatusSessionProblemsTests
         Assert.Equal(HealthWord.Healthy, status.Health!.Word);
         Assert.DoesNotContain(status.Health.Problems, p => string.Equals(p.Code, "SND-SESSION-001", StringComparison.Ordinal));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_overrun_beside_a_failed_source_is_counted_and_listed_and_only_the_failed_source_is_a_health_problem()
+    {
+        var status = await Status(SessionProblems.Overrun, _failed);
+
+        Assert.Equal(2, status.Sessions!.Problems);
+        Assert.Equal([SessionProblems.Overrun, _failed], status.Sessions.ProblemRows);
+        Assert.Equal(HealthWord.Degraded, status.Health!.Word);
+        var problem = Assert.Single(status.Health.Problems);
+        Assert.Equal(("SND-SESSION-001", _failed.Text), (problem.Code, problem.Text));
+    }
 }
