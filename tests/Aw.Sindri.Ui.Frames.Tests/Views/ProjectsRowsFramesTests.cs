@@ -3,6 +3,7 @@ using System.Net;
 using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
@@ -160,5 +161,28 @@ public sealed class ProjectsRowsFramesTests : FrameHost
 
         var long_ = rows.First(r => Named<TextBlock>(r, "ProjectRowNameText").Text == LongName);
         Assert.True(Named<Border>(long_, "ProjectRowName").Bounds.Width >= 120, "a long name has no room left");
+    });
+
+    // Issue 4241: under 1100 px the search placeholder is the short "Search projects" and it fits the box; from 1100 it is the long text. Both menu buttons carry a tooltip with their word and value.
+    [Theory]
+    [InlineData(1000, 700, "Search projects")]
+    [InlineData(1280, 800, "Search name, note, lead")]
+    public Task The_search_placeholder_follows_the_width_and_never_trims(int width, int height, string placeholder) => OnUi(async () =>
+    {
+        var (window, _) = await OnProjects(width, height);
+        var box = Named<TextBox>(window, "ProjectsSearch");
+
+        Assert.Equal(placeholder, box.PlaceholderText);
+        var mark = box.GetVisualDescendants().OfType<TextBlock>().First(t => string.Equals(t.Text, box.PlaceholderText, StringComparison.Ordinal));
+        var needs = new FormattedText(placeholder, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, new Typeface(mark.FontFamily, mark.FontStyle, mark.FontWeight), mark.FontSize, Brushes.White).Width;
+        Assert.True(needs <= box.Bounds.Width - box.Padding.Left - box.Padding.Right, string.Create(CultureInfo.InvariantCulture, $"the placeholder needs {needs} px, the box has {box.Bounds.Width - box.Padding.Left - box.Padding.Right}"));
+    });
+
+    [Fact]
+    public Task The_Sort_and_Group_buttons_carry_a_tooltip_with_their_word_and_value() => OnUi(async () =>
+    {
+        var (window, shell) = await OnProjects(1000, 700);
+
+        Assert.Equal((shell.Projects.SortName, shell.Projects.GroupName), (ToolTip.GetTip(Named<Button>(window, "ProjectsSort")) as string, ToolTip.GetTip(Named<Button>(window, "ProjectsGroup")) as string));
     });
 }
