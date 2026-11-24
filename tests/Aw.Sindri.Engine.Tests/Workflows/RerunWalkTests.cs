@@ -37,7 +37,7 @@ public sealed class RerunWalkTests
         Assert.Equal(["start", "c", "b"], rerun.Restored);
         Assert.Equal(NodeRunStatus.Succeeded, nodes["z"]);
         Assert.Equal(NodeRunStatus.Skipped, nodes["x"]);   // why: c said true and y says true; c's 'false' edge is not taken just because x has no row in the new run
-        Assert.DoesNotContain($"{rerun.Run.Value}/x", rig.Blocks.Log);
-        Assert.DoesNotContain($"{rerun.Run.Value}/b", rig.Blocks.Log);   // b is restored, not run again
+        Assert.DoesNotContain($"{rerun.Run.Value}/x", rig.Blocks.Log, StringComparer.Ordinal);
+        Assert.DoesNotContain($"{rerun.Run.Value}/b", rig.Blocks.Log, StringComparer.Ordinal);   // b is restored, not run again
     }
 }
