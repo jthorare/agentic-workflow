@@ -10,22 +10,47 @@ internal sealed partial class WholeMapCanvas
     private const double LaneMetaGap = 12;
     private const double WideOpen = 100_000;
 
-    /// <summary>Whether a band's heading is drawn whole at the zoom the map is drawn at (the canvas draws text, no control, so the frames tests ask here).</summary>
+    /// <summary>
+    /// Whether a band's counts (the words after its title) are drawn at the zoom the map is drawn at (#4305): never in dots mode,
+    /// where the heading is the title alone. The canvas draws text, no control, so the frames tests ask here.
+    /// </summary>
     /// <param name="band">The band.</param>
-    /// <returns>True when the band has a heading and none of it is cut.</returns>
+    /// <returns>True when the band is on the map, has counts and the map is not in dots mode.</returns>
+    internal bool LaneMetaDrawn(WholeBand band) => Placed(band) is { Meta.Length: > 0 } && !WholeMapViewModel.UsesDots(Scale);
+
+    /// <summary>Whether a band's counts are drawn whole at the zoom the map is drawn at; false when <see cref="LaneMetaDrawn"/> is.</summary>
+    /// <param name="band">The band.</param>
+    /// <returns>True when the counts are drawn and none of them is cut.</returns>
     internal bool LaneMetaWhole(WholeBand band)
     {
-        if (Map?.Shown is not { } geometry || geometry.Bands.FirstOrDefault(b => b.Band == band) is not { Meta.Length: > 0 } placed)
+        if (!LaneMetaDrawn(band) || Map?.Shown is not { } geometry || Placed(band) is not { } placed)
         {
             return false;
         }
 
+        var size = LaneSize(dots: false);
         var muted = Brush("Brush.InkSubtle");
-        var size = LaneSize(WholeMapViewModel.UsesDots(Scale));
-        var drawn = LaneMeta(geometry, placed, LaneTitle(placed, size, muted), size, muted);
+        var drawn = LaneMeta(geometry, placed, LaneTitle(placed, size, Brush(BandAccent(band))), size, muted);
         var whole = Text(placed.Meta, size * 0.9, muted, WideOpen);
         return drawn.Width >= whole.Width - 0.5;
     }
+
+    /// <summary>Whether a band's title is drawn whole at the zoom the map is drawn at (dots mode included).</summary>
+    /// <param name="band">The band.</param>
+    /// <returns>True when the band is on the map and its title is not cut.</returns>
+    internal bool LaneTitleWhole(WholeBand band)
+    {
+        if (Placed(band) is not { } placed)
+        {
+            return false;
+        }
+
+        var size = LaneSize(WholeMapViewModel.UsesDots(Scale));
+        var accent = Brush(BandAccent(band));
+        return LaneTitle(placed, size, accent).Width >= Text(NodeBands.Title(band), size, accent, WideOpen, bold: true).Width - 0.5;
+    }
+
+    private PlacedBand? Placed(WholeBand band) => Map?.Shown?.Bands.FirstOrDefault(b => b.Band == band);
 
     private double LaneSize(bool dots) => dots ? LaneTitleSize / Math.Max(Scale, 0.25) : LaneTitleSize;
 
