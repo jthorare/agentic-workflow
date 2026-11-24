@@ -144,4 +144,21 @@ public sealed class ProjectsRowsFramesTests : FrameHost
             Assert.True(Named<TextBox>(window, "ProjectsSearch").Bounds.Width >= 160, string.Create(CultureInfo.InvariantCulture, $"the search box is {Named<TextBox>(window, "ProjectsSearch").Bounds.Width} px wide"));
         }
     });
+
+    // Issue 4158: at 1000 px the Project cell is about 330 px; the reason beside a short name must trim with an ellipsis inside it, and a long name keeps room.
+    [Fact]
+    public Task At_1000_the_health_reason_trims_inside_the_Project_cell_and_the_name_keeps_room() => OnUi(async () =>
+    {
+        var (window, _) = await OnProjects(1000, 700);
+        var rows = window.GetVisualDescendants().OfType<ProjectRow>().Where(r => r.IsEffectivelyVisible).ToList();
+
+        var kitchen = rows.First(r => Named<TextBlock>(r, "ProjectRowNameText").Text == "Kitchen");
+        var reason = Named<TextBlock>(kitchen, "ProjectRowReason");
+        var prs = Named<Border>(kitchen, "ProjectRowPrs");
+        Assert.True(Right(reason, kitchen) <= Left(prs, kitchen) + 0.5, string.Create(CultureInfo.InvariantCulture, $"the reason ends at {Right(reason, kitchen)}, past the PRs column at {Left(prs, kitchen)}"));
+        Assert.True(reason.TextLayout.TextLines.Any(l => l.HasCollapsed), "the reason is cut without an ellipsis");
+
+        var long_ = rows.First(r => Named<TextBlock>(r, "ProjectRowNameText").Text == LongName);
+        Assert.True(Named<Border>(long_, "ProjectRowName").Bounds.Width >= 120, "a long name has no room left");
+    });
 }
