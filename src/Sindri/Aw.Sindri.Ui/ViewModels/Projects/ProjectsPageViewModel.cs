@@ -90,6 +90,17 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
     /// <summary>True when the page is wide enough for the Items and Target columns and the health reason; narrower, a row keeps its name, PRs, Blocked on and Active.</summary>
     public bool ShowsWide { get; private set => Set(ref field, value); } = true;
 
+    /// <summary>True when the page is wide enough for the words Sort and Group in the bar's two menu buttons; narrower, the buttons show only their values.</summary>
+    public bool ShowsBarLabels
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(SearchPlaceholder));
+        }
+    } = true;
+
     /// <summary>The last read's failure line; empty when the last read worked.</summary>
     public string Error { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -126,6 +137,7 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
     {
         ShowsAgents = width >= Labels.ProjectsAgentsFrom;
         ShowsWide = width >= Labels.ProjectsWideFrom;
+        ShowsBarLabels = width >= Labels.ProjectsBarLabelsFrom;
     }
 
     /// <summary>Re-reads the list (on connect and on every event); while the page isn't shown it only remembers where the API is.</summary>
