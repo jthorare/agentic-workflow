@@ -66,6 +66,11 @@
 # (mode 755, part of the stamp, checked by verify), --link points $AW_STATE_DIR/bin-r1b/meta-gate-reserve at
 # bin/cs/current/meta-gate-reserve, refuses a build without it, and moves a real file there to meta-gate-reserve.pre-repo.
 #
+# The read-only PR watcher (#4221) rides along too, but optionally: when the checkout has scripts/aw-pr-watch.sh it is copied
+# into the build as <build>/aw-pr-watch (mode 755, part of the stamp, checked by verify), and --link points
+# $CLAUDE_LOCAL_BIN/aw-pr-watch (default ~/.local/bin, beside the wrappers) at bin/cs/current/aw-pr-watch. A build without it
+# links nothing and is not refused.
+#
 # The toolkit SDK (src/Toolkit/Aw.Sindri.Toolkit, package id Aw.Sindri.Toolkit): after the publish step (also when the build is
 # current) it is `dotnet pack`ed from a copy of the sources into the folder feed $AW_SINDRI_SDK_FEED (default
 # $AW_SINDRI_HOME/sdk/packages) as version 0.1.0-local.<UTC yyyyMMddHHmmss>, but only when its own inputs (src/Toolkit and the
@@ -106,6 +111,7 @@ cache="$state/cache/install-cs"
 heavy="$state/bin-r1b/heavy"
 reserve="$state/bin-r1b/meta-gate-reserve"
 link_dir="${CLAUDE_LOCAL_BIN:-$HOME/.local/bin}"
+pr_watch="$link_dir/aw-pr-watch"
 skip_dl="${AW_CS_SKIP_DOWNLOADS:-0}"
 BINARIES=(sindri judge bugfix-state ui-evidence aw-packets aw-readiness)
 
@@ -122,7 +128,7 @@ commit="$(git -C "$root" rev-parse --verify -q HEAD 2> /dev/null || true)"
 [ -n "$commit" ] || die "the C# binaries can only be published from a git checkout"
 # shellcheck source=lib/sindri-build-inputs.sh
 source "$here/lib/sindri-build-inputs.sh"
-PATHSPECS=("${SINDRI_BUILD_PATHSPECS[@]}" src/Evidence src/BugFix src/Readiness scripts/heavy.sh scripts/meta-gate-reserve.sh config/lib/heavy-config.sh)
+PATHSPECS=("${SINDRI_BUILD_PATHSPECS[@]}" src/Evidence src/BugFix src/Readiness scripts/heavy.sh scripts/meta-gate-reserve.sh scripts/aw-pr-watch.sh config/lib/heavy-config.sh)
 sha256() { shasum -a 256 2> /dev/null || sha256sum; }
 # hash_list <list> <header line>...: sha256 (16 hex) of the header lines, the file list and git's hash of each listed file. A git that
 # dies (killed under memory pressure) stops the script with a message; piped into sha256 it ended the script silently (#3218).
@@ -520,9 +526,13 @@ publish() {
   fi
 
   install -m 755 "$tree/scripts/meta-gate-reserve.sh" "$stage/meta-gate-reserve" || die "staging scripts/meta-gate-reserve.sh failed"
+  # The read-only PR watcher (#4221), when the tree has it.
+  if [ -f "$tree/scripts/aw-pr-watch.sh" ]; then
+    install -m 755 "$tree/scripts/aw-pr-watch.sh" "$stage/aw-pr-watch" || die "staging scripts/aw-pr-watch.sh failed"
+  fi
 
   # 3. "Install didn't take": each binary answers its state-free call, in a scratch state dir and with no inherited environment.
-  verify "$stage" "$revision" "$tree/scripts/heavy.sh" "$tree/scripts/meta-gate-reserve.sh"
+  verify "$stage" "$revision" "$tree/scripts/heavy.sh" "$tree/scripts/meta-gate-reserve.sh" "$tree/scripts/aw-pr-watch.sh"
 
   printf 'commit=%s\nbuilt=%s\n' "$revision" "$when" > "$stage/build-info"
   rm -rf "$tree"; tree=""
@@ -545,8 +555,8 @@ check_skia_fontconfig() { # check_skia_fontconfig <dir>
     || die "install didn't take: the staged libSkiaSharp.so does not need libfontconfig, so it is not sindri-ui's build (judge's NoDependencies one won the stage: keep sindri-ui before judge in the pub lines)"
 }
 
-verify() { # verify <dir> <revision> <heavy source> <meta-gate-reserve source>
-  local d="$1" rev="$2" src="$3" rsrc="$4" scratch b out rc
+verify() { # verify <dir> <revision> <heavy source> <meta-gate-reserve source> <aw-pr-watch source, may be missing>
+  local d="$1" rev="$2" src="$3" rsrc="$4" wsrc="$5" scratch b out rc
   scratch="$(mktemp -d "$cache/verify.XXXXXX")"
   for b in "${BINARIES[@]}" sindri-ui sindri-code-runner; do
     [ -x "$d/$b" ] || { rm -rf "$scratch"; die "install didn't take: $d/$b is missing or not executable"; }
@@ -556,6 +566,9 @@ verify() { # verify <dir> <revision> <heavy source> <meta-gate-reserve source>
   { [ -x "$d/heavy" ] && cmp -s "$d/heavy" "$src"; } || { rm -rf "$scratch"; die "install didn't take: $d/heavy is missing, not executable or not scripts/heavy.sh"; }
   if grep -q heavy-config "$d/heavy" && [ ! -f "$d/heavy-config.sh" ]; then rm -rf "$scratch"; die "install didn't take: $d/heavy-config.sh is missing"; fi
   { [ -x "$d/meta-gate-reserve" ] && cmp -s "$d/meta-gate-reserve" "$rsrc"; } || { rm -rf "$scratch"; die "install didn't take: $d/meta-gate-reserve is missing, not executable or not scripts/meta-gate-reserve.sh"; }
+  if [ -f "$wsrc" ]; then
+    { [ -x "$d/aw-pr-watch" ] && cmp -s "$d/aw-pr-watch" "$wsrc"; } || { rm -rf "$scratch"; die "install didn't take: $d/aw-pr-watch is missing, not executable or not scripts/aw-pr-watch.sh"; }
+  fi
   mkdir -p "$scratch/state"
   rc=0; out="$(run "$d/sindri" help)" || rc=$?
   [ "$rc" = 0 ] || { rm -rf "$scratch"; die "install didn't take: sindri help exited $rc"; }
@@ -627,6 +640,7 @@ link() {
   if [ "$dry" = 1 ]; then
     say "[dry-run] would link $heavy -> $base/current/heavy"
     say "[dry-run] would link $reserve -> $base/current/meta-gate-reserve"
+    say "[dry-run] would link $pr_watch -> $base/current/aw-pr-watch when the build has it"
     say "[dry-run] would point $base/current at $stamp, write wrappers for ${BINARIES[*]} into $link_dir, and run ui-evidence install-browser"
     return 0
   fi
@@ -647,6 +661,7 @@ link() {
   say "current -> $stamp"
   link_through_current heavy "$heavy"
   link_through_current meta-gate-reserve "$reserve"
+  if [ -x "$base/$stamp/aw-pr-watch" ]; then link_through_current aw-pr-watch "$pr_watch"; fi
   for b in "${BINARIES[@]}"; do write_wrapper "$b"; done
   say "wrappers in $link_dir: ${BINARIES[*]}"
   case ":$PATH:" in *":$link_dir:"*) ;; *) warn "$link_dir is not on your PATH" ;; esac
