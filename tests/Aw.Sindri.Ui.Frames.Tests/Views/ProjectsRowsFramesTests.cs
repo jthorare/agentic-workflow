@@ -123,4 +123,25 @@ public sealed class ProjectsRowsFramesTests : FrameHost
 
         Assert.True(Right(Named<TextBox>(window, "ProjectsSearch"), window) <= Left(Named<Button>(window, "ProjectsSort"), window), "the search box runs under Sort");
     });
+
+    // Issue 4153: at 1000 px the bar drops the words Sort and Group (the values and the buttons' names stay) so the search box keeps room; at 1280 the words show.
+    [Theory]
+    [InlineData(1000, 700, false)]
+    [InlineData(1280, 800, true)]
+    public Task A_narrow_bar_drops_the_Sort_and_Group_words_and_the_search_box_keeps_160_px(int width, int height, bool wordsShown) => OnUi(async () =>
+    {
+        var (window, shell) = await OnProjects(width, height);
+
+        foreach (var (button, word) in new[] { ("ProjectsSort", shell.Projects.SortLabel), ("ProjectsGroup", shell.Projects.GroupLabel) })
+        {
+            var label = Named<Button>(window, button).GetVisualDescendants().OfType<TextBlock>().First(t => t.Text == word);
+            Assert.Equal(wordsShown, label.IsEffectivelyVisible);
+        }
+
+        Assert.Equal((shell.Projects.SortName, shell.Projects.GroupName), (Avalonia.Automation.AutomationProperties.GetName(Named<Button>(window, "ProjectsSort")), Avalonia.Automation.AutomationProperties.GetName(Named<Button>(window, "ProjectsGroup"))));   // the names keep saying Sort and Group
+        if (!wordsShown)
+        {
+            Assert.True(Named<TextBox>(window, "ProjectsSearch").Bounds.Width >= 160, string.Create(CultureInfo.InvariantCulture, $"the search box is {Named<TextBox>(window, "ProjectsSearch").Bounds.Width} px wide"));
+        }
+    });
 }
