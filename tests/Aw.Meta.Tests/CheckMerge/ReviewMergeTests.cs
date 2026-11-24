@@ -75,6 +75,23 @@ public sealed class ReviewMergeTests
         Assert.True(response.Ready);
     }
 
+    // #4332: the reviewer's OK reached the meta during its current turn, so it sits in the meta's own transcript and not yet
+    // in the messages store (only stop-check syncs it, at the turn's end). merge-check syncs the meta's transcript first.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Merge_check_sees_a_reviewer_OK_from_the_meta_transcript_not_yet_synced()
+    {
+        await Team();
+        await Inbox("t1-api", ReadyBody());
+        _world.Sessions.Add(A.Live("t1-meta", MetaWorld.MetaSessionId));
+        _world.Transcripts.Write("/transcripts/" + MetaWorld.MetaSessionId + ".jsonl", MetaWorld.PeerLine("m-ok", "t1-ideas", $"OK #190 at {Head}"));
+        Script();
+
+        var response = await Check();
+
+        Assert.DoesNotContain("review", Failed(response), StringComparer.Ordinal);
+        Assert.True(response.Ready);
+    }
+
     // #2651: a STATUS: or ACTION: tag in front of a protocol line is read past by the merge gate too, not only by the classifier.
     [Fact, Trait("Lane", "unit")]
     public async Task A_tagged_OK_and_a_tagged_ready_at_the_head_are_ready()
