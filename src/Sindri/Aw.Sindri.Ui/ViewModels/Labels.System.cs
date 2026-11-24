@@ -44,6 +44,9 @@ internal static partial class Labels
     /// <summary>The Agents card's row for sources that failed.</summary>
     internal const string AgentsProblems = "Problems";
 
+    /// <summary>The Agents card's link to the Agents page, under its problems (#4012).</summary>
+    internal const string AgentsOpen = "Open Agents";
+
     /// <summary>The Views card with nothing to say yet.</summary>
     internal const string ViewsUnknown = "Not read yet";
 

@@ -15,7 +15,7 @@ internal sealed class ShowNodeService(MapReader reader, IScrubberFactory scrubbe
     public async ValueTask<Result<NodeView>> Handle(ShowNodeRequest request, CancellationToken cancellationToken)
     {
         var call = await reader.Open(request.Scope, scrubbers, cancellationToken).ConfigureAwait(false);
-        var node = call.Bind(c => AnchorMatch.Resolve(c.Map.Graph, request.Key, request.Scope.Repos));
+        var node = call.Bind(c => AnchorMatch.Resolve(c.Map.Graph, request.Key, request.Scope.Repos, label: c.Text.ChoiceLabel));
         if (node.IsError)
         {
             return node.Error;

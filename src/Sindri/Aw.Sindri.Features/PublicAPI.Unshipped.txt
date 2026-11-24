@@ -2290,6 +2290,8 @@ Aw.Sindri.Features.GetStatus.SessionStatus.Deconstruct(out int Live, out int Ask
 Aw.Sindri.Features.GetStatus.SessionStatus.Equals(Aw.Sindri.Features.GetStatus.SessionStatus? other) -> bool
 Aw.Sindri.Features.GetStatus.SessionStatus.Live.get -> int
 Aw.Sindri.Features.GetStatus.SessionStatus.Live.init -> void
+Aw.Sindri.Features.GetStatus.SessionStatus.ProblemRows.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.SessionProblem!>!
+Aw.Sindri.Features.GetStatus.SessionStatus.ProblemRows.init -> void
 Aw.Sindri.Features.GetStatus.SessionStatus.Problems.get -> int
 Aw.Sindri.Features.GetStatus.SessionStatus.Problems.init -> void
 Aw.Sindri.Features.GetStatus.SessionStatus.Running.get -> int
@@ -2967,6 +2969,7 @@ Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Repo.get -> string!
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Repo.init -> void
 const Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Later = "later" -> string!
 const Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Ok = "ok" -> string!
+const Aw.Sindri.Features.CodeIndexReads.RepoHealth.QueuedWords = "the first build starts on code-index-main-move's next tick" -> string!
 const Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Pending = "pending" -> string!
 override Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest.Equals(object? obj) -> bool
 override Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest.GetHashCode() -> int

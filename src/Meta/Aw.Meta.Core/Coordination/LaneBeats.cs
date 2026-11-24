@@ -145,6 +145,32 @@ public sealed class LaneBeats(IKeyValueStore values, IDelay delay)
         return beat.Value is { Stopped: true } last && (wokeAt is null || wokeAt <= last.At);
     }
 
+    /// <summary>Records that the lane's recycle waiter gave up, so `status` shows it until the lane next recycles (#4264).</summary>
+    /// <param name="lane">The lane.</param>
+    /// <param name="at">When the waiter gave up.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Success.</returns>
+    public async ValueTask<Result<Unit>> RecordGaveUp(string lane, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        var stored = await values.Get(KvKeys.RecycleGaveUp, cancellationToken).ConfigureAwait(false);
+        return stored.IsError ? stored.Error : await values.Set(KvKeys.RecycleGaveUp, RecycleGiveUps.With(stored.Value, lane, at), cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Clears the lane's give-up record after it recycled.</summary>
+    /// <param name="lane">The lane.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Success.</returns>
+    public async ValueTask<Result<Unit>> ClearGaveUp(string lane, CancellationToken cancellationToken)
+    {
+        var stored = await values.Get(KvKeys.RecycleGaveUp, cancellationToken).ConfigureAwait(false);
+        if (stored.IsError || stored.Value is null)
+        {
+            return stored.IsError ? stored.Error : Results.Ok();
+        }
+
+        return await values.Set(KvKeys.RecycleGaveUp, RecycleGiveUps.Without(stored.Value, lane), cancellationToken).ConfigureAwait(false);
+    }
+
     private static string BeatKey(string lane) => "lane." + lane + ".beat";
 
     private static string WokeKey(string lane) => "lane." + lane + ".woke";

@@ -124,6 +124,9 @@ internal static partial class Labels
     /// <summary>The search field's placeholder.</summary>
     internal const string ProjectsSearchPlaceholder = "Search name, note, lead";
 
+    /// <summary>The search field's placeholder under <see cref="ProjectsBarLabelsFrom"/>: the long one would not fit; the window is at least 1000 wide (Size.WindowMinWidth), where the box is wide enough for it, so no shorter fallback exists.</summary>
+    internal const string ProjectsSearchPlaceholderShort = "Search projects";
+
     /// <summary>The search field's accessible name.</summary>
     internal const string ProjectsSearchName = "Search projects";
 
@@ -186,6 +189,9 @@ internal static partial class Labels
 
     /// <summary>The page width from which Items, Target and the health reason show (808 to 867 drops Agents only; under 808 the 1000-wide set: name, PRs, Blocked on, Active).</summary>
     internal const double ProjectsWideFrom = 808;
+
+    /// <summary>The page width from which the Sort and Group buttons keep their label words; narrower, only the values show and the search box gets the width (issue 4153).</summary>
+    internal const double ProjectsBarLabelsFrom = 1100;
 
     /// <summary>The Needs me view with no project.</summary>
     internal const string ProjectsNeedsMeEmptyTitle = "Nothing waits on you";

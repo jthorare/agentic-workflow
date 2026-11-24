@@ -67,7 +67,7 @@ fi
 allow() {
   local msg="${1:-}" out=""
   if [ -n "$msg" ] && [ -n "${input:-}" ]; then
-    out="$(printf '%s' "$input" | jq -ce --arg m "$msg" '(.tool_input | select(type == "object" and (.to // "") != "") | .message = $m) as $u | {"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","updatedInput":$u}}' 2>/dev/null)" || out=""
+    out="$(printf '%s' "$input" | jq -ce --rawfile m <(printf '%s' "$msg") '(.tool_input | select(type == "object" and (.to // "") != "") | .message = $m) as $u | {"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","updatedInput":$u}}' 2>/dev/null)" || out=""
   fi
   if [ -n "$out" ]; then
     printf '%s\n' "$out"
@@ -124,7 +124,7 @@ if [ -n "${AW_META_LANE:-}" ] && [ -n "$TO" ]; then
   case "$TO" in main|team-lead|"$META_LANE") allow ;; esac
 fi
 
-JUDGE_INPUT="$(jq -nc --arg text "$MESSAGE" --arg sk "$SENDER_KIND" '{text: $text, senderKind: $sk}')"
+JUDGE_INPUT="$(jq -nc --rawfile text <(printf '%s' "$MESSAGE") --arg sk "$SENDER_KIND" '{text: $text, senderKind: $sk}')"
 JUDGE_INPUT="$(aw_images_attach "$JUDGE_INPUT" "$(aw_image_paths "$MESSAGE" send-gate)")"
 JUDGE_OUT="$(printf '%s' "$JUDGE_INPUT" | AW_SESSION_ID="$SESSION_ID" judge wake-gate 2>/dev/null)" || { failopen "judge-exit-$?"; allow; }
 DECISION="$(printf '%s' "$JUDGE_OUT" | jq -r '.decision // empty' 2>/dev/null)" || { failopen judge-output-unparsable; allow; }
@@ -166,7 +166,7 @@ case "$DECISION" in
     ;;
   batch|*)
     if acquire_lock "$LOCK_DIR" 5; then
-      jq -nc --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg agent "$AGENT_TYPE" --arg to "$TO" --arg text "$MESSAGE" \
+      jq -nc --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg agent "$AGENT_TYPE" --arg to "$TO" --rawfile text <(printf '%s' "$MESSAGE") \
         '{ts: $ts, agentType: (if $agent == "" then null else $agent end), to: (if $to == "" then null else $to end), text: $text}' >> "$OUTBOX_FILE"
       release_lock "$LOCK_DIR"
     else

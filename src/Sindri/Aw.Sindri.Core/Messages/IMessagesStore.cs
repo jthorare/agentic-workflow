@@ -66,4 +66,38 @@ public interface IMessagesStore
     /// <param name="cancellationToken">Cancels the write.</param>
     /// <returns>The messages deleted, or SND-MSG-025.</returns>
     public ValueTask<Result<int>> Purge(string? conversation, bool ownerState, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The rows of one list (messages spec §8.2), oldest newest message first, then by conversation: Needs reply by the store's column (§7.1 items 1 to 3),
+    /// Unread (threads whose newest message is another person's and sits past the read pointer of an unmuted conversation), Later and Drafts. Each row
+    /// carries its newest message's text; the caller drops it for a session. No messages.db reads as none.
+    /// </summary>
+    /// <param name="list">The list.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The rows, or SND-MSG-025.</returns>
+    public ValueTask<Result<IReadOnlyList<ThreadRow>>> Rows(MessageList list, CancellationToken cancellationToken);
+
+    /// <summary>Every conversation, starred first, then by name. No messages.db reads as none.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The conversations, or SND-MSG-025.</returns>
+    public ValueTask<Result<IReadOnlyList<ConversationSummary>>> Conversations(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// A window of a conversation's top-level lines, oldest first: the <paramref name="limit"/> lines just newer than <paramref name="after"/>, else just
+    /// older than <paramref name="before"/>, else the newest; with the gaps whose edge is one of its lines.
+    /// </summary>
+    /// <param name="conversation">The conversation.</param>
+    /// <param name="before">Lines older than this ts, or null.</param>
+    /// <param name="after">Lines newer than this ts, or null.</param>
+    /// <param name="limit">At most this many lines.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The window, SND-MSG-011 when the store has no such conversation, or SND-MSG-025.</returns>
+    public ValueTask<Result<ConversationWindow>> Window(string conversation, MessageTs? before, MessageTs? after, int limit, CancellationToken cancellationToken);
+
+    /// <summary>A thread: its root and replies, oldest first, and its Needs reply or Unread row.</summary>
+    /// <param name="conversation">The conversation.</param>
+    /// <param name="thread">The root's ts.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The thread, SND-MSG-011 when the store holds no such conversation or root, or SND-MSG-025.</returns>
+    public ValueTask<Result<StoredThread>> Thread(string conversation, MessageTs thread, CancellationToken cancellationToken);
 }
