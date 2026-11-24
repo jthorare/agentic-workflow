@@ -43,7 +43,7 @@ public sealed class WholeMapLaneHeadingFramesTests : FrameHost
 
         Assert.NotEmpty(product.Meta);
         Assert.True(canvas.LaneMetaDrawn(WholeBand.Product), "counts not drawn at the default zoom");
-        Assert.True(canvas.LaneMetaWhole(WholeBand.Product), $"cut: {product.Meta}");
+        Assert.True(canvas.LaneMetaWhole(WholeBand.Product), string.Create(CultureInfo.InvariantCulture, $"cut: {product.Meta} (shown world {canvas.Map?.Shown?.World.Width:0}, whole world {canvas.Map?.Geometry?.World.Width:0})"));
     });
 
     [Theory]
