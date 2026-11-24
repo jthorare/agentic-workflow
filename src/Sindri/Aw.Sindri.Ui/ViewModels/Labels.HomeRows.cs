@@ -33,7 +33,7 @@ internal static partial class Labels
     internal const string HomeAsRows = "Home as rows";
 
     /// <summary>The line under Settings' Home switch.</summary>
-    internal const string HomeAsRowsNote = "New. One ranked list in place of the panels.";
+    internal const string HomeAsRowsNote = "One ranked list in place of the panels.";
 
     /// <summary>What a screen reader says for the tabs as a whole.</summary>
     internal const string HomeTabsName = "Home tabs";

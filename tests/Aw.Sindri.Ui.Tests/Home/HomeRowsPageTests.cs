@@ -78,6 +78,17 @@ public sealed class HomeRowsPageTests
         var title = page.GetVisualDescendants().OfType<TextBlock>().Single(t => string.Equals(t.Name, "HomeRowsTitle", StringComparison.Ordinal));
         Assert.Equal("Home", title.Text);
         Assert.True(title.Bounds.Right <= Tabs(page)[0].TranslatePoint(default, page)!.Value.X, "the title sits left of the tabs, in the one header row");
+        Assert.Equal(15, title.FontSize);   // the frame's header title, not the 24 px page title
+        Assert.All(Tabs(page), tab =>
+        {
+            Assert.Equal(24, tab.Bounds.Height, 0.5);   // the frame's pill
+            var words = tab.GetVisualDescendants().OfType<TextBlock>().ToList();
+            Assert.Equal(2, words.Count);
+            var tops = words.ConvertAll(w => w.TranslatePoint(default, tab)!.Value.Y);
+            Assert.Equal(tops[0], tops[1], 0.5);   // the word and its count sit on one line
+            Assert.Equal(words[0].FontSize, words[1].FontSize);
+            Assert.Equal((24 - words[0].Bounds.Height) / 2, tops[0], 0.5);   // centred in the pill
+        });
         Assert.All(list.GetVisualDescendants().OfType<Row>().Where(r => r.IsVisible && r.DataContext is HomeRowItem), r => Assert.Empty(r.Layout.Chips));   // the why cell is plain text
         var titles = list.GetVisualDescendants().OfType<Row>().Where(r => r.IsVisible && r.DataContext is HomeRowItem { Id.Length: 0 }).Select(r => r.Layout.TitleRect.X).ToList();
         Assert.NotEmpty(titles);
