@@ -141,11 +141,12 @@ internal sealed partial class ProjectsPageViewModel
         Arrange();
     }
 
-    // Until the owner picks a view: Needs me once a served card carries the flag (null from an older server, which stays on Projects). A read whose truth
-    // failed carries no flag and moves nothing back, so the view never flips between reads.
+    // Until the owner picks a view: Needs me once an open project is served as blocked on the owner; with none blocked (every flag false, or no flag from an
+    // older server) the page stays on Projects, so the first view is never empty. A read whose truth failed carries no flag and moves nothing back, so the
+    // view never flips between reads.
     private void DefaultView(ProjectList list)
     {
-        if (!_viewPicked && !FactsMissing && list.Projects.Concat(list.Finished).Any(c => c.Truth?.BlockedOnYou is not null))
+        if (!_viewPicked && !FactsMissing && list.Projects.Any(c => c.Truth?.BlockedOnYou == true))
         {
             ShowView(ProjectView.NeedsMe);
         }

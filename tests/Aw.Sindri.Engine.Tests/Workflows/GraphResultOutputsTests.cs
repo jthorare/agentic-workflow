@@ -73,6 +73,46 @@ public sealed class GraphResultOutputsTests
     }
 
     [Fact]
+    public void A_collect_result_gives_its_own_row_not_its_item_rows()
+    {
+        // why: a collect has its own row at item 0 beside one row per item (#4093); its output is items, count and skipped only
+        var spec = Spec(["start", "loop", "body", "gather"], [("start", "loop"), ("loop", "body"), ("body", "gather")]);
+        NodeRun[] rows =
+        [
+            Row("start", "{}"), Row("loop", """{"items":[1,2]}"""),
+            Row("body", """{"v":1}""", item: 1), Row("body", """{"v":2}""", item: 2),
+            Row("gather", """{"value":2}""", item: 2), Row("gather", """{"items":[1,2],"count":2,"skipped":0}"""), Row("gather", """{"value":1}""", item: 1),
+        ];
+
+        var outputs = Outputs(GraphResultOutputs.Build(spec, rows));
+
+        var own = Assert.IsType<JsonObject>(outputs["gather"]);
+        Assert.Equal(["items", "count", "skipped"], own.Select(static p => p.Key), StringComparer.Ordinal);
+        Assert.Equal(2, own["count"]!.GetValue<int>());
+    }
+
+    [Fact]
+    public void A_failed_collect_that_continue_let_pass_gives_no_slot_not_its_item_rows()
+    {
+        var spec = Spec(["start", "loop", "body", "gather"], [("start", "loop"), ("loop", "body"), ("body", "gather")], result: "gather");
+        NodeRun[] rows = [Row("start", "{}"), Row("loop", "{}"), Row("gather", """{"value":1}""", item: 1), Row("gather", "{}", status: NodeRunStatus.Failed)];
+
+        Assert.Null(GraphResultOutputs.Build(spec, rows));
+    }
+
+    [Fact]
+    public void A_named_body_node_still_gives_its_item_outputs_in_item_order()
+    {
+        // why: a body node has rows at items 1..N and none at 0, so naming it as the result keeps the per-item list
+        var spec = Spec(["start", "loop", "body", "gather"], [("start", "loop"), ("loop", "body"), ("body", "gather")], result: "body");
+        NodeRun[] rows = [Row("start", "{}"), Row("loop", "{}"), Row("body", """{"v":2}""", item: 2), Row("body", """{"v":1}""", item: 1), Row("gather", """{"count":2}""")];
+
+        var outputs = Outputs(GraphResultOutputs.Build(spec, rows));
+
+        Assert.Equal([1, 2], outputs["body"]!.AsArray().Select(static o => o!["v"]!.GetValue<int>()));
+    }
+
+    [Fact]
     public void A_result_node_whose_output_was_cut_is_a_marker_with_its_size_not_null()
     {
         var spec = Spec(["start", "big"], [("start", "big")]);

@@ -34,7 +34,7 @@ machine-wide, needs no profile approval, and never holds secrets. One JSON Schem
 | `agents.<id>` | An added catalog entry (`label`, `bin`, `open`, `sessionId` required; `sessionIdPattern` required unless `sessionId` is `none`, and matched against the whole id, as if written `^(…)$`; `reportedId` required for `reported`), or, with `"override": true`, the named fields of a built-in one. Ids match `^[a-z][a-z0-9-]{1,31}$` |
 | `agents.<id>.model`, `.policy` | Decided (owner, 2026-10-16). Per-entry form names, like `mcp`, for an unattended Step's per-run model and policy file; see "Model and policy forms" below. Absent means `none` |
 | `meta` | `lanesAgent` and per-lane `lanes.<lane>` name catalog agents for `aw-meta-launch`, when the team's `team.json` has no `agent`. That field sets every lane, including the meta lane, and wins over both of these |
-| `sessions` | The session collector's settings (`enabled`, `pollSeconds` 1 to 30, `providers`, `tmuxSockets`, `claudeSessionsDir`); optional, and the bash reader accepts and ignores it. See `docs/csharp/sindri-sessions.md` |
+| `sessions` | The session collector's settings (`enabled`, `pollSeconds` 1 to 30, `providers`, `tmuxSockets`, `scope`, `claudeSessionsDir`); `scope` is `all` (default) or `own`: `own` lists only sessions on a tmux socket under this home's `tmux` folder and sessions launched from this home's launch records, and a typo reads as `own`; optional, and the bash reader accepts and ignores it. See `docs/csharp/sindri-sessions.md` |
 
 Built-in entries (`claude-code`, `codex`, `cursor`) live once in `config/launcher/builtins.json`. The terminal templates
 below live once in `config/launcher/terminals.json`; `sindri launch init` and `aw-meta-launch --init-launcher` write

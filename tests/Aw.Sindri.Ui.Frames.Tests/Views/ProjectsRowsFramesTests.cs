@@ -3,6 +3,7 @@ using System.Net;
 using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
@@ -124,6 +125,27 @@ public sealed class ProjectsRowsFramesTests : FrameHost
         Assert.True(Right(Named<TextBox>(window, "ProjectsSearch"), window) <= Left(Named<Button>(window, "ProjectsSort"), window), "the search box runs under Sort");
     });
 
+    // Issue 4153: at 1000 px the bar drops the words Sort and Group (the values and the buttons' names stay) so the search box keeps room; at 1280 the words show.
+    [Theory]
+    [InlineData(1000, 700, false)]
+    [InlineData(1280, 800, true)]
+    public Task A_narrow_bar_drops_the_Sort_and_Group_words_and_the_search_box_keeps_160_px(int width, int height, bool wordsShown) => OnUi(async () =>
+    {
+        var (window, shell) = await OnProjects(width, height);
+
+        foreach (var (button, word) in new[] { ("ProjectsSort", shell.Projects.SortLabel), ("ProjectsGroup", shell.Projects.GroupLabel) })
+        {
+            var label = Named<Button>(window, button).GetVisualDescendants().OfType<TextBlock>().First(t => t.Text == word);
+            Assert.Equal(wordsShown, label.IsEffectivelyVisible);
+        }
+
+        Assert.Equal((shell.Projects.SortName, shell.Projects.GroupName), (Avalonia.Automation.AutomationProperties.GetName(Named<Button>(window, "ProjectsSort")), Avalonia.Automation.AutomationProperties.GetName(Named<Button>(window, "ProjectsGroup"))));   // the names keep saying Sort and Group
+        if (!wordsShown)
+        {
+            Assert.True(Named<TextBox>(window, "ProjectsSearch").Bounds.Width >= 160, string.Create(CultureInfo.InvariantCulture, $"the search box is {Named<TextBox>(window, "ProjectsSearch").Bounds.Width} px wide"));
+        }
+    });
+
     // Issue 4158: at 1000 px the Project cell is about 330 px; the reason beside a short name must trim with an ellipsis inside it, and a long name keeps room.
     [Fact]
     public Task At_1000_the_health_reason_trims_inside_the_Project_cell_and_the_name_keeps_room() => OnUi(async () =>
@@ -139,5 +161,28 @@ public sealed class ProjectsRowsFramesTests : FrameHost
 
         var long_ = rows.First(r => Named<TextBlock>(r, "ProjectRowNameText").Text == LongName);
         Assert.True(Named<Border>(long_, "ProjectRowName").Bounds.Width >= 120, "a long name has no room left");
+    });
+
+    // Issue 4241: under 1100 px the search placeholder is the short "Search projects" and it fits the box; from 1100 it is the long text. Both menu buttons carry a tooltip with their word and value.
+    [Theory]
+    [InlineData(1000, 700, "Search projects")]
+    [InlineData(1280, 800, "Search name, note, lead")]
+    public Task The_search_placeholder_follows_the_width_and_never_trims(int width, int height, string placeholder) => OnUi(async () =>
+    {
+        var (window, _) = await OnProjects(width, height);
+        var box = Named<TextBox>(window, "ProjectsSearch");
+
+        Assert.Equal(placeholder, box.PlaceholderText);
+        var mark = box.GetVisualDescendants().OfType<TextBlock>().First(t => string.Equals(t.Text, box.PlaceholderText, StringComparison.Ordinal));
+        var needs = new FormattedText(placeholder, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, new Typeface(mark.FontFamily, mark.FontStyle, mark.FontWeight), mark.FontSize, Brushes.White).Width;
+        Assert.True(needs <= box.Bounds.Width - box.Padding.Left - box.Padding.Right, string.Create(CultureInfo.InvariantCulture, $"the placeholder needs {needs} px, the box has {box.Bounds.Width - box.Padding.Left - box.Padding.Right}"));
+    });
+
+    [Fact]
+    public Task The_Sort_and_Group_buttons_carry_a_tooltip_with_their_word_and_value() => OnUi(async () =>
+    {
+        var (window, shell) = await OnProjects(1000, 700);
+
+        Assert.Equal((shell.Projects.SortName, shell.Projects.GroupName), (ToolTip.GetTip(Named<Button>(window, "ProjectsSort")) as string, ToolTip.GetTip(Named<Button>(window, "ProjectsGroup")) as string));
     });
 }

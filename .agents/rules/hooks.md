@@ -47,7 +47,7 @@ Put provider-specific parsing in the adapter, not the canonical hook. The one ex
 
 | Hook | Outputs |
 |------|---------|
-| `git-context.sh` | Current branch, last 5 commits, working tree status |
+| `git-context.sh` | Current branch, last 5 commits, working tree status, and one `Commands: N in .agentic-workflow/commands.json; find one with: aw-commands search <words>` line when the repo has a command catalog (#4221; nothing without jq or for a file that isn't JSON) |
 | `prism-context.sh` | One-line warning if prism-mcp dashboard at `PRISM_DASHBOARD_PORT` (default 7180) is unreachable; silent on success |
 | `sindri-nudge.sh` | One line when the session's repo is not in the approved sindri profile; silent otherwise; bounded by `AW_SINDRI_NUDGE_BUDGET_MS` |
 
@@ -85,6 +85,8 @@ All hook scripts live in `config/hooks/`:
 | `meta-lane-gate.sh` | UserPromptSubmit, Stop (Codex); sessionStart, postToolUse, stop (Cursor) | — |
 | `session-id-report.sh` | SessionStart (Codex); sessionStart (Cursor) | — |
 | `fleet-state.sh` | SessionStart, UserPromptSubmit, PermissionRequest, Notification, PostToolUse, Stop, SessionEnd (Claude; Codex and Cursor in CO-1b) | PostToolUse: `.*` |
+| `retry-gate.sh` | PreToolUse (`scripts/install-retry-guard.sh`, every provider; Cursor `preToolUse`) | `.*` |
+| `retry-record.sh` | PostToolUseFailure + PostToolUse (Codex: PostToolUse; Cursor: `postToolUseFailure` + `postToolUse`) | `.*` |
 
 Each provider's `install-hooks.sh` installs them by copying, not symlinking, so they survive repo moves. Claude Code's copies go to `~/.claude/hooks/`, and Codex and Cursor copies go to `~/.agentic-workflow/hooks/`. The script then registers the command in that provider's hook config, wrapped by the adapter for Codex and Cursor.
 

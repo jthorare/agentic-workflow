@@ -178,6 +178,19 @@
                        Text="{Binding MaxTextScaleText}" AutomationProperties.AccessibilityView="Raw" />
           </Grid>
         </StackPanel>
+
+        <Border Height="1" Background="{DynamicResource Brush.Hairline}" />
+
+        <!-- Home as rows (home spec §7.1, U1): one ranked list in place of Home's panels; off until the list has every piece. -->
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.MD}">
+          <StackPanel VerticalAlignment="Center" Spacing="{StaticResource Space.XXS}">
+            <TextBlock x:Name="HomeAsRowsText" Classes="body-strong" Text="{Binding HomeAsRowsLabel}" AutomationProperties.Name="{Binding HomeAsRowsLabel}" />
+            <TextBlock x:Name="HomeAsRowsNoteText" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" Text="{Binding HomeAsRowsNote}"
+                       AutomationProperties.Name="{Binding HomeAsRowsNote}" />
+          </StackPanel>
+          <ToggleSwitch x:Name="HomeAsRowsSwitch" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding HomeAsRows, Mode=TwoWay}"
+                        AutomationProperties.Name="{Binding HomeAsRowsLabel}" />
+        </Grid>
       </StackPanel>
     </Border>
   </StackPanel>

@@ -89,7 +89,14 @@ internal sealed class RecycleWaiter(IWaiterLauncher launcher, ILaneFiles files, 
             }
 
             var recycled = await runner.Run(plan, cancellationToken).ConfigureAwait(false);
-            return recycled.IsError ? await Failed(plan.Lane, recycled.Error, cancellationToken).ConfigureAwait(false) : recycled;
+            if (recycled.IsError)
+            {
+                return await Failed(plan.Lane, recycled.Error, cancellationToken).ConfigureAwait(false);
+            }
+
+            // The lane recycled: an earlier give-up no longer needs the owner. A failing write leaves the line, never fails the recycle.
+            _ = await beats.ClearGaveUp(plan.Lane, CancellationToken.None).ConfigureAwait(false);
+            return recycled;
         }
         finally
         {
@@ -122,9 +129,12 @@ internal sealed class RecycleWaiter(IWaiterLauncher launcher, ILaneFiles files, 
         return beats.WaitForStop(lane, since, left > TimeSpan.Zero ? left : TimeSpan.Zero, cancellationToken);
     }
 
+    // Besides the NOTE, the give-up is kept for `status`, whose ATTENTION line the owner sees (#4264); a failing write still logs the NOTE.
     private async ValueTask<Result<LaneRecycleResponse>> GaveUp(RecyclePlan plan, CancellationToken cancellationToken)
     {
-        var note = LogLine.Event(LogKind.Note, clock.GetUtcNow(), $"RECYCLE FAILED {plan.Lane}: recycle gave up, no turn ended within 30 min; an open obligation keeps the stop blocked");
+        var now = clock.GetUtcNow();
+        _ = await beats.RecordGaveUp(plan.Lane, now, cancellationToken).ConfigureAwait(false);
+        var note = LogLine.Event(LogKind.Note, now, $"RECYCLE FAILED {plan.Lane}: recycle gave up, no turn ended within 30 min; the stop stayed blocked");
         var logged = await log.Append(note, cancellationToken).ConfigureAwait(false);
         return logged.IsError
             ? logged.Error

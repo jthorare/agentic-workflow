@@ -1,0 +1,17 @@
+{
+  "name": "aw-mods",
+  "owner": { "name": "agentic-workflow" },
+  "description": "Claude Code mods that ship with the agentic-workflow toolkit (opt-in: scripts/install-mods.sh)",
+  "plugins": [
+    {
+      "name": "pr-line",
+      "source": "./pr-line",
+      "description": "One line under the prompt with the PR for the session's branch: CI, bot reviews, threads, people, next ship step"
+    },
+    {
+      "name": "my-prs",
+      "source": "./my-prs",
+      "description": "/prs opens a pane that lists your open PRs with CI, bot reviews, threads, people, next ship step"
+    }
+  ]
+}
