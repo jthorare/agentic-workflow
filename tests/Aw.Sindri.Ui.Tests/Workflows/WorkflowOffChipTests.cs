@@ -48,10 +48,52 @@ public sealed class WorkflowOffChipTests
     }
 
     [Fact]
-    public async Task An_active_workflow_draws_no_chip_because_no_next_run_time_is_served()
+    public async Task An_active_workflow_with_no_next_run_time_draws_no_chip()
     {
         var graph = await GraphWith(activeRevision: 1);
+        graph.NextRunAt = null;
 
         Assert.All(graph.Nodes, n => Assert.Null(graph.ChipFor(n)));
+    }
+
+    // The fixture's clock is Thursday 2026-01-01 00:05 UTC; the chip reads local time (#3758).
+    [Theory]
+    [InlineData("2026-01-05T07:00:00Z", "UTC", "next Mon 7:00")]                    // more than 24 hours away: the day and the time
+    [InlineData("2026-01-05T15:00:00Z", "America/Los_Angeles", "next Mon 7:00")]    // in the clock's time zone, not UTC
+    [InlineData("2026-01-01T07:00:00Z", "UTC", "next 7:00")]                        // within the next 24 hours: the time only
+    [InlineData("2026-01-01T23:30:00Z", "UTC", "next 23:30")]
+    public async Task An_active_workflows_Schedule_card_shows_its_next_run(string next, string zone, string chip)
+    {
+        var graph = await GraphWith(activeRevision: 1);
+        _f.Clock.SetLocalTimeZone(TimeZoneInfo.FindSystemTimeZoneById(zone));
+        graph.Clock = _f.Clock;
+        graph.NextRunAt = DateTimeOffset.Parse(next, System.Globalization.CultureInfo.InvariantCulture);
+
+        Assert.Equal(chip, graph.ChipFor(graph.Nodes.Single(n => string.Equals(n.Id, "when", StringComparison.Ordinal))), StringComparer.Ordinal);
+        Assert.Null(graph.ChipFor(graph.Nodes.Single(n => string.Equals(n.Id, "go", StringComparison.Ordinal))));   // only the Schedule card
+    }
+
+    [Fact]
+    public async Task An_off_workflow_keeps_the_off_chip_even_with_a_next_run_time()
+    {
+        var graph = await GraphWith(activeRevision: null);
+        graph.Clock = _f.Clock;
+        graph.NextRunAt = Now.AddHours(2);
+
+        Assert.Equal("off", graph.ChipFor(graph.Nodes.Single(n => string.Equals(n.Id, "when", StringComparison.Ordinal))), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task Opening_a_workflow_hands_its_rows_next_run_time_and_the_pages_clock_to_the_graph()
+    {
+        var list = Golden("workflows", "list-two");
+        list["workflows"]![0]!["nextRunAt"] = "2026-01-05T07:00:00Z";
+        _f.ServeList(list);
+        var page = await _f.Shown(Token);
+
+        await page.OpenWorkflow(Slug, Token);
+
+        Assert.Equal(DateTimeOffset.Parse("2026-01-05T07:00:00Z", System.Globalization.CultureInfo.InvariantCulture), page.Runs.Graph!.NextRunAt);
+        Assert.Same(_f.Clock, page.Runs.Graph.Clock);
     }
 }
