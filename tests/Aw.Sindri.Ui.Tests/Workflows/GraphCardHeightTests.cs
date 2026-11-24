@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text.Json.Nodes;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Threading;
