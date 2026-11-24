@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
 using Aw.Meta.Core.Config;
-using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Ids;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Features.CheckMerge;
@@ -21,7 +20,7 @@ public sealed class ReviewMergeTests
 
     private int _next;
 
-    private CheckMergeService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages, new LaneAddress(_world.LaneFiles, _world.LaneSessions, _world.Sessions)));
+    private CheckMergeService Service() => new(_world.Readiness);
 
     // The team file as the reader sees it: the reviewer lane under "review", an optional key.
     private async Task Team(bool withReview = true)
