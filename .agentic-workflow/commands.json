@@ -1,0 +1,244 @@
+{
+  "$schema": "../schemas/repo-config/commands.schema.json",
+  "version": 1,
+  "entries": [
+    {
+      "id": "bash-tests",
+      "purpose": "Run every tracked bash test suite the way CI's Bash tests job does",
+      "terms": [
+        "bash",
+        "tests",
+        "suites",
+        "ci",
+        "shell"
+      ],
+      "run": {
+        "argv": [
+          "bash",
+          "scripts/ci/bash-tests.sh"
+        ],
+        "cwd": "repo"
+      },
+      "effects": "writes-local",
+      "output": "PASS or FAIL per suite, the failures' logs, the slowest suites and a summary; exit 1 when a suite failed",
+      "stop": "ends when every suite ran; each suite gets its own temp HOME and AW_STATE_DIR, removed after; --list prints the suites without running them",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    },
+    {
+      "id": "check-prose",
+      "purpose": "Check the docs and skills Markdown for slop, hedges, vague verbs and long sentences with Vale",
+      "terms": [
+        "prose",
+        "docs",
+        "markdown",
+        "vale",
+        "lint",
+        "style",
+        "writing"
+      ],
+      "run": {
+        "argv": [
+          "scripts/check-prose.sh"
+        ],
+        "cwd": "repo"
+      },
+      "prerequisites": [
+        "vale from binaries.lock (scripts/binaries-lock.sh fetch vale)"
+      ],
+      "effects": "read-only",
+      "output": "file:line:col: error|warning Rule: message per hit; exit 1 on an error",
+      "stop": "exits when done; --base REF keeps only hits on lines added since REF",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    },
+    {
+      "id": "check-env-example",
+      "purpose": "Check that .env.example lists every environment variable the code reads",
+      "terms": [
+        "env",
+        "environment",
+        "variables",
+        "env.example",
+        "drift"
+      ],
+      "run": {
+        "argv": [
+          "scripts/check-env-example.sh"
+        ],
+        "cwd": "repo"
+      },
+      "effects": "read-only",
+      "output": "one line per variable that is missing or stale; exit 1 on drift",
+      "stop": "exits when done",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    },
+    {
+      "id": "check-skills-toolkit",
+      "purpose": "Check that skills name the toolkit as ${AW_TOOLKIT:-...} and the output dir as $AW_DIR",
+      "terms": [
+        "skills",
+        "toolkit",
+        "paths",
+        "drift",
+        "lint"
+      ],
+      "run": {
+        "argv": [
+          "scripts/check-skills-toolkit.sh"
+        ],
+        "cwd": "repo"
+      },
+      "effects": "read-only",
+      "output": "file:line per hit; exit 1 on drift",
+      "stop": "exits when done",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    },
+    {
+      "id": "check-skills-git-mode",
+      "purpose": "Check that every skill that writes git state reads AW_GIT_MODE and refuses under readonly",
+      "terms": [
+        "skills",
+        "git",
+        "readonly",
+        "mode",
+        "lint"
+      ],
+      "run": {
+        "argv": [
+          "scripts/check-skills-git-mode.sh"
+        ],
+        "cwd": "repo"
+      },
+      "effects": "read-only",
+      "output": "file:line per hit; exit 1 on drift",
+      "stop": "exits when done",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    },
+    {
+      "id": "check-skills-worktree-path",
+      "purpose": "Check that every skill that adds a git worktree takes its path from skills/_shared/worktree-path.sh",
+      "terms": [
+        "skills",
+        "worktree",
+        "path",
+        "lint"
+      ],
+      "run": {
+        "argv": [
+          "scripts/check-skills-worktree-path.sh"
+        ],
+        "cwd": "repo"
+      },
+      "effects": "read-only",
+      "output": "file:line per hit; exit 1 on drift, 2 usage",
+      "stop": "exits when done",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    },
+    {
+      "id": "sync-rules-check",
+      "purpose": "Check that the rule links and the Rules Index match .agents/rules/",
+      "terms": [
+        "rules",
+        "agents",
+        "index",
+        "links",
+        "sync"
+      ],
+      "run": {
+        "argv": [
+          "scripts/sync-rules.sh",
+          "--check"
+        ],
+        "cwd": "repo"
+      },
+      "effects": "read-only",
+      "output": "what is out of date; exit 1 when a link or the index is stale",
+      "stop": "exits when done; without --check it rewrites the links and the index",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    },
+    {
+      "id": "check-deps",
+      "purpose": "Check deps.yaml against the code: schema, tiers, cycles and undeclared edges",
+      "terms": [
+        "deps",
+        "dependencies",
+        "graph",
+        "tiers",
+        "cycles"
+      ],
+      "run": {
+        "argv": [
+          "node",
+          "scripts/check-deps.mjs"
+        ],
+        "cwd": "repo"
+      },
+      "prerequisites": [
+        "node"
+      ],
+      "effects": "read-only",
+      "output": "one line per finding; exit 1 on drift; --mermaid also prints the graph",
+      "stop": "exits when done",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    },
+    {
+      "id": "check-rules",
+      "purpose": "Check that every C# rule in the spec has a rule record and every active check exists",
+      "terms": [
+        "rules",
+        "records",
+        "csharp",
+        "checks"
+      ],
+      "run": {
+        "argv": [
+          "node",
+          "scripts/check-rules.mjs"
+        ],
+        "cwd": "repo"
+      },
+      "prerequisites": [
+        "node"
+      ],
+      "effects": "read-only",
+      "output": "one line per finding; --json for objects; exit 1 on a finding",
+      "stop": "exits when done",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-23"
+      }
+    }
+  ]
+}

@@ -25,6 +25,7 @@ cat > "$STUB" <<'EOF'
 if [ "$1" = board-line ]; then
   echo "board-line|${AW_META_HOOK:-}" >> "$BOARDCALLS"
   [ -n "${STUB_BOARD:-}" ] && echo "$STUB_BOARD"
+  [ -n "${STUB_BOARD_FILE:-}" ] && cat "$STUB_BOARD_FILE"
   exit "${STUB_BOARD_RC:-0}"
 fi
 echo "$*" >> "$CALLS"
@@ -42,6 +43,8 @@ if [ "$1" = inbox ] && { [ -n "${STUB_INBOX_EMPTY:-}" ] || [ -n "${STUB_INBOX_BO
   exit 0
 fi
 [ -n "${STUB_OUT:-}" ] && echo "$STUB_OUT"
+# STUB_OUT_FILE: output too big for an env var (one env string past 128 KiB fails exec, #4308)
+[ -n "${STUB_OUT_FILE:-}" ] && cat "$STUB_OUT_FILE"
 # lane-reply answers STUB_REPLY_RC when set (a lane that records its reply and is still blocked), else STUB_RC like every command
 if [ "$1" = lane-reply ]; then exit "${STUB_REPLY_RC:-${STUB_RC:-0}}"; fi
 exit "${STUB_RC:-0}"
@@ -183,6 +186,23 @@ OUT="$(STUB_OUT="inbox text" STUB_BOARD="$BL" STUB_BOARD_RC=2 lane "$UPS")"; RC=
 check "a failing board-line leaves the inbox alone" "$RC:$OUT" "0:inbox text"
 : > "$BOARDCALLS"; STUB_BOARD="$BL" lane '{"hook_event_name":"Stop","session_id":"s-2","last_assistant_message":"done"}' > /dev/null
 check "Stop never asks for the board line" "$(cat "$BOARDCALLS")" ""
+
+# --- #4308: aw-meta output over 128 KiB still reaches the agent. As one jq argv string it failed exec and the hook printed nothing.
+head -c 204800 /dev/zero | tr '\0' x > "$WORK/big.txt"
+{ printf 'aw-meta: warning: '; cat "$WORK/big.txt"; } > "$WORK/big-warning.txt"
+OUT="$(STUB_OUT_FILE="$WORK/big.txt" stop "$P")"; RC=$?
+check "200 KB stop-check warning: exit 0, the whole warning as a systemMessage" "$RC:$(jq -r '.systemMessage | length' <<< "$OUT" 2>/dev/null)" "0:204800"
+OUT="$(printf '%s' "$SEND" | STUB_OUT_FILE="$WORK/big-warning.txt" bash "$HOOKS/meta-outbox.sh")"
+check "200 KB outbox-record warning: the whole line as additionalContext" "$(jq -r '.hookSpecificOutput.additionalContext | length' <<< "$OUT" 2>/dev/null)" "204818"
+OUT="$(STUB_BOARD_FILE="$WORK/big.txt" board '{"hook_event_name":"UserPromptSubmit","session_id":"s-1"}')"
+check "200 KB board line: the whole line as additionalContext" "$(jq -r '.hookSpecificOutput.additionalContext | length' <<< "$OUT" 2>/dev/null)" "204800"
+OUT="$(STUB_OUT_FILE="$WORK/big.txt" lane '{"hook_event_name":"PostToolUse","session_id":"s-2","tool_name":"Shell"}')"
+check "200 KB lane inbox on PostToolUse: the whole inbox as additionalContext" "$(jq -r '.hookSpecificOutput.additionalContext | length' <<< "$OUT" 2>/dev/null)" "204800"
+OUT="$(STUB_OUT_FILE="$WORK/big.txt" lane '{"hook_event_name":"Stop","session_id":"s-2","stop_hook_active":false,"last_assistant_message":"done"}')"; RC=$?
+check "200 KB lane-stop-check warning: exit 0, the whole warning as a systemMessage" "$RC:$(jq -r '.systemMessage | length' <<< "$OUT" 2>/dev/null)" "0:204800"
+printf '{"metaLane":"api"}\n' > "$WORK/team-big.json"
+OUT="$(STUB_OUT_FILE="$WORK/big.txt" AW_META_CONFIG="$WORK/team-big.json" lane '{"hook_event_name":"PostToolUse","session_id":"s-2","tool_name":"Shell"}')"
+check "200 KB meta-lane inbox on PostToolUse: the whole inbox as additionalContext" "$(jq -r '.hookSpecificOutput.additionalContext | length' <<< "$OUT" 2>/dev/null)" "204800"
 
 STOP='{"hook_event_name":"Stop","session_id":"s-2","stop_hook_active":false,"last_assistant_message":"Rebased.\nREPLY TO META: rebased and pushed\nsecond line"}'
 : > "$CALLS"; : > "$STDIN_SEEN"

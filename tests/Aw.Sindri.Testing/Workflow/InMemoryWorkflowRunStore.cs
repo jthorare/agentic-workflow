@@ -52,8 +52,7 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
                 return Done<GraphStartKind>(SindriErrors.GraphRunIdTaken.With($"the run '{run.Id.Value}' already exists; a trigger that fires twice is one run"));
             }
 
-            var busy = mode != GraphConcurrency.Unlimited
-                && _runs.Exists(r => r.WorkflowId == run.WorkflowId && r.Status is WorkflowRunStatus.Queued or WorkflowRunStatus.Running or WorkflowRunStatus.Waiting);
+            var busy = mode != GraphConcurrency.Unlimited && run.Mode != WorkflowRunMode.Test && _runs.Exists(r => IsLiveInFlight(r, run.WorkflowId));
             if (busy && mode == GraphConcurrency.OnePerWorkflow)
             {
                 return Done<GraphStartKind>(GraphStartKind.Skipped);
@@ -64,12 +63,15 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
         }
     }
 
+    private static bool IsLiveInFlight(WorkflowRun run, WorkflowId workflow) =>
+        run.WorkflowId == workflow && run.Mode == WorkflowRunMode.Live && run.Status is WorkflowRunStatus.Queued or WorkflowRunStatus.Running or WorkflowRunStatus.Waiting;
+
     /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun?>> PromoteOldestQueued(WorkflowId workflow, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
-            var inFlight = _runs.Where(r => r.WorkflowId == workflow && r.Status is WorkflowRunStatus.Queued or WorkflowRunStatus.Running or WorkflowRunStatus.Waiting).ToList();
+            var inFlight = _runs.Where(r => IsLiveInFlight(r, workflow)).ToList();
             if (inFlight.Count == 0 || inFlight.Exists(static r => r.Status != WorkflowRunStatus.Queued))
             {
                 return Ok<WorkflowRun?>(value: null);
@@ -89,6 +91,40 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
         {
             IReadOnlyList<WorkflowId> queued = [.. _runs.Where(static r => r.Status == WorkflowRunStatus.Queued).Select(static r => r.WorkflowId).Distinct().OrderBy(static w => w.Value, StringComparer.Ordinal)];
             return Ok(queued);
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(int limit, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<WorkflowRun> failed = [.. _runs
+                .Where(static r => r.Status == WorkflowRunStatus.Failed && r.SeenAt is null && string.Equals(r.Mode, WorkflowRunMode.Live, StringComparison.Ordinal))
+                .OrderByDescending(static r => r.StartedAt)
+                .ThenByDescending(static r => r.Id.Value, StringComparer.Ordinal)
+                .Take(Math.Max(limit, 1))];
+            return Ok(failed);
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<WorkflowRun>> MarkSeen(WorkflowRunId id, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var found = _runs.FindIndex(r => r.Id == id);
+            if (found < 0)
+            {
+                return Done<WorkflowRun>(NotFound(id));
+            }
+
+            if (_runs[found].Status == WorkflowRunStatus.Failed)
+            {
+                _runs[found] = _runs[found] with { SeenAt = _runs[found].SeenAt ?? at };
+            }
+
+            return Done<WorkflowRun>(_runs[found]);
         }
     }
 
@@ -124,7 +160,7 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
         lock (_gate)
         {
             IReadOnlyList<WorkflowRun> recent = [.. _runs
-                .Where(r => r.WorkflowId == workflow)
+                .Where(r => r.WorkflowId == workflow && string.Equals(r.Mode, WorkflowRunMode.Live, StringComparison.Ordinal))
                 .OrderByDescending(static r => r.StartedAt)
                 .ThenByDescending(static r => r.Id.Occurrence)
                 .Skip(Math.Max(offset, 0))
@@ -151,7 +187,7 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     {
         lock (_gate)
         {
-            var matching = _runs.Where(r => r.WorkflowId == workflow && KindOf(r.Trigger) == triggerKind).ToList();
+            var matching = _runs.Where(r => r.WorkflowId == workflow && r.Mode == WorkflowRunMode.Live && KindOf(r.Trigger) == triggerKind).ToList();
             int? latest = matching.Count == 0 ? null : matching.Max(static r => r.Id.Occurrence);
             return Ok(latest);
         }
@@ -238,9 +274,9 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     public ValueTask<Result<NodeRun>> RecordNodeRun(NodeRun nodeRun, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(nodeRun);
-        var input = NodeRunLimits.Cap(nodeRun.Input, out var inputCut);
+        var input = NodeRunLimits.Cap(nodeRun.Input, out _);   // why: a cut input is for display; 'Truncated' says only that the output was cut (#3896)
         var output = NodeRunLimits.Cap(nodeRun.Output, out var outputCut);
-        var stored = nodeRun with { Input = input, Output = output, Truncated = nodeRun.Truncated || inputCut || outputCut };
+        var stored = NodeRunTimes.Stamp(nodeRun with { Input = input, Output = output, Truncated = nodeRun.Truncated || outputCut }, clock.GetUtcNow());
         lock (_gate)
         {
             if (!_runs.Exists(r => r.Id == stored.RunId))
@@ -248,7 +284,13 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
                 return Done<NodeRun>(NotFound(stored.RunId));
             }
 
-            _nodeRuns[(stored.RunId, stored.NodeId, stored.ItemIndex)] = stored;
+            var key = (stored.RunId, stored.NodeId, stored.ItemIndex);
+            if (stored.StartedAt is null && _nodeRuns.TryGetValue(key, out var before))
+            {
+                stored = stored with { StartedAt = before.StartedAt };   // as the store keeps the first start
+            }
+
+            _nodeRuns[key] = stored;
             return Done<NodeRun>(stored);
         }
     }

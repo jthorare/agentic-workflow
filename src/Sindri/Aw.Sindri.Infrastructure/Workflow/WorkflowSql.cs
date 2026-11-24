@@ -5,7 +5,7 @@ internal static class WorkflowSql
 {
     /// <summary>A workflow row with its newest revision number (columns in <see cref="WorkflowRecordMapper"/> order).</summary>
     internal const string SelectRecord =
-        "SELECT w.id, w.slug, w.name, w.active_revision, (SELECT MAX(revision) FROM workflow_revision WHERE workflow_id = w.id), w.archived_at, w.created_by FROM workflow w";
+        "SELECT w.id, w.slug, w.name, w.active_revision, (SELECT MAX(revision) FROM workflow_revision WHERE workflow_id = w.id), w.archived_at, w.created_by, w.was_activated FROM workflow w";
 
     internal const string ById = SelectRecord + " WHERE w.id = $id";
 
@@ -24,7 +24,7 @@ internal static class WorkflowSql
 
     internal const string Rename = "UPDATE workflow SET name = $name WHERE id = $id";
 
-    internal const string Pin = "UPDATE workflow SET active_revision = $revision WHERE id = $id";
+    internal const string Pin = "UPDATE workflow SET active_revision = $revision, was_activated = 1 WHERE id = $id";
 
     internal const string Unpin = "UPDATE workflow SET active_revision = NULL WHERE id = $id";
 

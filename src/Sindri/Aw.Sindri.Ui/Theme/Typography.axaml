@@ -32,7 +32,8 @@
     <Setter Property="FontWeight" Value="{DynamicResource Type.DetailTitle.Weight}" />
     <Setter Property="LetterSpacing" Value="-0.24" />
   </Style>
-  <Style Selector="TextBlock.body">
+  <!-- The Linear issue lines (LinearLineView) are SelectableTextBlocks in the body type (#3785). -->
+  <Style Selector="TextBlock.body, SelectableTextBlock.body">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.Body.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Body.LineHeight}" />
@@ -46,7 +47,8 @@
     <Setter Property="FontWeight" Value="{DynamicResource Type.BodyStrong.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
   </Style>
-  <Style Selector="TextBlock.caption">
+  <!-- A type selector matches the exact type, so the copyable caption lines (a failed open, a run error) need their own (#3785). -->
+  <Style Selector="TextBlock.caption, SelectableTextBlock.caption">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Caption.LineHeight}" />
@@ -68,12 +70,16 @@
     <Setter Property="FontWeight" Value="{DynamicResource Type.Button.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
   </Style>
+  <!-- Code reads as typed (#4087): JetBrains Mono joins "=>", "<=" and "!=" into one glyph through its 'calt' and 'liga'
+       features, so the mono and kbd styles turn both off (TextBox.typed-field does the same in ControlStyles). A feature
+       list is parsed from text when the XAML compiles, so it is a setter, not a DynamicResource token. -->
   <Style Selector="TextBlock.mono">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Mono}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.Mono.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Mono.LineHeight}" />
     <Setter Property="FontWeight" Value="{DynamicResource Type.Mono.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
+    <Setter Property="FontFeatures" Value="-calt, -liga" />
   </Style>
   <!-- A type selector matches the exact type, so the copyable mono text (a model trace) needs its own. -->
   <Style Selector="SelectableTextBlock.mono">
@@ -82,6 +88,7 @@
     <Setter Property="LineHeight" Value="{DynamicResource Type.Mono.LineHeight}" />
     <Setter Property="FontWeight" Value="{DynamicResource Type.Mono.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
+    <Setter Property="FontFeatures" Value="-calt, -liga" />
   </Style>
   <Style Selector="TextBlock.kbd">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Mono}" />
@@ -90,6 +97,7 @@
     <Setter Property="FontWeight" Value="{DynamicResource Type.Kbd.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+    <Setter Property="FontFeatures" Value="-calt, -liga" />
   </Style>
   <!-- A mono heading (an id as the sheet's title): DetailTitle's size and weight in the mono family. Declared after
        .mono, so its size wins over .mono's (Avalonia applies same-priority styles in order). -->

@@ -21,6 +21,7 @@ trap 'rm -rf "$WORK"' EXIT
 export HOME="$WORK/home"; mkdir -p "$HOME"
 export AW_STATE_DIR="$WORK/state"
 unset AW_JUDGE_CHILD CURSOR_TRANSCRIPT_PATH CURSOR_PROJECT_DIR
+for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done   # a meta lane caller's AW_META_* would steer the adapters' lane hooks; CI has none (#3818)
 
 BIN="$WORK/bin"; mkdir -p "$BIN"
 printf '#!/usr/bin/env bash\nexit 0\n' > "$BIN/rtk"
@@ -202,6 +203,55 @@ jq -nc --arg t $'Done.\nREPLY TO META: via the transcript' '{hook_event_name:"af
 lane_cursor "$WORK/aar3.json"; lane_cursor "$WORK/stop-plain.json"
 check "afterAgentResponse then stop with the same text: the reply is recorded once" "$(grep -c '^lane-reply' "$CALLS")" "1"
 reset_lane
+
+# --- Big payloads and big hook output (#4300): nothing the host or the hook sends may reach jq as one argv string.
+# Linux caps one argument at 128 KiB; past it jq never started, the result was empty and the adapter printed its
+# default allow, so a padded destructive command ran. Each row also checks no HOOK-FAILOPEN line was written.
+FOLOG="$AW_STATE_DIR/logs/failopen.log"
+folines() { [ -f "$FOLOG" ] && wc -l < "$FOLOG" | tr -d ' ' || echo 0; }
+xs() { head -c "$1" /dev/zero | tr '\0' x; }
+RMCMD="$(printf 'r%s -%s /' m rf)"
+for kb in 140 2048; do
+  jq -nc --arg c "$RMCMD" --rawfile pad <(xs $((kb * 1024))) \
+    '{conversation_id:"cu-big",generation_id:"g-big",hook_event_name:"beforeShellExecution",command:$c,cwd:"/tmp",workspace_roots:["/tmp"],_pad:$pad}' > "$WORK/big-$kb.json"
+  fo0="$(folines)"
+  run "$WORK/big-$kb.json" "$HOOKS/block-destructive.sh"
+  check "${kb} KB destructive payload: exit 0" "$RC" "0"
+  check "${kb} KB destructive payload: permission deny" "$(printf '%s' "$OUT" | jq -r '.permission' 2>/dev/null)" "deny"
+  check "${kb} KB destructive payload: no HOOK-FAILOPEN" "$(folines)" "$fo0"
+done
+# A hook whose plain-text reason on a deny is 200 KB (the --arg msg path).
+printf '#!/usr/bin/env bash\ncat >/dev/null\nhead -c 204800 /dev/zero | tr "\\0" x >&2\nexit 2\n' > "$WORK/big-deny-text.sh"
+fo0="$(folines)"
+run "$FIX/before-shell-ls.json" "$WORK/big-deny-text.sh"
+check "200 KB deny reason: permission deny" "$(printf '%s' "$OUT" | jq -r '.permission' 2>/dev/null)" "deny"
+check "200 KB deny reason: agent_message keeps all of it" "$(printf '%s' "$OUT" | jq -r '.agent_message | length' 2>/dev/null)" "204800"
+check "200 KB deny reason: no HOOK-FAILOPEN" "$(folines)" "$fo0"
+# A hook whose JSON stdout is 200 KB (the --argjson out path): its deny must stand.
+cat > "$WORK/big-deny-json.sh" << 'EOF'
+#!/usr/bin/env bash
+cat >/dev/null
+jq -nc --rawfile r <(head -c 204800 /dev/zero | tr '\0' x) \
+  '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"deny",permissionDecisionReason:$r}}'
+exit 0
+EOF
+fo0="$(folines)"
+run "$FIX/before-shell-ls.json" "$WORK/big-deny-json.sh"
+check "200 KB JSON deny: permission deny" "$(printf '%s' "$OUT" | jq -r '.permission' 2>/dev/null)" "deny"
+check "200 KB JSON deny: no HOOK-FAILOPEN" "$(folines)" "$fo0"
+# A sessionStart hook whose plain stdout is 200 KB (the --arg text path) becomes additional_context.
+printf '#!/usr/bin/env bash\ncat >/dev/null\nhead -c 204800 /dev/zero | tr "\\0" x\necho\nexit 0\n' > "$WORK/big-context.sh"
+fo0="$(folines)"
+run "$FIX/session-start.json" "$WORK/big-context.sh"
+check "200 KB sessionStart text: additional_context keeps all of it" "$(printf '%s' "$OUT" | jq -r '.additional_context | length' 2>/dev/null)" "204800"
+check "200 KB sessionStart text: no HOOK-FAILOPEN" "$(folines)" "$fo0"
+# A stop whose transcript's last reply is 200 KB (the --arg last path) reaches the hook whole.
+jq -nc --rawfile t <(xs 204800) '{role:"assistant",message:{content:[{type:"text",text:$t}]}}' > "$WORK/tr-big.jsonl"
+jq -nc --arg tp "$WORK/tr-big.jsonl" '{hook_event_name:"stop",conversation_id:"c-big",loop_count:0,transcript_path:$tp}' > "$WORK/stop-big.json"
+fo0="$(folines)"
+CAPTURE_FILE="$WORK/c-big.json" run "$WORK/stop-big.json" "$CAPTURE_HOOK"
+check "200 KB last reply: the hook gets it whole" "$(jq -r '.last_assistant_message | length' "$WORK/c-big.json" 2>/dev/null)" "204800"
+check "200 KB last reply: no HOOK-FAILOPEN" "$(folines)" "$fo0"
 
 check "never wrote into the real home" "$(ls -A "$HOME" | wc -l | tr -d ' ')" "0"
 exit $fail

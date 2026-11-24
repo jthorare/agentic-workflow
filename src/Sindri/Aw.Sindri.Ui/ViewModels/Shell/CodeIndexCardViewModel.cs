@@ -42,13 +42,24 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
     /// <summary>The state in a word at the heading's right: "ok" or "needs a look"; empty with no lines.</summary>
     public string Word { get; private set => Set(ref field, value); } = string.Empty;
 
+    // The newest read's number: an older read that answers late shows nothing over a newer one's.
+    private int _reads;
+
+    private bool IsOld(int round, CancellationToken cancellationToken) => round != _reads || cancellationToken.IsCancellationRequested;
+
     /// <summary>Reads the status and shows it.</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that completes when the answer is shown.</returns>
     internal async Task Refresh(Uri url, CancellationToken cancellationToken)
     {
+        var round = ++_reads;
         var read = await api.CodeIndexStatus(url, cancellationToken).ConfigureAwait(true);
+        if (IsOld(round, cancellationToken))
+        {
+            return;   // a newer read started, or this one was cancelled: its answer is old
+        }
+
         if (read.IsError)
         {
             Lines = [];
@@ -79,27 +90,30 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         OnChanged(nameof(HasMessage));
     }
 
-    // A repo the server serves as 'queued' (no index yet, a build starts within about a minute) is normal work: the card reads "build queued" unless another repo needs a look.
-    // A queued repo the server flags needsLook (queued over 30 min, #3479) is a look, not work: it stays in the list the card judges.
+    // The server's needsLook is the only look (#3430): the card keeps no list of state words. With no repo flagged, a build running reads "building"
+    // and a build queued "build queued"; everything else is "ok". A repo with no health row (a server that predates it) is not a look.
     private static string WordOf(List<(CodeIndexRepoView Repo, CodeIndexHealthView? Health)> views)
     {
-        var rest = views.Where(static v => !(string.Equals(StateOf(v.Repo, v.Health), "queued", StringComparison.Ordinal) && v.Health?.NeedsLook != true)).ToList();
-        if (!rest.TrueForAll(static v => Fine(v.Repo, v.Health)))
+        if (views.Exists(static v => v.Health?.NeedsLook == true))
         {
             return Labels.CodeIndexNeedsLook;
         }
 
-        return rest.Count < views.Count ? Labels.CodeIndexQueued : Labels.CodeIndexOk;
+        if (views.Exists(static v => Is(v, "building")))
+        {
+            return Labels.CodeIndexBuilding;
+        }
+
+        return views.Exists(static v => Is(v, "queued")) ? Labels.CodeIndexQueued : Labels.CodeIndexOk;
     }
+
+    private static bool Is((CodeIndexRepoView Repo, CodeIndexHealthView? Health) view, string state) => string.Equals(StateOf(view.Repo, view.Health), state, StringComparison.Ordinal);
 
     private static bool One(string state, params string[] words) => words.Contains(state, StringComparer.Ordinal);
 
-    // stale, building, waiting and queued override the file state; the other health states are the file's own.
+    // stale, building, waiting, queued and unbuildable override the file state; the other health states are the file's own.
     private static string StateOf(CodeIndexRepoView repo, CodeIndexHealthView? health) =>
-        health is { } h && One(h.State, "stale", "building", "waiting", "queued") ? h.State : repo.State;
-
-    private static bool Fine(CodeIndexRepoView repo, CodeIndexHealthView? health) =>
-        string.Equals(StateOf(repo, health), "ok", StringComparison.Ordinal) && repo.Layers.All(static l => One(l.State, "ok", "disabled", "pending"));
+        health is { } h && One(h.State, "stale", "building", "waiting", "queued", "unbuildable") ? h.State : repo.State;
 
     private string Line(CodeIndexRepoView repo, CodeIndexHealthView? health)
     {

@@ -141,6 +141,62 @@ public sealed class UsageSpendTests
         Expect.Equal(1, reader.Reads);
     }
 
+    /// <summary>#3751: a reader that throws is not walked again on every call; the failure is remembered for the fresh window, then the walk starts again.</summary>
+    [Fact]
+    public async Task A_peek_right_after_a_throwing_read_does_not_walk_again_until_the_window_passes()
+    {
+        var reader = new ThrowingReader();
+        var clock = new FakeTimeProvider(new DateTimeOffset(2026, 10, 17, 20, 0, 0, TimeSpan.Zero));
+        clock.SetLocalTimeZone(TimeZoneInfo.CreateCustomTimeZone("test", _utcMinusSeven, "test", "test"));
+        var spend = new UsageSpend(new AgentCatalog([AgentEntries.ClaudeCode]), new Dictionary<string, IUsageReader>(StringComparer.Ordinal) { ["claude-code"] = reader }, clock);
+
+        _ = spend.Peek(_claude);
+        _ = await reader.Threw.Task.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);
+        SpendPeek after = default;
+        for (var i = 0; i < 50; i++)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(10), TimeProvider.System, Token);   // a peek while the failed read still counts as in flight joins it; once it settled, a new walk would start here
+            after = spend.Peek(_claude);
+        }
+
+        Assert.False(after.Landed);
+        Expect.Equal(1, reader.Reads);   // red today: the settled failure was forgotten and the peek walked again
+
+        clock.Advance(TimeSpan.FromSeconds(16));
+        _ = spend.Peek(_claude);
+        _ = await reader.SecondRead.Task.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);
+        Expect.Equal(2, reader.Reads);
+    }
+
+    /// <summary>A reader whose every read throws once it ran.</summary>
+    private sealed class ThrowingReader : IUsageReader
+    {
+        private int _reads;
+
+        public int Reads => Volatile.Read(ref _reads);
+
+        public TaskCompletionSource<bool> Threw { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource<bool> SecondRead { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public string Name => "claude-code";
+
+        public bool Verified => true;
+
+        public ValueTask<IReadOnlyList<ModelTokens>> Between(DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken)
+        {
+            if (Interlocked.Increment(ref _reads) == 2)
+            {
+                _ = SecondRead.TrySetResult(true);
+            }
+
+            _ = Threw.TrySetResult(true);
+            throw new IOException("the transcripts are unreadable");
+        }
+
+        public ValueTask<IReadOnlyList<ModelTokens>> OfSession(SessionId session, CancellationToken cancellationToken) => ValueTask.FromResult<IReadOnlyList<ModelTokens>>([]);
+    }
+
     /// <summary>#3213 through #3418: every agent's first walk starts at once, so the slowest agent sets the wait, not the sum.</summary>
     [Fact]
     public async Task Peeks_of_several_agents_start_their_reads_together()

@@ -7,19 +7,22 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// The read-only graph of one workflow revision: its nodes at the positions Sindri served, its edges as arrows and, when a run is given, each node's status.
 /// The app does no layout: a node the server gave no position is not drawn (its id is in <see cref="Unplaced"/>), and nor is an edge that touches one.
 /// </summary>
-internal sealed class WorkflowGraphViewModel : ObservableObject
+internal sealed partial class WorkflowGraphViewModel : ObservableObject
 {
-    /// <summary>A node card's width in the world.</summary>
-    internal const double CardWidth = 200;
-
-    /// <summary>A node card's height in the world.</summary>
-    internal const double CardHeight = 64;
-
     /// <summary>The length of a missing branch's dotted stub.</summary>
     internal const double EndStub = 22;
 
     /// <summary>The width of the box a missing branch's words are drawn in.</summary>
     internal const double EndLabelWidth = 84;
+
+    /// <summary>The gap between a card and its "done" word.</summary>
+    internal const double DoneGap = 10;
+
+    /// <summary>The width of the box a "done" word is drawn in.</summary>
+    internal const double DoneLabelWidth = 32;
+
+    /// <summary>How far right of a row's last card its return line runs: clear of the "done" word, inside the right pad.</summary>
+    internal const double ReturnLaneOffset = 72;
 
     /// <summary>The height of the box a missing branch's words are drawn in.</summary>
     internal const double EndLabelHeight = 16;
@@ -39,18 +42,20 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
 
         var nodes = new List<GraphNodeViewModel>();
         var unplaced = new List<string>();
-        foreach (var (id, type, title) in ReadNodes(workflow.Spec))
+        foreach (var node in ReadNodes(workflow.Spec))
         {
-            if (!positions.TryGetValue(id, out var at))
+            if (!positions.TryGetValue(node.Id, out var at))
             {
-                unplaced.Add(id);
+                unplaced.Add(node.Id);
                 continue;
             }
 
-            var status = statuses is not null && statuses.TryGetValue(id, out var word) ? word : null;
-            nodes.Add(new GraphNodeViewModel(id, title.Length > 0 ? title : id, type, at.X, at.Y, status));
+            nodes.Add(NodeOf(node, at, statuses));
         }
 
+        _spec = workflow.Spec;
+        _isOff = workflow.ActiveRevision is null;
+        _layers = [.. nodes.GroupBy(n => n.X).OrderBy(g => g.Key).Select(g => (IReadOnlyList<string>)[.. g.OrderBy(n => n.Y).Select(n => n.Id)])];
         Nodes = nodes;
         Unplaced = unplaced;
         Edges = BuildEdges(workflow.Spec, nodes);
@@ -58,7 +63,21 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         Order = [.. nodes.OrderBy(n => n.X).ThenBy(n => n.Y).ThenBy(n => n.Id, StringComparer.Ordinal)];
     }
 
+    // One card: line 1 and line 2 from GraphCardLine (#3684), the run's status word when a run is shown.
+    private GraphNodeViewModel NodeOf((string Id, string Type, string Title, JsonElement Config) node, GraphPoint at, IReadOnlyDictionary<string, string>? statuses)
+    {
+        var status = statuses is not null && statuses.TryGetValue(node.Id, out var word) ? word : null;
+        var served = _summaries.TryGetValue(node.Id, out var summary) ? summary : null;
+        return new GraphNodeViewModel(node.Id, GraphCardLine.Title(node.Title, node.Type, served?.KindTitle), node.Type, at.X, at.Y, status)
+        {
+            Line = GraphCardLine.Settings(node.Type, node.Config, served?.Summary, served?.KindTitle),
+        };
+    }
+
     private readonly Dictionary<string, NodeSummaryView> _summaries;
+    private readonly JsonElement _spec;
+    private readonly bool _isOff;   // the workflow has no active revision: its Schedule card says so
+    private readonly List<IReadOnlyList<string>> _layers;   // the node ids of each layer, as the server served them: the order the canvas wraps
 
     /// <summary>The selected step's title and what it does ("Every weekday at 7:00 · ..."), from the lines the API serves; empty when no step is selected or the API sent none for it.</summary>
     public string StepLine => SelectedId is { } id && _summaries.TryGetValue(id, out var line) && Nodes.FirstOrDefault(n => string.Equals(n.Id, id, StringComparison.Ordinal)) is { } node
@@ -84,10 +103,10 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     public IReadOnlyList<GraphNodeViewModel> Nodes { get; }
 
     /// <summary>The branches of condition steps that have no edge, each drawn as "false → done".</summary>
-    public IReadOnlyList<GraphEnd> Ends { get; }
+    public IReadOnlyList<GraphEnd> Ends { get; private set; }
 
     /// <summary>The arrows; an edge naming a node the spec lacks is left out.</summary>
-    public IReadOnlyList<GraphEdgeViewModel> Edges { get; }
+    public IReadOnlyList<GraphEdgeViewModel> Edges { get; private set; }
 
     /// <summary>Gets the id of the selected node, or null.</summary>
     public string? SelectedId { get; private set { Set(ref field, value); OnChanged(nameof(StepLine)); } }
@@ -107,7 +126,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     internal IReadOnlyList<GraphNodeViewModel> Order { get; }
 
     /// <summary>The world's size: the far corner of the farthest card or missing branch's words.</summary>
-    internal GraphPoint Extent => Nodes.Count == 0 ? default : new GraphPoint(Math.Max(Nodes.Max(n => n.X) + CardWidth, Ends.Select(e => e.Label.Right).DefaultIfEmpty().Max()), Math.Max(Nodes.Max(n => n.Y) + CardHeight, Ends.Select(e => e.Label.Bottom).DefaultIfEmpty().Max()));
+    internal GraphPoint Extent => Nodes.Count == 0 ? default : new GraphPoint(Math.Max(Nodes.Max(n => n.X + n.Width), Ends.Select(e => e.Label.Right).DefaultIfEmpty().Max()), Math.Max(Nodes.Max(n => n.Y + n.Height), Ends.Select(e => e.Label.Bottom).DefaultIfEmpty().Max()));
 
     /// <summary>A graph read again keeps the node that was selected (by id), so a live refresh doesn't drop the keyboard's place.</summary>
     /// <param name="before">The graph shown until now, or null.</param>
@@ -133,11 +152,12 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
             return false;
         }
 
-        SelectedId = id;
         foreach (var node in Nodes)
         {
             node.IsSelected = string.Equals(node.Id, id, StringComparison.Ordinal);
         }
+
+        SelectedId = id;   // after the cards: a listener of the change (the minimap) reads the cards' selected flags
 
         NodeSelected?.Invoke(this, new ValueEventArgs<string>(id));
         return true;
@@ -197,9 +217,9 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         return next >= 0 && next < Order.Count && SelectNode(Order[next].Id);
     }
 
-    private static List<(string Id, string Type, string Title)> ReadNodes(JsonElement spec)
+    private static List<(string Id, string Type, string Title, JsonElement Config)> ReadNodes(JsonElement spec)
     {
-        var found = new List<(string, string, string)>();
+        var found = new List<(string, string, string, JsonElement)>();
         if (spec.ValueKind != JsonValueKind.Object || !spec.TryGetProperty("nodes", out var list) || list.ValueKind != JsonValueKind.Array)
         {
             return found;
@@ -209,7 +229,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         {
             if (Text(node, "id") is { Length: > 0 } id)
             {
-                found.Add((id, Text(node, "type"), Text(node, "title")));
+                found.Add((id, Text(node, "type"), Text(node, "title"), node.TryGetProperty("config", out var config) ? config.Clone() : default));
             }
         }
 
@@ -237,8 +257,8 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
                 from.Id,
                 to.Id,
                 output.Length == 0 ? null : output,
-                new GraphPoint(from.X + CardWidth, from.Y + (CardHeight / 2)),
-                new GraphPoint(to.X, to.Y + (CardHeight / 2))));
+                new GraphPoint(from.X + from.Width, from.Y + (from.Height / 2)),
+                new GraphPoint(to.X, to.Y + (to.Height / 2))));
         }
 
         return edges;

@@ -10,16 +10,23 @@ internal static class GraphEnds
     internal static List<GraphEnd> Build(List<GraphNodeViewModel> nodes, IReadOnlyList<GraphEdgeViewModel> edges)
     {
         var ends = new List<GraphEnd>();
-        var cards = nodes.Select(n => new GraphBox(n.X, n.Y, WorkflowGraphViewModel.CardWidth, WorkflowGraphViewModel.CardHeight)).ToList();
+        var cards = nodes.Select(n => new GraphBox(n.X, n.Y, n.Width, n.Height)).ToList();
         foreach (var node in nodes.Where(n => string.Equals(n.Type, "condition", StringComparison.Ordinal)))
         {
-            foreach (var (branch, across) in new[] { ("true", 50.0), ("false", WorkflowGraphViewModel.CardWidth - 50) })
+            foreach (var (branch, across) in new[] { ("true", 50 * node.Scale), ("false", node.Width - (50 * node.Scale)) })
             {
                 if (!edges.Any(e => string.Equals(e.From, node.Id, StringComparison.Ordinal) && string.Equals(e.Label, branch, StringComparison.Ordinal)))
                 {
                     ends.Add(PlaceEnd(node, branch + " \u2192 done", across, cards));
                 }
             }
+        }
+
+        foreach (var node in nodes.Where(n => !string.Equals(n.Type, "condition", StringComparison.Ordinal) && !edges.Any(e => string.Equals(e.From, n.Id, StringComparison.Ordinal))))
+        {
+            // a step with no out port ends the path: the word sits right of the card, clear of it, with no stub; sizes at the card's text scale (#3231)
+            var (k, at) = (node.Scale, new GraphPoint(node.X + node.Width, node.Y + (node.Height / 2)));
+            ends.Add(new GraphEnd(node.Id, Labels.WfEndDone, at, at, new GraphBox(at.X + (WorkflowGraphViewModel.DoneGap * k), at.Y - (WorkflowGraphViewModel.EndLabelHeight * k / 2), WorkflowGraphViewModel.DoneLabelWidth * k, WorkflowGraphViewModel.EndLabelHeight * k)));
         }
 
         return ends;
@@ -34,14 +41,16 @@ internal static class GraphEnds
     private static GraphEnd PlaceEnd(GraphNodeViewModel node, string text, double across, List<GraphBox> cards)
     {
         var x = node.X + across;
-        var below = new GraphPoint(x, node.Y + WorkflowGraphViewModel.CardHeight);
+        var below = new GraphPoint(x, node.Y + node.Height);
         var above = new GraphPoint(x, node.Y);
-        var right = new GraphPoint(node.X + WorkflowGraphViewModel.CardWidth, node.Y + (WorkflowGraphViewModel.CardHeight / 2));
+        var right = new GraphPoint(node.X + node.Width, node.Y + (node.Height / 2));
+        var k = node.Scale;   // the words are drawn at the card's text scale, so their box, stub and gaps grow with it (#3231)
+        double stub = WorkflowGraphViewModel.EndStub * k, w = WorkflowGraphViewModel.EndLabelWidth * k, h = WorkflowGraphViewModel.EndLabelHeight * k;
         GraphEnd[] places =
         [
-            new(node.Id, text, below, below with { Y = below.Y + WorkflowGraphViewModel.EndStub }, new GraphBox(x - (WorkflowGraphViewModel.EndLabelWidth / 2), below.Y + WorkflowGraphViewModel.EndStub + 2, WorkflowGraphViewModel.EndLabelWidth, WorkflowGraphViewModel.EndLabelHeight)),
-            new(node.Id, text, above, above with { Y = above.Y - WorkflowGraphViewModel.EndStub }, new GraphBox(x - (WorkflowGraphViewModel.EndLabelWidth / 2), above.Y - WorkflowGraphViewModel.EndStub - 2 - WorkflowGraphViewModel.EndLabelHeight, WorkflowGraphViewModel.EndLabelWidth, WorkflowGraphViewModel.EndLabelHeight)),
-            new(node.Id, text, right, right with { X = right.X + WorkflowGraphViewModel.EndStub }, new GraphBox(right.X + WorkflowGraphViewModel.EndStub + 6, right.Y - (WorkflowGraphViewModel.EndLabelHeight / 2), WorkflowGraphViewModel.EndLabelWidth, WorkflowGraphViewModel.EndLabelHeight)),
+            new(node.Id, text, below, below with { Y = below.Y + stub }, new GraphBox(x - (w / 2), below.Y + stub + (2 * k), w, h)),
+            new(node.Id, text, above, above with { Y = above.Y - stub }, new GraphBox(x - (w / 2), above.Y - stub - (2 * k) - h, w, h)),
+            new(node.Id, text, right, right with { X = right.X + stub }, new GraphBox(right.X + stub + (6 * k), right.Y - (h / 2), w, h)),
         ];
         return places.FirstOrDefault(p => p.Label.Y >= 0 && !cards.Exists(c => c.Overlaps(p.Label) || c.Overlaps(StubBox(p)))) ?? Lowered(places[0], cards);   // why Y >= 0: the world starts at 0, so words above a top-row card would be clipped
     }

@@ -57,6 +57,12 @@ public static class ViewNames
     /// <summary>What each item is linked to (a tracker issue, a pull request, a graph run), keyed '&lt;item&gt;/&lt;kind&gt;/&lt;record&gt;'.</summary>
     public const string ItemLinks = "item-links";
 
+    /// <summary>The Home page's rows (home spec §3.1), keyed by the row's id, folded from the 'home.*' events.</summary>
+    public const string HomeRows = "home-rows";
+
+    /// <summary>The edges between Home objects the rank reads (home spec §4.1), keyed '&lt;from&gt;|&lt;to&gt;|&lt;edge&gt;'.</summary>
+    public const string HomeLinks = "home-links";
+
     /// <summary>Every view that has a table.</summary>
-    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden, WorkflowRuns, ItemLinks, Todo];
+    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden, WorkflowRuns, ItemLinks, Todo, HomeRows, HomeLinks];
 }

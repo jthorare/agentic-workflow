@@ -1,0 +1,44 @@
+{
+  "schema": "aw-replay-fixture/1",
+  "id": "claude/block-destructive/allow-ls",
+  "provider": "claude",
+  "scenario": "block-destructive",
+  "verified": "unverified",
+  "source": {
+    "hostVersion": "claude-code 2.x",
+    "capturedAt": null,
+    "sanitizedBy": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  },
+  "policy": "block-destructive/1",
+  "notes": "Seeded with the Claude payload shape the canonical hooks read; not copied from a real run.",
+  "events": [
+    {
+      "n": 1,
+      "hook": "PreToolUse",
+      "script": "block-destructive.sh",
+      "payload": {
+        "session_id": "cl-1",
+        "transcript_path": null,
+        "cwd": "/tmp",
+        "permission_mode": "default",
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "ls -la",
+          "description": "List files"
+        }
+      }
+    }
+  ],
+  "judge": null,
+  "expect": [
+    {
+      "event": 1,
+      "decision": "allow",
+      "reasonCode": null,
+      "textContains": null
+    }
+  ]
+}

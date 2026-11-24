@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Aw.Sindri.Ui.Terminal;
 using Aw.Sindri.Ui.ViewModels.Agents;
 
 namespace Aw.Sindri.Ui.Views.Agents;
@@ -20,18 +21,117 @@ internal sealed partial class AgentsPage : UserControl
         AddHandler(EndedSessionRow.SelectEvent, OnSelectEnded);
         AddHandler(SessionGroup.ToggleEvent, OnToggle);
         SizeChanged += OnSized;
+        AddHandler(KeyDownEvent, OnAnyKeyDown, RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(TextInputEvent, OnTextInputTunnel, RoutingStrategies.Tunnel);
+        TerminalPanel.ShowsList = false;
+        TerminalPanel.PaneKeyPressed += (_, e) => _ = Page?.SendPaneKey(e.Name, e.Text);
+        TerminalPanel.PanePasted += (_, e) => _ = Page?.SendPanePaste(e.Text);
+        TerminalPanel.PaneScrollRequested += (_, e) => _ = Page?.ScrollPane(e.Pages);
+        TerminalPanel.PaneFitChanged += OnPaneFit;
+        _fitDebounce.Tick += OnFitDebounced;
+        _tick.Tick += (_, _) => Page?.Terminal.Tick();
+        TerminalPanel.TranscriptRequested += (_, _) => Page?.OpenTranscript();
+        AddHandler(KeyDownEvent, OnEscape, RoutingStrategies.Bubble);
+        DataContextChanged += (_, _) => FollowTerminal();
+        WireTyping();
+    }
+
+    private const double NarrowBelow = 1100;
+
+    private AgentsPageViewModel? _followed;
+
+    // A window drag fires FitChanged for every step; only the size it settles on goes to Serve (#3860).
+    private readonly DispatcherTimer _fitDebounce = new() { Interval = TimeSpan.FromMilliseconds(150) };
+    private (int Cols, int Rows) _fitting;
+
+    private void OnPaneFit(object? sender, TerminalSizeEventArgs e)
+    {
+        _fitting = (e.Columns, e.Rows);
+        _fitDebounce.Stop();
+        _fitDebounce.Start();
+    }
+
+    private void OnFitDebounced(object? sender, EventArgs e)
+    {
+        _fitDebounce.Stop();
+        _ = Page?.FitPane(_fitting.Cols, _fitting.Rows);
+    }
+
+    // The terminal view's clock rules (retries, the 30 s rule, a key's wait) move while the view is open.
+    private readonly DispatcherTimer _tick = new() { Interval = TimeSpan.FromMilliseconds(500) };
+
+    // Esc with focus in the list closes the terminal view; focus in the pane never reaches here (the pane sends Esc to the agent).
+    private void OnEscape(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None && Page is { } page && page.Press("Esc"))
+        {
+            e.Handled = true;
+        }
+    }
+
+    private void FollowTerminal()
+    {
+        _followed?.PropertyChanged -= OnPageChanged;
+        _followed = Page;
+        if (Page is { } drawn)
+        {
+            drawn.DrawFrame = grid => TerminalPanel.PaneDrawing.Draw(grid);
+        }
+
+        _followed?.PropertyChanged += OnPageChanged;
+        FollowSide();
+        Split();
+    }
+
+    private void OnPageChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(AgentsPageViewModel.IsTerminalOpen), StringComparison.Ordinal))
+        {
+            Split();
+        }
+    }
+
+    // Open: the list is the 360 px column (56 px under 1100 px of window width) and the pane takes the rest; closed: the list has the page.
+    private void Split()
+    {
+        var open = Page?.IsTerminalOpen == true;
+        _tick.IsEnabled = open;
+        var narrow = Bounds.Width < NarrowBelow;
+        AgentsSplit.ColumnDefinitions[0].Width = open ? new GridLength(narrow ? 56 : 360) : new GridLength(1, GridUnitType.Star);
+        AgentsSplit.ColumnDefinitions[1].Width = open ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        Page?.Resize(open ? (narrow ? 56 : 360) : Bounds.Width);
+        PlaceFilters(open);
+    }
+
+    // The filter row is part of the list column: beside the title while the list has the page, wrapped under it while the pane takes the right side.
+    private void PlaceFilters(bool open)
+    {
+        Grid.SetRow(AgentsFilters, open ? 1 : 0);
+        Grid.SetColumn(AgentsFilters, open ? 0 : 2);
+        Grid.SetColumnSpan(AgentsFilters, open ? 3 : 1);
+        AgentsFilters.HorizontalAlignment = open ? Avalonia.Layout.HorizontalAlignment.Left : Avalonia.Layout.HorizontalAlignment.Stretch;
+        AgentsFilters.Margin = open ? new Thickness(0, 8, 0, 0) : default;
     }
 
     private bool _focusWasHere;
 
-    // Under 640 px only Status, Agent and For stay: the page tells the rows, and the head's columns follow.
-    private void OnSized(object? sender, SizeChangedEventArgs e)
+    // Set when "/" asked for the search box: the key's own "/" text input may reach the box once it has focus, and that one is dropped.
+    private bool _dropSlashText;
+
+    // The next key press means the "/" text (if any) is already gone, so a "/" typed later on purpose is kept.
+    private void OnAnyKeyDown(object? sender, KeyEventArgs e) => _dropSlashText = false;
+
+    private void OnTextInputTunnel(object? sender, TextInputEventArgs e)
     {
-        if (Page is { } page)
+        if (_dropSlashText && string.Equals(e.Text, "/", StringComparison.Ordinal))
         {
-            page.Resize(e.NewSize.Width);
+            _dropSlashText = false;
+            e.Handled = true;
         }
     }
+
+    // Under 640 px only Status, Agent and For stay: the page tells the rows, and the head's columns follow.
+    private void OnSized(object? sender, SizeChangedEventArgs e) => Split();
 
     private void OnClearFilters(object? sender, RoutedEventArgs e)
     {
@@ -41,6 +141,33 @@ internal sealed partial class AgentsPage : UserControl
         Page?.ClearFilters();
     }
 
+
+    private void OnHeadLink(object? sender, RoutedEventArgs e) => Page?.FocusNeedsYou();
+
+    private void OnSortHeader(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string tag } && Enum.TryParse<AgentSort>(tag, out var sort))
+        {
+            Page?.SortBy(sort);
+        }
+    }
+
+    // Posted, like the Queue filter's focus: focused inside KeyDown, the box would also get the key's "/" text input.
+    private void OnSearchRequested(object? sender, EventArgs e)
+    {
+        _dropSlashText = true;
+        Dispatcher.UIThread.Post(() => _ = this.FindControl<TextBox>("AgentsSearch")?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
+    }
+
+    // Esc in the box clears it.
+    private void OnSearchKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && Page is { } page)
+        {
+            page.SearchText = string.Empty;
+            e.Handled = true;
+        }
+    }
 
     private AgentsPageViewModel? Page => DataContext as AgentsPageViewModel;
 
@@ -65,6 +192,7 @@ internal sealed partial class AgentsPage : UserControl
     private void OnFocusMoved(object? sender, RoutedEventArgs e)
     {
         _focusWasHere = e.Source is Visual source && this.IsVisualAncestorOf(source);
+        DropSideWhenFocusLeavesPane(e);
         if (!_focusWasHere && TopLevel.GetTopLevel(this)?.DataContext is ViewModels.Shell.ShellViewModel { IsSheetOpen: false })
         {
             Page?.ClearSelection();
@@ -93,8 +221,10 @@ internal sealed partial class AgentsPage : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         Page?.FocusRequested -= OnFocusRequested;
+        Page?.SearchRequested -= OnSearchRequested;
         base.OnDataContextChanged(e);
         Page?.FocusRequested += OnFocusRequested;
+        Page?.SearchRequested += OnSearchRequested;
     }
 
     private void OnFocusRequested(object? sender, AgentFocusEventArgs request) =>

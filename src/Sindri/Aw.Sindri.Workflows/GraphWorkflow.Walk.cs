@@ -15,9 +15,32 @@ internal sealed partial class GraphWorkflow
     private List<GraphNode> _pending = [];
     private GraphNode? _current;
 
+    // A re-run from a step starts with the earlier steps decided: they leave the pending list, and a succeeded one has taken the branches it took in the source run.
+    private void Restore(GraphSpec spec, IReadOnlyList<GraphRestoredNode> restored)
+    {
+        foreach (var step in restored)
+        {
+            var id = NodeId.From(step.Node);
+            _ = _decided.Add(id);
+            if (step.Taken.Count > 0)
+            {
+                _taken[id] = step.Taken;
+            }
+        }
+
+        // why: a taken loop ran its items in the source run; its body and collect are decided with it, even a body step with no row (a loop of no items), so none runs once as a plain step at item 0
+        foreach (var node in spec.Nodes.Where(n => _decided.Contains(n.Id) && string.Equals(n.Type, LoopBody.ForEachType, StringComparison.Ordinal)))
+        {
+            if (LoopBody.Find(spec, node.Id) is { IsSuccess: true } loop)
+            {
+                Decide(loop.Value);
+            }
+        }
+    }
+
     private async Task<GraphWorkflowResult> Walk(GraphSpec spec)
     {
-        _pending = [.. spec.Nodes];
+        _pending = [.. spec.Nodes.Where(n => !_decided.Contains(n.Id))];
         // why: a ready node on a branch nobody took is recorded 'skipped' before a live one runs, so a dead branch shows skipped while its sibling parks (a wait or ask_owner can hold the walk for hours).
         // The patch keeps a run started on the old walk order replaying it: its history has the live node's activity next.
         var deadFirst = Workflow.Patched("graph-walk-dead-first");
@@ -145,7 +168,7 @@ internal sealed partial class GraphWorkflow
     // why: the row carries no payload (input, output, usage), so Truncated is false here; the store sets it when it cuts a real payload
     private NodeRun Row(GraphNode node, NodeRunStatus status) => new(_run, node.Id, 0, status, Input: null, Output: null, Truncated: false, Error: null, Usage: null);
 
-    private static Task Record(NodeRun row, ActivityOptions options) => Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(row), options);
+    private Task Record(NodeRun row, ActivityOptions options) => Call((GraphRunActivities a) => a.RecordNodeAsync(row), ReferenceEquals(options, _detached));
 
     private async Task<GraphWorkflowResult> End(WorkflowRunStatus status, string? error)
     {
@@ -154,14 +177,14 @@ internal sealed partial class GraphWorkflow
         if (status == WorkflowRunStatus.Succeeded && Workflow.Patched("graph-commit-run-end"))
         {
             // why: a block remembers what it passed on (only_new) only when the whole run worked; a failed commit fails the run, and the items come back on the next one
-            if (await Workflow.ExecuteActivityAsync((GraphBlockActivities a) => a.CommitRunAsync(_run), _detached).ConfigureAwait(true) is { } why)
+            if (await Call((GraphBlockActivities a) => a.CommitRunAsync(_run), detached: true).ConfigureAwait(true) is { } why)
             {
                 status = WorkflowRunStatus.Failed;
                 error = why;
             }
         }
 
-        await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.FinishAsync(new GraphFinish(_run, status, error)), _detached).ConfigureAwait(true);
+        await Call((GraphRunActivities a) => a.FinishAsync(new GraphFinish(_run, status, error)), detached: true).ConfigureAwait(true);
         return new GraphWorkflowResult(status);
     }
 

@@ -166,6 +166,25 @@ public sealed class CodeIndexReadingTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void The_file_map_column_says_graph_off_when_the_profile_turns_the_graph_off()
+    {
+        var disabled = CodeIndexReading.FileMap(Head(CodeIndexState.Ok, asOf: null) with { GraphOff = true }, []);
+        var on = CodeIndexReading.FileMap(Head(CodeIndexState.Ok, asOf: null), []);
+
+        Assert.Equal((SymbolsState.Ok, "graph-off"), Words(disabled));
+        Assert.Null(on.Reason);
+    }
+
+    // #3862: a graph layer that is down (graphify missing or failed, SND-CODEIDX-008) is not one the profile turned off; its fix is to install graphify, not to edit the profile.
+    [Fact, Trait("Lane", "unit")]
+    public void The_file_map_column_says_graph_unavailable_when_the_graph_layer_is_down()
+    {
+        var down = CodeIndexReading.FileMap(Head(CodeIndexState.LayerUnavailable, asOf: null, layer: "graph", code: "SND-CODEIDX-008"), []);
+
+        Assert.Equal((SymbolsState.Ok, "graph-unavailable"), Words(down));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void The_file_map_column_over_a_stale_index_names_both_commits()
     {
         var column = CodeIndexReading.FileMap(Head(CodeIndexState.Ok, asOf: Other), [File(SymbolsState.Stale, Other)]);

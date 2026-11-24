@@ -53,6 +53,18 @@ public sealed class WorkflowsEditorSheetTests
     }
 
     [Fact]
+    public async Task The_steps_id_shows_only_in_the_sheets_Advanced_group()
+    {
+        var page = await OnRuns();
+        Assert.True(page.Runs.Graph!.SelectNode("agent"));
+
+        await page.OpenSettings(Token);
+
+        Assert.Equal(("Step id: agent", "Advanced"), (page.Editor.NodeIdLine, page.Editor.AdvancedText));
+        Assert.Equal("Check the repos", page.Runs.Graph.Nodes.Single(n => string.Equals(n.Id, "agent", StringComparison.Ordinal)).Title, StringComparer.Ordinal);   // the card shows the title, not the id
+    }
+
+    [Fact]
     public async Task Save_sends_set_config_for_the_changed_field_at_the_read_revision()
     {
         var page = await OnRuns();
@@ -82,10 +94,10 @@ public sealed class WorkflowsEditorSheetTests
         Assert.Equal((true, false), (page.Editor.NeedsReload, page.CanSave));
         Assert.StartsWith("This workflow changed elsewhere", page.Editor.ReloadPromptText, StringComparison.Ordinal);
 
-        var reads = _f.Server.WorkflowCalls;
+        var reads = _f.Server.WorkflowNewestCalls;
         await page.Editor.Reload(Token);
 
-        Assert.Equal(reads + 1, _f.Server.WorkflowCalls);
+        Assert.Equal(reads + 1, _f.Server.WorkflowNewestCalls);   // the editor reads the newest revision (#3303)
         Assert.Equal((false, true), (page.Editor.NeedsReload, page.CanSave));
     }
 
@@ -248,6 +260,8 @@ public sealed class WorkflowsEditorSheetTests
 
         await page.GraphEdit.BeginAdd(Token);
         await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+        page.Editor.Fields[0].Text = "Check";
+        await page.Save(Token);
 
         Assert.Equal(2, _f.Server.AppliedWorkflowOps.Count);
         Assert.Equal(3, _f.Server.AppliedWorkflowOps[1].BaseRevision);

@@ -20,6 +20,7 @@ internal sealed class UsageSpend(IAgentCatalog catalog, IReadOnlyDictionary<stri
     private readonly ConcurrentDictionary<AgentId, (DateTimeOffset At, DateOnly Day, AgentSpend Spend)> _read = new();
     private readonly Lock _gate = new();
     private readonly Dictionary<AgentId, (DateOnly Day, Task<AgentSpend> Task)> _flights = [];
+    private readonly Dictionary<AgentId, (DateTimeOffset At, DateOnly Day, Task<AgentSpend> Task)> _failures = [];
 
     /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<ModelTokens>?> OfSession(AgentId target, SessionId session, CancellationToken cancellationToken) =>
@@ -89,6 +90,12 @@ internal sealed class UsageSpend(IAgentCatalog catalog, IReadOnlyDictionary<stri
                 return flight.Task;
             }
 
+            // a read that just failed is not walked again for the fresh window (#3751): a broken reader would otherwise re-walk every transcript on each call
+            if (_failures.TryGetValue(target, out var failed) && failed.Day == window.Day && clock.GetUtcNow() - failed.At < _fresh)
+            {
+                return failed.Task;
+            }
+
             source = new TaskCompletionSource<AgentSpend>(TaskCreationOptions.RunContinuationsAsynchronously);
             _flights[target] = (window.Day, source.Task);
         }
@@ -104,11 +111,20 @@ internal sealed class UsageSpend(IAgentCatalog catalog, IReadOnlyDictionary<stri
             var used = Budgets.Spend(await reader.Between(window.Start, window.End, CancellationToken.None).ConfigureAwait(false));
             var spend = reader.Verified ? used : new AgentSpend(0m, used.Tokens, SpendBasis.TokensOnly);
             _read[target] = (clock.GetUtcNow(), window.Day, spend);
+            lock (_gate)
+            {
+                _ = _failures.Remove(target);
+            }
+
             _ = source.TrySetResult(spend);
         }
         catch (Exception e)
         {
             _ = source.TrySetException(e);
+            lock (_gate)
+            {
+                _failures[target] = (clock.GetUtcNow(), window.Day, source.Task);
+            }
         }
         finally
         {

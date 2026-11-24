@@ -98,6 +98,8 @@ internal static partial class Labels
         ("thing", false) => "things",
         ("flow", true) => "flow",
         ("flow", false) => "flows",
+        ("concept", true) => "concept",
+        ("concept", false) => "concepts",
         ("decision", true) => "decision",
         ("decision", false) => "decisions",
         ("record", true) => "record",

@@ -21,6 +21,8 @@ internal sealed partial class WorkflowsPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _pages = this.FindAncestorOfType<ScrollViewer>();
+        _pages?.PropertyChanged += OnPagesProperty;
         LayoutUpdated += OnLayoutUpdated;   // the title's text, its scale or the crumb's text changed: the crumb follows the title's baseline
     }
 
@@ -28,11 +30,14 @@ internal sealed partial class WorkflowsPage : UserControl
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         LayoutUpdated -= OnLayoutUpdated;
+        _pages?.PropertyChanged -= OnPagesProperty;
+        _pages = null;
         base.OnDetachedFromVisualTree(e);
     }
 
     private void OnLayoutUpdated(object? sender, EventArgs e)
     {
+        SizeStages();
         if (WorkflowsBack.IsVisible)
         {
             AlignCrumb(WorkflowsBack, WorkflowsBack.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault());
@@ -101,8 +106,19 @@ internal sealed partial class WorkflowsPage : UserControl
         if (DataContext is WorkflowsPageViewModel page)
         {
             await page.OpenSettings(CancellationToken.None).ConfigureAwait(true);   // the fields exist only once the form is read: focus the first one after
-            Dispatcher.UIThread.Post(() => _ = (FirstTarget(WorkflowEditor, static c => c is TextBox or CheckBox or Button) ?? WorkflowEditor).Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
+            FocusEditorField();   // the first required field
         }
+    }
+
+    /// <summary>Focuses the control of the sheet's first required field (else its first field, else the first control), once the form is laid out.</summary>
+    internal void FocusEditorField()
+    {
+        var name = (DataContext as WorkflowsPageViewModel)?.FocusFieldName ?? string.Empty;
+        Dispatcher.UIThread.Post(
+            () => _ = (FirstTarget(WorkflowEditor, c => name.Length > 0 && c is TextBox or CheckBox or ComboBox && c.DataContext is ConfigFieldViewModel f && string.Equals(f.Name, name, StringComparison.Ordinal))
+                ?? FirstTarget(WorkflowEditor, static c => c is TextBox or CheckBox or Button)
+                ?? WorkflowEditor).Focus(NavigationMethod.Tab),
+            DispatcherPriority.Loaded);
     }
 
     private void OnNewWorkflow(object? sender, RoutedEventArgs e)
@@ -202,6 +218,16 @@ internal sealed partial class WorkflowsPage : UserControl
         if (DataContext is WorkflowsPageViewModel page)
         {
             await page.Activate(CancellationToken.None).ConfigureAwait(true);
+            FocusLater(WorkflowPause);   // Pause replaced the button that was pressed
+        }
+    }
+
+    private async void OnMakeLive(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            await page.MakeLive(CancellationToken.None).ConfigureAwait(true);
+            FocusLater(RunNow);   // the button went with the line; Run now is what it changed (it runs the new revision now)
         }
     }
 

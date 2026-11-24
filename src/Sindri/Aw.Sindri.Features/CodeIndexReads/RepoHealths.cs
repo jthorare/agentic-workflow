@@ -37,6 +37,9 @@ internal sealed class RepoHealths(IRepoHeads heads, IJobViews jobs, IServicePaus
     private RepoHealth Timed(RepoHealth health, DateTimeOffset now, bool blind) => blind ? health with { QueuedFor = null } : health with { QueuedFor = queued.For(health.Repo, health.State == "queued", now) };
 
     // why: doctor's rule is the one rule, so the System card and `sindri doctor` can't disagree (#3430); its words go with it, so the card's line says why (#3515)
+    // why: a queued repo with no problem says what its build waits for, the service's next tick (#3515); one queued too long is a look, and its words say why instead
     private static RepoHealth Looked(RepoStatus status, RepoHealth health) =>
-        CodeIndexProblems.For(status, health) is { } problem ? health with { NeedsLook = true, LookWords = problem.Text } : health with { NeedsLook = false, LookWords = null };
+        CodeIndexProblems.For(status, health) is { } problem
+            ? health with { NeedsLook = true, LookWords = problem.Text }
+            : health with { NeedsLook = false, LookWords = null, Waiting = health.State == "queued" ? RepoHealth.QueuedWords : health.Waiting };
 }

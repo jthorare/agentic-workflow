@@ -72,6 +72,9 @@ internal sealed class ConfigFieldViewModel : ObservableObject
     /// <summary>The text being edited: a text list has one item per line, an object is JSON.</summary>
     public string Text { get; set { Set(ref field, value); OnChanged(nameof(IsOn)); OnChanged(nameof(IsChanged)); OnChanged(nameof(SelectedPreset)); } }
 
+    /// <summary>The hint the empty text box shows: a new step's example value, with a step the new one can't read named "&lt;step id&gt;" (#3944, #4272); empty for an existing step.</summary>
+    public string Placeholder { get; init; } = string.Empty;
+
     /// <summary>The text the field had when the form was made: Save sends only the fields that differ from it.</summary>
     public string Original { get; }
 

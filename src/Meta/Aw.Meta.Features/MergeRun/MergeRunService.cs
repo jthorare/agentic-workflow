@@ -64,24 +64,56 @@ internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands rep
             return await recorder.Enqueue(request.Pr, assessed, pull, cancellationToken).ConfigureAwait(false);
         }
 
-        var number = request.Pr.ToString(CultureInfo.InvariantCulture);
-        if (view.Value.Stacked && await StackExtensionMissing(repoDirectory).ConfigureAwait(false) is { } missing)
-        {
-            return missing;
-        }
-
-        // GitHub refuses a stacked pull request on the plain merge call: "gh stack merge" merges the stack up to it (or enqueues it behind a merge queue).
-        var merged = view.Value.Stacked
-            ? await repo.Gh(repoDirectory, "stack", "merge", number, "--yes").ConfigureAwait(false)
-            : await repo.Gh(repoDirectory, "pr", "merge", number, "--merge").ConfigureAwait(false);
+        var merged = await Merge(repoDirectory, request.Pr, view.Value.Stacked).ConfigureAwait(false);
         if (merged.IsError)
         {
             return merged.Error;
         }
 
-        return view.Value.Enabled
-            ? await recorder.Enqueue(request.Pr, assessed, pull, cancellationToken).ConfigureAwait(false)
-            : await Recorded(await recorder.Record(request, assessed, pull, await MainSha(repoDirectory, request.Pr).ConfigureAwait(false), cancellationToken).ConfigureAwait(false), assessed, cancellationToken).ConfigureAwait(false);
+        if (view.Value.Enabled)
+        {
+            return await recorder.Enqueue(request.Pr, assessed, pull, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Unlike "gh pr merge", an exit 0 of "gh stack merge" is not proof the pull request merged (it may have been accepted for a later merge): read it again before recording.
+        if (view.Value.Stacked && await NotMerged(repoDirectory, request.Pr).ConfigureAwait(false) is { } notMerged)
+        {
+            return notMerged;
+        }
+
+        return await Recorded(await recorder.Record(request, assessed, pull, await MainSha(repoDirectory, request.Pr).ConfigureAwait(false), cancellationToken).ConfigureAwait(false), assessed, cancellationToken).ConfigureAwait(false);
+    }
+
+    // Null when the pull request reads MERGED; otherwise the refusal (AW-META-012), which records nothing.
+    private async ValueTask<Error?> NotMerged(string repoDirectory, int pr)
+    {
+        var now = await repo.View(repoDirectory, pr, "state").ConfigureAwait(false);
+        if (now.IsError)
+        {
+            return now.Error;
+        }
+
+        var number = pr.ToString(CultureInfo.InvariantCulture);
+        return now.Value.State switch
+        {
+            PrState.Merged => null,
+            PrState.Closed => MetaErrors.CommandFailed.With($"gh stack merge #{number} exited 0 but the pull request was closed without merging; nothing is recorded"),
+            PrState.Open or _ => MetaErrors.CommandFailed.With($"gh stack merge #{number} exited 0 but the pull request is still open; nothing is recorded, run merge-run again when it has merged"),
+        };
+    }
+
+    // GitHub refuses a stacked pull request on the plain merge call: "gh stack merge" merges the stack up to it (or enqueues it behind a merge queue). Without the extension a stacked pull request is refused before anything runs.
+    private async ValueTask<Result<string>> Merge(string repoDirectory, int pr, bool stacked)
+    {
+        var number = pr.ToString(CultureInfo.InvariantCulture);
+        if (!stacked)
+        {
+            return await repo.Gh(repoDirectory, "pr", "merge", number, "--merge").ConfigureAwait(false);
+        }
+
+        return await StackExtensionMissing(repoDirectory).ConfigureAwait(false) is { } missing
+            ? missing
+            : await repo.Gh(repoDirectory, "stack", "merge", number, "--yes").ConfigureAwait(false);
     }
 
     // Null when the gh stack extension is installed; otherwise the refusal that names the install command (a failed listing is gh's own error).

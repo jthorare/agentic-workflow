@@ -17,6 +17,7 @@
     <ProjectReference Include="../../src/Connectors/Aw.Connectors.Features/Aw.Connectors.Features.csproj" />
     <ProjectReference Include="../../src/Connectors/Aw.Connectors.Infrastructure/Aw.Connectors.Infrastructure.csproj" />
     <ProjectReference Include="../Aw.Connectors.Testing/Aw.Connectors.Testing.csproj" />
+    <ProjectReference Include="../Aw.Connectors.Testing.Server/Aw.Connectors.Testing.Server.csproj" />
   </ItemGroup>
 
   <ItemGroup>
