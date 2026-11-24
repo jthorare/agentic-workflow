@@ -4,6 +4,7 @@ using Aw.CodeIndex.Testing;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.CodeIndexReads;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Server;
@@ -90,6 +91,35 @@ public sealed class CodeIndexHealthTests
         var problems = await health.Problems(Approved(), Token);
 
         Assert.Equal(["SND-CODEIDX-013"], problems.Select(static p => p.Code), StringComparer.Ordinal);
+    }
+
+    // #4091: the row read the way GET /status reads it, not only CodeIndexProblems.For: a repo with no index, off its default branch, with no default tip.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_repo_off_its_default_branch_with_no_tip_is_one_cant_build_row_through_the_status_read()
+    {
+        var demo = RepoName.From("demo");
+        var other = RepoName.From("other");
+        var index = new FakeCodeIndex().WithIndex(other, _old);
+        var heads = new FakeRepoHeads().With(demo, _new, onDefaultBranch: false).With(other, _old, onDefaultBranch: true);
+
+        var problems = await Health(index, heads).Problems(Approved(), Token);
+
+        var row = Assert.Single(problems);
+        Assert.Equal(("SND-CODEIDX-013", "demo: " + IndexBuildWords.Unbuildable + "; " + IndexBuildWords.UnbuildableFix), (row.Code, row.Text));
+    }
+
+    // #4091 (#3928): a git read that fails while reading the default tip gives an unread head; that poll must not read "no default branch".
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_unread_head_from_a_failed_git_read_is_no_cant_build_row()
+    {
+        var demo = RepoName.From("demo");
+        var other = RepoName.From("other");
+        var index = new FakeCodeIndex().WithIndex(other, _old);
+        var heads = new FakeRepoHeads().With(demo, head: null, onDefaultBranch: false).With(other, _old, onDefaultBranch: true);
+
+        var problems = await Health(index, heads).Problems(Approved(), Token);
+
+        Assert.Empty(problems);
     }
 
     private sealed class FixedClock(DateTimeOffset now) : TimeProvider
