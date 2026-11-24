@@ -51,7 +51,7 @@ public sealed class ScheduleBlock : IGraphBlock
     /// <inheritdoc />
     public BlockOutputs OutputsFor(JsonObject config) => _outputs;
 
-    /// <summary>"Runs every weekday at 7:00, America/Los_Angeles" for a preset cron, "Runs on schedule &lt;cron&gt;, &lt;zone&gt;" for any other, the title and "No time set yet" with no cron. No zone is UTC.</summary>
+    /// <summary>"Runs every weekday at 7:00, America/Los_Angeles" for a preset cron, "Runs every Thursday at 7:00, UTC" for another daily or weekly one, "Runs on schedule &lt;cron&gt;, &lt;zone&gt;" for any other, the title and "No time set yet" with no cron. No zone is UTC.</summary>
     /// <param name="config">The node's config.</param>
     /// <returns>The line.</returns>
     public BlockSummary Summarize(JsonObject config)
@@ -65,7 +65,8 @@ public sealed class ScheduleBlock : IGraphBlock
 
         var zone = Text(config["timezone"]) is { Length: > 0 } z ? z : "UTC";
         var preset = Array.FindIndex(_presets, p => string.Equals(p.Cron, cron.Trim(), StringComparison.Ordinal));
-        return new BlockSummary(preset >= 0 ? $"Runs {_presets[preset].Runs}, {zone}" : $"Runs on schedule {cron.Trim()}, {zone}");
+        var runs = preset >= 0 ? _presets[preset].Runs : ScheduleWords.Of(cron);
+        return new BlockSummary(runs is not null ? $"Runs {runs}, {zone}" : $"Runs on schedule {cron.Trim()}, {zone}");
     }
 
     /// <inheritdoc />
