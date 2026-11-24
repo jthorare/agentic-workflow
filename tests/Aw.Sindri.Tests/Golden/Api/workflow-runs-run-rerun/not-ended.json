@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-GRAPH-125",
+  "status": 409,
+  "detail": "'morning-check@1:2' is Queued; wait for it to end or cancel it first",
+  "traceId": "<trace>"
+}
