@@ -31,7 +31,7 @@ public sealed class SymbolsColumnTests
         var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false) with { Reason = "graph-off" });
 
         // #3862: the heading names a commit while the note says "off"; the sentence says the C# names are the index's, the rest wait on the graph.
-        Assert.Equal(("from 7c3e1a2", "C# names come from the index. Other languages need the code graph, which is off for this repo.", "C# names come from the index. Other languages need the code graph, which is off for this repo.", false), (column.Caption, column.EmptyReason, column.NoRowTip, column.Dimmed));
+        Assert.Equal(("from 7c3e1a2", "C# names come from the index. Other languages need the code graph, which is off for this repo (index.graph.enabled in the profile).", "C# names come from the index. Other languages need the code graph, which is off for this repo (index.graph.enabled in the profile).", false), (column.Caption, column.EmptyReason, column.NoRowTip, column.Dimmed));
         Assert.Equal("—", column.Cell("src/tabs/TabManager.ts"));
     }
 

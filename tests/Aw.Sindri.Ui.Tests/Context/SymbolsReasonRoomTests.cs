@@ -15,7 +15,7 @@ namespace Aw.Sindri.Ui.Tests.Context;
 [Lane(TestLane.Unit)]
 public sealed class SymbolsReasonRoomTests
 {
-    private const string GraphOff = "C# names come from the index. Other languages need the code graph, which is off for this repo.";
+    private const string GraphOff = "C# names come from the index. Other languages need the code graph, which is off for this repo (index.graph.enabled in the profile).";
 
     [Fact]
     public async Task Graph_off_with_no_rows_keeps_the_heading_short_and_says_why_under_the_table()
