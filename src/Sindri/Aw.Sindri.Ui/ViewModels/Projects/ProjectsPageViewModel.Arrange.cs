@@ -64,7 +64,6 @@ internal sealed partial class ProjectsPageViewModel
             {
                 ProjectView.All => list.Projects.Count + list.Finished.Count,   // the cards the answer holds, open and finished; hidden ones are not counted
                 ProjectView.Triage => 0,
-                ProjectView.NeedsMe or ProjectView.MyWork => list.Projects.Count(c => ProjectRows.InView(tab.View, c)),
                 _ => list.Projects.Count(c => ProjectRows.InView(tab.View, c)),
             };
         }

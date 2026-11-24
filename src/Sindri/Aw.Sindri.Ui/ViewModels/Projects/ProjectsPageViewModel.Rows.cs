@@ -41,7 +41,7 @@ internal sealed partial class ProjectsPageViewModel
         new(ProjectMenu.Group, (int)ProjectGrouping.None, Labels.ProjectsGroupNone, string.Empty),
     ];
 
-    /// <summary>The view shown. Until the owner picks one: Needs me when the served truth carries the blocked-on-you flag (issue 3797), else Projects (an older server).</summary>
+    /// <summary>The view shown. Until the owner picks one: Needs me once an open project is served as blocked on the owner and the facts are not missing (issue 3797), else Projects.</summary>
     public ProjectView View { get; private set => Set(ref field, value); } = ProjectView.All;
 
     /// <summary>The rows' order inside a group.</summary>
