@@ -41,7 +41,7 @@ public sealed class SteeringMinerCapsTests : IClassFixture<RoslynWarmup>
     [Fact]
     public void Shape_fails_a_batch_whose_json_passes_60000_bytes_and_names_the_cap()
     {
-        JsonArray batch = [new JsonObject { ["ref"] = "transcript:0000000a#1", ["text"] = new string('a', 61_000) }];
+        JsonArray batch = [new JsonObject { ["ref"] = "transcript:00000000000a#1", ["text"] = new string('a', 61_000) }];
 
         var result = Run("shape", new JsonObject { ["item"] = batch });
 
@@ -115,7 +115,7 @@ public sealed class SteeringMinerCapsTests : IClassFixture<RoslynWarmup>
         var corrections = new JsonArray();
         for (var line = 1; line <= 400; line++)
         {
-            corrections.Add((JsonNode)new JsonObject { ["ref"] = "transcript:0000000a#" + line.ToString(CultureInfo.InvariantCulture), ["label"] = "restate", ["mistake"] = "a phrase of the mistake that is close to the sixty char cap" });
+            corrections.Add((JsonNode)new JsonObject { ["ref"] = "transcript:00000000000a#" + line.ToString(CultureInfo.InvariantCulture), ["label"] = "restate", ["mistake"] = "a phrase of the mistake that is close to the sixty char cap" });
         }
 
         JsonArray gathered = [new JsonObject { ["turns"] = 400, ["labeled"] = 400, ["dropped"] = 0, ["corrections"] = corrections }];
@@ -132,7 +132,7 @@ public sealed class SteeringMinerCapsTests : IClassFixture<RoslynWarmup>
         for (var n = 0; n <= 200; n++)
         {
             var number = n.ToString("000", CultureInfo.InvariantCulture);
-            corrections.Add((JsonNode)new JsonObject { ["ref"] = "transcript:0000000a#" + (n + 1).ToString(CultureInfo.InvariantCulture), ["label"] = "restate", ["mistake"] = "mistake " + number });
+            corrections.Add((JsonNode)new JsonObject { ["ref"] = "transcript:00000000000a#" + (n + 1).ToString(CultureInfo.InvariantCulture), ["label"] = "restate", ["mistake"] = "mistake " + number });
         }
 
         JsonArray gathered = [new JsonObject { ["turns"] = 201, ["labeled"] = 201, ["dropped"] = 0, ["corrections"] = corrections }];
@@ -148,7 +148,7 @@ public sealed class SteeringMinerCapsTests : IClassFixture<RoslynWarmup>
         var batch = new JsonArray();
         for (var line = 1; line <= 20; line++)
         {
-            batch.Add((JsonNode)new JsonObject { ["ref"] = "transcript:0000000a#" + line.ToString(CultureInfo.InvariantCulture), ["text"] = new string(heavy, text), ["before"] = new string(heavy, before) });
+            batch.Add((JsonNode)new JsonObject { ["ref"] = "transcript:00000000000a#" + line.ToString(CultureInfo.InvariantCulture), ["text"] = new string(heavy, text), ["before"] = new string(heavy, before) });
         }
 
         return batch;

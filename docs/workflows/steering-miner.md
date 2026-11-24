@@ -28,15 +28,15 @@ The model only labels and merges. Code applies the caps, the threshold of 2 and 
 
 `turns` is a list of batches. A batch is a list of turns. A turn has three fields:
 
-- `ref`: the turn's opaque ref, such as `transcript:1a2b3c4d#120`. The part before `#` names the session.
+- `ref`: the turn's opaque ref, such as `transcript:00001a2b3c4d#120`. The part before `#` names the session.
 - `text`: the human's text, already scrubbed.
 - `before` (optional): the end of the assistant message just before the turn.
 
 ```text
 {"turns": [
-  [ {"ref": "transcript:1a2b3c4d#120", "text": "No, run it in CI, not locally.", "before": "I ran the suite on my machine."},
-    {"ref": "transcript:1a2b3c4d#131", "text": "Thanks."} ],
-  [ {"ref": "transcript:9f8e7d6c#44", "text": "Again: do not run it locally."} ]
+  [ {"ref": "transcript:00001a2b3c4d#120", "text": "No, run it in CI, not locally.", "before": "I ran the suite on my machine."},
+    {"ref": "transcript:00001a2b3c4d#131", "text": "Thanks."} ],
+  [ {"ref": "transcript:00009f8e7d6c#44", "text": "Again: do not run it locally."} ]
 ]}
 ```
 

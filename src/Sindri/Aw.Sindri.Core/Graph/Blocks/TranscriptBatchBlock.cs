@@ -82,6 +82,6 @@ public sealed partial class TranscriptBatchBlock(IGraphTranscriptPort transcript
         });
     }
 
-    [GeneratedRegex("^transcript:[0-9a-f]{8}#[1-9][0-9]{0,8}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex("^transcript:[0-9a-f]{12}#[1-9][0-9]{0,8}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex RefShape { get; }
 }

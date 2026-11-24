@@ -19,13 +19,13 @@ public sealed class TranscriptBlocksTests
     [Fact]
     public async Task Turns_come_out_newest_first_in_batches_of_refs_and_the_oldest_are_cut_at_maxTurns()
     {
-        var port = new FakeGraphTranscripts([Session("transcript:0000000a", Humans(1, 5)), Session("transcript:0000000b", Humans(10, 3))]);
+        var port = new FakeGraphTranscripts([Session("transcript:00000000000a", Humans(1, 5)), Session("transcript:00000000000b", Humans(10, 3))]);
 
         var result = await Turns(port, new JsonObject { ["batchSize"] = 3, ["maxTurns"] = 7 });
 
         var batches = result["batches"]!.AsArray().Select(static b => b!.AsArray().Select(static r => r!.GetValue<string>()).ToList()).ToList();
         Assert.Equal([3, 3, 1], batches.Select(static b => b.Count));
-        Assert.Equal("transcript:0000000a#1", batches[0][0]);   // why: line 1 of session a is the newest turn of the seed
+        Assert.Equal("transcript:00000000000a#1", batches[0][0]);   // why: line 1 of session a is the newest turn of the seed
         Assert.Equal((7, 2, true), (result["turns"]!.GetValue<int>(), result["sessions"]!.GetValue<int>(), result["truncated"]!.GetValue<bool>()));
         Assert.Equal(0, port.Reads);   // the list reads no text
     }
@@ -33,11 +33,11 @@ public sealed class TranscriptBlocksTests
     [Fact]
     public async Task Since_counts_back_from_the_clock()
     {
-        var port = new FakeGraphTranscripts([Session("transcript:0000000a", [new TranscriptSeedTurn(1, Human: true, _now.AddHours(-1), "new"), new TranscriptSeedTurn(2, Human: true, _now.AddHours(-30), "old")])]);
+        var port = new FakeGraphTranscripts([Session("transcript:00000000000a", [new TranscriptSeedTurn(1, Human: true, _now.AddHours(-1), "new"), new TranscriptSeedTurn(2, Human: true, _now.AddHours(-30), "old")])]);
 
         var result = await Turns(port, new JsonObject { ["since"] = "1d" });
 
-        Assert.Equal(["transcript:0000000a#1"], result["batches"]![0]!.AsArray().Select(static r => r!.GetValue<string>()), StringComparer.Ordinal);
+        Assert.Equal(["transcript:00000000000a#1"], result["batches"]![0]!.AsArray().Select(static r => r!.GetValue<string>()), StringComparer.Ordinal);
         Assert.False(result["truncated"]!.GetValue<bool>());
     }
 
@@ -58,15 +58,15 @@ public sealed class TranscriptBlocksTests
     [Fact]
     public async Task A_batch_reads_its_turns_with_the_tail_of_the_assistant_text_before_them()
     {
-        var port = new FakeGraphTranscripts([Session("transcript:0000000a", [
+        var port = new FakeGraphTranscripts([Session("transcript:00000000000a", [
             new TranscriptSeedTurn(1, Human: true, _now, new string('a', 1700)),
             new TranscriptSeedTurn(2, Human: false, _now, new string('x', 100) + new string('y', 400)),
             new TranscriptSeedTurn(3, Human: true, _now, "no, the other way")])]);
 
-        var result = await Batch(port, new JsonArray("transcript:0000000a#3", "transcript:0000000a#1", "transcript:ffffffff#4", "not a ref"));
+        var result = await Batch(port, new JsonArray("transcript:00000000000a#3", "transcript:00000000000a#1", "transcript:0000ffffffff#4", "not a ref"));
 
         var turns = result["turns"]!.AsArray();
-        Assert.Equal(["transcript:0000000a#3", "transcript:0000000a#1"], turns.Select(static t => t!["ref"]!.GetValue<string>()), StringComparer.Ordinal);
+        Assert.Equal(["transcript:00000000000a#3", "transcript:00000000000a#1"], turns.Select(static t => t!["ref"]!.GetValue<string>()), StringComparer.Ordinal);
         Assert.Equal(new string('y', 400), turns[0]!["before"]!.GetValue<string>());
         Assert.Equal(1500, turns[1]!["text"]!.GetValue<string>().Length);
         Assert.Null(turns[1]!["before"]);
@@ -82,10 +82,10 @@ public sealed class TranscriptBlocksTests
         {
             seed.Add(new TranscriptSeedTurn(line, Human: false, _now, new string('€', 1000)));
             seed.Add(new TranscriptSeedTurn(line + 1, Human: true, _now, new string('€', 3000)));
-            refs.Add((JsonNode)("transcript:0000000a#" + (line + 1).ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            refs.Add((JsonNode)("transcript:00000000000a#" + (line + 1).ToString(System.Globalization.CultureInfo.InvariantCulture)));
         }
 
-        var result = await Batch(new FakeGraphTranscripts([Session("transcript:0000000a", seed)]), refs);
+        var result = await Batch(new FakeGraphTranscripts([Session("transcript:00000000000a", seed)]), refs);
         var stored = new JsonObject { ["turns"] = result["turns"]!.DeepClone(), ["missing"] = 0, ["dropped"] = 0 }.ToJsonString();
 
         Assert.Equal(20, result["turns"]!.AsArray().Count);
@@ -95,7 +95,7 @@ public sealed class TranscriptBlocksTests
     [Fact]
     public async Task Refs_that_are_not_a_list_fail_the_node()
     {
-        var result = await new TranscriptBatchBlock(new FakeGraphTranscripts([])).Execute(BlockFakes.Context(new JsonObject { ["refs"] = "transcript:0000000a#1" }), Token);
+        var result = await new TranscriptBatchBlock(new FakeGraphTranscripts([])).Execute(BlockFakes.Context(new JsonObject { ["refs"] = "transcript:00000000000a#1" }), Token);
 
         Assert.True(result.IsError);
     }

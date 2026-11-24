@@ -15,7 +15,7 @@ public interface IGraphTranscriptPort
     public ValueTask<Result<IReadOnlyList<HumanTurnRef>>> HumanTurns(TranscriptTurnQuery query, CancellationToken cancellationToken);
 
     /// <summary>The text of each human turn in <paramref name="refs"/>, in the order asked. A ref no transcript has is left out.</summary>
-    /// <param name="refs">Turn refs, such as 'transcript:0a1b2c3d#42'.</param>
+    /// <param name="refs">Turn refs, such as 'transcript:00000a1b2c3d#42'.</param>
     /// <param name="withBefore">Whether to return the text of the assistant turn just before each human turn, in the same session.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The turns found.</returns>

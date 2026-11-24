@@ -12,7 +12,7 @@ Lists the newest human turns of your local agent sessions (Claude Code, Codex an
 
 | Output | Type | Meaning |
 |---|---|---|
-| `batches` | array | A list of batches. Each batch is a list of turn refs, such as `transcript:0a1b2c3d#42`. Newest first. |
+| `batches` | array | A list of batches. Each batch is a list of turn refs, such as `transcript:00000a1b2c3d#42`. Newest first. |
 | `sessions` | number | How many sessions the turns come from. |
 | `turns` | number | How many turns the batches hold. |
 | `truncated` | boolean | True when `maxTurns` cut older turns off. |

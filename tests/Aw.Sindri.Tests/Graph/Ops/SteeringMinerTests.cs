@@ -75,8 +75,8 @@ public sealed class SteeringMinerTests : IClassFixture<RoslynWarmup>
         JsonArray batch =
         [
             new JsonObject { ["text"] = "no ref" },
-            new JsonObject { ["ref"] = "transcript:0000000a#1 x", ["text"] = "a ref with a space" },
-            new JsonObject { ["ref"] = "transcript:0000000a#2", ["text"] = "   " },
+            new JsonObject { ["ref"] = "transcript:00000000000a#1 x", ["text"] = "a ref with a space" },
+            new JsonObject { ["ref"] = "transcript:00000000000a#2", ["text"] = "   " },
             "not a turn",
             new JsonObject { ["ref"] = Ref(10), ["text"] = new string('a', 1600), ["before"] = new string('x', 100) + new string('y', 400) },
         ];
@@ -125,7 +125,7 @@ public sealed class SteeringMinerTests : IClassFixture<RoslynWarmup>
             Row(Ref(2), "none", string.Empty),
             Row(Ref(3), "RESTATE", "  repeated\nthe   ask "),
             Row(Ref(1), "restate", "a second row for the same turn"),
-            Row("transcript:ffffffff#9", "restate", "a turn that is not in the batch"),
+            Row("transcript:0000ffffffff#9", "restate", "a turn that is not in the batch"),
             Row(Ref(4), "made_up", "a label outside the set"),
             "not a row",
             Row(Ref(5), "scope_surface", "   "));
@@ -151,29 +151,29 @@ public sealed class SteeringMinerTests : IClassFixture<RoslynWarmup>
     [Fact]
     public void Two_corrections_of_the_same_mistake_make_one_finding_and_one_alone_makes_none()
     {
-        var ranked = Rank([Batch(4, ("transcript:aaaaaaaa#1", "restate", "Repeated the ask!"), ("transcript:aaaaaaaa#2", "wrong_approach_design", "skipped tests")), Batch(3, ("transcript:bbbbbbbb#7", "restate", "repeated the ask"))]);
+        var ranked = Rank([Batch(4, ("transcript:0000aaaaaaaa#1", "restate", "Repeated the ask!"), ("transcript:0000aaaaaaaa#2", "wrong_approach_design", "skipped tests")), Batch(3, ("transcript:0000bbbbbbbb#7", "restate", "repeated the ask"))]);
 
         var finding = Assert.Single(ranked["findings"]!.AsArray())!;
         Assert.Equal("restate", finding["label"]!.GetValue<string>());
         Assert.Equal("repeated the ask", finding["mistake"]!.GetValue<string>());   // why: the two phrases tie on turns, so the shorter one names the finding
         Assert.Equal(2, finding["count"]!.GetValue<int>());
         Assert.Equal(2, finding["sessions"]!.GetValue<int>());
-        Assert.Equal(["transcript:aaaaaaaa#1", "transcript:bbbbbbbb#7"], finding["refs"]!.AsArray().Select(static r => r!.GetValue<string>()), StringComparer.Ordinal);
+        Assert.Equal(["transcript:0000aaaaaaaa#1", "transcript:0000bbbbbbbb#7"], finding["refs"]!.AsArray().Select(static r => r!.GetValue<string>()), StringComparer.Ordinal);
         Assert.Equal("2x restate: repeated the ask\nFrom 7 labeled turns of 7: 3 corrections.", ranked["summary"]!.GetValue<string>());
     }
 
     [Fact]
     public void A_turn_seen_twice_counts_once_and_rows_without_a_correction_label_or_phrase_are_dropped()
     {
-        var malformed = Batch(3, ("transcript:aaaaaaaa#1", "restate", "skipped the tests"));
+        var malformed = Batch(3, ("transcript:0000aaaaaaaa#1", "restate", "skipped the tests"));
         var corrections = malformed["corrections"]!.AsArray();
         corrections.Add((JsonNode)"not a row");
         corrections.Add((JsonNode)new JsonObject { ["ref"] = 5, ["label"] = "restate", ["mistake"] = "skipped the tests" });
-        corrections.Add((JsonNode)Row("transcript:aaaaaaaa#3", "none", "skipped the tests"));
-        corrections.Add((JsonNode)Row("transcript:aaaaaaaa#4", "restate", "?!"));
+        corrections.Add((JsonNode)Row("transcript:0000aaaaaaaa#3", "none", "skipped the tests"));
+        corrections.Add((JsonNode)Row("transcript:0000aaaaaaaa#4", "restate", "?!"));
 
-        var once = Rank([malformed, Batch(1, ("transcript:aaaaaaaa#1", "restate", "skipped the tests"))]);
-        var twice = Rank([malformed, Batch(1, ("transcript:aaaaaaaa#2", "restate", "skipped the tests"))]);
+        var once = Rank([malformed, Batch(1, ("transcript:0000aaaaaaaa#1", "restate", "skipped the tests"))]);
+        var twice = Rank([malformed, Batch(1, ("transcript:0000aaaaaaaa#2", "restate", "skipped the tests"))]);
 
         Assert.Empty(once["findings"]!.AsArray());
         Assert.Equal(1, once["corrections"]!.GetValue<int>());
@@ -185,10 +185,10 @@ public sealed class SteeringMinerTests : IClassFixture<RoslynWarmup>
     public void Findings_rank_by_turns_then_by_sessions()
     {
         var ranked = Rank([Batch(20,
-            ("transcript:00000001#1", "scope_surface", "missed the other screens"), ("transcript:00000001#2", "scope_surface", "missed the other screens"),
-            ("transcript:00000002#1", "restate", "ignored the earlier answer"), ("transcript:00000003#1", "restate", "ignored the earlier answer"),
-            ("transcript:00000004#1", "wrong_approach_process", "ran tests locally not on ci"), ("transcript:00000005#1", "wrong_approach_process", "ran tests locally not on ci"),
-            ("transcript:00000006#1", "wrong_approach_process", "ran tests locally not on ci"))]);
+            ("transcript:000000000001#1", "scope_surface", "missed the other screens"), ("transcript:000000000001#2", "scope_surface", "missed the other screens"),
+            ("transcript:000000000002#1", "restate", "ignored the earlier answer"), ("transcript:000000000003#1", "restate", "ignored the earlier answer"),
+            ("transcript:000000000004#1", "wrong_approach_process", "ran tests locally not on ci"), ("transcript:000000000005#1", "wrong_approach_process", "ran tests locally not on ci"),
+            ("transcript:000000000006#1", "wrong_approach_process", "ran tests locally not on ci"))]);
 
         Assert.Equal(["ran tests locally not on ci", "ignored the earlier answer", "missed the other screens"], ranked["findings"]!.AsArray().Select(static f => f!["mistake"]!.GetValue<string>()), StringComparer.Ordinal);
         Assert.Equal(3, ranked["count"]!.GetValue<int>());
@@ -198,8 +198,8 @@ public sealed class SteeringMinerTests : IClassFixture<RoslynWarmup>
     public void A_merge_joins_phrases_of_one_label_and_ignores_another_label_and_unknown_ids()
     {
         JsonObject[] batches = [Batch(5,
-            ("transcript:aaaaaaaa#1", "restate", "repeated the ask"), ("transcript:bbbbbbbb#1", "restate", "asked again for the same thing"),
-            ("transcript:cccccccc#1", "wrong_approach_design", "repeated the question"))];
+            ("transcript:0000aaaaaaaa#1", "restate", "repeated the ask"), ("transcript:0000bbbbbbbb#1", "restate", "asked again for the same thing"),
+            ("transcript:0000cccccccc#1", "wrong_approach_design", "repeated the question"))];
         var phrases = Run("group", Scope(("gather", new JsonObject { ["items"] = new JsonArray([.. batches.Select(static b => (JsonNode?)b.DeepClone())]) })))!["phrases"]!.AsArray();
         string Id(string mistake) => phrases.Single(p => string.Equals(p!["mistake"]!.GetValue<string>(), mistake, StringComparison.Ordinal))!["id"]!.GetValue<string>();
         var merges = new JsonArray(new JsonObject { ["keep"] = Id("repeated the ask"), ["same"] = new JsonArray(Id("asked again for the same thing"), Id("repeated the question"), "p999") });
@@ -208,15 +208,15 @@ public sealed class SteeringMinerTests : IClassFixture<RoslynWarmup>
 
         var finding = Assert.Single(ranked["findings"]!.AsArray())!;
         Assert.Equal(("restate", "repeated the ask", 2), (finding["label"]!.GetValue<string>(), finding["mistake"]!.GetValue<string>(), finding["count"]!.GetValue<int>()));   // why: the merge's 'keep' names the phrase when the turns tie
-        Assert.Equal(["transcript:aaaaaaaa#1", "transcript:bbbbbbbb#1"], finding["refs"]!.AsArray().Select(static r => r!.GetValue<string>()).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["transcript:0000aaaaaaaa#1", "transcript:0000bbbbbbbb#1"], finding["refs"]!.AsArray().Select(static r => r!.GetValue<string>()).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 
     [Fact]
     public void Group_lists_each_label_and_phrase_once_with_most_turns_first()
     {
         var batch = Batch(4,
-            ("transcript:aaaaaaaa#1", "restate", "skipped the tests"), ("transcript:aaaaaaaa#2", "rigor", "not a correction label"),
-            ("transcript:aaaaaaaa#3", "restate", "Repeated the ask"), ("transcript:aaaaaaaa#4", "restate", "repeated, the ask"));
+            ("transcript:0000aaaaaaaa#1", "restate", "skipped the tests"), ("transcript:0000aaaaaaaa#2", "rigor", "not a correction label"),
+            ("transcript:0000aaaaaaaa#3", "restate", "Repeated the ask"), ("transcript:0000aaaaaaaa#4", "restate", "repeated, the ask"));
         var grouped = Run("group", Scope(("gather", new JsonObject { ["items"] = new JsonArray(batch) })))!;
 
         var phrases = grouped["phrases"]!.AsArray().Select(static p => (p!["id"]!.GetValue<string>(), p["label"]!.GetValue<string>(), p["count"]!.GetValue<int>())).ToList();
@@ -224,7 +224,7 @@ public sealed class SteeringMinerTests : IClassFixture<RoslynWarmup>
         Assert.Equal(3, grouped["corrections"]!.GetValue<int>());
     }
 
-    private static string Ref(int line) => "transcript:0000000a#" + line.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    private static string Ref(int line) => "transcript:00000000000a#" + line.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     private static JsonObject Row(string reference, string label, string mistake) => new() { ["ref"] = reference, ["label"] = label, ["mistake"] = mistake };
 
