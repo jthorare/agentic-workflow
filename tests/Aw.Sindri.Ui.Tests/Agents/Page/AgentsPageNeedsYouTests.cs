@@ -253,11 +253,11 @@ public sealed class AgentsPageNeedsYouTests
         page.ClearSelection();
         page.Groups[0].Toggle();
         var jumped = page.Press("]");
-        var afterJump = (page.Groups[0].IsExpanded, page.SelectedKey);
+        var (jumpExpanded, jumpKey) = (page.Groups[0].IsExpanded, page.SelectedKey);
 
-        Assert.Equal((true, true, true), (head, jumped, afterJump.IsExpanded));
+        Assert.Equal((true, true, true), (head, jumped, jumpExpanded));
         Assert.Equal((true, asking), afterHead);
-        Assert.Equal(asking, afterJump.SelectedKey);
+        Assert.Equal(asking, jumpKey);
         Assert.Equal([asking, asking], asked.Select(e => e.Key), StringComparer.Ordinal);
     }
 
