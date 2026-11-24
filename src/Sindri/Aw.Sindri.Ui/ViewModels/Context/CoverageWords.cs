@@ -26,6 +26,8 @@ internal static class CoverageWords
         var symbols = view.Bands.Code.Symbols;
         var names = symbols.State;
         var stale = string.Equals(names, "stale", StringComparison.Ordinal);
+        // Only "ok" and "stale" mean the names were searched. Any other state (today "unavailable"; a later one such as "building") reads as not
+        // searched, and NamesDetail.Sentence gives the reason's words, or "aren't indexed" when it has none.
         var missing = !stale && !string.Equals(names, "ok", StringComparison.Ordinal);
         if (!missing)
         {

@@ -17,6 +17,18 @@ public sealed record InboxMessage(MessageId Id, string From, string FromName, st
     /// <summary>When `inbox --once` last showed the message; null when it never did.</summary>
     public DateTimeOffset? ShownAt { get; init; }
 
+    /// <summary>
+    /// Whether a lane sent the message: it carries the lane's session name, or it came from the socket of the session the lane runs
+    /// now. A recycled lane sends under its digest prompt, and an account switch drops the name too (#4103, #4108).
+    /// </summary>
+    /// <param name="session">The lane's session name ("team-lane").</param>
+    /// <param name="address">The sender address of the lane's running session; null when none was found.</param>
+    /// <param name="nameComparison">How the session name is compared.</param>
+    /// <returns>True when the name or the address matches.</returns>
+    public bool IsFromLane(string session, string? address, StringComparison nameComparison) =>
+        string.Equals(FromName, session, nameComparison)
+        || (address is { Length: > 0 } && string.Equals(From, address, StringComparison.Ordinal));
+
     /// <summary>Stores <paramref name="peer"/> with its classification.</summary>
     /// <param name="peer">The parsed message.</param>
     /// <returns>The inbox message, unresolved.</returns>

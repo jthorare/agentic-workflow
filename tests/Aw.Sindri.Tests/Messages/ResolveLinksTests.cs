@@ -71,7 +71,7 @@ public sealed class ResolveLinksTests
 
         Assert.Equal(urls, answer.Value.Links.Select(static l => l.Url));
         Assert.Equal([null, PrKey, null], answer.Value.Links.Select(static l => l.RowKey), StringComparer.Ordinal);
-        Assert.All(answer.Value.Links.Where(static l => l.RowKey is null), static l => Assert.Equal<(string?, string?, string?)>((null, null, null), (l.Title, l.State, l.Ci)));
+        Assert.All(answer.Value.Links.Where(static l => l.RowKey is null), static l => Assert.Equal((null, null, null), (l.Title, l.State, l.Ci)));
     }
 
     [Fact]
