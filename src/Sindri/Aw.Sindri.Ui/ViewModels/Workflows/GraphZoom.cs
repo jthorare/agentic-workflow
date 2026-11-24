@@ -22,6 +22,11 @@ internal static class GraphZoom
     /// <summary>The right gutter kept free of cards while the map shows (#4149): the map's width and its margin on both sides.</summary>
     internal const double MapGutter = MapWidth + (2 * MapMargin);
 
+    /// <summary>The map's gutter on a canvas this wide (#4191).</summary>
+    /// <param name="clipWidth">The canvas clip's width.</param>
+    /// <returns>The gutter's width.</returns>
+    internal static double MapGutterFor(double clipWidth) => Math.Min(MapGutter, clipWidth);   // red stub: no half-canvas cap yet
+
     /// <summary>The zoom steps of + and -, in percent.</summary>
     internal static IReadOnlyList<int> Ladder { get; } = [25, 33, 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200];
 
