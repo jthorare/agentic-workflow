@@ -22,10 +22,8 @@ public sealed class ScheduleSummaryTests
     [InlineData("0 7 * * thu", "Runs every Thursday at 7:00, UTC")]
     [InlineData("0 7 * * MON-FRI", "Runs every weekday at 7:00, UTC")]
     [InlineData("  0 7 * * 4 ", "Runs every Thursday at 7:00, UTC")]
-    public void A_weekly_or_daily_cron_reads_in_words(string cron, string expected)
-    {
+    public void A_weekly_or_daily_cron_reads_in_words(string cron, string expected) =>
         Assert.Equal(expected, Summary(cron));
-    }
 
     [Fact]
     public void A_weekly_cron_keeps_its_time_zone()
@@ -48,20 +46,16 @@ public sealed class ScheduleSummaryTests
     [InlineData("60 7 * * 4")]
     [InlineData("0 24 * * 4")]
     [InlineData("0 7 * *")]
-    public void A_cron_it_cannot_read_keeps_its_raw_text(string cron)
-    {
+    public void A_cron_it_cannot_read_keeps_its_raw_text(string cron) =>
         Assert.Equal($"Runs on schedule {cron.Trim()}, UTC", Summary(cron));
-    }
 
     [Theory]
     [InlineData("0 7 * * 1-5", "Runs every weekday at 7:00, UTC")]
     [InlineData("0 9 * * *", "Runs every day at 9:00, UTC")]
     [InlineData("0 * * * *", "Runs every hour, UTC")]
     [InlineData("0 8 * * 1", "Runs on Mondays at 8:00, UTC")]
-    public void The_four_presets_keep_their_words(string cron, string expected)
-    {
+    public void The_four_presets_keep_their_words(string cron, string expected) =>
         Assert.Equal(expected, Summary(cron));
-    }
 
     private static string Summary(string cron) => new ScheduleBlock().Summarize(new JsonObject { ["cron"] = cron }).Text;
 }
