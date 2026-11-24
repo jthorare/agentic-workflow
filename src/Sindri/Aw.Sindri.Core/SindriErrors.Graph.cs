@@ -116,4 +116,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-GRAPH-126: a step before the chosen one has no succeeded output to restore (it failed, was cancelled or never ran), so a re-run from the chosen step would feed it nothing.</summary>
     public static readonly ErrorDefinition GraphRerunUpstreamNotDone = new("SND-GRAPH-126", ErrorKind.Conflict, "A step before the chosen one did not succeed");
+
+    /// <summary>SND-GRAPH-127: every step the chosen one reads from was skipped in the source run, because the branch that leads to it was not taken, so a re-run from the chosen step would run it on nothing.</summary>
+    public static readonly ErrorDefinition GraphRerunBranchNotTaken = new("SND-GRAPH-127", ErrorKind.Conflict, "Every step before the chosen one was skipped");
 }
