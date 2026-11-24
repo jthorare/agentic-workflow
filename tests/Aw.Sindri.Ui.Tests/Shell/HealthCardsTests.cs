@@ -31,6 +31,7 @@ public sealed class HealthCardsTests
         await system.Show();
 
         Assert.Equal(Labels.ViewsUpToDate, system.Vm.ViewsWord);
+        Assert.Equal((StateGlyph.Ok, true), (system.Vm.ViewsGlyph, system.Vm.HasViewsGlyph));
         Assert.Equal([Labels.ViewsReadUpTo, "event 1 of 1", Labels.ViewsUpdated], Flat(system.Vm.ViewsRows).Take(3), StringComparer.Ordinal);
         Assert.Null(system.Vm.ViewsFix);
     }
@@ -43,6 +44,7 @@ public sealed class HealthCardsTests
         await system.Show();
 
         Assert.Equal(Labels.ViewsCardRebuilding, system.Vm.ViewsWord);
+        Assert.Equal((StateGlyph.None, false), (system.Vm.ViewsGlyph, system.Vm.HasViewsGlyph));
         Assert.Equal("RebuildViews", system.Vm.ViewsFix!.Action);
     }
 
@@ -54,7 +56,16 @@ public sealed class HealthCardsTests
         await system.Show();
 
         Assert.Equal(Labels.ViewsStalled, system.Vm.ViewsWord);
+        Assert.Equal((StateGlyph.Warning, true), (system.Vm.ViewsGlyph, system.Vm.HasViewsGlyph));
         Assert.Equal("RebuildViews", system.Vm.ViewsFix!.Action);
+    }
+
+    [Fact]
+    public void Views_not_read_yet_draw_no_mark()
+    {
+        var system = new SystemTestHarness();
+
+        Assert.Equal((Labels.ViewsUnknown, StateGlyph.None, false), (system.Vm.ViewsWord, system.Vm.ViewsGlyph, system.Vm.HasViewsGlyph));
     }
 
     [Fact]
