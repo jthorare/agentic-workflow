@@ -131,6 +131,7 @@ public sealed class WorkflowFindingsTests
 
         page.CloseSettings();
 
-        Assert.Equal(((string?)null, false), (page.FocusFieldName, page.IsFieldPickerAsked));
+        var sheetDefault = (page.Editor.Fields.FirstOrDefault(static f => f.IsRequired) ?? page.Editor.Fields.FirstOrDefault())?.Name ?? string.Empty;
+        Assert.Equal((sheetDefault, false), (page.FocusFieldName, page.IsFieldPickerAsked));
     }
 }

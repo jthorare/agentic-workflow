@@ -25,8 +25,9 @@ internal sealed partial class WorkflowFindingsList : UserControl
         }
 
         await page.FixFinding(finding, CancellationToken.None).ConfigureAwait(true);
-        if (page.FocusFieldName is { } name && this.FindAncestorOfType<WorkflowsPage>() is { } host)
+        if (page.IsFieldPickerAsked && this.FindAncestorOfType<WorkflowsPage>() is { } host)
         {
+            var name = page.FocusFieldName;
             // The sheet's fields are made on its next layout pass: focus once they are there
             Dispatcher.UIThread.Post(() => FocusField(host, name), DispatcherPriority.Loaded);
         }

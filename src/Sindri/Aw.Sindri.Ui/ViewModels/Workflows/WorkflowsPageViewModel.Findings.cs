@@ -25,8 +25,8 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>True when the selected step's findings show under the graph: it has some and the sheet, which lists them itself, is shut.</summary>
     public bool ShowsStepFindingsUnderGraph => HasStepFindings && !IsSettingsOpen;
 
-    /// <summary>The config field the sheet focuses after a fix (such as "prompt"), or null; forgotten when the sheet closes.</summary>
-    public string? FocusFieldName { get; private set => Set(ref field, value); }
+    // The config field a fix named (such as "prompt"), or null; it wins over the sheet's default in FocusFieldName and is forgotten when the sheet closes.
+    private string? _fixFieldName;
 
     /// <summary>True when a fix asked for the <c>/</c> field picker on <see cref="FocusFieldName"/>. The picker does not exist yet: #3033 reads this flag to open it.</summary>
     public bool IsFieldPickerAsked { get; private set => Set(ref field, value); }
@@ -58,7 +58,9 @@ internal sealed partial class WorkflowsPageViewModel
 
         if (IsSettingsOpen)
         {
-            (FocusFieldName, IsFieldPickerAsked) = (fieldName, true);
+            _fixFieldName = fieldName;
+            OnChanged(nameof(FocusFieldName));
+            IsFieldPickerAsked = true;
         }
     }
 
@@ -80,7 +82,8 @@ internal sealed partial class WorkflowsPageViewModel
                 OnChanged(nameof(ShowsStepFindingsUnderGraph));
                 if (!IsSettingsOpen)
                 {
-                    FocusFieldName = null;
+                    _fixFieldName = null;
+                    OnChanged(nameof(FocusFieldName));
                     IsFieldPickerAsked = false;
                 }
             }
