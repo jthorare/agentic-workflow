@@ -53,7 +53,7 @@ OVR_HINT=""
 # The override: let it through and record it.
 if [ -n "$RG_REASON" ]; then
   rg_update "$F" '
-    .overrides = ((.overrides // []) + [{hash: $h, kind: $kind, reason: $reason, at: $iso}] | .[-20:])
+    .overrides = ((.overrides // []) + [{hash: $h, kind: $kind, reason: $reason, at: $iso}] | .[-50:])
     | .counters.overrides += 1' --arg h "$RG_HASH" --arg kind "$KIND" --arg reason "$RG_REASON" \
     || rg_failopen retry-gate state-write
   exit 0
@@ -93,6 +93,11 @@ case "$KIND" in
       ACTION=advise; MSG="retry-guard: this exact call failed $FAILS times the same way. Change something (arguments, inputs, or the approach) before repeating it."
     fi ;;
 esac
+
+# An override marker with no reason is not an override: say so in the deny.
+if [ "$ACTION" = deny ] && [ "$RG_OVR_MARK" = true ]; then
+  MSG="$MSG An \`# aw-retry:\` override needs a reason after the colon (\`# aw-retry: <why this repeat is needed>\`); this one is empty, so the call is still denied."
+fi
 
 case "$ACTION" in
   none) exit 0 ;;

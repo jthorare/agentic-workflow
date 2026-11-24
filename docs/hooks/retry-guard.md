@@ -33,7 +33,7 @@ file 0600. A session id must match `^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`, or the 
 | `provider` | string | `claude`, `codex` or `cursor` (`AW_PROVIDER`, default `claude`). |
 | `updatedAt` | string | UTC time of the last write, `YYYY-MM-DDTHH:MM:SSZ`. |
 | `problems` | object | The open problems, keyed by call hash (see below). A cleared problem is removed. |
-| `overrides` | array | The last 20 overrides, oldest first (see below). |
+| `overrides` | array | The last 50 overrides, oldest first (see below). aw-meta turns new ones into events. |
 | `counters` | object | Totals for the session (see below). |
 
 ### A problem: `problems.<call hash>`
@@ -51,6 +51,9 @@ file 0600. A session id must match `^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`, or the 
 | `firstAt`, `lastAt` | string | UTC times of the first and the latest recorded failure. |
 | `retryAfter` | string | `transient` only: the earliest time a retry is not "too soon", or `""`. The wait doubles from 30 s per failure, up to 300 s. |
 | `authStamp` | string | `auth-expired` only: the mtime (epoch seconds) of the provider's auth file when the failure was recorded, or `""` when no auth file is known for the host. For `github.com` the file is `${GH_CONFIG_DIR:-~/.config/gh}/hosts.yml`. |
+| `errorHash` | string | sha256 (hex) of the last failure's error text, as the classifier read it (the first 8 KiB). The text itself is never stored. |
+| `errorHashes` | array | The distinct `errorHash` values this call has failed with, oldest first, at most the last 16. Bookkeeping for `distinctErrors`. |
+| `distinctErrors` | integer | How many different error texts this call has failed with. 1 with `failures` > 1 means the same failure again; it rising with `failures` means each try got new output, such as a poll seeing new state. Past 16 distinct texts an evicted one that comes back counts again. |
 
 ### An override: `overrides[]`
 
@@ -58,7 +61,7 @@ file 0600. A session id must match `^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`, or the 
 |---|---|---|
 | `hash` | string | The call hash that was let through. |
 | `kind` | string | The kind of its problem. |
-| `reason` | string | The text after `# aw-retry:` in the Bash command, at most 120 characters, control characters removed. |
+| `reason` | string | The text after `# aw-retry:` in the Bash command: control characters turned into spaces, trimmed, at most 200 characters, and passed to no other tool. Never empty: a marker with an empty or blank reason is no override (see below). |
 | `at` | string | UTC time. |
 
 ### Counters: `counters`
@@ -85,13 +88,17 @@ repeats. Any changed argument gives a new hash. The hooks store the hash, never 
 | Kind | Classified from (case-insensitive) | Gate, for the same hash |
 |---|---|---|
 | `missing-exe` | `command not found`, `Exit code 127` | Deny while `command -v <exe>` still fails. Once it succeeds, clear the problem. |
-| `auth-expired` | `401`, `bad credentials`, `token expired`, `gh auth login`, `authentication required`, `not logged in` | Deny once while the auth file's mtime is unchanged and less than 10 min have passed. After that, advise. A changed mtime clears the problem. |
+| `auth-expired` | `HTTP 401`, `401 Unauthorized`, `status 401` (a bare 401, such as "line 401", does not count), `bad credentials`, `token expired`, `gh auth login`, `authentication required`, `not logged in` | Deny once while the auth file's mtime is unchanged and less than 10 min have passed. After that, advise. A changed mtime clears the problem. |
 | `bad-args` | `unknown flag`, `unknown option`, `unknown command`, `invalid option`, `unrecognized option`, `usage:`, `invalid argument` | Bash: deny. Other tools: advise only. |
 | `missing-path` | `No such file or directory` with a path in the text, or `File does not exist` from a tool with a `file_path` or `path` argument | Deny while the path still does not exist. Once it exists, clear the problem. |
 | `transient` | `timed out`, `timeout`, `could not resolve host`, `temporary failure in name resolution`, `connection reset`, `connection refused`, `HTTP 5xx`, `rate limit` | Never deny. Advise "wait N s" while `retryAfter` is in the future. |
 | `unknown` | anything else | Never deny. Advise from the 3rd identical failure on. |
 
 The table is checked top to bottom: the first kind that matches wins. An interrupt (`is_interrupt: true`) is never recorded.
+
+The override: a Bash command that ends in `# aw-retry: <reason>` passes, and the gate records it in `overrides` with its
+reason. The reason is required. A marker with an empty or blank reason (`# aw-retry:`) is no override: the call is judged as
+if the marker were not there, and a deny adds that the override needs a reason.
 
 A deny exits 2 with one line on stderr that names the fix, for example:
 `` retry-guard: `rg` is not installed (this exact call failed with "command not found"). Install it or use another command. To repeat it on purpose, end the command with `# aw-retry: <reason>`. ``
@@ -120,7 +127,10 @@ Advice exits 0 with `{"hookSpecificOutput":{"hookEventName":"PreToolUse","additi
       "firstAt": "2026-11-24T10:03:40Z",
       "lastAt": "2026-11-24T10:03:40Z",
       "retryAfter": "",
-      "authStamp": ""
+      "authStamp": "",
+      "errorHash": "6f1d8a2c9b4e7f3a0d5c8b1e4a7f2d9c6b3e0a5d8c1f4b7e2a9d6c3f0b5e8a1d",
+      "errorHashes": ["6f1d8a2c9b4e7f3a0d5c8b1e4a7f2d9c6b3e0a5d8c1f4b7e2a9d6c3f0b5e8a1d"],
+      "distinctErrors": 1
     }
   },
   "overrides": [
@@ -135,7 +145,7 @@ Advice exits 0 with `{"hookSpecificOutput":{"hookEventName":"PreToolUse","additi
 | Provider | Failure input | Pre-tool deny |
 |---|---|---|
 | Claude Code | `PostToolUseFailure` (`error`, `is_interrupt`); `PostToolUse` clears | every tool (`PreToolUse .*`) |
-| Codex | `PostToolUse` whose shell `tool_response` says `Exit code: N` or `Process exited with code N`, or has an `exit_code`, with N not 0. The adapter keeps the event `PostToolUse` (other hooks see no change) and adds `aw_tool_failed: true` and `error` (the result text, 8 KiB at most) | every tool the Codex adapter maps |
+| Codex (unverified: no captured payload) | `PostToolUse` whose shell `tool_response` says `Exit code: N` or `Process exited with code N`, or has an `exit_code`, with N not 0. The adapter keeps the event `PostToolUse` (other hooks see no change) and adds `aw_tool_failed: true` and `error` (the result text, 8 KiB at most) | every tool the Codex adapter maps |
 | Cursor | `postToolUseFailure` (`error_message`, `is_interrupt`); `postToolUse` clears | `preToolUse` and `beforeShellExecution`. Post-tool output is advice only (`additional_context`) |
 
 The adapters README holds the full table (`config/hooks/adapters/README.md`).

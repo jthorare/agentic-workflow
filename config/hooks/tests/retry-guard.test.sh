@@ -239,6 +239,41 @@ check "override: the hash is the plain call's" "$(st s-ovr '.overrides[0].hash =
 check "override: counted" "$(st s-ovr '.counters.overrides')" "1"
 check "override: the problem stays open" "$(st s-ovr '.problems | length')" "1"
 
+for empty in 'aw-nosuch-tool --version # aw-retry:' 'aw-nosuch-tool --version # aw-retry:    '; do
+  gate "$(pre s-ovr Bash "$(bash_in "$empty")")"
+  check "override, empty reason ('${empty#*--version }'): still denied" "$RC" "2"
+  has "override, empty reason: the deny says a reason is needed" "$ERR" "needs a reason"
+done
+check "override, empty reason: never recorded as an override" "$(st s-ovr '"\(.counters.overrides) \(.overrides | length)"')" "1 1"
+LONG="$(printf 'x%.0s' $(seq 1 250))"
+gate "$(pre s-ovr Bash "$(bash_in "aw-nosuch-tool --version # aw-retry:    $LONG   ")")"
+check "override: the reason is trimmed and cut to 200 characters" "$(st s-ovr '.overrides[-1].reason | "\(length) \(startswith("x")) \(endswith("x"))"')" "200 true true"
+
+# --- the error hash: same failure again vs new state each time -------------------------------------------------------------
+reset
+EC="$(bash_in 'make poll')"
+record "$(failure s-eh Bash "$EC" 'still waiting: build 41 of 50')"
+check "error hash: 64 hex" "$(st s-eh '.problems[].errorHash | test("^[0-9a-f]{64}$")')" "true"
+check "error hash: one distinct error" "$(st s-eh '.problems[].distinctErrors')" "1"
+record "$(failure s-eh Bash "$EC" 'still waiting: build 41 of 50')"
+check "error hash: the same text again stays 1" "$(st s-eh '.problems[].distinctErrors')" "1"
+record "$(failure s-eh Bash "$EC" 'still waiting: build 42 of 50')"
+check "error hash: new text counts 2" "$(st s-eh '.problems[].distinctErrors')" "2"
+record "$(failure s-eh Bash "$EC" 'still waiting: build 41 of 50')"
+check "error hash: an earlier text again stays 2" "$(st s-eh '"\(.problems[].distinctErrors) \(.problems[].failures)"')" "2 4"
+check "error hash: the text itself is not stored" "$(grep -c 'still waiting' "$RG/s-eh.json")" "0"
+
+# --- 401 only as an HTTP status ---------------------------------------------------------------------------------------------
+reset
+record "$(failure s-401 Bash "$(bash_in 'node build.js')" 'SyntaxError: unexpected token, error at line 401')"
+check "401: \"error at line 401\" is unknown, not auth" "$(st s-401 '.problems[].kind')" "unknown"
+reset
+record "$(failure s-401b Bash "$(bash_in 'curl -sf https://api.example.com/x')" 'request failed with status 401')"
+check "401: \"status 401\" is auth-expired" "$(st s-401b '"\(.problems[].kind) \(.problems[].resource)"')" "auth-expired example.com"
+reset
+record "$(failure s-401c Bash "$(bash_in 'curl -sf https://api.example.com/y')" 'curl: (22) The requested URL returned error: 401 Unauthorized')"
+check "401: \"401 Unauthorized\" is auth-expired" "$(st s-401c '.problems[].kind')" "auth-expired"
+
 # --- a bad session id, the judge child, file modes, parallel writers --------------------------------------------------------
 reset
 record "$(failure '../evil' Bash "$CALL" 'aw-nosuch-tool: command not found')"

@@ -65,7 +65,7 @@ shopt -s nocasematch
 RE_NF1='([A-Za-z0-9._+/-]+): command not found'
 RE_NF2='command not found: ([A-Za-z0-9._+/-]+)'
 RE_127='exit code:? 127([^0-9]|$)'
-RE_AUTH='(http[^0-9]{0,8}401([^0-9]|$)|401 unauthorized|bad credentials|token (has )?expired|gh auth login|authentication required|not logged in|unauthorized)'
+RE_AUTH='(http 401([^0-9]|$)|401 unauthorized|status 401([^0-9]|$)|bad credentials|token (has )?expired|gh auth login|authentication required|not logged in|unauthorized)'
 RE_BAD='(unknown flag|unknown option|unknown command|invalid option|unrecognized option|usage:|invalid argument)'
 RE_TRANSIENT='(timed out|timeout|could not resolve host|temporary failure in name resolution|connection reset|connection refused|http[^0-9]{0,8}5[0-9][0-9]([^0-9]|$)|(^|[^0-9])50[234]([^0-9]|$)|rate limit)'
 if [[ $ERR_TEXT =~ $RE_NF1 ]] || [[ $ERR_TEXT =~ $RE_NF2 ]]; then
@@ -76,7 +76,7 @@ elif [[ $ERR_TEXT =~ $RE_AUTH ]]; then
   KIND=auth-expired
   RE_HOST='https?://([A-Za-z0-9.-]+)'
   if [[ $ERR_TEXT == *github.com* ]] || [ "$RG_EXE" = gh ]; then RES=github.com
-  elif [[ $ERR_TEXT =~ $RE_HOST ]]; then RES="${BASH_REMATCH[1]}"
+  elif [[ $ERR_TEXT =~ $RE_HOST ]] || [[ $RG_CMD =~ $RE_HOST ]]; then RES="${BASH_REMATCH[1]}"
   else RES=unknown-host; fi
   RES="${RES#api.}"
 elif [[ $ERR_TEXT =~ $RE_BAD ]]; then
@@ -104,6 +104,10 @@ case "$KIND" in bad-args | transient | unknown) RES="$RG_HASH" ;; esac
 RES="${RES//[$'\001'-$'\037']/ }"; RES="${RES:0:256}"
 [ -n "$RES" ] || RES="$RG_HASH"
 
+# The last failure's error text, as classified (8 KiB at most), hashed: the judge tells "the same failure again" from "a
+# poll that gets new state each time" by it. The text itself is never stored.
+ERR_HASH="$(rg_text_hash "$ERR_TEXT")"
+
 STAMP=""
 if [ "$KIND" = auth-expired ]; then
   AF="$(rg_auth_file "$RES")"
@@ -124,9 +128,14 @@ rg_update "$F" '
       lastAt: $iso,
       retryAfter: (if $kind == "transient"
                    then ($now + ([30 * pow(2; $n - 1), 300] | min | floor)) | todate else "" end),
-      authStamp: $stamp
+      authStamp: $stamp,
+      errorHash: $eh,
+      errorHashes: ((if $old != null and $old.kind == $kind then ($old.errorHashes // []) else [] end)
+                    | if index([$eh]) then . else (. + [$eh])[-16:] end),
+      distinctErrors: ((if $old != null and $old.kind == $kind then ($old.distinctErrors // 0) else 0 end)
+                       + (if $old != null and $old.kind == $kind and (($old.errorHashes // []) | index([$eh])) then 0 else 1 end))
     }
   | .counters.failures += 1' \
-  --arg h "$RG_HASH" --arg kind "$KIND" --arg res "$RES" --arg tool "$RG_TOOL" --arg exe "$RG_EXE" --arg stamp "$STAMP" \
+  --arg h "$RG_HASH" --arg kind "$KIND" --arg res "$RES" --arg tool "$RG_TOOL" --arg exe "$RG_EXE" --arg stamp "$STAMP" --arg eh "$ERR_HASH" \
   || rg_failopen retry-record state-write
 exit 0

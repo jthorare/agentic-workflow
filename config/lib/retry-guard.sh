@@ -27,7 +27,8 @@ rg_now() {
 }
 
 # rg_call <payload>: one jq run. Sets RG_TOOL, RG_CANON (tool_input, keys sorted, compact, with a Bash command's trailing
-# `# aw-retry: <reason>` removed), RG_REASON (that reason, or ""), RG_EXE (a Bash command's first word that is not an
+# `# aw-retry: <reason>` removed), RG_REASON (that reason, trimmed, at most 200 characters, or ""), RG_OVR_MARK ("true"
+# when the command ends in the `# aw-retry:` marker, even with an empty reason), RG_EXE (a Bash command's first word that is not an
 # assignment, without its folder), RG_CMD (the Bash command, override removed), RG_CWD, RG_EVENT and RG_INTR
 # ("true"/"false"). Returns 1 when the payload is not a JSON object.
 rg_call() {
@@ -40,17 +41,18 @@ rg_call() {
     | (.tool_name // "" | tostring) as $tool
     | (.tool_input // {}) as $in
     | (if $tool == "Bash" and ($in | type) == "object" and (($in.command // null) | type) == "string" then
-         ($in.command | capture("^(?<c>[\\s\\S]*?)\\s*#\\s*aw-retry:\\s*(?<r>[^\\n]*)\\z") // {c: $in.command, r: ""})
-       else {c: "", r: ""} end) as $ov
+         (($in.command | capture("^(?<c>[\\s\\S]*?)\\s*#\\s*aw-retry:(?<r>[^\\n]*)\\z") | . + {m: "true"})
+          // {c: $in.command, r: "", m: "false"})
+       else {c: "", r: "", m: "false"} end) as $ov
     | (if $tool == "Bash" and ($in | type) == "object" then ($in | .command = $ov.c) else $in end) as $canonIn
     | ($ov.c | [splits("\\s+")] | map(select(length > 0 and (test("^[A-Za-z_][A-Za-z0-9_]*=") | not))) | .[0] // "") as $exe
-    | $tool, ($canonIn | sortkeys | tojson), ($ov.r | clean | .[0:120]), ($exe | clean),
+    | $tool, ($canonIn | sortkeys | tojson), ($ov.r | clean | gsub("^\\s+|\\s+$"; "") | .[0:200]), ($exe | clean),
       ($ov.c | clean), (.cwd // "" | tostring | clean), (.hook_event_name // "" | tostring),
-      ((.is_interrupt // false) | tostring)
+      ((.is_interrupt // false) | tostring), $ov.m
   ' 2> /dev/null)" || return 1
   # Each value is one line: tojson escapes newlines, and clean() turns control characters into spaces.
   { IFS= read -r RG_TOOL; IFS= read -r RG_CANON; IFS= read -r RG_REASON; IFS= read -r RG_EXE
-    IFS= read -r RG_CMD; IFS= read -r RG_CWD; IFS= read -r RG_EVENT; IFS= read -r RG_INTR; } <<< "$out"
+    IFS= read -r RG_CMD; IFS= read -r RG_CWD; IFS= read -r RG_EVENT; IFS= read -r RG_INTR; IFS= read -r RG_OVR_MARK; } <<< "$out"
   case "$RG_EXE" in */*) RG_EXE="${RG_EXE##*/}" ;; esac
   case "$RG_EXE" in *[!A-Za-z0-9._+-]* | "") RG_EXE="" ;; esac
   return 0
@@ -65,6 +67,13 @@ rg_hash() {
     h="$(printf '%s\n%s' "$RG_TOOL" "$RG_CANON" | shasum -a 256)"
   fi
   RG_HASH="${h%% *}"
+}
+
+# rg_text_hash <text>: prints sha256 (hex) of the text.
+rg_text_hash() {
+  local h
+  if command -v sha256sum > /dev/null 2>&1; then h="$(printf '%s' "$1" | sha256sum)"; else h="$(printf '%s' "$1" | shasum -a 256)"; fi
+  printf '%s\n' "${h%% *}"
 }
 
 # rg_mtime <file>: its mtime in epoch seconds, or "".
