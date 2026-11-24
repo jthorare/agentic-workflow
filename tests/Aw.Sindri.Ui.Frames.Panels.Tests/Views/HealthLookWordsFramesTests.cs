@@ -75,7 +75,7 @@ public sealed class HealthLookWordsFramesTests : FrameHost
         Assert.NotNull(icon);
         Assert.True(icon.IsEffectivelyVisible, "the Context index mark is hidden");
         Assert.Equal(StateGlyph.Warning, icon.Glyph);
-        Assert.Equal(TokenColor("Brush.Attention"), Assert.IsAssignableFrom<ISolidColorBrush>(icon.Foreground).Color);
+        Assert.Equal(TokenColor("Brush.Attention"), Assert.IsType<ISolidColorBrush>(icon.Foreground, exactMatch: false).Color);
     });
 
     [Fact]
