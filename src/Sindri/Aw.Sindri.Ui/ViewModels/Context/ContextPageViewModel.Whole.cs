@@ -183,6 +183,14 @@ internal sealed partial class ContextPageViewModel
 
     private void ChangedWhole()
     {
+        if (Whole.IsReady && StageMessage.Length > 0)
+        {
+            // The whole map is the stage now, so "draws nothing" is no longer true; the sentence was set at the read, when it was not ready yet (#3844).
+            StageMessage = string.Empty;
+            OnChanged(nameof(StageMessage));
+            OnChanged(nameof(HasStageMessage));
+        }
+
         OnChanged(nameof(Head));
         OnChanged(nameof(HasHead));
         OnChanged(nameof(HeadDetail));
