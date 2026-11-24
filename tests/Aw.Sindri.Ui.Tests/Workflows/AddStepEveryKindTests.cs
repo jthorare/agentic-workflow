@@ -39,12 +39,13 @@ public sealed class AddStepEveryKindTests
         await page.GraphEdit.AddStep(block, Token);
         var example = block.ExampleConfig is { } raw ? JsonNode.Parse(raw.GetRawText()) as JsonObject ?? [] : [];
         var expected = new JsonObject();
+        var oneOfFirst = block.OneOf?.Select(static g => g[0]).ToList() ?? [];   // a wait needs one of Wait for / Wait until (#4359): the first of each group is typed
         foreach (var field in page.Editor.Fields)
         {
             Assert.Equal(field.IsBoolean && field.IsRequired ? "false" : string.Empty, field.Text);   // #4272: no example goes in as a value
             var named = Roots(field.Placeholder).Where(static r => !ExampleReferences.ScopeRoots.Contains(r)).ToList();
             Assert.True(named.Count == 0, $"'{type}': the hint of '{field.Name}' names " + string.Join(", ", named));
-            if (field.IsRequired)
+            if (field.IsRequired || oneOfFirst.Contains(field.Name, StringComparer.Ordinal))
             {
                 expected[field.Name] = TypeRequired(field, example);
             }
