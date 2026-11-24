@@ -19,6 +19,13 @@ internal sealed partial class HealthViewModel
             { Rebuilding: true } => Labels.ViewsCardRebuilding,
             _ => Labels.ViewsUpToDate,
         };
+        ViewsGlyph = views switch
+        {
+            null => StateGlyph.None,
+            { Stalled: true } => StateGlyph.Warning,
+            { Rebuilding: true } => StateGlyph.None,
+            _ => StateGlyph.Ok,
+        };
         ViewsRows = views is null ? [] : ViewsCells(views);
         ViewsFix = views is { } v && (v.Stalled || v.Rebuilding) ? Catalog.Rebuild : null;
     }
