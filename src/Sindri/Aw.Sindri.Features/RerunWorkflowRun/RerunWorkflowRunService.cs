@@ -15,7 +15,7 @@ namespace Aw.Sindri.Features.RerunWorkflowRun;
 /// Re-runs an ended run from one step (Workflows page spec §7.3, P7): a new run of the source run's revision that takes the stored node runs of every step the chosen step does not feed,
 /// runs the chosen step and everything after it again, and carries the source run's id in its trigger. Refuses an unknown run (SND-GRAPH-101), a deleted workflow (SND-GRAPH-008),
 /// a step the revision lacks or a loop body step (SND-GRAPH-001), a run that has not ended (SND-GRAPH-125), a step before the chosen one that did not succeed (SND-GRAPH-126),
-/// an output the store cut at 64 KB (SND-GRAPH-108) and an input that is not a JSON object (SND-GRAPH-106).
+/// a step whose every parent was skipped on a branch nobody took (SND-GRAPH-127), an output the store cut at 64 KB (SND-GRAPH-108) and an input that is not a JSON object (SND-GRAPH-106).
 /// </summary>
 /// <param name="workflows">The workflows and their revisions.</param>
 /// <param name="runs">The source run and its node runs; the next occurrence comes from them.</param>
@@ -76,7 +76,7 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
         }
 
         var restored = RerunPlan.Restored(spec, from, rows.Value);
-        var refused = LoopRefusal(spec, from) ?? UpstreamRefusal(spec, from, restored);
+        var refused = LoopRefusal(spec, from) ?? UpstreamRefusal(spec, from, restored) ?? BranchRefusal(spec, from, rows.Value);
         return refused is { } error ? error : Split(record, spec, from, restored, rows.Value);
     }
 
@@ -101,6 +101,18 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
         return missing.Count == 0
             ? null
             : SindriErrors.GraphRerunUpstreamNotDone.With($"'{missing[0].Value}' comes before '{from.Value}' and did not succeed in that run; re-run from '{missing[0].Value}' instead");
+    }
+
+    // why: the walk opens the edge from a restored step into the chosen one, but a parent skipped on a dead branch has no output, so '{{p.*}}' in the chosen step would resolve empty. One parent that ran is enough.
+    private static Error? BranchRefusal(GraphSpec spec, NodeId from, IReadOnlyList<NodeRun> rows)
+    {
+        var parents = spec.Edges.Where(e => e.To == from).Select(static e => e.From).Distinct().ToList();
+        if (parents.Count == 0 || parents.Exists(p => rows.Any(r => r.NodeId == p && r.Status == NodeRunStatus.Succeeded)))
+        {
+            return null;
+        }
+
+        return SindriErrors.GraphRerunBranchNotTaken.With($"'{parents[0].Value}' was skipped in that run, because the branch to it was not taken, so '{from.Value}' would run with nothing from it; re-run from a step on the branch that ran");
     }
 
     private static Result<Plan> Split(WorkflowRecord record, GraphSpec spec, NodeId from, IReadOnlyList<NodeId> restored, IReadOnlyList<NodeRun> rows)
