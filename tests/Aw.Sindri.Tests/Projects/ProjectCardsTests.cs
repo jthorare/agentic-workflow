@@ -281,6 +281,14 @@ public sealed class ProjectCardsTests
     public void Build_has_no_sentence_for_a_page_with_only_an_attached_project()
         => Expect.True(Page(attached: [Row(ProjectRows.HandMadeId, linear: null, name: "Kitchen")], configured: false).Empty is null);
 
+    [Fact]
+    public void A_home_without_Linear_and_with_a_by_hand_project_shows_no_empty_sentence()
+    {
+        var page = Page(attached: [Row(ProjectRows.HandMadeId, linear: null, name: "Kitchen")], configured: false, firstRead: false);
+
+        Expect.Equal((null, null), (page.Empty, page.EmptyCode));
+    }
+
     private static ProjectsPage PageWith(bool configured, bool tokenMissing, bool firstRead = true, IReadOnlyList<ProjectAttachedRow>? attached = null, Result<ProjectFactsSnapshot>? factsResult = null) =>
         ProjectCards.Build(new ProjectPageInputs(attached ?? [], [], factsResult ?? Snapshot([], firstRead, _owner), Synced(), configured, tokenMissing), _now, all: false);
 
