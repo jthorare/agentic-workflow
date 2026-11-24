@@ -13,12 +13,18 @@ public sealed class WatchQueuedPrOutOfListTests
 
     private WatchService Service() => new(
         _world.Config,
-        new WatchPoller(_world.Repo, _world.Resources, _world.InboxCounts, _world.Values, Worlds.FollowUps(_world), Worlds.Reservation(_world), _world.Context),
+        new WatchPoller(_world.Repo, _world.Resources, _world.InboxCounts, _world.Values, FollowUps(), Worlds.Reservation(_world), _world.Context),
         _world.Values,
         _world.Delay,
         _world.Clock,
         new LaneReport(_world.Monitor, _world.Values),
         _world.Board);
+
+    // With the team inputs, as DI builds it: without them the poll reads no ready messages and checks nothing outside the listing.
+    private PollFollowUps FollowUps() => new(
+        new WatchSweeper(_world.Config, _world.Sweeper, _world.Values),
+        Worlds.QueueWatch(_world),
+        new TeamPrInputs(_world.Repo, _world.Values, _world.Messages, _world.Paths, _world.WorktreeFiles));
 
     private StatusService Status() => new(_world.Config, Worlds.StatusReader(_world), _world.Values, _world.Resources, Worlds.Advisor(_world), _world.Processes, _world.Clock);
 
