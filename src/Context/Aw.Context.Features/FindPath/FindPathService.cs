@@ -12,8 +12,8 @@ internal sealed class FindPathService(MapReader reader, IScrubberFactory scrubbe
     public async ValueTask<Result<PathView>> Handle(FindPathRequest request, CancellationToken cancellationToken)
     {
         var call = await reader.Open(request.Scope, scrubbers, cancellationToken).ConfigureAwait(false);
-        var from = call.Bind(c => AnchorMatch.Resolve(c.Map.Graph, request.From, request.Scope.Repos));
-        var to = from.Bind(_ => AnchorMatch.Resolve(call.Value.Map.Graph, request.To, request.Scope.Repos));
+        var from = call.Bind(c => AnchorMatch.Resolve(c.Map.Graph, request.From, request.Scope.Repos, label: c.Text.ChoiceLabel));
+        var to = from.Bind(_ => AnchorMatch.Resolve(call.Value.Map.Graph, request.To, request.Scope.Repos, label: call.Value.Text.ChoiceLabel));
         if (to.IsError)
         {
             return to.Error;
