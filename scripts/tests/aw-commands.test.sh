@@ -200,4 +200,42 @@ out="$(cd "$WORK" && bash "$HOOK")"; rc=$?
 check "git-context: outside a git repo: exit 0" "$rc" "0"
 lacks "git-context: outside a git repo: no pointer" "$out" "Commands:"
 
+# --- detect (#4221 PR 2): optional; an entry without it validates and behaves exactly as before ---
+DA="$WORK/detect-a/commands.json" DB="$WORK/detect-b/commands.json"
+WATCH_P='{"id":"tk-pr","purpose":"Watch a pull request","terms":["pr","watch"],"run":{"argv":["true","--repo","{repo}"],"cwd":"any"},"params":[{"name":"repo","required":true,"description":"OWNER/NAME"}],"effects":"read-only","output":"one line","stop":"exits on its own","owner":"test","verified":{"status":"verified","at":"2026-11-24"}'
+catalog "$DA" "$(entry tk-status 'Show the toolkit status' '["status","health"]' '["true"]' any)" "$WATCH_P}"
+catalog "$DB" "$(entry tk-status 'Show the toolkit status' '["status","health"]' '["true"]' any)" \
+  "$WATCH_P"',"detect":{"all":["\\bgh\\s+pr\\s+checks","\\bsleep\\b"],"params":{"repo":"--repo\\s+([^\\s]+)"}}}'
+check "detect: a catalog without it validates" "$(bash "$CLI" validate "$DA" > /dev/null 2>&1; echo $?)" "0"
+check "detect: a catalog with it validates" "$(bash "$CLI" validate "$DB" > /dev/null 2>&1; echo $?)" "0"
+# norm: the output with the catalog path made neutral and, for JSON, every detect key removed
+norm() {
+  local o; o="$(sed "s#$WORK/detect-[ab]#X#g")"
+  if jq -e . > /dev/null 2>&1 <<< "$o"; then jq -c 'walk(if type == "object" then del(.detect) else . end)' <<< "$o"; else printf '%s\n' "$o"; fi
+}
+for q in "show tk-status --json" "search status --json" "list --json" "show tk-pr --set repo=a/b" "list"; do
+  # shellcheck disable=SC2086
+  a="$(cd "$WORK" && AW_COMMANDS_TOOLKIT="$DA" bash "$CLI" $q 2>&1 | norm)"
+  # shellcheck disable=SC2086
+  b="$(cd "$WORK" && AW_COMMANDS_TOOLKIT="$DB" bash "$CLI" $q 2>&1 | norm)"
+  check "detect: '$q' prints the same with and without detect" "$b" "$a"
+done
+check "detect: tk-status's own JSON has no detect key" "$(cd "$WORK" && AW_COMMANDS_TOOLKIT="$DB" bash "$CLI" show tk-status --json | jq 'has("detect")')" "false"
+for bad in '{"all":[]}:detect.all: must be a non-empty array of regexes' \
+           '{"all":["("]}:detect.all[0]: not a valid regex' \
+           '{"all":["x"],"params":{"pr":"([0-9]+)"}}:detect.params.pr: pr is not a declared param' \
+           '{"all":["x"],"params":{"repo":"no group"}}:detect.params.repo: needs one capture group' \
+           '{"all":["x"],"when":1}:detect.when: unknown key'; do
+  d="${bad%%:detect*}"; msg="detect${bad#*:detect}"
+  catalog "$WORK/detect-bad/commands.json" "$WATCH_P"',"detect":'"$d"'}'
+  out="$(bash "$CLI" validate "$WORK/detect-bad/commands.json" 2>&1)"; rc=$?
+  check "detect: $d is a finding (exit 1)" "$rc" "1"
+  has "detect: $d names the field" "$out" "entries[0] (tk-pr): $msg"
+done
+PW="$(jq -c '.entries[] | select(.id == "aw-pr-watch")' "$ROOT/config/commands.toolkit.json")"
+check "the toolkit has an aw-pr-watch entry" "$(jq -r .id <<< "$PW" 2> /dev/null)" "aw-pr-watch"
+check "aw-pr-watch: argv is a command plus one word per param" "$(jq -c .run.argv <<< "$PW" 2> /dev/null)" '["aw-pr-watch","--repo","{repo}","--pr","{pr}"]'
+check "aw-pr-watch: it has detect rules" "$(jq -r '.detect.all | length > 0' <<< "$PW" 2> /dev/null)" "true"
+check "aw-pr-watch: show fills the params" "$(cd "$ROOT" && AW_COMMANDS_TOOLKIT="$ROOT/config/commands.toolkit.json" bash "$CLI" show aw-pr-watch --set repo=acme/app --set pr=7 --json | jq -c .invocation)" '["aw-pr-watch","--repo","acme/app","--pr","7"]'
+
 [ "$fail" = 0 ] && echo "all aw-commands tests passed" || { echo "aw-commands tests FAILED"; exit 1; }

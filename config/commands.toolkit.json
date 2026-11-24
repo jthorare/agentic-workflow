@@ -231,6 +231,71 @@
         "status": "verified",
         "at": "2026-11-23"
       }
+    },
+    {
+      "id": "aw-pr-watch",
+      "purpose": "Watch one pull request (state, head, checks, reviews) and print only what changes, read-only, instead of writing a polling loop",
+      "terms": [
+        "pr",
+        "pull request",
+        "watch",
+        "watcher",
+        "poll",
+        "checks",
+        "ci",
+        "merged",
+        "review",
+        "status"
+      ],
+      "run": {
+        "argv": [
+          "aw-pr-watch",
+          "--repo",
+          "{repo}",
+          "--pr",
+          "{pr}"
+        ],
+        "cwd": "any"
+      },
+      "params": [
+        {
+          "name": "repo",
+          "required": true,
+          "description": "the repository, OWNER/NAME"
+        },
+        {
+          "name": "pr",
+          "required": true,
+          "description": "the pull request number"
+        }
+      ],
+      "prerequisites": [
+        "aw-pr-watch on PATH (scripts/install-cs.sh)",
+        "gh logged in (gh auth status)"
+      ],
+      "effects": "read-only",
+      "env": [
+        "AW_STATE_DIR",
+        "AW_PR_WATCH_BACKOFF"
+      ],
+      "output": "the first snapshot (under 30 lines), then one line per change; --json for objects",
+      "stop": "exits 0 on merged or closed, 4 at --deadline (default 120 min), 5 after 3 failed reads; --once polls once",
+      "owner": "agentic-workflow",
+      "verified": {
+        "status": "verified",
+        "at": "2026-11-24"
+      },
+      "detect": {
+        "all": [
+          "\\bgh\\s+(pr\\s+(view|checks|status)|api\\s+[^\\s]*pulls)",
+          "\\b(while|until)\\b",
+          "\\bsleep\\b"
+        ],
+        "params": {
+          "repo": "(?:--repo|-R)[\\s=]+([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)|repos/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/pulls",
+          "pr": "gh\\s+pr\\s+(?:view|checks|status)\\s+([0-9]+)|pulls/([0-9]+)|--pr[\\s=]+([0-9]+)"
+        }
+      }
     }
   ]
 }
