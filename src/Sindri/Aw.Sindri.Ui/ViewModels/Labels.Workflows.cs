@@ -35,6 +35,7 @@ internal static partial class Labels
 
     /// <summary>A workflow's state: a glyph and a word, never colour alone.</summary>
     /// <param name="active">True when triggers run a revision.</param>
+    /// <param name="archived">True when the workflow is archived; wins over <paramref name="active"/>.</param>
     /// <returns>The glyph and the word.</returns>
     internal static (string Glyph, string Word) WfState(bool active, bool archived = false) => archived ? ("○", "Archived") : active ? ("●", "Active") : ("○", "Off");
 

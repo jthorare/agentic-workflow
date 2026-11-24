@@ -27,7 +27,7 @@ internal sealed partial class WorkflowsPage
             return;
         }
 
-        if (_crumbText is not { IsAttachedToVisualTree: true })
+        if (_crumbText is null || !WorkflowsBack.IsVisualAncestorOf(_crumbText))   // a re-applied template drops the old TextBlock: find the new one
         {
             _crumbText = WorkflowsBack.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault();
         }

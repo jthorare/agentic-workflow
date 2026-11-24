@@ -65,6 +65,7 @@ internal sealed partial class WorkflowEditorSheet : UserControl
         base.OnKeyDown(e);
     }
 
+#pragma warning disable MA0155 // why: an Avalonia RoutedEvent handler returns void, so it can only be async void
     private async void OnAskSave(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)
@@ -73,6 +74,7 @@ internal sealed partial class WorkflowEditorSheet : UserControl
             this.FindAncestorOfType<WorkflowsPage>()?.FocusEdit();
         }
     }
+#pragma warning restore MA0155
 
     private void OnAskDiscard(object? sender, RoutedEventArgs e)
     {

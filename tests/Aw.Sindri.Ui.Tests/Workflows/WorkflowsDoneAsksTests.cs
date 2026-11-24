@@ -94,7 +94,7 @@ public sealed class WorkflowsDoneAsksTests
 
         await page.SaveAndLeave(Token);
 
-        Assert.Single(_f.Server.AppliedWorkflowOps);
+        _ = Assert.Single(_f.Server.AppliedWorkflowOps);
         Assert.False(page.IsEditing);
         Assert.False(page.AsksSaveFirst);
     }

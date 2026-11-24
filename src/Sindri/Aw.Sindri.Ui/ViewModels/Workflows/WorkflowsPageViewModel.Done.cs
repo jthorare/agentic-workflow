@@ -6,6 +6,7 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>True while Done asks "Save your changes?" because a field of the open sheet changed.</summary>
     public bool AsksSaveFirst { get; private set => Set(ref field, value); }
 
+#pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
     /// <summary>The question's words.</summary>
     public string AskSaveText => Labels.WfAskSave;
 
@@ -14,6 +15,7 @@ internal sealed partial class WorkflowsPageViewModel
 
     /// <summary>The question's Keep editing button.</summary>
     public string AskKeepText => Labels.WfAskKeep;
+#pragma warning restore CA1822, MA0041
 
     private bool _leaveWhenSaved;
 

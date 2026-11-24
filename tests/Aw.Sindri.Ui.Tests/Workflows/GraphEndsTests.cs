@@ -35,10 +35,8 @@ public sealed class GraphEndsTests
     }
 
     [Fact]
-    public void Both_edges_missing_get_both_ends()
-    {
+    public void Both_edges_missing_get_both_ends() =>
         Assert.Equal(["true \u2192 done", "false \u2192 done"], Texts(GraphEnds.Build([Condition()], [], _none)));
-    }
 
     [Fact]
     public void Both_edges_present_get_no_end()
@@ -49,10 +47,8 @@ public sealed class GraphEndsTests
     }
 
     [Fact]
-    public void A_graph_with_no_condition_gets_no_branch_end_only_the_done_word()
-    {
+    public void A_graph_with_no_condition_gets_no_branch_end_only_the_done_word() =>
         Assert.Equal(["done"], Texts(GraphEnds.Build([Step("a", 0, 0)], [], _none)));
-    }
 
     [Fact]
     public void A_step_the_spec_has_an_out_edge_for_gets_no_done_word_even_when_its_target_is_not_drawn()
@@ -63,10 +59,8 @@ public sealed class GraphEndsTests
     }
 
     [Fact]
-    public void An_empty_graph_gets_no_end()
-    {
+    public void An_empty_graph_gets_no_end() =>
         Assert.Empty(GraphEnds.Build([], [], _none));
-    }
 
     [Fact]
     public void A_branch_the_spec_has_an_edge_for_gets_no_end_even_when_its_target_is_not_drawn()
