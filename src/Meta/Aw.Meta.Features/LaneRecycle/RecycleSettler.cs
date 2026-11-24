@@ -14,8 +14,10 @@ namespace Aw.Meta.Features.LaneRecycle;
 /// <param name="addresses">Finds the socket of the session the lane runs now; null to match the lane by name only.</param>
 internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, TimeProvider clock, ObligationEventWriter? obligations = null, LaneAddress? addresses = null)
 {
+    private readonly LaneAddress? _addresses = addresses;
+
     /// <summary>Gets a value indicating whether the settler can match the lane by its socket (it was given a <see cref="LaneAddress"/>).</summary>
-    internal bool MatchesBySocket => addresses is not null;
+    internal bool MatchesBySocket => _addresses is not null;
 
     // The lane's open messages from before this run that ask for this recycle (a `DIGEST READY` line, or one naming this digest) are answered by it: dismiss them like `inbox-dismiss`.
     internal async ValueTask<Result<IReadOnlyList<string>>> Settle(RecyclePlan plan, DateTimeOffset started, CancellationToken cancellationToken)
@@ -32,12 +34,7 @@ internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, Tim
             return all.Error;
         }
 
-        // A lane recycled before sends under its digest title, so its socket finds it too (#4108). Find runs after the /clear.
-        // It reads the session id under the lane's tmux session; when that read fails, it reads the lane record, which the
-        // runner already rewrote to the new id. The lane's Claude keeps its process over /clear, so the new session sends from
-        // the socket the old one did. The match holds over /clear only: after a process restart or an account switch, the
-        // old message sits under the old socket and matches by name only, the same limit as merge-check.
-        var address = addresses is null ? null : await addresses.Find(plan.Team, plan.Lane, cancellationToken).ConfigureAwait(false);
+        var address = await Address(plan, cancellationToken).ConfigureAwait(false);
         var now = clock.GetUtcNow();
         var reason = string.Create(CultureInfo.InvariantCulture, $"settled by lane-recycle {plan.Lane} at {now.UtcDateTime:yyyy-MM-dd HH:mm:ss}Z");
         var settled = new List<string>();
@@ -61,6 +58,14 @@ internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, Tim
 
         return settled;
     }
+
+    // A lane recycled before sends under its digest title, so its socket finds it too (#4108). Find runs after the /clear.
+    // It reads the session id under the lane's tmux session; when that read fails, it reads the lane record, which the
+    // runner already rewrote to the new id. The lane's Claude keeps its process over /clear, so the new session sends from
+    // the socket the old one did. The match holds over /clear only: after a process restart or an account switch, the
+    // old message sits under the old socket and matches by name only, the same limit as merge-check.
+    private async ValueTask<string?> Address(RecyclePlan plan, CancellationToken cancellationToken) =>
+        _addresses is null ? null : await _addresses.Find(plan.Team, plan.Lane, cancellationToken).ConfigureAwait(false);
 
     // The meta runs a recycle in the turn it reads the lane's DIGEST READY, and only its Stop hook syncs the inbox, so the
     // request is not stored yet (#2647): read the meta session's own transcript first, as stop-check would.
