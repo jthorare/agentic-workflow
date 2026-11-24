@@ -176,7 +176,7 @@ public sealed class ContextMapViewModelTests
     {
         var map = Map(node => node["bands"]!["code"]!["symbols"]!["reason"] = reason);   // the golden's symbols are unavailable
 
-        Assert.EndsWith(" " + why + " See Code index on the Health page.", map.Coverage, StringComparison.Ordinal);   // the reason, then where to look (#4122)
+        Assert.EndsWith(" " + why + " See Code index on the System page.", map.Coverage, StringComparison.Ordinal);   // the reason, then where to look (#4122)
         Assert.Equal(string.Equals(why, Labels.ContextMapNamesNotIndexed, StringComparison.Ordinal) ? Labels.ContextMapNamesDetail : why, NamesDetail.For(new SymbolsView("unavailable", reason, [])));
     }
 }

@@ -18,7 +18,7 @@ namespace Aw.Sindri.Ui.Tests.Context;
 [Lane(TestLane.Unit)]
 public sealed class CoverageWordsTests
 {
-    private const string NextStep = "See Code index on the Health page.";
+    private const string NextStep = "See Code index on the System page.";
 
     private static LensesView View(Action<JsonNode> edit)
     {

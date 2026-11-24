@@ -285,7 +285,7 @@ public sealed class ContextMapLayoutTests
 
         Assert.Equal(Labels.ContextMapMetaIntent(1, 2, 1), layout.Bands[0].Meta);
         Assert.Equal(Labels.ContextMapMetaProduct(1, 0, 6), layout.Bands[1].Meta);
-        Assert.Equal(Labels.ContextMapMetaCode(2, 0, namesAvailable: false), layout.Bands[2].Meta);
+        Assert.Equal(Labels.ContextMapMetaCode(2, 0, "unavailable"), layout.Bands[2].Meta);
     }
 
     [Fact]

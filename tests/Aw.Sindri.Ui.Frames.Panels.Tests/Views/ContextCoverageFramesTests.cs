@@ -23,7 +23,7 @@ public sealed class ContextCoverageFramesTests : FrameHost
 {
     private const string Question = "Tab groups";
 
-    private const string NextStep = "See Code index on the Health page.";
+    private const string NextStep = "See Code index on the System page.";
 
     private static string Anchor => (string)GoldenFiles.Node("context-lenses", "map-tabs")["anchor"]!["key"]!;
 
