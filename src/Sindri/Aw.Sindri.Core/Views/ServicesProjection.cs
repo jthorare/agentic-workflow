@@ -52,7 +52,7 @@ internal sealed class ServicesProjection(EventFactory events) : IProjection
         ArgumentNullException.ThrowIfNull(ran);
         ArgumentNullException.ThrowIfNull(recorded);
         var last = new LastRun(ran.Slot, ran.Outcome, ran.Code, recorded.Envelope.OccurredAt, ran.Detail);
-        return new ServiceRow(ran.Service, last, row?.Paused ?? false, recorded.Sequence, ran.Job is null ? ran.Slot : row?.ScheduledSlot, row?.PausedBy, row?.PausedAt);
+        return new ServiceRow(ran.Service, last, row?.Paused ?? false, recorded.Sequence, ran.Job is null ? ran.Slot : row?.ScheduledSlot, row?.PausedBy, row?.PausedAt, row?.ResumedAt);
     }
 
     /// <summary>The row after a 'service.paused': paused, the last run and scheduled slot kept (a row is made when there is none).</summary>
@@ -64,10 +64,10 @@ internal sealed class ServicesProjection(EventFactory events) : IProjection
     {
         ArgumentNullException.ThrowIfNull(paused);
         ArgumentNullException.ThrowIfNull(recorded);
-        return new ServiceRow(paused.Service, row?.LastRun, Paused: true, recorded.Sequence, row?.ScheduledSlot, recorded.Envelope.Actor, recorded.Envelope.OccurredAt);
+        return new ServiceRow(paused.Service, row?.LastRun, Paused: true, recorded.Sequence, row?.ScheduledSlot, recorded.Envelope.Actor, recorded.Envelope.OccurredAt, row?.ResumedAt);
     }
 
-    /// <summary>The row after a 'service.resumed': not paused, the rest kept.</summary>
+    /// <summary>The row after a 'service.resumed': not paused, resumed at the event's time (#3909), the rest kept.</summary>
     /// <param name="row">The row so far, or null.</param>
     /// <param name="resumed">The payload.</param>
     /// <param name="recorded">The recorded event.</param>
@@ -76,6 +76,6 @@ internal sealed class ServicesProjection(EventFactory events) : IProjection
     {
         ArgumentNullException.ThrowIfNull(resumed);
         ArgumentNullException.ThrowIfNull(recorded);
-        return new ServiceRow(resumed.Service, row?.LastRun, Paused: false, recorded.Sequence, row?.ScheduledSlot);
+        return new ServiceRow(resumed.Service, row?.LastRun, Paused: false, recorded.Sequence, row?.ScheduledSlot, ResumedAt: recorded.Envelope.OccurredAt);
     }
 }
