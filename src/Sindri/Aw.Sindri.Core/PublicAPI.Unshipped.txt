@@ -10874,6 +10874,9 @@ Aw.Sindri.Core.Forge.IPullRequests.Digest(System.Collections.Generic.IReadOnlyLi
 Aw.Sindri.Core.Forge.PullView.Base.get -> string!
 Aw.Sindri.Core.Forge.PullView.Base.init -> void
 Aw.Sindri.Core.Scheduling.IndexBuildWords
+const Aw.Sindri.Core.Scheduling.IndexBuildWords.FirstBuildRunning = "building the first index" -> string!
+const Aw.Sindri.Core.Scheduling.IndexBuildWords.Unbuildable = "can't build a code index: no default branch to build from (no origin/HEAD, main or master)" -> string!
+const Aw.Sindri.Core.Scheduling.IndexBuildWords.UnbuildableFix = "check out the default branch or fetch origin" -> string!
 static Aw.Sindri.Core.Scheduling.IndexBuildWords.IsBuildOf(Aw.Sindri.Core.Jobs.JobRow! job, string! repo) -> bool
 static Aw.Sindri.Core.Scheduling.IndexBuildWords.Waiting(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobRow!>! finishedNewestFirst, System.DateTimeOffset now) -> string?
 Aw.Sindri.Core.Events.LaunchFailed.LaunchFailed(Aw.Sindri.Core.Launch.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, string! Code, string! Message, Aw.Sindri.Core.Events.LaunchFailureDetail? Detail = null, Aw.Sindri.Core.Launch.InstanceAddress? Instance = null, string? State = null, int? Attempt = null) -> void

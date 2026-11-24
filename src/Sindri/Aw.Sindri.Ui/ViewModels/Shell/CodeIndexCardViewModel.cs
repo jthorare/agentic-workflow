@@ -136,7 +136,7 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
     }
 
     // A repo with no commit: the server's look words when it flags the repo and no pause holds the build (#3515: a flagged repo with no build yet never reads as plain "build queued"),
-    // else the state's words; "build queued" reads "first build queued" here, since a repo never built has no rebuild to wait for (#3602).
+    // else the state's words; "build queued" reads "first build queued" and "building" "building the first index" here, since a repo never built has no rebuild to wait for (#3602, #4091).
     private static string NoCommitLine(CodeIndexRepoView repo, CodeIndexHealthView? health)
     {
         if (health is { NeedsLook: true, Paused: false, LookWords: { Length: > 0 } lookWords })
@@ -145,7 +145,12 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         }
 
         var word = StateWords(StateOf(repo, health), health);
-        return repo.Repo + ": " + (string.Equals(word, Labels.CodeIndexQueued, StringComparison.Ordinal) ? Labels.CodeIndexFirstBuildQueued : word);
+        return repo.Repo + ": " + (word switch
+        {
+            Labels.CodeIndexQueued => Labels.CodeIndexFirstBuildQueued,
+            Labels.CodeIndexBuilding => Labels.CodeIndexFirstBuildRunning,   // a repo with no commit is building its first index, in doctor's words (#4091)
+            _ => word,
+        });
     }
 
     private static bool Shown(CodeIndexLayerView layer) => _named.Contains(layer.Layer, StringComparer.Ordinal) || !One(layer.State, "ok", "disabled");

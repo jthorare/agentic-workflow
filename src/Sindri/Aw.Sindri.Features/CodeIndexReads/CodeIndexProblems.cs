@@ -58,7 +58,7 @@ internal static class CodeIndexProblems
         var repo = health.Repo;
         if (health.State == "unbuildable")
         {
-            return new(CodeIndexErrors.IndexNotBuilt.Code, $"{repo}: can't build a code index: no default branch to build from (no origin/HEAD, main or master); check out the default branch or fetch origin", $"the code index for {repo} has no default branch to build from");
+            return new(CodeIndexErrors.IndexNotBuilt.Code, $"{repo}: {IndexBuildWords.Unbuildable}; {IndexBuildWords.UnbuildableFix}", $"the code index for {repo} has no default branch to build from");
         }
 
         return health.State == "queued" && health.QueuedFor >= TimeSpan.FromMinutes(QueuedLimitMinutes)

@@ -8,6 +8,15 @@ public static class IndexBuildWords
 {
     private const string BuildKind = "BuildCodeIndex";
 
+    /// <summary>Why a repo's first index can never build (#3187): the Health card's look and the doctor row say it in these words (#4091).</summary>
+    public const string Unbuildable = "can't build a code index: no default branch to build from (no origin/HEAD, main or master)";
+
+    /// <summary>The fix for <see cref="Unbuildable"/>, the same on the Health card and the doctor row (#4091).</summary>
+    public const string UnbuildableFix = "check out the default branch or fetch origin";
+
+    /// <summary>A repo whose first index build runs: the doctor row's words, and the Health card's line for a repo with no commit says the same (#4091).</summary>
+    public const string FirstBuildRunning = "building the first index";
+
     /// <summary>Whether the job is a code index build of the repo (key 'index:&lt;repo&gt;', lower case).</summary>
     /// <param name="job">The job.</param>
     /// <param name="repo">The repo's name.</param>

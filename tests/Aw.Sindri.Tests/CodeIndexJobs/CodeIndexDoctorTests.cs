@@ -121,7 +121,7 @@ public sealed class CodeIndexDoctorTests
 
         Assert.Equal(CheckState.Warn, row.State);
         Assert.DoesNotContain("first build queued", row.Detail, StringComparison.Ordinal);
-        Assert.Contains("no main or origin/main", row.Detail, StringComparison.Ordinal);
+        Assert.Equal(("can't build a code index: no default branch to build from (no origin/HEAD, main or master)", "check out the default branch or fetch origin"), (row.Detail, row.Fix));   // the Health card's words (#4091)
     }
 
     [Fact, Trait("Lane", "unit")]

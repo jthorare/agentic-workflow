@@ -152,7 +152,7 @@ public sealed class CodeIndexCardTests
     [Theory]
     [InlineData("missing", "repo: no index yet")]
     [InlineData("damaged", "repo: damaged, rebuilding on the next check")]
-    [InlineData("building", "repo: building")]
+    [InlineData("building", "repo: building the first index")]
     [InlineData("waiting", "repo: waiting to retry")]
     [InlineData("something-new", "repo: something-new")]
     public async Task An_index_with_no_commit_says_its_state_in_words(string state, string expected)
