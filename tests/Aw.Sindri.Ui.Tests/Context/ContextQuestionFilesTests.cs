@@ -94,6 +94,26 @@ public sealed class ContextQuestionFilesTests
     }
 
     [Fact]
+    public async Task A_question_asked_before_the_whole_map_is_read_loses_its_draws_nothing_sentence_when_the_whole_map_lands()
+    {
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var server = new FakeSindriApi { QueryAnswer = _ => LaneRecycleAnswer(), LensesAnswer = EmptyMap, WholeMapGate = gate };
+        var page = Page(server);
+        var opened = page.Opened(Token);   // the first whole-map read waits at the gate
+        page.AnchorText = Question;
+        await page.Submit(Token);
+        Assert.True(page.HasStageMessage, "with no whole map yet the empty lens is the stage, so the sentence shows");
+
+        gate.SetResult();
+        await opened;
+
+        // why: the sentence was set once at the read from Whole.IsReady, so it stayed over the whole map once that landed (#3844)
+        Assert.True(page.ShowWhole);
+        Assert.False(page.HasStageMessage, page.StageMessage);
+        Assert.Equal([Recycle, Pane], page.AnswerFiles.Select(f => f.Path).ToList());   // the files stay listed
+    }
+
+    [Fact]
     public async Task A_long_answer_lists_its_first_25_files_and_says_how_many_more_in_words()
     {
         var files = Enumerable.Range(1, 30).Select(n => string.Create(CultureInfo.InvariantCulture, $"src/Many/File{n:D2}.cs")).ToList();
