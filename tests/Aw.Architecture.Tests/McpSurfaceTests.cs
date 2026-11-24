@@ -68,7 +68,7 @@ public sealed class McpSurfaceTests
         typeof(PickTodoHoldRequest).FullName!,
         typeof(UndoTodoHoldRequest).FullName!,
         typeof(ImportTodoNoteRequest).FullName!,
-        // why: issue 2258 Part 1 (every verb for agents): an agent session builds, edits, validates, activates, pauses, archives, runs and cancels workflows through the workflow_* tools; each write is desk class and names the launch as its actor (WriteAttributionTests); the requests are internal to Features, so they're named by full name
+        // why: issue 2258 Part 1 (every verb for agents): an agent session builds, edits, validates, activates, pauses, archives, runs, re-runs and cancels workflows through the workflow_* tools; each write is desk class and names the launch as its actor (WriteAttributionTests); the requests are internal to Features, so they're named by full name
         "Aw.Sindri.Features.ActivateWorkflow.ActivateWorkflowRequest",
         "Aw.Sindri.Features.ApplyWorkflowOps.ApplyWorkflowOpsRequest",
         "Aw.Sindri.Features.CancelWorkflowRun.CancelWorkflowRunRequest",
@@ -77,6 +77,7 @@ public sealed class McpSurfaceTests
         "Aw.Sindri.Features.PauseWorkflow.PauseWorkflowRequest",
         "Aw.Sindri.Features.ReplaceWorkflow.ReplaceWorkflowRequest",
         "Aw.Sindri.Features.RunWorkflow.RunWorkflowRequest",
+        "Aw.Sindri.Features.RerunWorkflowRun.RerunWorkflowRunRequest",   // #3204: a session may re-run an ended run from a step exactly as it may start one (workflow_rerun)
         "Aw.Sindri.Features.ValidateWorkflow.ValidateWorkflowRequest",
     };
 

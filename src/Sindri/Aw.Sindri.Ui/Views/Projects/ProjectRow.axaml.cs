@@ -11,11 +11,17 @@ internal sealed partial class ProjectRow : UserControl
     /// <summary>A click: open the project's sheet.</summary>
     public static readonly RoutedEvent<RoutedEventArgs> OpenEvent = RoutedEvent.Register<ProjectRow, RoutedEventArgs>(nameof(OpenEvent), RoutingStrategies.Bubble);
 
+    // Under about 80 px the reason would show a few letters and an ellipsis: it goes whole (still laid out, so it comes back when the cell grows) and the health dot says the level.
+    private const double MinReasonWidth = 80;
+
     public ProjectRow()
     {
         InitializeComponent();
         AddHandler(PointerReleasedEvent, OnPointerReleased);
+        ProjectRowReason.SizeChanged += OnReasonSized;
     }
+
+    private void OnReasonSized(object? sender, SizeChangedEventArgs e) => ProjectRowReason.Opacity = e.NewSize.Width < MinReasonWidth ? 0 : 1;
 
     private void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {

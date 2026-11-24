@@ -797,6 +797,7 @@ Aw.Meta.Core.Messages.InboxMessage.FromName.init -> void
 Aw.Meta.Core.Messages.InboxMessage.Id.get -> Aw.Meta.Core.Ids.MessageId
 Aw.Meta.Core.Messages.InboxMessage.Id.init -> void
 Aw.Meta.Core.Messages.InboxMessage.InboxMessage(Aw.Meta.Core.Ids.MessageId Id, string! From, string! FromName, string! Body, System.DateTimeOffset At, Aw.Meta.Core.Messages.Classification! Class) -> void
+Aw.Meta.Core.Messages.InboxMessage.IsFromLane(string! session, string? address, System.StringComparison nameComparison) -> bool
 Aw.Meta.Core.Messages.InboxMessage.ShownAt.get -> System.DateTimeOffset?
 Aw.Meta.Core.Messages.InboxMessage.ShownAt.init -> void
 Aw.Meta.Core.Messages.InboxMessage.Resolution.get -> Aw.Meta.Core.Messages.MessageResolution?

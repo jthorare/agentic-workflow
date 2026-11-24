@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Aw.Transcripts.Core;
 
 namespace Aw.Transcripts.Infrastructure.Repos;
 
@@ -6,15 +7,17 @@ namespace Aw.Transcripts.Infrastructure.Repos;
 /// Maps a session's cwd to the main repo it belongs to: the nearest directory with a '.git'. A '.git' file is a
 /// worktree's (or a submodule's) pointer, 'gitdir: &lt;dir&gt;'; that dir's 'commondir' names the main repo's git dir,
 /// whose parent is the main checkout. A cwd that no longer exists, or is in no repo, is kept as it is. A cwd that is no
-/// valid path (a NUL byte) has no repo: null, never an exception.
+/// valid path (a NUL byte) has no repo: null, never an exception. A cwd that no longer exists and sits under one of the
+/// host's worktree roots belongs to that root's main checkout.
 /// </summary>
-internal sealed class RepoResolver
+/// <param name="worktreeRoots">The host's (worktree root, main checkout) pairs; empty keeps a gone cwd as it is.</param>
+internal sealed class RepoResolver(IReadOnlyList<WorktreeRoot> worktreeRoots)
 {
     private readonly ConcurrentDictionary<string, string?> _known = new(StringComparer.Ordinal);
 
     public string? Resolve(string cwd) => _known.GetOrAdd(cwd, Find);
 
-    private static string? Find(string cwd)
+    private string? Find(string cwd)
     {
         if (cwd.AsSpan().IndexOfAny(Path.GetInvalidPathChars()) >= 0)
         {
@@ -24,6 +27,11 @@ internal sealed class RepoResolver
         if (!Path.IsPathFullyQualified(cwd))
         {
             return cwd;
+        }
+
+        if (!Directory.Exists(cwd) && !File.Exists(cwd))
+        {
+            return WorktreeRoots.MainCheckoutOf(worktreeRoots, cwd) ?? cwd;
         }
 
         try

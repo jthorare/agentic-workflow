@@ -12577,6 +12577,8 @@ Aw.Context.Core.Concepts.ConceptAnswers.Glossary(Aw.Context.Core.Engine.ContextS
 Aw.Context.Core.Concepts.ConceptAnswerFills
 Aw.Context.Core.Concepts.ConceptAnswerFills.ConceptAnswerFills(System.Func<Aw.Context.Core.Engine.ContextScope!, System.Threading.CancellationToken, System.Threading.Tasks.Task!>! fill, System.Action<System.Exception!>? failed = null) -> void
 Aw.Context.Core.Concepts.ConceptAnswerFills.Start(Aw.Context.Core.Engine.ContextScope! scope) -> void
+Aw.Context.Core.Concepts.ConceptAnswerFills.Dispose() -> void
+Aw.Context.Core.Concepts.ConceptAnswerFills.DisposeAsync() -> System.Threading.Tasks.ValueTask
 Aw.Context.Core.Concepts.IConceptAnswerFills
 Aw.Context.Core.Concepts.IConceptAnswerFills.Start(Aw.Context.Core.Engine.ContextScope! scope) -> void
 Aw.Context.Core.Concepts.KeptConcepts
