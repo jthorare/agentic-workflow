@@ -28,7 +28,8 @@
 # them and asks go/wait/stop on a terminal, and stops without one unless AW_SINDRI_STOP_OK=1.
 # One publish at a time per state dir (a lock dir holding the owner's pid; a dead owner's lock is taken over).
 # A killed publish leaves tree.*, sdk-tree.*, verify.* and .stage.* (its EXIT trap never ran). The next publish
-# removes them while it holds the lock, including when the build is already current. Between binaries it removes the
+# removes them while it holds the lock, including when the build is already current. The toolkit pack holds the same
+# lock, so its sdk-tree is never taken for a dead one. Between binaries the publish removes the
 # previous publish's bin/ and any NativeAOT .o, so the next object file (sindri-ui.o is the large one) is not written
 # beside them. A publish that dies with "No space left on device" says the disk is full.
 #
@@ -274,14 +275,30 @@ reclaim_scratch() {
   done
 }
 
-# Take the publish lock if no live install holds it, reclaim dead scratch, and release the lock.
-# A live holder is left alone. A dead holder's lock is taken over, same as publish's wait loop.
+# Wait for the publish lock and take it. A holder whose pid is dead loses the lock. A lock without a pid is a publish
+# between its mkdir and its pid write, so it is waited for like a live one.
+take_lock() {
+  local owner
+  mkdir -p "$base"
+  lock="$base/.lock"
+  until mkdir "$lock" 2> /dev/null; do
+    owner="$(cat "$lock/pid" 2> /dev/null || true)"
+    if [ -n "$owner" ] && ! kill -0 "$owner" 2> /dev/null; then rm -rf "$lock"; continue; fi
+    say "waiting for another install-cs publish (pid ${owner:-?})"
+    sleep 2
+  done
+  echo $$ > "$lock/pid"
+}
+
+# Take the publish lock if no install holds it, reclaim dead scratch, and release the lock. It never waits.
+# A live holder is left alone, and so is a lock without a pid (take_lock's rule). A dead holder's lock is taken over.
 reclaim_unlocked() {
   local lk="$base/.lock" owner
   mkdir -p "$base" "$cache"
   if ! mkdir "$lk" 2> /dev/null; then
     owner="$(cat "$lk/pid" 2> /dev/null || true)"
-    if [ -n "$owner" ] && kill -0 "$owner" 2> /dev/null; then return 0; fi
+    [ -n "$owner" ] || return 0
+    if kill -0 "$owner" 2> /dev/null; then return 0; fi
     rm -rf "$lk"
     mkdir "$lk" 2> /dev/null || return 0
   fi
@@ -298,7 +315,7 @@ drop_earlier_outputs() {
   [ -n "$tree" ] || return 0
   rm -rf "$tree/artifacts/bin"
   [ -d "$tree/artifacts" ] || return 0
-  find "$tree/artifacts" -name '*.o' -exec rm -f {} +
+  find "$tree/artifacts" -type f -name '*.o' -exec rm -f {} +
 }
 
 # ilc reports ENOSPC as an IOException in the publish log. Name it before the compiler tail.
@@ -370,16 +387,7 @@ publish() {
     if [ -n "$guard_bin" ] && ! sindri_open_runs_guard "$guard_bin"; then exit 1; fi
   fi
 
-  mkdir -p "$base"
-  lock="$base/.lock"
-  until mkdir "$lock" 2> /dev/null; do
-    local owner
-    owner="$(cat "$lock/pid" 2> /dev/null || true)"
-    if [ -n "$owner" ] && ! kill -0 "$owner" 2> /dev/null; then rm -rf "$lock"; continue; fi
-    say "waiting for another install-cs publish (pid ${owner:-?})"
-    sleep 2
-  done
-  echo $$ > "$lock/pid"
+  take_lock
   if [ "$rebuild" = 0 ] && built "$stamp"; then
     reclaim_scratch
     say "build $stamp is current"
@@ -649,6 +657,9 @@ pack_sdk() {
   export DOTNET_ROOT="${DOTNET_ROOT:-$HOME/.dotnet}"
   export PATH="$DOTNET_ROOT:$PATH"
   mkdir -p "$cache" "$sdk_feed"
+  # why: a run whose build was current released the lock, and another run's reclaim_scratch removes every sdk-tree.*
+  # it finds under the lock. The EXIT trap releases it.
+  [ -n "$lock" ] || take_lock
   local ptree version out="$cache/pack-sdk.log" pre=()
   ptree="$(mktemp -d "$cache/sdk-tree.XXXXXX")"
   version="0.1.0-local.$(date -u +%Y%m%d%H%M%S)"
