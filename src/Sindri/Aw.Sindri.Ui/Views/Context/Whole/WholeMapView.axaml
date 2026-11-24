@@ -201,6 +201,7 @@
                       <TextBlock Classes="caption subtle" Text="{Binding Mark}" IsVisible="{Binding HasMark}" />
                       <TextBlock Classes="caption subtle" Text="{Binding LoadingText}" IsVisible="{Binding IsLoading}" />
                       <TextBlock Classes="caption" Text="{Binding FailedText}" IsVisible="{Binding IsFailed}" TextWrapping="Wrap" />
+                      <Button x:Name="WholeSectionRetry" Classes="panel-action" Content="{Binding RetryText}" IsVisible="{Binding CanRetry}" Click="OnNodeSectionRetry" HorizontalAlignment="Left" AutomationProperties.Name="{Binding RetryName}" />
                       <TextBlock Classes="caption subtle" Text="{Binding EmptyText}" IsVisible="{Binding IsEmpty}" TextWrapping="Wrap" />
                       <ItemsControl ItemsSource="{Binding Rows}">
                         <ItemsControl.ItemTemplate>

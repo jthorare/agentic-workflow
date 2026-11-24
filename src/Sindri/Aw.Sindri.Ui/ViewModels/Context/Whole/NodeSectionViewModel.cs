@@ -64,6 +64,7 @@ internal sealed class NodeSectionViewModel
     /// <summary>A section whose read is still running.</summary>
     internal static NodeSectionViewModel Loading(string heading) => new(heading, [], string.Empty, string.Empty, string.Empty, isLoading: true);
 
-    /// <summary>A section whose read failed.</summary>
-    internal static NodeSectionViewModel Failed(string heading, string failedText) => new(heading, [], string.Empty, string.Empty, failedText, isLoading: false);
+    /// <summary>A section whose read failed; with <paramref name="retry"/> its Retry button runs that read again (#3060).</summary>
+    internal static NodeSectionViewModel Failed(string heading, string failedText, Func<CancellationToken, Task>? retry = null) =>
+        new(heading, [], string.Empty, string.Empty, failedText, isLoading: false) { Retrier = retry };
 }

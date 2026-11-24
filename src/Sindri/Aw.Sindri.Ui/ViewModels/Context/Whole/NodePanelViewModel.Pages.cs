@@ -89,10 +89,35 @@ internal sealed partial class NodePanelViewModel
         var relates = d.Concepts is { } concepts
             ? NodeSectionViewModel.Of(Labels.ContextNodePanelRelatesTo, concepts, d.IsAction ? Labels.ContextNodePanelNoConcept : Labels.ContextNodePanelNoActionConcept)
             : NodeSectionViewModel.Loading(Labels.ContextNodePanelRelatesTo);
-        var why = d.WhyFailed ? NodeSectionViewModel.Failed(Labels.ContextWholeBandWhy, FailedText)
+        var why = d.WhyFailed ? NodeSectionViewModel.Failed(Labels.ContextWholeBandWhy, FailedText, ct => RetryWhy(d, ct))
             : d.Why is { } rows ? NodeSectionViewModel.Of(Labels.ContextWholeBandWhy, rows, Labels.ContextNodePanelNoWhy)
             : NodeSectionViewModel.Loading(Labels.ContextWholeBandWhy);
         return [first, relates, why, NodeSectionViewModel.Of(Labels.ContextMapAreaCode, d.Code, Labels.ContextPagesNoCode, d.Code.Count > 0 ? Labels.ContextPagesCode : string.Empty)];
+    }
+
+    // A failed Why's Retry (#3060): only the lens is read again; the node and the other sections stay as drawn. A newer Open or a Close drops the answer.
+    private async Task RetryWhy(Draft draft, CancellationToken cancellationToken)
+    {
+        var version = _version;
+        Sections = Build(draft with { Why = null, WhyFailed = false });
+        Changed();
+        (List<NodeEdgeRowViewModel>? Rows, bool Failed) why;
+        try
+        {
+            why = await ReadWhy(draft.View.Node.Key, cancellationToken).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (version != _version)
+        {
+            return;
+        }
+
+        Sections = Build(draft with { Why = why.Rows, WhyFailed = why.Failed });
+        Changed();
     }
 
     // The decisions, then the records, the intent lens serves for the node (the server widens an action's or page's scope to its page or actions).

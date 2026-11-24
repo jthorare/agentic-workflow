@@ -1,4 +1,6 @@
+using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.Views.Context.Whole;
 
@@ -6,4 +8,12 @@ namespace Aw.Sindri.Ui.Views.Context.Whole;
 internal sealed partial class WholeMapView
 {
     private void OnNodePanelRetry(object? sender, RoutedEventArgs e) => _ = _map?.Panel.Retry();
+
+    private void OnNodeSectionRetry(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: NodeSectionViewModel section })
+        {
+            _ = section.Retry();
+        }
+    }
 }
