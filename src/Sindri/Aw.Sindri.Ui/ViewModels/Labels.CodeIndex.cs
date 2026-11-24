@@ -29,6 +29,9 @@ internal static partial class Labels
     /// <summary>The card's state word while the only repos not ok are queued for their first build.</summary>
     internal const string CodeIndexQueued = "build queued";
 
+    /// <summary>The card's state word while a build runs and the server flags no repo (#3430).</summary>
+    internal const string CodeIndexBuilding = "building";
+
     /// <summary>A repo line's state word for a repo queued for its first build: it has no commit yet (#3602).</summary>
     internal const string CodeIndexFirstBuildQueued = "first build queued";
 
@@ -41,9 +44,10 @@ internal static partial class Labels
         "missing" => "no index yet",
         "damaged" => "damaged, rebuilding on the next check",
         "stale" => "behind main",
-        "building" => "building",
+        "building" => CodeIndexBuilding,
         "queued" => CodeIndexQueued,
         "waiting" => "waiting to retry",
+        "unbuildable" => "can't build",
         _ => state,
     };
 

@@ -882,6 +882,31 @@
           "Temporalio": "[1.20.0, 1.20.0]"
         }
       },
+      "aw.transcripts.core": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Kernel": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]",
+          "Vogen": "[8.0.7, 8.0.7]"
+        }
+      },
+      "aw.transcripts.features": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Kernel": "[1.0.0, )",
+          "Aw.Transcripts.Core": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]"
+        }
+      },
+      "aw.transcripts.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Kernel": "[1.0.0, )",
+          "Aw.Redaction": "[1.0.0, )",
+          "Aw.Transcripts.Core": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]"
+        }
+      },
       "aw.uidriver.avalonia": {
         "type": "Project",
         "dependencies": {
@@ -941,6 +966,8 @@
           "Aw.Sindri.Features": "[1.0.0, )",
           "Aw.Sindri.Infrastructure": "[1.0.0, )",
           "Aw.Sindri.Workflows": "[1.0.0, )",
+          "Aw.Transcripts.Core": "[1.0.0, )",
+          "Aw.Transcripts.Infrastructure": "[1.0.0, )",
           "ModelContextProtocol.AspNetCore": "[2.2.0, 2.2.0]",
           "SkiaSharp.NativeAssets.Linux.NoDependencies": "[3.119.4, 3.119.4]",
           "SkiaSharp.NativeAssets.Win32": "[3.119.4, 3.119.4]",

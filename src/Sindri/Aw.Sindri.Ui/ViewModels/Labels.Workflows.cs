@@ -147,19 +147,14 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string WfRunTitle(string id) => "Run " + id;
 
-    /// <summary>What started a run.</summary>
-    /// <param name="kind">The trigger's kind, as served.</param>
-    /// <returns>The words.</returns>
-    internal static string WfStartedBy(string kind) => "Started by " + kind;
-
-    /// <summary>A run row's trigger when the object has no kind.</summary>
-    internal const string WfUnknownTrigger = "an unknown trigger";
-
     /// <summary>The heading over a run's outputs.</summary>
     internal const string WfOutputsHeading = "What the run produced";
 
     /// <summary>The heading over a node's input.</summary>
     internal const string WfInputHeading = "Input";
+
+    /// <summary>The heading over a code step's body.</summary>
+    internal const string WfCodeHeading = "Code";
 
     /// <summary>The heading over a node's output.</summary>
     internal const string WfOutputHeading = "Output";
@@ -174,10 +169,13 @@ internal static partial class Labels
     internal static string WfNodeItems(string node, int count) => string.Create(CultureInfo.InvariantCulture, $"{node} · {count} items");
 
     /// <summary>One item of a for_each node.</summary>
-    /// <param name="index">The item's position, from 0.</param>
+    /// <param name="index">The item's position as served, counted from 1.</param>
     /// <param name="count">How many items.</param>
     /// <returns>The words.</returns>
-    internal static string WfItemTitle(int index, int count) => string.Create(CultureInfo.InvariantCulture, $"Item {index + 1} of {count}");
+    internal static string WfItemTitle(int index, int count) => string.Create(CultureInfo.InvariantCulture, $"Item {index} of {count}");
+
+    /// <summary>The title of a collect step's own row (its result), above its item rows.</summary>
+    internal const string WfCollectResultTitle = "Result";
 
     /// <summary>A node run's accessible name.</summary>
     /// <param name="title">The node or item.</param>

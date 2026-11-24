@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Temp-dir cleanup (#3262): every mktemp this suite makes is recorded and removed when it exits.
+__aw_tmp_reg="$(command mktemp)"
+mktemp() { local p; p="$(command mktemp "$@")" || return; printf '%s\n' "$p" >>"$__aw_tmp_reg"; printf '%s\n' "$p"; }
+__aw_tmp_clean() { local rc=$? p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null || true; rm -rf "$p" || true; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; exit "$rc"; }
+trap __aw_tmp_clean EXIT
 . "$(dirname "${BASH_SOURCE[0]}")/../../../scripts/lib/test-grep.sh"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$DIR/../../.." && pwd)"
@@ -50,7 +56,7 @@ test_done_gate_entry_has_an_explicit_timeout_covering_the_10s_budget() {
   bin_dir="$(fake_judge_bin_dir)"
   PATH="$bin_dir:$PATH" CLAUDE_SETTINGS_FILE="$settings" HOME="$home" bash "$ROOT/scripts/install-done-gate.sh" > /dev/null
   timeout_val="$(jq -r '.hooks.Stop[]?.hooks[]? | select(.command | contains("done-gate.sh")) | .timeout' "$settings")"
-  [ "$timeout_val" -ge 12 ] || { echo "FAIL: expected done-gate's hook timeout >= 12s (ask-check's 10s budget + 2s margin), got: $timeout_val"; exit 1; }
+  [ "$timeout_val" -ge 20 ] || { echo "FAIL: expected done-gate's hook timeout >= 20s (2x the 10s wall-clock budget), got: $timeout_val"; exit 1; }
   echo "PASS: test_done_gate_entry_has_an_explicit_timeout_covering_the_10s_budget"
 }
 

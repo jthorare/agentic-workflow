@@ -6,6 +6,9 @@ public static class KvKeys
     /// <summary>When the watch last polled (ISO 8601); absent until a watch has run.</summary>
     public const string WatchHeartbeat = "watch.heartbeat";
 
+    /// <summary>The lanes whose recycle waiter gave up since they last recycled, one "lane|time" line each (#4264); `status` shows them as an ATTENTION line.</summary>
+    public const string RecycleGaveUp = "recycle.gave-up";
+
     /// <summary>The stop-check loop guard's last open set.</summary>
     public const string StopFingerprint = "stopcheck.fingerprint";
 
@@ -82,4 +85,7 @@ public static class KvKeys
 
     /// <summary>Today's report-defect counts as "yyyy-MM-dd|filed|skipped" (the UTC date); another date means 0|0.</summary>
     public const string DefectsDay = "defects.day";
+
+    /// <summary>The delegations `aw-meta delegate` recorded, one line per issue (DelegationBook).</summary>
+    public const string Delegations = "delegations";
 }

@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 # Tests for config/hooks/prompt-sort.sh. Run: bash config/lib/tests/prompt-sort.test.sh
 set -euo pipefail
+
+# Temp-dir cleanup (#3262): every mktemp this suite makes is recorded and removed when it exits.
+__aw_tmp_reg="$(command mktemp)"
+mktemp() { local p; p="$(command mktemp "$@")" || return; printf '%s\n' "$p" >>"$__aw_tmp_reg"; printf '%s\n' "$p"; }
+__aw_tmp_clean() { local rc=$? p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null || true; rm -rf "$p" || true; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; exit "$rc"; }
+trap __aw_tmp_clean EXIT
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK="$DIR/../../hooks/prompt-sort.sh"
 BASH_BIN="$(command -v bash)"
 AW_STATE_DIR="$(mktemp -d)" || exit 2; export AW_STATE_DIR
-trap 'find "$AW_STATE_DIR" -delete 2> /dev/null' EXIT
 
 # A fake `judge` on PATH. FAKE_MODE: context | silent | slow | garbage. Logs argv + stdin.
 make_fake_judge() {
@@ -16,7 +21,7 @@ make_fake_judge() {
 case "${FAKE_MODE:-context}" in
   context) echo '{"id":"d1","fired":["brief"],"context":"Prompt sorter note: state Goal and Verify."}' ;;
   silent) echo '{"id":"d1","fired":[],"context":""}' ;;
-  slow) sleep 5; echo '{"context":"too late"}' ;;
+  slow) echo "$$" > "${FAKE_LOG%/*}/judge.pid"; sleep 5; echo '{"context":"too late"}' ;;
   crash) echo '{"context":"partial"}'; exit 3 ;;
   garbage) echo 'not json at all' ;;
 esac
@@ -52,15 +57,27 @@ test_silent_when_no_scaffold_fires() {
   echo "PASS: test_silent_when_no_scaffold_fires"
 }
 
+# #3778: a timeout must not leave the judge it started running. The slow fake writes its own pid; after the hook returns,
+# that pid must be gone within 1 s (10 checks, 0.1 s apart). Checked by the recorded pid only, never by process name.
+assert_judge_gone() { # assert_judge_gone <bin>
+  local pid n; pid="$(cat "$1/judge.pid" 2> /dev/null)"
+  [ -n "$pid" ] || { echo "FAIL: the slow fake judge never wrote its pid"; exit 1; }
+  for n in 1 2 3 4 5 6 7 8 9 10; do kill -0 "$pid" 2> /dev/null || return 0; sleep 0.1; done
+  kill -9 "$pid" 2> /dev/null || true
+  echo "FAIL: #3778: the judge (pid $pid) still runs after the hook timed out"; exit 1
+}
+
 test_slow_judge_is_killed_within_budget_with_no_output_rf2() {
-  local bin out rc start end; bin="$(make_fake_judge)"
+  local bin out rc start end tmp; bin="$(make_fake_judge)"; tmp="$(mktemp -d)"
   start=$(date +%s)
-  set +e; out="$(RUN_BUDGET_MS=600 run_hook "$bin" slow '{"session_id":"s1","prompt":"fix the login button"}')"; rc=$?; set -e
+  set +e; out="$(RUN_BUDGET_MS=600 run_hook "$bin" slow '{"session_id":"s1","prompt":"fix the login button"}' TMPDIR="$tmp")"; rc=$?; set -e
   end=$(date +%s)
   [ "$rc" -eq 0 ] || { echo "FAIL: RF-2 must exit 0, got $rc"; exit 1; }
   [ -z "$out" ] || { echo "FAIL: RF-2 must print nothing, got: $out"; exit 1; }
   grep -q '"hook":"prompt-sort","cause":"timeout"' "$AW_STATE_DIR/logs/failopen.log" 2>/dev/null || { echo "FAIL: JG-18: a timeout must be logged to failopen.log"; exit 1; }
   [ $((end - start)) -le 3 ] || { echo "FAIL: RF-2 hook took $((end - start))s, budget is 0.6s"; exit 1; }
+  assert_judge_gone "$bin"
+  [ -z "$(ls -A "$tmp")" ] || { echo "FAIL: #3778: the timeout left temp files behind: $(ls -A "$tmp")"; exit 1; }
   echo "PASS: test_slow_judge_is_killed_within_budget_with_no_output_rf2"
 }
 
@@ -150,4 +167,33 @@ test_images_past_four_leave_a_probe_log_line_with_the_dropped_count() {
 }
 
 test_images_past_four_leave_a_probe_log_line_with_the_dropped_count
+
+# #3778: the budget is wall-clock and covers the whole script, not a count of 100 ms passes after the judge started. A slow jq
+# (0.4 s per call) before the judge call used to add to the budget; now the hook ends near AW_PROMPT_SORT_BUDGET_MS from its start,
+# prints nothing and writes ONE failopen timeout row.
+test_the_budget_is_wall_clock_over_the_whole_script() {
+  local bin slow out rc t0 t1 real_jq rows; bin="$(make_fake_judge)"; slow="$(mktemp -d)"; real_jq="$(command -v jq)"
+  printf '#!/bin/sh\n/bin/sleep 0.4\nexec "%s" "$@"\n' "$real_jq" > "$slow/jq"; chmod +x "$slow/jq"
+  find "$AW_STATE_DIR/logs" -delete 2> /dev/null
+  t0=$(date +%s%3N 2> /dev/null); case "$t0" in *[!0-9]* | '') echo "SKIP: no millisecond clock"; return 0 ;; esac
+  set +e; out="$(PATH="$slow:$PATH" RUN_BUDGET_MS=1000 run_hook "$bin" slow '{"session_id":"s1","prompt":"fix the login button"}')"; rc=$?; set -e
+  t1=$(date +%s%3N)
+  [ "$rc" -eq 0 ] || { echo "FAIL: exit 0 expected, got $rc"; exit 1; }
+  [ -z "$out" ] || { echo "FAIL: expected no output, got: $out"; exit 1; }
+  [ $((t1 - t0)) -lt 1800 ] || { echo "FAIL: the hook ran $((t1 - t0)) ms against a 1000 ms wall-clock budget"; exit 1; }
+  rows="$(grep -c '"hook":"prompt-sort","cause":"timeout"' "$AW_STATE_DIR/logs/failopen.log" 2> /dev/null || true)"
+  [ "$rows" = "1" ] || { echo "FAIL: expected one failopen timeout row, got $rows"; exit 1; }
+  echo "PASS: test_the_budget_is_wall_clock_over_the_whole_script"
+}
+test_the_budget_is_wall_clock_over_the_whole_script
+# #4308: a prompt over 128 KiB must still be sorted. As one jq argv string it failed exec and the hook exited 0 silently.
+test_a_200kb_prompt_is_still_sorted() {
+  local bin out in; bin="$(make_fake_judge)"; in="$(mktemp)"
+  jq -nc --rawfile p <(head -c 204800 /dev/zero | tr '\0' x) '{session_id:"s1",prompt:$p}' > "$in"
+  out="$(env PATH="$bin:$PATH" FAKE_LOG="$bin/calls.log" FAKE_MODE=context AW_PROMPT_SORT_BUDGET_MS=30000 "$BASH_BIN" "$HOOK" < "$in")"
+  [ "$out" = "Prompt sorter note: state Goal and Verify." ] || { echo "FAIL: expected the context on stdout for a 200 KB prompt, got: $(printf '%s' "$out" | head -c 200)"; exit 1; }
+  [ "$(grep '^STDIN:' "$bin/calls.log" | sed 's/^STDIN: //' | jq -r '.prompt | length')" = "204800" ] || { echo "FAIL: the judge must get the whole 200 KB prompt"; exit 1; }
+  echo "PASS: test_a_200kb_prompt_is_still_sorted"
+}
+test_a_200kb_prompt_is_still_sorted
 echo "All prompt-sort hook tests passed."

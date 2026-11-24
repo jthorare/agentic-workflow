@@ -4,22 +4,27 @@ using Aw.Sindri.Features.ConnectAccount;
 using Aw.Sindri.Features.RestartProcess;
 using Aw.Sindri.Host;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.ConnectAccount;
+using Aw.Sindri.Tests.RestartProcess;
+using Aw.Sindri.Tests.SetupSources;
 
 namespace Aw.Sindri.Tests.FirstRun;
 
 /// <summary>RestartProcess and ConnectAccount are the owner's (first-run spec decisions 11 and 13): a caller without the per-start human token, the launched session first, gets SND-AUTH-002, as `profile set` does.</summary>
 public sealed class OwnerOnlyRoutesTests
 {
-    private readonly SliceHarness _slice = new();
+    private readonly ConnectAccountRig _accounts = new();
+
+    private SliceHarness Slice => _accounts.Slice;
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_launched_session_cannot_restart_Sindri()
     {
-        using var entered = _slice.Callers.Enter(A.Caller().Launched().Build());
+        using var entered = Slice.Callers.Enter(A.Caller().Launched().Build());
 
-        var result = await new RestartProcessService(_slice.Callers).Handle(new RestartProcessRequest(), Token);
+        var result = await new RestartProcessService(Slice.Callers, new FixedOpenRuns(), new RecordingStop(), new FixedBuildStamps()).Handle(new RestartProcessRequest(), Token);
 
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
@@ -28,9 +33,9 @@ public sealed class OwnerOnlyRoutesTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_session_without_the_human_token_cannot_restart_Sindri()
     {
-        using var entered = _slice.Callers.Enter(A.Caller().Session().Build());
+        using var entered = Slice.Callers.Enter(A.Caller().Session().Build());
 
-        var result = await new RestartProcessService(_slice.Callers).Handle(new RestartProcessRequest(), Token);
+        var result = await new RestartProcessService(Slice.Callers, new FixedOpenRuns(), new RecordingStop(), new FixedBuildStamps()).Handle(new RestartProcessRequest(), Token);
 
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
@@ -42,9 +47,9 @@ public sealed class OwnerOnlyRoutesTests
     [InlineData("slack")]
     public async Task A_launched_session_cannot_connect_an_account(string provider)
     {
-        using var entered = _slice.Callers.Enter(A.Caller().Launched().Build());
+        using var entered = Slice.Callers.Enter(A.Caller().Launched().Build());
 
-        var result = await new ConnectAccountService(_slice.Callers).Handle(new ConnectAccountRequest(provider), Token);
+        var result = await _accounts.Service().Handle(new ConnectAccountRequest(provider), Token);
 
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
@@ -53,9 +58,9 @@ public sealed class OwnerOnlyRoutesTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_session_without_the_human_token_cannot_connect_an_account()
     {
-        using var entered = _slice.Callers.Enter(A.Caller().Session().Build());
+        using var entered = Slice.Callers.Enter(A.Caller().Session().Build());
 
-        var result = await new ConnectAccountService(_slice.Callers).Handle(new ConnectAccountRequest("github"), Token);
+        var result = await _accounts.Service().Handle(new ConnectAccountRequest("github"), Token);
 
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
@@ -64,13 +69,13 @@ public sealed class OwnerOnlyRoutesTests
     [Fact, Trait("Lane", "unit")]
     public async Task The_owner_with_the_human_token_is_not_refused()
     {
-        using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
+        using var entered = Slice.Callers.Enter(A.Caller().Human().Build());
 
-        var restart = await Record.ExceptionAsync(async () => await new RestartProcessService(_slice.Callers).Handle(new RestartProcessRequest(), Token));
-        var connect = await Record.ExceptionAsync(async () => await new ConnectAccountService(_slice.Callers).Handle(new ConnectAccountRequest("github"), Token));
+        var restart = await new RestartProcessService(Slice.Callers, new FixedOpenRuns(), new RecordingStop(), new FixedBuildStamps()).Handle(new RestartProcessRequest(), Token);
+        var connect = await Record.ExceptionAsync(async () => await _accounts.Service().Handle(new ConnectAccountRequest("linear"), Token));
 
-        _ = Assert.IsType<NotSupportedException>(restart);   // past the check, the stub is unbuilt
-        _ = Assert.IsType<NotSupportedException>(connect);
+        Assert.True(restart.IsSuccess);
+        _ = Assert.IsType<NotSupportedException>(connect);   // Linear sign-in is a later slice of the accounts step
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -1,5 +1,6 @@
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.WholeMap;
 
 namespace Aw.Context.Core.Concepts;
 
@@ -11,4 +12,7 @@ public sealed record ConceptRead(ConceptsBasis Basis, GraphSnapshot Graph, MapTe
 {
     /// <summary>The pins the caller sees, or null when the profile has none: a pin's definition and aliases are read from here, over the map's.</summary>
     public PinSet? Pins { get; init; }
+
+    /// <summary>The repos the map the caller may see holds nodes of (<see cref="WholeMapBuilder.Repos"/>), read before the cut to the asked repo, so a pick still lists them all.</summary>
+    public IReadOnlyList<WholeMapRepo> Repos { get; init; } = [];
 }

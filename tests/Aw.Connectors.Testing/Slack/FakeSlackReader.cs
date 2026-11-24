@@ -78,7 +78,7 @@ public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackRea
         }
 
         _reads.Add($"history {channel} {oldest}");
-        return ValueTask.FromResult(Page(LimitOf(_historyLimits, channel), () => _store.Top(channel, oldest, latest)));
+        return ValueTask.FromResult(Page(LimitOf(_historyLimits, channel), () => Top(channel, oldest, latest)));
     }
 
     /// <inheritdoc />
@@ -95,7 +95,7 @@ public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackRea
             ? (Result<SlackMessagePage>)_failure
             : LimitOf(_historyLimits, channel) is { } until
                 ? new SlackMessagePage([], until)
-                : PageOf(_store.Top(channel, oldest, latest), size));
+                : PageOf(Top(channel, oldest, latest), size));
     }
 
     /// <inheritdoc />
@@ -158,4 +158,8 @@ public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackRea
         => _failure is not null
             ? _failure
             : limit is { } until ? new SlackMessagePage([], until) : new SlackMessagePage(read(), RateLimitedUntil: null);
+
+    // why: the reader's bounds are oldest inclusive, latest exclusive; the store's two bounds share Slack's one inclusive flag.
+    private List<SlackMessage> Top(string channel, string? oldest, string? latest)
+        => [.. _store.Top(channel, oldest, latest, inclusive: true).Where(m => SlackStore.Before(m.Ts, latest, inclusive: false))];
 }

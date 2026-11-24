@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Aw.Sindri.Ui.ViewModels;
 
 /// <summary>The app's own copy (<see cref="Labels"/>, continued): the read-only workflow graph (#2258 PR 17 part 2). Never a served sentence.</summary>
@@ -5,6 +7,21 @@ internal static partial class Labels
 {
     /// <summary>The graph's accessible name.</summary>
     internal const string WfGraphName = "Workflow graph";
+
+    /// <summary>The zoom strip's Fit button: its text and accessible name.</summary>
+    internal const string WfZoomFit = "Fit";
+
+    /// <summary>The Fit button's tooltip: the name and its key.</summary>
+    internal const string WfZoomFitTip = "Fit  F";
+
+    /// <summary>The zoom strip's minus button text.</summary>
+    internal const string WfZoomMinus = "\u2212";
+
+    /// <summary>The zoom strip's plus button text.</summary>
+    internal const string WfZoomPlus = "+";
+
+    /// <summary>The word after a step with no out port.</summary>
+    internal const string WfEndDone = "done";
 
     /// <summary>The graph when the workflow has no steps.</summary>
     internal const string WfGraphEmpty = "This workflow has no steps.";
@@ -20,5 +37,18 @@ internal static partial class Labels
     /// <param name="ids">The ids of the nodes not drawn, in spec order.</param>
     /// <returns>The words.</returns>
     internal static string WfGraphUnplaced(IReadOnlyList<string> ids) =>
-        string.Create(global::System.Globalization.CultureInfo.InvariantCulture, $"{ids.Count} {(ids.Count == 1 ? "node has" : "nodes have")} no position: {string.Join(", ", ids)}");
+        string.Create(CultureInfo.InvariantCulture, $"{ids.Count} {(ids.Count == 1 ? "node has" : "nodes have")} no position: {string.Join(", ", ids)}");
+
+    /// <summary>A workflow card's tooltip (#4203): its title and its full settings line, which the card cuts when it is long; the title alone with no line.</summary>
+    /// <param name="title">The card's line 1.</param>
+    /// <param name="line">The card's settings line.</param>
+    /// <returns>The words.</returns>
+    internal static string WfCardTip(string title, string line) => line.Length == 0 ? title : title + " \u00b7 " + line;   // no dangling " · " (#4253)
+
+    /// <summary>The Schedule card's chip for a workflow that is on (#3758): the next run in local time, "next 7:00" within the next 24 hours, else "next Mon 7:00".</summary>
+    /// <param name="local">The next run in the viewer's time zone.</param>
+    /// <param name="soon">True when it is within the next 24 hours.</param>
+    /// <returns>The chip's words.</returns>
+    internal static string WfNextRun(DateTimeOffset local, bool soon) =>
+        "next " + local.ToString(soon ? "H:mm" : "ddd H:mm", CultureInfo.InvariantCulture);
 }

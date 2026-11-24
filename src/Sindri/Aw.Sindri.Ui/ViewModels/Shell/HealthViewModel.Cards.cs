@@ -5,9 +5,15 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 /// <summary>The System overview's Agents, Views, Code index and Context index cards and what they add to the headline (<see cref="HealthViewModel"/>, continued).</summary>
 internal sealed partial class HealthViewModel
 {
-    private void ShowAgentsCard() => AgentsRows = Sessions is { } s
-        ? [new(Labels.AgentsWorking, Count(s.Running ?? s.Live)), new(Labels.AgentsAsking, Count(s.Asking)), new(Labels.AgentsProblems, Count(s.Problems))]
-        : [];
+    private void ShowAgentsCard()
+    {
+        var s = Sessions;
+        AgentsRows = s is null
+            ? []
+            : [new(Labels.AgentsWorking, Count(s.Running ?? s.Live)), new(Labels.AgentsAsking, Count(s.Asking)), new(Labels.AgentsProblems, Count(s.Problems))];
+        HasAgentsProblems = s is { Problems: > 0 };   // an older answer has the count and no rows: the link still shows (#4012)
+        AgentsProblemLines = s is { Problems: > 0, ProblemRows: { } rows } ? [.. rows.Select(static p => new AgentProblemLine(p.Text, p.Code))] : [];
+    }
 
     private void ShowViewsCard()
     {
@@ -23,11 +29,47 @@ internal sealed partial class HealthViewModel
         ViewsFix = views is { } v && (v.Stalled || v.Rebuilding) ? Catalog.Rebuild : null;
     }
 
-    /// <summary>Has the Code index and Context index cards read on connect and after every event, with the other views.</summary>
-    internal void FollowCards()
+    /// <summary>
+    /// Has the Code index and Context index cards read on connect and after every event, with the other views, while they are shown
+    /// (#2775: they and the headline they feed are on the System page only); <see cref="ReadCards"/> reads them when it opens.
+    /// </summary>
+    /// <param name="shown">True while the cards are on screen.</param>
+    internal void FollowCards(Func<bool> shown)
     {
-        Follow(CodeIndex.Refresh);
-        Follow(ContextIndex.Refresh);
+        Follow((url, token) => shown() ? CodeIndex.Refresh(url, token) : Task.CompletedTask);
+        Follow((url, token) => shown() ? ContextIndex.Refresh(url, token) : Task.CompletedTask);
+    }
+
+    // Cancels and frees the cards' read in flight; an Action so the view model owns no disposable field.
+    private Action? _stopCards;
+
+    /// <summary>Reads both cards once now (the page they are on was opened, so they are never stale on open); nothing while not connected or Not running.</summary>
+    internal void ReadCards()
+    {
+        StopCards();
+        if (_url is not { } url || IsNotRunning)
+        {
+            return;
+        }
+
+#pragma warning disable CA2000 // disposed by _stopCards
+        var read = new CancellationTokenSource();
+#pragma warning restore CA2000
+        _stopCards = () =>
+        {
+            read.Cancel();
+            read.Dispose();
+        };
+        _ = CodeIndex.Refresh(url, read.Token);
+        _ = ContextIndex.Refresh(url, read.Token);
+    }
+
+    /// <summary>Cancels the cards' read in flight (the page they are on was left, or a newer read starts).</summary>
+    internal void StopCards()
+    {
+        var stop = _stopCards;
+        _stopCards = null;
+        stop?.Invoke();
     }
 
     private CodeIndexCardViewModel WatchCodeIndex(CodeIndexCardViewModel card)

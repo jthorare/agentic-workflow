@@ -22,6 +22,7 @@
         xmlns:ctxv="using:Aw.Sindri.Ui.Views.Context"
         xmlns:item="using:Aw.Sindri.Ui.Views.Item"
         xmlns:ny="using:Aw.Sindri.Ui.Views.NeedsYou"
+        xmlns:hv="using:Aw.Sindri.Ui.Views.Home"
         xmlns:tdv="using:Aw.Sindri.Ui.Views.Todo"
         x:Class="Aw.Sindri.Ui.Views.Shell.ShellWindow"
         x:DataType="shell:ShellViewModel"
@@ -36,6 +37,10 @@
          off, is never spoken (docs/csharp/sindri-ui.md "LiveSetting on macOS"). -->
     <Style Selector="TextBlock.live-region.live">
       <Setter Property="AutomationProperties.LiveSetting" Value="Polite" />
+    </Style>
+    <!-- A page that pins its own head and scrolls its own rows (Projects) gets the viewport's height: the pages' scroller stops scrolling while it shows. -->
+    <Style Selector="ScrollViewer#Pages.fixed-page">
+      <Setter Property="VerticalScrollBarVisibility" Value="Disabled" />
     </Style>
   </Window.Styles>
 
@@ -209,7 +214,7 @@
             </Border>
 
             <!-- The pages (§3.3), each shown by the view model's page flag. -->
-            <ScrollViewer x:Name="Pages" IsVisible="{Binding IsPagesShown}">
+            <ScrollViewer x:Name="Pages" IsVisible="{Binding IsPagesShown}" Classes.fixed-page="{Binding IsProjects}">
               <Panel x:Name="PageContent" Classes="page-content" Classes.edge="{Binding IsEdgeTabShown}">
                 <views:HomePage x:Name="HomePage" IsVisible="{Binding IsHomeShown}" />
                 <!-- Projects (Projects page spec §7): the owner's projects in state groups. -->
@@ -301,6 +306,14 @@
               </Panel>
             </ScrollViewer>
             <!-- The Needs-you inbox (F3 needs-you spec §2): over Home's panels while Home stays the page; it scrolls its own list and card, so it sits beside the pages' scroller. -->
+            <!-- Home as rows (home spec §7.1, U1): one ranked list in place of Home's panels while Settings' switch asks for it; the list scrolls itself, so it sits beside the pages' scroller. -->
+            <Panel x:Name="HomeRowsLayer" IsVisible="{Binding IsHomeRowsShown}">
+              <controls:Deferred DataContext="{Binding HomeRows}">
+                <controls:Deferred.Template>
+                  <DataTemplate><hv:HomeRowsPage x:Name="HomeRowsPage" /></DataTemplate>
+                </controls:Deferred.Template>
+              </controls:Deferred>
+            </Panel>
             <Panel x:Name="NeedsYouInboxLayer" IsVisible="{Binding IsInboxShown}">
               <controls:Deferred DataContext="{Binding Inbox}">
                 <controls:Deferred.Template>
@@ -326,6 +339,12 @@
             <TextBlock Classes="mono" Text="{Binding EdgeTabText}" />
           </LayoutTransformControl>
         </Button>
+
+        <!-- The New agent form (agents spec §15.4): a 440 px sheet at the right; Esc closes it and keeps the text. -->
+        <Border x:Name="NewAgentSheet" Classes="sheet" IsVisible="{Binding NewAgent.IsOpen}" HorizontalAlignment="Right" Width="440"
+                AutomationProperties.Name="New agent" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+          <agv:NewAgentFormView DataContext="{Binding NewAgent}" />
+        </Border>
 
         <!-- The detail sheet (§3.2): over the page at the right, 420–760 px wide; below 1100 px it covers the page. -->
         <Border x:Name="Sheet" Classes="sheet focus-region" IsVisible="{Binding IsSheetShown}" Focusable="True"

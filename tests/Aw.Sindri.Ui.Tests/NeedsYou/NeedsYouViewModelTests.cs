@@ -32,6 +32,19 @@ public sealed class NeedsYouViewModelTests
 
     private static string[] Ids(NeedsYouViewModel list) => [.. list.Rows.Select(r => r.Id)];
 
+    // #3734: a pointer already over the panel when the first read lands (the page drew empty first) must not hold the whole first list back as "new".
+    [Fact]
+    public async Task A_first_read_shows_every_row_even_when_the_pointer_was_over_the_empty_panel_before_it()
+    {
+        var list = new NeedsYouViewModel(new Preferences(_store), _os, _clock);
+        await list.Restore(Token);
+        list.PointerOver = true;
+
+        list.Update(Feed(NeedsYouRows.Profile(), NeedsYouRows.Park(), NeedsYouRows.Failure()));
+
+        Assert.Equal((3, 0, string.Empty), (list.Rows.Count, list.HeldCount, list.EmptyLine));
+    }
+
     [Fact]
     public async Task Rows_keep_the_apis_order()
     {

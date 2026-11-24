@@ -14,6 +14,9 @@ namespace Aw.Sindri.Ui.Api.Sources;
 /// <param name="LastErrorText">One scrubbed line saying what failed.</param>
 /// <param name="Failures">Failed attempts in a row.</param>
 /// <param name="NextTry">When a source in backoff tries again.</param>
+/// <param name="NeedsLook">The server's look for the source (#3430): the card reads it and keeps no rule of its own; false from a server that predates it.</param>
+/// <param name="LookWords">The server's own sentence for why the source needs a look, source name first (#3908); null when its state words say it, or from a server that predates it.</param>
+/// <param name="ReReading">How many records the source holds while it reads them again (Linear's one-time re-read for project links, #4084); null on a first pass, when not re-reading, or from a server that predates it.</param>
 internal sealed record IndexSourceView(
     string Source,
     string? Phase,
@@ -27,4 +30,7 @@ internal sealed record IndexSourceView(
     string? LastError = null,
     string? LastErrorText = null,
     int? Failures = null,
-    DateTimeOffset? NextTry = null);
+    DateTimeOffset? NextTry = null,
+    bool NeedsLook = false,
+    string? LookWords = null,
+    int? ReReading = null);

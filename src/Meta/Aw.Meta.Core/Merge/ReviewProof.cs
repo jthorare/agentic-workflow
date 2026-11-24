@@ -9,17 +9,18 @@ public static partial class ReviewProof
 {
     /// <summary>Collects the review facts for <paramref name="pr"/>.</summary>
     /// <param name="messages">Every inbound message, oldest first.</param>
-    /// <param name="reviewer">The reviewer lane's session name.</param>
+    /// <param name="reviewer">The reviewer lane's session name ("team-lane").</param>
     /// <param name="pr">The pull request number.</param>
+    /// <param name="address">The sender address of the reviewer lane's running session; null when none was found.</param>
     /// <returns>The reviewer's standing OK (with its qa line) and the newest ready message with its counts.</returns>
-    public static ReviewFacts Collect(IReadOnlyList<InboxMessage> messages, string reviewer, int pr)
+    public static ReviewFacts Collect(IReadOnlyList<InboxMessage> messages, string reviewer, int pr, string? address)
     {
         ArgumentNullException.ThrowIfNull(messages);
 
-        // Replay the reviewer's lines in order: an OK sets the standing OK, a HOLD clears it. A later message that names
-        // neither keeps whatever stands, so a reviewer's unrelated message never voids an OK.
-        var standing = (Ok: (string?)null, Qa: Qa.None);
-        foreach (var message in messages.Where(m => string.Equals(m.FromName, reviewer, StringComparison.Ordinal)))
+        // Replay the reviewer's lines in order: an OK sets the standing OK and lifts a hold, a HOLD clears the OK and stands as
+        // the hold. A later message that names neither keeps whatever stands, so a reviewer's unrelated message never voids an OK.
+        var standing = Standing.None;
+        foreach (var message in messages.Where(m => m.IsFromLane(reviewer, address, StringComparison.Ordinal)))
         {
             standing = Replay(message.Body, pr, standing);
         }
@@ -29,10 +30,12 @@ public static partial class ReviewProof
         {
             Reviewer = reviewer,
             OkSha = standing.Ok,
+            Hold = standing.Hold,
             QaNotYet = standing.Qa.NotYet,
             QaSha = standing.Qa.Sha,
             ReadySha = ready is null ? null : ReadySha(ready.Body),
             Counts = ready is null ? [] : Counts(ready.Body),
+            BuildOnly = ready is not null && IsBuildOnly(ready.Body),
         };
     }
 
@@ -41,9 +44,15 @@ public static partial class ReviewProof
         public static Qa None => default;
     }
 
+    // What the reviewer's lines leave standing for the pull request: an OK with its qa line, or a HOLD line, or neither.
+    private readonly record struct Standing(string? Ok, Qa Qa, string? Hold)
+    {
+        public static Standing None => default;
+    }
+
     // One reviewer message, line by line: "OK #pr at sha" (with the qa line right after it) or "HOLD #pr". A STATUS: or ACTION: tag
     // on the first line is read past (#2651).
-    private static (string? Ok, Qa Qa) Replay(string body, int pr, (string? Ok, Qa Qa) standing)
+    private static Standing Replay(string body, int pr, Standing standing)
     {
         var lines = body.Split('\n');
         lines[0] = NoticeRule.StripTag(lines[0].Trim());
@@ -54,11 +63,11 @@ public static partial class ReviewProof
                 var ok = OkLine.Match(lines[i]);
                 if (ok.Success && SamePr(ok, pr))
                 {
-                    standing = (ok.Groups["sha"].Value, i + 1 < lines.Length ? QaOf(lines[i + 1]) : Qa.None);
+                    standing = new Standing(ok.Groups["sha"].Value, i + 1 < lines.Length ? QaOf(lines[i + 1]) : Qa.None, Hold: null);
                 }
                 else if (HoldLine.Match(lines[i]) is { Success: true } hold && SamePr(hold, pr))
                 {
-                    standing = (null, Qa.None);
+                    standing = new Standing(Ok: null, Qa.None, lines[i].Trim());
                 }
             }
         }
@@ -122,6 +131,13 @@ public static partial class ReviewProof
 
         return lines;
     }
+
+    // The build-only marker: a line that is exactly "0 passed, 0 skipped, 0 failed (build only)" once trimmed, in any case. The
+    // lane built and ran no test. "(build only)" next to other words is not the marker (#3840).
+    internal const string BuildOnlyLine = "0 passed, 0 skipped, 0 failed (build only)";
+
+    private static bool IsBuildOnly(string body) =>
+        body.Split('\n').Any(line => string.Equals(line.Trim(), BuildOnlyLine, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Whether <paramref name="sha"/> (7 to 40 hex characters) names <paramref name="head"/>.</summary>
     /// <param name="sha">The sha a message names.</param>

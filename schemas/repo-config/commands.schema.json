@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-workflow.local/schemas/repo-config/commands.schema.json",
+  "title": "<repo>/.agentic-workflow/commands.json",
+  "description": "A repo's command catalog (#4221): the helpers an agent should find and reuse before it writes a new one. Each entry points at an entrypoint that exists in the repo or on PATH; the catalog never copies a helper's body. The toolkit ships its own catalog of the same shape (config/commands.toolkit.json). Rules a schema can't state (a duplicate id, a {param} slot no param declares, an owner-home path, a repo path that does not exist) are checked by `aw-commands validate`.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "entries"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": 1 },
+    "entries": { "type": "array", "items": { "$ref": "#/$defs/entry" } }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "purpose", "run", "effects", "output", "stop", "owner", "verified"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$", "description": "Unique in its catalog; what `aw-commands show <id>` takes." },
+        "purpose": { "type": "string", "minLength": 1, "maxLength": 200, "description": "One sentence: what it is for. Searched." },
+        "terms": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Search words beyond the purpose." },
+        "run": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["argv", "cwd"],
+          "properties": {
+            "argv": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 },
+              "description": "The command as separate arguments, never one string for a shell. argv[0] is a command on PATH or a repo-relative path. {name} fills in a declared param."
+            },
+            "cwd": { "enum": ["repo", "any"], "description": "repo: run from the repo's top level; any: run from anywhere." }
+          }
+        },
+        "params": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "required", "description"],
+            "properties": {
+              "name": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,31}$" },
+              "required": { "type": "boolean" },
+              "description": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "prerequisites": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "What must exist first (a tool on PATH, a running service, a login)." },
+        "effects": { "enum": ["read-only", "writes-local", "writes-remote"], "description": "The strongest thing it changes." },
+        "env": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Environment variables it reads." },
+        "output": { "type": "string", "minLength": 1, "description": "What it prints and its exit codes." },
+        "stop": { "type": "string", "minLength": 1, "description": "When it ends and what it cleans up; how to stop it early." },
+        "owner": { "type": "string", "minLength": 1, "description": "Who maintains the entrypoint." },
+        "verified": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "at"],
+          "properties": {
+            "status": { "enum": ["verified", "unverified", "stale"] },
+            "at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+          }
+        },
+        "detect": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["all"],
+          "description": "Optional. How the duplicate-script gate (config/hooks/dup-script-gate.sh) knows a script redoes this entry: every regex in all matches the script text, case-insensitive (jq/Oniguruma syntax). An entry without detect is only ever an uncertain match, by its terms.",
+          "properties": {
+            "all": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "description": "Regexes that must all match the script text." },
+            "params": {
+              "type": "object",
+              "additionalProperties": { "type": "string", "minLength": 1 },
+              "description": "Per declared param: a regex whose first capture group that matched is the value, so the gate prints the filled invocation."
+            }
+          }
+        }
+      }
+    }
+  }
+}

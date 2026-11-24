@@ -60,6 +60,28 @@ public sealed class MergeGateTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_stacked_gate_without_a_tree_on_the_same_main_says_main_did_not_move()
+    {
+        var gate = Gate() with { Stack = [new StackedPr(188, "a0"), new StackedPr(189, "a1")] };
+
+        var check = MergeGate.Evaluate(Facts(gate)).Single(c => c.Name == "main");
+
+        Assert.False(check.Ok);
+        Assert.Equal("gate ran on main main1 with a stack (#188, #189) and recorded no tree; main didn't move, but a stacked gate vouches only through its tested tree: gate again", check.Detail);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_conflict_on_the_same_main_with_a_merge_queue_says_main_did_not_move()
+    {
+        var gate = Gate() with { Tree = "t1", Stack = [new StackedPr(189, "a1")] };
+
+        var check = MergeGate.Evaluate(Facts(gate) with { MergedTree = "t2", BaseHasMergeQueue = true, MergeConflicts = true }).Single(c => c.Name == "main");
+
+        Assert.False(check.Ok);
+        Assert.Equal("gate ran on main main1 and main didn't move, but the gated head conflicts with it; the merge queue would drop it too", check.Detail);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void The_head_check_still_applies_to_a_stacked_gate_whose_tree_matches()
     {
         var gate = Gate() with { Tree = "t1", Stack = [new StackedPr(189, "a1")] };
@@ -158,6 +180,15 @@ public sealed class MergeGateTests
 
         Assert.True(check.Ok, check.Detail);
         Assert.Contains("merge queue re-tests on the merged tree", check.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Main_moved_refuses_on_a_conflict_even_with_a_merge_queue()
+    {
+        var check = MergeGate.Evaluate(Facts(Gate() with { Tree = "t1" }) with { CurrentMain = "main2", BaseHasMergeQueue = true, MergeConflicts = true }).Single(c => c.Name == "main");
+
+        Assert.False(check.Ok);
+        Assert.Contains("conflicts", check.Detail, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

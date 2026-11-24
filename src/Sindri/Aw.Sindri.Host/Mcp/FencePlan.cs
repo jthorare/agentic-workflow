@@ -24,8 +24,8 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
     /// <summary>sindri_job: the summary, each progress line and every string inside the result (a service's result can carry text an agent wrote).</summary>
     internal static FencePlan Job { get; } = new("sindri:job", [new("summary", "startedBy"), new("progress[].line"), new("result", "startedBy", EveryString: true)]);
 
-    /// <summary>workflow_list: each workflow's name, by whoever saved its newest revision.</summary>
-    internal static FencePlan WorkflowList { get; } = new("sindri:workflow", [new("workflows[].name", "changedBy")]);
+    /// <summary>workflow_list: each workflow's name, by whoever saved its newest revision, and its trigger in words (a cron with no words is shown as written; the shown revision may be the active one, not the newest, so no author).</summary>
+    internal static FencePlan WorkflowList { get; } = new("sindri:workflow", [new("workflows[].name", "changedBy"), new("workflows[].trigger")]);
 
     /// <summary>workflow_get: the names, the description, each node's title, every string of each node's config (prompts, templates, URLs) and the resource names (the graph validator checks a node type and an edge's output against the known blocks, but not these).</summary>
     internal static FencePlan WorkflowGet { get; } = new("sindri:workflow",
@@ -41,8 +41,8 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("findings[].message"), new("findings[].fix"), new("findings[].field"), new("findings[].nodes[]"),
     ]);
 
-    /// <summary>workflow_runs: each run's failure text.</summary>
-    internal static FencePlan WorkflowRuns { get; } = new("sindri:workflow-run", [new("runs[].error")]);
+    /// <summary>workflow_runs: each run's failure text and its one-line result (the error's first line or the outputs, which an agent or a service wrote).</summary>
+    internal static FencePlan WorkflowRuns { get; } = new("sindri:workflow-run", [new("runs[].error"), new("runs[].result")]);
 
     /// <summary>workflow_run_get: the failure text, what a trigger carried, the outputs, and each node run's input, output and error (payloads an agent or a service wrote).</summary>
     internal static FencePlan WorkflowRun { get; } = new("sindri:workflow-run",
@@ -51,17 +51,18 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("nodes[].input", EveryString: true), new("nodes[].output", EveryString: true), new("nodes[].error"),
     ]);
 
-    /// <summary>sindri_projects: the Linear-sourced text of every card (name, description, lead's name) in the three lists, and the viewer's name; the owner's notes (free text a session reads); the owner's links stay plain.</summary>
+    /// <summary>sindri_projects: the Linear-sourced text of every card (name, description, lead's name) in the three lists, and the viewer's name; the owner's notes (free text a session reads) and each open PR's title (forge text); the owner's links stay plain.</summary>
     internal static FencePlan Projects { get; } = new("sindri:project",
     [
         new("viewer"),
         new("projects[].name"), new("projects[].description"), new("projects[].lead.name"), new("projects[].notes"),
         new("finished[].name"), new("finished[].description"), new("finished[].lead.name"), new("finished[].notes"),
         new("hidden[].name"), new("hidden[].description"), new("hidden[].lead.name"), new("hidden[].notes"),
+        new("projects[].truth.openPrs[].title"), new("finished[].truth.openPrs[].title"), new("hidden[].truth.openPrs[].title"),
     ]);
 
     /// <summary>sindri_projects for one project: the card's Linear-sourced text, the owner's notes and the viewer's name.</summary>
-    internal static FencePlan OneProject { get; } = new("sindri:project", [new("viewer"), new("project.name"), new("project.description"), new("project.lead.name"), new("project.notes")]);
+    internal static FencePlan OneProject { get; } = new("sindri:project", [new("viewer"), new("project.name"), new("project.description"), new("project.lead.name"), new("project.notes"), new("project.truth.openPrs[].title")]);
 
     /// <summary>GET /sindri/projects/linear for a session: each row's Linear name and lead's name.</summary>
     internal static FencePlan LinearProjects { get; } = new("sindri:project", [new("projects[].name"), new("projects[].lead")]);

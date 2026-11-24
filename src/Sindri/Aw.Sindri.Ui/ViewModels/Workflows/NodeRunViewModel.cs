@@ -11,15 +11,16 @@ internal sealed class NodeRunViewModel : ObservableObject
     internal NodeRunViewModel(NodeRunView run, int count, Func<NodeRunViewModel, bool, CancellationToken, Task>? control = null)
     {
         _control = control;
-        TitleText = count > 1 || run.ItemIndex > 0 ? Labels.WfItemTitle(run.ItemIndex, count) : run.Node;
+        HasTitle = run.ItemIndex > 0 || count > 0;   // a node that runs once is named by the group's heading (#3307); a collect's own row reads "Result" (#4341)
+        TitleText = run.ItemIndex > 0 ? Labels.WfItemTitle(run.ItemIndex, count) : HasTitle ? Labels.WfCollectResultTitle : string.Empty;
         var (glyph, word) = Labels.WfChip(run.Status);
         Tone = RunStatus.Tone(run.Status);
         (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(run.Status));
-        InputText = WorkflowJson.Pretty(run.Input);
+        (CodeText, InputText) = WorkflowJson.CodeAndRest(run.Input);
         OutputText = WorkflowJson.Pretty(run.Output);
         IsTruncated = run.Truncated;
         ErrorText = run.Error ?? string.Empty;
-        Name = Labels.WfNodeRunName(TitleText, word.ToLowerInvariant(), ErrorText);
+        Name = Labels.WfNodeRunName(HasTitle ? TitleText : run.Node, word.ToLowerInvariant(), ErrorText);
         (Node, ItemIndex, Agent) = (run.Node, run.ItemIndex, run.Agent);
     }
 
@@ -59,8 +60,17 @@ internal sealed class NodeRunViewModel : ObservableObject
     /// <returns>A task that completes when the answer is shown.</returns>
     internal Task HandBack(CancellationToken cancellationToken) => _control?.Invoke(this, false, cancellationToken) ?? Task.CompletedTask;
 
-    /// <summary>The node's id, or "Item 2 of 3" for one item of a for_each node.</summary>
+    /// <summary>"Item 2 of 3" for one item of a for_each node, "Result" for a collect's own row; empty for a node that runs once, which its group's heading names.</summary>
     public string TitleText { get; }
+
+    /// <summary>True when the row shows its own title (an item of a for_each node, or a collect's own result).</summary>
+    public bool HasTitle { get; }
+
+    /// <summary>A code step's body as written, with real line breaks; empty for any other step.</summary>
+    public string CodeText { get; }
+
+    /// <summary>True when the step has a code body.</summary>
+    public bool HasCode => CodeText.Length > 0;
 
     /// <summary>The chip's tone; the glyph and word carry the status too.</summary>
     public ChipTone Tone { get; }
@@ -77,7 +87,7 @@ internal sealed class NodeRunViewModel : ObservableObject
     /// <summary>True for a failed node (the error colour).</summary>
     public bool IsError => Tone == ChipTone.Fail;
 
-    /// <summary>The interpolated config the block got, as indented JSON; empty for none.</summary>
+    /// <summary>The interpolated config the block got, as indented JSON, without a code step's body; empty for none.</summary>
     public string InputText { get; }
 
     /// <summary>True when the node has an input.</summary>
@@ -89,7 +99,7 @@ internal sealed class NodeRunViewModel : ObservableObject
     /// <summary>True when the node has an output.</summary>
     public bool HasOutput => OutputText.Length > 0;
 
-    /// <summary>True when Sindri cut the input or the output to fit its size limit.</summary>
+    /// <summary>True when Sindri cut the output to fit its size limit; a cut input never sets it (#3896).</summary>
     public bool IsTruncated { get; }
 
     /// <summary>The note shown when it was cut.</summary>
@@ -98,6 +108,9 @@ internal sealed class NodeRunViewModel : ObservableObject
 
     /// <summary>The input's heading.</summary>
     public string InputHeading => Labels.WfInputHeading;
+
+    /// <summary>The code's heading.</summary>
+    public string CodeHeading => Labels.WfCodeHeading;
 
     /// <summary>The output's heading.</summary>
     public string OutputHeading => Labels.WfOutputHeading;

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -74,9 +75,8 @@ public sealed class SessionSheetTests : FrameHost
         Assert.Equal((PageId.Agents, "Session " + sheet.Heading), (shell.CurrentPage, shell.SheetName));
         Assert.Equal(shell.SheetName, Heard.Name(Named<Control>(window, "Sheet")));
         Assert.False(Visible(window, "SheetBody"), "the placeholder is gone");
-        Assert.Equal(sheet.Heading, Heard.Wrapper(Named<Border>(window, "SessionHeading")));
         var heard = Tree(window);
-        var expected = new[] { sheet.Heading, sheet.StateLine }
+        var expected = new[] { sheet.StateLine }
             .Concat(sheet.Fields.Select(f => f.Name)).Concat(sheet.HostFields.Select(f => f.Name)).Concat(sheet.History.Select(h => h.Name));
         Assert.All(expected, name => Assert.Contains((name, AutomationControlType.Text), heard));
         Assert.All(heard.Where(h => h.Type == AutomationControlType.Text), h => Assert.False(string.IsNullOrWhiteSpace(h.Name), "a nameless text node in the sheet"));
@@ -115,12 +115,42 @@ public sealed class SessionSheetTests : FrameHost
         var details = InSheet<Expander>(window, "SessionDetails");
         Assert.False(details.IsExpanded);
         Assert.Equal("Details", details.Header);
-        Assert.True(InSheet<Border>(window, "SessionHeading").IsEffectivelyVisible);
+        Assert.True(InSheet<Border>(window, "SessionState").IsEffectivelyVisible);
         Assert.Equal(shell.AgentSheet.StateLine, Heard.Wrapper(InSheet<Border>(window, "SessionState")));
         Assert.DoesNotContain(Named<Control>(window, "SessionSheet").GetVisualDescendants().OfType<ItemsControl>(), c => string.Equals(c.Name, "SessionFields", StringComparison.Ordinal) && c.IsEffectivelyVisible);   // a closed Expander builds no content
         OpenDetails(window);
         Assert.True(details.IsExpanded);
         Assert.Contains(InSheet<ItemsControl>(window, "SessionFields").GetVisualDescendants().OfType<Border>(), b => b.IsEffectivelyVisible);
+    });
+
+    // #3872: the shell's title names the session once, in the UI face; the body starts at the state, a dot and a word.
+    [Fact]
+    public Task The_sheet_names_the_session_once_and_its_title_is_not_mono_3872() => OnUi(async () =>
+    {
+        var (window, shell) = await Opened(Claude, details: false);
+
+        var names = Named<Control>(window, "SessionSheet").GetVisualDescendants().OfType<Control>().Select(c => c.Name);
+        Assert.DoesNotContain("SessionHeading", names, StringComparer.Ordinal);
+        Assert.DoesNotContain("mono", Named<TextBlock>(window, "SheetSubjectText").Classes, StringComparer.Ordinal);
+        var state = InSheet<Border>(window, "SessionState").GetVisualDescendants().OfType<TextBlock>().ToList();
+        Assert.Equal((shell.AgentSheet.StateGlyph, shell.AgentSheet.StateLine), (state[0].Text, state[1].Text));
+        Assert.DoesNotContain(state, t => t.Classes.Contains("mono", StringComparer.Ordinal));
+        Assert.Equal(shell.AgentSheet.StateLine, Heard.Wrapper(InSheet<Border>(window, "SessionState")));
+    });
+
+    // #3871: the two copy chips sit in one row, and the attach command shows as text before anyone copies it.
+    [Fact]
+    public Task The_copy_chips_sit_side_by_side_and_the_attach_command_shows_3871() => OnUi(async () =>
+    {
+        var (window, shell) = await Opened(Claude, details: false);
+
+        var row = InSheet<StackPanel>(window, "SessionCopyChips");
+        Assert.Equal(Orientation.Horizontal, row.Orientation);
+        Assert.Equal("SessionRefCopy,SessionAttachCopy", string.Join(',', row.Children.Select(c => c.Name)));
+        var shown = InSheet<Border>(window, "SessionAttachText");
+        Assert.True(shown.IsEffectivelyVisible);
+        Assert.Equal(shell.AgentSheet.AttachText, Heard.Wrapper(shown));
+        Assert.Equal(shell.AgentSheet.AttachText, ToolTip.GetTip(InSheet<Button>(window, "SessionAttachCopy")));
     });
 
     [Fact]
@@ -148,7 +178,7 @@ public sealed class SessionSheetTests : FrameHost
         Assert.True(row.Focus(NavigationMethod.Tab));
 
         shell.Agents.RequestOpen(new SessionOpenRequestedEventArgs(Link(Claude)));
-        await Until(window, () => shell.IsSheetShown && Named<Border>(window, "SheetTitle").IsFocused, "focus never reached the sheet's heading");
+        await Until(window, () => shell.IsSheetShown && Named<Border>(window, "Sheet").IsFocused, "focus never reached the sheet");   // #3710: a session sheet takes focus on its body, not the title
         Press(window, Key.Escape);
 
         await Until(window, () => !shell.IsSheetOpen && ReferenceEquals(window.FocusManager?.GetFocusedElement(), row), $"focus is on {window.FocusManager?.GetFocusedElement()}");

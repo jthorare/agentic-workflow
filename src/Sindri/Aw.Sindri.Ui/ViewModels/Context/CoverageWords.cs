@@ -1,40 +1,95 @@
 using Aw.Sindri.Ui.Api.Context;
-using Aw.Sindri.Ui.ViewModels.Context.Layout;
+using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.ViewModels.Context;
 
-/// <summary>The coverage strip's words, built on the client from the answer's coverage, searched bands and symbols state.</summary>
+/// <summary>
+/// The sentence under an answer: what was searched and why the rest was not, built on the client from the answer's coverage, searched bands and symbols state.
+/// The function names are not an area: they get their own words, "indexed" as on the code band (#4122), then where to look.
+/// </summary>
 internal static class CoverageWords
 {
-    /// <summary>The four areas and the sentence over them.</summary>
+    /// <summary>The one plain sentence under the answer.</summary>
     /// <param name="view">The lenses answer.</param>
-    /// <returns>The areas, the lead ("3 of 4 areas searched.") and the rest ("Code is limited.").</returns>
-    internal static (IReadOnlyList<CoverageArea> Areas, string Lead, string Tail) Words(LensesView view)
+    /// <param name="exact">Whether the answer came from a direct pick or an exact name.</param>
+    /// <returns>"Searched Code. No Why or Product records. Function names aren't indexed yet. See Code index on the System page.", or empty on an exact hit or when every area and the function names were searched.</returns>
+    internal static string Sentence(LensesView view, bool exact)
     {
         ArgumentNullException.ThrowIfNull(view);
+        if (exact)
+        {
+            return string.Empty;
+        }
+
         var c = view.Coverage;
-        var symbols = view.Bands.Code.Symbols.State;
-        IReadOnlyList<CoverageArea> areas =
-        [
-            Area(Labels.ContextMapAreaIntent, view.Searched.Bands.Intent.Empty, c.Intent.Covered, c.Intent.Of),
-            Area(Labels.ContextMapAreaProduct, view.Searched.Bands.Product.Empty, c.Product.Confirmed, c.Product.Of),
-            Area(Labels.ContextMapAreaCode, view.Searched.Bands.Code.Empty, c.Code.Implemented, c.Code.Of),
-            Level(Labels.ContextMapAreaNames, string.Equals(symbols, "ok", StringComparison.Ordinal) ? CoverageLevel.Searched : string.Equals(symbols, "stale", StringComparison.Ordinal) ? CoverageLevel.Limited : CoverageLevel.NotAvailable,
-                string.Equals(symbols, "unavailable", StringComparison.Ordinal) ? Labels.ContextMapNamesDetail : null),
-        ];
-        var searched = areas.Count(a => a.Level == CoverageLevel.Searched);
-        var limited = areas.Where(a => a.Level == CoverageLevel.Limited).Select(a => a.Name).ToList();
-        return (areas, Labels.ContextMapCoverageLead(searched, areas.Count), limited.Count == 0 ? string.Empty : Labels.ContextMapCoverageRest(limited));
+        var areas = new Areas();
+        areas.Sort(NodeBands.Title(WholeBand.Intent), view.Searched.Bands.Intent.Empty, c.Intent.Covered < c.Intent.Of);
+        areas.Sort(NodeBands.Title(WholeBand.Product), view.Searched.Bands.Product.Empty, c.Product.Confirmed < c.Product.Of);
+        areas.Sort(NodeBands.Title(WholeBand.Code), view.Searched.Bands.Code.Empty, c.Code.Implemented < c.Code.Of);
+        var symbols = view.Bands.Code.Symbols;
+        var ok = string.Equals(symbols.State, "ok", StringComparison.Ordinal);
+        if (ok && areas.Searched.Count == 3)
+        {
+            return string.Empty;
+        }
+
+        // Only "ok" and "stale" mean the names were searched. Any other state (today "unavailable"; a later one such as "building") reads as not
+        // searched, and NamesDetail.Sentence gives the reason's words, or "aren't indexed yet" when it has none.
+        var stale = string.Equals(symbols.State, "stale", StringComparison.Ordinal);
+        var names = ok ? null : stale ? Labels.ContextMapNamesStale : NamesDetail.Sentence(symbols);
+        return Compose(areas, names, missing: !ok && !stale);
     }
 
-    private static CoverageArea Area(string name, bool empty, int covered, int of) =>
-        Level(name, empty ? CoverageLevel.NotAvailable : covered < of ? CoverageLevel.Limited : CoverageLevel.Searched, detail: null);
-
-    private static CoverageArea Level(string name, CoverageLevel level, string? detail) => new(name, level, level switch
+    private static string Compose(Areas areas, string? names, bool missing)
     {
-        CoverageLevel.Searched => Labels.ContextMapSearched,
-        CoverageLevel.Limited => Labels.ContextMapLimited,
-        CoverageLevel.NotAvailable => Labels.ContextMapNotAvailable,
-        _ => Labels.ContextMapNotAvailable,
-    }, detail);
+        var parts = new List<string>();
+        if (areas.Searched.Count > 0 || areas.Partly.Count > 0)
+        {
+            parts.Add(Labels.ContextMapSearchedSentence(areas.Searched, areas.Partly));
+        }
+        else if (missing)
+        {
+            // Nothing was searched at all; with the function names searched in full or in part, the opening would contradict them.
+            parts.Add(Labels.ContextMapSearchedNothing);
+        }
+
+        if (areas.Empty.Count > 0)
+        {
+            parts.Add(Labels.ContextMapNoRecords(areas.Empty));
+        }
+
+        if (names is not null)
+        {
+            parts.Add(names);   // why the function names were not searched in full (#3777)
+            parts.Add(Labels.ContextMapNamesNextStep);   // and where to look (#4122)
+        }
+
+        return string.Join(' ', parts);
+    }
+
+    /// <summary>The area words, sorted by how much of each area was searched.</summary>
+    private sealed class Areas
+    {
+        public List<string> Searched { get; } = [];
+
+        public List<string> Empty { get; } = [];
+
+        public List<string> Partly { get; } = [];
+
+        public void Sort(string word, bool none, bool some)
+        {
+            if (none)
+            {
+                Empty.Add(word);
+            }
+            else if (some)
+            {
+                Partly.Add(word);
+            }
+            else
+            {
+                Searched.Add(word);
+            }
+        }
+    }
 }
