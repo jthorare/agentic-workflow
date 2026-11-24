@@ -40,10 +40,11 @@ public sealed class GraphEditTests
         return page;
     }
 
-    // Add step on the run_agent block, then Save with its example untouched: the one add_node goes out here.
+    // Add step on the run_agent block, type its example prompt (#4272: the example is only a hint), then Save: the one add_node goes out here.
     private static async Task AddAndSave(WorkflowsPageViewModel page)
     {
         await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+        page.Editor.Fields[0].Text = "Summarize the open pull requests";
         await page.Save(Token);
     }
 
@@ -88,7 +89,7 @@ public sealed class GraphEditTests
     }
 
     [Fact]
-    public async Task Add_step_opens_the_sheet_prefilled_with_the_blocks_example()
+    public async Task Add_step_opens_the_sheet_empty_with_the_blocks_example_as_the_hint()
     {
         var page = await Open("start");
         await page.GraphEdit.BeginAdd(Token);
@@ -99,8 +100,8 @@ public sealed class GraphEditTests
         Assert.Empty(_f.Server.AppliedWorkflowOps);
         Assert.True(page.IsSettingsOpen);
         Assert.True(page.IsNewStep);
-        Assert.Equal([("prompt", "Summarize the open pull requests")], page.Editor.Fields.Select(f => (f.Name, f.Text)));
-        Assert.True(page.CanSave);   // the example is complete, so Save works untouched
+        Assert.Equal([("prompt", string.Empty, "Summarize the open pull requests")], page.Editor.Fields.Select(f => (f.Name, f.Text, f.Placeholder)));
+        Assert.False(page.CanSave);   // #4272: the required prompt is not filled in for the person
         Assert.Equal(nodes, page.Runs.Graph.Nodes.Count);
     }
 
