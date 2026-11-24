@@ -65,6 +65,23 @@ public sealed class WorkflowNextRunChipTests
         Assert.Equal(("off", "next Mon 7:00"), (before, page.Runs.Graph!.ChipFor(Schedule(page.Runs.Graph))));
     }
 
+    // #4208: a good read that sends no next run is the truth (an active workflow whose schedule has no next time); the list row's time from the open is
+    // kept only when the read failed.
+    [Fact]
+    public async Task A_good_read_with_no_next_run_draws_no_chip_though_the_list_row_had_one()
+    {
+        var list = Golden("workflows", "list-two");
+        list["workflows"]![0]!["nextRunAt"] = "2026-01-05T07:00:00Z";
+        _f.ServeList(list);
+        var page = await _f.Shown(Token);
+        ServeWorkflow(activeRevision: 1, nextRunAt: null);
+
+        await page.OpenWorkflow(Slug, Token);
+
+        Assert.Null(page.Runs.Graph!.NextRunAt);
+        Assert.Null(page.Runs.Graph.ChipFor(Schedule(page.Runs.Graph)));
+    }
+
     private static GraphNodeViewModel Schedule(WorkflowGraphViewModel graph) => graph.Nodes.Single(n => string.Equals(n.Id, "when", StringComparison.Ordinal));
 
     // GET /sindri/workflows/{slug}: a Schedule card and one step, on or off, with the next run Sindri serves (or none).
