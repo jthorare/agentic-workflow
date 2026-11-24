@@ -36,7 +36,7 @@ internal static partial class ContextMapLayout
         {
             new(MapBand.Intent, 0, places.IntentHeight, Labels.ContextMapBandIntent, Labels.ContextMapMetaIntent(view.Bands.Intent.Counts.Records, view.Bands.Intent.Counts.Decisions, view.Conflicts.Count)),
             new(MapBand.Product, places.ProductTop, places.ProductHeight, Labels.ContextMapBandProduct, Labels.ContextMapMetaProduct(view.Anchors.Count, view.Bands.Product.Counts.Affects, view.Bands.Product.Own.Count + view.Bands.Product.Neighbors.Count + view.Bands.Product.Affects.Count)),
-            new(MapBand.Code, places.CodeTop, places.CodeHeight, Labels.ContextMapBandCode, Labels.ContextMapMetaCode(view.Bands.Code.Files.Count(f => f.Tests.Count == 0), view.Bands.Code.Files.Count(f => f.Tests.Count > 0), namesAvailable: !string.Equals(view.Bands.Code.Symbols.State, "unavailable", StringComparison.Ordinal))),
+            new(MapBand.Code, places.CodeTop, places.CodeHeight, Labels.ContextMapBandCode, Labels.ContextMapMetaCode(view.Bands.Code.Files.Count(f => f.Tests.Count == 0), view.Bands.Code.Files.Count(f => f.Tests.Count > 0), view.Bands.Code.Symbols.State)),
         };
         var laid = Route(edges, nodes);
         return new MapLayout(new MapRect(0, 0, WorldWidth, places.CodeTop + places.CodeHeight), bands, nodes, laid);

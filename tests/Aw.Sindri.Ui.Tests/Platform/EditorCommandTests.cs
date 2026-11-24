@@ -3,7 +3,7 @@ using Aw.Sindri.Ui.Platform;
 
 namespace Aw.Sindri.Ui.Tests.Platform;
 
-/// <summary>The editor command a code file opens in: the configured one, then VISUAL, then EDITOR, as an argv list (#3715).</summary>
+/// <summary>The editor command a code file opens in: the configured one, then VISUAL, then EDITOR, as an argv list (#3715); a terminal editor is told apart by its program name (#3836).</summary>
 [Lane(TestLane.Unit)]
 public sealed class EditorCommandTests
 {
@@ -38,4 +38,16 @@ public sealed class EditorCommandTests
 
         Assert.Equal(["code", "--wait", "$HOME;rm"], argv, StringComparer.Ordinal);
     }
+
+    [Theory]
+    [InlineData("vim", true)]
+    [InlineData("/usr/local/bin/nvim", true)]
+    [InlineData("hx", true)]
+    [InlineData("emacs -nw", true)]
+    [InlineData("emacsclient -t", true)]
+    [InlineData("emacs", false)]
+    [InlineData("code -w", false)]
+    [InlineData("gvim -f", false)]
+    public void A_terminal_editor_is_known_by_its_program_name(string command, bool terminal) =>
+        Assert.Equal(terminal, EditorCommand.IsTerminal(command.Split(' ')));
 }

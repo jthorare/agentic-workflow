@@ -40,7 +40,7 @@ internal sealed class ListWorkflowRunsService(IWorkflowStore workflows, IWorkflo
 
         var page = recent.Value.Take(limit).ToList();
         var titles = await Titles(record.Id, page, cancellationToken).ConfigureAwait(false);
-        return new ListWorkflowRunsResponse(record.Slug, [.. page.Select(r => new WorkflowRunSummary(r.Id, r.Revision, RunWords.Of(r.Status), RunWords.Kind(r.Trigger), r.StartedAt, r.EndedAt, r.Error, Sentence(r, titles)))], More: recent.Value.Count > limit);
+        return new ListWorkflowRunsResponse(record.Slug, [.. page.Select(r => new WorkflowRunSummary(r.Id, r.Revision, RunWords.Of(r.Status), RunWords.TriggerWord(r.Trigger), r.StartedAt, r.EndedAt, r.Error, Sentence(r, titles)) { Seconds = RunWords.Seconds(r.StartedAt, r.EndedAt), Result = RunWords.Result(r) })], More: recent.Value.Count > limit);
     }
 
     // why: the row says why in the §6.1 words, naming the step by its title (#3304); one revision read per revision a failed run on this page walked, never one per run

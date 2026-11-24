@@ -51,15 +51,17 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(IsZoomedIn));
         Whole.LeaveConcept();   // the concepts are another repo's now
         OpenedConceptId = null;
+        _conceptsRead = false;   // the other repo's concepts are not read yet, so its first event reads them before its whole map (#3792)
         Concepts.Reset();
         ChangedConcepts();
         return ShowFiles ? FileMap.Opened(cancellationToken) : OpenFirst(cancellationToken);
     }
 
-    // What the whole map says about the repos it covers; an answer that doesn't say leaves the list as it was.
-    private void NoteRepos(Api.Context.WholeMapView answer)
+    // What the whole map or the concepts answer says about the repos the map covers (#3696: a page that opens on the concepts reads no whole map); an answer that doesn't
+    // say leaves the list as it was.
+    private void NoteRepos(IReadOnlyList<Api.Context.WholeRepoSummary>? listed)
     {
-        if (answer.Repos is { Count: > 0 } repos)
+        if (listed is { Count: > 0 } repos)
         {
             Repos = [.. repos.Select(r => r.Name).Distinct(StringComparer.Ordinal).Order(NaturalOrder.Instance)];
             OnChanged(nameof(HasRepoPicker));

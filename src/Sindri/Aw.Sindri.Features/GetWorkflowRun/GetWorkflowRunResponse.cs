@@ -27,4 +27,8 @@ internal sealed record GetWorkflowRunResponse(
     ItemId? ItemId,
     DateTimeOffset StartedAt,
     DateTimeOffset? EndedAt,
-    IReadOnlyList<NodeRunView> Nodes);
+    IReadOnlyList<NodeRunView> Nodes)
+{
+    /// <summary>The trigger kind: 'manual', 'schedule', 'cli' or 'agent' (same words as the run list). Issue 3683.</summary>
+    public string TriggerKind { get; init; } = "";
+}

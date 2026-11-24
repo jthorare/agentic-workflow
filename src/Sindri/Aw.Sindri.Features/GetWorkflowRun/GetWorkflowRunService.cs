@@ -37,8 +37,18 @@ internal sealed class GetWorkflowRunService(IWorkflowRunStore runs, IWorkflowSto
         var titles = StepTitles(spec, nodes.Value);
         var slug = WorkflowSlug.From(found.Id.Value[..found.Id.Value.IndexOf('@', StringComparison.Ordinal)]);
         return new GetWorkflowRunResponse(found.Id, slug, found.Revision, RunText.Of(found.Status), RunText.Json(found.Trigger), RunText.Json(found.Outputs), found.Error, found.ItemId, found.StartedAt, found.EndedAt,
-            [.. RunOrder.Of(spec, nodes.Value).Select(n => new NodeRunView(n.NodeId, n.ItemIndex, RunText.Of(n.Status), RunText.Json(n.Input), RunText.Json(n.Output), n.Truncated, n.Error, agentNodes.Of(n), n.Raw, Failure(n, titles)))]);
+            [.. RunOrder.Of(spec, nodes.Value).Select(n => View(n, agentNodes, titles))])
+        {
+            TriggerKind = RunWords.TriggerWord(found.Trigger),
+        };
     }
+
+    // One node row as the run page shows it; Seconds is null while the row has not ended or when it was written before node times (#3683).
+    private static NodeRunView View(NodeRun n, AgentRows agentNodes, Dictionary<NodeId, string> titles) =>
+        new(n.NodeId, n.ItemIndex, RunText.Of(n.Status), RunText.Json(n.Input), RunText.Json(n.Output), n.Truncated, n.Error, agentNodes.Of(n), n.Raw, Failure(n, titles))
+        {
+            Seconds = n.StartedAt is { } begun && n.EndedAt is { } end ? (end - begun).TotalSeconds : null,
+        };
 
     // why: the §6.1 sentence names a step by its title, never its node id (#3304); a row the revision can't name keeps only its raw error
     private static StepFailure? Failure(NodeRun row, Dictionary<NodeId, string> titles) =>

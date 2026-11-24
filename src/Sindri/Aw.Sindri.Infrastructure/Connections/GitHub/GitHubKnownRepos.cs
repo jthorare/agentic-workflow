@@ -10,14 +10,15 @@ using Aw.Sindri.Core.Setup;
 namespace Aw.Sindri.Infrastructure.Connections.GitHub;
 
 /// <summary>
-/// <see cref="IKnownRepos"/> over the Connections page (first-run spec gap 7): one GET https://api.github.com/user/repos?sort=pushed&amp;per_page=100 with the first connected 'github' connection's token (https,
+/// <see cref="IKnownRepos"/> over the Connections page (first-run spec gap 7): one GET https://api.github.com/user/repos?sort=pushed&amp;per_page=100 with the token of the newest connected 'github' connection whose token reads (a gh login's `github:gh` row too) (https,
 /// api.github.com only, no redirect followed); the 100 repos the account pushed to most lately are the known ones. No connected account (or no token) is no slug and no error. The token is in no error or log.
 /// </summary>
 /// <param name="store">The Connections page's rows.</param>
-/// <param name="secrets">Reads a connection's tokens.</param>
 /// <param name="http">The HTTP client; it must not follow redirects on its own.</param>
-internal sealed class GitHubKnownRepos(IConnectionStore store, IConnectionSecrets secrets, HttpClient http) : IKnownRepos
+/// <param name="credentials">Reads the picked connection's token: a gh login's `command:` credential or the secret pointer (first-run spec decision 14).</param>
+internal sealed class GitHubKnownRepos(IConnectionStore store, HttpClient http, IConnectionCredentials credentials) : IKnownRepos
 {
+
     private const string Preset = "github";
     private static readonly Uri _recent = new("https://api.github.com/user/repos?sort=pushed&per_page=100&affiliation=owner,collaborator,organization_member");
 
@@ -29,9 +30,8 @@ internal sealed class GitHubKnownRepos(IConnectionStore store, IConnectionSecret
             return listed.Error;
         }
 
-        var connected = listed.Value.Where(static c => string.Equals(c.Preset, Preset, StringComparison.Ordinal) && c.Status == ConnectionStatus.Connected)
-            .OrderBy(static c => c.Name.ToString(), StringComparer.Ordinal).FirstOrDefault();
-        return connected?.SecretPointer is { } pointer && secrets.Read(pointer) is { IsSuccess: true } tokens && tokens.Value.AccessToken is { Length: > 0 } token
+        var connected = listed.Value.Where(static c => string.Equals(c.Preset, Preset, StringComparison.Ordinal) && c.Status == ConnectionStatus.Connected);
+        return ConnectionCredentials.Newest(connected).Select(credentials.TokenOf).FirstOrDefault(static t => t is { Length: > 0 }) is { } token
             ? await Read(token, cancellationToken).ConfigureAwait(false)
             : Results.Success<IReadOnlySet<string>>(new HashSet<string>(StringComparer.Ordinal));
     }

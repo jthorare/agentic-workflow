@@ -72,6 +72,9 @@ public sealed class WorkflowReadFencingTests : IAsyncLifetime
         AssertFenced(leaves, "spec.resources.sandbox", Fence);
         AssertFenced(leaves, "spec.resources.database", Fence);
         AssertEverywhereFenced(leaves);
+
+        // #3756: the tool carries the next run time unfenced, a date and no text; this workflow runs by hand, so it has none
+        Assert.Equal(JsonValueKind.Null, result.StructuredContent!.Value.GetProperty("nextRunAt").ValueKind);
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
@@ -85,6 +88,24 @@ public sealed class WorkflowReadFencingTests : IAsyncLifetime
         Assert.NotEqual(true, result.IsError);
         var leaves = Leaves(result);
         AssertFenced(leaves, "workflows[0].name", Fence);
+        AssertEverywhereFenced(leaves);
+    }
+
+    [Fact(Timeout = 60_000), Trait("Lane", "integration")]
+    public async Task Workflow_list_fences_the_trigger_words_a_cron_with_no_words_shows_as_written()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var schedule = new GraphNode(NodeId.From("tick"), "schedule", Title: null, new System.Text.Json.Nodes.JsonObject { ["cron"] = Attack });
+        var spec = new GraphSpec(Version: 1, "Evening check", Description: null, Concurrency: null, Resources: null, Nodes: [schedule], Edges: []);
+        _ = (await Host.App.Services.GetRequiredService<IWorkflowStore>().Create(WorkflowId.From("WF-00000000000000000000000000000002"), WorkflowSlug.From("evening-check"), spec, "owner", ct)).Value;
+        await using var mcp = await McpSession.Open(Host, repo: null, ct);
+
+        var result = await mcp.Call("workflow_list", "{}", ct);
+
+        Assert.NotEqual(true, result.IsError);
+        var leaves = Leaves(result);
+        var row = leaves.Single(static l => l.Path.EndsWith(".slug", StringComparison.Ordinal) && l.Text == "evening-check").Path[..^".slug".Length];
+        AssertFenced(leaves, row + ".trigger", Fence);
         AssertEverywhereFenced(leaves);
     }
 

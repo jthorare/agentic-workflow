@@ -35,9 +35,10 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(InspectorOpen));
     }
 
-    // A new read starts with nothing chosen: the old node's card must not outlive its map.
+    // A new read starts with nothing chosen: the old node's card must not outlive its map, nor the old choices' titles (#3045: kept by key, they grew with every key seen).
     private void ForgetSelection()
     {
+        _choiceTitles.Clear();
         Node.Close();
         Sources.Close();
         Code.Clear();

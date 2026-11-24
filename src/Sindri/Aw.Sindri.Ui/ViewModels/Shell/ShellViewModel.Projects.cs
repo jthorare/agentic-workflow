@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
@@ -35,6 +36,9 @@ internal sealed partial class ShellViewModel
     /// <summary>True on Projects.</summary>
     public bool IsProjects => CurrentPage == PageId.Projects;
 
+    // The Projects page's own keys (1 to 4, O, B, J / K, Enter; issue 3717) belong to the page and never to the sheet.
+    private bool ProjectsKeyPressed(string key, bool inSheet) => !inSheet && IsProjects && Projects.Press(key);
+
     [MemberNotNull(nameof(Projects), nameof(ProjectSheet), nameof(ProjectAdd))]
     private void InitProjects(ILauncher launcher)
     {
@@ -56,18 +60,29 @@ internal sealed partial class ShellViewModel
             OpenerProject = Uri.UnescapeDataString(e.Link.Subject ?? string.Empty);   // Esc comes back to this card, after the sheet's own opening cleared it
         };
         ProjectSheet.Done += OnProjectDone;
+        Projects.Laid += OnProjectsLaid;
         WireProjectAdd();
-        ProjectSheet.PropertyChanged += (_, e) =>
+        ProjectSheet.PropertyChanged += OnProjectSheetChanged;
+    }
+
+    private void OnProjectsLaid(object? sender, EventArgs e)
+    {
+        if (IsProjectSheet && SheetLink?.Subject is { } subject)
         {
-            if (string.Equals(e.PropertyName, nameof(ProjectSheetViewModel.Heading), StringComparison.Ordinal))
-            {
-                Changed(nameof(SheetTitle), nameof(SheetName), nameof(EdgeTabName), nameof(EdgeTabText));
-            }
-            else if (string.Equals(e.PropertyName, nameof(ProjectSheetViewModel.Announcement), StringComparison.Ordinal) && ProjectSheet.Announcement.Length > 0)
-            {
-                _line.Say(ProjectSheet.Announcement);
-            }
-        };
+            ProjectSheet.EditNotesWith(Projects.CardOf(Uri.UnescapeDataString(subject)));   // a sheet opened before the page read gets its row now
+        }
+    }
+
+    private void OnProjectSheetChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(ProjectSheetViewModel.Heading), StringComparison.Ordinal))
+        {
+            Changed(nameof(SheetTitle), nameof(SheetName), nameof(EdgeTabName), nameof(EdgeTabText));
+        }
+        else if (string.Equals(e.PropertyName, nameof(ProjectSheetViewModel.Announcement), StringComparison.Ordinal) && ProjectSheet.Announcement.Length > 0)
+        {
+            _line.Say(ProjectSheet.Announcement);
+        }
     }
 
     // The Add project sheet: the page's button opens it, Cancel closes it, and an added project closes it with the sentence said.
@@ -106,6 +121,7 @@ internal sealed partial class ShellViewModel
         }
 
         ProjectSheet.Show(subject);
+        ProjectSheet.EditNotesWith(Projects.CardOf(Uri.UnescapeDataString(subject)));   // the rows have no notes area: the sheet edits the notes through the project's row
         if (Health.ApiUrl() is { } url)
         {
             _ = ProjectSheet.Open(url, subject, CancellationToken.None);

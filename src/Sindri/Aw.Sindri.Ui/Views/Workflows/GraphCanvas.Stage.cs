@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Input;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.Views.Workflows;
@@ -21,6 +22,9 @@ internal sealed partial class GraphCanvas
 
     /// <summary>True when the world at this zoom is larger than the canvas, so the canvas scrolls.</summary>
     internal bool Scrolls => Graph is { Nodes.Count: > 0 } && GraphZoom.Scrolls(World.Right, World.Bottom, Zoom, (Bounds.Width, Bounds.Height));
+
+    /// <summary>True when the minimap shows: the world at this zoom is over twice the canvas one way (GraphZoom.MapShown, #4055).</summary>
+    internal bool MapShown => Graph is { Nodes.Count: > 0 } && GraphZoom.MapShown(World.Right, World.Bottom, Zoom, (Bounds.Width, Bounds.Height));
 
     /// <summary>Zooms to the next ladder step about the canvas's centre. Cards keep their columns and rows: only open, a size change and a text-size change wrap again.</summary>
     internal void ZoomIn() => StepTo(GraphZoom.Next(ZoomPercent));
@@ -73,12 +77,18 @@ internal sealed partial class GraphCanvas
         FitIfPending();
     }
 
+    /// <summary>The tooltip for the card under a point (#4203): the card's title and its full settings line, which the card may cut; null off the cards.</summary>
+    /// <param name="point">A point in this control.</param>
+    /// <returns>The tooltip's words, or null.</returns>
+    internal string? TipAt(Point point) =>
+        NodeAt(point) is { } id && Graph?.Nodes.FirstOrDefault(n => string.Equals(n.Id, id, StringComparison.Ordinal)) is { } node ? Labels.WfCardTip(node.Title, node.Line) : null;
+
     /// <summary>Centres the canvas on a point of the world (the minimap's press).</summary>
     /// <param name="world">The point.</param>
     internal void CentreOn(Point world)
     {
         _fitPending = false;
-        Pan = new Point((Bounds.Width / 2) - (world.X * Zoom), (Bounds.Height / 2) - (world.Y * Zoom));
+        PanTo(new Point((Bounds.Width / 2) - (world.X * Zoom), (Bounds.Height / 2) - (world.Y * Zoom)));
     }
 
     // The pan held inside the scroll extent (the world plus the map's 144 px at the bottom): no pan past it, none along an axis that fits.
@@ -94,13 +104,18 @@ internal sealed partial class GraphCanvas
         return new Point(x, y);
     }
 
+    // Sets the pan. The Pan setter stores it already held inside the scroll extent (#4063), so the value Avalonia keeps is the one on screen and a later
+    // zoom's CoerceValue has no unclamped value to bring back (#4033).
+    private void PanTo(Point pan) => Pan = pan;
+
     private void StepTo(int percent)
     {
         _fitPending = false;
         var old = Zoom;
+        var pan = Pan;   // before the zoom: its handler clamps the pan to the new extent, and the centre formula needs the pan on screen now
         Zoom = percent / 100.0;
         var centre = new Point(Bounds.Width / 2, Bounds.Height / 2);
         var k = Zoom / old;
-        Pan = new Point(centre.X - ((centre.X - Pan.X) * k), centre.Y - ((centre.Y - Pan.Y) * k));
+        PanTo(new Point(centre.X - ((centre.X - pan.X) * k), centre.Y - ((centre.Y - pan.Y) * k)));
     }
 }

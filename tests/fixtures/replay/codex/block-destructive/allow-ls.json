@@ -1,0 +1,43 @@
+{
+  "schema": "aw-replay-fixture/1",
+  "id": "codex/block-destructive/allow-ls",
+  "provider": "codex",
+  "scenario": "block-destructive",
+  "verified": "captured",
+  "source": {
+    "hostVersion": "codex 0.158.0",
+    "capturedAt": null,
+    "sanitizedBy": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  },
+  "policy": "block-destructive/1",
+  "notes": "Payload copied from config/hooks/tests/fixtures/codex/ (Codex 0.158.0 PreToolUse).",
+  "events": [
+    {
+      "n": 1,
+      "hook": "PreToolUse",
+      "script": "block-destructive.sh",
+      "payload": {
+        "session_id": "cx-1",
+        "turn_id": "t-1",
+        "cwd": "/tmp",
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_use_id": "call_2",
+        "tool_input": {
+          "command": "ls -la"
+        }
+      }
+    }
+  ],
+  "judge": null,
+  "expect": [
+    {
+      "event": 1,
+      "decision": "allow",
+      "reasonCode": null,
+      "textContains": null
+    }
+  ]
+}

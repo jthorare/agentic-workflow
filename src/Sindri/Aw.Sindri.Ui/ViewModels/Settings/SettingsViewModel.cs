@@ -192,6 +192,7 @@ internal sealed partial class SettingsViewModel : ObservableObject, IDisposable
         {
             ReduceMotion = stored.ReduceMotion;
             TextScale = stored.TextScale;
+            HomeAsRows = string.Equals(stored.HomeLayout, UiPreferences.HomeRows, StringComparison.Ordinal);
             SystemReducesMotion = _motion.ReduceMotion;
         }
         finally

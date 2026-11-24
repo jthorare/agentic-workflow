@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pvm="using:Aw.Sindri.Ui.ViewModels.Projects"
+             x:Class="Aw.Sindri.Ui.Views.Projects.ProjectNotesEditor"
+             x:DataType="pvm:ProjectCardViewModel">
+  <!-- The owner's notes in the project's sheet (issue 3717): the whole text (wrapping, line breaks kept) with Edit notes, or the box with its counter, Save and Cancel,
+       and the 409's Reload. It was the card's notes area until the rows replaced the cards; the frames draw notes read-only, so this is the smallest way to keep
+       editing them. Its code-behind stops Enter, Space and a press at this panel, so nothing around it sees them. -->
+  <Panel x:Name="ProjectNotesArea">
+    <TextBlock x:Name="ProjectNotesAnnouncement" Classes="caption live-region" Classes.live="{Binding Voice.IsAnnouncing}" Width="0" Opacity="0" IsHitTestVisible="False" Text="{Binding Voice.Announcement}" />
+    <StackPanel Spacing="6">
+      <Border x:Name="ProjectNotesText" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.HairlineTertiary}" BorderThickness="2,0,0,0"
+              CornerRadius="{StaticResource Radius.XS}" Padding="8,6" IsVisible="{Binding ShowsNotes}">
+        <TextBlock Classes="caption muted" Text="{Binding NotesText}" TextWrapping="Wrap" />
+      </Border>
+      <Button x:Name="ProjectNotesEdit" Classes="link" Content="{Binding EditText}" AutomationProperties.Name="{Binding EditName}" Click="OnEdit" IsVisible="{Binding IsReading}" HorizontalAlignment="Left" />
+      <StackPanel x:Name="ProjectNotesForm" Spacing="6" IsVisible="{Binding IsEditing}">
+        <Border x:Name="ProjectNotesNewer" IsVisible="{Binding HasNewerNotes}" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.HairlineTertiary}"
+              BorderThickness="2,0,0,0" CornerRadius="{StaticResource Radius.XS}" Padding="8,6"
+              AutomationProperties.Name="{Binding NewerNotesCaption}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+        <StackPanel Spacing="4">
+          <TextBlock Classes="caption subtle" Text="{Binding NewerNotesCaption}" TextWrapping="Wrap" />
+          <TextBlock x:Name="ProjectNotesNewerText" Classes="caption muted" Text="{Binding NewerNotes}" TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+      <TextBox x:Name="ProjectNotesBox" Text="{Binding Draft}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="96" MaxHeight="320" AutomationProperties.Name="{Binding BoxName}" />
+        <TextBlock x:Name="ProjectNotesCounter" Classes="caption subtle" Classes.error="{Binding OverLimit}" Text="{Binding Counter}" HorizontalAlignment="Right" />
+        <StackPanel x:Name="ProjectNotesConflict" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsConflict}">
+          <TextBlock Classes="caption error" Text="{Binding ConflictText}" VerticalAlignment="Center" />
+          <Button x:Name="ProjectNotesReload" Content="{Binding ReloadText}" AutomationProperties.Name="{Binding ReloadName}" Click="OnReload" />
+        </StackPanel>
+        <TextBlock x:Name="ProjectNotesError" Classes="caption error" Text="{Binding SaveError}" TextWrapping="Wrap" IsVisible="{Binding HasSaveError}" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button x:Name="ProjectNotesSave" Classes="accent" Content="{Binding SaveText}" AutomationProperties.Name="{Binding SaveName}" IsEnabled="{Binding CanSave}" Click="OnSave" />
+          <Button x:Name="ProjectNotesCancel" Classes="link" VerticalAlignment="Center" Content="{Binding CancelText}" AutomationProperties.Name="{Binding CancelName}" Click="OnCancel" />
+        </StackPanel>
+      </StackPanel>
+    </StackPanel>
+  </Panel>
+</UserControl>

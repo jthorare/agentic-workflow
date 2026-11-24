@@ -60,7 +60,7 @@ internal static class DelegateCommand
     private static string DropText(DelegateDropResponse response) =>
         response.Dropped
             ? string.Create(CultureInfo.InvariantCulture, $"dropped the delegation of #{response.Issue} to lane {response.Lane}")
-            : string.Create(CultureInfo.InvariantCulture, $"no delegation of #{response.Issue}: nothing dropped");
+            : string.Create(CultureInfo.InvariantCulture, $"no delegation of #{response.Issue} recorded: nothing dropped. A delegate of #{response.Issue} that is still delivering records it when it ends: run aw-meta delegate --drop {response.Issue} again after it");
 
     // The same knob lane-send reads.
     private static int WakeConfirmSeconds(CommandContext context) =>
@@ -69,6 +69,7 @@ internal static class DelegateCommand
     private static string Text(DelegateResponse response) =>
         response.MovedFrom is not { } movedFrom ? Body(response)
         : response.MovedNotice is { } notice ? Body(response) + Environment.NewLine + $"moved off {movedFrom}: send it this with SendMessage: {notice}"
+        : response.MovedProblem is { } problem ? Body(response) + Environment.NewLine + $"moved off {movedFrom}: the notice was not delivered ({problem}); it is not a Claude lane, so SendMessage can't reach it"
         : Body(response) + Environment.NewLine + $"moved off {movedFrom}: told it through lane-send";
 
     private static string Body(DelegateResponse response)

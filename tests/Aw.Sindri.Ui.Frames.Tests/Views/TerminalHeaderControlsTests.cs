@@ -1,8 +1,8 @@
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.Agents;
 using Aw.Sindri.Ui.Views.Agents;
 using Microsoft.Extensions.Time.Testing;

@@ -24,8 +24,8 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
     /// <summary>sindri_job: the summary, each progress line and every string inside the result (a service's result can carry text an agent wrote).</summary>
     internal static FencePlan Job { get; } = new("sindri:job", [new("summary", "startedBy"), new("progress[].line"), new("result", "startedBy", EveryString: true)]);
 
-    /// <summary>workflow_list: each workflow's name, by whoever saved its newest revision.</summary>
-    internal static FencePlan WorkflowList { get; } = new("sindri:workflow", [new("workflows[].name", "changedBy")]);
+    /// <summary>workflow_list: each workflow's name, by whoever saved its newest revision, and its trigger in words (a cron with no words is shown as written; the shown revision may be the active one, not the newest, so no author).</summary>
+    internal static FencePlan WorkflowList { get; } = new("sindri:workflow", [new("workflows[].name", "changedBy"), new("workflows[].trigger")]);
 
     /// <summary>workflow_get: the names, the description, each node's title, every string of each node's config (prompts, templates, URLs) and the resource names (the graph validator checks a node type and an edge's output against the known blocks, but not these).</summary>
     internal static FencePlan WorkflowGet { get; } = new("sindri:workflow",
@@ -41,8 +41,8 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("findings[].message"), new("findings[].fix"), new("findings[].field"), new("findings[].nodes[]"),
     ]);
 
-    /// <summary>workflow_runs: each run's failure text and its sentence (which quotes the error).</summary>
-    internal static FencePlan WorkflowRuns { get; } = new("sindri:workflow-run", [new("runs[].error"), new("runs[].failureSentence")]);
+    /// <summary>workflow_runs: each run's failure text, its sentence (which quotes the error) and its one-line result (the error's first line or the outputs, which an agent or a service wrote).</summary>
+    internal static FencePlan WorkflowRuns { get; } = new("sindri:workflow-run", [new("runs[].error"), new("runs[].failureSentence"), new("runs[].result")]);
 
     /// <summary>workflow_run_get: the failure text, what a trigger carried, the outputs, and each node run's input, output, error and failure sentence (payloads an agent or a service wrote; the sentence quotes the error and the step's title).</summary>
     internal static FencePlan WorkflowRun { get; } = new("sindri:workflow-run",

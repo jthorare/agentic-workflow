@@ -40,6 +40,6 @@ internal sealed partial class ShellViewModel
     private void ShowTabCount(string live)
     {
         Agents.ShowNavCount(live);
-        Navigation.First(n => n.Page == PageId.Agents).Count = live;
+        ShowPageCount(PageId.Agents, live);
     }
 }

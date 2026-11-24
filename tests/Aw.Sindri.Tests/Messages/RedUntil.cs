@@ -1,3 +1,5 @@
+using Aw.Sindri.Core.Messages;
+
 namespace Aw.Sindri.Tests.Messages;
 
 /// <summary>
@@ -17,7 +19,7 @@ internal static class RedUntil
         {
             body();
         }
-        catch (NotSupportedException e)
+        catch (NotSupportedException e) when (IsStub(e))
         {
             Assert.Skip($"red until {phase}: the stub throws ({e.Message})");
         }
@@ -34,9 +36,12 @@ internal static class RedUntil
         {
             await body();
         }
-        catch (NotSupportedException e)
+        catch (NotSupportedException e) when (IsStub(e))
         {
             Assert.Skip($"red until {phase}: the stub throws ({e.Message})");
         }
     }
+
+    // only a Messages stub's own refusal skips; any other NotSupportedException (System.Text.Json's missing metadata is one) fails the test
+    private static bool IsStub(NotSupportedException e) => e.Message.Contains(MessageStubs.NotBuiltText, StringComparison.Ordinal);
 }
