@@ -158,13 +158,14 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
     // A source the server flags with its own sentence (#3911) reads that sentence in place of its state; any other reads its name and state.
     private string Line(IndexSourceView source)
     {
-        var firstSync = IsFirstSync(source);
+        var pass = Pass(source);
         var line = source is { NeedsLook: true, LookWords: { Length: > 0 } words }
             ? words
-            : source.Source + ": " + (firstSync ? Labels.ContextSourceFirstSync : State(source));
+            : source.Source + ": " + (pass ?? State(source));
         if (source.Records is { } records)
         {
-            line += firstSync ? ", " + Labels.ContextRecordsSoFar(records) : " · " + Labels.ContextRecords(records);
+            line += pass is null ? " · " + Labels.ContextRecords(records)
+                : ", " + (IsReReading(source) ? Labels.ContextRecords(records) : Labels.ContextRecordsSoFar(records));
         }
 
         if (source.LastCommit is { } commit)
@@ -175,9 +176,16 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
         return source.Records is null ? line : line + " · " + Labels.ContextNothingCommitted;
     }
 
-    // A first pass (phase recent or backfill) that the server does not flag reads as progress, not as a pull word (#4035); a failing pull keeps its words.
-    private static bool IsFirstSync(IndexSourceView source) =>
-        !source.NeedsLook && (Is(source.Phase, "recent") || Is(source.Phase, "backfill")) && (Is(source.Pull, "running") || Is(source.Pull, "idle"));
+    // A pass the server does not flag reads as progress, not as a pull word: a re-read of stored records (#4084), else a first pass, phase recent or backfill
+    // (#4035); a failing pull keeps its words. Null for any other source. At the time cap (SND-CONTEXT-059) a pass still reads as its pass: the cap ends a
+    // tick, not the pass.
+    private static string? Pass(IndexSourceView source) =>
+        source.NeedsLook || !(Is(source.Pull, "running") || Is(source.Pull, "idle")) ? null
+        : IsReReading(source) ? Labels.ContextSourceReReading
+        : Is(source.Phase, "recent") || Is(source.Phase, "backfill") ? Labels.ContextSourceFirstSync
+        : null;
+
+    private static bool IsReReading(IndexSourceView source) => source.ReReading is not null;
 
     private string State(IndexSourceView source) => source.Pull switch
     {
