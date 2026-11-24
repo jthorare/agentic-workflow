@@ -30,8 +30,8 @@ internal static partial class Labels
     /// <param name="seconds">How long it took.</param>
     /// <returns>The words.</returns>
     internal static string WfDuration(double seconds) => seconds < 60
-        ? string.Create(CultureInfo.InvariantCulture, $"{Math.Round(seconds)} s")
-        : string.Create(CultureInfo.InvariantCulture, $"{(int)(seconds / 60)}m {(int)Math.Round(seconds % 60)}s");
+        ? string.Create(CultureInfo.InvariantCulture, $"{Math.Round(seconds, MidpointRounding.AwayFromZero)} s")
+        : string.Create(CultureInfo.InvariantCulture, $"{(int)(seconds / 60)}m {(int)Math.Round(seconds % 60, MidpointRounding.AwayFromZero)}s");
 
     /// <summary>The runs table's count: "500 runs".</summary>
     /// <param name="total">The runs.</param>

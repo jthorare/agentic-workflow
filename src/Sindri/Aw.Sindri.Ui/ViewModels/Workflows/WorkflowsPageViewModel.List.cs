@@ -25,7 +25,7 @@ internal sealed partial class WorkflowsPageViewModel
     private static List<WorkflowRowViewModel> Sorted(List<WorkflowRowViewModel> rows)
     {
         var ordered = rows.OrderByDescending(r => r.NeedsLook).ThenByDescending(r => r.Activity).ToList();
-        var names = ordered.GroupBy(r => r.NameText, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var names = ordered.GroupBy(r => r.NameText, StringComparer.OrdinalIgnoreCase).Where(g => g.Skip(1).Any()).Select(g => g.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var row in ordered)
         {
             row.ShowsId = names.Contains(row.NameText);

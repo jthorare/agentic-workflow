@@ -17,8 +17,6 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
     private int _reads;
     private List<RunRowViewModel> _all = [];
     private readonly HashSet<string> _ticked = new(StringComparer.Ordinal);   // ticked run ids survive a re-read
-    private string _status = string.Empty;
-    private string _range = string.Empty;
 
     /// <summary>The workflow's slug.</summary>
     public string Slug { get; private set => Set(ref field, value); } = string.Empty;
@@ -96,7 +94,7 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
         var read = ++_reads;
         if (!string.Equals(Slug, slug, StringComparison.Ordinal))
         {
-            (_all, _status, _range) = ([], string.Empty, string.Empty);
+            (_all, StatusFilter, DateFilter) = ([], string.Empty, string.Empty);
             _ticked.Clear();
             Rows.Clear();   // another workflow: none of the old runs stay
             (Head, DetailText) = (string.Empty, string.Empty);

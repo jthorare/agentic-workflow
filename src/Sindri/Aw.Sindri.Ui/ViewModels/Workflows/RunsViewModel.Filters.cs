@@ -9,7 +9,7 @@ internal sealed partial class RunsViewModel
     public string CountText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when a status or date filter is on.</summary>
-    public bool HasFilter => !string.IsNullOrEmpty(_status) || !string.IsNullOrEmpty(_range);
+    public bool HasFilter => !string.IsNullOrEmpty(StatusFilter) || !string.IsNullOrEmpty(DateFilter);
 
     /// <summary>True when a filter leaves no run.</summary>
     public bool HasNoMatch => HasFilter && _all.Count > 0 && Rows.Count == 0;
@@ -67,22 +67,22 @@ internal sealed partial class RunsViewModel
     public IReadOnlyList<RunFilterChoice> DateChoices { get; } = [new("", "Any time"), new("24h", "Last 24 hours"), new("7d", "Last 7 days"), new("30d", "Last 30 days")];
 
     /// <summary>The picked status choice; picking one filters.</summary>
-    public RunFilterChoice SelectedStatus { get => StatusChoices.First(c => string.Equals(c.Key, _status, StringComparison.Ordinal)); set => SetStatusFilter(value?.Key); }
+    public RunFilterChoice SelectedStatus { get => StatusChoices.First(c => string.Equals(c.Key, StatusFilter, StringComparison.Ordinal)); set => SetStatusFilter(value?.Key); }
 
     /// <summary>The picked date choice; picking one filters.</summary>
-    public RunFilterChoice SelectedDate { get => DateChoices.First(c => string.Equals(c.Key, _range, StringComparison.Ordinal)); set => SetDateFilter(value?.Key); }
+    public RunFilterChoice SelectedDate { get => DateChoices.First(c => string.Equals(c.Key, DateFilter, StringComparison.Ordinal)); set => SetDateFilter(value?.Key); }
 
     /// <summary>The status filter: "failed", "succeeded", "running", "cancelled", or empty for every status.</summary>
-    public string StatusFilter => _status;
+    public string StatusFilter { get; private set; } = string.Empty;
 
     /// <summary>The date filter: "24h", "7d", "30d", or empty for every date.</summary>
-    public string DateFilter => _range;
+    public string DateFilter { get; private set; } = string.Empty;
 
     /// <summary>Filters by status ("failed", "succeeded", "running", "cancelled"); null or empty shows every status.</summary>
     /// <param name="status">The status.</param>
     internal void SetStatusFilter(string? status)
     {
-        _status = status ?? string.Empty;
+        StatusFilter = status ?? string.Empty;
         Apply();
     }
 
@@ -90,23 +90,23 @@ internal sealed partial class RunsViewModel
     /// <param name="range">The range.</param>
     internal void SetDateFilter(string? range)
     {
-        _range = range ?? string.Empty;
+        DateFilter = range ?? string.Empty;
         Apply();
     }
 
     /// <summary>Clears both filters.</summary>
     internal void ClearFilters()
     {
-        (_status, _range) = (string.Empty, string.Empty);
+        (StatusFilter, DateFilter) = (string.Empty, string.Empty);
         Apply();
     }
 
     // The rows the filters keep, newest first as served; the count says how many of all.
     private void Apply()
     {
-        var since = _range switch { "24h" => TimeSpan.FromHours(24), "7d" => TimeSpan.FromDays(7), "30d" => TimeSpan.FromDays(30), _ => TimeSpan.Zero };
+        var since = DateFilter switch { "24h" => TimeSpan.FromHours(24), "7d" => TimeSpan.FromDays(7), "30d" => TimeSpan.FromDays(30), _ => TimeSpan.Zero };
         var now = clock.GetUtcNow();
-        var kept = _all.Where(r => (_status.Length == 0 || string.Equals(r.Status, _status, StringComparison.Ordinal)) && (since == TimeSpan.Zero || now - r.StartedAt <= since)).ToList();
+        var kept = _all.Where(r => (StatusFilter.Length == 0 || string.Equals(r.Status, StatusFilter, StringComparison.Ordinal)) && (since == TimeSpan.Zero || now - r.StartedAt <= since)).ToList();
         Patch.To(Rows, kept);
         CountText = HasFilter ? Labels.WfRunsCountOf(kept.Count, _all.Count) : Labels.WfRunsCount(_all.Count);
         OnChanged(nameof(HasFilter));

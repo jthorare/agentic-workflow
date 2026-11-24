@@ -25,7 +25,7 @@ public sealed class RunCompareTests
 
     private static JsonObject Run(string id, int revision, string status, string trigger, TimeSpan ago, double seconds, string? error, params JsonObject[] nodes) => new()
     {
-        ["id"] = id, ["slug"] = Slug, ["revision"] = revision, ["status"] = status, ["trigger"] = new JsonObject { ["kind"] = trigger is "cli" or "agent" ? "manual" : trigger }, ["triggerKind"] = trigger, ["outputs"] = null, ["error"] = error, ["itemId"] = null,
+        ["id"] = id, ["slug"] = Slug, ["revision"] = revision, ["status"] = status, ["trigger"] = new JsonObject { ["kind"] = string.Equals(trigger, "cli", StringComparison.Ordinal) || string.Equals(trigger, "agent", StringComparison.Ordinal) ? "manual" : trigger }, ["triggerKind"] = trigger, ["outputs"] = null, ["error"] = error, ["itemId"] = null,
         ["startedAt"] = (Now - ago).ToString("O", System.Globalization.CultureInfo.InvariantCulture), ["endedAt"] = status == "running" ? null : (Now - ago + TimeSpan.FromSeconds(seconds)).ToString("O", System.Globalization.CultureInfo.InvariantCulture),
         ["nodes"] = new JsonArray([.. nodes.Select(n => (JsonNode?)n)]),
     };

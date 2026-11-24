@@ -18,8 +18,8 @@ internal sealed class WorkflowRowViewModel : ObservableObject
         ChangedText = Labels.WfChangedBy(row.ChangedBy, clock.GetUtcNow() - row.ChangedAt);
         TriggerText = row.Trigger ?? string.Empty;
         IsPaused = row.Paused == true;
-        StateText = IsPaused ? "Paused" : IsActive ? "Active" : "Off";
-        NeedsLook = (IsPaused && IsSchedule(TriggerText)) || string.Equals(row.LastRun?.Status, "failed", StringComparison.Ordinal);   // served paused = on once, off now, any trigger: only a held schedule is missed work (#3683)
+        StateText = StateOf(IsPaused, IsActive);
+        NeedsLook = NeedsLookOf(row, IsPaused, TriggerText);
         (LastRunText, LastRunToneWord) = LastRunOf(row, IsPaused, clock);
         NextRunText = NextRunOf(row, IsPaused, clock);
         Activity = row.LastRun?.At ?? row.ChangedAt;
@@ -157,6 +157,12 @@ internal sealed class WorkflowRowViewModel : ObservableObject
         var word = Labels.WfChip(status).Word;
         return (word + " " + Labels.AgoWords(clock.GetUtcNow() - last.At), tone);
     }
+
+    private static string StateOf(bool paused, bool active) => paused ? "Paused" : active ? "Active" : "Off";
+
+    // Served paused = on once, off now, any trigger: only a held schedule is missed work (#3683). A failed last run always needs a look.
+    private static bool NeedsLookOf(WorkflowRowView row, bool paused, string trigger) =>
+        (paused && IsSchedule(trigger)) || string.Equals(row.LastRun?.Status, "failed", StringComparison.Ordinal);
 
     // The served trigger words name a schedule unless they are the by-hand words, empty (no trigger node) or another trigger's node type (TriggerWords.Of on the server).
     private static bool IsSchedule(string trigger) => trigger is not ("" or "By hand" or "connection_event" or "workflow_call");

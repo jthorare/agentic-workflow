@@ -3,7 +3,10 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <summary>One slot of a list row's strip of the last 10 runs: its outcome, its shape (a failed run is tall, a cancelled one hollow, so colour is never the only cue) and the two tooltip lines.</summary>
 internal sealed class RunBarViewModel
 {
-    private RunBarViewModel(string kind, string titleLine, string detailLine) => (Kind, TitleLine, DetailLine) = (kind, titleLine, detailLine);
+    private RunBarViewModel(string kind, string titleLine, string detailLine)
+    {
+        (Kind, TitleLine, DetailLine) = (kind, titleLine, detailLine);
+    }
 
     /// <summary>An empty slot: a short dash.</summary>
     internal static RunBarViewModel Empty { get; } = new("empty", string.Empty, string.Empty);
@@ -15,14 +18,14 @@ internal sealed class RunBarViewModel
     internal static RunBarViewModel Of(Api.Workflows.WorkflowRecentRunView run, TimeProvider clock)
     {
         var status = run.Status.ToLowerInvariant();
-        var kind = status is "queued" or "waiting" ? "running" : status;
+        var kind = string.Equals(status, "queued", StringComparison.Ordinal) || string.Equals(status, "waiting", StringComparison.Ordinal) ? "running" : status;
         var number = run.Run[(run.Run.LastIndexOf(':') + 1)..];
         var local = TimeZoneInfo.ConvertTime(run.StartedAt, clock.LocalTimeZone);
         var culture = System.Globalization.CultureInfo.InvariantCulture;
         var detail = local.ToString("ddd d MMM yyyy", culture) + " \u00b7 " + local.ToString("HH:mm:ss", culture);
         if (run.Seconds is { } seconds)
         {
-            detail += string.Create(culture, $" \u00b7 {Math.Round(seconds)} s");
+            detail += string.Create(culture, $" \u00b7 {Math.Round(seconds, MidpointRounding.AwayFromZero)} s");
         }
 
         return new RunBarViewModel(kind, $"Run {number} \u00b7 {status} \u00b7 {Labels.AgoWords(clock.GetUtcNow() - run.StartedAt)}", detail);
@@ -41,7 +44,7 @@ internal sealed class RunBarViewModel
     public bool IsEmpty => string.Equals(Kind, "empty", StringComparison.Ordinal);
 
     /// <summary>True for a bar drawn in the success colour (succeeded, or still running).</summary>
-    public bool IsOk => Kind is "succeeded" or "running";
+    public bool IsOk => string.Equals(Kind, "succeeded", StringComparison.Ordinal) || string.Equals(Kind, "running", StringComparison.Ordinal);
 
     /// <summary>The bar's height: tall for a failed run, short for the others, a dash for an empty slot.</summary>
     public double BarHeight => IsTall ? 16 : IsEmpty ? 2 : 8;

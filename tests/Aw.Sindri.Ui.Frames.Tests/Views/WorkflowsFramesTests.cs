@@ -349,7 +349,7 @@ public sealed class WorkflowsFramesTests : FrameHost
     });
 
     private static TextBlock RunGlyph(Border row) =>
-        row.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name is "RunErrorGlyph" or "RunGlyph" && t.IsEffectivelyVisible);
+        row.GetVisualDescendants().OfType<TextBlock>().Single(t => (string.Equals(t.Name, "RunErrorGlyph", StringComparison.Ordinal) || string.Equals(t.Name, "RunGlyph", StringComparison.Ordinal)) && t.IsEffectivelyVisible);
 
     [Fact]
     public Task The_run_header_and_the_node_runs_draw_their_status_as_StateChipViews() => OnUi(async () =>

@@ -49,6 +49,7 @@ internal sealed partial class WorkflowsPage
         }
     }
 
+#pragma warning disable MA0155 // why: an Avalonia RoutedEvent handler returns void, so it can only be async void
     private async void OnCompare(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)
@@ -65,4 +66,5 @@ internal sealed partial class WorkflowsPage
             await node.EditStep(CancellationToken.None).ConfigureAwait(true);
         }
     }
+#pragma warning restore MA0155
 }

@@ -22,7 +22,7 @@ internal sealed record ColumnPlan(double Name, double Trigger, double LastRun, d
     /// <returns>The plan.</returns>
     internal static ColumnPlan For(double width)
     {
-        const double Glyph = 24, LastRun = 170, State = 72, Gap = 16, Margins = 32;
+        const double Glyph = 24, LastRunWidth = 170, State = 72, Gap = 16, Margins = 32;
         var (trigger, next, slots) = width switch
         {
             >= 1100 => (200d, 130d, 10),
@@ -30,10 +30,10 @@ internal sealed record ColumnPlan(double Name, double Trigger, double LastRun, d
             _ => (0d, 0d, 5),   // below 900 the strip shows the last 5 runs, then Trigger drops
         };
         var strip = slots == 10 ? 140d : 70d;
-        var others = new[] { Glyph, trigger, LastRun, next, strip, State };
+        var others = new[] { Glyph, trigger, LastRunWidth, next, strip, State };
         var shown = others.Count(w => w > 0) + 1;   // and the Name column
         var name = Math.Clamp(width - others.Sum() - (Gap * (shown - 1)) - Margins, 200, 360);
-        return new ColumnPlan(name, trigger, LastRun, next, slots);
+        return new ColumnPlan(name, trigger, LastRunWidth, next, slots);
     }
 
     /// <summary>The strip column's width: 10 slots, or 5 when narrow.</summary>
