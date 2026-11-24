@@ -43,7 +43,7 @@ public sealed class StopCheckRecycleCarryOverTests
         Assert.Contains(stop.Open.Count == 1 ? "1 open obligation carries over" : string.Create(CultureInfo.InvariantCulture, $"{stop.Open.Count} open obligations carry over"), stop.Warning, StringComparison.Ordinal);
         Assert.Contains(reply.Summary, stop.Warning, StringComparison.Ordinal);
         Assert.True((await _world.Beats.Last("meta", CancellationToken.None)).Value?.Stopped ?? false);
-        Assert.Single((await MetaStops()).Open, o => o.Kind == ObligationKind.Reply);   // nothing was cleared: the next stop-check still sees it
+        _ = Assert.Single((await MetaStops()).Open, o => o.Kind == ObligationKind.Reply);   // nothing was cleared: the next stop-check still sees it
     }
 
     [Fact, Trait("Lane", "unit")]
