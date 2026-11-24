@@ -84,12 +84,15 @@ public sealed class WorkflowOffChipTests
     }
 
     [Fact]
-    public async Task Opening_a_workflow_hands_its_rows_next_run_time_and_the_pages_clock_to_the_graph()
+    public async Task Opening_a_workflow_hands_its_reads_next_run_time_and_the_pages_clock_to_the_graph()
     {
         var list = Golden("workflows", "list-two");
-        list["workflows"]![0]!["nextRunAt"] = "2026-01-05T07:00:00Z";
+        list["workflows"]![0]!["nextRunAt"] = "2026-01-09T07:00:00Z";   // the list row's time loses to the read's (#4208)
         _f.ServeList(list);
         var page = await _f.Shown(Token);
+        var workflow = Golden("workflows-slug", "found");
+        workflow["nextRunAt"] = "2026-01-05T07:00:00Z";
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, workflow.ToJsonString());
 
         await page.OpenWorkflow(Slug, Token);
 
