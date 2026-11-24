@@ -21,7 +21,9 @@ internal sealed partial class ProjectsPageViewModel
         HasRows = rows.Count > 0;
         ShowsFactsMissing = FactsMissing;
         ShowEmptyView(empty: !IsEmptyBlock && (View == ProjectView.Triage || (View != ProjectView.All && inView.Count == 0)));
-        ShowSearch(inView, rows.Count);
+        // the folds are part of the view the search lists (Projects only), so they count and can match too
+        IReadOnlyList<ProjectCardView> folded = View == ProjectView.All ? [.. list.Finished, .. list.Hidden] : [];
+        ShowSearch([.. inView, .. folded], rows.Count + Searched(folded).Count);
         Reselect();
         Laid?.Invoke(this, EventArgs.Empty);
     }

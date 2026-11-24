@@ -100,13 +100,13 @@ internal sealed partial class ProjectsPageViewModel
 
     private bool ByNote(ProjectCardView card) => card.Notes?.Contains(Query, StringComparison.OrdinalIgnoreCase) == true;
 
-    // After a layout: the field's count, the no-match state, and the rows found only by their note.
-    private void ShowSearch(IReadOnlyList<ProjectCardView> inView, int found)
+    // After a layout: the field's count, the no-match state, and the rows found only by their note, over every row the view can list (open rows and, on Projects, the folds).
+    private void ShowSearch(IReadOnlyList<ProjectCardView> listed, int found)
     {
-        SearchCount = IsSearching ? Labels.ProjectsSearchCount(found, inView.Count) : string.Empty;
+        SearchCount = IsSearching ? Labels.ProjectsSearchCount(found, listed.Count) : string.Empty;
         IsSearchEmpty = IsSearching && found == 0 && View != ProjectView.Triage;
         SearchEmptyTitle = IsSearchEmpty ? Labels.ProjectsSearchNone(Query) : string.Empty;
-        foreach (var served in inView)
+        foreach (var served in listed)
         {
             if (_cards.TryGetValue(served.Id, out var card))
             {

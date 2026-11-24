@@ -26,7 +26,7 @@ public sealed class ProjectsPageSearchTests
         page.SearchText = "KITCHEN";
 
         Assert.Equal(["Kitchen"], Rows(page), StringComparer.Ordinal);
-        Assert.Equal(("1 of 3", false), (page.SearchCount, page.Groups[0].Cards[0].MatchedInNote));
+        Assert.Equal(("1 of 5", false), (page.SearchCount, page.Groups[0].Cards[0].MatchedInNote));
         Assert.Equal(1, _f.Server.ProjectsCalls);   // it filters what was served
     }
 
@@ -49,7 +49,7 @@ public sealed class ProjectsPageSearchTests
         page.SearchText = "xyz";
 
         Assert.Empty(page.Groups);
-        Assert.Equal((true, "No project matches “xyz”", "0 of 3"), (page.IsSearchEmpty, page.SearchEmptyTitle, page.SearchCount));
+        Assert.Equal((true, "No project matches “xyz”", "0 of 5"), (page.IsSearchEmpty, page.SearchEmptyTitle, page.SearchCount));
         Assert.True(page.ClearSearch());
         Assert.Equal((false, string.Empty, 3), (page.IsSearchEmpty, page.SearchCount, Rows(page).Count));
         Assert.False(page.ClearSearch());   // nothing left to clear: Esc goes on to the shell
