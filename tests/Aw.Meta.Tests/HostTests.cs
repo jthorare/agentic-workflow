@@ -1,5 +1,6 @@
 using Aw.Kernel.Services;
 using Aw.Kernel.Telemetry;
+using Aw.Meta.Features.LaneRecycle;
 using Aw.Meta.Host;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -27,6 +28,21 @@ public sealed class HostTests
 
         Assert.NotEmpty(serviceTypes);
         Assert.All(serviceTypes, t => Assert.NotNull(scope.ServiceProvider.GetRequiredService(t)));
+    }
+
+    // LaneAddress is an optional constructor parameter: without its registration the settler matches by name only and every
+    // settler test, which builds it by hand, stays green (#4181).
+    [Fact, Trait("Lane", "unit")]
+    public void The_recycle_settler_from_the_container_matches_the_lane_by_its_socket()
+    {
+        using var provider = Compose().BuildServiceProvider(
+            new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
+        _ = provider.GetRequiredService<TelemetryRuntime>();
+        using var scope = provider.CreateScope();
+
+        var settler = scope.ServiceProvider.GetRequiredService<RecycleSettler>();
+
+        Assert.True(settler.MatchesBySocket);
     }
 
     [Fact, Trait("Lane", "unit")]
