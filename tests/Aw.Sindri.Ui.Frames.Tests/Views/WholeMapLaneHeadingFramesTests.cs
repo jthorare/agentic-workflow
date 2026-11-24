@@ -32,6 +32,6 @@ public sealed class WholeMapLaneHeadingFramesTests : FrameHost
         var product = Assert.Single(canvas.Map?.Shown?.Bands.Where(b => b.Band == WholeBand.Product) ?? []);
 
         Assert.NotEmpty(product.Meta);
-        Assert.True(canvas.LaneMetaWhole(WholeBand.Product), string.Create(CultureInfo.InvariantCulture, $"cut: {product.Meta}"));
+        Assert.True(canvas.LaneMetaWhole(WholeBand.Product), $"cut: {product.Meta}");
     });
 }
