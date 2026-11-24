@@ -90,6 +90,19 @@ case "$proj" in
 esac
 echo "$name rev=$rev" >> "$FAKE_LOG"
 [ "${FAKE_FAIL:-}" != "$name" ] || { echo "boom publishing $name" >&2; exit 1; }
+# FAKE_ENOSPC=<binary>: ilc ran out of disk writing that binary's object file.
+[ "${FAKE_ENOSPC:-}" != "$name" ] || { echo "EXEC : error : No space left on device : '/tmp/${name}.o'" >&2; exit 1; }
+# FAKE_TRACK_DISK=1: the previous publish left artifacts/bin and a NativeAOT .o in this tree. The real
+# script has to remove both before the next `dotnet publish`, or this one refuses.
+if [ -n "${FAKE_TRACK_DISK:-}" ]; then
+  earlier=""
+  [ -e artifacts/bin/from-earlier-publish ] && earlier=bin
+  [ -z "$earlier" ] && earlier="$(find artifacts -name '*.o' 2> /dev/null | head -1)"
+  [ -z "$earlier" ] || { echo "earlier publish left its bin or object file ($earlier)" >&2; exit 1; }
+  mkdir -p artifacts/bin artifacts/obj/native
+  : > artifacts/bin/from-earlier-publish
+  : > artifacts/obj/native/sindri-ui.o
+fi
 mkdir -p "$out"
 printf '#!/usr/bin/env bash\nFAKE_SELF="$0" FAKE_NAME=%s FAKE_REV=%s FAKE_CALLS="%s" FAKE_BAD_VERSION="%s" exec bash "%s" "$@"\n' "$name" "$rev" "$FAKE_CALLS" "${FAKE_BAD_VERSION:-}" "$FAKE_BIN" > "$out/$name"
 chmod +x "$out/$name"
@@ -624,5 +637,32 @@ check "no inputs/ in current: the publish exits 0" "$rc" "0"
 check "no inputs/ in current: all eight are published" "$(pubs)" "$ALL8"
 check "no inputs/ in current: the new build records its inputs" "$(ls "$B/$NB/inputs"/*.sha256 2> /dev/null | wc -l | tr -d ' ')" "8"
 unset AW_HEAVY_TEST_PATH
+
+# A killed publish leaves its tree, sdk tree, verify dir and stage. The next publish removes them, including
+# when the build is already current (that path returns before it would have compiled anything).
+CACHE="$AW_STATE_DIR/cache/install-cs"
+mkdir -p "$CACHE/tree.orphan" "$CACHE/sdk-tree.orphan" "$CACHE/verify.orphan" "$B/.stage.dead"
+echo leak > "$CACHE/tree.orphan/big"
+diskout="$(bash "$INSTALL" --publish 2>&1)"
+check "a current build still short-circuits" "$(printf '%s\n' "$diskout" | grep -c '^install-cs: build .* is current$')" "1"
+check "a dead publish tree is removed" "$([ -d "$CACHE/tree.orphan" ] && echo yes || echo no)" "no"
+check "a dead sdk tree is removed" "$([ -d "$CACHE/sdk-tree.orphan" ] && echo yes || echo no)" "no"
+check "a dead verify dir is removed" "$([ -d "$CACHE/verify.orphan" ] && echo yes || echo no)" "no"
+check "a dead stage is removed" "$([ -e "$B/.stage.dead" ] && echo yes || echo no)" "no"
+
+# The next binary must not be published beside the previous one's bin/ or its NativeAOT object file.
+echo "<!-- disk -->" >> "$REPO/Directory.Build.props"
+: > "$FAKE_LOG"
+diskout="$(FAKE_TRACK_DISK=1 bash "$INSTALL" --publish 2>&1)"; drc=$?
+check "dropping the previous publish's bin and object file: the publish exits 0" "$drc" "0"
+unset FAKE_TRACK_DISK
+
+# ilc's "No space left on device" is reported as the disk being full, not only as a tail of the compiler log.
+echo "<!-- disk full -->" >> "$REPO/Directory.Build.props"
+: > "$FAKE_LOG"
+diskout="$(FAKE_ENOSPC=sindri-ui bash "$INSTALL" --publish 2>&1)"; drc=$?
+check "a full disk while publishing sindri-ui exits 1" "$drc" "1"
+has "a full disk names the disk, not only the compiler" "$diskout" "the disk is full (No space left on device) while publishing sindri-ui"
+has "a full disk still names the binary that failed" "$diskout" "publishing sindri-ui failed"
 
 [ "$fail" = 0 ] && echo "all install-cs tests passed" || { echo "install-cs tests FAILED"; exit 1; }
