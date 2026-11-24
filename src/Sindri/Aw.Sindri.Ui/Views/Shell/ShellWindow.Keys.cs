@@ -32,7 +32,7 @@ internal sealed partial class ShellWindow
             return true;
         }
 
-        if (KeyName(e) is not { } key)
+        if ((KeyName(e) ?? ViewDigit(shell, e)) is not { } key)
         {
             return false;
         }
@@ -136,6 +136,26 @@ internal sealed partial class ShellWindow
         {
             Dispatcher.UIThread.Post(() => _ = this.Get<TextBox>("QueueFilter").Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
         }
+    }
+
+    // 1 to 4 on Projects pick its view (issue 3717); digits reach no other page, so they never start a chord or a row key there.
+    private static string? ViewDigit(ViewModels.Shell.ShellViewModel shell, KeyEventArgs e)
+    {
+        if (!shell.IsProjects || e.KeyModifiers != KeyModifiers.None)
+        {
+            return null;
+        }
+
+#pragma warning disable IDE0072 // every other key is not a view's digit
+        return e.Key switch
+        {
+            Key.D1 or Key.NumPad1 => "1",
+            Key.D2 or Key.NumPad2 => "2",
+            Key.D3 or Key.NumPad3 => "3",
+            Key.D4 or Key.NumPad4 => "4",
+            _ => null,
+        };
+#pragma warning restore IDE0072
     }
 
     // The key as the view model names it: a letter (no Shift), "Enter" or ".".

@@ -11,4 +11,9 @@ public interface IConnectionCredentials
     /// <param name="profilePointer">The profile's secret pointer for the source, or null when the profile names none.</param>
     /// <returns>The connected connection's access token, else the token the profile pointer resolves to, else null (no feed).</returns>
     public string? TokenFor(string preset, string? profilePointer);
+
+    /// <summary>Reads one connection's token: its `command:` credential run (a gh login), else its secret pointer read.</summary>
+    /// <param name="connection">The connection, as a reader picked it.</param>
+    /// <returns>The access token, or null when the connection has none that reads.</returns>
+    public string? TokenOf(Connection connection);
 }
