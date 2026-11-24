@@ -194,6 +194,12 @@ claude_install_hooks() {
   else
     bash "$TOOLKIT_DIR/scripts/install-sindri-hooks.sh"
   fi
+  # The retry guard: a pre-tool gate and a post-tool record (issue 4248).
+  if aw_dry; then
+    echo "  [dry-run] would run scripts/install-retry-guard.sh (retry-gate, retry-record)"
+  else
+    bash "$TOOLKIT_DIR/scripts/install-retry-guard.sh"
+  fi
   aw_install_levers claude
 }
 

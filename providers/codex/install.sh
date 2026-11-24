@@ -49,6 +49,8 @@ codex_install_hooks() {
   AW_DRY_RUN="${AW_DRY_RUN:-0}" bash "$TOOLKIT_DIR/scripts/install-judge-hooks.sh" --provider codex
   # sindri's SessionStart nudge (honors AW_DRY_RUN itself).
   AW_DRY_RUN="${AW_DRY_RUN:-0}" bash "$TOOLKIT_DIR/scripts/install-sindri-hooks.sh" --provider codex
+  # The retry guard (issue 4248; honors AW_DRY_RUN itself).
+  AW_DRY_RUN="${AW_DRY_RUN:-0}" bash "$TOOLKIT_DIR/scripts/install-retry-guard.sh" --provider codex
 }
 
 codex_install_agents() {

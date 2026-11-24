@@ -37,7 +37,7 @@ internal static partial class Labels
     /// <param name="ids">The ids of the nodes not drawn, in spec order.</param>
     /// <returns>The words.</returns>
     internal static string WfGraphUnplaced(IReadOnlyList<string> ids) =>
-        string.Create(global::System.Globalization.CultureInfo.InvariantCulture, $"{ids.Count} {(ids.Count == 1 ? "node has" : "nodes have")} no position: {string.Join(", ", ids)}");
+        string.Create(CultureInfo.InvariantCulture, $"{ids.Count} {(ids.Count == 1 ? "node has" : "nodes have")} no position: {string.Join(", ", ids)}");
 
     /// <summary>A workflow card's tooltip (#4203): its title and its full settings line, which the card cuts when it is long; the title alone with no line.</summary>
     /// <param name="title">The card's line 1.</param>
