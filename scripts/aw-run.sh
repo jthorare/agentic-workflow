@@ -8,6 +8,7 @@
 # The command runs as given (argv, never eval), with stdin from /dev/null, in its own process group. Its stdout and stderr go
 # straight to files, so nothing is held in memory. Each run gets a folder $AW_STATE_DIR/runs/<YYYYMMDD>/<HHMMSS>-<pid>-<n>
 # (UTC; n counts up until mkdir makes a new one) holding stdout.log, stderr.log and meta.json: folders 0700, files 0600.
+# The command itself runs under the caller's umask.
 # Run folders of days more than 7 days old are removed at start; only run-shaped real folders under runs/, never a symlink.
 #
 # The summary (text, or one JSON object with --json) names the outcome, the exit code, the bytes and lines of each stream,
@@ -16,12 +17,15 @@
 #   ok            the command exited 0          failed       it exited non-zero (a child's own 124 is failed too)
 #   timeout       --timeout passed (exit 124)   interrupted  aw-run got INT (exit 130), TERM or HUP (exit 143)
 #   error         a group member was still there 5 s after the KILL (its pids are named; the exit stays as above),
-#                 or the command could not be started (exit 127)
+#                 the command itself could not be reaped 5 s after that (its pid is named), or it could not be started (127)
 # A command that printed nothing says "(no output)". Nothing here ever says a test passed.
 # On a timeout or an interrupt the group gets TERM, then KILL after --grace seconds; what a finished command left in its
 # group is stopped the same way and reported. The summary is printed only once the group is empty or the 5 s are up.
 # Exit: the command's own code, 124 timeout, 130 or 143 interrupted, 125 a usage or runner error.
 set -u
+# The runner writes only under runs/ (day folders, run folders, their files), so it runs under 077. The command gets the
+# caller's umask back (#4290): under 077 `aw-run -- dotnet build` wrote bin/ and obj/ as 0700/0600.
+caller_umask="$(umask)"
 umask 077
 
 LINE_BYTES=300
@@ -163,6 +167,22 @@ stop_group() {
   leftover="$(group_pids | tr '\n' ' ')"; leftover="${leftover% }"
 }
 
+# Reap the command with a deadline (#4290): wait blocks on a child the kernel holds (D state after the KILL), so the zombie
+# is waited for only once ps shows it as one. A child still not reapable 5 s after the group was stopped is named in
+# $unreaped instead of hanging the runner; one stop_group already named in $leftover is not waited for again.
+unreaped=""
+reap_child() {
+  local n=25 st
+  case " $leftover " in *" $child "*) kill -0 "$child" 2> /dev/null && { unreaped="$child"; return 0; } ;; esac
+  while kill -0 "$child" 2> /dev/null; do
+    st="$(ps -o stat= -p "$child" 2> /dev/null | tr -d ' ')"
+    case "$st" in Z* | "") wait "$child"; rc=$?; continue ;; esac
+    [ "$n" -gt 0 ] || { unreaped="$child"; return 0; }
+    sleep 0.2; n=$((n - 1))
+  done
+  return 0
+}
+
 trap 'why=${why:-INT}' INT
 trap 'why=${why:-TERM}' TERM
 trap 'why=${why:-HUP}' HUP
@@ -170,16 +190,19 @@ trap 'why=${why:-timeout}' USR1
 
 rc=127
 if command -v "$1" > /dev/null 2>&1; then
-  # Job control is off here, so the background child is not a group leader and setsid execs in place: $! is its pid and
-  # its group id. macOS has no setsid; perl does the same (as in heavy.sh).
+  # Job control is off here, so the background subshell is not a group leader: it sets the caller's umask and execs setsid,
+  # which execs in place, so $! is the command's pid and its group id. macOS has no setsid; perl does the same (as in heavy.sh).
+  # The command starts with SIGINT (and SIGQUIT) ignored: non-interactive bash does that for every async command, and the
+  # command inherits it. That is fine: aw-run traps INT itself and stops the group with TERM, then KILL (stop_group).
   if command -v setsid > /dev/null 2>&1; then
-    setsid "$@" > "$out" 2> "$err" < /dev/null &
+    ( umask "$caller_umask"; exec setsid "$@" ) > "$out" 2> "$err" < /dev/null &
   else
-    perl -e 'setpgrp(0, 0); exec @ARGV or exit 127' -- "$@" > "$out" 2> "$err" < /dev/null &
+    ( umask "$caller_umask"; exec perl -e 'setpgrp(0, 0); exec @ARGV or exit 127' -- "$@" ) > "$out" 2> "$err" < /dev/null &
   fi
   child=$! pg=$!
   # The watcher wakes this shell with USR1 at the timeout; it kills its own sleep when it is stopped.
-  ( sleep "$timeout_s" & sp=$!; trap 'kill "$sp" 2> /dev/null; exit 0' TERM; wait "$sp" && kill -USR1 $$ 2> /dev/null ) > /dev/null 2>&1 < /dev/null &
+  # The trap is set before the sleep starts, so a TERM in between can't leave the sleep behind (#4290).
+  ( sp=""; trap '[ -n "$sp" ] && kill "$sp" 2> /dev/null; exit 0' TERM; sleep "$timeout_s" & sp=$!; wait "$sp" && kill -USR1 $$ 2> /dev/null ) > /dev/null 2>&1 < /dev/null &
   watcher=$!
   # wait returns early when a trapped signal arrives; the command is reaped once kill -0 no longer finds it.
   while :; do
@@ -190,7 +213,7 @@ if command -v "$1" > /dev/null 2>&1; then
   # Not waited for: bash's wait on the watcher after its USR1 blocked until the command itself ended. Stopped, it stops its sleep.
   kill -TERM "$watcher" 2> /dev/null
   stop_group
-  while kill -0 "$child" 2> /dev/null; do wait "$child"; rc=$?; done
+  reap_child
 else
   echo "aw-run: command not found: $1" > "$err"
 fi
@@ -204,7 +227,7 @@ case "$why" in
   TERM | HUP) outcome=interrupted code=143 interrupted=true signal="$why" ;;
   *) code=$rc; if [ "$rc" = 0 ]; then outcome=ok; else outcome=failed; fi ;;
 esac
-if [ -z "$child" ] || [ -n "$leftover" ]; then outcome=error; fi
+if [ -z "$child" ] || [ -n "$leftover" ] || [ -n "$unreaped" ]; then outcome=error; fi
 trap - INT TERM HUP USR1
 
 jq -n --arg cwd "$PWD" --arg start "$start_iso" --arg end "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --argjson exit "$code" \
@@ -251,6 +274,7 @@ text_summary() {
       *) if [ "$stopped" = 1 ]; then echo "stopped 1 process the command left in its group"; elif [ "$stopped" -gt 1 ]; then echo "stopped $stopped processes the command left in its group"; fi ;;
     esac
     [ -z "$leftover" ] || echo "still in the group 5 s after the KILL: pids $leftover"
+    [ -z "$unreaped" ] || echo "the command (pid $unreaped) could not be reaped 5 s after the KILL; its exit code is unknown"
     if [ "$ob" = 0 ] && [ "$eb" = 0 ]; then
       echo "(no output)"
     else
@@ -283,13 +307,20 @@ json_summary() { # json_summary <tail lines> <failure lines> <cut>
   jq -n --slurpfile meta "$dir/meta.json" --arg dir "$dir" --argjson secs "$secs" --arg why "$why" \
     --argjson ob "$ob" --argjson ol "$ol" --argjson ot "$ot" --argjson eb "$eb" --argjson el "$el" --argjson et "$et" \
     --rawfile fails "$dir/.failures" --rawfile tso "$dir/.tail.stdout" --rawfile tse "$dir/.tail.stderr" \
-    --arg left "$leftover" --argjson stopped "$stopped" --argjson cut "$3" \
+    --arg left "$leftover" --arg unreaped "$unreaped" --argjson stopped "$stopped" --argjson cut "$3" \
     'def tolines: if . == "" then [] else rtrimstr("\n") | split("\n") end;
-     $meta[0] + {seconds: $secs,
+     # argv cut as the text summary cuts it: 200 characters of the joined words, then "..." (meta.json keeps it whole).
+     def cutargv: reduce .[] as $a ({out: [], n: 0, cut: false};
+       if .cut then .
+       elif .n + ($a | length) > 200 then .out += [($a[0:(200 - .n)] + "...")] | .cut = true
+       else .out += [$a] | .n += ($a | length) + 1 end);
+     ($meta[0].argv | cutargv) as $av
+     | $meta[0] + {argv: $av.out, argvCut: $av.cut, seconds: $secs,
        stdout: {bytes: $ob, lines: $ol, truncated: $ot}, stderr: {bytes: $eb, lines: $el, truncated: $et},
        failureLines: ($fails | tolines | map(split("\t") | {stream: .[0], line: (.[1:] | join("\t"))})),
        tail: {stdout: ($tso | tolines), stderr: ($tse | tolines)},
        leftoverPids: ($left | split(" ") | map(select(length > 0) | tonumber)),
+       unreapedPid: (if $unreaped == "" then null else ($unreaped | tonumber) end),
        stoppedLeftovers: (if $why == "" then $stopped else 0 end),
        artifactDir: $dir, summaryCut: $cut}'
 }

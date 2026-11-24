@@ -110,6 +110,7 @@ SERIAL=(
   "config/lib/tests/failopen.test.sh	runs hooks against hung and slow fake judges under a short watchdog (rc=hung) and checks the fail-open path within the hook's own timeout"
   "config/lib/tests/statusline.test.sh	asserts the statusline returns within 1 s while a 3 s scorer runs, then polls a 10 s deadline for the cache"
   "config/hooks/tests/fleet-state.test.sh	asserts every aw:fleet hook event runs under 100 ms (best of 5), which CPU contention from a parallel suite can turn into a false failure"
+  "config/hooks/tests/retry-guard.test.sh	asserts the retry gate's empty path has a median under 20 ms over 50 runs, which CPU contention from a parallel suite can turn into a false failure"
   "config/hooks/tests/sindri-nudge.test.sh	asserts the nudge gives up within a 300 ms budget (AW_SINDRI_NUDGE_BUDGET_MS) against a 5 s sleeping sindri"
   "config/hooks/tests/sindri-tasks.test.sh	asserts one prompt returns within 500 ms with no sindri on PATH, which CPU contention from a parallel suite can turn into a false failure"
   "config/lib/tests/prompt-sort.test.sh	asserts the hook gives up within a 600 ms budget (AW_PROMPT_SORT_BUDGET_MS) against a 5 s sleeping sorter"
@@ -131,6 +132,7 @@ SERIAL=(
   "scripts/tests/heavy-pgid-race.test.sh	bounds each case at 10 s against a 1 s slow setsid/perl stub and the watchdog's 5 s group wait; a loaded machine shifts it (#2799)"
   "scripts/tests/ci-runner-parity.test.sh	runs heavy-cap-reserve.test.sh (timing-bound, see its row) under a stripped PATH and without /proc/meminfo; in the parallel pool its wrapper row timed out once in 6 runs (#2584)"
   "scripts/tests/readiness-baseline.test.sh	asserts a 200 ms gh timeout (READINESS_GH_TIMEOUT_MS) fires against a 3 s stub and is reported as the timeout, not a parse error"
+  "scripts/tests/aw-pr-watch.test.sh	sends INT and TERM to a polling watcher and asserts a 2 s deadline stops it within 6 s; a loaded machine shifts both"
 )
 
 if [ "${BASH_TESTS_EXCLUDED+set}" = set ]; then

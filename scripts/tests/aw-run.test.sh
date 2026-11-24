@@ -162,4 +162,23 @@ check "show --max 10 caps at 10" "$(bash "$RUN" show "$big" --max 10 | grep -c a
 bash "$RUN" show "$WORK/nope" > /dev/null 2>&1; check "show of a folder that is not a run is exit 125" "$?" "125"
 check "last names the newest run folder" "$(bash "$RUN" last | sed -E "s#^$R/[0-9]{8}/[0-9]{6}-[0-9]+-[0-9]+\$#shape#")" "shape"
 
+# --- the command runs under the caller's umask; only the run folder is private (#4290) ---
+text="$( (umask 022; bash "$RUN" -- touch "$WORK/umask-f") )"
+check "umask: a file the command makes keeps the caller's umask (0644 under 022)" "$(perm "$WORK/umask-f")" "644"
+ud="$(artifacts "$text")"
+check "umask: the run folder is still 0700" "$(perm "$ud")" "700"
+check "umask: stdout.log is still 0600" "$(perm "$ud/stdout.log")" "600"
+check "umask: meta.json is still 0600" "$(perm "$ud/meta.json")" "600"
+check "umask: the day folder is 0700" "$(perm "$(dirname "$ud")")" "700"
+
+# --- --json stays at or under 8 KB with a 9 KB argv; argv is cut as in the text summary (#4290) ---
+long="$(printf 'a%.0s' $(seq 1 9216))"
+out="$(bash "$RUN" --json -- echo "$long")"
+check "a 9 KB argv: the JSON summary is at most 8192 bytes" "$([ "$(printf '%s' "$out" | wc -c)" -le 8192 ] && echo yes || echo "no ($(printf '%s' "$out" | wc -c) bytes)")" "yes"
+check "a 9 KB argv: the summary says argv was cut" "$(jq -r .argvCut <<< "$out" 2> /dev/null)" "true"
+check "a 9 KB argv: the summary's argv is at most 203 characters" "$(jq -r '(.argv | join(" ") | length) <= 203' <<< "$out" 2> /dev/null)" "true"
+check "a 9 KB argv: meta.json keeps the whole argv" "$(jq -r '.argv[1] | length' "$(jq -r .artifactDir <<< "$out" 2> /dev/null)/meta.json" 2> /dev/null)" "9216"
+out="$(bash "$RUN" --json -- echo short)"
+check "a short argv: not cut" "$(jq -c '[.argv, .argvCut]' <<< "$out")" '[["echo","short"],false]'
+
 [ "$fail" = 0 ] && echo "all aw-run tests passed" || { echo "aw-run tests FAILED"; exit 1; }
