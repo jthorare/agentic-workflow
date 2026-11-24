@@ -177,7 +177,7 @@ public sealed class ProjectsRowsFramesTests : FrameHost
         list["projects"]![1]!["truth"]!["health"]!["reason"] = reason;
         Server.ProjectsAnswer = new RouteAnswer(HttpStatusCode.OK, list.ToJsonString());
         var (window, _) = await OnProjects(1000, 700);
-        var row = window.GetVisualDescendants().OfType<ProjectRow>().Where(r => r.IsEffectivelyVisible).First(r => Named<TextBlock>(r, "ProjectRowNameText").Text == "Kitchen");
+        var row = window.GetVisualDescendants().OfType<ProjectRow>().First(r => r.IsEffectivelyVisible && Named<TextBlock>(r, "ProjectRowNameText").Text == "Kitchen");
         var text = Named<TextBlock>(row, "ProjectRowReason");
         var name = Named<Border>(row, "ProjectRowName");
         name.Width = name.Bounds.Width + text.Bounds.Width - column;
