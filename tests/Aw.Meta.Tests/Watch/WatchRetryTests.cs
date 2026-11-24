@@ -24,14 +24,18 @@ public sealed class WatchRetryTests
     private WatchRequest Request() =>
         new(TimeSpan.FromSeconds(120), TimeSpan.FromMinutes(10), line => { _lines.Add(line); return ValueTask.CompletedTask; }) { UntilEvent = true };
 
-    // gh pr list fails with `stderr` for the first `failures` calls, then lists pull request 190.
+    // gh pr list fails with `stderr` for the first `failures` calls, then lists nothing once (the watch's starting snapshot,
+    // which prints no event), then lists pull request 190, so the next poll reports it opened.
     private void Script(int failures, string stderr)
     {
         var calls = 0;
         _ = _world.Runner
-            .When("gh pr list", _ => ++calls <= failures
-                ? new CommandResult(1, string.Empty, stderr, TimedOut: false)
-                : new CommandResult(0, """[{"number":190,"state":"OPEN","isDraft":false,"headRefOid":"aaa1111","mergeable":"MERGEABLE","title":"t190"}]""", string.Empty, TimedOut: false))
+            .When("gh pr list", _ => ++calls switch
+            {
+                var n when n <= failures => new CommandResult(1, string.Empty, stderr, TimedOut: false),
+                var n when n == failures + 1 => new CommandResult(0, "[]", string.Empty, TimedOut: false),
+                _ => new CommandResult(0, """[{"number":190,"state":"OPEN","isDraft":false,"headRefOid":"aaa1111","mergeable":"MERGEABLE","title":"t190"}]""", string.Empty, TimedOut: false),
+            })
             .When("git ls-remote origin main", "aaaaaaa1111111\trefs/heads/main\n");
     }
 
