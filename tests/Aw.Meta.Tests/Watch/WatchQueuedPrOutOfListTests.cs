@@ -28,7 +28,8 @@ public sealed class WatchQueuedPrOutOfListTests
 
     private StatusService Status() => new(_world.Config, Worlds.StatusReader(_world), _world.Values, _world.Resources, Worlds.Advisor(_world), _world.Processes, _world.Clock);
 
-    // One poll: the listing holds only pull request 300; #250 and #251 were said ready and are not in it.
+    // One poll: the listing holds only pull request 300; #250 and #251 were said ready and are not in it. The team inputs read
+    // the worktrees (none here).
     private async Task PollOnce(string state250, string state251)
     {
         await _world.Ready();
@@ -37,6 +38,7 @@ public sealed class WatchQueuedPrOutOfListTests
         _ = _world.Runner
             .When("gh pr list", """[{"number":300,"state":"OPEN","isDraft":false,"headRefOid":"aaa1111","mergeable":"MERGEABLE","title":"t300"}]""")
             .When("git ls-remote origin main", "aaaaaaa1111111\trefs/heads/main\n")
+            .When("git worktree list --porcelain", string.Empty)
             .When("gh pr view 250 --json state", "{\"state\":\"" + state250 + "\"}")
             .When("gh pr view 251 --json state", "{\"state\":\"" + state251 + "\"}");
         _ = await Service().Handle(new WatchRequest(TimeSpan.FromSeconds(120), TimeSpan.FromSeconds(120), _ => ValueTask.CompletedTask), CancellationToken.None);
