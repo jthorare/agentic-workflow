@@ -22,7 +22,7 @@ internal sealed partial class FileMapViewModel
     // The server sends ok, stale or unavailable: an unavailable index gets the note for its reason.
     private string SymbolsNote() => _symbolsServed?.State switch
     {
-        "ok" => Symbols is { AsOfNote: null, EmptyReason: null } or null ? string.Empty : Labels.Dots(ColSymbols, Symbols.AsOfNote, Symbols.EmptyReason),
+        "ok" => Symbols?.Note(ColSymbols) ?? string.Empty,
         "stale" => Labels.Dots(Labels.ContextFilesNamesStale(_symbolsServed.Commit), Symbols?.AsOfNote),
         _ => _symbolsServed is null ? Labels.ContextMapNamesDetail : NamesDetail.For(_symbolsServed),
     };
