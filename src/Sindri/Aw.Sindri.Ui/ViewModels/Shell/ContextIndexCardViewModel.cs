@@ -143,10 +143,13 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
     // A source the server flags with its own sentence (#3911) reads that sentence in place of its state; any other reads its name and state.
     private string Line(IndexSourceView source)
     {
-        var line = source is { NeedsLook: true, LookWords: { Length: > 0 } words } ? words : source.Source + ": " + State(source);
+        var firstSync = IsFirstSync(source);
+        var line = source is { NeedsLook: true, LookWords: { Length: > 0 } words }
+            ? words
+            : source.Source + ": " + (firstSync ? Labels.ContextSourceFirstSync : State(source));
         if (source.Records is { } records)
         {
-            line += " · " + Labels.ContextRecords(records);
+            line += firstSync ? ", " + Labels.ContextRecordsSoFar(records) : " · " + Labels.ContextRecords(records);
         }
 
         if (source.LastCommit is { } commit)
@@ -156,6 +159,10 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
 
         return source.Records is null ? line : line + " · " + Labels.ContextNothingCommitted;
     }
+
+    // A first pass (phase recent or backfill) that the server does not flag reads as progress, not as a pull word (#4035); a failing pull keeps its words.
+    private static bool IsFirstSync(IndexSourceView source) =>
+        !source.NeedsLook && (Is(source.Phase, "recent") || Is(source.Phase, "backfill")) && (Is(source.Pull, "running") || Is(source.Pull, "idle"));
 
     private string State(IndexSourceView source) => source.Pull switch
     {

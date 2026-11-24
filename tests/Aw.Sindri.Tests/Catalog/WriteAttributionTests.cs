@@ -100,6 +100,7 @@ public sealed class WriteAttributionTests
     private static readonly Dictionary<string, string> _onlyRefusals = new(StringComparer.Ordinal)
     {
         ["POST /sindri/workflows/{slug}/runs"] = "a run that starts needs the Temporal worker, which the golden host doesn't run; its goldens are refusals (#2434)",
+        ["POST /sindri/workflow-runs/{run}/rerun"] = "a re-run that starts needs the Temporal worker, like a run; its goldens are refusals (bad id, unknown run, not ended, unknown step) and RerunWorkflowRunServiceTests pins the start; the succeeding scenario is #2434 (#3204)",
         ["POST /sindri/setup/mcp"] = "a job starter; its only golden is not-in-profile, a refusal; the job's mcp.registered needs a succeeding scenario (#2434)",
         ["POST /sindri/setup/repos/onboard"] = "a job starter; its only golden is not-approved, a refusal; the job's repo.onboarded needs a succeeding scenario (#2434)",
     };
