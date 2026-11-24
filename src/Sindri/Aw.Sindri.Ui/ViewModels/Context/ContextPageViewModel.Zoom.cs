@@ -28,7 +28,7 @@ internal sealed partial class ContextPageViewModel
         if (Whole.SearchesAsList)
         {
             Whole.ShowSearchList(hits);   // above 60 nodes the matches are the ranked list, never a zoom on the canvas (#3674); a search on a search's list replaces it
-            Problem = hits.Count == 0 ? Labels.ContextWholeNoMatch : string.Empty;
+            SetProblem(hits.Count == 0 ? Labels.ContextWholeNoMatch : string.Empty, hits.Count == 0 ? ZoomMissCode : null);
             Head = Whole.Head;
             ChangedWhole();
             OnChanged(nameof(IsZoomedIn));
@@ -45,7 +45,7 @@ internal sealed partial class ContextPageViewModel
 
         if (!zoomed)
         {
-            SetProblem(Labels.ContextWholeNoMatch);
+            SetProblem(Labels.ContextWholeNoMatch, ZoomMissCode);   // a miss like 003: the sentence with Clear, not the banner (#3060)
         }
 
         Head = Whole.Head;
@@ -57,7 +57,7 @@ internal sealed partial class ContextPageViewModel
     private void ShowTitledAreas(IReadOnlyList<MapSearchHit> titled)
     {
         Whole.ShowSearchList(titled);
-        Problem = string.Empty;
+        SetProblem(string.Empty);
         Choices = [];
         Head = Whole.Head;
         ChangedWhole();

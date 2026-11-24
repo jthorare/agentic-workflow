@@ -49,9 +49,13 @@ internal sealed partial class ContextPageViewModel
     /// <summary>Whether there is a refusal to show.</summary>
     public bool HasProblem => Problem.Length > 0;
 
-    /// <summary>True when the last search found nothing, or several items: a plain sentence with one action, not the refusal banner (#3677).</summary>
+    // The page's own code for a zoom that finds none of the answer on the whole map; never served.
+    private const string ZoomMissCode = "zoom-miss";
+
+    /// <summary>True when the last search found nothing, or several items, or none of its items on the whole map: a plain sentence with one action, not the refusal banner (#3677, #3060).</summary>
     public bool IsMiss => HasProblem
-        && (string.Equals(_problemCode, "SND-CONTEXT-003", StringComparison.Ordinal) || string.Equals(_problemCode, "SND-CONTEXT-037", StringComparison.Ordinal));
+        && (string.Equals(_problemCode, "SND-CONTEXT-003", StringComparison.Ordinal) || string.Equals(_problemCode, "SND-CONTEXT-037", StringComparison.Ordinal)
+            || string.Equals(_problemCode, ZoomMissCode, StringComparison.Ordinal));
 
     /// <summary>Whether the refusal banner shows: a refusal that is not a miss.</summary>
     public bool ShowBanner => HasProblem && !IsMiss;
