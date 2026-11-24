@@ -274,7 +274,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
 
         foreach (var id in _starting)
         {
-            Rows.Add(Placeholder(id));   // still not shown by the server: keep the placeholder, newest first
+            Rows.Add(Placeholder(id));   // still not shown by the server: keep the placeholder, in the order they started (oldest first), above the server's rows
         }
 
         foreach (var run in list.Runs)

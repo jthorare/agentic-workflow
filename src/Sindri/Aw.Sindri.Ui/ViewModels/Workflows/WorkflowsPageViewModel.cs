@@ -197,6 +197,11 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
             return Task.CompletedTask;
         }
 
+        if (!string.Equals(Runs.Slug, slug, StringComparison.Ordinal))
+        {
+            Run.ForgetStarting();   // another workflow: the run page no longer awaits the old one's run (Runs.Read clears its own)
+        }
+
         var read = Runs.Read(url, slug, name, cancellationToken);   // sets the slug before its first await, so the buttons below read the right row
         ForgetStateNote();
         return read;
