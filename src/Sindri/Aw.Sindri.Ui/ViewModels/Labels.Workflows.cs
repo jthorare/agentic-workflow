@@ -174,6 +174,9 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string WfItemTitle(int index, int count) => string.Create(CultureInfo.InvariantCulture, $"Item {index} of {count}");
 
+    /// <summary>The title of a collect step's own row (its result), above its item rows.</summary>
+    internal const string WfCollectResultTitle = "Result";
+
     /// <summary>A node run's accessible name.</summary>
     /// <param name="title">The node or item.</param>
     /// <param name="word">The status word in lower case.</param>
