@@ -3,6 +3,7 @@ using System.Net;
 using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
@@ -139,5 +140,68 @@ public sealed class ProjectsRowsFramesTests : FrameHost
 
         var long_ = rows.First(r => Named<TextBlock>(r, "ProjectRowNameText").Text == LongName);
         Assert.True(Named<Border>(long_, "ProjectRowName").Bounds.Width >= 120, "a long name has no room left");
+    });
+
+    // Issue 4186: a long name used to take the whole Project cell and push the health dot out of it; the dot's width is reserved, so only the words hide.
+    [Theory]
+    [InlineData(1280, 800)]
+    [InlineData(1000, 700)]
+    public Task The_health_dot_stays_inside_the_Project_cell_for_every_row_with_a_health(int width, int height) => OnUi(async () =>
+    {
+        var (window, _) = await OnProjects(width, height);
+        var rows = window.GetVisualDescendants().OfType<ProjectRow>().Where(r => r.IsEffectivelyVisible).ToList();
+
+        var dots = 0;
+        foreach (var row in rows)
+        {
+            var dot = row.GetVisualDescendants().OfType<Ellipse>().FirstOrDefault(e => e.Classes.Contains("health") && e.IsEffectivelyVisible);
+            if (dot is null)
+            {
+                continue;
+            }
+
+            dots++;
+            var name = Named<TextBlock>(row, "ProjectRowNameText").Text;
+            var cellRight = Right(Named<DockPanel>(row, "ProjectRowTitle"), row);
+            Assert.True(Right(dot, row) <= cellRight + 0.5, string.Create(CultureInfo.InvariantCulture, $"the dot of '{name}' ends at {Right(dot, row)}, outside the Project cell that ends at {cellRight}"));
+            Assert.True(Left(dot, row) >= 0, $"the dot of '{name}' starts left of the row");
+        }
+
+        Assert.True(dots >= 2, "fewer than two rows drew a health dot: the check proved nothing");
+    });
+
+    // The Kitchen row with its reason "On track", and its name cell widened so the reason column is exactly 'column' px wide.
+    private async Task<(TextBlock Reason, ProjectRow Row)> KitchenWithReasonColumn(string reason, double column)
+    {
+        var list = JsonNode.Parse(Served(factsMissing: false))!;
+        list["projects"]![1]!["truth"]!["health"]!["reason"] = reason;
+        Server.ProjectsAnswer = new RouteAnswer(HttpStatusCode.OK, list.ToJsonString());
+        var (window, _) = await OnProjects(1000, 700);
+        var row = window.GetVisualDescendants().OfType<ProjectRow>().Where(r => r.IsEffectivelyVisible).First(r => Named<TextBlock>(r, "ProjectRowNameText").Text == "Kitchen");
+        var text = Named<TextBlock>(row, "ProjectRowReason");
+        var name = Named<Border>(row, "ProjectRowName");
+        name.Width = name.Bounds.Width + text.Bounds.Width - column;
+        Settle(window);
+        Assert.InRange(text.Bounds.Width, column - 1, column + 1);
+        return (text, row);
+    }
+
+    // Issue 4186 (review nit): the reason hides when its text does not fit, not by the column width alone: "On track" fits whole in a 70 px column.
+    [Fact]
+    public Task A_short_reason_that_fits_whole_in_a_narrow_column_stays_visible() => OnUi(async () =>
+    {
+        var (text, _) = await KitchenWithReasonColumn("On track", column: 70);
+
+        Assert.False(text.TextLayout.TextLines.Any(l => l.HasCollapsed), "the test's column is too narrow for \"On track\"");
+        Assert.Equal(1, text.Opacity);
+    });
+
+    [Fact]
+    public Task A_trimmed_reason_under_80_px_still_hides() => OnUi(async () =>
+    {
+        var (text, _) = await KitchenWithReasonColumn("CI not checked yet for 2 of 3 PRs and a long tail of words", column: 60);
+
+        Assert.True(text.TextLayout.TextLines.Any(l => l.HasCollapsed), "the reason was not trimmed");
+        Assert.Equal(0, text.Opacity);
     });
 }
