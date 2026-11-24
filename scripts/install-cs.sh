@@ -26,7 +26,8 @@
 # alive, its command line naming the build dir): that one is neither pruned nor rebuilt (it says to run `sindri stop`).
 # A publish while a control plane runs first checks for open agent runs (scripts/lib/sindri-open-runs.sh, #1000): it lists
 # them and asks go/wait/stop on a terminal, and stops without one unless AW_SINDRI_STOP_OK=1.
-# One publish at a time per state dir (a lock dir holding the owner's pid; a dead owner's lock is taken over).
+# One publish at a time per state dir (a lock dir holding the owner's pid, made in one rename; a dead owner's lock, and
+# a pidless one older than 60 s, is taken over).
 # A killed publish leaves tree.*, sdk-tree.*, verify.* and .stage.* (its EXIT trap never ran). The next publish
 # removes them while it holds the lock, including when the build is already current. The toolkit pack holds the same
 # lock, so its sdk-tree is never taken for a dead one. Between binaries the publish removes the
@@ -152,9 +153,10 @@ status="$(git -C "$root" status --porcelain -- "${PATHSPECS[@]}" 2> /dev/null)" 
 if [ -n "$status" ]; then dirty="-dirty"; fi
 revision="$commit$dirty"
 
-lock="" stage="" tree=""
+lock="" lock_new="" stage="" tree=""
 cleanup() {
   rm -f "$inputs"
+  if [ -n "$lock_new" ]; then rm -rf "$lock_new"; fi
   if [ -n "$stage" ]; then rm -rf "$stage" "$stage".*; fi
   if [ -n "$tree" ]; then rm -rf "$tree"; fi
   if [ -n "$lock" ]; then rm -rf "$lock"; fi
@@ -271,6 +273,12 @@ reclaim_scratch() {
     [ -n "$tree" ] && [ "$d" = "$tree" ] && continue
     rm -rf "$d"
   done
+  # make_lock's temp folder of a killed run. A live run's is a few ms old, so only one older than 60 s goes.
+  for d in "$base"/.lock-new.*; do
+    [ -d "$d" ] || continue
+    [ -n "$(find "$d" -maxdepth 0 -mmin +1 2> /dev/null)" ] || continue
+    rm -rf "$d"
+  done
   for d in "$base"/.stage.*; do
     [ -e "$d" ] || continue
     if [ -n "$stage" ] && { [ "$d" = "$stage" ] || [ "${d#"$stage".}" != "$d" ]; }; then continue; fi
@@ -278,35 +286,71 @@ reclaim_scratch() {
   done
 }
 
-# Wait for the publish lock and take it. A holder whose pid is dead loses the lock. A lock without a pid is a publish
-# between its mkdir and its pid write, so it is waited for like a live one.
+# Renames folder $1 to $2 in one rename(2), which fails when $2 is a folder with anything in it. GNU mv has -T for
+# that; BSD mv (macOS) has no -T and would move $1 into $2, so perl's rename does it there.
+rename_dir() {
+  if mv --version > /dev/null 2>&1; then
+    mv -T "$1" "$2" 2> /dev/null
+  else
+    perl -e 'rename($ARGV[0], $ARGV[1]) or exit 1' "$1" "$2" 2> /dev/null
+  fi
+}
+
+# Makes the publish lock $1 in one step (#4247): a temp folder holding this pid is renamed to $1, so no lock is ever
+# seen without its pid. rename(2) replaces an empty folder, so an existing $1 (a pidless lock of an older install-cs)
+# is checked for first. Exit 1 when $1 exists, 2 when the lock could not be made at all.
+make_lock() {
+  local lk="$1"
+  [ ! -e "$lk" ] || return 1
+  lock_new="$(mktemp -d "$base/.lock-new.XXXXXX")" || return 2
+  echo $$ > "$lock_new/pid" || { rm -rf "$lock_new"; lock_new=""; return 2; }
+  if rename_dir "$lock_new" "$lk"; then lock_new=""; return 0; fi
+  rm -rf "$lock_new"; lock_new=""
+  if [ -e "$lk" ]; then return 1; fi
+  return 2
+}
+
+# Whether lock $1 may be taken over: its pid is dead, or it has no pid and is older than 60 s. A lock without a pid
+# comes from an older install-cs killed between its mkdir and its pid write; a fresh one may still be such a run, so
+# it is waited for like a live one.
+lock_stale() {
+  local lk="$1" owner
+  owner="$(cat "$lk/pid" 2> /dev/null || true)"
+  if [ -n "$owner" ]; then
+    ! kill -0 "$owner" 2> /dev/null
+    return
+  fi
+  [ -d "$lk" ] && [ -n "$(find "$lk" -maxdepth 0 -mmin +1 2> /dev/null)" ]
+}
+
+# Wait for the publish lock and take it; a stale lock (lock_stale) is taken over. $lock is set only once the lock is
+# this run's, so a run that ends while it waits never removes the holder's lock in its EXIT trap (#4247).
 take_lock() {
-  local owner
+  local lk="$base/.lock" owner rc
   mkdir -p "$base"
-  lock="$base/.lock"
-  until mkdir "$lock" 2> /dev/null; do
-    owner="$(cat "$lock/pid" 2> /dev/null || true)"
-    if [ -n "$owner" ] && ! kill -0 "$owner" 2> /dev/null; then rm -rf "$lock"; continue; fi
+  while :; do
+    rc=0; make_lock "$lk" || rc=$?
+    if [ "$rc" = 0 ]; then break; fi
+    if [ "$rc" = 2 ]; then die "could not make the publish lock $lk (mktemp or rename failed in $base)"; fi
+    if lock_stale "$lk"; then rm -rf "$lk"; continue; fi
+    owner="$(cat "$lk/pid" 2> /dev/null || true)"
     say "waiting for another install-cs publish (pid ${owner:-?})"
     sleep 2
   done
-  echo $$ > "$lock/pid"
+  lock="$lk"
 }
 
 # Take the publish lock if no install holds it, reclaim dead scratch, and release the lock. It never waits.
-# A live holder is left alone, and so is a lock without a pid (take_lock's rule). A dead holder's lock is taken over.
+# A live holder and a fresh lock without a pid are left alone; a stale lock (lock_stale) is taken over.
 reclaim_unlocked() {
-  local lk="$base/.lock" owner
+  local lk="$base/.lock"
   mkdir -p "$base" "$cache"
-  if ! mkdir "$lk" 2> /dev/null; then
-    owner="$(cat "$lk/pid" 2> /dev/null || true)"
-    [ -n "$owner" ] || return 0
-    if kill -0 "$owner" 2> /dev/null; then return 0; fi
+  if ! make_lock "$lk"; then
+    lock_stale "$lk" || return 0
     rm -rf "$lk"
-    mkdir "$lk" 2> /dev/null || return 0
+    make_lock "$lk" || return 0
   fi
   lock="$lk"
-  echo $$ > "$lock/pid"
   reclaim_scratch
   rm -rf "$lock"
   lock=""
