@@ -14,14 +14,16 @@ using Aw.Sindri.Ui.Views.Shell;
 namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>
-/// The coverage sentence under a question's answer (#3260, #3680, #3900) on the page, in the three states qa shoots: a typical answer, nothing
-/// searched, and function names only partly searched because the code index is stale. Each sentence fits on one line at 1280 and 1000 px.
+/// The coverage sentence under a question's answer (#3260, #3680, #3900, #4122) on the page, in the three states qa shoots: a typical answer, nothing
+/// searched, and function names only partly indexed because the code index is stale. Each sentence fits on one line at 1280 and 1000 px.
 /// Saved under frames/ as f3-context-coverage-*.png when AW_UI_FRAMES=1.
 /// </summary>
 [Lane(TestLane.Integration)]
 public sealed class ContextCoverageFramesTests : FrameHost
 {
     private const string Question = "Tab groups";
+
+    private const string NextStep = "See Code index on the Health page.";
 
     private static string Anchor => (string)GoldenFiles.Node("context-lenses", "map-tabs")["anchor"]!["key"]!;
 
@@ -33,7 +35,7 @@ public sealed class ContextCoverageFramesTests : FrameHost
         node["searched"]!["bands"]!["code"]!["empty"] = true;
     }
 
-    // The code index is at another commit than the map, so the function names are only partly searched.
+    // The code index is at another commit than the map, so the function names are only partly indexed.
     private static void NamesStale(JsonNode node) => node["bands"]!["code"]!["symbols"]!["state"] = "stale";
 
     // The question goes through the query (not an exact hit), so the page shows the sentence for the edited answer.
@@ -70,17 +72,17 @@ public sealed class ContextCoverageFramesTests : FrameHost
     [InlineData(1280)]
     [InlineData(1000)]
     public Task A_typical_answer_draws_its_sentence_on_one_line(double width) =>
-        Shows(_ => { }, "Searched Product. Why and Code are only partly searched. Function names aren't indexed.", width, "typical");
+        Shows(_ => { }, "Searched all of Product and part of Why and Code. Function names aren't indexed yet. " + NextStep, width, "typical");
 
     [Theory]
     [InlineData(1280)]
     [InlineData(1000)]
     public Task An_answer_with_no_records_draws_nothing_searched_on_one_line(double width) =>
-        Shows(NothingSearched, "Nothing searched. No Why, Product or Code records. Function names aren't indexed.", width, "none");
+        Shows(NothingSearched, "Nothing searched. No Why, Product or Code records. Function names aren't indexed yet. " + NextStep, width, "none");
 
     [Theory]
     [InlineData(1280)]
     [InlineData(1000)]
-    public Task A_stale_code_index_draws_function_names_as_partly_searched_on_one_line(double width) =>
-        Shows(NamesStale, "Searched Product. Why, Code and function names are only partly searched.", width, "stale");
+    public Task A_stale_code_index_draws_function_names_as_partly_indexed_on_one_line(double width) =>
+        Shows(NamesStale, "Searched all of Product and part of Why and Code. Function names are only partly indexed. " + NextStep, width, "stale");
 }
