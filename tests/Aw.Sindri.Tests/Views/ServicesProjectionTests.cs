@@ -56,6 +56,7 @@ public sealed class ServicesProjectionTests
         Assert.Equal((afterRun.LastRun, afterRun.ScheduledSlot, 2L), (afterPause.LastRun, afterPause.ScheduledSlot, afterPause.Sequence));
         Assert.False(afterResume.Paused);
         Assert.Equal((afterRun.LastRun, 3L), (afterResume.LastRun, afterResume.Sequence));
+        Assert.Equal((null, resumed.Envelope.OccurredAt), (afterPause.ResumedAt, afterResume.ResumedAt));
     }
 
     [Fact, Trait("Lane", "unit")]

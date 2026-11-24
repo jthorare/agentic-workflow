@@ -114,12 +114,24 @@ public sealed class WorkflowListRowTests
             Row("old", "Old one", lastStatus: "succeeded", lastAgo: TimeSpan.FromDays(1)),
             Row("flaky", "Flaky checker", lastStatus: "failed", lastAgo: TimeSpan.FromMinutes(3)),
             Row("new", "New one", lastStatus: "succeeded", lastAgo: TimeSpan.FromMinutes(2)),
-            Row("gate", "Nightly main gate", paused: true),
+            Row("gate", "Nightly main gate", trigger: "Every night 2:00", paused: true),
             Row("off", "Off one", active: null));
 
         Assert.Equal(["flaky", "gate", "new", "old", "off"], page.Rows.Select(r => r.Slug), StringComparer.Ordinal);
         Assert.Equal(("Needs a look · 2", string.Empty, "Everything else · 3", string.Empty), (page.Rows[0].GroupHeader, page.Rows[1].GroupHeader, page.Rows[2].GroupHeader, page.Rows[3].GroupHeader));
         Assert.Equal((true, true, false), (page.Rows[0].NeedsLook, page.Rows[1].NeedsLook, page.Rows[2].NeedsLook));
+    }
+
+    [Fact]
+    public async Task A_paused_workflow_run_by_hand_reads_Paused_but_is_not_under_Needs_a_look()
+    {
+        var page = await Serve(
+            Row("hand", "By hand one", active: null, trigger: "By hand", paused: true),
+            Row("gate", "Nightly main gate", active: null, trigger: "Every night 2:00", paused: true));
+
+        var hand = page.Rows.Single(r => string.Equals(r.Slug, "hand", StringComparison.Ordinal));
+        Assert.Equal((true, "Paused", false), (hand.IsPaused, hand.StateText, hand.NeedsLook));   // the server says paused for any trigger; only a held schedule misses runs
+        Assert.True(page.Rows.Single(r => string.Equals(r.Slug, "gate", StringComparison.Ordinal)).NeedsLook);
     }
 
     [Fact]

@@ -33,9 +33,17 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         return status with { ApiVersion = SindriApi.Version, Views = views, Health = health, Sessions = SessionCounts() };
     }
 
-    /// <summary>The collector's last pass in three numbers; zeros before the first pass (collector spec CA-8).</summary>
-    private SessionStatus SessionCounts() =>
-        sessions.Current is { } pass ? new SessionStatus(pass.Sessions.Count, pass.Sessions.Count(static s => s.State == SessionState.Asking), pass.Problems.Count, pass.Sessions.Count(static s => s.State == SessionState.Running)) : new SessionStatus(0, 0, 0, 0);
+    /// <summary>The collector's last pass in numbers and its counted problems (#4012: a test override is none); zeros before the first pass (collector spec CA-8).</summary>
+    private SessionStatus SessionCounts()
+    {
+        if (sessions.Current is not { } pass)
+        {
+            return new SessionStatus(0, 0, 0, 0);
+        }
+
+        var counted = SessionHealth.Counted(pass.Problems);
+        return new SessionStatus(pass.Sessions.Count, pass.Sessions.Count(static s => s.State == SessionState.Asking), counted.Count, pass.Sessions.Count(static s => s.State == SessionState.Running)) { ProblemRows = counted };
+    }
 
     /// <summary>The projector's status with the ledger's head read fresh, not the projector's last-seen one: cursor below ledgerHead is the real lag.</summary>
     private async ValueTask<ViewsStatus> Views(CancellationToken cancellationToken)
@@ -49,7 +57,8 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         var rows = await healthRows.Read(approved, cancellationToken).ConfigureAwait(false);
         var codeIndex = await healthRows.CodeIndexProblems(approved, cancellationToken).ConfigureAwait(false);
         var sources = await healthRows.SourceProblems(approved, cancellationToken).ConfigureAwait(false);   // #4010: a flagged Context index card is not "healthy"
-        var health = HealthSummary.For(running, views, rows, healthRows.Context([.. codeIndex, .. sources]));
+        var agents = SessionHealth.Problems(sessions.Current?.Problems ?? []);   // #4012: a failed session source flags the Agents card the same way
+        var health = HealthSummary.For(running, views, rows, healthRows.Context([.. codeIndex, .. sources, .. agents]));
         var stalled = HealthSummary.WithStalledAgents(health, await healthRows.Stalled(cancellationToken).ConfigureAwait(false));   // issue #1000: so do agent runs idle past their launch's idle time
         return HealthSummary.WithIdleAgents(stalled, await healthRows.IdleAgents(cancellationToken).ConfigureAwait(false));   // issue #1265: and sessions ended as idle that no retry replaced (ended launches, so no overlap with the live count above)
     }

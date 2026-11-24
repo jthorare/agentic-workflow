@@ -16,6 +16,7 @@ namespace Aw.Sindri.Ui.Platform;
 /// <param name="SeenPages">Per concept ("&lt;repo&gt;/&lt;concept id&gt;"), the suggested page keys already seen (pages spec §3.5), at most <see cref="MaxSeenConcepts"/> concepts of <see cref="MaxSeenPagesPerConcept"/> keys.</param>
 /// <param name="WorkView">The Work page's last pick on the Sindri / Linear switch: <see cref="SindriView"/> or <see cref="LinearView"/> (Linear hub spec §3).</param>
 /// <param name="LinearSince">The marker the since-you-looked strip last dismissed; null before the first Dismiss (Linear hub spec §3).</param>
+/// <param name="HomeLayout">What Home shows: <see cref="HomePanels"/> or <see cref="HomeRows"/> (home spec §7.1, U1).</param>
 internal sealed record UiPreferences(
     int Version,
     WindowBounds? Window,
@@ -27,8 +28,15 @@ internal sealed record UiPreferences(
     bool ReduceMotion,
     IReadOnlyDictionary<string, IReadOnlyList<string>> SeenPages,
     string WorkView = UiPreferences.SindriView,
-    string? LinearSince = null)
+    string? LinearSince = null,
+    string HomeLayout = UiPreferences.HomePanels)
 {
+    /// <summary>Home as its panels: the layout a first run shows.</summary>
+    internal const string HomePanels = "panels";
+
+    /// <summary>Home as one ranked list of rows.</summary>
+    internal const string HomeRows = "rows";
+
     /// <summary>The Work page's own view: the queue.</summary>
     internal const string SindriView = "Sindri";
 
@@ -99,7 +107,8 @@ internal sealed record UiPreferences(
         ReduceMotion,
         ClampSeenPages(SeenPages),
         ClampView(WorkView),
-        NonBlank(LinearSince));
+        NonBlank(LinearSince),
+        ClampHome(HomeLayout));
 
     // The non-blank concept keys with their non-blank page keys (each once, the newest 200); the newest 2000 concepts.
     private static Dictionary<string, IReadOnlyList<string>> ClampSeenPages(IReadOnlyDictionary<string, IReadOnlyList<string>>? seen)
@@ -145,9 +154,11 @@ internal sealed record UiPreferences(
         && SameRest(other);
 
     private bool SameRest(UiPreferences other) =>
-        SameSeenPages(SeenPages, other.SeenPages) && string.Equals(WorkView, other.WorkView, StringComparison.Ordinal) && string.Equals(LinearSince, other.LinearSince, StringComparison.Ordinal);
+        SameSeenPages(SeenPages, other.SeenPages) && string.Equals(WorkView, other.WorkView, StringComparison.Ordinal) && string.Equals(LinearSince, other.LinearSince, StringComparison.Ordinal) && string.Equals(HomeLayout, other.HomeLayout, StringComparison.Ordinal);
 
     private static string ClampView(string view) => string.Equals(view, LinearView, StringComparison.Ordinal) ? LinearView : SindriView;
+
+    private static string ClampHome(string layout) => string.Equals(layout, HomeRows, StringComparison.Ordinal) ? HomeRows : HomePanels;
 
     private static string? NonBlank(string? text) => string.IsNullOrWhiteSpace(text) ? null : text;
 

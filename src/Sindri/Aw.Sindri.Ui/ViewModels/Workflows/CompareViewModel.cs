@@ -124,7 +124,7 @@ internal sealed class CompareRunHeadViewModel
             parts.Add(Labels.WfDuration((ended - run.StartedAt).TotalSeconds));
         }
 
-        parts.Add(Labels.WfRunTriggerWords(KindOf(run.Trigger)));
+        parts.Add(Labels.WfRunTriggerWords(run.TriggerKind is { Length: > 0 } served ? served : KindOf(run.Trigger)));   // a CLI start is stored as manual: the served word tells it apart (#3683)
         Facts = string.Join(" \u00b7 ", parts);
         (ChipGlyph, ChipWord) = Labels.WfChip(run.Status);
         ToneWord = RunStatus.ToneWord(run.Status);

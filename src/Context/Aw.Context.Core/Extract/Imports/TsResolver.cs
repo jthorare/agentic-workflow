@@ -39,26 +39,37 @@ internal sealed class TsResolver
             if (specifier.StartsWith(package.Name + "/", StringComparison.Ordinal))
             {
                 var sub = specifier[(package.Name.Length + 1)..];
-                return Subpath(package, "./" + sub) ?? Under(package.Dir, sub) ?? Under(package.Dir + "/src", sub);
+                var (hit, blocked) = Subpath(package, "./" + sub);
+                return blocked ? null : hit ?? Under(package.Dir, sub) ?? Under(package.Dir + "/src", sub);
             }
         }
 
         return null;
     }
 
-    // the first 'exports' key that matches and has a target in the repo; a target outside it (dist/, a build output) falls back to the folder guesses
-    private string? Subpath(PackageRoot package, string sub)
+    // the first 'exports' key that matches and has a target in the repo; a target outside it (dist/, a build output) falls back to the folder guesses.
+    // The first matching key with a null target blocks the subpath (issue 4043): no later key and no folder guess. Node takes only that best match, so a
+    // later blocked key blocks nothing (issue 4095): it has no target, and the folder guesses still run.
+    private (string? Hit, bool Blocked) Subpath(PackageRoot package, string sub)
     {
+        var first = true;
         foreach (var subpath in package.Subpaths.Where(s => Matches(s.Prefix, s.Suffix, s.Wild, sub)))
         {
+            if (subpath.Blocked && first)
+            {
+                return (null, true);
+            }
+
+            first = false;
+
             var middle = subpath.Wild ? sub[subpath.Prefix.Length..^subpath.Suffix.Length] : "";
             if (subpath.Targets.Select(t => File(subpath.Wild ? t.Replace("*", middle, StringComparison.Ordinal) : t)).FirstOrDefault(r => r is not null) is { } hit)
             {
-                return hit;
+                return (hit, false);
             }
         }
 
-        return null;
+        return (null, false);
     }
 
     private string? Under(string dir, string sub) => RepoPath.Join(dir, sub) is { } path ? File(path) : null;

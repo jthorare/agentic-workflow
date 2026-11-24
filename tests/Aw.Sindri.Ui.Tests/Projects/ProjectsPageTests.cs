@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Projects;
@@ -54,7 +55,7 @@ public sealed class ProjectsPageTests
     }
 
     [Fact]
-    public async Task The_cards_stay_in_the_order_the_server_serves()
+    public async Task Rows_with_the_same_last_activity_go_by_name()
     {
         var list = Golden("mixed");
         var second = list["projects"]![0]!.DeepClone();
@@ -115,6 +116,25 @@ public sealed class ProjectsPageTests
     }
 
     [Fact]
+    public async Task An_unset_github_login_keeps_the_hint_on_the_freshness_line_without_tinting_it()
+    {
+        var list = Golden("mixed");
+        list["freshness"] = new JsonArray(new JsonObject
+        {
+            ["source"] = "github-login",
+            ["state"] = "ok",
+            ["text"] = "not known: connect GitHub or set review.login to see what is blocked on you",
+            ["at"] = null,   // served as null: the row has no sync time
+        });
+        _f.Serve(list);
+
+        var page = await _f.Shown(Token);
+
+        Assert.False(page.FreshnessFailing);
+        Assert.Contains("not known: connect GitHub or set review.login to see what is blocked on you", page.Freshness, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_failing_source_tints_the_freshness_line()
     {
         _f.Serve("linear-failing");
@@ -123,6 +143,23 @@ public sealed class ProjectsPageTests
 
         Assert.True(page.FreshnessFailing);
         Assert.Contains("Linear issues needs attention (SND-INDEX-401)", page.Freshness, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_failing_sindri_row_says_what_could_not_be_read_without_the_raw_error()
+    {
+        var list = Golden("mixed");
+        list["freshness"]!.AsArray().Add(new JsonObject { ["source"] = "sindri", ["state"] = "failing", ["text"] = "SND-REVIEWS-012: reviews.db is locked", ["at"] = null });
+        _f.Serve(list);
+
+        var page = await _f.Shown(Token);
+
+        Assert.False(page.FreshnessFailing);   // the freshness line leaves Sindri's row out: the line above the rows says it, once (frames round 13, truth-failed)
+        Assert.Contains("GitHub synced 14 min ago · Linear says you're Jo Smith", page.Freshness, StringComparison.Ordinal);
+        Assert.DoesNotContain("couldn't be read", page.Freshness, StringComparison.Ordinal);
+        Assert.Equal((true, "PRs, checks and agents couldn't be read just now"), (page.ShowsFactsMissing, page.FactsMissingText));   // grouped by state already: no tail
+        Assert.DoesNotContain("SND-", page.Freshness, StringComparison.Ordinal);
+        Assert.DoesNotContain("sindri", page.Freshness, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -183,7 +220,7 @@ public sealed class ProjectsPageTests
 
     private const string ServedMissingKey = "Linear needs a token. Run sindri index connect linear in your terminal to connect it.";
 
-    private async Task<ProjectsPageViewModel> ShownWithMissingKey(Action<System.Text.Json.Nodes.JsonNode>? edit = null)
+    private async Task<ProjectsPageViewModel> ShownWithMissingKey(Action<JsonNode>? edit = null)
     {
         var list = Golden("mixed");
         list["empty"] = ServedMissingKey;
@@ -219,7 +256,7 @@ public sealed class ProjectsPageTests
     [Fact]
     public async Task A_missing_key_banner_with_no_last_read_leaves_the_last_read_out()
     {
-        var page = await ShownWithMissingKey(list => list["freshness"] = new System.Text.Json.Nodes.JsonArray());
+        var page = await ShownWithMissingKey(list => list["freshness"] = new JsonArray());
 
         Assert.Equal("Sindri has no Linear key, so projects aren't refreshing.", page.Sentence);
     }
@@ -286,19 +323,19 @@ public sealed class ProjectsPageTests
     }
 
     [Theory]
-    [InlineData(0, 1)]
-    [InlineData(559, 1)]
-    [InlineData(560, 2)]
-    [InlineData(1039, 2)]
-    [InlineData(1040, 3)]
-    [InlineData(2000, 3)]
-    public void The_columns_follow_the_page_width(double width, int columns)
+    [InlineData(0, false, false)]
+    [InlineData(807, false, false)]
+    [InlineData(808, false, true)]
+    [InlineData(867, false, true)]
+    [InlineData(868, true, true)]
+    [InlineData(2000, true, true)]
+    public void The_columns_drop_as_the_page_narrows(double width, bool agents, bool wide)
     {
         var page = _f.Page();
 
         page.SetPageWidth(width);
 
-        Assert.Equal(columns, page.Columns);
+        Assert.Equal((agents, wide), (page.ShowsAgents, page.ShowsWide));
     }
 
     [Fact]

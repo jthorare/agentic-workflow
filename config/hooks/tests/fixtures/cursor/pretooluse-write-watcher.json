@@ -1,0 +1,1 @@
+{"conversation_id": "cursor-dup-2", "generation_id": "gen-1", "model": "claude-sonnet", "hook_event_name": "preToolUse", "workspace_roots": ["/tmp"], "cwd": "/tmp", "tool_name": "Write", "tool_input": {"file_path": "/tmp/watch-pr.sh", "content": "#!/usr/bin/env bash\nwhile true; do\n  gh pr checks 7 --repo acme/app\n  sleep 60\ndone\n"}, "tool_use_id": "tool-2"}

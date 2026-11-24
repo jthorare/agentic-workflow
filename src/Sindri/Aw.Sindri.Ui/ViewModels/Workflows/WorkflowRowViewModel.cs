@@ -8,6 +8,7 @@ internal sealed class WorkflowRowViewModel : ObservableObject
     internal WorkflowRowViewModel(WorkflowRowView row, TimeProvider clock)
     {
         Slug = row.Slug;
+        NextRunAt = row.NextRunAt;
         NameText = row.Name;
         IsActive = row.ActiveRevision is not null;
         HasNewerRevision = row.ActiveRevision is { } active && active < row.LatestRevision;
@@ -18,7 +19,7 @@ internal sealed class WorkflowRowViewModel : ObservableObject
         TriggerText = row.Trigger ?? string.Empty;
         IsPaused = row.Paused == true;
         StateText = IsPaused ? "Paused" : IsActive ? "Active" : "Off";
-        NeedsLook = IsPaused || string.Equals(row.LastRun?.Status, "failed", StringComparison.Ordinal);
+        NeedsLook = (IsPaused && IsSchedule(TriggerText)) || string.Equals(row.LastRun?.Status, "failed", StringComparison.Ordinal);   // served paused = on once, off now, any trigger: only a held schedule is missed work (#3683)
         (LastRunText, LastRunToneWord) = LastRunOf(row, IsPaused, clock);
         NextRunText = NextRunOf(row, IsPaused, clock);
         Activity = row.LastRun?.At ?? row.ChangedAt;
@@ -38,7 +39,7 @@ internal sealed class WorkflowRowViewModel : ObservableObject
     /// <summary>True when the Last run cell has a chip.</summary>
     public bool ShowsLastRun => LastRunText.Length > 0;
 
-    /// <summary>True for a workflow with a schedule that is held.</summary>
+    /// <summary>True when the workflow was on once and is off now, as served (#3683).</summary>
     public bool IsPaused { get; }
 
     /// <summary>"Active", "Paused" or "Off".</summary>
@@ -94,6 +95,9 @@ internal sealed class WorkflowRowViewModel : ObservableObject
 
     /// <summary>The name commands use.</summary>
     public string Slug { get; }
+
+    /// <summary>When the workflow's schedule fires next, as the list serves it; null when none is known (#3758).</summary>
+    internal DateTimeOffset? NextRunAt { get; }
 
     /// <summary>The name for people.</summary>
     public string NameText { get; }
@@ -153,6 +157,9 @@ internal sealed class WorkflowRowViewModel : ObservableObject
         var word = Labels.WfChip(status).Word;
         return (word + " " + Labels.AgoWords(clock.GetUtcNow() - last.At), tone);
     }
+
+    // The served trigger words name a schedule unless they are the by-hand words, empty (no trigger node) or another trigger's node type (TriggerWords.Of on the server).
+    private static bool IsSchedule(string trigger) => trigger is not ("" or "By hand" or "connection_event" or "workflow_call");
 
     private static string NextRunOf(WorkflowRowView row, bool paused, TimeProvider clock)
     {

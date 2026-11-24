@@ -186,7 +186,7 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
         (ChipWord, ChipGlyph) = (word, glyph);
         (Status, Tone) = (run.Status, RunStatus.Tone(run.Status));
         ChipToneWord = RunStatus.ToneWord(run.Status);
-        TriggerText = Labels.WfStartedBy(KindOf(run.Trigger));
+        TriggerText = Labels.WfStartedBy(run.TriggerKind is { Length: > 0 } served ? served : KindOf(run.Trigger));   // the served word tells a CLI or agent start from one by hand (#3683)
         RevisionText = Labels.WfRunRevision(run.Revision);
         var live = RunStatus.IsLive(run.Status);
         WhenText = live
@@ -196,6 +196,7 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
         OutputsText = WorkflowJson.Pretty(run.Outputs);
         var types = NodeTypes(Shape);
         Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode, (node, token) => EditStep?.Invoke(node, token) ?? Task.CompletedTask, types.GetValueOrDefault(g.Key, string.Empty)))];
+        // No next-run time on purpose (#4188): this page shows a past run, so its Schedule card carries no "next ..." chip.
         Graph = Shape is { } shape && shape.Revision == run.Revision ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(shape, Statuses(run))) : null;
         Changed();
     }

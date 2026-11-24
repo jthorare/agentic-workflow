@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:wf="using:Aw.Sindri.Ui.ViewModels.Workflows"
              xmlns:api="using:Aw.Sindri.Ui.Api.Workflows"
+             xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
              x:Class="Aw.Sindri.Ui.Views.Workflows.WorkflowEditorSheet"
              x:DataType="wf:WorkflowsPageViewModel">
   <!-- The workflow editor (#2258 PR 17 part 3a): the settings of the node selected on the graph, one input per field type, Save, and the reload prompt when the workflow changed elsewhere.
@@ -59,7 +60,10 @@
       </Expander>
 
       <Border x:Name="EditorFailure" IsVisible="{Binding Editor.FailureText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Editor.FailureText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-        <TextBlock Classes="caption" Text="{Binding Editor.FailureText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        <Grid ColumnDefinitions="Auto,*">
+          <icons:StateIcon x:Name="EditorFailureIcon" Glyph="Down" Classes="error" VerticalAlignment="Top" Margin="0,0,8,0" AutomationProperties.AccessibilityView="Raw" />
+          <TextBlock x:Name="EditorFailureText" Grid.Column="1" Classes="caption error" Text="{Binding Editor.FailureText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Grid>
       </Border>
 
       <StackPanel Orientation="Horizontal" Spacing="8">

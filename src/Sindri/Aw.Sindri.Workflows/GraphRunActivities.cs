@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Rerun;
 using Aw.Sindri.Core.Graph.Runs;
 using Temporalio.Activities;
 using Temporalio.Exceptions;
@@ -28,6 +29,46 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         var cancel = ActivityExecutionContext.Current.CancellationToken;
         var row = GraphFailures.Value(await runs.Get(run, cancel).ConfigureAwait(false));
         return GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
+    }
+
+    /// <summary>The steps a re-run from a step (spec §7.3) took from its source run: the nodes that already have a succeeded or skipped row when the walk starts, and for a succeeded one the branch its row says it took (RerunPlan.Branches). Empty for every other run.</summary>
+    /// <param name="run">The run.</param>
+    /// <returns>The restored steps.</returns>
+    [Activity("GraphRestored")]
+    public async Task<IReadOnlyList<GraphRestoredNode>> RestoredAsync(WorkflowRunId run)
+    {
+        var cancel = ActivityExecutionContext.Current.CancellationToken;
+        var rows = GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false));
+        if (rows.Count == 0)
+        {
+            return [];
+        }
+
+        var row = GraphFailures.Value(await runs.Get(run, cancel).ConfigureAwait(false));
+        var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
+        // why: each restored step's branch is read from its own copied row, the same way the re-run service read it from the source run; a step with no row never counts as a taken branch
+        var nodes = spec.Nodes.ToDictionary(static n => n.Id);
+        var from = Chosen(row.Trigger);
+        return [.. rows.GroupBy(static r => r.NodeId).Select(g => new GraphRestoredNode(g.Key.Value, Taken(spec, nodes, g.Key, [.. g], from)))];
+    }
+
+    private static IReadOnlyList<string> Taken(GraphSpec spec, Dictionary<NodeId, GraphNode> nodes, NodeId id, List<NodeRun> rows, NodeId? from)
+    {
+        var branches = nodes.TryGetValue(id, out var node) ? RerunPlan.Branches(node, rows) ?? [] : [];
+        return from is { } chosen ? RerunPlan.WithChosen(spec, id, branches, chosen) : branches;
+    }
+
+    // The re-run's 'fromNode' (RerunWorkflowRunService's trigger), or null for a trigger that names none.
+    private static NodeId? Chosen(string trigger)
+    {
+        try
+        {
+            return JsonNode.Parse(trigger)?["fromNode"] is JsonValue value && value.TryGetValue<string>(out var text) && NodeId.TryFrom(text, out var id) ? id : null;
+        }
+        catch (System.Text.Json.JsonException)   // boundary: a stored trigger that is not JSON names no step
+        {
+            return null;
+        }
     }
 
     /// <summary>Marks the run running and mirrors it as started.</summary>
@@ -183,23 +224,11 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         }
     }
 
-    /// <summary>
-    /// A succeeded run's outputs as JSON: an object keyed by node id holding what each succeeded node gave. A node that ran once gives its outputs object; a node that ran per item
-    /// (item index above 0) gives an array of them in item order. Null when nothing succeeded or the text would pass <see cref="NodeRunLimits.PayloadBytes"/>.
-    /// </summary>
+    /// <summary>A succeeded run's outputs as JSON: its result node or last nodes (<see cref="GraphResultOutputs"/>), kept up to 64 KB on their own (#3807).</summary>
     private async Task<string?> Outputs(WorkflowRunId run, CancellationToken cancel)
     {
-        var rows = GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false));
-        var result = new JsonObject();
-        foreach (var group in rows.Where(static n => n.Status == NodeRunStatus.Succeeded && n.Output is not null && !n.Truncated).GroupBy(static n => n.NodeId))
-        {
-            // why: a cut output is no longer JSON, so that node is left out rather than half-written
-            var parsed = group.OrderBy(static n => n.ItemIndex).Select(static n => JsonNode.Parse(n.Output!)).ToList();
-            result[group.Key.Value] = group.Any(static n => n.ItemIndex > 0) ? new JsonArray([.. parsed]) : parsed[0];
-        }
-
-        var text = result.Count == 0 ? null : result.ToJsonString();
-        // why: like a node's output, the run's is kept only up to 64 KB; a cut JSON text is worse than none, so a larger one is not stored
-        return text is not null && NodeRunLimits.Cap(text, out var truncated) is not null && !truncated ? text : null;
+        var row = GraphFailures.Value(await runs.Get(run, cancel).ConfigureAwait(false));
+        var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
+        return GraphResultOutputs.Build(spec, GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false)));
     }
 }

@@ -20,6 +20,10 @@ public sealed class InMemoryLaneFiles : ILaneFiles
         _records[record.Lane] = record;
     }
 
+    /// <summary>Removes a lane's record, as when lane-sessions/&lt;lane&gt; is deleted.</summary>
+    /// <param name="lane">The lane.</param>
+    public void Remove(string lane) => _ = _records.Remove(lane);
+
     /// <summary>Puts a lane's hook trace in place.</summary>
     /// <param name="lane">The lane.</param>
     /// <param name="trace">The trace.</param>

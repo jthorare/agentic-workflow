@@ -61,10 +61,11 @@ public sealed class ProjectSheetShellTests
     public Task A_cards_open_request_opens_the_sheet_and_remembers_the_card_for_Esc() => UiThread.Run(async () =>
     {
         var shell = await Shell();
+        shell.Projects.SetView(ProjectView.All);
         shell.GoTo(PageId.Projects);
         await Until(() => !shell.Projects.IsLoading);
 
-        shell.Projects.RequestOpen(shell.Projects.Groups[2].Cards[0].Link);
+        shell.Projects.RequestOpen(shell.Projects.Groups.SelectMany(g => g.Cards).First(c => c.Id == "prj_00000000000000000000000008").Link);
 
         Assert.Equal((true, "prj_00000000000000000000000008"), (shell.IsProjectSheet, shell.OpenerProject));
     }, Token);
@@ -110,11 +111,12 @@ public sealed class ProjectSheetShellTests
     {
         ServeLed();
         var shell = await Shell();
+        shell.Projects.SetView(ProjectView.All);
         shell.GoTo(PageId.Projects);
         await Until(() => !shell.Projects.IsLoading);
         var asked = new List<ProjectFocusEventArgs>();
         shell.Projects.FocusRequested += (_, e) => asked.Add(e);
-        shell.Projects.RequestOpen(shell.Projects.Groups[0].Cards[0].Link);
+        shell.Projects.RequestOpen(shell.Projects.Groups.SelectMany(g => g.Cards).First(c => c.Name == "Checkout rewrite").Link);   // the card ServeLed answers for
         await Until(() => shell.ProjectSheet.IsShown);
         var reads = _server.ProjectsCalls;
 
@@ -166,4 +168,33 @@ public sealed class ProjectSheetShellTests
         Assert.False(DeepLink.TryParse("project/%2E%2E", out _));
         Assert.False(DeepLink.TryParse("project/" + new string('a', 129), out _));
     }
+
+    // Issue 3717: the rows have no notes area, so the sheet edits the notes through the page's row of the project.
+    [Fact]
+    public Task A_rows_sheet_edits_its_notes_through_that_row() => UiThread.Run(async () =>
+    {
+        var shell = await Shell();
+        shell.Projects.SetView(ProjectView.All);
+        shell.GoTo(PageId.Projects);
+        await Until(() => !shell.Projects.IsLoading);
+        var row = shell.Projects.Groups.SelectMany(g => g.Cards).First(c => c.Id == "prj_00000000000000000000000008");
+
+        shell.Projects.RequestOpen(row.Link);
+        await Until(() => shell.ProjectSheet.IsShown);
+
+        Assert.Same(row, shell.ProjectSheet.NotesCard);
+        Assert.Equal((true, false), (shell.ProjectSheet.HasNotesCard, shell.ProjectSheet.ShowsReadOnlyNotes));
+    }, Token);
+
+    [Fact]
+    public Task A_sheet_opened_by_link_before_the_page_read_gets_its_row_once_the_page_reads() => UiThread.Run(async () =>
+    {
+        var shell = await Shell();
+
+        shell.Navigate(Link("prj_00000000000000000000000008"));
+        await Until(() => shell.ProjectSheet.IsShown && !shell.Projects.IsLoading);
+        await Until(() => shell.ProjectSheet.NotesCard is not null);
+
+        Assert.Equal("prj_00000000000000000000000008", shell.ProjectSheet.NotesCard!.Id);
+    }, Token);
 }

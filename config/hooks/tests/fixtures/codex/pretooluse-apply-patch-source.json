@@ -1,0 +1,1 @@
+{"session_id": "codex-dup-3", "transcript_path": null, "cwd": "/tmp", "hook_event_name": "PreToolUse", "model": "gpt-5.1-codex", "permission_mode": "default", "turn_id": "turn-1", "tool_name": "apply_patch", "tool_input": {"input": "*** Begin Patch\n*** Update File: src/app.py\n@@\n-timeout = 5\n+timeout = 10\n*** End Patch\n"}, "tool_use_id": "call_3"}

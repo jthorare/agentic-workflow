@@ -99,11 +99,11 @@ public sealed class ConceptAnswers(ConceptReader reader, IConceptAnswerStore sto
         }
     }
 
-    // The map-derived answer and its rows' code paths; the read's basis carries no change times, so no kept row holds one.
+    // The map-derived answer with the map's repos and its rows' code paths; the read's basis carries no change times, so no kept row holds one.
     private static Result<KeptConcepts> Kept(ConceptRead read, ConceptsQuery query)
     {
         var view = ConceptBuilder.Build(read.Basis, query, read.Graph, read.Text, read.Pins);
-        return view.IsError ? view.Error : new KeptConcepts(view.Value, ConceptBuilder.CodePathsOf(view.Value.Concepts.Select(c => c.Id), read.Graph));
+        return view.IsError ? view.Error : new KeptConcepts(view.Value with { Repos = read.Repos }, ConceptBuilder.CodePathsOf(view.Value.Concepts.Select(c => c.Id), read.Graph));
     }
 
     // The digest of the rules this read scrubs with, or null when the profile's patterns don't build (the read then refuses, and nothing is kept).
