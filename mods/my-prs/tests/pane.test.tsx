@@ -120,3 +120,32 @@ test('a gh failure shows on the pane', { options: OPTIONS }, async ($, on) => {
   expect((await ui.find({ type: 'Text', text: /not logged in/ }))?.text).toBe('gh: gh: not logged in')
   await ui.unmount()
 })
+
+test('control characters in titles, logins, teams and check names never reach the pane', { options: OPTIONS }, async ($, on) => {
+  mock.clock(on)
+  on('command.register', () => ({ value: { command: 'prs' } }))
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  const dirty = SEARCH.data.search.nodes[0] as any
+  const search = { data: { search: { nodes: [{
+    ...dirty,
+    title: 'T\u001b[31mitle\u0007',
+    commits: { nodes: [{ commit: { statusCheckRollup: { contexts: { nodes: [
+      { __typename: 'StatusContext', context: 'ci/bad\u001b[2Jname', state: 'FAILURE' },
+    ] } } } }] },
+    latestReviews: { nodes: [{ state: 'APPROVED', author: { __typename: 'User', login: 'al\u001b]0;x\u0007ex' }, commit: { oid: HEAD } }] },
+    reviewRequests: { nodes: [{ requestedReviewer: { __typename: 'Team', name: 'e\u0085ng' } }] },
+  }] } } }
+  on('process.run', (_, e) => {
+    const stdout = e.argv.includes('graphql') ? JSON.stringify(search) : JSON.stringify(['ci/bad\u001b[2Jname'])
+    return { value: { exitCode: 0, stdout, stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }
+  })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  await $.command.run({ command: 'prs', args: '', origin: 'person', presentation: 'typed' } as never)
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  const find = async (re: RegExp) => (await ui.find({ type: 'Text', text: re }))?.text
+  expect(await find(/itle/)).toContain('T[31mitle')
+  expect(await find(/CI ✗/)).toBe('  CI ✗ bad[2Jname   bots ✗✗   threads 0')
+  expect(await find(/people:/)).toBe('  people: ✓ al]0;xex   ? eng')
+  await ui.unmount()
+})

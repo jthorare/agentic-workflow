@@ -91,6 +91,10 @@ type Pr = {
 
 export type ThreadMemory = Record<string, { count: number; raisedAt: number }>
 
+// Titles, logins, team names and check names come from other people's text: drop C0 and C1 control characters
+// (escape sequences, backspace, bell) so they can't move the cursor or restyle the terminal.
+const clean = (text: string): string => text.replace(/[\u0000-\u001f\u007f-\u009f]/g, '')
+
 const NEW_THREAD_MS = 10 * 60 * 1000
 
 function contextName(c: Context): string {
@@ -114,7 +118,7 @@ function ciOf(contexts: Context[], required: string[] | undefined, cfg: ModConfi
   const names = required && required.length > 0 ? required : [...byName.keys()]
   if (names.length === 0) return { state: 'none', failing: [], done: 0, total: 0 }
   const states = names.map(n => byName.get(n) ?? 'running')
-  const failing = names.filter((_, i) => states[i] === 'fail').map(n => cfg.stripPrefixes.reduce((name, p) => (name.startsWith(p) ? name.slice(p.length) : name), n))
+  const failing = names.filter((_, i) => states[i] === 'fail').map(n => clean(cfg.stripPrefixes.reduce((name, p) => (name.startsWith(p) ? name.slice(p.length) : name), n)))
   const done = states.filter(s => s !== 'running').length
   const state = failing.length > 0 ? 'fail' : done < names.length ? 'running' : 'pass'
   return { state, failing, done, total: names.length }
@@ -126,7 +130,7 @@ function peopleOf(pr: Pr): Person[] {
     if (!r.author || r.author.__typename !== 'User') continue
     if (r.state !== 'APPROVED' && r.state !== 'CHANGES_REQUESTED') continue
     people.push({
-      login: r.author.login,
+      login: clean(r.author.login),
       mark: r.state === 'APPROVED' ? 'approved' : 'changes',
       isOld: r.commit?.oid !== pr.headRefOid,
     })
@@ -134,7 +138,7 @@ function peopleOf(pr: Pr): Person[] {
   for (const req of pr.reviewRequests.nodes) {
     const who = req.requestedReviewer
     if (!who || who.__typename === 'Bot') continue
-    const login = who.login ?? who.name ?? '?'
+    const login = clean(who.login ?? who.name ?? '?')
     if (!people.some(p => p.login === login)) people.push({ login, mark: 'requested', isOld: false })
   }
   return people
@@ -199,7 +203,7 @@ export function toRows(
       number: pr.number,
       repo,
       branch: pr.headRefName,
-      title: pr.title,
+      title: clean(pr.title),
       url: pr.url,
       ci,
       bots,
