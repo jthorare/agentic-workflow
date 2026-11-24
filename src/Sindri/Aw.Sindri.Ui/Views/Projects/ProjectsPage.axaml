@@ -249,7 +249,8 @@
       </Grid>
     </Border>
 
-    <ScrollViewer x:Name="ProjectsScroll" Grid.Row="2" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+    <Panel Grid.Row="2">
+    <ScrollViewer x:Name="ProjectsScroll" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" ScrollChanged="OnRowsScrolled">
     <StackPanel x:Name="ProjectsRows" Spacing="{StaticResource Size.PanelGap}">
     <StackPanel x:Name="ProjectsList" IsVisible="{Binding HasRows}" Spacing="0">
       <ItemsControl x:Name="ProjectsGroups" ItemsSource="{Binding Groups}" AutomationProperties.Name="{Binding Title}">
@@ -297,6 +298,18 @@
 
     </StackPanel>
     </ScrollViewer>
+    <!-- The sticky head (#4153): while the list is scrolled, a copy of the head of the group in view sits on the top edge of the rows, so the rows still say which group they are in.
+         Its DataContext is that group (ProjectsPage.axaml.cs UpdateStickyHead); at the top, where the real head shows, it is hidden. -->
+    <Button x:Name="ProjectsStickyHead" Classes="group-head" x:DataType="pvm:ProjectGroupViewModel" IsVisible="False" Click="OnGroupHead" VerticalAlignment="Top"
+            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" AutomationProperties.Name="{Binding HeadingName}">
+      <Grid ColumnDefinitions="Auto,Auto,Auto,*" VerticalAlignment="Center">
+        <TextBlock Classes="caption subtle" Width="14" Text="{Binding Chevron}" />
+        <TextBlock x:Name="ProjectsStickyHeading" Grid.Column="1" Classes="caption" Foreground="{DynamicResource Brush.InkMuted}" FontWeight="Medium" Text="{Binding Heading}" />
+        <TextBlock x:Name="ProjectsStickyCount" Grid.Column="2" Classes="caption subtle" Margin="8,0,0,0" Text="{Binding Count}" />
+        <TextBlock Grid.Column="3" Classes="caption subtle" HorizontalAlignment="Right" Text="{Binding Hint}" TextTrimming="CharacterEllipsis" />
+      </Grid>
+    </Button>
+    </Panel>
 
     <ItemsControl x:Name="ProjectsKeys" Grid.Row="3" Margin="0,12,0,0" ItemsSource="{Binding KeyHints}" IsVisible="{Binding !IsLoading}">
       <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="16" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>

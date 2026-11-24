@@ -156,6 +156,26 @@ internal sealed partial class ProjectsPage : UserControl
         }
     }
 
+    private void OnRowsScrolled(object? sender, ScrollChangedEventArgs e) => UpdateStickyHead();
+
+    // The group in view is the one whose head last passed the top edge of the rows; at the top (no head above the edge) the copy hides.
+    private void UpdateStickyHead()
+    {
+        var edge = ProjectsScroll.Offset.Y - 0.5;
+        ProjectGroupViewModel? current = null;
+        var best = double.NegativeInfinity;
+        foreach (var head in ProjectsGroups.GetVisualDescendants().OfType<Button>())
+        {
+            if (head is { Name: "ProjectsGroupHead", IsEffectivelyVisible: true, DataContext: ProjectGroupViewModel group } && head.TranslatePoint(default, ProjectsRows) is { Y: var y } && y < edge && y > best)
+            {
+                (current, best) = (group, y);
+            }
+        }
+
+        ProjectsStickyHead.DataContext = current;
+        ProjectsStickyHead.IsVisible = current is not null;
+    }
+
     private void OnGroupHead(object? sender, RoutedEventArgs e)
     {
         if (sender is Control { DataContext: ProjectGroupViewModel group } && DataContext is ProjectsPageViewModel page)
