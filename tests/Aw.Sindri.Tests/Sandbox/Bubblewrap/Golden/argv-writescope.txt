@@ -96,6 +96,12 @@
 /home/owner/.agentic-workflow/context-guard/state
 /home/owner/.agentic-workflow/context-guard/state
 --bind
+/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/spool/retry-guard
+/home/owner/.agentic-workflow/retry-guard
+--bind
+/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/spool/duplicate-script
+/home/owner/.agentic-workflow/duplicate-script
+--bind
 /home/owner/.agentic-workflow/fleet
 /home/owner/.agentic-workflow/fleet
 --bind
