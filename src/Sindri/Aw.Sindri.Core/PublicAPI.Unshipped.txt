@@ -25302,6 +25302,11 @@ Aw.Sindri.Core.Connections.ConnectionPreset.ShippedClient.get -> string?
 Aw.Sindri.Core.Connections.ConnectionPreset.ShippedClient.init -> void
 Aw.Sindri.Core.Connections.ConnectionPreset.DeviceCodeUrl.get -> string?
 Aw.Sindri.Core.Connections.ConnectionPreset.DeviceCodeUrl.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.Auth.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Connections.ConnectionPreset.Auth.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.KeyFirst.get -> bool
+const Aw.Sindri.Core.Connections.ConnectionPreset.KeyAuth = "key" -> string!
+const Aw.Sindri.Core.Connections.ConnectionPreset.OAuthAuth = "oauth" -> string!
 Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization
 Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization.DeviceAuthorization(string! deviceCode, string! userCode, System.Uri! verificationUri, System.DateTimeOffset expiresAt, System.TimeSpan interval) -> void
 Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization.DeviceCode.get -> string!

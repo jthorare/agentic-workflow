@@ -7,7 +7,7 @@ using Aw.Sindri.Core.Connections;
 namespace Aw.Sindri.Features.AddConnection;
 
 /// <summary>
-/// Adds a connection. A bad name is SND-CONN-008, an existing one SND-CONN-010 (the insert itself refuses a duplicate, so two adds racing cannot both win), a preset
+/// Adds a connection. With no --kind, a preset whose first way to connect is a key (<see cref="ConnectionPreset.KeyFirst"/>: github, linear, slack) makes a rest connection, the others the preset's kind (#4357). A bad name is SND-CONN-008, an existing one SND-CONN-010 (the insert itself refuses a duplicate, so two adds racing cannot both win), a preset
 /// without a client id SND-CONN-007, and a preset that cannot take a loopback sign-in is refused with its sign-in note before any listener opens. An oauth connection
 /// runs <see cref="OAuthSignInFlow"/>. A rest or cli connection stores the key the CLI sent (read from the CLI's own environment) or, for an agent, the variable named by
 /// --key-env in serve's environment. An error shows its code and fixed title only (<see cref="ConnectionFailures"/>).
@@ -96,9 +96,10 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
             return ConnectionWire.ParseKind(wire);
         }
 
-        return preset is not null
-            ? preset.Kind
-            : SindriErrors.InvalidInput.With("name a --preset or a --kind (oauth, rest or cli)");
+        // #4357: a preset whose first way to connect is a key (github, linear, slack) stores a key unless --kind oauth asks for the browser sign-in
+        return preset is null ? SindriErrors.InvalidInput.With("name a --preset or a --kind (oauth, rest or cli)")
+            : preset.KeyFirst ? ConnectionKind.Rest
+            : preset.Kind;
     }
 
     private async ValueTask<Result<AddConnectionResponse>> AddOAuth(ConnectionName name, AddConnectionRequest request, ConnectionPreset? preset, CancellationToken cancellationToken)
@@ -156,7 +157,9 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
 
         if (key.Value is null)
         {
-            return SindriErrors.InvalidInput.With($"a {ConnectionWire.Name(kind)} connection needs --key-env NAME (the environment variable that holds the key)");
+            return SindriErrors.InvalidInput.With(preset is { KeyFirst: true }
+                ? $"a {preset.DisplayName} connection takes a key: pass --key-env NAME (the environment variable that holds your API key or personal access token), or --kind oauth for a browser sign-in with your own OAuth app"
+                : $"a {ConnectionWire.Name(kind)} connection needs --key-env NAME (the environment variable that holds the key)");
         }
 
         var pointer = _secrets.Store(name, new TokenSet(key.Value, RefreshToken: null, ExpiresAt: null));
