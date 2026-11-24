@@ -101,6 +101,6 @@ public sealed class RunDetailStartTimeoutTests : IDisposable
         await page.OpenRun(NewRun, Token);
 
         Assert.Equal((true, false), (page.Run.IsFailed, page.Run.DidNotStart));
-        Assert.NotEqual("Starting", page.Run.ChipWord);
+        Assert.NotEqual("Starting", page.Run.ChipWord, StringComparer.Ordinal);
     }
 }

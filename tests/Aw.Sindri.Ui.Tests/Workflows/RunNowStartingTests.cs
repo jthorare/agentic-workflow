@@ -41,7 +41,7 @@ public sealed class RunNowStartingTests
 
         await page.RunNow(Token);
 
-        var row = page.Runs.Rows.First();
+        var row = page.Runs.Rows[0];
         Assert.Equal((NewRun, "Starting", 4), (row.Id, row.ChipWord, page.Runs.Rows.Count));
         Assert.Equal((true, NewRun, "Starting", false), (page.IsRun, page.Run.Id, page.Run.ChipWord, page.Run.IsFailed));
     }
