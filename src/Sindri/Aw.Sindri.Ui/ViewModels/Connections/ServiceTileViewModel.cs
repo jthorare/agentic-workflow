@@ -117,6 +117,9 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     /// <summary>True when the last try failed or was cancelled.</summary>
     public bool HasError => ErrorText.Length > 0;
 
+    /// <summary>True when the last try failed without the service judging the token (SND-CONN-019 not reached, SND-CONN-020 rate limited): the line shows amber, not red (#4428).</summary>
+    public bool ErrorIsCaution { get; private set; }
+
     /// <summary>The label on the Connect button: "Add token" while the tile takes a token, "Connect" for a browser sign-in.</summary>
     public string ConnectText => TakesToken ? Labels.ConnectAddToken : Labels.ConnectTile;
 
