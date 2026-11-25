@@ -88,6 +88,12 @@ internal sealed class ConnectionsText
     /// <summary><see cref="Labels.ConnectionKeyLabel"/> for a tile.</summary>
     public string TileTokenLabel { get; } = "Token";
 
+    /// <summary><see cref="Labels.TileUseOAuth"/>.</summary>
+    public string UseOAuth { get; } = Labels.TileUseOAuth;
+
+    /// <summary><see cref="Labels.TileUseToken"/>.</summary>
+    public string UseToken { get; } = Labels.TileUseToken;
+
     /// <summary><see cref="Labels.TileRename"/>.</summary>
     public string Rename { get; } = Labels.TileRename;
 
