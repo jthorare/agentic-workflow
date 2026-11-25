@@ -12,6 +12,6 @@ public interface IKeyCheck
     /// <param name="preset">The preset the key is for.</param>
     /// <param name="key">The key. Secret: it goes only into the request's Authorization header.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>Unit when the service takes the key or the preset has no check; SND-CONN-018 when the service refuses it; SND-CONN-019 when the service could not be asked. No error holds the key or the service's body.</returns>
+    /// <returns>Unit when the service takes the key or the preset has no check; SND-CONN-018 when the service refuses it; SND-CONN-019 when the service could not be asked; SND-CONN-020 when it is rate limiting Sindri. No error holds the key or the service's body.</returns>
     public ValueTask<Result<Unit>> Check(ConnectionPreset preset, string key, CancellationToken cancellationToken);
 }

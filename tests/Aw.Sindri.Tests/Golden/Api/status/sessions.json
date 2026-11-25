@@ -147,6 +147,7 @@
         "code": "SND-SESSION-001",
         "text": "The claude-records source couldn't be read in the last pass"
       }
-    ]
+    ],
+    "watching": "on"
   }
 }

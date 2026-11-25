@@ -101,6 +101,20 @@ public sealed class TestKeyConnectionTests
     }
 
     [Fact]
+    public async Task A_rate_limited_check_is_SND_CONN_020_and_leaves_the_row_as_it_was()
+    {
+        var world = await World(Slack);
+        var before = Assert.Single(world.Store.Rows);
+        world.Keys.RateLimited = true;
+
+        var tested = await world.Test().Handle(new TestConnectionRequest("slack:work"), Token);
+
+        Assert.False(tested.Value.Ok);
+        Assert.Equal("The service is rate limiting Sindri; the key was not checked (SND-CONN-020)", tested.Value.Reason);
+        Assert.Equal(before, Assert.Single(world.Store.Rows));
+    }
+
+    [Fact]
     public async Task A_rest_connection_whose_preset_has_no_check_tries_the_probe_url_in_its_config()
     {
         var world = await World(Unchecked);
