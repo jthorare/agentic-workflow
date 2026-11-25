@@ -13,7 +13,10 @@ internal sealed partial class WorkflowsPageViewModel
     /// </summary>
     /// <param name="cancellationToken">Cancels the call and the reads.</param>
     /// <returns>A task that completes when the answer is shown.</returns>
-    internal async Task RunNow(CancellationToken cancellationToken)
+    internal Task RunNow(CancellationToken cancellationToken) => Start(reopenRunPage: false, cancellationToken);
+
+    // reopenRunPage: Retry started this run from the run page, so the page moves to the new run's Starting page like the runs list does.
+    private async Task Start(bool reopenRunPage, CancellationToken cancellationToken)
     {
         if (_url is not { } url || Runs.IsStarting || !Runs.CanRun || Runs.Slug.Length == 0)
         {
@@ -37,13 +40,35 @@ internal sealed partial class WorkflowsPageViewModel
                 return;
             }
 
+            if (string.Equals(started.Value.Status, "started", StringComparison.Ordinal))
+            {
+                Runs.AddStarting(started.Value.Run);   // at once, from the reply: the server's views row comes later
+                Run.ExpectStarting(started.Value.Run);
+            }
+
             await Runs.Read(url, slug, Runs.Title, cancellationToken).ConfigureAwait(true);
-            await AfterStart(started.Value, cancellationToken).ConfigureAwait(true);
+            await AfterStart(started.Value, reopenRunPage, cancellationToken).ConfigureAwait(true);
         }
         finally
         {
             Runs.SetStarting(starting: false);
         }
+    }
+
+    /// <summary>Retry on a Starting placeholder that did not start: the placeholder goes and Run now runs again.</summary>
+    /// <param name="runId">The placeholder's run id.</param>
+    /// <param name="cancellationToken">Cancels the call and the reads.</param>
+    /// <returns>A task that completes when the answer is shown.</returns>
+    internal async Task RetryStart(string runId, CancellationToken cancellationToken)
+    {
+        if (Runs.IsStarting || !Runs.CanRun)
+        {
+            return;   // what Run now would refuse: the placeholder stays
+        }
+
+        var fromRunPage = _level == Level.Run;
+        Runs.DropStarting(runId);
+        await Start(fromRunPage, cancellationToken).ConfigureAwait(true);
     }
 
     // A refusal says why; one that says the workflow is off turns Run now off. When Sindri didn't answer, the run may have started, so the runs are read
@@ -65,13 +90,13 @@ internal sealed partial class WorkflowsPageViewModel
         Runs.Note(Labels.WfRunNowRefused(error));
     }
 
-    // a started run is opened (when the runs are still shown); a queued or skipped one says why under the button
-    private async Task AfterStart(WorkflowRunStarted started, CancellationToken cancellationToken)
+    // a started run is opened (when the runs are still shown, or Retry came from the run page); a queued or skipped one says why under the button
+    private async Task AfterStart(WorkflowRunStarted started, bool reopenRunPage, CancellationToken cancellationToken)
     {
         switch (started.Status)
         {
             case "started":
-                if (_level == Level.Runs)
+                if (_level == Level.Runs || (reopenRunPage && _level == Level.Run))
                 {
                     await OpenRun(started.Run, cancellationToken).ConfigureAwait(true);
                 }
