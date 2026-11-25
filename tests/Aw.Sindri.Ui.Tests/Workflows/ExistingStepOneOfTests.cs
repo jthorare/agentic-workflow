@@ -82,4 +82,29 @@ public sealed class ExistingStepOneOfTests
         Assert.True(page.CanSave);
         Assert.All(page.Editor.Fields, static f => Assert.False(f.HasNeed));
     }
+
+    [Fact]
+    public async Task Text_of_only_spaces_counts_as_empty()
+    {
+        var page = await OpenedWait("""{"duration":"10m"}""");
+
+        Field(page, "until").Text = "   ";
+
+        Assert.True(page.CanSave);   // the spaces are not a second value
+        Assert.False(Field(page, "duration").HasNeed);
+
+        Field(page, "duration").Text = "  ";
+
+        Assert.False(page.CanSave);
+        Assert.Equal(Empty, Field(page, "duration").NeedText);
+    }
+
+    [Fact]
+    public async Task A_server_that_sends_no_oneOf_leaves_the_rule_off()
+    {
+        var page = await OpenedWait("{}", serverSendsOneOf: false);
+
+        Assert.True(page.CanSave);   // an older Sindri: Save follows the required fields only, and Wait has none
+        Assert.All(page.Editor.Fields, static f => Assert.False(f.HasNeed));
+    }
 }
