@@ -128,4 +128,44 @@ public sealed class RunsTableTests
 
         Assert.Equal("<1 s", page.Runs.Rows.Single().DurationText);
     }
+
+    // The filter bar and the column heads show only when there are runs to filter and read: not while reading, not for "No runs yet.", "This workflow is off" or a failed read.
+    [Fact]
+    public async Task A_workflow_with_no_runs_shows_no_filters_or_column_heads()
+    {
+        var page = await Open();
+
+        Assert.Equal((true, false), (page.Runs.IsEmpty, page.Runs.ShowsRunTable));
+    }
+
+    [Fact]
+    public async Task A_workflow_that_is_off_shows_no_filters_or_column_heads()
+    {
+        _f.ServeRuns("not-active");
+        var page = await _f.Shown(Token);
+        await page.OpenWorkflow(Slug, Token);
+
+        Assert.Equal((true, false), (page.Runs.IsEmpty, page.Runs.ShowsRunTable));
+    }
+
+    [Fact]
+    public async Task A_failed_runs_read_shows_no_filters_or_column_heads()
+    {
+        _ = _f.Server.WorkflowRunsAnswers.Remove(Slug);
+        var page = await _f.Shown(Token);
+        await page.OpenWorkflow(Slug, Token);
+
+        Assert.Equal((true, false), (page.Runs.IsFailed, page.Runs.ShowsRunTable));
+    }
+
+    [Fact]
+    public async Task A_filter_that_leaves_no_run_keeps_the_filters_and_the_column_heads()
+    {
+        var page = await Open(Run(1, "succeeded", TimeSpan.FromMinutes(5)));
+        Assert.True(page.Runs.ShowsRunTable);
+
+        page.Runs.SetStatusFilter("failed");
+
+        Assert.Equal((true, true), (page.Runs.HasNoMatch, page.Runs.ShowsRunTable));
+    }
 }
