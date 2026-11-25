@@ -98,7 +98,8 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-CONN-016` | The poller was given a connection with no preset (`slack:messages` has none on purpose), so it made no call. | none; the Messages page reads that connection, not the poller |
 | `SND-CONN-017` | A generic add or a rename used the name `slack:messages` (a rename counts when `slack:messages` is the old name or the new one). | run `sindri messages connect` |
 | `SND-CONN-018` | The service refused the pasted key when Sindri checked it. Nothing was stored. | check that the key was copied whole and has not expired or been revoked, then paste it again |
-| `SND-CONN-019` | Sindri could not reach the service to check the pasted key. Nothing was stored. | check the network and try again |
+| `SND-CONN-019` | Sindri could not reach the service to check the pasted key: no answer in 15 s, no network, or a 5xx. Sindri stored nothing, and a `connection test` keeps the row's status. | check the network and try again |
+| `SND-CONN-020` | The service is rate limiting Sindri, so the pasted key was not checked: a 429, or a 403 with `Retry-After` or `x-ratelimit-remaining: 0` (GitHub's secondary rate limit). Sindri stored nothing, and a `connection test` keeps the row's status. | wait a minute and try again |
 | `SND-CONN-101` | A polled event found its run ids, five in a row, held by runs of other events. | nothing: the cursor stays and the next poll tries again; the event is never dropped |
 | `SND-CONN-201` | The handoff inbox's answer breaks the inbox contract; the message names the field. | fix the inbox so it answers as `schemas/handoff/inbox.openapi.yaml` says (docs/sindri/handoff.md) |
 | `SND-CONN-202` | Another caller claimed the offer first. Informational: nothing starts. | none; the next poll lists what is still open |

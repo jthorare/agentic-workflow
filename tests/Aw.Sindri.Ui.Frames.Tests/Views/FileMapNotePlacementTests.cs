@@ -8,6 +8,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Shell;
 
@@ -20,7 +21,7 @@ public sealed class FileMapNotePlacementTests : FrameHost
     private const double RowHeight = 28;   // Row.Height.Compact (#2546)
 
     // A folder of n mapped files, and an index that answers with no names because the code graph is off: the note line has a sentence to show.
-    private static RouteAnswer Folder(int n)
+    private static RouteAnswer Folder(int n, string reason = "graph-off")
     {
         var body = GoldenFiles.Node("context-filemap", "src-tabs");
         var entries = new JsonArray();
@@ -35,7 +36,7 @@ public sealed class FileMapNotePlacementTests : FrameHost
         body["suggested"] = new JsonArray();
         body["totals"] = new JsonObject { ["files"] = n, ["mapped"] = n, ["suggested"] = 0, ["unmapped"] = 0 };
         body["total"] = n;
-        body["symbols"] = JsonNode.Parse("""{"state":"ok","reason":"graph-off","items":[],"commit":"b3f29d6","files":[]}""");
+        body["symbols"] = JsonNode.Parse("{\"state\":\"ok\",\"reason\":\"" + reason + "\",\"items\":[],\"commit\":\"b3f29d6\",\"files\":[]}");
         return new RouteAnswer(HttpStatusCode.OK, body.ToJsonString());
     }
 
@@ -53,6 +54,24 @@ public sealed class FileMapNotePlacementTests : FrameHost
         Assert.False(string.IsNullOrEmpty(shell.Context.FileMap.Note));
         Assert.True(note.IsEffectivelyVisible, "the note line is hidden");
         Assert.True(noteTop >= rowBottom - 0.5 && noteTop - rowBottom <= RowHeight, string.Create(CultureInfo.InvariantCulture, $"the note's top is {noteTop:F1} px, the last row ends at {rowBottom:F1} px"));
+    });
+
+    // The other half of #3862: the graph is on in the profile but did not build, so the note names graphify and `sindri doctor`, not the profile key.
+    [Fact]
+    public Task The_note_for_a_graph_that_did_not_build_sits_under_the_table_and_names_doctor() => OnUi(async () =>
+    {
+        Server.FileMapAnswer = Folder(1, "graph-unavailable");
+        var (window, shell) = await OpenFiles();
+
+        var row = Assert.Single(window.GetVisualDescendants().OfType<Border>(), b => b.Classes.Contains("file-row"));
+        var note = Named<TextBlock>(window, "FilesNote");
+        var rowBottom = row.TranslatePoint(new Point(0, row.Bounds.Height), window)?.Y ?? double.NaN;
+        var noteTop = note.TranslatePoint(default, window)?.Y ?? double.NaN;
+
+        Assert.Equal(Labels.ContextSymbolsGraphUnavailable, shell.Context.FileMap.Note);
+        Assert.True(note.IsEffectivelyVisible, "the note line is hidden");
+        Assert.True(noteTop >= rowBottom - 0.5 && noteTop - rowBottom <= RowHeight, string.Create(CultureInfo.InvariantCulture, $"the note's top is {noteTop:F1} px, the last row ends at {rowBottom:F1} px"));
+        Frame(window, "files-graph-unavailable-1440", "f3-");
     });
 
     [Fact]

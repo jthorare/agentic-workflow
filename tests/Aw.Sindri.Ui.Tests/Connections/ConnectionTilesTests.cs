@@ -91,11 +91,9 @@ public sealed class ConnectionTilesTests
     public async Task A_failed_sign_in_shows_on_its_tile_with_Try_again()
     {
         var page = await _f.Shown();
-        var tile = page.Tiles.Single(t => t.Id == "github");
+        var tile = page.Tiles.Single(t => t.Id == "spotify");
         await tile.Connect(Token);
-        tile.UseOAuth();
         tile.ClientId = "client-123";
-        tile.ClientSecret.Text = "secret-456";
         _f.Server.NextConnectionGetError = new Kernel.Error("SND-CONN-003", Kernel.ErrorKind.Unavailable, "The provider refused the sign-in.");
 
         await _f.Drive(tile.Connect(Token));

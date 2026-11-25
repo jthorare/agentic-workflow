@@ -22,8 +22,8 @@ public sealed class SymbolsReasonRoomTests
     {
         var map = await Loaded("""{"state":"ok","reason":"graph-off","items":[],"commit":"7c3e1a2","files":[]}""");
 
-        Assert.Equal("symbols · from 7c3e1a2", map.SymbolsHeading);
-        Assert.Equal(GraphOff, map.Note);   // #3862: a whole sentence stands alone; "symbols · C# names come from ..." read as a fragment
+        Assert.Equal("Symbols · from 7c3e1a2", map.SymbolsHeading);
+        Assert.Equal(GraphOff, map.Note);   // #3862: a whole sentence stands alone; "Symbols · C# names come from ..." read as a fragment
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public sealed class SymbolsReasonRoomTests
     {
         var map = await Loaded("""{"state":"ok","reason":"graph-off","items":[],"commit":"7c3e1a2","asOfCommit":"1234567","asOfMismatch":true,"files":[]}""");
 
-        Assert.Equal("symbols · from 7c3e1a2, not 1234567. " + GraphOff, map.Note);
+        Assert.Equal("Symbols · from 7c3e1a2, not 1234567. " + GraphOff, map.Note);
     }
 
     [Fact]
@@ -39,8 +39,8 @@ public sealed class SymbolsReasonRoomTests
     {
         var map = await Loaded("""{"state":"ok","reason":null,"items":[],"commit":"7c3e1a2","files":[]}""");
 
-        Assert.Equal("symbols · from 7c3e1a2", map.SymbolsHeading);
-        Assert.Equal("symbols · none in these files", map.Note);
+        Assert.Equal("Symbols · from 7c3e1a2", map.SymbolsHeading);
+        Assert.Equal("Symbols · none in these files", map.Note);
     }
 
     [Fact]
@@ -54,6 +54,22 @@ public sealed class SymbolsReasonRoomTests
     }
 
     [Fact]
+    public async Task A_mixed_folder_with_the_graph_off_says_why_under_the_table_for_its_dash_rows()
+    {
+        var map = await Loaded("""{"state":"ok","reason":"graph-off","items":[],"commit":"7c3e1a2","files":[{"path":"src/tabs/Other.cs","symbols":[{"ref":"r1","name":"Run","kind":"method","path":"src/tabs/Other.cs","startLine":1,"endLine":2,"signature":null,"exported":true}],"commit":"7c3e1a2","asOfCommit":null,"state":"ok"}]}""");
+
+        Assert.Equal(GraphOff, map.Note);
+    }
+
+    [Fact]
+    public async Task A_mixed_folder_with_the_graph_down_says_why_under_the_table_for_its_dash_rows()
+    {
+        var map = await Loaded("""{"state":"ok","reason":"graph-unavailable","items":[],"commit":"7c3e1a2","files":[{"path":"src/tabs/Other.cs","symbols":[{"ref":"r1","name":"Run","kind":"method","path":"src/tabs/Other.cs","startLine":1,"endLine":2,"signature":null,"exported":true}],"commit":"7c3e1a2","asOfCommit":null,"state":"ok"}]}""");
+
+        Assert.Contains("did not build", map.Note, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_file_with_names_has_no_hover_reason()
     {
         var map = await Loaded("""{"state":"ok","reason":"graph-off","items":[],"commit":"7c3e1a2","files":[{"path":"src/tabs/TabManager.ts","symbols":[{"ref":"r1","name":"open","kind":"method","path":"src/tabs/TabManager.ts","startLine":1,"endLine":2,"signature":null,"exported":true}],"commit":"7c3e1a2","asOfCommit":null,"state":"ok"}]}""");
@@ -61,7 +77,7 @@ public sealed class SymbolsReasonRoomTests
         var file = map.Rows.First(static r => string.Equals(r.Path, "src/tabs/TabManager.ts", StringComparison.Ordinal));
 
         Assert.Equal(("open", null), (file.SymbolsText, file.SymbolsTip));
-        Assert.Equal(string.Empty, map.Note);
+        Assert.Equal(GraphOff, map.Note);
     }
 
     [Fact]
@@ -69,8 +85,8 @@ public sealed class SymbolsReasonRoomTests
     {
         var map = await Loaded("""{"state":"ok","reason":null,"items":[],"commit":"7c3e1a2","asOfCommit":"1234567","asOfMismatch":true,"files":[]}""");
 
-        Assert.Equal("symbols · from 7c3e1a2", map.SymbolsHeading);
-        Assert.Equal("symbols · from 7c3e1a2, not 1234567 · none in these files", map.Note);
+        Assert.Equal("Symbols · from 7c3e1a2", map.SymbolsHeading);
+        Assert.Equal("Symbols · from 7c3e1a2, not 1234567 · none in these files", map.Note);
     }
 
     private static async Task<FileMapViewModel> Loaded(string symbols)

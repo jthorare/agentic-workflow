@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.ViewModels.Toast;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
@@ -17,10 +18,24 @@ internal sealed partial class ShellViewModel
     /// <summary>True on Workflows.</summary>
     public bool IsWorkflows => CurrentPage == PageId.Workflows;
 
+    // What the workflow Undo toast asks before it runs: the button repaints when any of it changes, not at the toast's next tick.
+    private static readonly string[] _undoInputs = [nameof(OpsEditor.BaseRevision), nameof(OpsEditor.IsSending), nameof(OpsEditor.NeedsReload), nameof(OpsEditor.Slug), nameof(WorkflowsPageViewModel.IsChangingState)];
+
+    private void RefreshToastUndo(string? property)
+    {
+        if (property is not null && _undoInputs.Contains(property, StringComparer.Ordinal))
+        {
+            Toast.RefreshUndo();
+        }
+    }
+
     [MemberNotNull(nameof(Workflows))]
     private void InitWorkflows()
     {
         Workflows = new WorkflowsPageViewModel(_api, _clock);
+        Workflows.StepSaved += (_, saved) => ShowToast(new ToastMessage(Labels.WfStepSavedToast, saved.Undo, UndoAllowed: saved.CanUndo));   // "Step saved. Undo (Ctrl+Z)"
+        Workflows.Editor.PropertyChanged += (_, e) => RefreshToastUndo(e.PropertyName);   // a canvas edit moves the editor's revision; a send or a reload holds Undo off meanwhile
+        Workflows.PropertyChanged += (_, e) => RefreshToastUndo(e.PropertyName);   // an Activate or Pause on the way
         Health.Banner.PropertyChanged += (_, e) =>
         {
             if (string.Equals(e.PropertyName, nameof(ViewsBanner.IsStalled), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(ViewsBanner.Rebuild), StringComparison.Ordinal))

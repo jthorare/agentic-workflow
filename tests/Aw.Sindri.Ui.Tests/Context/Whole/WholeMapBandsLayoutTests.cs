@@ -92,16 +92,16 @@ public sealed class WholeMapBandsLayoutTests
     }
 
     [Fact]
-    public void An_opened_area_keeps_the_bands_in_one_column()
+    public void An_opened_area_is_its_canvas_not_a_column_of_kind_bands()
     {
-        var map = Nodes(("a", "decision"), ("a", "feature"), ("a", "code"), ("b", "code"));
+        var map = Nodes(("a", "decision"), ("a", "feature"), ("a", "code"));
         var opened = map with { Area = new WholeAreaInfo("a", Truncated: false, new WholeCounts(3, 0, new Dictionary<string, int>(StringComparer.Ordinal))) };
 
         var geometry = WholeMapLayout.Place(opened);
 
-        _ = Assert.Single(geometry.Columns);
-        Assert.Equal([WholeBand.Intent, WholeBand.Product, WholeBand.Code], geometry.Bands.Select(b => b.Band));
-        Assert.All(geometry.Nodes, n => Assert.Equal(NodeBands.Of(n.Kind), geometry.Bands.Single(b => n.Rect.Y >= b.Top && n.Rect.Bottom <= b.Top + b.Height).Band));
+        // why: #3674 lays an opened area out as Entry points, Core and Data and effects (AreaCanvasLayout), so the overview's columns and kind bands are gone
+        Assert.Equal((0, 0, 3), (geometry.Columns.Count, geometry.Bands.Count, geometry.Nodes.Count));
+        Assert.NotEmpty(geometry.AreaBands!);
     }
 
     [Fact]

@@ -39,7 +39,38 @@ public sealed class ConnectionTileStatesTests
     }
 
     [Fact]
-    public async Task A_failed_sign_in_turns_the_primary_action_into_Try_again()
+    public async Task A_failed_sign_in_turns_the_primary_action_into_Try_again_while_its_input_is_whole()
+    {
+        var tile = await Tile("spotify");
+        await tile.Connect(Token);
+        tile.ClientId = "client-123";
+        _f.Server.ConnectionWriteError = new Kernel.Error("SND-CONN-006", Kernel.ErrorKind.Unavailable, "The connection's secret store is not available");
+
+        await tile.Primary(Token);
+
+        Assert.Equal(("Try again", true), (tile.PrimaryText, tile.CanPress));
+    }
+
+    // #4368 review: clearing the input that survived the failed try takes "Try again" away, never a greyed one.
+    [Fact]
+    public async Task Clearing_the_client_ID_after_a_failed_sign_in_reads_Connect_not_a_greyed_Try_again()
+    {
+        var tile = await Tile("spotify");
+        await tile.Connect(Token);
+        tile.ClientId = "client-123";
+        _f.Server.ConnectionWriteError = new Kernel.Error("SND-CONN-006", Kernel.ErrorKind.Unavailable, "The connection's secret store is not available");
+        await tile.Primary(Token);
+
+        tile.ClientId = string.Empty;
+
+        Assert.Equal(("Connect", false), (tile.PrimaryText, tile.CanPress));
+        tile.ClientId = "client-456";
+        Assert.Equal(("Try again", true), (tile.PrimaryText, tile.CanPress));
+    }
+
+    // #4368: the client secret went with the failed try, so the same press can't run again; the button reads Connect and waits for the secret.
+    [Fact]
+    public async Task A_failed_sign_in_that_spent_the_client_secret_reads_Connect_not_Try_again()
     {
         var tile = await Tile("github");
         await tile.Connect(Token);
@@ -50,7 +81,7 @@ public sealed class ConnectionTileStatesTests
 
         await tile.Primary(Token);
 
-        Assert.Equal("Try again", tile.PrimaryText);
+        Assert.Equal(("Connect", false, "Paste your GitHub app's client secret"), (tile.PrimaryText, tile.CanPress, tile.BlockedReason));
     }
 
     [Fact]
@@ -65,7 +96,7 @@ public sealed class ConnectionTileStatesTests
         Assert.False(tile.CanPress);
         Assert.Equal("Paste a GitHub token", tile.BlockedReason);
         tile.UseOAuth();
-        Assert.Equal("Enter your GitHub app's client id", tile.BlockedReason);
+        Assert.Equal("Enter your GitHub app's client ID", tile.BlockedReason);
         tile.ClientId = "client-123";
         Assert.False(tile.CanPress);
         Assert.Equal("Paste your GitHub app's client secret", tile.BlockedReason);
@@ -82,7 +113,7 @@ public sealed class ConnectionTileStatesTests
         tile.UseOAuth();
 
         Assert.DoesNotContain('\n', tile.HelpText);
-        Assert.Equal("Create an OAuth app in Linear, then paste its client id here.", tile.HelpText);
+        Assert.Equal("Create an OAuth app in Linear, then paste its client ID here.", tile.HelpText);
         Assert.Equal(("Open Linear's API settings", "https://linear.app/settings/api"), (tile.HelpLinkText, tile.HelpUrl));
 
         await tile.OpenHelp(Token);
@@ -110,7 +141,7 @@ public sealed class ConnectionTileStatesTests
         var tile = await Tile("slack");
 
         Assert.Equal("Add token", tile.PrimaryText);
-        Assert.Equal("2. Copy the User OAuth Token (it starts with xoxp-).", tile.TokenSteps[1]);
+        Assert.Equal("2. Copy the User OAuth Token (it starts with xoxp-).", tile.TokenSteps[1].Text);
         Assert.Equal("https://api.slack.com/apps", tile.HelpUrl);
 
         await tile.Primary(Token);

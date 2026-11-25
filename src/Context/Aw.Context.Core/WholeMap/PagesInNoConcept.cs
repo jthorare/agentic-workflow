@@ -14,8 +14,9 @@ public static class PagesInNoConcept
         ArgumentNullException.ThrowIfNull(graph);
         var expressing = graph.Edges.Where(e => e.Type == EdgeType.Expresses).Select(e => e.From.Value).ToHashSet(StringComparer.Ordinal);
         var related = graph.Edges.Where(e => e is { Type: EdgeType.On, From.Kind: NodeKind.Action } && expressing.Contains(e.From.Value)).Select(e => e.To.Value).ToHashSet(StringComparer.Ordinal);
+        var components = PageKinds.ComponentImplemented(graph.Edges);
         var pages = graph.Nodes.DistinctBy(n => n.Key.Value, StringComparer.Ordinal)
-            .Where(n => !expressing.Contains(n.Key.Value) && !related.Contains(n.Key.Value) && PageKinds.IsPage(n, graph.Edges));
+            .Where(n => !expressing.Contains(n.Key.Value) && !related.Contains(n.Key.Value) && PageKinds.IsPageIn(n, components));
         return PageOrder.Of(pages, graph.Edges, rank);
     }
 }

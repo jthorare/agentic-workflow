@@ -24,7 +24,7 @@ internal sealed class FileRowViewModel
         IntentText = entry.Intent is { } intent ? Labels.ContextFilesIntent(intent.Records, intent.Decisions) : Labels.ContextFilesIntentNone;
         SymbolsText = IsDirectory ? string.Empty : symbols?.Cell(Path) ?? string.Empty;
         SymbolsOpacity = symbols?.Dimmed == true ? MapHighlightStyle.DimmedOpacity : 1;
-        SymbolsTip = string.Equals(SymbolsText, Labels.ContextSymbolsNoRow, StringComparison.Ordinal) ? symbols?.NoRowTip : null;
+        SymbolsTip = string.Equals(SymbolsText, Labels.ContextSymbolsNoRow, StringComparison.Ordinal) ? symbols?.NoRowTipFor(Path) : null;
         AutomationName = Dots(Name, StatusWord, ForText, IntentText, SymbolsText);
     }
 

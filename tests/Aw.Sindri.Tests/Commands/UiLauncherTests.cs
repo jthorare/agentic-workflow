@@ -40,13 +40,21 @@ public sealed class UiLauncherTests
     [System.Runtime.Versioning.UnsupportedOSPlatform("windows")]
     public void A_file_that_isnt_executable_is_named_with_the_fix()
     {
-        var file = Path.Combine(Directory.CreateTempSubdirectory("sindri-ui-").FullName, "sindri-ui");
-        File.WriteAllText(file, "not a program");
-        File.SetUnixFileMode(file, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+        var dir = Directory.CreateTempSubdirectory("sindri-ui-").FullName;
+        try
+        {
+            var file = Path.Combine(dir, "sindri-ui");
+            File.WriteAllText(file, "not a program");
+            File.SetUnixFileMode(file, UnixFileMode.UserRead | UnixFileMode.UserWrite);
 
-        var line = UiLauncher.Open(file);
+            var line = UiLauncher.Open(file);
 
-        Assert.StartsWith($"not executable at {file} (fix: ", line, StringComparison.Ordinal);
+            Assert.StartsWith($"not executable at {file} (fix: ", line, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -97,10 +97,57 @@ public sealed class HttpKeyCheckTests
         Assert.Null(handler.Method);
     }
 
+    [Fact]
+    public async Task A_service_that_never_answers_is_SND_CONN_019_once_the_check_times_out()
+    {
+        using var handler = new Scripted(HttpStatusCode.OK, """{"login":"ada"}""") { Delay = TimeSpan.FromSeconds(5) };
+        using var http = new HttpClient(handler);
+
+        var checkedKey = await new HttpKeyCheck(http, TimeSpan.FromMilliseconds(50)).Check(Preset("github"), Key, Token);
+
+        Assert.Equal("SND-CONN-019", checkedKey.Error.Code);
+        Assert.Contains("did not answer", checkedKey.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_check_waits_15_seconds_by_default() => Assert.Equal(TimeSpan.FromSeconds(15), new HttpKeyCheck(new HttpClient()).Timeout);
+
+    [Theory]
+    [InlineData(HttpStatusCode.Forbidden, "retry-after", "60")]
+    [InlineData(HttpStatusCode.Forbidden, "x-ratelimit-remaining", "0")]
+    [InlineData(HttpStatusCode.TooManyRequests, "retry-after", "60")]
+    [InlineData(HttpStatusCode.TooManyRequests, null, null)]
+    public async Task A_rate_limit_is_SND_CONN_020_that_says_wait_not_a_refused_key(HttpStatusCode status, string? header, string? value)
+    {
+        using var handler = new Scripted(status, """{"message":"You have exceeded a secondary rate limit"}""") { Header = header, HeaderValue = value };
+        using var http = new HttpClient(handler);
+
+        var checkedKey = await new HttpKeyCheck(http).Check(Preset("github"), Key, Token);
+
+        Assert.Equal("SND-CONN-020", checkedKey.Error.Code);
+        Assert.Contains("rate limiting", checkedKey.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("secondary", checkedKey.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_403_with_rate_limit_left_is_still_a_refused_key()
+    {
+        using var handler = new Scripted(HttpStatusCode.Forbidden, "{}") { Header = "x-ratelimit-remaining", HeaderValue = "4999" };
+        using var http = new HttpClient(handler);
+
+        Assert.Equal("SND-CONN-018", (await new HttpKeyCheck(http).Check(Preset("github"), Key, Token)).Error.Code);
+    }
+
     // Answers every request with one status and body, and records the last request.
     private sealed class Scripted(HttpStatusCode status, string body) : HttpMessageHandler
     {
         public bool Throws { get; init; }
+
+        public TimeSpan Delay { get; init; }
+
+        public string? Header { get; init; }
+
+        public string? HeaderValue { get; init; }
 
         public string? Method { get; private set; }
 
@@ -122,7 +169,18 @@ public sealed class HttpKeyCheckTests
                 throw new HttpRequestException("no network");
             }
 
-            return new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
+            if (Delay > TimeSpan.Zero)
+            {
+                await Task.Delay(Delay, cancellationToken);
+            }
+
+            var response = new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
+            if (Header is not null)
+            {
+                _ = response.Headers.TryAddWithoutValidation(Header, HeaderValue);
+            }
+
+            return response;
         }
     }
 }

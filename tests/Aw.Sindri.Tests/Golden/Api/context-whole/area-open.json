@@ -93,18 +93,6 @@
       "repo": "aw-split-panes"
     },
     {
-      "key": "action:tab-groups.group-selected",
-      "label": "Group the selected tabs",
-      "kind": "action",
-      "area": "feature:tabs.tab-groups",
-      "alsoIn": [],
-      "trust": "trusted",
-      "provenance": "human",
-      "confidence": 1,
-      "confirmed": true,
-      "repo": "aw-split-panes"
-    },
-    {
       "key": "decision:d036352234b17baf9a7b2e7cffef599bdc9c8209e92c389d2bcbb919c74c162b",
       "label": "A tab group collapses to one tab in the strip.",
       "kind": "decision",
@@ -125,6 +113,18 @@
       "provenance": "human",
       "confidence": 1,
       "confirmed": true
+    },
+    {
+      "key": "action:tab-groups.group-selected",
+      "label": "Group the selected tabs",
+      "kind": "action",
+      "area": "feature:tabs.tab-groups",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true,
+      "repo": "aw-split-panes"
     },
     {
       "key": "code:src/tabs/TabGroups.ts",
@@ -212,7 +212,9 @@
         "code": 1,
         "concept": 0
       }
-    }
+    },
+    "page": 1,
+    "pages": 1
   },
   "truncated": false,
   "repos": [

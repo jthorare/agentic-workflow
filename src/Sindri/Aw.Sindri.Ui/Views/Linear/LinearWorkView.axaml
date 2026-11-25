@@ -156,7 +156,6 @@
 
         <StackPanel x:Name="LinearNoMatch" IsVisible="{Binding ShowsNoMatch}" Spacing="8" Margin="24,12">
           <TextBlock Classes="body-strong" Text="{Binding NoMatchText}" AutomationProperties.Name="{Binding NoMatchText}" />
-          <Button x:Name="LinearNoMatchClear" Content="{Binding ClearFiltersText}" HorizontalAlignment="Left" Click="OnClearFilters" AutomationProperties.Name="{Binding ClearFiltersText}" />
         </StackPanel>
 
         <ItemsControl x:Name="LinearGroups" ItemsSource="{Binding Groups}">

@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:cb="using:Aw.Sindri.Ui.ViewModels.Connections"
+             xmlns:vm="using:Aw.Sindri.Ui.ViewModels"
              x:Class="Aw.Sindri.Ui.Views.Connections.ServiceTileView"
              x:DataType="cb:ServiceTileViewModel">
   <!-- One service tile (#2537): the service, a status chip, and ONE primary button (Add token, Connect, Try again or Reconnect; a connected tile has none). Connected, it shows the account
@@ -8,6 +9,10 @@
        the reason the button waits. A failed or cancelled sign-in shows here. Hover and pressed come from the shared clickable class. -->
   <UserControl.Styles>
     <Style Selector="TextBlock.tile-chip.ok"><Setter Property="Foreground" Value="{DynamicResource Brush.Success}" /></Style>
+    <Style Selector="TextBlock.step-detail"><Setter Property="Margin" Value="12,0,0,0" /></Style>
+    <Style Selector="TextBlock.tile-error"><Setter Property="Foreground" Value="{DynamicResource Brush.Error}" /></Style>
+    <!-- #4428: a check that never judged the token (not reached, rate limited) is not the person's mistake: amber, not red. -->
+    <Style Selector="TextBlock.tile-error.caution"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
     <Style Selector="TextBlock.tile-chip.attention"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
   </UserControl.Styles>
   <Border x:Name="ServiceTileFrame" Classes="card clickable" Width="260" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
@@ -55,8 +60,8 @@
       <StackPanel x:Name="ServiceTileInput" Spacing="{StaticResource Space.XS}" IsVisible="{Binding IsAsking}">
         <ItemsControl x:Name="ServiceTileSteps" ItemsSource="{Binding TokenSteps}" IsVisible="{Binding ShowTokenSteps}">
           <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="x:String">
-              <TextBlock Classes="caption" Text="{Binding}" TextWrapping="Wrap" />
+            <DataTemplate x:DataType="vm:TokenStep">
+              <TextBlock Classes="caption" Classes.subtle="{Binding IsDetail}" Classes.step-detail="{Binding IsDetail}" Text="{Binding Text}" TextWrapping="Wrap" />
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
@@ -65,13 +70,13 @@
         <TextBox x:Name="ServiceTileToken" PasswordChar="●" Text="{Binding Token.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.TileTokenLabel}" IsVisible="{Binding TakesToken}" AutomationProperties.Name="{Binding Text.TileTokenLabel}" />
         <TextBlock x:Name="ServiceTileHelp" Classes="caption subtle" Text="{Binding HelpText}" IsVisible="{Binding HasHelpText}" TextWrapping="Wrap" />
         <Button x:Name="ServiceTileHelpLink" Content="{Binding HelpLinkText}" IsVisible="{Binding HasHelpLink}" Click="OnHelp" HorizontalAlignment="Left" />
-        <Button x:Name="ServiceTileUseOAuth" Classes="link" Content="{Binding Text.UseOAuth}" IsVisible="{Binding ShowUseOAuth}" Click="OnUseOAuth" HorizontalAlignment="Left" />
-        <Button x:Name="ServiceTileUseToken" Classes="link" Content="{Binding Text.UseToken}" IsVisible="{Binding ShowUseToken}" Click="OnUseToken" HorizontalAlignment="Left" />
+        <Button x:Name="ServiceTileUseOAuth" Classes="link accent-link" Content="{Binding Text.UseOAuth}" IsVisible="{Binding ShowUseOAuth}" Click="OnUseOAuth" HorizontalAlignment="Left" />
+        <Button x:Name="ServiceTileUseToken" Classes="link accent-link" Content="{Binding Text.UseToken}" IsVisible="{Binding ShowUseToken}" Click="OnUseToken" HorizontalAlignment="Left" />
         <TextBlock x:Name="ServiceTileReason" Classes="caption subtle" Text="{Binding BlockedReason}" IsVisible="{Binding HasBlockedReason}" TextWrapping="Wrap" />
       </StackPanel>
 
       <TextBlock x:Name="ServiceTileStatus" Classes="caption" Text="{Binding StatusText}" IsVisible="{Binding HasStatus}" TextWrapping="Wrap" />
-      <TextBlock x:Name="ServiceTileError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" />
+      <TextBlock x:Name="ServiceTileError" Classes="caption tile-error" Classes.caution="{Binding ErrorIsCaution}" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" />
 
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
         <Button x:Name="ServiceTilePrimary" Classes="command-control primary" Content="{Binding PrimaryText}" IsVisible="{Binding HasPrimary}" IsEnabled="{Binding CanPress}" Click="OnPrimary" ToolTip.Tip="{Binding BlockedReason}" />

@@ -1,7 +1,10 @@
+using System.Text.Json.Serialization;
+
 namespace Aw.Sindri.Core.Evolve;
 
 /// <summary>The layers of the leak gate, in the order they run. A hold names its layer and nothing else.</summary>
-internal enum LeakLayer
+[JsonConverter(typeof(JsonStringEnumConverter<LeakLayer>))]
+public enum LeakLayer
 {
     /// <summary>The rewrite changed the kind, the target or the evidence of the original.</summary>
     Rewrite,
