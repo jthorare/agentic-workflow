@@ -331,6 +331,9 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
+              <!-- #4316: while the owner turned session watching off, one plain line in place of the problems. -->
+              <TextBlock x:Name="AgentsWatchingOff" Classes="body subtle" TextWrapping="Wrap" IsVisible="{Binding IsAgentsWatchingOff}" Text="{Binding AgentsWatchingOffText}"
+                         AutomationProperties.Name="{Binding AgentsWatchingOffText}" />
               <!-- #4012: while the count is above 0, each problem's sentence and code, one wrapped line each, and a link to the Agents page. -->
               <ItemsControl x:Name="AgentsProblems" ItemsSource="{Binding AgentsProblemLines}" IsVisible="{Binding HasAgentsProblems}">
                 <ItemsControl.ItemTemplate>
