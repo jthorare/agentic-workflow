@@ -446,6 +446,7 @@
                           <StackPanel Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
                             <TextBlock Classes="body-strong" Text="{Binding TitleText}" IsVisible="{Binding HasTitle}" />
                             <controls:StateChipView Word="{Binding ChipWord}" Tone="{Binding ChipToneWord}" Glyph="{Binding ChipGlyph}" />
+                            <TextBlock Name="StepDuration" Classes="caption subtle" Text="{Binding DurationText}" IsVisible="{Binding DurationText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" VerticalAlignment="Center" />
                           </StackPanel>
                           <Button HorizontalAlignment="Left" Content="{Binding TakeOverText}" Click="OnTakeOverNode" IsVisible="{Binding CanTakeOver}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding TakeOverText}" />
                           <Button HorizontalAlignment="Left" Content="{Binding HandBackText}" Click="OnHandBackNode" IsVisible="{Binding CanHandBack}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding HandBackText}" />

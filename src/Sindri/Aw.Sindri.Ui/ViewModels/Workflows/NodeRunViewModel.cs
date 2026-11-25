@@ -24,12 +24,13 @@ internal sealed class NodeRunViewModel : ObservableObject
         OutputText = IsNotification ? string.Empty : WorkflowJson.Pretty(run.Output);   // a notification's output is always empty: the card shows what it sent instead
         IsTruncated = run.Truncated;
         ErrorText = run.Error ?? string.Empty;
+        DurationText = run.Seconds is { } seconds and >= 0 ? Labels.WfDuration(seconds) : string.Empty;
         Name = Labels.WfNodeRunName(HasTitle ? TitleText : run.Node, word.ToLowerInvariant(), ErrorText);
         (Node, ItemIndex, Agent) = (run.Node, run.ItemIndex, run.Agent);
     }
 
     /// <summary>How long the step ran ("&lt;1 s", "7 s", "1m 15s"); empty while it runs and for a row with no times.</summary>
-    public string DurationText { get; } = string.Empty;
+    public string DurationText { get; }
 
     /// <summary>True on a notification step that sent: its card shows what was sent.</summary>
     public bool IsNotification { get; }

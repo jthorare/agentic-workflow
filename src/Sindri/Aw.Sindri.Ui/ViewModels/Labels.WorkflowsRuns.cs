@@ -29,7 +29,9 @@ internal static partial class Labels
     /// <summary>A run's duration: "9 s", "1m 4s".</summary>
     /// <param name="seconds">How long it took.</param>
     /// <returns>The words.</returns>
-    internal static string WfDuration(double seconds) => seconds < 60
+    internal static string WfDuration(double seconds) => seconds < 1
+        ? "<1 s"   // a quick step is not "0 s"
+        : seconds < 60
         ? string.Create(CultureInfo.InvariantCulture, $"{Math.Round(seconds, MidpointRounding.AwayFromZero)} s")
         : string.Create(CultureInfo.InvariantCulture, $"{(int)(seconds / 60)}m {(int)Math.Round(seconds % 60, MidpointRounding.AwayFromZero)}s");
 
