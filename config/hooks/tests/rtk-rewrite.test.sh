@@ -64,4 +64,11 @@ check "unrelated command: no output" "$out" ""
 run 'echo "git status"'
 check "quoted mention: no output" "$out" ""
 
+# #4308: a command over 128 KiB is still rewritten. As one jq argv string the encoder failed exec and printed nothing.
+head -c 204800 /dev/zero | tr '\0' x > "$WORK/big.txt"
+{ printf 'git log --grep '; cat "$WORK/big.txt"; } > "$WORK/big-cmd.txt"
+out="$(jq -nc --rawfile c "$WORK/big-cmd.txt" '{tool_name:"Bash",tool_input:{command:$c}}' | PATH="$WORK/bin:$PATH" bash "$HOOK" 2> /dev/null)"; rc=$?
+check "200 KB git log: exit 0" "$rc" "0"
+check "200 KB git log: one document, the whole command rewritten" "$(docs):$(rewritten | wc -c | tr -d ' ')" "1:204820"
+
 [ "$fail" = 0 ] && echo "all passed" || exit 1

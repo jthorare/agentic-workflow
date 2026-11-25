@@ -2,7 +2,8 @@
 # Tests for mods/ (the Claude Code mods pr-line and my-prs) and scripts/install-mods.sh.
 #  1. The two copies of hooks/rows.ts are byte-identical and the two types/index.d.ts files differ only in their
 #     `declare module` block (each plugin dir must stand alone, so the copies stay; this stops them drifting).
-#  2. With `claude` on PATH: `claude plugin validate` on each mod and on mods/ (the marketplace), `claude plugin test` per mod.
+#  2. With `claude` on PATH: `claude plugin validate` on each mod and on mods/ (the marketplace), `claude plugin test` per mod,
+#     each with TMPDIR=$TMPROOT: Claude Code makes its own $TMPDIR/claude-<uid> folder, which bash-tests.sh would flag (#4325).
 #     Without it these print a SKIP line.
 #  3. A run with no `claude` on PATH (this suite re-run with `--no-claude`, PATH=/usr/bin:/bin) prints SKIP and exits 0.
 #  4. install-mods.sh against a stub `claude`: no claude -> exit 0 with a note, --dry-run runs nothing, a first run adds the
@@ -38,14 +39,14 @@ fi
 # --- 2. claude validate and test ---
 if command -v claude >/dev/null 2>&1; then
   for target in mods mods/pr-line mods/my-prs; do
-    if (cd "$REPO" && claude plugin validate "$target" >"$TMPROOT/validate.log" 2>&1); then
+    if (cd "$REPO" && TMPDIR="$TMPROOT" claude plugin validate "$target" >"$TMPROOT/validate.log" 2>&1); then
       ok "claude plugin validate $target"
     else
       fail "claude plugin validate $target"; sed 's/^/      | /' "$TMPROOT/validate.log"
     fi
   done
   for mod in pr-line my-prs; do
-    if (cd "$REPO" && claude plugin test "mods/$mod" >"$TMPROOT/test.log" 2>&1); then
+    if (cd "$REPO" && TMPDIR="$TMPROOT" claude plugin test "mods/$mod" >"$TMPROOT/test.log" 2>&1); then
       ok "claude plugin test mods/$mod ($(grep -E '^ *[0-9]+ pass' "$TMPROOT/test.log" | tr -s ' ' | head -1 | sed 's/^ //'))"
     else
       fail "claude plugin test mods/$mod"; sed 's/^/      | /' "$TMPROOT/test.log"

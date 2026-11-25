@@ -70,7 +70,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         {
             // another workflow: nothing of the old one stays to be saved to this one, even when this read fails
             Fields.Clear();
-            (Nodes, BaseRevision, _selected, NodeHeading, NodeIdLine) = ([], 0, null, string.Empty, string.Empty);
+            (Nodes, _edges, BaseRevision, _selected, NodeHeading, NodeIdLine) = ([], [], 0, null, string.Empty, string.Empty);
         }
 
         (_url, Slug) = (url, slug);
@@ -91,7 +91,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
             return;
         }
 
-        (BaseRevision, Nodes, Groups) = (workflow.Value.LatestRevision, ReadNodes(workflow.Value.Spec), blocks.Value.Groups);
+        (BaseRevision, Nodes, _edges, Groups) = (workflow.Value.LatestRevision, ReadNodes(workflow.Value.Spec), ReadEdges(workflow.Value.Spec), blocks.Value.Groups);
         (NeedsReload, ReloadPromptText, FailureText) = (false, string.Empty, string.Empty);
         Select(_selected ?? string.Empty);   // the form stays on its node, with what the new revision holds
     }
@@ -118,7 +118,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         NodeIdLine = node is null ? string.Empty : Labels.WfEditorStepId(node.Id);
         foreach (var field in block?.Config ?? [])
         {
-            Fields.Add(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field)));   // why: a block was found, so node is not null
+            AddWatched(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field)));   // why: a block was found, so node is not null
         }
     }
 

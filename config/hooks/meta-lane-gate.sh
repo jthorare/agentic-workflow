@@ -112,7 +112,7 @@ if [ -n "${AW_META_CONFIG:-}" ] && [ -f "$AW_META_CONFIG" ] \
       if [ "$EVENT" = UserPromptSubmit ]; then
         printf '%s\n' "$OUT"
       else
-        jq -nc --arg e "$EVENT" --arg m "$OUT" '{hookSpecificOutput: {hookEventName: $e, additionalContext: $m}}' 2> /dev/null
+        jq -nc --arg e "$EVENT" --rawfile m <(printf '%s' "$OUT") '{hookSpecificOutput: {hookEventName: $e, additionalContext: $m}}' 2> /dev/null
       fi ;;
   esac
   exit 0
@@ -125,7 +125,7 @@ UNMARKED=0
 record_reply() { # <text>
   local REPLY SUM RO rrc
   UNMARKED=0
-  if [ -n "$(printf '%s' "$1" | tr -d '[:space:]')" ] && ! printf '%s\n' "$1" | grep -Eq '^[[:space:]>*#_`-]*REPLY TO META:'; then UNMARKED=1; fi
+  if [ -n "$(printf '%s' "$1" | tr -d '[:space:]')" ] && ! grep -Eq '^[[:space:]>*#_`-]*REPLY TO META:' <<<"$1"; then UNMARKED=1; fi
   REPLY="$(printf '%s\n' "$1" | awk '
     { if (match($0, /^[[:space:]>*#_`-]*REPLY TO META:/)) { found = 1; sub(/^[[:space:]>*#_`-]*REPLY TO META:(\*\*|__|`)?[[:space:]]*/, ""); text = $0; next }
       if (found) text = text "\n" $0 }
@@ -161,7 +161,7 @@ case "$EVENT" in
     if [ "$EVENT" = UserPromptSubmit ]; then
       printf '%s\n' "$OUT"
     else
-      jq -nc --arg e "$EVENT" --arg m "$OUT" '{hookSpecificOutput: {hookEventName: $e, additionalContext: $m}}' 2> /dev/null
+      jq -nc --arg e "$EVENT" --rawfile m <(printf '%s' "$OUT") '{hookSpecificOutput: {hookEventName: $e, additionalContext: $m}}' 2> /dev/null
     fi
     exit 0 ;;
   AfterAgentResponse)
@@ -180,7 +180,7 @@ case "$EVENT" in
          unlink "$OWED" 2> /dev/null   # nothing owed any more: the next owed list is a new one
          # the loop guard's "stop allowed ..." warning: shown to the user (Codex; the Cursor adapter drops it, and
          # `aw-meta health` shows the stop cap either way)
-         [ -z "$OUT" ] || jq -nc --arg m "$OUT" '{systemMessage: $m}' 2> /dev/null
+         [ -z "$OUT" ] || jq -nc --rawfile m <(printf '%s' "$OUT") '{systemMessage: $m}' 2> /dev/null
          exit 0 ;;
       1) if [ "$UNMARKED" = 1 ]; then trace reply-unmarked; else trace ran; fi
          # A block shows the owed messages, so it is a delivery too: a new owed list makes the same reply text recordable again (the

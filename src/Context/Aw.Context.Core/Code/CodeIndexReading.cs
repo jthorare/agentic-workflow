@@ -153,8 +153,11 @@ public static class CodeIndexReading
         };
     }
 
-    /// <summary>The file map's reason when the graph layer is disabled or down: only C# files have symbols (#3740).</summary>
+    /// <summary>The file map's reason when the profile turns the graph layer off: only C# files have symbols (#3740); the fix is the profile's index.graph.</summary>
     public const string GraphOffReason = "graph-off";
+
+    /// <summary>The file map's reason when the graph layer is on but down (graphify missing or failed, SND-CODEIDX-008): only C# files have symbols; the fix is to install graphify (#3862).</summary>
+    public const string GraphUnavailableReason = "graph-unavailable";
 
     /// <summary>The file map's 'symbols' object for a head and the files read under it.</summary>
     /// <param name="head">The head.</param>
@@ -171,7 +174,7 @@ public static class CodeIndexReading
         }
 
         var state = head.State == CodeIndexState.CatchingUp ? (files.Any(static f => f.State == SymbolsState.Stale) ? SymbolsState.Stale : SymbolsState.Ok) : Stamp(head).State;
-        return new LensSymbols(state, Reason(head, calls: false) ?? (head.GraphOff || head.Layer == "graph" ? GraphOffReason : null), [])
+        return new LensSymbols(state, Reason(head, calls: false) ?? GraphReason(head), [])
         {
             Files = files,
             Commit = head.Commit,
@@ -188,6 +191,9 @@ public static class CodeIndexReading
         ArgumentNullException.ThrowIfNull(heads);
         return heads.MaxBy(h => Weight(h.State)) ?? throw new ArgumentException("at least one head is needed", nameof(heads));
     }
+
+    // Why only C# files have names: the profile turned the graph off, or the graph layer is down (#3862); null when the graph is on and up.
+    private static string? GraphReason(CodeIndexHead head) => head.GraphOff ? GraphOffReason : string.Equals(head.Layer, "graph", StringComparison.Ordinal) ? GraphUnavailableReason : null;
 
     private static bool Unreadable(CodeIndexState state) => state is CodeIndexState.Missing or CodeIndexState.Damaged or CodeIndexState.Building or CodeIndexState.NotConfigured;
 

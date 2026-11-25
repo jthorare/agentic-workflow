@@ -62,7 +62,7 @@ internal sealed partial class WorkflowsPageViewModel
     public string SaveText => Editor.IsSending ? Labels.WfEditSaving : Labels.WfEditSave;
 
     /// <summary>True when Save does something: the form has fields read for the workflow the page shows (and it is not archived), no edit is on the way and no reload is due.</summary>
-    public bool CanSave => IsNewStep ? Editor.RequiredFilled && CanSend : Editor.Fields.Count > 0 && CanSend;
+    public bool CanSave => Editor.OneOfMet && (IsNewStep ? Editor.RequiredFilled && CanSend : Editor.Fields.Count > 0 && CanSend);
 
     // no edit is on the way, no reload is due, and the workflow the page shows is the one the editor read
     private bool CanSend => !Editor.IsSending && !Editor.NeedsReload && CanEdit && Editor.BaseRevision > 0 && string.Equals(Editor.Slug, Runs.Slug, StringComparison.Ordinal);
@@ -87,6 +87,7 @@ internal sealed partial class WorkflowsPageViewModel
         }
 
         Editor.ClearPendingStep();   // Step settings on a node leaves a new step that was being filled in
+        Editor.ClearRefusal();   // an earlier refusal (a graph edit, or the new step just left) is not shown on this sheet, not even while it reads (#3999)
         OnChanged(nameof(IsNewStep));
         OnChanged(nameof(NoFieldsText));
         (IsEditing, IsSettingsOpen, GraphEdit.SheetOpen) = (true, true, true);

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Text.Json.Nodes;
 using Aw.Sindri.Ui.Api.Workflows;
 
@@ -17,29 +18,98 @@ internal sealed partial class OpsEditor
     /// <summary>True when every required field of the form has text.</summary>
     internal bool RequiredFilled => Fields.All(f => !f.IsRequired || !string.IsNullOrWhiteSpace(f.Text));
 
+    /// <summary>True when each "exactly one of" group the block declares (a wait's "Wait for" and "Wait until") has exactly one field with text (#4359).</summary>
+    internal bool OneOfMet => OneOfProblem() is null;
+
     /// <summary>Makes the form of a step that does not exist yet, from its block's config fields; nothing is sent.</summary>
     /// <param name="block">The block picked.</param>
     /// <param name="id">The id the new node gets.</param>
     /// <param name="after">The node the new one follows, or null for none.</param>
     internal void BeginNewStep(WorkflowBlock block, string id, string? after)
     {
+        ClearRefusal();   // a refusal belongs to the save that caused it: the new step's sheet opens without it (#3999)
         _pending = new PendingStep(id, block.Type, after);
         Fields.Clear();
-        var example = block.ExampleConfig ?? default;   // the block's example settings: a step that opens complete saves untouched; a block with no example opens with its required fields empty
-        var steps = Nodes.Select(static n => n.Id).ToHashSet(StringComparer.Ordinal);
+        var example = block.ExampleConfig ?? default;   // the block's example settings: only ever a hint, never a value, so Save can't send a title nobody typed ("Drifted" before #4330, #4272)
+        var steps = Upstream(after);   // the validator lets a step read only steps upstream of it (GRAPH-REF-003 a missing one, GRAPH-REF-001 one that runs later)
+        var near = HintStepOf(after);
         foreach (var field in block.Config)
         {
             var boolean = string.Equals(field.Type, "boolean", StringComparison.Ordinal);
-            var text = EditorFieldText.Of(example, field);
-            var foreign = ExampleReferences.NamesMissingStep(text, steps);   // the example reads a step of the doc page's graph ("{{triage.items}}"): it starts empty, with the example as its hint (#3944)
-            var shown = foreign ? string.Empty : text;
-            Fields.Add(new ConfigFieldViewModel(field, shown.Length == 0 && boolean && field.Required ? "false" : shown) { Placeholder = foreign ? text : string.Empty });   // why: a required check box shows a value, and the value it shows is the one sent
+            var hint = ExampleReferences.Hint(block.Type, field.Name, EditorFieldText.Of(example, field), steps, near);   // a step the new one can't read shows as the step it follows, else "<step id>" (#3944, #4272, #4330)
+            var form = new ConfigFieldViewModel(field, boolean && field.Required ? "false" : string.Empty) { Placeholder = hint };   // why: a required check box shows a value, and the value it shows is the one sent
+            AddWatched(form);
         }
 
         NodeHeading = Labels.WfEditorNewStep(block.Title);
         NodeIdLine = string.Empty;   // a new step has no id until it is saved
 
         OnChanged(nameof(HasPendingStep));
+    }
+
+    // The step a new one follows, with its block's outputs, for the hint (#4330); null when it follows none.
+    private HintStep? HintStepOf(string? after)
+    {
+        if (after is null)
+        {
+            return null;
+        }
+
+        var type = Nodes.FirstOrDefault(n => string.Equals(n.Id, after, StringComparison.Ordinal))?.Type;
+        var block = Groups.SelectMany(static g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, type, StringComparison.Ordinal));
+        return new HintStep(after, block is null ? [] : [.. block.Outputs.Keys]);
+    }
+
+    // Adds a field to the form and hooks it so a change of its text recomputes the "why Save is off" lines; each add recomputes them, so a saved step opens with its line (#4369).
+    private void AddWatched(ConfigFieldViewModel form)
+    {
+        form.PropertyChanged += OnPendingFieldChanged;
+        Fields.Add(form);
+        MarkNeeded();
+    }
+
+    // The "exactly one of" groups of the block the form is for: the new step's block, else the selected step's.
+    private IReadOnlyList<IReadOnlyList<string>> OneOfGroups()
+    {
+        var type = _pending?.Type ?? Nodes.FirstOrDefault(n => string.Equals(n.Id, _selected, StringComparison.Ordinal))?.Type;
+        return Groups.SelectMany(static g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, type, StringComparison.Ordinal))?.OneOf ?? [];
+    }
+
+    // The first group with none or two fields filled: the group's first field and the line it shows; null when every group has exactly one.
+    private (ConfigFieldViewModel Field, string Line)? OneOfProblem()
+    {
+        foreach (var group in OneOfGroups())
+        {
+            var fields = Fields.Where(f => group.Contains(f.Name, StringComparer.Ordinal)).ToList();
+            var filled = fields.Count(static f => !string.IsNullOrWhiteSpace(f.Text));
+            if (fields.Count > 1 && filled != 1)
+            {
+                return (fields[0], filled == 0
+                    ? Labels.WfFieldNeededToSave(string.Join(" or ", fields.Select(static f => f.Label)))
+                    : Labels.WfFieldOnlyOne(string.Join(" and ", fields.Select(static f => f.Label))));
+            }
+        }
+
+        return null;
+    }
+
+    private void OnPendingFieldChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(ConfigFieldViewModel.Text), StringComparison.Ordinal))
+        {
+            MarkNeeded();
+        }
+    }
+
+    // Says why Save is off: a line on a new step's first empty required field (#4330), and on the first field of an "exactly one of" group that has none or two (#4359).
+    private void MarkNeeded()
+    {
+        var first = _pending is null ? null : Fields.FirstOrDefault(static f => f.IsRequired && string.IsNullOrWhiteSpace(f.Text));
+        var oneOf = OneOfProblem();
+        foreach (var field in Fields)
+        {
+            field.MarkNeeded(ReferenceEquals(field, first) ? Labels.WfFieldNeededToSave(field.Label) : oneOf is { } o && ReferenceEquals(field, o.Field) ? o.Line : string.Empty);
+        }
     }
 
     // True while FailureText is Sindri's refusal of an edit (or an unsure answer), not a failed read: closing the sheet drops the edit, so its refusal goes too (#3944).

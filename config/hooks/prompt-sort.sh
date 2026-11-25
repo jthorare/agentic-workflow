@@ -77,10 +77,10 @@ case "$PROMPT" in
 esac
 # "/bugFixOrchestrator FRN-1", "/clear": slash word then space or end. A pasted
 # absolute path ("/Users/joi/x") has "/" after the first segment and passes.
-if printf '%s' "$PROMPT" | grep -qE '^[[:space:]]*/[A-Za-z][A-Za-z0-9:_-]*([[:space:]]|$)'; then exit 0; fi
+if grep -qE '^[[:space:]]*/[A-Za-z][A-Za-z0-9:_-]*([[:space:]]|$)' <<<"$PROMPT"; then exit 0; fi
 
 command -v judge >/dev/null 2>&1 || exit 0
-PAYLOAD="$(jq -nc --arg p "$PROMPT" --arg s "$SESSION_ID" '{prompt:$p, sessionId:$s}' 2>/dev/null)" || exit 0
+PAYLOAD="$(jq -nc --rawfile p <(printf '%s' "$PROMPT") --arg s "$SESSION_ID" '{prompt:$p, sessionId:$s}' 2>/dev/null)" || exit 0
 OUT_FILE="$(mktemp "${AW_HOOK_WD_TMP:-${TMPDIR:-/tmp}}/aw-hook.XXXXXX" 2>/dev/null)" || exit 0
 IN_FILE="$(mktemp "${AW_HOOK_WD_TMP:-${TMPDIR:-/tmp}}/aw-hook.XXXXXX" 2>/dev/null)" || { rm -f "$OUT_FILE"; exit 0; }
 trap 'rm -f "$OUT_FILE" "$IN_FILE"' EXIT

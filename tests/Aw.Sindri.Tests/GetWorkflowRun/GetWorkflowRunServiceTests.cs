@@ -212,13 +212,29 @@ public sealed class GetWorkflowRunServiceTests
         Assert.Equal(["start", "tell", "gone"], result.Value.Nodes.Select(static n => n.Node.Value), StringComparer.Ordinal);
     }
 
-    private async Task InsertRun(string[] nodes, (string From, string To)[] edges, (string Node, int Item)[] rows)
+    // #4086: the run's outputs are kept by node id, so "What the run produced" read check, each, gather, measure above a step list in walk order.
+    [Fact]
+    public async Task The_runs_outputs_come_in_graph_order_and_a_key_the_revision_lacks_comes_last()
+    {
+        await InsertRun(
+            ["check", "start", "measure"],
+            [("start", "measure"), ("measure", "check")],
+            [("check", 0), ("measure", 0), ("start", 0)],
+            outputs: """{"check":{"ok":true},"gone":1,"measure":{"mb":3}}""");
+
+        var result = await _service.Handle(new GetWorkflowRunRequest(_run), Token);
+
+        Assert.Equal(["measure", "check", "gone"], result.Value.Outputs!.AsObject().Select(static p => p.Key), StringComparer.Ordinal);
+        Assert.Equal(3, result.Value.Outputs!["measure"]!["mb"]!.GetValue<int>());
+    }
+
+    private async Task InsertRun(string[] nodes, (string From, string To)[] edges, (string Node, int Item)[] rows, string? outputs = null)
     {
         var spec = new GraphSpec(Version: 1, Name: "Size check", Description: null, Concurrency: null, Resources: null,
             Nodes: [.. nodes.Select(static n => new GraphNode(NodeId.From(n), n == "start" ? "manual" : "notify", Title: null, []))],
             Edges: [.. edges.Select(static e => new GraphEdge(NodeId.From(e.From), Output: null, NodeId.From(e.To)))]);
         _ = (await _workflows.Create(_id, _slug, spec, "owner", Token)).Value;
-        _ = (await _runs.Insert(Run(WorkflowRunStatus.Succeeded, outputs: null, error: null) with { Revision = 1 }, Token)).Value;
+        _ = (await _runs.Insert(Run(WorkflowRunStatus.Succeeded, outputs, error: null) with { Revision = 1 }, Token)).Value;
         foreach (var (node, item) in rows)
         {
             _ = (await _runs.RecordNodeRun(new NodeRun(_run, NodeId.From(node), item, NodeRunStatus.Succeeded, Input: null, Output: "{}", Truncated: false, Error: null, Usage: null), Token)).Value;

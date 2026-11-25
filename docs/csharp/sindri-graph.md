@@ -152,6 +152,88 @@ Four reads, each one slice (`Features/ListWorkflows`, `GetWorkflow`, `ListWorkfl
 
 An unknown slug is `SND-GRAPH-008` (404), an unknown run `SND-GRAPH-101`, a slug or run id of the wrong shape invalid input. "Who changed it last" is the `createdBy` of the newest revision (`owner` or `session:<id>`). Node payloads the store cut at its size limit come back as a string. `truncated: true` on the node run means its output was cut; a cut input alone leaves it false. Over MCP, names, descriptions, node titles and every string of a node config (prompts), failure text, trigger payloads, outputs and node inputs and outputs are fenced as untrusted. `IWorkflowRunStore.Recent` is the new store read behind the run list.
 
+### The fields the list row and the runs table read (#3683, #3756)
+
+The list row, the run list and the run read carry the fields below on top of the ones above. The MCP tools answer the same JSON as the routes. The MCP tools also fence `workflows[].trigger` and `runs[].result` as untrusted (`Host/Mcp/FencePlan.cs`): a cron with no words comes back as written, and a result line is error or output text an agent or a service wrote.
+
+**`GET /sindri/workflows`, `workflow_list`: each row** (`Features/ListWorkflows/WorkflowSummary.cs`).
+
+| Field | Type | What it holds | When it is empty |
+|---|---|---|---|
+| `trigger` | string | The trigger in words (`TriggerWords.Of`): `By hand`, `Every 20 min`, `Every day 7:00`, `Every weekday 7:00` (weekdays as `1-5` or `MON-FRI`), `N schedules` for a node with more than one cron, `On a schedule` for a schedule node with no cron. A cron it has no words for comes back as its text; any other trigger as its node type (`connection_event`, `workflow_call`). The trigger node is the first node no edge leads into, read from the active revision, else the newest | `""` when the graph has no trigger node |
+| `paused` | bool | True when the workflow was on once and is off now (`workflow.was_activated` set by an activate, kept by a pause). A workflow never turned on is off, not paused | Always present. A workflow that was off before migration 0023 reads `false` |
+| `nextRunAt` | timestamp or null | The soonest tick of the active schedule, the same value as `GET /sindri/workflows/{slug}` | Null when the workflow is off, archived, run by hand or by an event, or its schedule has no tick |
+| `lastRun` | object or null | The newest run of any status: `run` (the run id), `status`, `at` (when the store recorded the run) | Null when the workflow never ran |
+| `recent` | array | The newest 10 runs of any status, newest first: `run`, `status`, `startedAt`, `seconds` (null while the run has not ended) | `[]` when the workflow never ran |
+
+```json
+{
+  "workflows": [
+    {
+      "slug": "morning-check",
+      "trigger": "Every weekday 7:00",
+      "paused": false,
+      "nextRunAt": "2026-01-02T07:00:00.0000000Z",
+      "lastRun": { "run": "morning-check@1:2", "status": "running", "at": "2026-01-01T07:00:00.0000000Z" },
+      "recent": [
+        { "run": "morning-check@1:2", "status": "running", "startedAt": "2026-01-01T07:00:00.0000000Z", "seconds": null },
+        { "run": "morning-check@1:1", "status": "succeeded", "startedAt": "2025-12-31T07:00:00.0000000Z", "seconds": 42.5 }
+      ]
+    }
+  ]
+}
+```
+
+**`GET /sindri/workflows/{slug}`, `workflow_get`** (`Features/GetWorkflow/GetWorkflowResponse.cs`).
+
+| Field | Type | What it holds | When it is empty |
+|---|---|---|---|
+| `nextRunAt` | timestamp or null | The soonest tick of the active revision's schedule, whichever revision the read shows (`?revision=latest` or a number) | Null in the same cases as the list row |
+
+```json
+{ "slug": "morning-check", "revision": 1, "activeRevision": 1, "nextRunAt": "2026-01-01T07:00:00.0000000Z" }
+```
+
+**`GET /sindri/workflows/{slug}/runs`, `workflow_runs`: each run** (`Features/ListWorkflowRuns/WorkflowRunSummary.cs`).
+
+| Field | Type | What it holds | When it is empty |
+|---|---|---|---|
+| `trigger` | string | What started the run (`RunWords.TriggerWord`): `manual` (the app or HTTP), `cli` (`sindri wf run`, stored as `by: "human:cli"`), `agent` (a stored `manual` trigger by `session:<id>`) or `schedule`. Any other stored kind (`workflow_call`, `connection_event`) comes back as stored | `unknown` when the stored trigger has no `kind` |
+| `seconds` | number or null | `endedAt` minus `startedAt`, in seconds | Null while the run has not ended |
+| `result` | string or null | One line for the table (`RunWords.Result`): the first line of `error` for a failed or cancelled run, the outputs as compact JSON for a succeeded run, cut at 120 characters with a trailing `…` | Null for a queued, running or waiting run, a failed run with no error, or a succeeded run with no outputs |
+
+```json
+{
+  "slug": "morning-check",
+  "runs": [
+    { "id": "morning-check@1:3", "status": "running", "trigger": "agent", "seconds": null, "result": null },
+    { "id": "morning-check@1:2", "status": "failed", "trigger": "schedule", "seconds": 12.0, "result": "node 'agent' failed" },
+    { "id": "morning-check@1:1", "status": "succeeded", "trigger": "cli", "seconds": 42.5, "result": "{\"summary\":\"no drift\"}" }
+  ],
+  "more": false
+}
+```
+
+**`GET /sindri/workflow-runs/{run}`, `workflow_run_get`** (`Features/GetWorkflowRun/GetWorkflowRunResponse.cs`, `NodeRunView.cs`). The `trigger` object stays as it was.
+
+| Field | Type | What it holds | When it is empty |
+|---|---|---|---|
+| `triggerKind` | string | The same word as the run list's `trigger` | Always present |
+| `nodes[].seconds` | number or null | How long the node row ran: `ended_at` minus `started_at` of `workflow_node_run` (migration 0023). The store stamps `started_at` when it writes a `running` row and `ended_at` on the final write, with its own clock; a later write keeps the first `started_at` (`Core/Graph/Runs/NodeRunTimes.cs`) | Null while the node runs, for a row written before migration 0023, and for a row written once at its end (`skipped` rows, `collect` rows) |
+
+```json
+{
+  "id": "morning-check@1:1",
+  "status": "succeeded",
+  "trigger": { "kind": "manual", "by": "human:cli" },
+  "triggerKind": "cli",
+  "nodes": [
+    { "node": "start", "itemIndex": 0, "status": "succeeded", "seconds": null },
+    { "node": "agent", "itemIndex": 0, "status": "succeeded", "seconds": 41.8 }
+  ]
+}
+```
+
 ## Writing workflows (PR 8b)
 
 Seven writes, each one slice (`Features/CreateWorkflow`, `ApplyWorkflowOps`, `ReplaceWorkflow`, `ValidateWorkflow`, `ActivateWorkflow`, `PauseWorkflow`, `DeleteWorkflow`) behind a route, an MCP tool and a `sindri wf` verb. `workflow_run` and `workflow_cancel` are the existing run and cancel slices (PR 6) as tools. Every write is a catalog row (`Host/Catalog/WorkflowRows.cs`) an agent session may run, except activate and pause: those are the owner's, and a session is refused with `SND-AUTH-002` (the check sits in `ActivateWorkflowService` and `PauseWorkflowService`, so the route, the MCP tool and the CLI share it; the rows have `SessionOk: false`). The CLI verbs start the control plane first, like `wf run`.
@@ -186,12 +268,12 @@ The built-in service `workflow-poll` (`Features/PollConnections`, every 30 secon
 The built-in service `workflow-schedule` (`Features/WorkflowSchedule`, every minute) starts runs for `schedule` nodes.
 
 1. For each active workflow, take the `schedule` node of its active revision.
-2. Compute the latest cron tick after the latest of the revision's save time, the last schedule run's tick and the last handled tick, up to now (`CronExpression.LastTick`, in the node's timezone).
+2. Compute the latest cron tick after the latest of the revision's save time, the last schedule run's tick and the last marked tick, up to now (`CronExpression.LastTick`, in the node's timezone).
 3. Start one run through `IGraphRunStarter` with trigger `{"kind":"schedule","scheduledFor":"<tick>"}`. The starter decides start, queue or skip by the workflow's `concurrency`.
 
 - Three missed days fire one run, for the latest tick only.
 - **Occurrence** of a schedule run is the tick in whole minutes since the Unix epoch, so firing the same tick twice is SND-GRAPH-100 (one run row).
-- **Handled ticks.** The store keeps the last handled tick per workflow (`IWorkflowRunStore.MarkTick` / `LastTick`, table `workflow_schedule_tick` in the run tables' migration; it only moves forward). The service marks a tick when the starter started it, queued it **or skipped it** (a run was in flight), and when the tick already has a run (SND-GRAPH-100). A skipped tick is therefore done: it is not retried each minute and does not fire late when the run in flight ends; the next cron tick fires on its own. The newest schedule run's occurrence (`IWorkflowRunStore.LatestOccurrence`) stays a second floor.
+- **Marked ticks.** The store keeps the last marked tick per workflow (`IWorkflowRunStore.MarkTick` / `LastTick`, table `workflow_schedule_tick` in the run tables' migration; it only moves forward). The service marks a tick when the starter started it, queued it **or skipped it** (a run was in flight), and when the tick already has a run (SND-GRAPH-100). A skipped tick is therefore done: it is not retried each minute and does not fire late when the run in flight ends; the next cron tick fires on its own. The newest schedule run's occurrence (`IWorkflowRunStore.LatestOccurrence`) stays a second floor.
 - **A failed launch does not use up its tick.** When the starter returns any other error (the engine is down, say), the tick is not marked, the pass logs a warning, and the next pass tries the same tick again (as long as it is still the latest). A pass keeps going over the other workflows after one fails and returns the first error at the end.
 - **One schedule node.** A workflow has exactly one trigger (`GRAPH-TRIGGER-001`), so the service reads only the first `schedule` node (up to six crons inside it).
 - **Known gap:** nothing stores when a revision was activated, so the floor is `WorkflowRevision.CreatedAt`. A tick between saving and activating a revision can fire once on activation.

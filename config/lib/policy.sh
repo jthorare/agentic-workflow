@@ -28,7 +28,7 @@ policy_mode() {
   value="${!env_name:-}"
   value="${value//[[:space:]]/}"
   if [ -z "$value" ]; then
-    value="$(_policy_read_file "${AW_STATE_DIR:-$HOME/.agentic-workflow}/policy/${id//\//-}.mode")"
+    value="$(_policy_read_file "${AW_STATE_DIR:-${HOME:-}/.agentic-workflow}/policy/${id//\//-}.mode")"
   fi
   if [ -z "$value" ]; then
     json="${BASH_SOURCE[0]}"
@@ -36,7 +36,7 @@ policy_mode() {
     json="$json/../policy/interventions.json"
     value="$(jq -r --arg id "$id" \
       '.policies[$id] | if .mode == "block" and .evidence == null then "advisory" else .mode end // empty' \
-      "$json" 2>/dev/null)"
+      "$json" 2>/dev/null)" || value=""
   fi
   case $value in
     off | advisory | block) printf '%s\n' "$value" ;;
