@@ -162,6 +162,6 @@ public sealed class ConnectionTilesTests
         await tile.Disconnect(Token);
 
         Assert.False(tile.IsConnected);
-        Assert.Equal("Connect", tile.PrimaryText);
+        Assert.Equal("Add token", tile.PrimaryText);   // Linear opens on a token first (#4357)
     }
 }
