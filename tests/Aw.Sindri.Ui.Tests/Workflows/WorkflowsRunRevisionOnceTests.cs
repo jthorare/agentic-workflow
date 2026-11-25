@@ -78,7 +78,7 @@ public sealed class WorkflowsRunRevisionOnceTests
 
         Assert.True(page.IsRuns);
         Assert.True(page.Runs.HasNotice);
-        Assert.StartsWith("Couldn't start a run. workflow 'morning-check' has no revision 4", page.Runs.NoticeText, StringComparison.Ordinal);
+        Assert.StartsWith("Couldn't start a run. Workflow 'morning-check' has no revision 4", page.Runs.NoticeText, StringComparison.Ordinal);
         Assert.False(page.Runs.IsStarting);
     }
 
