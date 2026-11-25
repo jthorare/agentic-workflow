@@ -155,7 +155,8 @@ examples.forEach((ex, i) => {
   const m = /^(.+):(\d+)$/.exec(source);
   const lines = m ? linesOf(m[1]) : null;
   if (!m) findings.push(`${where}: the source must be <file>:<line>`);
-  else if (!lines || Number(m[2]) < 1 || Number(m[2]) > lines.length) findings.push(`${where}: the source line does not exist`);
+  else if (!lines) findings.push(`${where}: the source line does not exist`);
+  else if (Number(m[2]) < 1 || Number(m[2]) > lines.length) findings.push(`${where}: the source line does not exist; ${movedHint(m[1], lines, tool)}`);
   else if (!lines[Number(m[2]) - 1].includes(tool)) findings.push(`${where}: the source line does not name ${tool}; ${movedHint(m[1], lines, tool)}`);
   else covered.add(`${source} ${tool}`);
   if (!tools.has(tool)) {
