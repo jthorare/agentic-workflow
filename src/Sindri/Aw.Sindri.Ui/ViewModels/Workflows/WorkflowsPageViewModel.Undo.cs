@@ -37,6 +37,9 @@ internal sealed partial class WorkflowsPageViewModel
         await RereadRuns(slug, CancellationToken.None).ConfigureAwait(true);
         if (failure is null)
         {
+            NoteSaved();   // the undo made a new revision: the line names it
+            _undone = true;
+            NotifySaved();
             StepUndone?.Invoke(this, EventArgs.Empty);
         }
 

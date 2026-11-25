@@ -4,14 +4,15 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 internal sealed partial class WorkflowsPageViewModel
 {
     private int _savedWhileOff;   // the revision a save made on a workflow that is off; 0 until one did
+    private bool _undone;   // the newest revision was made by an undo, not a Save step: the line says so
 
     // the live revision is older than the newest one: an edit made a revision that is saved but not running
     private bool IsNotLive => IsRuns && Runs.Shown is { ActiveRevision: { } active } shown && active < shown.LatestRevision;
 
     /// <summary>The line under the header after a save: "Saved as revision 3. Not live yet." on a live workflow, "Saved as revision 3." on one that is off; empty otherwise.</summary>
     public string SavedLineText => IsNotLive
-        ? Labels.WfSavedNotLive(Runs.Shown!.LatestRevision)   // why: IsNotLive holds, so Shown is set
-        : IsRuns && _savedWhileOff > 0 && Runs.Shown is { ActiveRevision: null } ? Labels.WfSaved(_savedWhileOff) : string.Empty;
+        ? (_undone ? Labels.WfUndone(Runs.Shown!.LatestRevision, notLive: true) : Labels.WfSavedNotLive(Runs.Shown!.LatestRevision))   // why: IsNotLive holds, so Shown is set
+        : IsRuns && _savedWhileOff > 0 && Runs.Shown is { ActiveRevision: null } ? (_undone ? Labels.WfUndone(_savedWhileOff, notLive: false) : Labels.WfSaved(_savedWhileOff)) : string.Empty;
 
     /// <summary>True when the saved-revision line shows.</summary>
     public bool HasSavedLine => SavedLineText.Length > 0;
@@ -33,6 +34,7 @@ internal sealed partial class WorkflowsPageViewModel
     // a save on a workflow that is off is the one case the revisions alone can't tell: remember it for the line
     private void NoteSaved()
     {
+        _undone = false;
         _savedWhileOff = Runs.Shown is { ActiveRevision: null } shown ? shown.LatestRevision : 0;
         NotifySaved();
     }
