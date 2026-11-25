@@ -130,7 +130,7 @@ internal static partial class CommandTable
         ["wf", "activate", .. var rest] => await new WfWriteVerbs(desk, output).Activate(rest, ct).ConfigureAwait(false),
         ["wf", "pause", .. var rest] => await new WfWriteVerbs(desk, output).Pause(rest, ct).ConfigureAwait(false),
         ["wf", "delete", .. var rest] => await new WfWriteVerbs(desk, output).Delete(rest, ct).ConfigureAwait(false),
-        ["wf", "validate", .. var rest] when rest.Contains("--slug", StringComparer.Ordinal) => await new WfWriteVerbs(desk, output).Validate(rest, ct).ConfigureAwait(false),   // a stored workflow goes to the server; a file stays in process
+        ["wf", "validate", .. var rest] when CliCompositions.ValidatesStoredWorkflow(rest) => await new WfWriteVerbs(desk, output).Validate(rest, ct).ConfigureAwait(false),   // a stored workflow goes to the server; a file stays in process
         ["wf", "validate", .. var rest] => await WfValidateCommand.Run(rest, services, output, ct).ConfigureAwait(false),   // in process: reads the graph file, never starts or contacts serve
         ["wf", "run", .. var rest] => await WfRunCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "cancel", .. var rest] => await WfRunCommand.Cancel(rest, desk, output, ct).ConfigureAwait(false),
