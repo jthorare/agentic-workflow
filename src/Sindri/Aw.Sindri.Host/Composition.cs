@@ -65,6 +65,7 @@ internal static class Composition
             .AddSingleton<IModelPort>(sp => new RoutedModelPort(sp.GetRequiredService<JudgeCatalog>().Get,
                 sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJobContextAccessor>(), sp.GetRequiredService<IModelCallLog>(), sp.GetRequiredService<Kernel.Ids.IIdGenerator>(), sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<IModelCatalog>()))
             .AddScoped<IWorkflowChecker, ProfileWorkflowChecker>().AddScoped<WorkflowChangeLog>()   // the workflow write slices (#2258, PR 8b): the validator with this Sindri's blocks and repos, and the lifecycle events
+            .AddSingleton<IGraphTranscriptPort, CorpusTranscriptPort>()   // the transcript blocks (issue 3787): the corpus AddTranscriptsInfrastructure registered, read-only
             .AddSingleton<IGraphModelPort, GraphModelPortAdapter>().AddSingleton<INotifyPort, LedgerNotifyPort>()   // the prompt and notify blocks of the graph engine (#2258, PR 6): the routed model port and a 'workflow.notify' event
             .AddSingleton<IQuestionPort, LedgerQuestionPort>()   // the ask_owner block (#2258, PR 9): a 'workflow.question' event
             .AddChoicePort(environment)   // the Jev label pick: IChoicePort over the judge's batch classifier, and the route's prompt budget (model routing spec §6.7)
@@ -73,6 +74,22 @@ internal static class Composition
             .AddPullRequests(environment)   // IPullRequests over the forge the approved profile names (workflow.forge; compose edge to Aw.Forge.Infrastructure in Forge/ForgeAdapters)
             .AddScoped<IDoctorChecks, Skills.SkillsDoctorChecks>()   // the 'skills:' rows (skill flows spec §3.2)
             .AddSindriHost();
+
+    /// <summary>
+    /// The CLI's client composition (#3727): what a verb that only calls the running control plane resolves (the clock, the
+    /// JSON options, telemetry and Infrastructure's client adapters). <see cref="Compose"/> holds the same adapters, so a
+    /// client verb behaves the same in either; CommandTable picks this one for the verbs in CliCompositions.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="environment">Reads an environment variable.</param>
+    /// <param name="clock">The clock.</param>
+    /// <returns>The same collection.</returns>
+    internal static IServiceCollection ComposeClient(IServiceCollection services, Func<string, string?> environment, TimeProvider clock)
+        => services
+            .AddSingleton(clock)
+            .AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
+            .AddKernelTelemetry(TelemetryOptions.FromEnvironment("sindri", environment, clock))   // the same runtime as Compose's, so an unknown AW_LOG_LEVEL warns the same way
+            .AddSindriClientInfrastructure(environment);
 
     /// <summary>
     /// The environment function Composition passes to AddContextInfrastructure (context spec §4 "Secrets"): a name that is a

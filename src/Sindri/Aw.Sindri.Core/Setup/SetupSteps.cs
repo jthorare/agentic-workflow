@@ -150,6 +150,17 @@ public static class SetupSteps
         return new SetupStep(SetupStepId.Serve, ServeTitle, SetupState.NeedsYou, why, "Running " + Words(running) + ". Restart Sindri to run the installed one.", Error: null, SetupActions.RestartProcess, Progress: null);
     }
 
+    /// <summary>The serve step while Sindri isn't running (first-run spec decision 8): open, and the fix is to start it, which any caller may do.</summary>
+    /// <returns>The step.</returns>
+    public static SetupStep NotRunning() =>
+        new(SetupStepId.Serve, ServeTitle, SetupState.Todo, "Sindri isn't running.", "Start it: sindri", Error: null, Action: null, Progress: null);
+
+    /// <summary>A step whose source only the running Sindri can read, while it isn't running (first-run spec decision 8): open, waiting for Sindri to run.</summary>
+    /// <param name="id">Which step.</param>
+    /// <returns>The step.</returns>
+    public static SetupStep WaitsForServe(SetupStepId id) =>
+        Unreadable(id, SindriErrors.NotRunning.Code) with { State = SetupState.Todo, Why = "Waits for Sindri to run.", Error = null };
+
     private static string Words(BuildInfo build) =>
         build.ShortCommit + ", built " + build.Built.ToUniversalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + " UTC";
 

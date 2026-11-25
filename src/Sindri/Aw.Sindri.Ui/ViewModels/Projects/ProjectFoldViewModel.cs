@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 
 namespace Aw.Sindri.Ui.ViewModels.Projects;
 
-/// <summary>A fold under the groups ("Finished", "Hidden"): closed until opened, and kept open across reads.</summary>
+/// <summary>A fold under the rows ("Finished", "Hidden"): closed until opened, and kept open across reads.</summary>
 internal sealed class ProjectFoldViewModel : ObservableObject
 {
     internal ProjectFoldViewModel(string title, string why)
@@ -27,9 +27,6 @@ internal sealed class ProjectFoldViewModel : ObservableObject
 
     /// <summary>True while the fold is open. Public set: the Expander's IsExpanded writes it back (TwoWay), so a click, Enter or Space on the fold moves it.</summary>
     public bool IsOpen { get; set => Set(ref field, value); }
-
-    /// <summary>How many cards sit across, as the page last set it.</summary>
-    public int Columns { get; internal set => Set(ref field, value); } = 1;
 
     /// <summary>The cards, as the server orders them.</summary>
     public ObservableCollection<ProjectCardViewModel> Cards { get; } = [];

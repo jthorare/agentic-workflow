@@ -53,20 +53,30 @@ public sealed record ThreadRow(string Key, ConversationKind Kind, string Convers
     /// <param name="workspace">The Slack workspace.</param>
     /// <param name="conversation">The DM.</param>
     /// <returns>'slack:dm:&lt;workspace&gt;/&lt;conversation&gt;'.</returns>
-    public static string DmKey(string workspace, string conversation)
-    {
-        _ = (workspace, conversation);
-        throw MessageStubs.NotBuilt("ThreadRow.DmKey", "M1b");
-    }
+    /// <exception cref="ArgumentException">A part is empty or holds a '/'.</exception>
+    public static string DmKey(string workspace, string conversation) =>
+        $"slack:dm:{Part(workspace, nameof(workspace))}/{Part(conversation, nameof(conversation))}";
 
     /// <summary>The key of a channel thread's row.</summary>
     /// <param name="workspace">The Slack workspace.</param>
     /// <param name="conversation">The channel.</param>
     /// <param name="thread">The thread root's ts.</param>
     /// <returns>'slack:thread:&lt;workspace&gt;/&lt;conversation&gt;/&lt;thread ts&gt;'.</returns>
+    /// <exception cref="ArgumentException">A part is empty or holds a '/', or the thread is not a Slack ts.</exception>
     public static string ThreadKey(string workspace, string conversation, MessageTs thread)
     {
-        _ = (workspace, conversation, thread);
-        throw MessageStubs.NotBuilt("ThreadRow.ThreadKey", "M1b");
+        if (!MessageTs.TryParse(thread.Value, out _))
+        {
+            throw new ArgumentException("The thread is not a Slack ts.", nameof(thread));
+        }
+
+        return $"slack:thread:{Part(workspace, nameof(workspace))}/{Part(conversation, nameof(conversation))}/{thread.Value}";
+    }
+
+    // a key part is a Slack id: never empty, never a '/', which would split the key
+    private static string Part(string value, string name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, name);
+        return value.Contains('/', StringComparison.Ordinal) ? throw new ArgumentException("A key part holds no '/'.", name) : value;
     }
 }

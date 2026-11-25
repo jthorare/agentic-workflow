@@ -2,6 +2,7 @@
   "id": "github",
   "displayName": "GitHub",
   "kind": "oauth",
+  "auth": ["key", "oauth"],
   "authorizeUrl": "https://github.com/login/oauth/authorize",
   "tokenUrl": "https://github.com/login/oauth/access_token",
   "revokeUrl": null,
@@ -10,5 +11,7 @@
   "loopbackAllowed": true,
   "signInNote": "Register an OAuth app with the callback http://127.0.0.1 and pass its client id with --client-id. GitHub OAuth apps also need the client secret at the token endpoint: put it in a variable and pass --client-secret-env NAME (it is stored in your OS keychain with the tokens).",
   "pollableEvents": [],
-  "probeUrl": "https://api.github.com/user"
+  "probeUrl": "https://api.github.com/user",
+  "clientId": "",
+  "deviceCodeUrl": "https://github.com/login/device/code"
 }

@@ -1,6 +1,6 @@
 namespace Aw.Sindri.Core.Messages;
 
-/// <summary>What a mrkdwn span is (guess: M1b settles the set).</summary>
+/// <summary>What a mrkdwn span is (messages spec §6.3): the subset Sindri reads and writes back; anything else stays text.</summary>
 public enum MrkdwnKind
 {
     /// <summary>Plain text.</summary>
@@ -38,4 +38,7 @@ public enum MrkdwnKind
 
     /// <summary>An :emoji: name.</summary>
     Emoji,
+
+    /// <summary>A list line: '• ', '- ', '* ' or '1. ' at the start of a line, the marker kept as written.</summary>
+    ListItem,
 }

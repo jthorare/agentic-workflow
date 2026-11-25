@@ -1,0 +1,22 @@
+{
+  "links": [
+    {
+      "url": "https://github.com/acme/harbor/pull/3120",
+      "rowKey": "gh:pr:acme/harbor#3120",
+      "title": "Fare table uses 90 s",
+      "state": "open",
+      "ci": "passing",
+      "waitsOn": "you",
+      "since": "2026-11-20T08:00:00.0000000Z"
+    },
+    {
+      "url": "https://example.com/x",
+      "rowKey": null,
+      "title": null,
+      "state": null,
+      "ci": null,
+      "waitsOn": null,
+      "since": null
+    }
+  ]
+}

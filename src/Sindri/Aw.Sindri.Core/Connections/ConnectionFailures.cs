@@ -43,6 +43,8 @@ public static class ConnectionFailures
         _ when code == SindriErrors.ConnectionNameInvalid.Code => SindriErrors.ConnectionNameInvalid.Title,
         _ when code == SindriErrors.ConnectionConsentDenied.Code => SindriErrors.ConnectionConsentDenied.Title,
         _ when code == SindriErrors.ConnectionExists.Code => SindriErrors.ConnectionExists.Title,
+        _ when code == SindriErrors.ConnectionKeyRefused.Code => SindriErrors.ConnectionKeyRefused.Title,
+        _ when code == SindriErrors.ConnectionKeyUnchecked.Code => SindriErrors.ConnectionKeyUnchecked.Title,
         _ => null,
     };
 }

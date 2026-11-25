@@ -34,9 +34,19 @@ internal sealed class GetWorkflowRunService(IWorkflowRunStore runs, IWorkflowSto
         var spec = revision.IsError ? null : revision.Value.Spec;
         var agentNodes = await AgentNodes(found, spec, nodes.Value, cancellationToken).ConfigureAwait(false);
         var slug = WorkflowSlug.From(found.Id.Value[..found.Id.Value.IndexOf('@', StringComparison.Ordinal)]);
-        return new GetWorkflowRunResponse(found.Id, slug, found.Revision, RunText.Of(found.Status), RunText.Json(found.Trigger), RunText.Json(found.Outputs), found.Error, found.ItemId, found.StartedAt, found.EndedAt,
-            [.. RunOrder.Of(spec, nodes.Value).Select(n => new NodeRunView(n.NodeId, n.ItemIndex, RunText.Of(n.Status), RunText.Json(n.Input), RunText.Json(n.Output), n.Truncated, n.Error, agentNodes.Of(n), n.Raw))]);
+        return new GetWorkflowRunResponse(found.Id, slug, found.Revision, RunText.Of(found.Status), RunText.Json(found.Trigger), RunOrder.Outputs(spec, RunText.Json(found.Outputs)), found.Error, found.ItemId, found.StartedAt, found.EndedAt,
+            [.. RunOrder.Of(spec, nodes.Value).Select(n => View(n, agentNodes))])
+        {
+            TriggerKind = RunWords.TriggerWord(found.Trigger),
+        };
     }
+
+    // One node row as the run page shows it; Seconds is null while the row has not ended or when it was written before node times (#3683).
+    private static NodeRunView View(NodeRun n, AgentRows agentNodes) =>
+        new(n.NodeId, n.ItemIndex, RunText.Of(n.Status), RunText.Json(n.Input), RunText.Json(n.Output), n.Truncated, n.Error, agentNodes.Of(n), n.Raw)
+        {
+            Seconds = n.StartedAt is { } begun && n.EndedAt is { } end ? (end - begun).TotalSeconds : null,
+        };
 
     // The agent state of the run's rows. The candidates are the 'run_agent' nodes of the revision the run walked whose row runs now (item 0: a run_agent node runs once). The run's workflow says which
     // one it waits on and whether it is held; when it can't be asked (Temporal down, no workflow), the held marker of the node's launch files answers instead. A revision the store can't give leaves no

@@ -2,8 +2,8 @@ schemaVersion: 1
 id: engineering.csharp.di-composition-shape
 kind: engineering
 section: "4b.4"
-text: "Decorators are registered in the owning project's Add…() method, never in Host; each Host exposes one internal static Compose(IServiceCollection, Func<string, string?> environment, TimeProvider) that Program.cs and the DI test both call; Host never builds an Infrastructure settings type."
-why: "The DI test covers the real composition, and a technology swap changes Infrastructure and one Add…() call only."
+text: "Decorators are registered in the owning project's Add…() method, never in Host; each Host exposes one internal static Compose(IServiceCollection, Func<string, string?> environment, TimeProvider) that Program.cs and the DI test both call (the one exception: the Sindri Host's ComposeClient for verbs that only call the control plane, with its own DI test and a subset-of-Compose test); Host never builds an Infrastructure settings type."
+why: "The DI test covers the real composition, and a technology swap changes Infrastructure and one Add…() call only. A second composition is allowed only when tests prove it validates and is a subset of Compose, so it cannot drift."
 select:
   languages: [csharp]
   paths: ["src/**"]

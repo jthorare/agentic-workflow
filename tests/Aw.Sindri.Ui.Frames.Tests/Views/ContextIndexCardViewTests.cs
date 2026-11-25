@@ -24,7 +24,7 @@ public sealed class ContextIndexCardViewTests : FrameHost
         await Until(window, () => shell.Health.ContextIndex.Lines.Count > 0);
         Settle(window);
 
-        var lines = Named<ItemsControl>(window, "ContextIndexLines").GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).ToList();
+        var lines = Named<ItemsControl>(window, "ContextIndexLines").GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible && !string.IsNullOrEmpty(AutomationProperties.GetName(t))).ToList();   // #4269: the label column carries no name
         Assert.Equal(2, lines.Count);
         Assert.Equal(shell.Health.ContextIndex.Lines[1].Name, AutomationProperties.GetName(lines[1]));
         Assert.StartsWith("Context index: linear: idle", AutomationProperties.GetName(lines[1]), StringComparison.Ordinal);

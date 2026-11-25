@@ -48,7 +48,10 @@ from the cwd to the nearest `.git`:
 1. A `.git` directory: that directory's parent is the repo.
 2. A `.git` file (`gitdir: <dir>`): the worktree's git dir names the main git dir in its `commondir` file. The main
    git dir's parent is the repo.
-3. A cwd that no longer exists, or that sits in no repo, stays as it is.
+3. A cwd that no longer exists, under one of the host's worktree roots, belongs to that root's main checkout. The
+   host passes `(worktree root -> main checkout)` pairs to `AddTranscriptsInfrastructure(roots, worktreeRoots)`; the
+   longest root that holds the cwd wins, by whole path segments. The library guesses no pair: with none, step 4 applies.
+4. Any other cwd that no longer exists, or that sits in no repo, stays as it is.
 
 ## A turn
 
@@ -63,7 +66,8 @@ machine prompt (below) ends it.
 A human turn is a prompt a person typed. These are machine text, never human turns:
 
 - Tool results.
-- Tag-led text: `<system-reminder>`, `<command-name>` and the other slash-command wrappers, `<local-command-stdout>`,
+- Tag-led text (after the leading `<ide_opened_file>` and `<ide_selection>` blocks an IDE extension adds, which are
+  stripped; what follows them is judged by these rules, and the stored prompt leaves them out): `<system-reminder>`, `<command-name>` and the other slash-command wrappers, `<local-command-stdout>`,
   `<teammate-message>`, `<task-notification>`, `<environment_context>`. A lone `<pasted_content>` block is still typed.
 - Compaction summaries ("This session is being continued…"), skill preambles ("Base directory for this skill"),
   "Caveat:" notes, peer-session deliveries ("Another Claude session sent a message"), interrupt markers, AGENTS.md text.
@@ -89,12 +93,12 @@ its own) before it leaves the library. A secret becomes a `[REDACTED:<rule>]` pl
 
 | Ref | Shape | Made from |
 |---|---|---|
-| Session | `transcript:<8 hex>` | The first 4 bytes of SHA-256 of the provider's wire name, a newline and the file's full path |
-| Turn | `transcript:<8 hex>#<line>` | The session ref and the 1-based line the turn starts on |
+| Session | `transcript:<12 hex>` | The first 6 bytes of SHA-256 of the provider's wire name, a newline and the file's full path |
+| Turn | `transcript:<12 hex>#<line>` | The session ref and the 1-based line the turn starts on |
 
 A ref names no project, repo or path. It stays the same across runs while the file stays where it is. `ReadSession`
 resolves a ref by hashing the path of every file under the roots, without opening any. A turn's session ref is `TurnRef.SessionOf()`: a method, because a derived typed-id property breaks `ARCH-ID-002` (a typed-id property must be required on read). Two files with one ref are
-`AW-TRANSCRIPTS-004`; with 8 hex digits that needs tens of thousands of files to become likely.
+`AW-TRANSCRIPTS-004`; with 12 hex digits (48 bits) a collision stays below one in a million up to about 20,000 files.
 
 ## Resume and fork dedupe
 
@@ -124,9 +128,12 @@ Dedupe runs only inside one directory. A Codex resume in a later day's folder is
 | `AW-TRANSCRIPTS-003` | The ref's file exists but can't be read |
 | `AW-TRANSCRIPTS-004` | Two files share the ref |
 
-A line that is not a JSON object of the provider's shape is skipped and counted in `SkippedLines`; this includes lines
-of a known kind whose fields have an unexpected type. A list leaves out a file it can't read (deleted or locked
-mid-scan) and lists the rest.
+A line that is not a JSON object of the provider's shape is skipped and counted in `SkippedLines`. That includes lines
+of a known kind whose fields have an unexpected type, a line with no type (Claude Code, Codex) or no payload (Codex), a
+user or assistant line whose content is no string or block array, and a Cursor line with neither a user or assistant
+role nor a type. A known bookkeeping line (a Claude Code `permission-mode`, a Cursor `turn_ended`) is not counted. A list leaves out a file it can't read (deleted or locked
+mid-scan) and lists the rest. A bad field never fails a list: a cwd that is no valid path (a NUL byte) gives the
+session no repo, and a line whose pattern match runs out of time (Cursor's prompt and timestamp patterns) is skipped.
 
 ## Not verified
 

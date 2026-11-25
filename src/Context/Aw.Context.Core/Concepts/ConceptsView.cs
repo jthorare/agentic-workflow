@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Aw.Context.Core.WholeMap;
 
 namespace Aw.Context.Core.Concepts;
 
@@ -26,4 +27,11 @@ public sealed record ConceptsView(
     /// <summary>How many pages relate to no concept (<see cref="WholeMap.PagesInNoConcept"/>), for the "Pages in no concept (N)" link; null (left out of the answer) when no map was read.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? PagesInNoConcept { get; init; }
+
+    /// <summary>
+    /// The repos the map holds nodes of, with their node counts, for the page's repo picker (issue 3696: a page that opens on the concepts never reads the whole map). Read from the
+    /// map the caller may see, not from the graph cut to the asked repo, so it lists every repo after a pick too; null (left out of the answer) when no map was read.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<WholeMapRepo>? Repos { get; init; }
 }

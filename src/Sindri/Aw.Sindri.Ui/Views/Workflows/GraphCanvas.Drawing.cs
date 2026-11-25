@@ -12,12 +12,19 @@ internal sealed partial class GraphCanvas
     private const double ArrowSize = 9;
     private const double Radius = 8;
     private const double RingGap = 3;
+    private const double MarkWidth = 48;
+
+    private readonly List<(string Text, double Size)> _drawn = [];
+
+    /// <summary>The words the last pass drew, each with its font size: a test reads it to see that the text size setting reaches the canvas (#3231).</summary>
+    internal IReadOnlyList<(string Text, double Size)> DrawnText => _drawn;
 
     /// <inheritdoc/>
     public override void Render(DrawingContext context)
     {
         base.Render(context);
         RenderCount++;
+        _drawn.Clear();
         context.DrawRectangle(Brushes.Transparent, pen: null, new Rect(Bounds.Size));   // so a drag on empty space hits this control
         if (Graph is not { } graph)
         {
@@ -26,7 +33,7 @@ internal sealed partial class GraphCanvas
 
         if (graph.IsEmpty)
         {
-            var empty = Text(graph.EmptyText, 13, Brush("Brush.InkMuted"), Math.Max(Bounds.Width - 48, 0), semiBold: false);
+            var empty = Text(graph.EmptyText, 13 * TextScale, Brush("Brush.InkMuted"), Math.Max(Bounds.Width - 48, 0), semiBold: false);
             context.DrawText(empty, new Point(24, 24));
             return;
         }
@@ -107,13 +114,14 @@ internal sealed partial class GraphCanvas
         context.DrawGeometry(wire, pen: null, head);
     }
 
-    // The branch output's pill at the middle of the curve.
+    // The branch output's pill at the middle of the curve, at the text scale the cards were laid out at (#3231).
     private void DrawEdgeLabel(DrawingContext context, string label, Point mid)
     {
-        var text = Text(label, 11, Brush("Brush.Ink"), 80, semiBold: true);
-        var pill = new Rect(mid.X - (text.Width / 2) - 6, mid.Y - (text.Height / 2) - 2, text.Width + 12, text.Height + 4);
-        context.DrawRectangle(Brush("Brush.Surface1"), new Pen(Brush("Brush.Hairline"), 1), pill, 4, 4);
-        context.DrawText(text, new Point(pill.X + 6, pill.Y + 2));
+        var k = _laidOutScale;
+        var text = Text(label, 11 * k, Brush("Brush.Ink"), 80 * k, semiBold: true);
+        var pill = new Rect(mid.X - (text.Width / 2) - (6 * k), mid.Y - (text.Height / 2) - (2 * k), text.Width + (12 * k), text.Height + (4 * k));
+        context.DrawRectangle(Brush("Brush.Surface1"), new Pen(Brush("Brush.Hairline"), 1), pill, 4 * k, 4 * k);
+        context.DrawText(text, new Point(pill.X + (6 * k), pill.Y + (2 * k)));
     }
 
     // Thin scrollbars, only on an axis that overflows: a thumb showing where the viewport is in the scroll extent.
@@ -125,8 +133,8 @@ internal sealed partial class GraphCanvas
         }
 
         var world = World;
-        var extentW = world.Right * Zoom;
-        var extentH = GraphZoom.ExtentHeight(world.Bottom, Zoom, mapShown: true);
+        var extentW = GraphZoom.ExtentWidth(world.Right, Zoom, MapShown, Bounds.Width);
+        var extentH = GraphZoom.ExtentHeight(world.Bottom, Zoom, MapShown);
         var thumb = Brush("Brush.InkSubtle");
         if (extentH > Bounds.Height + 0.5)
         {
@@ -147,7 +155,7 @@ internal sealed partial class GraphCanvas
     {
         var faint = Brush("Brush.InkSubtle");
         context.DrawLine(new Pen(faint, 1, DashStyle.Dash), new Point(end.At.X, end.At.Y), new Point(end.To.X, end.To.Y));
-        var text = Text(end.Text, 11, faint, end.Label.Width, semiBold: false);
+        var text = Text(end.Text, 11 * _laidOutScale, faint, end.Label.Width, semiBold: false);
         context.DrawText(text, new Point(end.Label.X, end.Label.Y + ((end.Label.Height - text.Height) / 2)));
     }
 
@@ -161,9 +169,6 @@ internal sealed partial class GraphCanvas
 
         context.DrawRectangle(Brush("Brush.Surface2"), new Pen(Brush("Brush.Hairline"), 1), rect, Radius, Radius);
         var k = node.Scale;
-        var chip = Graph?.ChipFor(node);
-        var chipText = chip is null ? null : Text(chip, 11 * k, Brush("Brush.InkMuted"), rect.Width / 3, semiBold: false);
-        var chipWidth = chipText is null ? 0 : chipText.Width + (16 * k);
         var iconSize = GraphBlockIcons.Size * k;
         using (context.PushTransform(Matrix.CreateScale(k, k) * Matrix.CreateTranslation(rect.X + (12 * k), rect.Y + ((rect.Height - iconSize) / 2))))
         {
@@ -171,21 +176,39 @@ internal sealed partial class GraphCanvas
         }
 
         var textX = rect.X + (12 * k) + iconSize + (12 * k);   // the icon, then a 12 px gap
-        var width = rect.Right - (12 * k) - textX - (chipWidth > 0 ? chipWidth + (8 * k) : 0);
-        context.DrawText(Text(node.Title, 13 * k, Brush("Brush.Ink"), width, semiBold: true), new Point(textX, rect.Y + (8 * k)));
-        if (chipText is not null)
-        {
-            var box = new Rect(rect.Right - (12 * k) - chipWidth, rect.Y + (6 * k), chipWidth, chipText.Height + (4 * k));
-            context.DrawRectangle(brush: null, new Pen(Brush("Brush.Hairline"), 1), box, box.Height / 2, box.Height / 2);
-            context.DrawText(chipText, new Point(box.X + (8 * k), box.Y + (2 * k)));
-        }
-
+        DrawTitleLine(context, node, rect, textX, k);
         var lineWidth = rect.Right - (12 * k) - textX;
         context.DrawText(Text(node.Line.Length > 0 ? node.Line : node.Type, 11 * k, Brush("Brush.InkMuted"), lineWidth, semiBold: false), new Point(textX, rect.Y + (27 * k)));
         if (node.StatusWord.Length > 0)
         {
             context.DrawText(Text(node.Glyph + " " + node.StatusWord, 11 * k, Brush(ToneKey(node.Tone)), lineWidth, semiBold: false), new Point(textX, rect.Bottom - (16 * k)));
         }
+    }
+
+    // The card's title line: the title on the left; on the right the server's findings on this step (#3803: "⚠ 1" or "✕ 2" in the attention or
+    // error tone) and left of it the card's chip ("off"). The title starts at textX, right of the block's icon, and gives way to both.
+    private void DrawTitleLine(DrawingContext context, GraphNodeViewModel node, Rect rect, double textX, double k)
+    {
+        var right = rect.Right - (12 * k);
+        if (node.FindingMark.Length > 0)
+        {
+            var mark = Text(node.FindingMark, 11 * k, Brush(node.IsFindingError ? "Brush.Error" : "Brush.Attention"), MarkWidth * k, semiBold: true);
+            context.DrawText(mark, new Point(right - mark.Width, rect.Y + (9 * k)));
+            right -= mark.Width + (8 * k);
+        }
+
+        var chip = Graph?.ChipFor(node);
+        if (chip is not null)
+        {
+            var chipText = Text(chip, 11 * k, Brush("Brush.InkMuted"), rect.Width / 3, semiBold: false);
+            var box = new Rect(right - chipText.Width - (16 * k), rect.Y + (6 * k), chipText.Width + (16 * k), chipText.Height + (4 * k));
+            context.DrawRectangle(brush: null, new Pen(Brush("Brush.Hairline"), 1), box, box.Height / 2, box.Height / 2);
+            context.DrawText(chipText, new Point(box.X + (8 * k), box.Y + (2 * k)));
+            right = box.X - (8 * k);
+        }
+
+        var width = Math.Max(0, right - textX);
+        context.DrawText(Text(node.Title, 13 * k, Brush("Brush.Ink"), width, semiBold: true), new Point(textX, rect.Y + (8 * k)));
     }
 
 #pragma warning disable IDE0072 // None and Muted share the subtle ink
@@ -218,13 +241,16 @@ internal sealed partial class GraphCanvas
 
     private Point ToWorld(Point screen) => new((screen.X - Pan.X) / Zoom, (screen.Y - Pan.Y) / Zoom);
 
-    private static FormattedText Text(string text, double size, IBrush brush, double maxWidth, bool semiBold) =>
-        new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, new Typeface(FontFamily.Default, FontStyle.Normal, semiBold ? FontWeight.SemiBold : FontWeight.Normal), size, brush)
+    private FormattedText Text(string text, double size, IBrush brush, double maxWidth, bool semiBold)
+    {
+        _drawn.Add((text, size));
+        return new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, new Typeface(FontFamily.Default, FontStyle.Normal, semiBold ? FontWeight.SemiBold : FontWeight.Normal), size, brush)
         {
             MaxTextWidth = maxWidth,
             MaxLineCount = 1,
             Trimming = TextTrimming.CharacterEllipsis,
         };
+    }
 
     private IBrush Brush(string key) => this.TryFindResource(key, ActualThemeVariant, out var value) && value is IBrush brush ? brush : Brushes.Gray;
 }

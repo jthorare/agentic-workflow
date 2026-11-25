@@ -73,8 +73,10 @@ internal sealed partial class TerminalViewViewModel
 
         if (IsChord(key))
         {
+            // A chord that moves nothing (the pane is still connecting, no card) passes through, so the shell can cycle its regions.
+            var before = Side;
             SwapSide();
-            return TerminalKeyRoute.Handled;
+            return Side == before ? TerminalKeyRoute.Page : TerminalKeyRoute.Handled;
         }
 
         if (Side == TerminalSide.Pane)

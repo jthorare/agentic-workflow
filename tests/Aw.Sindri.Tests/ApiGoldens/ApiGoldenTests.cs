@@ -131,6 +131,8 @@ public sealed class ApiGoldenTests
         slug.StartsWith("profile", StringComparison.Ordinal) || slug.StartsWith("linear-connect", StringComparison.Ordinal) || slug.StartsWith("linear-disconnect", StringComparison.Ordinal)
         || string.Equals(slug, "workflows-slug-activate", StringComparison.Ordinal) || string.Equals(slug, "workflows-slug-pause", StringComparison.Ordinal)   // a session is refused (#3199)
         || string.Equals(slug, "sessions-start", StringComparison.Ordinal) || string.Equals(slug, "sessions-worktree", StringComparison.Ordinal)
+        || string.Equals(slug, "proposals-id-reject", StringComparison.Ordinal)   // why: rejecting a proposal is the owner's decision (#3787); a session gets SND-AUTH-002 before the id is read
+        || string.Equals(slug, "setup-accounts", StringComparison.Ordinal)   // why: connecting and disconnecting an account are the owner's (first-run spec decisions 13 and 14): a session gets SND-AUTH-002
         || string.Equals(slug, "workflow-runs-run-seen", StringComparison.Ordinal);   // why: "seen" is the owner's own read of a failed run (#3733); a session that marked it would take the row off Home before the owner saw it
 
     private static string HumanGolden((string Slug, string Scenario) row) =>

@@ -116,16 +116,7 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
     {
         var read = ++_reads;
         _url = url;
-        if (!string.Equals(Id, runId, StringComparison.Ordinal))
-        {
-            if (!string.Equals(_toMarkSeen, runId, StringComparison.Ordinal))
-            {
-                _toMarkSeen = null;   // another run: the old open's mark is not wanted
-            }
-
-            Empty(runId);
-        }
-
+        SwitchTo(runId);
         IsReading = Groups.Count == 0;
         if (IsReading)
         {
@@ -141,13 +132,36 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
         IsReading = false;
         if (run.IsError)
         {
+            if (string.Equals(_startingId, runId, StringComparison.Ordinal))
+            {
+                ShowStarting(runId);   // the views row is not there yet: not a failure
+                return;
+            }
+
             (IsFailed, FailedText) = (true, Labels.WfRunFailed(run.Error));
             return;
         }
 
+        (_startingId, _timedOutId, DidNotStart) = (null, null, false);   // the run landed, late or not: it replaces the did-not-start page
         (IsFailed, FailedText) = (false, string.Empty);
         Show(run.Value);
         await MarkSeen(url, run.Value, cancellationToken).ConfigureAwait(true);
+    }
+
+    // A read of another run empties the page first; the old open's mark is not wanted then.
+    private void SwitchTo(string runId)
+    {
+        if (string.Equals(Id, runId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (!string.Equals(_toMarkSeen, runId, StringComparison.Ordinal))
+        {
+            _toMarkSeen = null;
+        }
+
+        Empty(runId);
     }
 
     // Another run: nothing of the old one stays.
@@ -195,6 +209,7 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
         ErrorText = run.Error ?? string.Empty;
         OutputsText = WorkflowJson.Pretty(run.Outputs);
         Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode))];
+        // No next-run time on purpose (#4188): this page shows a past run, so its Schedule card carries no "next ..." chip.
         Graph = Shape is { } shape && shape.Revision == run.Revision ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(shape, Statuses(run))) : null;
         Changed();
     }

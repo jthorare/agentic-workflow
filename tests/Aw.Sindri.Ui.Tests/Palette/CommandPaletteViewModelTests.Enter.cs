@@ -82,4 +82,35 @@ public sealed partial class CommandPaletteViewModelTests
 
         Assert.False(palette.Entries.Single(e => e.Id == "CreateItem").IsEnabled);
     }
+
+    // Issue 3717: Add project (the AttachProject row) opens the Add project sheet, as the Projects page's button does, instead of copying its command.
+    [Fact]
+    public async Task Add_project_opens_the_sheet_instead_of_copying_its_command()
+    {
+        var opened = 0;
+        var controls = new CatalogViewModel(_clipboard, _clock);
+        controls.Show(_api, _server, AwJson.Deserialize<CommandList>(Encoding.UTF8.GetBytes(GoldenFiles.Api("commands", "catalog")), SindriApiClient.Json).Value);
+        var palette = new CommandPaletteViewModel(controls, _pages.Add, _history.Add) { AddProject = () => opened++ };
+        palette.Open();
+        var add = palette.Entries.Single(e => e.Id == "AttachProject");
+        _ = await _clipboard.SetText(string.Empty, Token);
+
+        Assert.Equal((true, Labels.Ready), (add.IsEnabled, add.Status));
+        await palette.Run(add, Token);
+
+        Assert.Equal((1, false, string.Empty), (opened, palette.IsOpen, _clipboard.Text));
+        Assert.Empty(_pages);
+    }
+
+    // Without a sheet to open (no shell), Add project is not called ready, and Enter doesn't copy it either.
+    [Fact]
+    public void Add_project_without_a_sheet_to_open_is_not_runnable()
+    {
+        var controls = new CatalogViewModel(_clipboard, _clock);
+        controls.Show(_api, _server, AwJson.Deserialize<CommandList>(Encoding.UTF8.GetBytes(GoldenFiles.Api("commands", "catalog")), SindriApiClient.Json).Value);
+        var palette = new CommandPaletteViewModel(controls, _pages.Add, _history.Add);
+        palette.Open();
+
+        Assert.False(palette.Entries.Single(e => e.Id == "AttachProject").IsEnabled);
+    }
 }

@@ -1,13 +1,15 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:cb="using:Aw.Sindri.Ui.ViewModels.Connections"
+             xmlns:vm="using:Aw.Sindri.Ui.ViewModels"
              x:Class="Aw.Sindri.Ui.Views.Connections.ServiceTileView"
              x:DataType="cb:ServiceTileViewModel">
-  <!-- One service tile (#2537): the service, a status chip, and ONE primary button (Connect, Add token, Try again or Reconnect; a connected tile has none). Connected, it shows the account
+  <!-- One service tile (#2537): the service, a status chip, and ONE primary button (Add token, Connect, Try again or Reconnect; a connected tile has none). Connected, it shows the account
        and the last use, with a menu for Reconnect and Disconnect. A service that needs a client id or a token asks for it on the tile, with one help line, a link to the provider's page and
        the reason the button waits. A failed or cancelled sign-in shows here. Hover and pressed come from the shared clickable class. -->
   <UserControl.Styles>
     <Style Selector="TextBlock.tile-chip.ok"><Setter Property="Foreground" Value="{DynamicResource Brush.Success}" /></Style>
+    <Style Selector="TextBlock.step-detail"><Setter Property="Margin" Value="12,0,0,0" /></Style>
     <Style Selector="TextBlock.tile-chip.attention"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
   </UserControl.Styles>
   <Border x:Name="ServiceTileFrame" Classes="card clickable" Width="260" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
@@ -51,12 +53,22 @@
       <TextBlock x:Name="ServiceTileLastUsed" Classes="caption subtle" Text="{Binding LastUsedText}" IsVisible="{Binding IsConnected}" AutomationProperties.AccessibilityView="Raw" />
       <TextBlock x:Name="ServiceTileAttention" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding ReasonText}" IsVisible="{Binding HasReason}" TextWrapping="Wrap" ToolTip.Tip="{Binding ReasonTip}" />
 
+      <!-- #4357: a service with a key asks for a token first, under three numbered steps; GitHub and Linear swap to their own OAuth app's fields with the link under the input. -->
       <StackPanel x:Name="ServiceTileInput" Spacing="{StaticResource Space.XS}" IsVisible="{Binding IsAsking}">
+        <ItemsControl x:Name="ServiceTileSteps" ItemsSource="{Binding TokenSteps}" IsVisible="{Binding ShowTokenSteps}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:TokenStep">
+              <TextBlock Classes="caption" Classes.subtle="{Binding IsDetail}" Classes.step-detail="{Binding IsDetail}" Text="{Binding Text}" TextWrapping="Wrap" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
         <TextBox x:Name="ServiceTileClientId" Text="{Binding ClientId, Mode=TwoWay}" PlaceholderText="{Binding Text.TileClientLabel}" IsVisible="{Binding NeedsClientId}" AutomationProperties.Name="{Binding Text.TileClientLabel}" />
         <TextBox x:Name="ServiceTileClientSecret" PasswordChar="●" Text="{Binding ClientSecret.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.TileSecretLabel}" IsVisible="{Binding NeedsSecret}" AutomationProperties.Name="{Binding Text.TileSecretLabel}" />
         <TextBox x:Name="ServiceTileToken" PasswordChar="●" Text="{Binding Token.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.TileTokenLabel}" IsVisible="{Binding TakesToken}" AutomationProperties.Name="{Binding Text.TileTokenLabel}" />
-        <TextBlock x:Name="ServiceTileHelp" Classes="caption subtle" Text="{Binding HelpText}" TextWrapping="Wrap" />
+        <TextBlock x:Name="ServiceTileHelp" Classes="caption subtle" Text="{Binding HelpText}" IsVisible="{Binding HasHelpText}" TextWrapping="Wrap" />
         <Button x:Name="ServiceTileHelpLink" Content="{Binding HelpLinkText}" IsVisible="{Binding HasHelpLink}" Click="OnHelp" HorizontalAlignment="Left" />
+        <Button x:Name="ServiceTileUseOAuth" Classes="link" Content="{Binding Text.UseOAuth}" IsVisible="{Binding ShowUseOAuth}" Click="OnUseOAuth" HorizontalAlignment="Left" />
+        <Button x:Name="ServiceTileUseToken" Classes="link" Content="{Binding Text.UseToken}" IsVisible="{Binding ShowUseToken}" Click="OnUseToken" HorizontalAlignment="Left" />
         <TextBlock x:Name="ServiceTileReason" Classes="caption subtle" Text="{Binding BlockedReason}" IsVisible="{Binding HasBlockedReason}" TextWrapping="Wrap" />
       </StackPanel>
 
