@@ -66,7 +66,7 @@ internal sealed partial class TodoPanel : UserControl
     // the From elsewhere line sits right under the last todo; the spare slot under the line takes the rest and the card keeps its height (#2908).
     private void FixCollapsedHeight()
     {
-        var row = this.TryFindResource("Row.Height.Default", ActualThemeVariant, out var found) && found is double height ? height : DefaultRowHeight;
+        var row = RowHeight();
         var open = Panel is { IsAttentionOpen: true };
         if (this.FindControl<Grid>("TodoCollapsed") is { } collapsed)
         {
@@ -78,6 +78,10 @@ internal sealed partial class TodoPanel : UserControl
             slot.Height = open ? 0 : row * (Panel?.SpareSlots ?? 0);
         }
     }
+
+    // Row.Height.Default from the theme, the height the skeleton bars and the rows already use.
+    private double RowHeight() =>
+        this.TryFindResource("Row.Height.Default", ActualThemeVariant, out var found) && found is double height ? height : DefaultRowHeight;
 
     // An open attention row is drawn at its full height, which grows the panel on the owner's key (D13); folded, the body is five slots again.
     private void OnDataContext(object? sender, EventArgs e)

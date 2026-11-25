@@ -5,7 +5,7 @@ internal sealed partial class TodoPanelViewModel
 {
     private const int CardSlots = CollapsedRows + 1;   // five rows and the Show all slot
 
-    private int _attentionSlots;
+    private int AttentionSlots { get; set; }
 
     /// <summary>How many row-high slots the collapsed card takes under its header, the From elsewhere line aside: 6 (five rows and the Show all slot), or 1 when the list is empty.</summary>
     public int CollapsedSlots => IsEmpty && !IsLoading && !IsExpanded && Error.Length == 0 ? 1 : CardSlots;
@@ -19,7 +19,7 @@ internal sealed partial class TodoPanelViewModel
     /// </summary>
     public int BodySlots => IsLoading || HasFootSlot || CollapsedSlots < CardSlots
         ? CollapsedSlots
-        : Math.Clamp(_attentionSlots + Rows.Count, 1, CollapsedRows);
+        : Math.Clamp(AttentionSlots + Rows.Count, 1, CollapsedRows);
 
     /// <summary>The slots under the From elsewhere line that keep the card at one height (D13): what the body leaves of the collapsed slots.</summary>
     public int SpareSlots => CollapsedSlots - BodySlots;
@@ -27,7 +27,7 @@ internal sealed partial class TodoPanelViewModel
     // The rows are patched: the attention rows take the first slots, the todo rows follow.
     private void TakeSlots(int attention)
     {
-        _attentionSlots = attention;
+        AttentionSlots = attention;
         RaiseSlots();
     }
 
