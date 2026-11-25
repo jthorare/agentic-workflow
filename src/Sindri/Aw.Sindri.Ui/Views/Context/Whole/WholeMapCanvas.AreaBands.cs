@@ -27,13 +27,15 @@ internal sealed partial class WholeMapCanvas
                 continue;
             }
 
+            if (band.IsEmpty)
+            {
+                context.DrawText(Text(string.Concat(band.Title, ": ", Labels.ContextAreaNone), TextSize, muted, rect.Width), new Point(rect.X, rect.Y));   // an empty band is one muted line, not a column
+                continue;
+            }
+
             var title = Text(band.Title, LaneTitleSize, ink, rect.Width, bold: true);
             context.DrawText(title, new Point(rect.X, rect.Y));
             context.DrawText(Text(band.Caption, TextSize, muted, rect.Width), new Point(rect.X, rect.Y + 20));   // the caption on its own line under the title
-            if (band.IsEmpty)
-            {
-                context.DrawText(Text(Labels.ContextAreaNone, TextSize, muted, rect.Width), new Point(rect.X, rect.Y + 42));
-            }
         }
     }
 

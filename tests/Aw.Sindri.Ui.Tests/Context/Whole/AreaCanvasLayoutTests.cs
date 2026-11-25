@@ -27,13 +27,15 @@ public sealed class AreaCanvasLayoutTests
     }
 
     [Fact]
-    public void A_band_with_no_nodes_is_as_wide_as_its_heading_and_says_none_in_this_area()
+    public void A_band_with_no_nodes_takes_no_column_and_is_noted_in_one_line_under_the_bands()
     {
         var map = AreaCanvasLayout.Place([Node("OrderService", "code")], [], 1440);
 
         var entry = map.AreaBands!.Single(b => string.Equals(b.Title, "Entry points", StringComparison.Ordinal));
         Assert.True(entry.IsEmpty);
-        Assert.InRange(entry.Rect.Width, AreaCanvasLayout.EmptyWidth, 200);   // the title, its hint under it, never a full column
+        var core = map.AreaBands!.Single(b => string.Equals(b.Title, "Core", StringComparison.Ordinal));
+        Assert.Equal(16, core.Rect.X);   // the empty band takes no column: Core starts at the margin
+        Assert.True(entry.Rect.Y >= map.Nodes.Max(n => n.Rect.Bottom) && entry.Rect.Bottom <= map.World.Height);   // its note sits under the bands, inside the world
     }
 
     [Fact]

@@ -20,15 +20,13 @@ internal static class AreaCanvasLayout
     /// <summary>The space around the world and between bands.</summary>
     internal const double Gap = 12;
 
-    /// <summary>The width of an empty band: its heading and "none in this area".</summary>
-    internal const double EmptyWidth = 128;
-
     /// <summary>The fewest rows a group's column is cut at when the layout looks for the best fit.</summary>
     internal const int MinRows = 4;
 
     /// <summary>The most rows a group's column holds before the group wraps into another column.</summary>
     internal const int MaxRows = 10;
 
+    private const double NoteHeight = 22;
     private const double TitleChar = 8;
     private const double MinWidth = 140;
     private const double MaxWidth = 340;
@@ -102,7 +100,10 @@ internal static class AreaCanvasLayout
         x = coreLeft + coreWidth + Gap;
 
         (x, bottom) = Outer(new OuterBand(data, Labels.ContextAreaData, Labels.ContextAreaDataWhat), x, Math.Max(bottom, coreBottom), sink);
-        var world = new WholeRect(0, 0, x - Gap + Margin, Math.Max(bottom, coreBottom) + Margin);
+        var contentBottom = Math.Max(bottom, coreBottom);
+        var notesRight = AddNotes(sink.Notes, headings, contentBottom - 8);
+        var worldWidth = Math.Max(x - Gap + Margin, notesRight > 0 ? notesRight + Margin : 0);
+        var world = new WholeRect(0, 0, worldWidth, contentBottom + (sink.Notes.Count > 0 ? NoteHeight : 0) + Margin);
         return new WholeMapGeometry(world, ByArea: false, [], [], placed, [], Links(edges, placed), [], [], headings);
     }
 
@@ -116,10 +117,33 @@ internal static class AreaCanvasLayout
         _ => Labels.ContextAreaGroupServices,
     };
 
+    // The notes of the empty bands in one row from the margin; returns where the row ends (0 with no note).
+    private static double AddNotes(List<string> notes, List<PlacedAreaBand> headings, double y)
+    {
+        var x = Margin;
+        foreach (var title in notes)
+        {
+            var width = NoteWords(title);
+            headings.Add(new PlacedAreaBand(title, string.Empty, 0, new WholeRect(x, y, width, 18), Sub: false));
+            x += width + Gap + Gap;
+        }
+
+        return notes.Count > 0 ? x - Gap - Gap : 0;
+    }
+
+    // The line an empty band is drawn as: "Entry points: none in this area".
+    private static double NoteWords(string title) => (title.Length + 2 + Labels.ContextAreaNone.Length) * CharWidth;
+
     private static (double Right, double Bottom) Outer(OuterBand band, double x, double bottom, Drawn sink)
     {
         var members = band.Members;
-        var width = Math.Max(members.Count == 0 ? EmptyWidth : GridWidth(members, sink.MaxRows), HeadingWords(band.Title, band.Caption));
+        if (members.Count == 0)
+        {
+            sink.Notes.Add(band.Title);   // an empty band takes no column: one muted line under the bands
+            return (x, bottom);
+        }
+
+        var width = Math.Max(GridWidth(members, sink.MaxRows), HeadingWords(band.Title, band.Caption));
         sink.Headings.Add(new PlacedAreaBand(band.Title, band.Caption, members.Count, new WholeRect(x, 0, width, 38), Sub: false));
         var next = Grid([.. members.OrderBy(n => n.Label, StringComparer.Ordinal)], x, HeadingHeight, sink.Nodes, sink.MaxRows);
         return (x + width + Gap, Math.Max(bottom, next));
@@ -181,5 +205,8 @@ internal static class AreaCanvasLayout
 
     private sealed record OuterBand(List<WholeNode> Members, string Title, string Caption);
 
-    private sealed record Drawn(List<PlacedNode> Nodes, List<PlacedAreaBand> Headings, int MaxRows);
+    private sealed record Drawn(List<PlacedNode> Nodes, List<PlacedAreaBand> Headings, int MaxRows)
+    {
+        internal List<string> Notes { get; } = [];
+    }
 }
