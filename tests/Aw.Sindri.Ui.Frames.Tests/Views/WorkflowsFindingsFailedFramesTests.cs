@@ -61,7 +61,7 @@ public sealed class WorkflowsFindingsFailedFramesTests : FrameHost
         await Until(window, () => !Visible(window, "FindingsFailed"), "the failed-check line stayed after a good answer");
     });
 
-    private static readonly int[] RenderWidths = [1280, 1000];
+    private static readonly int[] _renderWidths = [1280, 1000];
 
     // A render for qa (AW_UI_FRAMES=1 saves it under frames/ in the test output; without it nothing is written): the failed-check line with its Retry, the fake validate answering an error.
     [Fact]
@@ -69,7 +69,7 @@ public sealed class WorkflowsFindingsFailedFramesTests : FrameHost
     {
         var window = await OnTheWorkflowWithAFailedCheck();
 
-        foreach (var width in RenderWidths)
+        foreach (var width in _renderWidths)
         {
             window.Width = width;
             Settle(window);
