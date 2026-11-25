@@ -91,7 +91,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
             return;
         }
 
-        (BaseRevision, Nodes, _edges, Groups) = (workflow.Value.LatestRevision, ReadNodes(workflow.Value.Spec), ReadEdges(workflow.Value.Spec), blocks.Value.Groups);
+        (BaseRevision, Nodes, _edges, Groups, SpecRead) = (workflow.Value.LatestRevision, ReadNodes(workflow.Value.Spec), ReadEdges(workflow.Value.Spec), blocks.Value.Groups, Kept(workflow.Value.Spec));
         (NeedsReload, ReloadPromptText, FailureText) = (false, string.Empty, string.Empty);
         Select(_selected ?? string.Empty);   // the form stays on its node, with what the new revision holds
     }
