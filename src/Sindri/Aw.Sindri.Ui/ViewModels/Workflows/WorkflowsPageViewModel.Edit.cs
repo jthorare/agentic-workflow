@@ -123,27 +123,7 @@ internal sealed partial class WorkflowsPageViewModel
             return;
         }
 
-        if (IsNewStep)
-        {
-            var slugNew = Runs.Slug;
-            var added = await Editor.AddPendingStep(cancellationToken).ConfigureAwait(true);
-            await RereadRuns(slugNew, cancellationToken).ConfigureAwait(true);
-            if (added)
-            {
-                CloseSettings();   // the step exists now; a refusal keeps the sheet open with the refusal shown and every typed value
-            }
-
-            return;
-        }
-
-        var changed = Editor.Fields.Where(f => f.IsChanged).Select(f => (f.Name, f.Text)).ToList();
-        var (slug, before) = (Runs.Slug, Editor.BaseRevision);
-        await Editor.EditFields(changed, cancellationToken).ConfigureAwait(true);
-        await RereadRuns(slug, cancellationToken).ConfigureAwait(true);   // the page shows the revision Sindri holds now, so a graph edit next is not held as "never showed"
-        if (string.Equals(Runs.Slug, slug, StringComparison.Ordinal) && Editor.BaseRevision > before && Runs.Shown is { } shown && shown.LatestRevision == Editor.BaseRevision)
-        {
-            NoteSaved();
-        }
+        await (IsNewStep ? SaveNewStep(cancellationToken) : SaveFields(cancellationToken)).ConfigureAwait(true);
     }
 
     /// <summary>Reads the workflow again from the sheet's Reload button.</summary>

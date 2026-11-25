@@ -114,6 +114,7 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(Workflows.NodeSummaryView))]
 [JsonSerializable(typeof(Workflows.ActivateWorkflowBody))]
 [JsonSerializable(typeof(Workflows.ApplyWorkflowOpsBody))]
+[JsonSerializable(typeof(Workflows.ReplaceWorkflowBody))]
 [JsonSerializable(typeof(Workflows.ValidateWorkflowBody))]   // Workflows page P0 (#3191): the contract records the ui lane builds on
 [JsonSerializable(typeof(Workflows.WorkflowValidated))]
 [JsonSerializable(typeof(Workflows.TestWorkflowBody))]

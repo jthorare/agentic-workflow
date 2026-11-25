@@ -11,8 +11,28 @@ public static class PageKinds
     /// <returns>True for a 'screen' or 'dialog' surface, and for a 'route' implemented from a '.tsx' or '.jsx' file; never a 'pane', 'api' or any other kind.</returns>
     public static bool IsPage(GraphNode node, IEnumerable<GraphEdge> edges)
     {
-        ArgumentNullException.ThrowIfNull(node);
         ArgumentNullException.ThrowIfNull(edges);
+        return IsPageIn(node, ComponentImplemented(edges));
+    }
+
+    /// <summary>The keys of the nodes some '.tsx' or '.jsx' file implements: one pass over the edges, to ask <see cref="IsPageIn(GraphNode, IReadOnlySet{string})"/> per node without a scan each.</summary>
+    /// <param name="edges">The graph's edges; only 'implements' edges are read.</param>
+    /// <returns>The node keys, ordinal.</returns>
+    public static IReadOnlySet<string> ComponentImplemented(IEnumerable<GraphEdge> edges)
+    {
+        ArgumentNullException.ThrowIfNull(edges);
+        return edges.Where(e => e.Type == EdgeType.Implements && _componentExtensions.Any(x => e.From.Name.EndsWith(x, StringComparison.OrdinalIgnoreCase)))
+            .Select(e => e.To.Value).ToHashSet(StringComparer.Ordinal);
+    }
+
+    /// <summary>Whether <paramref name="node"/> is a page: the same answer as <see cref="IsPage(GraphNode, IEnumerable{GraphEdge})"/>, given the set from <see cref="ComponentImplemented"/>.</summary>
+    /// <param name="node">The node.</param>
+    /// <param name="componentImplemented">The keys a '.tsx' or '.jsx' file implements.</param>
+    /// <returns>True for a 'screen' or 'dialog' surface, and for a 'route' in the set; never any other kind.</returns>
+    public static bool IsPageIn(GraphNode node, IReadOnlySet<string> componentImplemented)
+    {
+        ArgumentNullException.ThrowIfNull(node);
+        ArgumentNullException.ThrowIfNull(componentImplemented);
         if (node.Key.Kind != NodeKind.Surface)
         {
             return false;
@@ -21,7 +41,7 @@ public static class PageKinds
         return SurfaceKindOf(node.Key) switch
         {
             "screen" or "dialog" => true,
-            "route" => edges.Any(e => e.Type == EdgeType.Implements && e.To.Value == node.Key.Value && _componentExtensions.Any(x => e.From.Name.EndsWith(x, StringComparison.OrdinalIgnoreCase))),
+            "route" => componentImplemented.Contains(node.Key.Value),
             _ => false,
         };
     }

@@ -45,7 +45,7 @@ Sindri runs on your machine, on `127.0.0.1`. An OAuth app needs a callback addre
 
 Each preset file lists its ways to connect under `auth`, the default first (`"auth": ["key", "oauth"]`). With no `--kind`, `--preset github`, `--preset linear` and `--preset slack` store a key. Pass `--kind oauth` to sign in through your own OAuth app instead (GitHub and Linear only).
 
-**Sindri checks the key before it stores it.** It makes one call to the service with it: GitHub `GET https://api.github.com/user`, Slack `GET https://slack.com/api/auth.test` (it reads `"ok": true`), Linear a `POST` of `{ viewer { id } }` to `https://api.linear.app/graphql`. A key the service refuses is `SND-CONN-018`, and a service Sindri can't reach is `SND-CONN-019`. In both cases nothing is stored and no row is written. A key for a hand-made `--kind rest` connection (no preset) is stored without a check. Sindri trims spaces and newlines from both ends of the key first, so a paste that ends in a newline still works. The check waits 15 s at most. A 429, or a 403 that carries `Retry-After` or `x-ratelimit-remaining: 0` (GitHub's secondary rate limit), is `SND-CONN-019` "rate limiting": wait a minute and try again. A plain 403 is a refused key (`SND-CONN-018`).
+**Sindri checks the key before it stores it.** It makes one call to the service with it: GitHub `GET https://api.github.com/user`, Slack `GET https://slack.com/api/auth.test` (it reads `"ok": true`), Linear a `POST` of `{ viewer { id } }` to `https://api.linear.app/graphql`. A key the service refuses is `SND-CONN-018`, and a service Sindri can't reach is `SND-CONN-019`. In every case nothing is stored and no row is written. A key for a hand-made `--kind rest` connection (no preset) is stored without a check. Sindri trims spaces and newlines from both ends of the key first, so a paste that ends in a newline still works. The check waits 15 s at most. A 429, or a 403 that carries `Retry-After` or `x-ratelimit-remaining: 0` (GitHub's secondary rate limit), is `SND-CONN-020` "rate limiting": wait a minute and try again. A plain 403 is a refused key (`SND-CONN-018`).
 
 ## Signing in (oauth)
 
@@ -114,11 +114,11 @@ The row in `ledger.db` (table `connection`) has the name, kind, preset, non-secr
 | `needs-sign-in` | The provider refused the credential; sign in again |
 | `error` | The last test failed for another reason (see the reason) |
 
-`sindri connection test <name>` calls the connection's probe URL (a cheap authenticated GET the preset names) with the stored credential and updates the status. A key connection with a preset runs the same check as the add. When that check can't reach the service (`SND-CONN-019`: no answer or rate limited), the test answers "not connected" and leaves the status as it was, because a network failure says nothing about the key. The reason it prints is the error's code and fixed title, never the provider's body, which can repeat your token.
+`sindri connection test <name>` calls the connection's probe URL (a cheap authenticated GET the preset names) with the stored credential and updates the status. A key connection with a preset runs the same check as the add. When that check can't reach the service (`SND-CONN-019` no answer, `SND-CONN-020` rate limited), the test answers "not connected" and leaves the status as it was, because a network failure says nothing about the key. The reason it prints is the error's code and fixed title, never the provider's body, which can repeat your token.
 
 ## Errors
 
-`SND-CONN-001` to `SND-CONN-011`, `SND-CONN-018` and `SND-CONN-019` are listed in [errors.md](errors.md): not found, needs sign-in, sign-in timeout, state mismatch, refresh failed, secret store unavailable, preset needs a client id, invalid name, consent denied, already exists, key-based (no browser sign-in), the service refused the key, and the service could not be reached to check the key.
+`SND-CONN-001` to `SND-CONN-011`, `SND-CONN-018` to `SND-CONN-020` are listed in [errors.md](errors.md): not found, needs sign-in, sign-in timeout, state mismatch, refresh failed, secret store unavailable, preset needs a client id, invalid name, consent denied, already exists, key-based (no browser sign-in), the service refused the key, the service could not be reached to check the key, and the service is rate limiting Sindri.
 
 ## In the app
 

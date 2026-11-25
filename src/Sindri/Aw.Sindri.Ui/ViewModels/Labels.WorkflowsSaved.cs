@@ -20,6 +20,12 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string WfSaved(int revision) => string.Create(CultureInfo.InvariantCulture, $"Saved as revision {revision}.");
 
+    /// <summary>The line after an undo: the undo is one more revision, so it names itself and the revision it wrote.</summary>
+    /// <param name="revision">The revision the undo saved.</param>
+    /// <param name="notLive">True when the workflow is on and the new revision is not the live one.</param>
+    /// <returns>The words.</returns>
+    internal static string WfUndone(int revision, bool notLive) => string.Create(CultureInfo.InvariantCulture, $"Undone. Saved as revision {revision}.{(notLive ? " Not live yet." : string.Empty)}");
+
     /// <summary>The button that turns the newest saved revision on.</summary>
     internal const string WfMakeLive = "Make live";
 
