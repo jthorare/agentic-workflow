@@ -112,13 +112,13 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     public bool HasStatus => StatusText.Length > 0;
 
     /// <summary>Why the last try failed, in words; empty otherwise.</summary>
-    public string ErrorText { get; private set { Set(ref field, value); CanRetry = value.Length > 0 && BlockedReason.Length == 0; Raise(nameof(HasError)); RaiseState(); } } = string.Empty;
+    public string ErrorText { get; private set { Set(ref field, value); ErrorIsCaution = false; CanRetry = value.Length > 0 && BlockedReason.Length == 0; Raise(nameof(HasError)); RaiseState(); } } = string.Empty;
 
     /// <summary>True when the last try failed or was cancelled.</summary>
     public bool HasError => ErrorText.Length > 0;
 
     /// <summary>True when the last try failed without the service judging the token (SND-CONN-019 not reached, SND-CONN-020 rate limited): the line shows amber, not red (#4428).</summary>
-    public bool ErrorIsCaution { get; private set; }
+    public bool ErrorIsCaution { get; private set => Set(ref field, value); }
 
     /// <summary>The label on the Connect button: "Add token" while the tile takes a token, "Connect" for a browser sign-in.</summary>
     public string ConnectText => TakesToken ? Labels.ConnectAddToken : Labels.ConnectTile;
@@ -230,9 +230,11 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     private async Task Run(CancellationToken cancellationToken)
     {
         var added = await _actions.Add(Body(), cancellationToken).ConfigureAwait(true);
+        var unjudged = KeepToken(added);
         if (added.IsError)
         {
             ErrorText = Labels.ConnectTileFailed(added.Error, Service.Title);
+            ErrorIsCaution = unjudged;
             return;
         }
 
