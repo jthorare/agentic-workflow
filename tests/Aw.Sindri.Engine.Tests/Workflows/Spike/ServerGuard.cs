@@ -18,6 +18,8 @@ internal static class ServerGuard
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Lazy<string>> _launchers = new(StringComparer.Ordinal);
 
 
+    private const string DirectoryPrefix = "aw-sindri-test-guard-";
+
     private const string Watchdog =
         "alive() { kill -0 \"$1\" 2>/dev/null || return 1; case $(ps -o stat= -p \"$1\" 2>/dev/null) in Z*) return 1;; esac; }; "
         + "owner=$1; target=$2; "
@@ -59,9 +61,15 @@ internal static class ServerGuard
             return executable;
         }
 
-        var directory = Path.Combine(Path.GetTempPath(), "aw-sindri-test-guard");
-        _ = Directory.CreateDirectory(directory);
-        Sweep(directory);
+        var directory = Path.Combine(Path.GetTempPath(), DirectoryPrefix + Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
+        if (!Directory.Exists(directory))
+        {
+            // why: first launcher of this host; folders of hosts that died by SIGKILL are swept now, this host's own goes at process exit
+            Sweep(Path.GetTempPath());
+            _ = Directory.CreateDirectory(directory);
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => RemoveOwn(directory);
+        }
+
         var script = new StringBuilder();
         _ = script.Append(CultureInfo.InvariantCulture, $"/bin/sh -c '{Watchdog.Replace("'", "'\\''", StringComparison.Ordinal)}' aw-test-guard {ownerPid} $$ </dev/null >/dev/null 2>&1 &\n");
         _ = script.Append(CultureInfo.InvariantCulture, $"exec '{executable.Replace("'", "'\\''", StringComparison.Ordinal)}' \"$@\"\n");
@@ -89,17 +97,34 @@ internal static class ServerGuard
     /// <returns>The path to start.</returns>
     public static string Wrap(string executable) => Wrap(executable, Environment.ProcessId);
 
-    /// <summary>Deletes the launchers of hosts that are gone.</summary>
-    private static void Sweep(string directory)
+    /// <summary>Deletes this host's launcher folder; the servers already exec'd their script, so nothing reads it after exit.</summary>
+    private static void RemoveOwn(string directory)
     {
-        foreach (var file in Directory.EnumerateFiles(directory, "*.sh"))
+        try
         {
-            var owner = Path.GetFileName(file).Split('-')[0];
+            Directory.Delete(directory, recursive: true);
+        }
+        catch (IOException)
+        {
+            // why: best effort at exit; the next host sweeps it once this pid is gone
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // why: same
+        }
+    }
+
+    /// <summary>Deletes the launcher folders of hosts that are gone.</summary>
+    private static void Sweep(string tempRoot)
+    {
+        foreach (var folder in Directory.EnumerateDirectories(tempRoot, DirectoryPrefix + "*"))
+        {
+            var owner = Path.GetFileName(folder)[DirectoryPrefix.Length..];
             if (int.TryParse(owner, NumberStyles.None, CultureInfo.InvariantCulture, out var pid) && !Exists(pid))
             {
                 try
                 {
-                    File.Delete(file);
+                    Directory.Delete(folder, recursive: true);
                 }
                 catch (IOException)
                 {
