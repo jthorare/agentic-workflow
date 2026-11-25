@@ -223,9 +223,9 @@
           "node": "code:src/layout/PaneResize.ts",
           "title": "src/layout/PaneResize.ts",
           "text": "implements feature:layout.pane-resize",
-          "score": null,
+          "score": 4,
           "why": [
-            "implements→feature:layout.pane-resize"
+            "in the anchor's own scope"
           ],
           "provenance": "deterministic",
           "confirmed": false,
@@ -233,7 +233,7 @@
           "cites": [
             "C1"
           ],
-          "depth": null,
+          "depth": 0,
           "path": null,
           "tokens": 16
         },
@@ -242,10 +242,9 @@
           "node": "code:src/layout/SplitPane.ts",
           "title": "src/layout/SplitPane.ts",
           "text": "implements feature:layout.split-pane, feature:layout.split-pane.orientation",
-          "score": null,
+          "score": 4,
           "why": [
-            "implements→feature:layout.split-pane",
-            "implements→feature:layout.split-pane.orientation"
+            "in the anchor's own scope"
           ],
           "provenance": "deterministic",
           "confirmed": false,
@@ -253,7 +252,7 @@
           "cites": [
             "C1"
           ],
-          "depth": null,
+          "depth": 0,
           "path": null,
           "tokens": 25
         }
@@ -452,5 +451,11 @@
     },
     "truncated": false,
     "anchorsTotal": 2
-  }
+  },
+  "matches": {
+    "matched": 3,
+    "offset": 0,
+    "read": 3
+  },
+  "codeMatched": 2
 }

@@ -36,7 +36,7 @@ public sealed class QueryFetchWindowTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_second_page_reads_only_ranks_101_to_200()
     {
-        var whole = await Engines.Over(SourceOf(Matching)).Query(new ContextQuery("orientation"), Engines.Human(), Token);
+        var whole = await Engines.Over(SourceOf(Matching)).Query(new ContextQuery("orientation") { Window = new QueryWindow(0, Matching) }, Engines.Human(), Token);
         var docs = SourceOf(Matching);
 
         var page = await Engines.Over(docs).Query(new ContextQuery("orientation") { Window = new QueryWindow(100, 100) }, Engines.Human(), Token);
@@ -61,15 +61,15 @@ public sealed class QueryFetchWindowTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task No_window_reads_every_match_and_leaves_the_count_out()
+    public async Task No_window_reads_the_first_10_records_and_still_counts_every_match()
     {
         var docs = SourceOf(Matching);
 
         var result = await Engines.Over(docs).Query(new ContextQuery("orientation"), Engines.Human(), Token);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(Matching, docs.BatchedReads);   // #938: no limit = the whole answer
-        Assert.Null(result.Value.Matches);
+        Assert.Equal(10, docs.BatchedReads);   // #3673: no window = the default page of 10, so the answer stays small
+        Assert.Equal(new RecordMatches(Matched: Matching, Offset: 0, Read: 10), result.Value.Matches);
     }
 
     [Fact, Trait("Lane", "unit")]

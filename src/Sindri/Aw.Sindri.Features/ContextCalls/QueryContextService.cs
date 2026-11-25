@@ -16,7 +16,7 @@ internal sealed class QueryContextService(ContextScopes scopes, IContextEngine e
     public async ValueTask<Result<ContextResult>> Handle(QueryContextRequest request, CancellationToken cancellationToken)
     {
         var depth = QueryRules.ParseDepth(request.Depth);
-        var window = Window(request.Limit, request.Offset);
+        var window = Window(request.Limit, request.Offset ?? request.After);
         var diff = request.Diff is null ? (Result<DiffRange?>)(DiffRange?)null : DiffRange.Parse(request.Diff).Map<DiffRange?>(d => d);
         var repo = request.Repo is null ? (Result<ContextRepoName?>)(ContextRepoName?)null : Repo(request.Repo);
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
