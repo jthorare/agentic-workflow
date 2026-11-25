@@ -14,9 +14,19 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
 {
     /// <summary>The refusal code for a workflow with no active revision.</summary>
     internal const string NotActive = "SND-GRAPH-105";
+    /// <summary>How long a Starting placeholder waits for the server's run row before it says the run did not start.</summary>
+    internal static readonly TimeSpan StartWait = TimeSpan.FromSeconds(10);
+
+    /// <summary>Raised with the run id when a Starting run's 10 s start deadline passes with no run row. The one timer is here; the list row and the run page both read this.</summary>
+    internal event EventHandler<ValueEventArgs<string>>? StartTimedOut;
+
+    private readonly UiContext _ui = new();
+    private readonly Dictionary<string, ITimer> _startTimers = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _didNotStart = new(StringComparer.Ordinal);
     private int _reads;
     private List<RunRowViewModel> _all = [];
     private readonly HashSet<string> _ticked = new(StringComparer.Ordinal);   // ticked run ids survive a re-read
+    private readonly List<string> _starting = [];   // runs Run now started whose views row the server has not shown yet: each is drawn as a Starting placeholder until its real row arrives
 
     /// <summary>The workflow's slug.</summary>
     public string Slug { get; private set => Set(ref field, value); } = string.Empty;
@@ -97,6 +107,7 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
             (_all, StatusFilter, DateFilter) = ([], string.Empty, string.Empty);
             _ticked.Clear();
             Rows.Clear();   // another workflow: none of the old runs stay
+            ClearStarting();
             (Head, DetailText) = (string.Empty, string.Empty);
             (IsFailed, FailedText, IsEmpty, EmptyText) = (false, string.Empty, false, string.Empty);   // nor does the old one's failure or "off" line
             (CanRun, NoticeText) = (false, string.Empty);   // until this one's runs read says it is on
@@ -173,6 +184,13 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
     {
         (IsFailed, FailedText, CanRun) = (false, string.Empty, true);
         _all = [.. list.Runs.Select(run => new RunRowViewModel(run, clock) { IsSelected = _ticked.Contains(run.Id) })];
+        foreach (var id in _starting.Where(s => list.Runs.Any(r => string.Equals(r.Id, s, StringComparison.Ordinal))).ToList())
+        {
+            _ = _starting.Remove(id);   // the real row is here: it replaces the placeholder
+            _ = _didNotStart.Remove(id);
+            StopStartTimer(id);
+        }
+
         foreach (var row in _all)
         {
             row.PropertyChanged += (_, e) =>
@@ -189,7 +207,7 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
 
         var running = list.Runs.Count(r => string.Equals(r.Status, "running", StringComparison.Ordinal));
         Head = list.Runs.Count == 0 ? Labels.WfRunsHeadNone : Labels.WfRunsHead(running, list.Runs.Count);
-        (IsEmpty, EmptyText) = list.Runs.Count == 0 ? (true, Labels.WfRunsNone) : (false, string.Empty);
+        (IsEmpty, EmptyText) = list.Runs.Count == 0 && _starting.Count == 0 ? (true, Labels.WfRunsNone) : (false, string.Empty);
     }
 
     private static string Detail(WorkflowView workflow)

@@ -264,13 +264,18 @@
                     <Button Grid.Column="1" Classes="row-title" Margin="-2,0" Click="OnOpenRun" HorizontalAlignment="Left" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding TimeTip}" ToolTip.Placement="Bottom">
                       <TextBlock Name="RunTime" Classes="body-strong" Text="{Binding TimeText}" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
-                    <TextBlock Grid.Column="2" Name="RunTrigger" Classes="body muted" Text="{Binding TriggerWords}" VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="3" Name="RunRevision" Classes="body muted" Text="{Binding RevisionShort}" VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="4" Name="RunDuration" Classes="body muted" Text="{Binding DurationText}" VerticalAlignment="Center" />
-                    <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Grid.Column="2" Name="RunTrigger" Classes="body muted" IsVisible="{Binding IsShownStatus}" Text="{Binding TriggerWords}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="3" Name="RunRevision" Classes="body muted" IsVisible="{Binding IsShownStatus}" Text="{Binding RevisionShort}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="4" Name="RunDuration" Classes="body muted" IsVisible="{Binding IsShownStatus}" Text="{Binding DurationText}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" IsVisible="{Binding IsShownStatus}">
                       <TextBlock Name="RunErrorGlyph" Text="{Binding ChipGlyph}" Foreground="{DynamicResource Brush.Error}" IsVisible="{Binding IsError}" AutomationProperties.AccessibilityView="Raw" />
                       <TextBlock Name="RunGlyph" Text="{Binding ChipGlyph}" Foreground="{DynamicResource Brush.InkSubtle}" IsVisible="{Binding !IsError}" AutomationProperties.AccessibilityView="Raw" />
                       <TextBlock Name="RunResult" Classes="caption muted" Text="{Binding ResultText}" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Grid.ColumnSpan="4" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" IsVisible="{Binding DidNotStart}" AutomationProperties.AccessibilityView="Raw">
+                      <TextBlock Classes="caption" Text="{Binding DidNotStartText}" AutomationProperties.AutomationId="RunDidNotStart" VerticalAlignment="Center" />
+                      <TextBlock Classes="caption subtle" Text="{Binding DidNotStartHint}" VerticalAlignment="Center" />
+                      <Button Content="{Binding RetryText}" Click="OnRetryStart" AutomationProperties.AutomationId="RunStartRetry" AutomationProperties.Name="{Binding RetryText}" />
                     </StackPanel>
                   </Grid>
                 </Border>
@@ -380,7 +385,10 @@
     <!-- Level 3: one run, every node with its input, output and error. -->
     <StackPanel x:Name="WorkflowRunLevel" Spacing="{StaticResource Size.PanelGap}" IsVisible="{Binding IsRun}">
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <controls:StateChipView x:Name="RunChipName" Word="{Binding Run.ChipWord}" Tone="{Binding Run.ChipToneWord}" Glyph="{Binding Run.ChipGlyph}" />
+        <controls:StateChipView x:Name="RunChipName" Word="{Binding Run.ChipWord}" Tone="{Binding Run.ChipToneWord}" Glyph="{Binding Run.ChipGlyph}" IsVisible="{Binding !Run.DidNotStart}" />
+        <TextBlock Classes="caption" Text="{Binding Run.DidNotStartText}" IsVisible="{Binding Run.DidNotStart}" VerticalAlignment="Center" AutomationProperties.AutomationId="RunPageDidNotStart" />
+        <TextBlock Classes="caption subtle" Text="{Binding Run.DidNotStartHint}" IsVisible="{Binding Run.DidNotStart}" VerticalAlignment="Center" />
+        <Button Content="{Binding Run.StartRetryText}" Click="OnRetryStartRunPage" IsVisible="{Binding Run.DidNotStart}" AutomationProperties.AutomationId="RunPageStartRetry" AutomationProperties.Name="{Binding Run.StartRetryText}" />
         <Button x:Name="RunCancel" Content="{Binding Run.CancelText}" Click="OnCancelRun" IsVisible="{Binding Run.CanCancel}" IsEnabled="{Binding Run.CanPressCancel}" AutomationProperties.Name="{Binding Run.CancelText}" />
       </StackPanel>
       <Border x:Name="RunNoticeName" IsVisible="{Binding Run.HasNotice}" AutomationProperties.Name="{Binding Run.NoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">

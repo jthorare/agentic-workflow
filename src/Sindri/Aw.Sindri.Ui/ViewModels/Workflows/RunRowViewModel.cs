@@ -28,14 +28,38 @@ internal sealed class RunRowViewModel : ObservableObject
         RevisionShort = string.Create(culture, $"r{row.Revision}");
         var seconds = row.Seconds ?? (row.EndedAt is { } ended && !live ? (ended - row.StartedAt).TotalSeconds : (double?)null);
         DurationText = seconds is { } s and >= 0 ? Labels.WfDuration(s) : string.Empty;
-        ResultText = row.Result ?? row.Error ?? string.Empty;
+        ResultText = row.Result ?? row.Error ?? (string.Equals(row.Status, "starting", StringComparison.Ordinal) ? word : string.Empty);   // a Starting placeholder has no result yet: the column says what it is
         Name = Labels.WfRunRowName(Id, word.ToLowerInvariant(), TriggerText.ToLowerInvariant(), WhenText, ErrorText);
+    }
+
+    /// <summary>True when this Starting placeholder waited 10 s and no run row came: it says the run did not start and offers Retry.</summary>
+    public bool DidNotStart { get; private set { Set(ref field, value); OnChanged(nameof(IsShownStatus)); } }
+
+    /// <summary>True when the status chip and the age show: everything but a placeholder that did not start.</summary>
+    public bool IsShownStatus => !DidNotStart;
+
+    /// <summary>"The run didn't start."</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string DidNotStartText => Labels.WfRunDidNotStart;
+
+    /// <summary>The Retry button's words.</summary>
+    public string RetryText => Labels.WfRunStartRetry;
+
+    /// <summary>What to do about a run that did not start.</summary>
+    public string DidNotStartHint => Labels.WfRunDidNotStartHint;
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>Turns a Starting placeholder into the "didn't start" row.</summary>
+    internal void MarkDidNotStart()
+    {
+        DidNotStart = true;
+        Name = Labels.WfRunRowName(Id, Labels.WfRunDidNotStart.TrimEnd('.').ToLowerInvariant(), string.Empty, string.Empty, string.Empty);
     }
 
     /// <summary>The run's id.</summary>
     public string Id { get; }
 
-    /// <summary>The served status: running, waiting, queued, succeeded, failed, skipped or cancelled.</summary>
+    /// <summary>The served status: starting (a Run now placeholder), running, waiting, queued, succeeded, failed, skipped or cancelled.</summary>
     public string Status { get; }
 
     /// <summary>The chip's tone; the glyph and word carry the status too.</summary>
@@ -93,5 +117,5 @@ internal sealed class RunRowViewModel : ObservableObject
     public bool HasError => ErrorText.Length > 0;
 
     /// <summary>The row's accessible name.</summary>
-    public string Name { get; }
+    public string Name { get; private set => Set(ref field, value); }
 }

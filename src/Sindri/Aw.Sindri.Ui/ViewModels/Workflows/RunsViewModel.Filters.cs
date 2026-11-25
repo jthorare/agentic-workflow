@@ -107,7 +107,8 @@ internal sealed partial class RunsViewModel
         var since = DateFilter switch { "24h" => TimeSpan.FromHours(24), "7d" => TimeSpan.FromDays(7), "30d" => TimeSpan.FromDays(30), _ => TimeSpan.Zero };
         var now = clock.GetUtcNow();
         var kept = _all.Where(r => (StatusFilter.Length == 0 || string.Equals(r.Status, StatusFilter, StringComparison.Ordinal)) && (since == TimeSpan.Zero || now - r.StartedAt <= since)).ToList();
-        Patch.To(Rows, kept);
+        var starting = _starting.Select(id => Rows.FirstOrDefault(r => string.Equals(r.Id, id, StringComparison.Ordinal) && string.Equals(r.Status, "starting", StringComparison.Ordinal)) ?? Placeholder(id));   // a Starting placeholder is not a served run: it stays above the served rows, whatever the filters say
+        Patch.To(Rows, [.. starting, .. kept]);
         CountText = HasFilter ? Labels.WfRunsCountOf(kept.Count, _all.Count) : Labels.WfRunsCount(_all.Count);
         OnChanged(nameof(HasFilter));
         OnChanged(nameof(HasNoMatch));
