@@ -58,9 +58,6 @@ internal static partial class Labels
     /// <summary>What a file with no ticket or decision says.</summary>
     internal const string ContextFilesIntentNone = "None";
 
-    /// <summary>The word for a file the tool suggests a link for.</summary>
-    internal const string ContextFilesSuggested = "Suggested";
-
     /// <summary>The word for a file with no link.</summary>
     internal const string ContextFilesUnmapped = "Not in the map";
 
@@ -105,7 +102,7 @@ internal static partial class Labels
     internal static string ContextFilesStatus(string status) => status switch
     {
         "mapped" => ContextMapInMap,
-        "suggested" => ContextFilesSuggested,
+        "suggested" => ContextPagesSuggested,
         "unmapped" => ContextFilesUnmapped,
         _ => status,
     };
