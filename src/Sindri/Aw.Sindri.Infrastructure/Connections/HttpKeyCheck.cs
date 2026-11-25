@@ -14,8 +14,12 @@ namespace Aw.Sindri.Infrastructure.Connections;
 /// A preset with neither is not checked. The key goes only into the Authorization header; no error holds it or the body.
 /// </summary>
 /// <param name="http">The HTTP client (no redirects followed).</param>
-internal sealed class HttpKeyCheck(HttpClient http) : IKeyCheck
+/// <param name="timeout">How long the check waits for the service (default 15 s).</param>
+internal sealed class HttpKeyCheck(HttpClient http, TimeSpan? timeout = null) : IKeyCheck
 {
+    /// <summary>Gets how long the check waits for the service before it answers SND-CONN-019.</summary>
+    internal TimeSpan Timeout { get; } = timeout ?? TimeSpan.FromSeconds(15);
+
     /// <summary>Linear's GraphQL endpoint.</summary>
     internal const string LinearGraphQl = "https://api.linear.app/graphql";
 

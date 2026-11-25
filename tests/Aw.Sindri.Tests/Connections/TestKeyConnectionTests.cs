@@ -87,6 +87,51 @@ public sealed class TestKeyConnectionTests
     }
 
     [Fact]
+    public async Task A_service_out_of_reach_leaves_the_row_as_it_was()
+    {
+        var world = await World(Slack);
+        var before = Assert.Single(world.Store.Rows);
+        world.Keys.Unreachable = true;
+
+        var tested = await world.Test().Handle(new TestConnectionRequest("slack:work"), Token);
+
+        Assert.False(tested.Value.Ok);
+        Assert.Equal(before, Assert.Single(world.Store.Rows));
+        Assert.Equal("connected", tested.Value.Connection.Status);
+    }
+
+    [Fact]
+    public async Task A_rest_connection_whose_preset_has_no_check_tries_the_probe_url_in_its_config()
+    {
+        var world = await World(Unchecked);
+        var row = Assert.Single(world.Store.Rows);
+        var config = new Dictionary<string, string>(StringComparer.Ordinal) { ["probeUrl"] = "https://acme.example.test/me" };
+        _ = await world.Store.Upsert(row with { Config = config }, Token);
+
+        var tested = await world.Test().Handle(new TestConnectionRequest("acme:work"), Token);
+
+        Assert.True(tested.Value.Ok);
+        Assert.Null(tested.Value.Reason);
+        Assert.Equal([("https://acme.example.test/me", Key)], world.Probe.Calls);
+        Assert.Empty(world.Keys.Calls);
+    }
+
+    [Fact]
+    public async Task An_empty_stored_key_tests_as_not_connected_without_a_call()
+    {
+        var world = await World(LinearKey);
+        var row = Assert.Single(world.Store.Rows);
+        _ = world.Secrets.Store(row.Name, new TokenSet(string.Empty, RefreshToken: null, ExpiresAt: null));
+
+        var tested = await world.Test().Handle(new TestConnectionRequest("linear:work"), Token);
+
+        Assert.True(tested.IsSuccess);
+        Assert.False(tested.Value.Ok);
+        Assert.EndsWith("(SND-CONN-018)", tested.Value.Reason, StringComparison.Ordinal);
+        Assert.Empty(world.Keys.Calls);
+    }
+
+    [Fact]
     public async Task A_good_Linear_key_is_checked_once_and_tests_as_connected()
     {
         var world = await World(LinearKey);
