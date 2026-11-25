@@ -12,9 +12,10 @@ using Aw.Sindri.Host.Commands.Probe;
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// The verb table: 'serve' runs the control plane; every other verb runs as a client in a short-lived container built by
-/// the same Compose, so the CLI and the API share one composition. The CLI classes itself first (API spec §6): that sets
-/// its caller headers and whether it may start the control plane (§7).
+/// The verb table: 'serve' runs the control plane; every other verb runs as a client in a short-lived container. A verb
+/// that runs in process gets the same Compose as the API, so the CLI and the API share one composition; a verb that only
+/// calls the API gets ComposeClient, and the usage gets none (CliCompositions, #3727). The CLI classes itself first (API
+/// spec §6): that sets its caller headers and whether it may start the control plane (§7).
 /// </summary>
 internal static partial class CommandTable
 {
@@ -26,21 +27,9 @@ internal static partial class CommandTable
     /// <returns>The exit code.</returns>
     internal static async Task<int> Run(string[] args, Func<string, string?> environment, TimeProvider clock, Action<IServiceCollection>? configure = null)
     {
-        if (args is ["serve"])
+        if (await BeforeAnyContainer(args, environment, clock).ConfigureAwait(false) is { } early)
         {
-            return await Serve(environment, clock).ConfigureAwait(false);
-        }
-
-        if (args is ["sandbox", "explain", .. var explain])
-        {
-            // before Compose: explain reads only the plan file, never the state directory, the ledger or telemetry (sandbox spec 3.6)
-            return await SandboxExplainVerb.Run(explain, environment, Console.Out, Console.Error, CancellationToken.None).ConfigureAwait(false);
-        }
-
-        if (args is ["sandbox", "show", .. var show])
-        {
-            // before Compose, like explain: show reads only the plan file
-            return await SandboxShowVerb.Run(show, environment, Console.Out, Console.Error, CancellationToken.None).ConfigureAwait(false);
+            return early;
         }
 
         var skills = SkillsFlag.Apply(args, environment, Directory.GetCurrentDirectory());   // 'recipe validate|eval --skills <dir>': the folder the in-process verbs read their blocks from
@@ -51,7 +40,7 @@ internal static partial class CommandTable
         }
 
         (args, environment) = skills.Value;
-        var services = Composition.Compose(new ServiceCollection(), environment, clock);
+        var services = Container(args, environment, clock);
         configure?.Invoke(services);   // tests only: a test replaces a port with its fake; Program passes nothing
         var provider = services.BuildServiceProvider();
         await using (provider.ConfigureAwait(false))
@@ -66,10 +55,6 @@ internal static partial class CommandTable
             }
         }
     }
-
-    /// <summary>'sindri serve': the control plane in the foreground; the lease keeps a second one out.</summary>
-    private static Task<int> Serve(Func<string, string?> environment, TimeProvider clock) =>
-        ServeCommand.Run(environment, clock, Console.Error);
 
     /// <summary>Runs the verb; a Ctrl-C that cancels a call in flight ends it with 'interrupted' and exit 130 instead of a stack trace. Any other cancellation is a bug and propagates.</summary>
     /// <param name="interrupt">The listener whose token the Ctrl-C cancels.</param>
@@ -127,7 +112,6 @@ internal static partial class CommandTable
             ["mcp", .. var rest] => await new McpVerbs(services, output).Run(rest, ct).ConfigureAwait(false),
             ["context", ..] => await ContextOrPin(args, (client, output), (services, start), (ct, interrupt.Again)).ConfigureAwait(false),
             ["workflow" or "wf" or "takeover" or "handback" or "answer", ..] => await Workflows(args, services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), ct).ConfigureAwait(false),
-            ["help" or "--help" or "-h"] => await output.Text(Usage.Text + "\n", 0).ConfigureAwait(false),
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
     }
