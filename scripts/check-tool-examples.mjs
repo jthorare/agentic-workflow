@@ -9,7 +9,7 @@
 //
 // 1. config/tool-examples/sindri-mcp.json holds { examples: [{ tool, args, source: "<file>:<line>" }] }. Each example's
 //    tool is in the golden (else "unknown: ... is not in the last-known golden"), its args pass the tool's inputSchema
-//    (required fields, unknown fields, types, enums; Ajv 2020), and its source line exists and names the tool.
+//    (required fields, unknown fields, types, enums; Ajv 2020), and its source line exists and names the tool (when it no longer does, the finding says where the call moved).
 // 2. Every `mcp: sindri/<tool>` in skills/ and bootstrap/ (*.md) names a tool in the golden, and has an example whose
 //    source is that file:line.
 // A finding names the place, the field and the field names the tool takes, never the schema or its descriptions.
@@ -132,6 +132,17 @@ if (!fs.existsSync(exPath)) {
     findings.push(`${EXAMPLES}: not a valid examples file (${e.message})`);
   }
 }
+// Where a call went when its recorded line no longer names the tool: the lines of the same file that say `mcp: sindri/<tool>`.
+function movedHint(file, lines, tool) {
+  const at = [];
+  lines.forEach((line, n) => {
+    for (const r of line.matchAll(REF)) if (r[1] === tool) at.push(n + 1);
+  });
+  const uniq = [...new Set(at)];
+  if (uniq.length === 1) return `the call moved to ${file}:${uniq[0]}: set "source" to that line in ${EXAMPLES}`;
+  if (uniq.length === 0) return `${file} has no mcp: sindri/${tool} line now: fix or remove the example in ${EXAMPLES}`;
+  return `${file} names mcp: sindri/${tool} on lines ${uniq.join(", ")}: set "source" in ${EXAMPLES} to the one this example shows`;
+}
 const covered = new Set(); // "<file>:<line> <tool>"
 examples.forEach((ex, i) => {
   const tool = typeof ex?.tool === "string" ? ex.tool : "?";
@@ -145,7 +156,7 @@ examples.forEach((ex, i) => {
   const lines = m ? linesOf(m[1]) : null;
   if (!m) findings.push(`${where}: the source must be <file>:<line>`);
   else if (!lines || Number(m[2]) < 1 || Number(m[2]) > lines.length) findings.push(`${where}: the source line does not exist`);
-  else if (!lines[Number(m[2]) - 1].includes(tool)) findings.push(`${where}: the source line does not name ${tool}`);
+  else if (!lines[Number(m[2]) - 1].includes(tool)) findings.push(`${where}: the source line does not name ${tool}; ${movedHint(m[1], lines, tool)}`);
   else covered.add(`${source} ${tool}`);
   if (!tools.has(tool)) {
     findings.push(`${where}: unknown: ${tool} is not in the last-known golden`);
