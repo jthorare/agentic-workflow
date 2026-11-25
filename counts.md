@@ -1,5 +1,7 @@
 # Count spots by frame (prep for MUST 6 and MUST 4; no numbers picked)
 
+Snapshot of b62867d9b6. It is out of date: the frames now use the §5.0 numbers (8 files, 3/8 viewed, 6 findings with 4 left, 3 threads).
+
 Generated from the frame HTML at b62867d9b6 plus the queue fix. `tick marks` = tree/list file rows drawn viewed (check mark); `tree/file rows` = file rows drawn in that frame (tree or file list, a failing file counts). Fixed-number sources in `gen.py` are listed at the end.
 
 | Frame | Spot | What it shows now |

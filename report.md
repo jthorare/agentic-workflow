@@ -10,7 +10,8 @@
 | queue-partial | 382 (5.6 Queue error) | "List is from 09:12: GitHub search failed", Retry, last rows kept |
 | queue-serve-down-cache / -nocache | 382 | Cached rows with "as of", and "Sindri is not running" with `sindri serve` in Details |
 | queue-filtered-nothing | 382 | "No match for ..." and Clear filter |
-| queue-first-run | 382, 474 | "Connect GitHub": token steps, keychain command, `sindri review connect` |
+| queue-first-run | 5.7 | first-run's Accounts card (question 1 of 2) in the queue body on `SND-REVIEW-008`: device code, Copy code and open GitHub, Linear and Slack secondary, Skip for now |
+| queue-credential-expired / -scope-missing / -rate-limited / -github-down | 5.6, 5.7, 9 | The last list under one state line each: one plain sentence, one action (Sign in again, Sign in with team access, Try again, Try again) |
 | toast-posted | 285-286 | After Posted: cursor on the next row, "Posted. Next: #3127" and Open (Enter) |
 | toast-merged | 352 | "Merged #3109 into main", the row left Ready to merge, cursor on the queue row |
 | a-1440, a-1200 | 252-258 | Layout A, the phase-1 build: folder-grouped file list above the diff, 420 px column: seven panels, Threads, Findings, draft counter |
@@ -51,8 +52,10 @@ Round 2 (ideas FIX on bc98aa05b7) changed every Layout A frame (Files mode, real
 
 ## UX pass fold-in (meta's 8 MUSTs, spec 8a6d74c200)
 New or changed frames, by MUST (see the comment on #3177 for images):
-- MUST 1: queue-first-run, first-run-connecting, first-run-refused, first-run-org-approval, first-run-store-failed, watch-repos, watch-repos-ticked, watch-repos-none, queue-serve-down-nocache, start-sindri-starting, start-sindri-failed.
+- MUST 1: queue-first-run (now the Accounts card; the token-paste frames first-run-connecting, -refused, -org-approval and -store-failed are gone, first-run owns them), watch-repos, watch-repos-ticked, watch-repos-none, queue-serve-down-nocache, start-sindri-starting, start-sindri-failed.
 - MUST 2: queue-loading, queue-empty-some, queue-empty-all, queue-empty-stale, queue-dot-menu, queue-dot-menu-running, queue-ctrl-enter-menu, diff-loading, diff-error, diff-partial, offline-surface, offline-surface-uncached, thread-sending, thread-send-failed, thread-expired, since-loading, since-empty, since-error, callers-states, draft-save-failed, submit-failed-010/012/013/014, submit-checking, submit-not-posted, merge-checking, merge-not-merged, read-only, read-only-sheet.
 - MUST 3: submit-flagged, submit-flagged-two, submit-empty. MUST 4: toast-posted. MUST 5: queue footers, queue-done-toast, queue-snooze-picker, queue-snoozed-toggle, queue-back.
 - MUST 6: every #3120 surface frame (counts.md has the spot list). MUST 7: queue-peek-ready, toast-merged, reviewer-picker, submit-offline. MUST 8: queue, a-1440, walk-1440 and the other opening frames.
 - Picks: a-300files, ready-line, thread-focused-footer, Resolve chip on every thread. New mid-walk frames: a-1440-walk, walk-1200-thread.
+
+Round 3 and UX fix (Part of #3177): every review header frame shows the ready line ("2 open threads" for #3120); Threads show the three fixture threads (§5.0); the submit sheet buttons show the 1/2/3 verdict keys; queue-partial names a failing repo. Frames: `git show <sha>:reviews-<name>.png`.

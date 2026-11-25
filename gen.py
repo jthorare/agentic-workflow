@@ -96,8 +96,8 @@ for st in ('running', 'failed', 'absent', 'stale'):
     write(f'queue-peek-{st}', qpage(f'Reviews - peek, pre-review {st}', qrows(sel=3120), peek(st), sr=f'Peek: pre-review {st}. ' + QSR))
 write('queue-peek-ready', qpage('Reviews - peek, ready line', qrows(sel=3109), peek(ready='ok'), sr='Peek ready line reads: "Can merge. Required checks 2 of 2, no open thread, approved."'))
 # partial
-sl = '<div class="state-line att"><span class="g parked"></span><span class="what">List is from 09:12: GitHub search failed: rate limit reached, resets 09:58.</span><span class="btns"><span class="det">Details ▸</span><span class="btn">Retry <kbd>F5</kbd></span></span></div>'
-write('queue-partial', qpage('Reviews - partial list', qrows(), top=sl, head=qhead(asof='as of 09:12 · joi'), sr='Banner reads: "List is from 09:12. GitHub search failed: rate limit reached. Button: Retry." Rows below are the last read.'))
+sl = '<div class="state-line att"><span class="g parked"></span><span class="what">List is from 09:12: acme/billing failed: GitHub answered 404.</span><span class="btns"><span class="det">Details ▸</span><span class="btn">Retry <kbd>F5</kbd></span></span></div>'
+write('queue-partial', qpage('Reviews - partial list', qrows(), top=sl, head=qhead(asof='as of 09:12 · joi'), sr='Banner reads: "List is from 09:12. acme/billing failed: GitHub answered 404. Button: Retry." Rows below are the last read.'))
 sl = '<div class="state-line err"><span class="g dn"></span><span class="what">Sindri is not running. Showing the last read, as of 09:41.</span><span class="btns"><span class="det">Details ▸</span><span class="btn">Start Sindri</span></span></div>'
 write('queue-serve-down-cache', qpage('Reviews - serve down with cache', qrows(), top=sl, head=qhead(asof='as of 09:41 · not live'), sr='Banner reads: "Sindri is not running. Showing the last read, as of 09:41. Button: Start Sindri."'))
 def empty(glyph, h, p, acts, extra=''):
@@ -113,9 +113,10 @@ write('toast-merged', qpage('Reviews - merged toast', qrows(merged=True, sel=311
       extra='<div class="toast"><span class="g done"></span><span>Merged #3109 into main</span><span class="life"></span></div>', sr='Toast reads: "Merged number 3109 into main." Focus is on the queue cursor row. The row left Ready to merge.'))
 
 # ---------------- review surface ----------------
+DEFAULT_READY = '<span class="dot">·</span><span class="tag att">2 open threads</span>'
 RKEYS = [('j/k', 'file'), ('n/p', 'hunk'), ('↑↓', 'line'), ('c', 'comment'), ('v', 'viewed'), ('Ctrl+Enter', 'submit review'), ('?', 'all keys')]
 def rhead(title='Harbor ferry: seat holds', num=3120, who='ada → main', sha='a1b2c3d', files='8 files +310 −42', viewed='3/8 viewed', primary='Submit review (2)', pk='Ctrl+Enter', pcls='primary',
-          findings='Pre-review: 6 findings, 4 left', ci='CI green', req='Required 2 of 2', conf='0 conflicts', order=True, scope=False, ready=None, w=1440, since=None, chips=False):
+          findings='Pre-review: 6 findings, 4 left', ci='CI green', req='Required 2 of 2', conf='0 conflicts', order=True, scope=False, ready=DEFAULT_READY, w=1440, since=None, chips=False):
     if primary: pb = f'<span class="btn {pcls}">{primary} {kb(pk, pcls == "primary")}</span>' if pk else f'<span class="btn {pcls}">{primary}</span>'
     else: pb = ''
     ro = '' if not ready else ready
@@ -124,7 +125,7 @@ def rhead(title='Harbor ferry: seat holds', num=3120, who='ada → main', sha='a
     toggles += f'<span class="seg"><span class="{"" if scope else "on"}">All</span><span class="{"on" if scope else ""}">Since your review</span></span>'
     ot = '<span class="tag">order from the code index at a1b2c3d</span>' if order and not chips else ''
     if chips:
-        l2 = f'<span class="tag pri">Findings 4</span><span class="tag">Draft 2</span><span class="dot">·</span><span>{ci}</span><span class="dot">·</span><span>{req}</span><span class="dot">·</span><span>{conf}</span><span class="sp"></span>{toggles}'
+        l2 = f'<span class="tag pri">Findings 4</span><span class="tag">Draft 2</span><span class="dot">·</span><span>{ci}</span><span class="dot">·</span><span>{req}</span><span class="dot">·</span><span>{conf}</span>{ro}<span class="sp"></span>{toggles}'
     else:
         l2 = f'<span>{findings}</span><span class="dot">·</span><span>{ci}</span><span class="dot">·</span><span>{req}</span><span class="dot">·</span><span>{conf}</span>{ro}<span class="sp"></span>{ot}{toggles}'
     sin = f'<span class="tag att">{since}</span>' if since else ''
@@ -232,7 +233,8 @@ def threads_block(state='normal', compact=False):
     if state == 'sendfail': t1 = base1.format(cls=' err', mid='<div class="e">Couldn’t resolve: GitHub refused it, the thread is outdated.<small>SND-REVIEW-019 · resolve</small></div><div class="ac"><span class="btn foc">Retry</span><span class="btn">Discard</span></div>')
     if state == 'expired': t1 = base1.format(cls='', mid='<div class="e" style="color:var(--att)">Not sent: expired after 10 minutes.' + det('SND-REVIEW-022') + '</div><div class="ac"><span class="btn foc">Repeat</span></div>')
     t2 = '<div class="th"><div class="tt"><span class="g done"></span>HoldPolicy.cs:12 <span class="st">resolved, outdated</span></div><div class="tx">@sam: rename to MaxHoldMinutes. Done.</div></div>'
-    return h + t1 + t2
+    t3 = '<div class="th"><div class="tt"><span class="g msg"></span>0042_holds.sql:9 <span class="st op">open</span></div><div class="tx"><b style="color:var(--ink);font-weight:600">@sam</b> does this need an index on seat_id?</div></div>'
+    return h + t1 + t3 + t2
 def findings_block(state='normal'):
     fd = lambda sv, cls, anchor, why, ev, acs, extra='': f'<div class="fd {extra}"><div class="tt"><span class="sv {cls}">{sv}</span>{anchor}</div><div class="ws">{why}</div><div class="ev">evidence: {ev}</div><div class="ac">{acs}</div></div>'
     acc = '<span class="btn">Accept <kbd>y</kbd></span><span class="btn">Edit <kbd>e</kbd></span><span class="btn">Drop <kbd>d</kbd></span>'
@@ -277,6 +279,7 @@ def tpane(since=False, overview=False):
     if since:
         o += '<div class="ph" style="margin-bottom:0">Conversation<span class="n">3</span></div><div class="empty1" style="padding-top:0">Your 6 comments: 4 changed lines near the thread, 2 untouched.</div>'
         o += '<div class="th"><div class="tt"><span class="g msg"></span>HoldService.cs:41 <span class="st op">open</span></div><div class="tx">@lee: why a static clock?</div><div style="margin-top:6px;border:1px solid var(--hair-strong);border-radius:var(--r2);background:var(--s2);padding:6px 8px;font-size:12px;line-height:18px;color:var(--ink-muted)"><span class="tag pri">agent proposes: addressed</span><br>Pending reply, never posted: “Now injected through IClock in 1f3e9aa.”<div class="ac" style="display:flex;gap:6px;margin-top:6px"><span class="btn">Accept <kbd>y</kbd></span><span class="btn">Edit <kbd>e</kbd></span><span class="btn">Drop <kbd>d</kbd></span></div></div></div>'
+        o += '<div class="th"><div class="tt"><span class="g msg"></span>0042_holds.sql:9 <span class="st op">open</span></div><div class="tx">@sam: does this need an index on seat_id?</div></div>'
         o += '<div class="th"><div class="tt"><span class="g msg"></span>HoldPolicy.cs:12 <span class="st">outdated</span></div><div class="tx">@sam: rename to MaxHoldMinutes.</div></div>'
     else: o += threads_block('normal') if not overview else threads_block('normal').replace('on this file first', '')
     o += findings_block('normal') if not since else '<div class="ph">Findings<span class="n">1</span></div><div class="empty1">1 finding on the commits since your review.</div>'
@@ -327,8 +330,8 @@ def sheet(body_txt='Two small things: the static clock, the missing index.', com
     dis = verdict in ('flagged', 'offline', 'moved')
     cdis = verdict == 'empty'
     dc = 'dis' if dis else ''
-    cbtn = f'<span class="btn {"dis" if (dis or cdis) else "primary"} {"foc" if not (dis or cdis) else ""}">Comment</span>'
-    ab = f'<span class="btn {dc}">Approve</span><span class="btn {dc or ("dis" if cdis else "")}">Request changes</span>'
+    cbtn = f'<span class="btn {"dis" if (dis or cdis) else "primary"} {"foc" if not (dis or cdis) else ""}">Comment {kb("1", not (dis or cdis))}</span>'
+    ab = f'<span class="btn {dc}">Approve {kb("2")}</span><span class="btn {dc or ("dis" if cdis else "")}">Request changes {kb("3")}</span>'
     ta = f'<div class="ta2 ph foc">Add a body (optional)…</div>' if bodyph else f'<div class="ta2">{body_txt}</div>'
     n = comments.count('class="cm') if comments else 0
     sl = sline or f'<div class="sline"><span class="g done"></span>Required checks: 2 of 2 pass</div>'
@@ -343,7 +346,7 @@ FLAGGED = '⚠ from a finding, unedited'
 c_find = lambda flag, btns: cm('HoldService.cs:41', 'Static clock; tests can’t pin it.', flag, btns, 'flag' if 'unedited' in flag else '')
 c_typed = cm('0042_holds.sql:9', 'No index on seat_id. cc @priya, see <span class="lk">#3112</span>', '', '<span class="btn">Edit</span><span class="btn">Remove</span>')
 NORMAL_C = c_find(KEPT, '<span class="btn">Edit</span><span class="btn">Remove</span>') + c_typed
-write('submit-normal', modal(extra='<div class="dim"></div>' + sheet(comments=NORMAL_C), sr=SSR + 'Three verdict buttons: Comment, Approve, Request changes. Escape cancels. The typed comment with an at-mention and a link is not flagged.', kb=keys([('Tab', 'next'), ('Esc', 'cancel'), ('Enter', 'press')], None)))
+write('submit-normal', modal(extra='<div class="dim"></div>' + sheet(comments=NORMAL_C), sr=SSR + 'Three verdict buttons: Comment, Approve, Request changes. Escape cancels. The typed comment with an at-mention and a link is not flagged.', kb=keys([('1/2/3', 'verdict'), ('Tab', 'next'), ('Esc', 'cancel')], None)))
 write('submit-empty', modal(extra='<div class="dim"></div>' + sheet(comments='', bodyph=True, verdict='empty', reason='Comment is off: add a body or a comment first. Request changes needs a body.', sline='<div class="sline"><span class="g done"></span>Required checks: 2 of 2 pass</div>', discard=False), sr=SSR + 'Focus is in the Body field. Comment and Request changes are disabled: request changes needs a body. Approve can still post.', kb=keys([('Tab', 'next'), ('Esc', 'cancel')], None)))
 write('submit-offline', modal(extra='<div class="dim"></div>' + sheet(comments=NORMAL_C, verdict='offline', banner='<div class="banner" style="background:var(--err-soft);flex-direction:column;align-items:flex-start;gap:2px;padding:10px var(--sp5)"><span>Offline: reconnect to post. Your draft is kept.</span>' + det('SND-REVIEW-021') + '</div>'), sr=SSR + 'All three verdicts disabled. Banner: "Offline: reconnect to post. Your draft is kept." The code is under Details.', kb=keys([('Tab', 'next'), ('Esc', 'cancel')], None)))
 fl_c = c_find(FLAGGED, '<span class="btn foc">Keep</span><span class="btn">Edit</span><span class="btn">Remove</span>') + c_typed
@@ -504,11 +507,24 @@ def frfr(name, **kw):
     sr = kw.pop('sr', '')
     write(name, qpage('Reviews - ' + name, tokcard(kw.pop('h', 'Connect GitHub to review here'), **kw), head=qhead(count='', asof='GitHub not connected'), base=[('Tab', 'next'), ('Enter', 'press'), ('Ctrl+K', 'palette'), ('?', 'all keys')], kb=[], sr=sr, ncount=None, donelist=False))
 OSLINE = ['secret-tool store --label=sindri-review service sindri-review', 'sindri review connect']
-frfr('queue-first-run', details=det_open(OSLINE), sr='Connect GitHub to review here, two steps. Step 1: Open github.com. Step 2: Paste token, masked, with a Show toggle, focused. Button: Save and connect. Details: the keychain command and sindri review connect.')
-frfr('first-run-connecting', field_f='', btn_html=btn('Connecting…', '', 'primary dis'), ro=True, sr='Connecting. The button reads Connecting, disabled. The token field is read-only.')
-frfr('first-run-refused', field_t='', msg='GitHub refused this token: Bad credentials. Paste a new one.' , details='<details class="details"><summary>Details</summary><code>SND-REVIEW-009</code></details>', sr='GitHub refused this token: Bad credentials. Paste a new one. The field is cleared and focused. Details: SND-REVIEW-009.')
-frfr('first-run-org-approval', field_t='', msg='Your org must approve this token first: SAML SSO authorization is required for acme.', extra_btn=btn('Open github.com'), sr='Your org must approve this token first. Buttons: Open github.com, Save and connect. The field is cleared and focused.')
-frfr('first-run-store-failed', field_t='', msg='Couldn’t store the token: the keychain is locked. Nothing was saved.', details='<details class="details"><summary>Details</summary><code>SND-REVIEW-025</code></details>', sr='Couldn’t store the token: the keychain is locked. Nothing was saved. Details: SND-REVIEW-025.')
+
+# first-run's Accounts card, shown in the queue body on SND-REVIEW-008 (spec 5.7; first-run spec 4.2, frame setup-connect)
+def acct(name, sub, btns, state=''):
+    return f'<div style="display:grid;grid-template-columns:var(--col-glyph) minmax(0,1fr) auto;column-gap:var(--sp3);align-items:center;padding:12px var(--inset);border-top:1px solid var(--hair)"><span class="g {state or "todo"}"></span><span><b style="font-weight:600">{name}</b><br><span style="color:var(--ink-muted);font-size:12px">{sub}</span></span><span style="display:flex;gap:8px">{btns}</span></div>'
+accounts = ('<div class="empty" style="max-width:none;padding-bottom:var(--sp3)"><h2>Connect your accounts · Question 1 of 2</h2><p>GitHub lets Sindri tick the repos you work on next. Sign in once; the repos you reviewed lately come pre-ticked.</p></div>'
+  + acct('GitHub', 'Enter <b class="mono" style="font-weight:600;color:var(--ink)">ABCD-1234</b> at github.com/login/device · Waiting for GitHub… the code works for 14:32 more. <span class="lk">Your org blocks the app? Paste a token instead.</span>', btn('Copy code and open GitHub', 'Enter', 'primary') + btn('Cancel', 'Esc'), 'ci-run')
+  + acct('Linear', 'issues and projects · opens your browser', btn('Sign in to Linear'))
+  + acct('Slack', 'messages and mentions · needs a token, 3 steps · optional', btn('Paste a Slack token'))
+  + '<div class="actionbar" style="border-top:1px solid var(--hair)"><span style="color:var(--ink-subtle)">You can connect these later from Connections.</span><span class="spacer"></span>' + btn('Skip for now') + '</div>')
+write('queue-first-run', qpage('Reviews - first run: the Accounts card', accounts, head=qhead(count='', asof='GitHub not connected'), base=[('Tab', 'next'), ('Enter', 'copy code and open GitHub'), ('Esc', 'cancel'), ('?', 'all keys')], kb=[], sr='Reviews with no GitHub connection shows first-run’s Accounts card. Question 1 of 2. GitHub row: Enter ABCD-1234 at github.com/login/device, waiting, the code works for 14 minutes 32 seconds more. Buttons: Copy code and open GitHub, focused and primary, Cancel. Linear and Slack rows are secondary. Footer: Skip for now. Question 2 picks the repos, pre-ticked.', ncount=None, donelist=False))
+def failq(name, tone, glyph, sentence, btns, asof='as of 09:41 · not live', sr=''):
+    sl = f'<div class="state-line {tone}"><span class="g {glyph}"></span><span class="what">{sentence}</span><span class="btns"><span class="det">Details ▸</span>{btns}</span></div>'
+    write(name, qpage('Reviews - ' + name, qrows(), top=sl, head=qhead(asof=asof), sr=sr))
+failq('queue-credential-expired', 'err', 'fail', 'GitHub says your sign-in ended. Showing the list from 09:41.', btn('Sign in again', 'Enter', 'primary'), sr='Banner reads: "GitHub says your sign-in ended. Showing the list from 09:41. Button: Sign in again." Details: SND-REVIEW-009. The button opens the Accounts card.')
+failq('queue-scope-missing', 'att', 'parked', 'Your sign-in can’t see team requests, so rows asked of a team are missing.', btn('Sign in with team access', 'Enter', 'primary'), asof='as of 09:41 · joi', sr='Banner reads: "Your sign-in can’t see team requests, so rows asked of a team are missing. Button: Sign in with team access." Details: read:org is missing.')
+failq('queue-rate-limited', 'att', 'parked', 'GitHub is limiting Sindri until 09:58. Showing the list from 09:41.', btn('Try again', 'F5'), sr='Banner reads: "GitHub is limiting Sindri until 09:58. Showing the list from 09:41. Button: Try again." Before 09:58 a retry gives the same sentence.')
+failq('queue-github-down', 'err', 'dn', 'GitHub isn’t answering. Showing the list from 09:41.', btn('Try again', 'F5'), sr='Banner reads: "GitHub isn’t answering. Showing the list from 09:41. Button: Try again." Sindri tries again by itself every 5 minutes.')
+
 # watch repos
 REPOS = ['acme/harbor', 'acme/harbor-web', 'acme/ferry-ops', 'acme/billing', 'acme/quay-lights', 'acme/pier-schedule', 'acme/booking-export', 'acme/infra', 'acme/design-tokens', 'acme/docs', 'acme/status-page', 'acme/sandbox']
 def watchcard(ticked):
