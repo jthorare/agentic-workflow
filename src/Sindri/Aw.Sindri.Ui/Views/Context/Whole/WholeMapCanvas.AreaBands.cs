@@ -29,10 +29,10 @@ internal sealed partial class WholeMapCanvas
 
             var title = Text(band.Title, LaneTitleSize, ink, rect.Width, bold: true);
             context.DrawText(title, new Point(rect.X, rect.Y));
-            context.DrawText(Text(band.Caption, TextSize, muted, Math.Max(rect.Width - title.WidthIncludingTrailingWhitespace - 8, 0)), new Point(rect.X + title.WidthIncludingTrailingWhitespace + 8, rect.Y + 1));
+            context.DrawText(Text(band.Caption, TextSize, muted, rect.Width), new Point(rect.X, rect.Y + 20));   // the caption on its own line under the title
             if (band.IsEmpty)
             {
-                context.DrawText(Text(Labels.ContextAreaNone, TextSize, muted, rect.Width), new Point(rect.X, rect.Y + 34));
+                context.DrawText(Text(Labels.ContextAreaNone, TextSize, muted, rect.Width), new Point(rect.X, rect.Y + 42));
             }
         }
     }

@@ -63,16 +63,18 @@ internal static partial class WholeMapLayout
 
     /// <summary>Places an answer.</summary>
     /// <param name="map">The answer.</param>
-    /// <param name="width">The window width in px, which decides how the Core band of an opened area draws.</param>
+    /// <param name="width">The window width in px, which gives an opened area's stage when that is not known.</param>
+    /// <param name="stageWidth">The width in px the canvas fits a map into, or 0.</param>
+    /// <param name="stageHeight">The height in px the canvas fits a map into, or 0.</param>
     /// <returns>Where everything sits.</returns>
-    internal static WholeMapGeometry Place(WholeMapView map, double width = DefaultWidth)
+    internal static WholeMapGeometry Place(WholeMapView map, double width = DefaultWidth, double stageWidth = 0, double stageHeight = 0)
     {
         ArgumentNullException.ThrowIfNull(map);
         if (map.Area is { } opened)
         {
             if (map.Nodes is { Count: > 0 and <= WholeDrillIn.CanvasNodeCap } own && map.Detail is not "areas")
             {
-                return AreaCanvasLayout.Place(own, map.Edges ?? [], width);   // #3674: an opened area is bands, not a column
+                return AreaCanvasLayout.Place(own, map.Edges ?? [], width, stageWidth, stageHeight);   // #3674: an opened area is bands, not a column
             }
 
             // One feature opened in full: its nodes alone, in one column (the others stay tiles in the overview it came from).

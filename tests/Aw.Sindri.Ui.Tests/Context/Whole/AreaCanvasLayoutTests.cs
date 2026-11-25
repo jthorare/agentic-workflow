@@ -33,22 +33,34 @@ public sealed class AreaCanvasLayoutTests
 
         var entry = map.AreaBands!.Single(b => string.Equals(b.Title, "Entry points", StringComparison.Ordinal));
         Assert.True(entry.IsEmpty);
-        Assert.InRange(entry.Rect.Width, AreaCanvasLayout.EmptyWidth, 340);   // the title and its hint on one line, never a full column
+        Assert.InRange(entry.Rect.Width, AreaCanvasLayout.EmptyWidth, 200);   // the title, its hint under it, never a full column
     }
 
     [Fact]
-    public void Core_draws_Requests_Services_and_Responses_side_by_side_from_1390_px_and_stacked_below()
+    public void The_arrangement_is_the_one_that_fits_the_stage_biggest()
     {
-        WholeNode[] nodes = [Node("InitRequest", "code"), Node("InitService", "code"), Node("InitResponse", "code")];
+        var nodes = PaymentsLike();
 
-        var wide = AreaCanvasLayout.Place(nodes, [], 1440).AreaBands!.Where(b => b.Sub).Select(b => (b.Title, b.Rect.X, b.Rect.Y)).ToList();
-        var narrow = AreaCanvasLayout.Place(nodes, [], 1200).AreaBands!.Where(b => b.Sub).Select(b => (b.Title, b.Rect.X, b.Rect.Y)).ToList();
+        var map = AreaCanvasLayout.Place(nodes, [], 1280, 1030, 400);
 
-        Assert.True(wide.Select(w => w.Title).SequenceEqual(["Requests", "Services and rules", "Responses"], StringComparer.Ordinal));
-        Assert.True(wide[0].X < wide[1].X && wide[1].X < wide[2].X);
-        Assert.All(wide, w => Assert.Equal(wide[0].Y, w.Y));
-        _ = Assert.Single(narrow.Select(w => w.X).Distinct());
-        Assert.True(narrow[0].Y < narrow[1].Y && narrow[1].Y < narrow[2].Y);
+        var scale = Math.Min(1, Math.Min(1030 / map.World.Width, 400 / map.World.Height));
+        Assert.True(scale >= 0.9, $"fit {scale.ToString("0.00", CultureInfo.InvariantCulture)}");
+        AssertNoOverlap(map);
+    }
+
+    private static List<WholeNode> PaymentsLike() => [.. Enumerable.Range(0, 20).Select(i => Node(string.Create(CultureInfo.InvariantCulture, $"Svc{i:00}Service"), "code")),
+        Node("PayRequest", "code"), Node("RefundRequest", "code"), Node("VoidRequest", "code"),
+        Node("PayResponse", "code"), Node("RefundResponse", "code"), Node("VoidResponse", "code")];
+
+    private static void AssertNoOverlap(WholeMapGeometry map)
+    {
+        for (var i = 0; i < map.Nodes.Count; i++)
+        {
+            for (var j = i + 1; j < map.Nodes.Count; j++)
+            {
+                Assert.False(map.Nodes[i].Rect.Intersects(map.Nodes[j].Rect), $"{map.Nodes[i].Label} overlaps {map.Nodes[j].Label}");
+            }
+        }
     }
 
     [Fact]
@@ -57,10 +69,9 @@ public sealed class AreaCanvasLayoutTests
         var nodes = Enumerable.Range(0, 20).Select(i => Node(string.Create(CultureInfo.InvariantCulture, $"Svc{i:00}Service"), "code")).Concat(
             [Node("PayRequest", "code"), Node("RefundRequest", "code"), Node("VoidRequest", "code")]).ToList();
 
-        var map = AreaCanvasLayout.Place(nodes, [], 1280);
+        var map = AreaCanvasLayout.Place(nodes, [], 1280, 1024, 540);
 
-        Assert.True(map.World.Width <= 1100, "width");
-        Assert.True(map.World.Height <= 560, "height");
+        Assert.True(map.World.Width <= 1100 && map.World.Height <= 560, "fits a 1024 by 540 stage");
         for (var i = 0; i < map.Nodes.Count; i++)
         {
             for (var j = i + 1; j < map.Nodes.Count; j++)
@@ -70,7 +81,7 @@ public sealed class AreaCanvasLayoutTests
         }
 
         Assert.True(map.Nodes.Max(n => n.Rect.Bottom) <= map.World.Height);
-        Assert.Equal(3, map.Nodes.Where(n => n.Label.EndsWith("Service", StringComparison.Ordinal)).Select(n => n.Rect.X).Distinct().Count());
+        Assert.True(map.Nodes.Where(n => n.Label.EndsWith("Service", StringComparison.Ordinal)).Select(n => n.Rect.X).Distinct().Skip(1).Any());
     }
 
     [Fact]
@@ -92,7 +103,7 @@ public sealed class AreaCanvasLayoutTests
 
         foreach (var band in map.AreaBands!.Where(b => !b.Sub))
         {
-            Assert.True(band.Rect.Width >= (band.Title.Length * 8) + 8 + (band.Caption.Length * 7.2) - 0.001, band.Title);
+            Assert.True(band.Rect.Width >= Math.Max(band.Title.Length * 8, band.Caption.Length * 7.2) - 0.001, band.Title);
         }
     }
 

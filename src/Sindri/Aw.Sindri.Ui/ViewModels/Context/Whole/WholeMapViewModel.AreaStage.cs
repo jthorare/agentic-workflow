@@ -10,6 +10,9 @@ internal sealed partial class WholeMapViewModel
     /// <summary>Gets or sets the window width in px, which decides whether Core draws its three groups side by side (the view sets it).</summary>
     internal double ViewWidth { get; set; } = WholeMapLayout.DefaultWidth;
 
+    /// <summary>Gets or sets the size in px the canvas fits a map into (0 when not known): the opened area picks the arrangement that fits it biggest (the view sets it).</summary>
+    internal (double Width, double Height) ViewStage { get; set; }
+
     /// <summary>Raised when another page of the open area is wanted (the new page, 1-based).</summary>
     internal event EventHandler<ValueEventArgs<int>>? AreaPageRequested;
 
@@ -116,7 +119,7 @@ internal sealed partial class WholeMapViewModel
     private async Task LayOutArea(WholeMapView answer)
     {
         var run = ++_layoutRun;
-        var placed = await Task.Run(() => WholeMapLayout.Place(answer, ViewWidth)).ConfigureAwait(true);
+        var placed = await Task.Run(() => WholeMapLayout.Place(answer, ViewWidth, ViewStage.Width, ViewStage.Height)).ConfigureAwait(true);
         if (run == _layoutRun && IsAreaOpen)
         {
             Geometry = placed;

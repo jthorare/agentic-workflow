@@ -15,7 +15,7 @@ internal static class AreaCanvasLayout
     internal const double NodeHeight = 28;
 
     /// <summary>The height of the headings over the first row.</summary>
-    internal const double HeadingHeight = 52;
+    internal const double HeadingHeight = 72;
 
     /// <summary>The space around the world and between bands.</summary>
     internal const double Gap = 12;
@@ -23,8 +23,11 @@ internal static class AreaCanvasLayout
     /// <summary>The width of an empty band: its heading and "none in this area".</summary>
     internal const double EmptyWidth = 128;
 
+    /// <summary>The fewest rows a group's column is cut at when the layout looks for the best fit.</summary>
+    internal const int MinRows = 4;
+
     /// <summary>The most rows a group's column holds before the group wraps into another column.</summary>
-    internal const int MaxRows = 8;
+    internal const int MaxRows = 10;
 
     private const double TitleChar = 8;
     private const double MinWidth = 140;
@@ -36,24 +39,46 @@ internal static class AreaCanvasLayout
     /// <summary>Places an area's nodes and the links among them.</summary>
     /// <param name="nodes">The nodes of the page.</param>
     /// <param name="edges">The links; one whose end is not a node here is left out.</param>
-    /// <param name="width">The window width in px: from 1390 the three Core groups sit side by side, below that they stack.</param>
-    /// <returns>Where everything sits.</returns>
-    internal static WholeMapGeometry Place(IReadOnlyList<WholeNode> nodes, IReadOnlyList<WholeEdge> edges, double width)
+    /// <param name="width">The window width in px; it gives the stage when <paramref name="stageWidth"/> is not known.</param>
+    /// <param name="stageWidth">The width in px the map fits into, or 0 when not known.</param>
+    /// <param name="stageHeight">The height in px the map fits into, or 0 when not known.</param>
+    /// <returns>Where everything sits: of the Core arrangements (stacked or side by side) and row caps tried, the one that fits the stage biggest (capped at 1; a tie keeps the fewer columns).</returns>
+    internal static WholeMapGeometry Place(IReadOnlyList<WholeNode> nodes, IReadOnlyList<WholeEdge> edges, double width, double stageWidth = 0, double stageHeight = 0)
     {
         ArgumentNullException.ThrowIfNull(nodes);
         ArgumentNullException.ThrowIfNull(edges);
+        var (sw, sh) = stageWidth > 0 && stageHeight > 0 ? (stageWidth, stageHeight) : (Math.Max(width - 250, 400), 400);
+        var best = Build(nodes, edges, sideBySide: false, MaxRows);
+        var bestFit = Math.Min(1, Math.Min(sw / best.World.Width, sh / best.World.Height));
+        foreach (var side in (bool[])[false, true])
+        {
+            for (var rows = MaxRows; rows >= MinRows; rows--)
+            {
+                var candidate = Build(nodes, edges, side, rows);
+                var fit = Math.Min(1, Math.Min(sw / candidate.World.Width, sh / candidate.World.Height));
+                if (fit > bestFit + 1e-9)
+                {
+                    (best, bestFit) = (candidate, fit);
+                }
+            }
+        }
+
+        return best;
+    }
+
+    private static WholeMapGeometry Build(IReadOnlyList<WholeNode> nodes, IReadOnlyList<WholeEdge> edges, bool sideBySide, int maxRows)
+    {
         var entry = nodes.Where(n => WholeDrillIn.BandOf(n.Kind) == AreaBand.Entry).ToList();
         var data = nodes.Where(n => WholeDrillIn.BandOf(n.Kind) == AreaBand.Data).ToList();
         var core = nodes.Where(n => WholeDrillIn.BandOf(n.Kind) == AreaBand.Core).ToList();
         var groups = Enum.GetValues<CoreGroup>().Select(g => (Group: g, Members: core.Where(n => WholeDrillIn.CoreGroupOf(n.Label) == g).OrderBy(n => n.Label, StringComparer.Ordinal).ToList())).ToList();
-        var sideBySide = WholeDrillIn.CoreColumns(width) >= 2;
 
         var placed = new List<PlacedNode>(nodes.Count);
         var headings = new List<PlacedAreaBand>();
         var x = Margin;
         var bottom = HeadingHeight;
 
-        var sink = new Drawn(placed, headings);
+        var sink = new Drawn(placed, headings, maxRows);
         (x, bottom) = Outer(new OuterBand(entry, Labels.ContextAreaEntry, Labels.ContextAreaEntryWhat), x, bottom, sink);
 
         var coreLeft = x;
@@ -62,18 +87,18 @@ internal static class AreaCanvasLayout
         var stackTop = HeadingHeight;
         foreach (var (group, members) in groups.Where(g => g.Members.Count > 0 || sideBySide))
         {
-            var column = Math.Max(GridWidth(members), SubWords(group, members.Count));
+            var column = Math.Max(GridWidth(members, maxRows), SubWords(group, members.Count));
             var left = sideBySide ? coreRight : coreLeft;
-            var top = sideBySide || stackTop <= HeadingHeight ? HeadingHeight : stackTop + 28;   // stacked: room for the next group's heading
+            var top = sideBySide || stackTop <= HeadingHeight ? HeadingHeight : stackTop + 32;   // stacked: room for the next group's heading
             headings.Add(new PlacedAreaBand(GroupWords(group), string.Empty, members.Count, new WholeRect(left, top - 24, column, 20), Sub: true));
-            var next = Grid(members, left, top, placed);
+            var next = Grid(members, left, top, placed, maxRows);
             coreBottom = Math.Max(coreBottom, next);
             stackTop = next;
             coreRight = sideBySide ? left + column + Gap : Math.Max(coreRight, left + column + Gap);
         }
 
         var coreWidth = Math.Max(Math.Max(coreRight - coreLeft - Gap, MinWidth), HeadingWords(Labels.ContextAreaCore, Labels.ContextAreaCoreWhat));
-        headings.Add(new PlacedAreaBand(Labels.ContextAreaCore, Labels.ContextAreaCoreWhat, core.Count, new WholeRect(coreLeft, 0, coreWidth, 20), Sub: false));
+        headings.Add(new PlacedAreaBand(Labels.ContextAreaCore, Labels.ContextAreaCoreWhat, core.Count, new WholeRect(coreLeft, 0, coreWidth, 38), Sub: false));
         x = coreLeft + coreWidth + Gap;
 
         (x, bottom) = Outer(new OuterBand(data, Labels.ContextAreaData, Labels.ContextAreaDataWhat), x, Math.Max(bottom, coreBottom), sink);
@@ -94,29 +119,29 @@ internal static class AreaCanvasLayout
     private static (double Right, double Bottom) Outer(OuterBand band, double x, double bottom, Drawn sink)
     {
         var members = band.Members;
-        var width = Math.Max(members.Count == 0 ? EmptyWidth : GridWidth(members), HeadingWords(band.Title, band.Caption));
-        sink.Headings.Add(new PlacedAreaBand(band.Title, band.Caption, members.Count, new WholeRect(x, 0, width, 20), Sub: false));
-        var next = Grid([.. members.OrderBy(n => n.Label, StringComparer.Ordinal)], x, HeadingHeight, sink.Nodes);
+        var width = Math.Max(members.Count == 0 ? EmptyWidth : GridWidth(members, sink.MaxRows), HeadingWords(band.Title, band.Caption));
+        sink.Headings.Add(new PlacedAreaBand(band.Title, band.Caption, members.Count, new WholeRect(x, 0, width, 38), Sub: false));
+        var next = Grid([.. members.OrderBy(n => n.Label, StringComparer.Ordinal)], x, HeadingHeight, sink.Nodes, sink.MaxRows);
         return (x + width + Gap, Math.Max(bottom, next));
     }
 
-    private static int ColumnsOf(int count) => Math.Max(1, (count + MaxRows - 1) / MaxRows);
+    private static int ColumnsOf(int count, int maxRows) => Math.Max(1, (count + maxRows - 1) / maxRows);
 
-    private static double GridWidth(List<WholeNode> members)
+    private static double GridWidth(List<WholeNode> members, int maxRows)
     {
-        var columns = ColumnsOf(members.Count);
+        var columns = ColumnsOf(members.Count, maxRows);
         return (columns * WidthOf(members)) + ((columns - 1) * Gap);
     }
 
-    // The words of a heading on one line: the title, a space, the caption.
-    private static double HeadingWords(string title, string caption) => (title.Length * TitleChar) + 8 + (caption.Length * CharWidth);
+    // The words of a heading: the title on one line, the caption under it; the wider of the two.
+    private static double HeadingWords(string title, string caption) => Math.Max(title.Length * TitleChar, caption.Length * CharWidth);
 
     private static double SubWords(CoreGroup group, int count) => ((GroupWords(group).Length + 1 + count.ToString(System.Globalization.CultureInfo.InvariantCulture).Length) * CharWidth) + 8;
 
     // A group as a grid: column by column in label order, at most MaxRows rows, as even as the columns allow. Returns the bottom.
-    private static double Grid(List<WholeNode> members, double left, double top, List<PlacedNode> placed)
+    private static double Grid(List<WholeNode> members, double left, double top, List<PlacedNode> placed, int maxRows)
     {
-        var columns = ColumnsOf(members.Count);
+        var columns = ColumnsOf(members.Count, maxRows);
         var rows = Math.Max(1, (members.Count + columns - 1) / columns);
         var width = WidthOf(members);
         for (var i = 0; i < members.Count; i++)
@@ -156,5 +181,5 @@ internal static class AreaCanvasLayout
 
     private sealed record OuterBand(List<WholeNode> Members, string Title, string Caption);
 
-    private sealed record Drawn(List<PlacedNode> Nodes, List<PlacedAreaBand> Headings);
+    private sealed record Drawn(List<PlacedNode> Nodes, List<PlacedAreaBand> Headings, int MaxRows);
 }

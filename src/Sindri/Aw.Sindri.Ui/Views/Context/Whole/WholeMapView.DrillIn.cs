@@ -14,6 +14,7 @@ internal sealed partial class WholeMapView
     private void Resized()
     {
         _map?.ViewWidth = TopLevel.GetTopLevel(this)?.ClientSize.Width ?? Bounds.Width;
+        _map?.ViewStage = (WholeCanvas.FitStage.Width, WholeCanvas.FitStage.Height);
 
         Arrange();
     }
