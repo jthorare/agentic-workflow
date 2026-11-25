@@ -236,7 +236,7 @@
             <TextBlock Classes="caption quiet" Text="{Binding Runs.EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
           <!-- The runs table (frame wf-runs): filters and the count, then Time, Trigger, Revision, Duration and Result. The run id is not shown (#3360). -->
-          <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto" Margin="16,8" ColumnSpacing="8" IsVisible="{Binding !Runs.IsReading}">
+          <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto" Margin="16,8" ColumnSpacing="8" IsVisible="{Binding Runs.ShowsRunTable}">
             <TextBlock Classes="caption subtle" Text="Status" VerticalAlignment="Center" />
             <ComboBox x:Name="RunsStatusFilter" Grid.Column="1" ItemsSource="{Binding Runs.StatusChoices}" SelectedItem="{Binding Runs.SelectedStatus, Mode=TwoWay}" AutomationProperties.Name="Status">
               <ComboBox.ItemTemplate><DataTemplate x:DataType="wf:RunFilterChoice"><TextBlock Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate>
@@ -255,7 +255,7 @@
           <Border x:Name="RunsNoMatchName" Margin="16,8" IsVisible="{Binding Runs.HasNoMatch}" AutomationProperties.Name="{Binding Runs.NoMatchText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="caption quiet" Text="{Binding Runs.NoMatchText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
-          <Grid ColumnDefinitions="24,136,168,64,80,*" ColumnSpacing="16" Margin="16,0" Height="28" IsVisible="{Binding !Runs.IsReading}">
+          <Grid ColumnDefinitions="24,136,168,64,80,*" ColumnSpacing="16" Margin="16,0" Height="28" IsVisible="{Binding Runs.ShowsRunTable}">
             <TextBlock Grid.Column="1" Classes="caption subtle run-column-head" Text="Time" VerticalAlignment="Center" />
             <TextBlock Grid.Column="2" Classes="caption subtle run-column-head" Text="Trigger" VerticalAlignment="Center" />
             <TextBlock Grid.Column="3" Classes="caption subtle run-column-head" Text="Revision" VerticalAlignment="Center" />

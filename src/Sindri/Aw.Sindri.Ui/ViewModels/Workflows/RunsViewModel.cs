@@ -80,16 +80,16 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
     public bool HasNotice => NoticeText.Length > 0;
 
     /// <summary>True until the answer.</summary>
-    public bool IsReading { get; private set => Set(ref field, value); }
+    public bool IsReading { get; private set { Set(ref field, value); OnChanged(nameof(ShowsRunTable)); } }
 
     /// <summary>True when there are no runs to list.</summary>
-    public bool IsEmpty { get; private set => Set(ref field, value); }
+    public bool IsEmpty { get; private set { Set(ref field, value); OnChanged(nameof(ShowsRunTable)); } }
 
     /// <summary>"No runs yet." or "This workflow is off, so it has no runs."; empty otherwise.</summary>
     public string EmptyText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when the read failed.</summary>
-    public bool IsFailed { get; private set => Set(ref field, value); }
+    public bool IsFailed { get; private set { Set(ref field, value); OnChanged(nameof(ShowsRunTable)); } }
 
     /// <summary>The sentence for a failed read.</summary>
     public string FailedText { get; private set => Set(ref field, value); } = string.Empty;
