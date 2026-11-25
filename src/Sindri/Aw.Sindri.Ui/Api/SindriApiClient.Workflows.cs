@@ -78,6 +78,24 @@ internal sealed partial class SindriApiClient
     }
 
     /// <inheritdoc />
+    public async Task<Result<WorkflowOpsApplied>> ReplaceWorkflow(Uri api, string slug, int baseRevision, string specJson, CancellationToken cancellationToken)
+    {
+        JsonElement spec;
+        try
+        {
+            using var document = JsonDocument.Parse(specJson);
+            spec = document.RootElement.Clone();
+        }
+        catch (JsonException)
+        {
+            return SindriUiErrors.BadAnswer.With("the graph is not JSON");
+        }
+
+        var content = AwJson.Serialize(new ReplaceWorkflowBody(baseRevision, spec), Json);
+        return await Call<WorkflowOpsApplied>(api, HttpMethod.Put, WorkflowRoutes.One(slug), cancellationToken, new CallOptions(Content: content)).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public Task<Result<WorkflowActivated>> ActivateWorkflow(Uri api, string slug, CancellationToken cancellationToken) =>
         Call<WorkflowActivated>(api, HttpMethod.Post, WorkflowRoutes.Activate(slug), cancellationToken, new CallOptions(Content: AwJson.Serialize(new ActivateWorkflowBody(Revision: null), Json)));
 
