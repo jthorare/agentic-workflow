@@ -76,6 +76,22 @@ internal static class Composition
             .AddSindriHost();
 
     /// <summary>
+    /// The CLI's client composition (#3727): what a verb that only calls the running control plane resolves (the clock, the
+    /// JSON options, telemetry and Infrastructure's client adapters). <see cref="Compose"/> holds the same adapters, so a
+    /// client verb behaves the same in either; CommandTable picks this one for the verbs in CliCompositions.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="environment">Reads an environment variable.</param>
+    /// <param name="clock">The clock.</param>
+    /// <returns>The same collection.</returns>
+    internal static IServiceCollection ComposeClient(IServiceCollection services, Func<string, string?> environment, TimeProvider clock)
+        => services
+            .AddSingleton(clock)
+            .AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
+            .AddKernelTelemetry(TelemetryOptions.FromEnvironment("sindri", environment, clock))   // the same runtime as Compose's, so an unknown AW_LOG_LEVEL warns the same way
+            .AddSindriClientInfrastructure(environment);
+
+    /// <summary>
     /// The environment function Composition passes to AddContextInfrastructure (context spec §4 "Secrets"): a name that is a
     /// secret pointer (keychain:, env:, op:, file:) resolves here, in Sindri Host, so Aw.Context never resolves pointers or
     /// reads the keychain; every other name reads <paramref name="environment"/>.

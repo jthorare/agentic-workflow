@@ -31,7 +31,7 @@ internal static partial class CommandTable
         {
             ["agents", .. var rest] => await new AgentsVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["skills", .. var rest] => await new SkillsVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
-            ["setup", .. var rest] when Array.Exists(rest, static a => string.Equals(a, "--apply", StringComparison.Ordinal)) =>
+            ["setup", .. var rest] when CliCompositions.AppliesSetup(rest) =>
                 await new SetupApplyVerb(client, output, host.Start.EnsureRunning, host.Services.GetRequiredService<TimeProvider>()).Run(rest, ct).ConfigureAwait(false),   // may start serve (first-run spec decision 10)
             ["setup", .. var rest] => await new SetupVerbs(client, output, host.Services.GetRequiredService<Kernel.Services.IService<Features.GetSetup.GetSetupOfflineRequest, Features.GetSetup.GetSetupResponse>>()).Run(rest, ct).ConfigureAwait(false),
             ["code-index", .. var rest] => await new CodeIndexVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
