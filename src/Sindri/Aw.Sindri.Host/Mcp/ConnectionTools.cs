@@ -64,7 +64,7 @@ internal static class ConnectionTools
         {
             ["name"] = ContextTools.Property("string", "The connection name, e.g. linear:work"),
             ["preset"] = ContextTools.Property("string", "A shipped preset: github, linear, slack, google or spotify"),
-            ["kind"] = ContextTools.Property("string", "oauth, mcp, rest or cli; the preset's kind when left out", bounds: new ContextTools.PropertyBounds(Allowed: ["oauth", "mcp", "rest", "cli"])),
+            ["kind"] = ContextTools.Property("string", "oauth, mcp, rest or cli; left out, the github, linear and slack presets store a key (rest, with keyEnv) and google and spotify sign in (oauth)", bounds: new ContextTools.PropertyBounds(Allowed: ["oauth", "mcp", "rest", "cli"])),
             ["clientId"] = ContextTools.Property("string", "The OAuth client id (not secret); presets ship none"),
             ["keyEnv"] = ContextTools.Property("string", "The NAME of an environment variable in the environment of the running sindri serve (not your shell) that holds the key of a rest or cli connection; the error says when serve has no such variable"),
             ["clientSecretEnv"] = ContextTools.Property("string", "The NAME of an environment variable in the running sindri serve's environment that holds the OAuth client secret, for providers that want one (the github and google presets)"),

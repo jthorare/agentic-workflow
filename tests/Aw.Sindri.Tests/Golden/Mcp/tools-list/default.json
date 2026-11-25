@@ -816,7 +816,7 @@
         },
         "kind": {
           "type": "string",
-          "description": "oauth, mcp, rest or cli; the preset's kind when left out",
+          "description": "oauth, mcp, rest or cli; left out, the github, linear and slack presets store a key (rest, with keyEnv) and google and spotify sign in (oauth)",
           "enum": [
             "oauth",
             "mcp",
