@@ -197,7 +197,7 @@ internal sealed partial class WholeMapView : UserControl
         var viewport = view.Scale > 0 ? new Rect(-view.X / view.Scale, -view.Y / view.Scale, size.Width / view.Scale, size.Height / view.Scale) : default;
         WholeWorld.Scale = view.Scale;
         WholeWorld.Viewport = viewport;
-        _map?.ViewportChanged(new WholeRect(viewport.X, viewport.Y, viewport.Width, viewport.Height));
+        _map?.ViewportChanged(new WholeRect(viewport.X, viewport.Y, viewport.Width, Math.Max(viewport.Height - (WholeCanvas.FitBottomInset / Math.Max(view.Scale, 0.01)), 1)));   // the stage clear of the tools strip: a node under the legend is not in view
         WholeMiniMap.Viewport = MiniMapControl.VisiblePart(viewport, WholeCanvas.WorldBounds);   // the part of the world on the stage, never the empty stage past it
         WholeZoomValue.Text = Labels.ContextMapZoomPct(view.Scale);
         WholeZoomIn.IsEnabled = WholeMapViewModel.CanZoomIn(view.Scale, WholeCanvas.MaxZoom);

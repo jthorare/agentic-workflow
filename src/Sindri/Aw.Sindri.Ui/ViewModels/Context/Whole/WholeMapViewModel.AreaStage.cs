@@ -37,7 +37,8 @@ internal sealed partial class WholeMapViewModel
             return;
         }
 
-        var (inView, below) = (geometry.Nodes.Count(n => n.Rect.Intersects(view)), geometry.Nodes.Count(n => n.Rect.Y >= view.Bottom));
+        var inView = geometry.Nodes.Count(n => n.Rect.Intersects(view));
+        var below = geometry.Nodes.Count - inView;   // whatever is not in view, so the pill and the bar always agree
         if (inView == _inView && below == _below)
         {
             return;

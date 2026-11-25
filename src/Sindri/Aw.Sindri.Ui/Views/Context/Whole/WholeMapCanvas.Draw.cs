@@ -27,14 +27,14 @@ internal sealed partial class WholeMapCanvas
         var view = Viewport.Width > 0 ? new WholeRect(Viewport.X, Viewport.Y, Viewport.Width, Viewport.Height) : geometry.World;
         var dots = WholeMapViewModel.UsesDots(Scale);
         DrawLanes(context, geometry, view, dots);
-        if (geometry.IsAreaCanvas)
-        {
-            DrawAreaBands(context, geometry, view);
-        }
-
         if (geometry.Nodes.Count > 0 || geometry.Columns.Count > 0)
         {
             DrawNodeEdges(context, geometry, view);
+            if (geometry.IsAreaCanvas)
+            {
+                DrawAreaBands(context, geometry, view);   // after the links, so no line runs through a heading
+            }
+
             DrawHeaders(context, geometry, view, dots);
             DrawNodes(context, geometry, view, dots);
         }

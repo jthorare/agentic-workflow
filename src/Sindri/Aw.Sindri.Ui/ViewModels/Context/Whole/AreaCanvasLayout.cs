@@ -23,6 +23,10 @@ internal static class AreaCanvasLayout
     /// <summary>The width of an empty band: its heading and "none in this area".</summary>
     internal const double EmptyWidth = 128;
 
+    /// <summary>The most rows a group's column holds before the group wraps into another column.</summary>
+    internal const int MaxRows = 8;
+
+    private const double TitleChar = 8;
     private const double MinWidth = 140;
     private const double MaxWidth = 340;
     private const double Margin = 16;
@@ -58,17 +62,17 @@ internal static class AreaCanvasLayout
         var stackTop = HeadingHeight;
         foreach (var (group, members) in groups.Where(g => g.Members.Count > 0 || sideBySide))
         {
-            var column = WidthOf(members);
+            var column = Math.Max(GridWidth(members), SubWords(group, members.Count));
             var left = sideBySide ? coreRight : coreLeft;
             var top = sideBySide || stackTop <= HeadingHeight ? HeadingHeight : stackTop + 28;   // stacked: room for the next group's heading
             headings.Add(new PlacedAreaBand(GroupWords(group), string.Empty, members.Count, new WholeRect(left, top - 24, column, 20), Sub: true));
-            var next = Column(members, left, top, column, placed);
+            var next = Grid(members, left, top, placed);
             coreBottom = Math.Max(coreBottom, next);
             stackTop = next;
             coreRight = sideBySide ? left + column + Gap : Math.Max(coreRight, left + column + Gap);
         }
 
-        var coreWidth = Math.Max(coreRight - coreLeft - Gap, MinWidth);
+        var coreWidth = Math.Max(Math.Max(coreRight - coreLeft - Gap, MinWidth), HeadingWords(Labels.ContextAreaCore, Labels.ContextAreaCoreWhat));
         headings.Add(new PlacedAreaBand(Labels.ContextAreaCore, Labels.ContextAreaCoreWhat, core.Count, new WholeRect(coreLeft, 0, coreWidth, 20), Sub: false));
         x = coreLeft + coreWidth + Gap;
 
@@ -90,22 +94,39 @@ internal static class AreaCanvasLayout
     private static (double Right, double Bottom) Outer(OuterBand band, double x, double bottom, Drawn sink)
     {
         var members = band.Members;
-        var width = members.Count == 0 ? EmptyWidth : WidthOf(members);
+        var width = Math.Max(members.Count == 0 ? EmptyWidth : GridWidth(members), HeadingWords(band.Title, band.Caption));
         sink.Headings.Add(new PlacedAreaBand(band.Title, band.Caption, members.Count, new WholeRect(x, 0, width, 20), Sub: false));
-        var next = Column([.. members.OrderBy(n => n.Label, StringComparer.Ordinal)], x, HeadingHeight, width, sink.Nodes);
+        var next = Grid([.. members.OrderBy(n => n.Label, StringComparer.Ordinal)], x, HeadingHeight, sink.Nodes);
         return (x + width + Gap, Math.Max(bottom, next));
     }
 
-    private static double Column(IReadOnlyList<WholeNode> members, double left, double top, double width, List<PlacedNode> placed)
+    private static int ColumnsOf(int count) => Math.Max(1, (count + MaxRows - 1) / MaxRows);
+
+    private static double GridWidth(List<WholeNode> members)
     {
-        var y = top;
-        foreach (var node in members)
+        var columns = ColumnsOf(members.Count);
+        return (columns * WidthOf(members)) + ((columns - 1) * Gap);
+    }
+
+    // The words of a heading on one line: the title, a space, the caption.
+    private static double HeadingWords(string title, string caption) => (title.Length * TitleChar) + 8 + (caption.Length * CharWidth);
+
+    private static double SubWords(CoreGroup group, int count) => ((GroupWords(group).Length + 1 + count.ToString(System.Globalization.CultureInfo.InvariantCulture).Length) * CharWidth) + 8;
+
+    // A group as a grid: column by column in label order, at most MaxRows rows, as even as the columns allow. Returns the bottom.
+    private static double Grid(List<WholeNode> members, double left, double top, List<PlacedNode> placed)
+    {
+        var columns = ColumnsOf(members.Count);
+        var rows = Math.Max(1, (members.Count + columns - 1) / columns);
+        var width = WidthOf(members);
+        for (var i = 0; i < members.Count; i++)
         {
-            placed.Add(new PlacedNode(node.Key, node.Label, node.Kind, 0, new WholeRect(left, y, width, NodeHeight), node.Confirmed));
-            y += RowPitch;
+            var node = members[i];
+            var rect = new WholeRect(left + (i / rows * (width + Gap)), top + (i % rows * RowPitch), width, NodeHeight);
+            placed.Add(new PlacedNode(node.Key, node.Label, node.Kind, 0, rect, node.Confirmed));
         }
 
-        return y;
+        return top + (Math.Min(rows, members.Count) * RowPitch);
     }
 
     private static double WidthOf(List<WholeNode> members) =>
