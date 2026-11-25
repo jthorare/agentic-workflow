@@ -12606,3 +12606,4 @@ static Aw.Context.Core.Concepts.ConceptBuilder.CodePathsOf(System.Collections.Ge
 Aw.Context.Core.Symbols.CodeIndexHead.GraphOff.get -> bool
 Aw.Context.Core.Symbols.CodeIndexHead.GraphOff.init -> void
 const Aw.Context.Core.Code.CodeIndexReading.GraphOffReason = "graph-off" -> string!
+const Aw.Context.Core.Code.CodeIndexReading.GraphUnavailableReason = "graph-unavailable" -> string!

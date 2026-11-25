@@ -34,7 +34,7 @@ internal sealed class GetWorkflowRunService(IWorkflowRunStore runs, IWorkflowSto
         var spec = revision.IsError ? null : revision.Value.Spec;
         var agentNodes = await AgentNodes(found, spec, nodes.Value, cancellationToken).ConfigureAwait(false);
         var slug = WorkflowSlug.From(found.Id.Value[..found.Id.Value.IndexOf('@', StringComparison.Ordinal)]);
-        return new GetWorkflowRunResponse(found.Id, slug, found.Revision, RunText.Of(found.Status), RunText.Json(found.Trigger), RunText.Json(found.Outputs), found.Error, found.ItemId, found.StartedAt, found.EndedAt,
+        return new GetWorkflowRunResponse(found.Id, slug, found.Revision, RunText.Of(found.Status), RunText.Json(found.Trigger), RunOrder.Outputs(spec, RunText.Json(found.Outputs)), found.Error, found.ItemId, found.StartedAt, found.EndedAt,
             [.. RunOrder.Of(spec, nodes.Value).Select(n => View(n, agentNodes))])
         {
             TriggerKind = RunWords.TriggerWord(found.Trigger),

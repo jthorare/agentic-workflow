@@ -2,6 +2,7 @@
   "id": "spotify",
   "displayName": "Spotify",
   "kind": "oauth",
+  "auth": ["oauth"],
   "authorizeUrl": "https://accounts.spotify.com/authorize",
   "tokenUrl": "https://accounts.spotify.com/api/token",
   "revokeUrl": null,

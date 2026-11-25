@@ -80,7 +80,37 @@ public sealed class ConnectionPresetsTests
     {
         foreach (var preset in new EmbeddedConnectionPresets().List().Value.Where(static p => !p.LoopbackAllowed))
         {
-            Assert.Contains("--kind rest", preset.SignInNote, StringComparison.Ordinal);
+            Assert.Contains($"--preset {preset.Key} --key-env", preset.SignInNote, StringComparison.Ordinal);
+        }
+    }
+
+    // #4357: a key first where the service has one (Sindri runs on loopback, so an OAuth app has no good callback); OAuth only where there is no key
+    [Fact]
+    public void GitHub_Linear_and_Slack_take_a_key_first_and_Google_and_Spotify_sign_in_only()
+    {
+        var auth = new EmbeddedConnectionPresets().List().Value.ToDictionary(static p => p.Key, static p => string.Join(',', p.Auth), StringComparer.Ordinal);
+
+        Assert.Equal(
+            new Dictionary<string, string>(StringComparer.Ordinal) { ["github"] = "key,oauth", ["google"] = "oauth", ["linear"] = "key,oauth", ["slack"] = "key", ["spotify"] = "oauth" },
+            auth);
+    }
+
+    [Fact]
+    public void A_preset_without_auth_signs_in_only_and_a_bad_auth_list_does_not_parse()
+    {
+        const string Head = """{"id":"x","displayName":"X","kind":"oauth","authorizeUrl":"https://x.test/a","tokenUrl":"https://x.test/t","defaultScopes":["a"],"hostGroup":"x","loopbackAllowed":true,"signInNote":"n" """;
+
+        var bare = ConnectionPresets.Parse(Head + "}").Value;
+        var keyed = ConnectionPresets.Parse(Head + ",\"auth\":[\"key\",\"oauth\"]}").Value;
+
+        Assert.Equal(["oauth"], bare.Auth, StringComparer.Ordinal);
+        Assert.False(bare.KeyFirst);
+        Assert.True(keyed.KeyFirst);
+        foreach (var bad in (string[])["[]", "[\"password\"]", "[\"key\",\"key\"]", "\"key\""])
+        {
+            var parsed = ConnectionPresets.Parse(Head + ",\"auth\":" + bad + "}");
+            Assert.True(parsed.IsError, bad);
+            Assert.Contains("'auth'", parsed.Error.Message, StringComparison.Ordinal);
         }
     }
 

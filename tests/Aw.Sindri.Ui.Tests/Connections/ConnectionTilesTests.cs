@@ -55,7 +55,7 @@ public sealed class ConnectionTilesTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task Connect_asks_for_the_client_id_first_and_says_why_it_waits()
+    public async Task Connect_asks_for_the_token_first_and_says_why_it_waits()
     {
         var page = await _f.Shown();
         var tile = page.Tiles.Single(t => t.Id == "linear");
@@ -64,7 +64,7 @@ public sealed class ConnectionTilesTests
 
         Assert.True(tile.IsAsking);
         Assert.False(tile.CanSend);
-        Assert.Equal("Enter your Linear app's client id", tile.BlockedReason);
+        Assert.Equal("Paste a Linear token", tile.BlockedReason);
         Assert.Empty(_f.Server.AddedConnections);
     }
 
@@ -74,6 +74,7 @@ public sealed class ConnectionTilesTests
         var page = await _f.Shown();
         var tile = page.Tiles.Single(t => t.Id == "linear");
         await tile.Connect(Token);
+        tile.UseOAuth();
         tile.ClientId = "client-123";
 
         await _f.Drive(tile.Connect(Token), "linear:work");
@@ -92,6 +93,7 @@ public sealed class ConnectionTilesTests
         var page = await _f.Shown();
         var tile = page.Tiles.Single(t => t.Id == "github");
         await tile.Connect(Token);
+        tile.UseOAuth();
         tile.ClientId = "client-123";
         tile.ClientSecret.Text = "secret-456";
         _f.Server.NextConnectionGetError = new Kernel.Error("SND-CONN-003", Kernel.ErrorKind.Unavailable, "The provider refused the sign-in.");
@@ -109,6 +111,7 @@ public sealed class ConnectionTilesTests
         var page = await _f.Shown();
         var tile = page.Tiles.Single(t => t.Id == "github");
         await tile.Connect(Token);
+        tile.UseOAuth();
         tile.ClientId = "client-123";
         tile.ClientSecret.Text = "secret-456";
         _f.Server.ConnectionWriteError = new Kernel.Error("SND-CONN-006", Kernel.ErrorKind.Unavailable, "The connection's secret store is not available");
@@ -135,6 +138,19 @@ public sealed class ConnectionTilesTests
     }
 
     [Fact]
+    public async Task A_Slack_token_connect_names_the_slack_preset_so_the_Slack_feed_finds_the_row()
+    {
+        var page = await _f.Shown();
+        var tile = page.Tiles.Single(t => t.Id == "slack");
+        await tile.Connect(Token);
+        tile.Token.Text = "pasted-test-value";
+
+        await _f.Drive(tile.Connect(Token));
+
+        Assert.Equal(("slack", "rest"), (_f.Server.LastAddConnection!.Preset, _f.Server.LastAddConnection.Kind));
+    }
+
+    [Fact]
     public async Task A_connected_tile_shows_the_account_and_Disconnect_removes_the_connection()
     {
         _f.SeedThree();
@@ -146,6 +162,6 @@ public sealed class ConnectionTilesTests
         await tile.Disconnect(Token);
 
         Assert.False(tile.IsConnected);
-        Assert.Equal("Connect", tile.PrimaryText);
+        Assert.Equal("Add token", tile.PrimaryText);   // Linear opens on a token first (#4357)
     }
 }
