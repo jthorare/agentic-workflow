@@ -16,7 +16,7 @@ internal sealed class WorkflowFindingViewModel : ObservableObject
     /// <param name="finding">The finding.</param>
     internal WorkflowFindingViewModel(WorkflowFindingView finding)
     {
-        (Id, Code, Node, _field) = (finding.Id, finding.Code, finding.Node, finding.Field);
+        (Id, Code, Node, _field, ServerMessage) = (finding.Id, finding.Code, finding.Node, finding.Field, finding.Message);
         IsError = string.Equals(finding.Severity, "error", StringComparison.Ordinal);
         FixField = string.Equals(finding.Code, PromptReadsNoData, StringComparison.Ordinal) && finding.Node is not null && finding.Field is { } field && field.StartsWith(ConfigPrefix, StringComparison.Ordinal) && field.Length > ConfigPrefix.Length
             ? field[ConfigPrefix.Length..]
@@ -24,10 +24,27 @@ internal sealed class WorkflowFindingViewModel : ObservableObject
     }
 
     /// <summary>The step's card title the finding's words name (the whole workflow when it has no step).</summary>
-    internal string StepTitle { get; set; } = WorkflowFindingWords.Workflow;
+    internal string StepTitle
+    {
+        get;
+        set
+        {
+            if (string.Equals(field, value, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            field = value;
+            OnChanged(nameof(Sentence));   // Mark sets the title after the view bound: a rename changes all three words
+            OnChanged(nameof(FixLine));
+            OnChanged(nameof(Name));
+        }
+    } = WorkflowFindingWords.Workflow;
+
+    private string ServerMessage { get; }
 
     /// <summary>The server's own message, for the codes whose product words cannot say what is wrong (a compiler error, a cron, a condition, a value): shown under Details. Empty otherwise.</summary>
-    public string Details => Code.Length > 1000 ? Code : string.Empty;   // red stub
+    public string Details => WorkflowFindingWords.KeepsServerText(Code) ? ServerMessage : string.Empty;
 
     /// <summary>True when Details has text.</summary>
     public bool HasDetails => Details.Length > 0;
@@ -68,5 +85,8 @@ internal sealed class WorkflowFindingViewModel : ObservableObject
 
     /// <summary>The fix button's words.</summary>
     public string FixText => Labels.WfFindingFix;
+
+    /// <summary>The Details expander's header.</summary>
+    public string DetailsHeader => Labels.WfFindingDetails;
 #pragma warning restore CA1822, MA0041
 }

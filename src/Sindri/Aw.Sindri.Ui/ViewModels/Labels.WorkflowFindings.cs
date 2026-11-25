@@ -5,6 +5,9 @@ namespace Aw.Sindri.Ui.ViewModels;
 /// <summary>The app's own copy (<see cref="Labels"/>, continued): the server's validation findings in the Workflows editor (#3803). The finding's sentence and fix line come from WorkflowFindingWords (#4397); the chip and the header use one term, "to fix".</summary>
 internal static partial class Labels
 {
+    /// <summary>The expander under a finding that holds the server's own message.</summary>
+    internal const string WfFindingDetails = "Details";
+
     /// <summary>The fix button of a finding the app can fix (GRAPH-PROMPT-001: open the step's question).</summary>
     internal const string WfFindingFix = "Fix this";
 

@@ -13,7 +13,7 @@ public sealed partial class WorkflowFindingWordsTests
         "GRAPH-AGENT-001", "GRAPH-AGENT-002", "GRAPH-BLOCK-001", "GRAPH-CODE-001", "GRAPH-COND-001", "GRAPH-CONFIG-001", "GRAPH-CRON-001", "GRAPH-CYCLE-001",
         "GRAPH-EDGE-001", "GRAPH-EDGE-002", "GRAPH-LOOP-001", "GRAPH-LOOP-002", "GRAPH-LOOP-003", "GRAPH-NODE-001", "GRAPH-NODE-002", "GRAPH-NODE-003",
         "GRAPH-NODE-004", "GRAPH-NODE-005", "GRAPH-PROMPT-001", "GRAPH-REF-001", "GRAPH-REF-002", "GRAPH-REF-003", "GRAPH-REF-004", "GRAPH-REF-005",
-        "GRAPH-RESULT-001", "GRAPH-TRIGGER-001", "GRAPH-TRIGGER-002", "GRAPH-WIRING-001",
+        "GRAPH-RESULT-001", "GRAPH-TRIGGER-001", "GRAPH-TRIGGER-002", "GRAPH-WIRING-001", "GRAPH-REPO-001", "GRAPH-REPO-002", "GRAPH-NAME-001", "GRAPH-NAME-002",
     ];
 
     private static readonly string[] _codeWords = ["node", "trigger", "{{", "}}", "'", "config.", "edge", "GRAPH-", "onFailure", "for_each", "id "];
