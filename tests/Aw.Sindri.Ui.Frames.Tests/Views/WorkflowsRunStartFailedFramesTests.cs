@@ -6,6 +6,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
+using Aw.Sindri.Ui.ViewModels.Shell;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
@@ -27,7 +28,7 @@ public sealed class WorkflowsRunStartFailedFramesTests : FrameHost
         FrameFile.Save(window, "s3702-" + name);
     }
 
-    private async Task<(Window Window, Aw.Sindri.Ui.ViewModels.Shell.ShellViewModel Shell)> AfterRunNow()
+    private async Task<(Window Window, ShellViewModel Shell)> AfterRunNow()
     {
         Server.WorkflowsAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, Golden("workflows", "list-two").ToJsonString());
         Server.WorkflowAnswers[Slug] = RouteAnswer.Api("workflows-slug", "found");

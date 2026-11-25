@@ -74,7 +74,7 @@ public sealed class AddStepSaysWhyAndNamesUpstreamTests
     [Fact]
     public async Task A_step_with_no_required_field_shows_no_line_and_Save_is_lit()
     {
-        var page = await AddedStep("wait");
+        var page = await AddedStep("manual");
 
         Assert.True(page.CanSave);
         Assert.All(page.Editor.Fields, static f => Assert.False(f.HasNeed));

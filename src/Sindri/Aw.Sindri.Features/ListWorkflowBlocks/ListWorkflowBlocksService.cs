@@ -23,7 +23,7 @@ internal sealed class ListWorkflowBlocksService(IGraphBlockCatalog catalog, IWor
 
     private static BlockView View(GraphBlockEntry entry) =>
         new(entry.Type, entry.Title, entry.IsTrigger,
-            [.. entry.Config.Fields.Select(static f => FieldView(f))], entry.Outputs.Fields, entry.Outputs.BranchNames, Json(entry.ExampleConfig), Json(entry.ExampleSpec));
+            [.. entry.Config.Fields.Select(static f => FieldView(f))], entry.Outputs.Fields, entry.Outputs.BranchNames, Json(entry.ExampleConfig), Json(entry.ExampleSpec), entry.Config.OneOf);
 
     // why: the caption falls back to the field's name, so the editor always has a label
     private static BlockFieldView FieldView(BlockField f) => new(f.Name, Word(f.Type), f.Required, f.Caption ?? f.Name, Views(f.Choices), Views(f.Presets), f.Advanced, f.Services);
