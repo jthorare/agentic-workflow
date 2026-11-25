@@ -34,4 +34,29 @@ contains "usage names the flag" "$out" "usage: scripts/warp-screen-layout/instal
 setup="$(cat "$ROOT/setup.sh")"
 contains "setup.sh runs the installer" "$setup" 'scripts/warp-screen-layout/install.sh'
 
+# Non-dry install on this box (Linux in CI): skip and exit 0, no shell rc written.
+out="$(bash "$INSTALL" 2>&1)"; rc=$?
+check "non-dry install exits 0" "$rc" "0"
+if [ "$(uname -s)" != "Darwin" ]; then contains "non-dry install skips on non-macOS" "$out" "skipped on"; fi
+if [ -e "$HOME/.zshrc" ]; then echo "not ok - non-dry install wrote ~/.zshrc"; fail=1; else echo "ok - non-dry install wrote no ~/.zshrc"; fi
+
+# A uname stub says Darwin; with no Warp.app the installer skips and writes nothing.
+if [ -d /Applications/Warp.app ]; then
+  echo "ok - skipped the no-Warp stub run (Warp.app is installed here)"
+else
+  stub="$WORK/stub"; mkdir -p "$stub"
+  printf '#!/bin/sh\necho Darwin\n' >"$stub/uname"; chmod +x "$stub/uname"
+  out="$(PATH="$stub:$PATH" bash "$INSTALL" 2>&1)"; rc=$?
+  check "Darwin without Warp.app exits 0" "$rc" "0"
+  contains "Darwin without Warp.app says so" "$out" "Warp.app is not installed"
+  if [ -e "$HOME/.zshrc" ] || [ -e "$HOME/Applications" ]; then echo "not ok - no-Warp run wrote into HOME"; fail=1; else echo "ok - no-Warp run wrote nothing"; fi
+fi
+
+# setup.sh only runs the installer with --with-warp-layout.
+out="$(env -u AW_META_LANE -u AW_META_TEAM bash "$ROOT/setup.sh" --providers claude --dry-run 2>&1)"
+contains "setup without the flag skips the layout" "$out" "skipped (opt-in: --with-warp-layout)"
+case "$out" in *"dry-run: would build Warp Screen Layout"*) echo "not ok - setup ran the installer without the flag"; fail=1 ;; *) echo "ok - setup did not run the installer without the flag" ;; esac
+out="$(env -u AW_META_LANE -u AW_META_TEAM bash "$ROOT/setup.sh" --providers claude --dry-run --with-warp-layout 2>&1)"
+contains "setup with the flag runs the installer" "$out" "dry-run: would build Warp Screen Layout"
+
 exit "$fail"

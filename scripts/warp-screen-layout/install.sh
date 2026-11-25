@@ -26,6 +26,10 @@ if [ "$(uname -s)" != "Darwin" ]; then
   echo "warp-screen-layout: skipped on $(uname -s)"
   exit 0
 fi
+if [ ! -d /Applications/Warp.app ] && [ ! -d "$HOME/Applications/Warp.app" ]; then
+  echo "warp-screen-layout: skipped, Warp.app is not installed"
+  exit 0
+fi
 command -v swiftc >/dev/null 2>&1 || { echo "warp-screen-layout: swiftc is required" >&2; exit 1; }
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -65,8 +69,8 @@ EOF
 }
 
 mkdir -p "$MOVER/Contents/MacOS" "$KEYS/Contents/MacOS"
-write_plist "$MOVER/Contents/Info.plist" "com.joi.warp-screen-layout" "Warp Screen Layout"
-write_plist "$KEYS/Contents/Info.plist" "com.joi.warp-screen-layout.keys" "Warp Screen Layout Keys"
+write_plist "$MOVER/Contents/Info.plist" "dev.agentic-workflow.warp-screen-layout" "Warp Screen Layout"
+write_plist "$KEYS/Contents/Info.plist" "dev.agentic-workflow.warp-screen-layout.keys" "Warp Screen Layout Keys"
 swiftc -O -framework AppKit -framework Carbon -o "$MOVER/Contents/MacOS/$BIN_NAME" "$SRC"
 cp "$MOVER/Contents/MacOS/$BIN_NAME" "$KEYS/Contents/MacOS/$BIN_NAME"
 codesign --force --sign - "$MOVER"
