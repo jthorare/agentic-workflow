@@ -5,6 +5,6 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 /// <param name="Code">Its SND code, for example SND-SESSION-001.</param>
 internal sealed record AgentProblemLine(string Text, string Code)
 {
-    /// <summary>The code as drawn, glued so a wrap can't split it at a hyphen (#4269, not built yet).</summary>
-    public string ShownCode { get; } = string.Empty;
+    /// <summary>The code as drawn: its hyphens are non-breaking (U+2011), so a wrap at a large text scale can't leave "SND-" on one line (#4269).</summary>
+    public string ShownCode { get; } = Code.Replace('-', '‑');
 }
