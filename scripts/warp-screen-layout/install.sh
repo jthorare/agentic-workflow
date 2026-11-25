@@ -9,6 +9,7 @@
 set -euo pipefail
 
 DRY=0
+if [ "${AW_DRY_RUN:-0}" = "1" ]; then DRY=1; fi
 for arg in "$@"; do
   case "$arg" in
     --dry-run) DRY=1 ;;
@@ -22,8 +23,8 @@ if [ "$DRY" = 1 ]; then
 fi
 
 if [ "$(uname -s)" != "Darwin" ]; then
-  echo "warp-screen-layout: macOS only" >&2
-  exit 1
+  echo "warp-screen-layout: skipped on $(uname -s)"
+  exit 0
 fi
 command -v swiftc >/dev/null 2>&1 || { echo "warp-screen-layout: swiftc is required" >&2; exit 1; }
 

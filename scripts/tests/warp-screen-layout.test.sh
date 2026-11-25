@@ -31,4 +31,7 @@ out="$(bash "$INSTALL" --nope 2>&1)"; rc=$?
 check "unknown flag exits 1" "$rc" "1"
 contains "usage names the flag" "$out" "usage: scripts/warp-screen-layout/install.sh [--dry-run]"
 
+setup="$(cat "$ROOT/setup.sh")"
+contains "setup.sh runs the installer" "$setup" 'scripts/warp-screen-layout/install.sh'
+
 exit "$fail"

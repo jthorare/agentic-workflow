@@ -9,6 +9,7 @@
 #   ./setup.sh [--providers ...] --with-meta     # also install the /meta harness: aw-meta CLI, hooks, launcher (opt-in)
 #   ./setup.sh [--providers ...] --with-fleet    # also install the aw:fleet session-state hook for Sindri's session collector (opt-in)
 #   ./setup.sh [--providers ...] --no-tldraw     # skip the tldraw offline app (the canvas agents draw diagrams on)
+#   ./setup.sh [--providers ...]                 # on macOS this also installs the Warp window layout (Control-Option-1 through 0)
 #   ./setup.sh [--providers ...] --with-mods     # also install the Claude Code mods in mods/ (pr-line, my-prs) through `claude plugin` (opt-in)
 #   ./setup.sh [--providers ...] --with-tmux     # also install the toolkit's tmux config to ~/.tmux.conf (opt-in; old file backed up)
 #   ./setup.sh [--providers ...] --with-tmux-restore  # --with-tmux plus session restore (TPM, tmux-resurrect, tmux-continuum)
@@ -31,7 +32,7 @@ CLAUDE_DIR="$HOME/.claude"
 ALL_PROVIDERS="claude codex cursor"
 
 usage() {
-  sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 # System packages are installed when missing (config/lib/sys-pkg.sh: Homebrew on macOS, sudo + the distro's package
@@ -612,6 +613,16 @@ if [ "$WITH_TLDRAW" = "1" ]; then
   echo ""
   echo "=== tldraw offline ==="
   bash "$SCRIPT_DIR/scripts/install-tldraw.sh" || echo "  WARN: tldraw: install-tldraw.sh failed (non-fatal)"
+fi
+
+# --- Warp screen layout: Control-Option-1 through 0 tiles open Warp windows. Once, not per provider. The mover inherits
+# Accessibility from the terminal that runs setup, so run setup from Warp or Cursor. Fail-open: a failure warns and setup goes on. ---
+echo ""
+echo "=== Warp screen layout ==="
+if aw_dry; then
+  bash "$SCRIPT_DIR/scripts/warp-screen-layout/install.sh" --dry-run || echo "  WARN: warp-screen-layout: install.sh failed (non-fatal)"
+else
+  bash "$SCRIPT_DIR/scripts/warp-screen-layout/install.sh" || echo "  WARN: warp-screen-layout: install.sh failed (non-fatal)"
 fi
 
 # --- tmux config (opt-in: ./setup.sh --with-tmux; --with-tmux-restore adds TPM, tmux-resurrect and tmux-continuum): writes
