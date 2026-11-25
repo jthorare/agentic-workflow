@@ -84,6 +84,9 @@ internal sealed class WorkflowRowViewModel : ObservableObject
     /// <summary>The right-hand line of a group header: why the group is first, or how it is ordered; empty on a row that does not start a group.</summary>
     public string GroupHint => GroupHeader.StartsWith("Needs", StringComparison.Ordinal) ? "last run failed, or paused with a schedule" : HasGroupHeader ? "latest activity first" : string.Empty;
 
+    /// <summary>True on the first row of every group after the first: a hairline rule shows above its header.</summary>
+    public bool HasGroupRule { get; internal set => Set(ref field, value); }
+
     /// <summary>The last 10 runs, oldest first, always 10 slots.</summary>
     public IReadOnlyList<RunBarViewModel> Strip { get; }
 

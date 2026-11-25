@@ -116,9 +116,10 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:WorkflowRowViewModel">
                 <StackPanel>
+                  <Border Name="GroupRule" Height="1" Background="{DynamicResource Brush.Hairline}" IsVisible="{Binding HasGroupRule}" />
                   <Grid ColumnDefinitions="*,Auto" Margin="16,12,16,4" IsVisible="{Binding HasGroupHeader}">
                     <TextBlock Name="RowGroupHeader" Classes="caption subtle" Text="{Binding GroupHeader}" />
-                    <TextBlock Grid.Column="1" Classes="caption quiet" Text="{Binding GroupHint}" />
+                    <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding GroupHint}" HorizontalAlignment="Right" />
                   </Grid>
                   <Border Name="WorkflowRow" Classes="item-row clickable" Focusable="True" KeyDown="OnWorkflowRowKey" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
                     <StackPanel Orientation="Horizontal" Spacing="16" Margin="16,0" MinHeight="{StaticResource Row.Height.Default}" VerticalAlignment="Center">
