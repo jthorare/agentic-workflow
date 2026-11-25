@@ -208,7 +208,7 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
         Apply();
 
         var running = list.Runs.Count(r => string.Equals(r.Status, "running", StringComparison.Ordinal));
-        Head = list.Runs.Count == 0 ? Labels.WfRunsHeadNone : Labels.WfRunsHead(running, list.Runs.Count);
+        Head = list.Runs.Count == 0 ? Labels.WfRunsHeadNone : Labels.WfRunsHead(running, list.Runs.Count, list.More);
         (IsEmpty, EmptyText) = list.Runs.Count == 0 && _starting.Count == 0 ? (true, Labels.WfRunsNone) : (false, string.Empty);
     }
 

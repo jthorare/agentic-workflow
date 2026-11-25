@@ -85,9 +85,10 @@ internal static partial class Labels
     /// <summary>The runs list's head: "1 running · 3 runs".</summary>
     /// <param name="running">Runs running.</param>
     /// <param name="total">Runs listed.</param>
+    /// <param name="more">True when older runs exist that were not listed: "0 running · 50+ runs".</param>
     /// <returns>The words.</returns>
-    internal static string WfRunsHead(int running, int total) =>
-        string.Create(CultureInfo.InvariantCulture, $"{running} running · {total} {(total == 1 ? "run" : "runs")}");
+    internal static string WfRunsHead(int running, int total, bool more = false) =>
+        string.Create(CultureInfo.InvariantCulture, $"{running} running · {total}{(more ? "+" : string.Empty)} {(total == 1 && !more ? "run" : "runs")}");
 
     /// <summary>The line under a workflow's name: which revision, how big, who made it.</summary>
     /// <param name="shown">The revision shown.</param>
