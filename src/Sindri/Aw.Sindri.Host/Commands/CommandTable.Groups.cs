@@ -44,4 +44,18 @@ internal static partial class CommandTable
 
     private static IndexVerbs Index(ControlPlaneClient client, Output output, (IServiceProvider Services, StartCommand Start) host) =>
         new(client, output, new JobFollower(client, output, host.Services.GetRequiredService<TimeProvider>()), Interactive(), Console.In, host.Start.EnsureRunning);
+
+    /// <summary>'sindri queue|items|item|project|todo|connection|memory|resources|toolkit|proposal …': the item and project families.</summary>
+    private static Task<int> ItemOrProject(string[] args, (ControlPlaneClient Client, Output Output, IServiceProvider Services) host, StartCommand start, CancellationToken ct, CancellationToken again) => args switch
+    {
+        ["todo", "note", "set" or "stop", ..] => new TodoNoteVerbs(host.Services, host.Output).Run(args, ct),
+        ["todos" or "todo", ..] => new TodoVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c), noteKey: c => TodoNoteTargets.Read(host.Services, c)).Run(args, ct),
+        ["project" or "projects", ..] => new ProjectVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
+        ["connection" or "connections", ..] => new ConnectionVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
+        ["resources", ..] => new ResourceVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
+        ["toolkit" or "toolkits", ..] => new ToolkitVerbs(host.Client, host.Output, new JobFollower(host.Client, host.Output, host.Services.GetRequiredService<TimeProvider>()), (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct, again),
+        ["proposal" or "proposals", ..] => new ProposalVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
+        ["memory" or "memories", ..] => new MemoryVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
+        _ => new ItemVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
+    };
 }
