@@ -25680,5 +25680,6 @@ Aw.Sindri.Core.Commands.MessageReadAccess
 static Aw.Sindri.Core.Commands.MessageReadAccess.ShowsText(Aw.Sindri.Core.Commands.CallerContext? caller) -> bool
 Aw.Sindri.Core.Connections.IKeyCheck
 Aw.Sindri.Core.Connections.IKeyCheck.Check(Aw.Sindri.Core.Connections.ConnectionPreset! preset, string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyRateLimited -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyUnchecked -> Aw.Kernel.ErrorDefinition!

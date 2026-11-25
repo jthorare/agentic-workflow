@@ -33,6 +33,17 @@ aw_adapter_failopen() {
   ) > /dev/null 2>&1 || true
 }
 
+# aw_adapter_capture <provider> <raw-input> — the capture tap (issue 4382, scripts/retry-guard-capture.sh): with
+# AW_HOOK_CAPTURE_DIR naming a folder, saves the host's raw payload there as <provider>.<n>.json (0600), one file per
+# hook run. Off unless that variable is set; a failed write is ignored, so it never changes what the adapter does.
+aw_adapter_capture() {
+  [ -n "${AW_HOOK_CAPTURE_DIR:-}" ] && [ -d "$AW_HOOK_CAPTURE_DIR" ] || return 0
+  (
+    umask 077
+    printf '%s' "$2" > "$AW_HOOK_CAPTURE_DIR/$1.$(date +%s).$$.$RANDOM.json"
+  ) 2> /dev/null || true
+}
+
 AW_ADAPTER_RAW=0
 AW_ADAPTER_EVENT=""
 AW_ADAPTER_SCRIPT=""

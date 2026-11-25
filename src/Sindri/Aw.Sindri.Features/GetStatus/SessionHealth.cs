@@ -6,19 +6,26 @@ using Aw.Sindri.Core.Sessions;
 namespace Aw.Sindri.Features.GetStatus;
 
 /// <summary>
-/// What the System page's Agents card and the health make of the collector's problems (#4012). Every row but a test override (SND-SESSION-003) is
-/// counted and listed. Two kinds are health problems as well, through the same rows a flagged card uses (#4010), so the banner never says "Everything
-/// is running." beside a broken collector: a source that couldn't be read, and a collector that can't run (SND-SESSION-002). Two counted rows are not:
-/// a collector the owner turned off in launcher.json (the owner's choice), and a pass that overran its budget (SessionProblem.IsOverrun, set only on
-/// the collector's overrun row): slow is not broken, and nothing failed, though that row shares SND-SESSION-001 with a failed source.
+/// What the System page's Agents card and the health make of the collector's problems (#4012). Every row but a test override (SND-SESSION-003) and a
+/// collector the owner turned off in launcher.json (the owner's choice, read as watching off instead, #4316) is counted and listed. Two kinds are
+/// health problems as well, through the same rows a flagged card uses (#4010), so the banner never says "Everything is running." beside a broken
+/// collector: a source that couldn't be read, and a collector that can't run (SND-SESSION-002). A pass that overran its budget (SessionProblem.IsOverrun,
+/// set only on the collector's overrun row) is counted but is not one: slow is not broken, though that row shares SND-SESSION-001 with a failed source.
 /// </summary>
 internal static class SessionHealth
 {
     /// <summary>The problems the Agents card counts and lists.</summary>
     /// <param name="problems">The last pass's problem rows.</param>
-    /// <returns>Every row but a test override.</returns>
+    /// <returns>Every row but a test override and a turned-off collector.</returns>
     internal static IReadOnlyList<SessionProblem> Counted(IReadOnlyList<SessionProblem> problems) =>
-        [.. problems.Where(static p => !IsCode(p, SindriErrors.SessionsTestOverride))];
+        [.. problems.Where(static p => !IsCode(p, SindriErrors.SessionsTestOverride) && !IsTurnedOff(p))];
+
+    /// <summary>True when the owner turned session watching off: the pass carries the collector's disabled row (#4316).</summary>
+    /// <param name="problems">The last pass's problem rows.</param>
+    /// <returns>True while watching is off.</returns>
+    internal static bool IsWatchingOff(IReadOnlyList<SessionProblem> problems) => problems.Any(IsTurnedOff);
+
+    private static bool IsTurnedOff(SessionProblem problem) => IsCode(problem, SindriErrors.SessionsUnavailable) && problem.Reason == UnavailableReason.Disabled;
 
     /// <summary>The health problems among them: each source that couldn't be read and a collector that can't run; never an overrun or a turned-off collector.</summary>
     /// <param name="problems">The last pass's problem rows.</param>
@@ -31,7 +38,7 @@ internal static class SessionHealth
     // SND-SESSION-001 is shared: a source that couldn't be read is a health problem, the overrun row is not.
     private static bool IsUnreadSource(SessionProblem problem) => IsCode(problem, SindriErrors.SessionSourceFailed) && !problem.IsOverrun;
 
-    private static bool IsCollectorDown(SessionProblem problem) => IsCode(problem, SindriErrors.SessionsUnavailable) && problem.Reason != UnavailableReason.Disabled;
+    private static bool IsCollectorDown(SessionProblem problem) => IsCode(problem, SindriErrors.SessionsUnavailable) && !IsTurnedOff(problem);
 
     // Only health problems get a clause: an unread source, else a collector that can't run.
     private static string Clause(SessionProblem problem) => IsUnreadSource(problem) ? "an agent session source failed" : "Sindri can't see agent sessions";
