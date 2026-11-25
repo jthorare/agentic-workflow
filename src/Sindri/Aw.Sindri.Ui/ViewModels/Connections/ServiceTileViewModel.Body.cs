@@ -8,7 +8,7 @@ internal sealed partial class ServiceTileViewModel
     private AddConnectionBody Body()
     {
         var name = Service.Id + ":" + DefaultLabel;
-        return Service.Mode == ServiceTileMode.Token
+        return TakesToken
             ? new AddConnectionBody(name, Service.Id, Kind: "rest", Client: null, KeyEnv: null, Scopes: [], Wait: false, Key: Token.Take())
             : new AddConnectionBody(name, Service.Id, Kind: "oauth", ClientId.Trim(), KeyEnv: null, Scopes: [], Wait: false, ClientSecret: ClientSecret.Take());
     }
