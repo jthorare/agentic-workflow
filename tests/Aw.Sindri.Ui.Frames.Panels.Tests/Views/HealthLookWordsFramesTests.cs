@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.VisualTree;
@@ -21,6 +22,8 @@ namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 [Lane(TestLane.Integration)]
 public sealed class HealthLookWordsFramesTests : FrameHost
 {
+    private const string LinePrefix = "Context index: ";
+
     private const string Words = "linear hasn't finished a sync in 15 minutes";   // why: a sentence as the server sends it; the app shows it whole
 
     private static string Status(string lookWords) =>
@@ -52,7 +55,8 @@ public sealed class HealthLookWordsFramesTests : FrameHost
 
     private static List<string> LineTexts(Window window) =>
         [.. window.GetVisualDescendants().OfType<ItemsControl>().Where(i => string.Equals(i.Name, "ContextIndexLines", StringComparison.Ordinal))
-            .SelectMany(i => i.GetVisualDescendants().OfType<TextBlock>()).Select(t => t.Text ?? string.Empty)];
+            .SelectMany(i => i.GetVisualDescendants().OfType<TextBlock>())
+            .Select(t => AutomationProperties.GetName(t) ?? string.Empty).Where(n => n.StartsWith(LinePrefix, StringComparison.Ordinal)).Select(n => n[LinePrefix.Length..])];   // #4269: a line is a label and a rest; its name holds the whole words
 
     [Theory]
     [InlineData(1000)]
