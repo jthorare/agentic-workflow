@@ -141,7 +141,7 @@ public sealed class RunsTableTests
     [Fact]
     public async Task A_workflow_that_is_off_shows_no_filters_or_column_heads()
     {
-        _f.ServeRuns("not-active");
+        _f.Server.WorkflowRunsAnswers[Slug] = RouteAnswer.Problem("workflows-slug-runs", "not-active");
         var page = await _f.Shown(Token);
         await page.OpenWorkflow(Slug, Token);
 
