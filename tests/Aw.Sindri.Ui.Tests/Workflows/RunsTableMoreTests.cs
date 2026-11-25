@@ -66,4 +66,12 @@ public sealed class RunsTableMoreTests
 
         Assert.Equal(("0 of 3 runs", "No runs match these filters."), (page.Runs.CountText, page.Runs.NoMatchText));
     }
+
+    [Fact]
+    public async Task When_older_runs_exist_the_top_line_says_50_plus_like_the_count()
+    {
+        var page = await Open(50, more: true);
+
+        Assert.Equal("0 running · 50+ runs", page.Runs.Head);
+    }
 }
