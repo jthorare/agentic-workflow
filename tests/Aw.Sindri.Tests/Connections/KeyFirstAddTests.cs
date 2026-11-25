@@ -85,6 +85,34 @@ public sealed class KeyFirstAddTests
         Assert.Empty(world.Secrets.Pointers);
     }
 
+    [Theory]
+    [InlineData("lin-api-test-0001\n")]
+    [InlineData("  lin-api-test-0001 \r\n")]
+    public async Task A_pasted_key_with_whitespace_around_it_is_checked_and_stored_trimmed(string pasted)
+    {
+        var world = KeyFirst();
+        world.Environment.Set("LINEAR_KEY", pasted);
+
+        var added = await world.Add().Handle(NoKind(), Token);
+
+        Assert.True(added.IsSuccess);
+        Assert.Equal(("linear", "lin-api-test-0001"), Assert.Single(world.Keys.Calls));
+        Assert.Equal("lin-api-test-0001", world.Secrets.Read(Assert.Single(world.Store.Rows).SecretPointer!).Value.AccessToken);
+    }
+
+    [Fact]
+    public async Task A_key_of_only_whitespace_is_no_key()
+    {
+        var world = KeyFirst();
+        world.Environment.Set("LINEAR_KEY", " \n");
+
+        var added = await world.Add().Handle(NoKind(), Token);
+
+        Assert.Equal("SND-CLI-003", added.Error.Code);
+        Assert.Empty(world.Keys.Calls);
+        Assert.Empty(world.Store.Rows);
+    }
+
     [Fact]
     public async Task A_key_with_no_preset_is_stored_unchecked()
     {
