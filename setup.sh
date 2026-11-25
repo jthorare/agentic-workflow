@@ -12,7 +12,6 @@
 #   ./setup.sh [--providers ...] --with-warp-layout  # macOS: also install the Warp window layout (Control-Option-1 through 0; opt-in, edits ~/.zshrc)
 #   ./setup.sh [--providers ...] --with-mods     # also install the Claude Code mods in mods/ (pr-line, my-prs) through `claude plugin` (opt-in)
 #   ./setup.sh [--providers ...] --with-tmux     # also install the toolkit's tmux config to ~/.tmux.conf (opt-in; old file backed up)
-#   ./setup.sh [--providers ...] --with-tmux-restore  # --with-tmux plus session restore (TPM, tmux-resurrect, tmux-continuum)
 #   ./setup.sh --profile <web-app|ios|personal> --target <dir> [--dry-run]
 #
 # --providers defaults to every provider whose CLI is installed
@@ -147,7 +146,6 @@ WITH_FLEET=0
 WITH_MODS=0
 WITH_TLDRAW=1
 WITH_TMUX=0
-WITH_TMUX_RESTORE=0
 WITH_WARP_LAYOUT=0
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -162,7 +160,6 @@ while [ $# -gt 0 ]; do
     --with-mods) WITH_MODS=1; shift ;;
     --no-tldraw) WITH_TLDRAW=0; shift ;;
     --with-tmux) WITH_TMUX=1; shift ;;
-    --with-tmux-restore) WITH_TMUX=1; WITH_TMUX_RESTORE=1; shift ;;
     --with-warp-layout) WITH_WARP_LAYOUT=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown option: $1"; echo ""; usage; exit 1 ;;
@@ -634,17 +631,13 @@ else
   echo "  skipped (opt-in: --with-warp-layout)"
 fi
 
-# --- tmux config (opt-in: ./setup.sh --with-tmux; --with-tmux-restore adds TPM, tmux-resurrect and tmux-continuum): writes
+# --- tmux config (opt-in: ./setup.sh --with-tmux): writes
 # config/tmux/tmux.conf to ~/.tmux.conf, backing up a different file to ~/.tmux.conf.aw-bak first. Once, not per provider.
 # It never starts tmux or edits a shell rc. Fail-open: a failure warns and setup goes on. ---
 if [ "$WITH_TMUX" = "1" ]; then
   echo ""
   echo "=== tmux config ==="
-  if [ "$WITH_TMUX_RESTORE" = "1" ]; then
-    bash "$SCRIPT_DIR/scripts/install-tmux.sh" --restore || echo "  WARN: tmux: install-tmux.sh failed (non-fatal)"
-  else
-    bash "$SCRIPT_DIR/scripts/install-tmux.sh" || echo "  WARN: tmux: install-tmux.sh failed (non-fatal)"
-  fi
+  bash "$SCRIPT_DIR/scripts/install-tmux.sh" || echo "  WARN: tmux: install-tmux.sh failed (non-fatal)"
 fi
 
 # --- Provider registry (read by the skill preamble) ---
