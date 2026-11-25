@@ -25,7 +25,7 @@ public sealed class TodoPanelHeightTests : IDisposable
 {
     private const double MaxBand = 24;   // one row gap at most between the last todo and the From elsewhere line
 
-    private static readonly Uri Api = new("http://127.0.0.1:7410/");
+    private static readonly Uri _api = new("http://127.0.0.1:7410/");
 
     private readonly List<Window> _windows = [];
     private readonly CancellationTokenSource _stop = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
@@ -117,9 +117,9 @@ public sealed class TodoPanelHeightTests : IDisposable
         if (fail)
         {
             _server.TodosAnswer = RouteAnswer.Problem(HttpStatusCode.ServiceUnavailable, "SND-API-011", "The views are behind.");
-            await shell.Todo.Refresh(Api, Token);
+            await shell.Todo.Refresh(_api, Token);
             Settle(window);
-            Assert.NotEqual(string.Empty, shell.Todo.Error);
+            Assert.NotEmpty(shell.Todo.Error);
         }
 
         Assert.Equal(hold, shell.Todo.IsLoading);
@@ -165,7 +165,7 @@ public sealed class TodoPanelHeightTests : IDisposable
         var bottom = last.TranslatePoint(new Point(0, last.Bounds.Height), window)!.Value.Y;   // why: both are in the window's visual tree
         var band = Top(window, "TodoElsewhereSlot") - bottom;
 
-        Assert.True(band >= 0 && band <= MaxBand, string.Create(CultureInfo.InvariantCulture, $"{band} px between todo {count} and the From elsewhere line"));
+        Assert.True(band is >= 0 and <= MaxBand, string.Create(CultureInfo.InvariantCulture, $"{band} px between todo {count} and the From elsewhere line"));
     });
 
     [Fact]
@@ -177,7 +177,7 @@ public sealed class TodoPanelHeightTests : IDisposable
         Assert.False(shell.Todo.ShowsShowAll);
 
         Serve(6);
-        await shell.Todo.Refresh(Api, Token);
+        await shell.Todo.Refresh(_api, Token);
         Settle(window);
 
         Assert.True(shell.Todo.ShowsShowAll);
