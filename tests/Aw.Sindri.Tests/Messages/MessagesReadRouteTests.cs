@@ -4,8 +4,8 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Messages;
 using Aw.Sindri.Tests.ApiGoldens;
 using Aw.Sindri.Tests.Callers;
-using static Aw.Sindri.Tests.Callers.CallerRequests;
 using Microsoft.Extensions.DependencyInjection;
+using static Aw.Sindri.Tests.Callers.CallerRequests;
 using static Aw.Sindri.Tests.Messages.MessageSeed;
 
 namespace Aw.Sindri.Tests.Messages;

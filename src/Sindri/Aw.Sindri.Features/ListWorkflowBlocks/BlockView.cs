@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace Aw.Sindri.Features.ListWorkflowBlocks;
 
@@ -11,4 +12,5 @@ namespace Aw.Sindri.Features.ListWorkflowBlocks;
 /// <param name="Branches">The branch names an edge may leave by; 'out' for a block that does not branch.</param>
 /// <param name="ExampleConfig">An example config.</param>
 /// <param name="ExampleSpec">A whole example workflow using the block, from its docs page, or null when the page has none.</param>
-internal sealed record BlockView(string Type, string Title, bool IsTrigger, IReadOnlyList<BlockFieldView> Config, IReadOnlyDictionary<string, string> Outputs, IReadOnlyList<string> Branches, JsonNode? ExampleConfig, JsonNode? ExampleSpec);
+/// <param name="OneOf">Groups of field names of which exactly one must be filled ("duration" and "until" of a wait), or null when the block has no such rule (left out of the JSON; #4359).</param>
+internal sealed record BlockView(string Type, string Title, bool IsTrigger, IReadOnlyList<BlockFieldView> Config, IReadOnlyDictionary<string, string> Outputs, IReadOnlyList<string> Branches, JsonNode? ExampleConfig, JsonNode? ExampleSpec, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<IReadOnlyList<string>>? OneOf = null);

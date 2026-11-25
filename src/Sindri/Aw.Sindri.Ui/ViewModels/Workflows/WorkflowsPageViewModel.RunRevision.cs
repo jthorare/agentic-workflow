@@ -16,5 +16,5 @@ internal sealed partial class WorkflowsPageViewModel
     /// <param name="cancellationToken">Cancels the call and the reads.</param>
     /// <returns>A task that completes when the answer is shown.</returns>
     internal Task RunRevisionOnce(CancellationToken cancellationToken) =>
-        ShowRunRevisionOnce && Runs.Shown is { } shown ? StartRun(shown.LatestRevision, cancellationToken) : Task.CompletedTask;
+        ShowRunRevisionOnce && Runs.Shown is { } shown ? Start(shown.LatestRevision, reopenRunPage: false, cancellationToken) : Task.CompletedTask;
 }

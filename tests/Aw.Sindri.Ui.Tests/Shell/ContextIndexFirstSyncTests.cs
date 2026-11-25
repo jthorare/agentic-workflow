@@ -7,7 +7,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Shell;
 
-/// <summary>A source on its first pass (phase recent or backfill) reads as progress on the Context index card, not as a bare pull word (#4035).</summary>
+/// <summary>A source on its first pass (phase recent or backfill) reads as progress on the Context index card, not as a bare pull word (#4035); a re-read of stored records reads "reading again" (#4084).</summary>
 [Lane(TestLane.Unit)]
 public sealed class ContextIndexFirstSyncTests
 {
@@ -30,5 +30,47 @@ public sealed class ContextIndexFirstSyncTests
 
         Assert.Equal(["linear: first sync, 12400 records so far · last commit 1 min ago", "slack: first sync, 0 records so far · nothing committed yet"], card.Lines.Select(l => l.Text), StringComparer.Ordinal);
         Assert.Equal(Labels.CodeIndexOk, card.Word);
+    }
+
+    [Fact]
+    public async Task A_source_reading_its_stored_records_again_reads_reading_again_not_first_sync()
+    {
+        var commit = _clock.GetUtcNow().AddMinutes(-1);
+        _server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK,
+            $$"""{"sources":[{"source":"linear","phase":"recent","usable":true,"complete":false,"lastSync":"{{commit:O}}","lastCode":null,"reReading":3200,"pull":"running","records":3200,"lastCommit":"{{commit:O}}","needsLook":false}]}""");
+        var card = new ContextIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        // why: after migration 0020 Linear's issues go back to the recent phase with their rows stored; that is a re-read, not a first pass (#4084)
+        Assert.Equal(["linear: reading again, 3200 records · last commit 1 min ago"], card.Lines.Select(l => l.Text), StringComparer.Ordinal);
+        Assert.Equal(Labels.CodeIndexOk, card.Word);
+    }
+
+    [Theory]
+    [InlineData("backfill", "null", "linear: first sync, 12400 records so far · nothing committed yet")]
+    [InlineData("recent", "12400", "linear: reading again, 12400 records · nothing committed yet")]
+    public async Task At_the_time_cap_a_pass_still_reads_as_its_pass_not_as_at_cap(string phase, string reReading, string expected)
+    {
+        _server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK,
+            $$"""{"sources":[{"source":"linear","phase":"{{phase}}","usable":true,"complete":false,"lastSync":null,"lastCode":"SND-CONTEXT-059","reReading":{{reReading}},"pull":"idle","records":12400,"lastCommit":null,"needsLook":false}]}""");
+        var card = new ContextIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        // why: the cap ends a tick, not the pass, so the idle-at-cap word stays hidden while a pass runs (#4138 item 5)
+        Assert.Equal([expected], card.Lines.Select(l => l.Text), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_re_read_whose_pull_failed_keeps_its_failure_words()
+    {
+        _server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK,
+            """{"sources":[{"source":"linear","phase":"recent","usable":true,"complete":false,"lastSync":null,"lastCode":"SND-CONTEXT-041","reReading":3200,"pull":"failed","records":3200,"lastCommit":null,"lastError":"SND-CONTEXT-041","lastErrorText":"the token was refused","needsLook":false}]}""");
+        var card = new ContextIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        Assert.DoesNotContain(card.Lines, l => l.Text.Contains("reading again", StringComparison.Ordinal));
     }
 }

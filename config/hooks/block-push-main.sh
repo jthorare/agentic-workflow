@@ -115,7 +115,8 @@ PUSHES=$(printf '%s\n' "$FLAT" | awk '
 # Check if pushing to main or master explicitly (with optional flags before remote, and refspec support)
 # Blocks: git push origin main, git push -u origin main, git push --set-upstream origin main, git push origin HEAD:main
 # Allows: git push origin main:feature (pushing main TO a non-main refspec)
-if printf '%s\n' "$PUSHES" | grep -E '\bgit\s+push\b.*\b(main|master)\b' | grep -qvE '\bgit\s+push\b.*\b(main|master)\s*:'; then
+MAIN_PUSHES="$(grep -E '\bgit\s+push\b.*\b(main|master)\b' <<<"$PUSHES" || true)"
+if [ -n "$MAIN_PUSHES" ] && grep -qvE '\bgit\s+push\b.*\b(main|master)\s*:' <<<"$MAIN_PUSHES"; then
   echo "BLOCKED: Pushing directly to main/master is not allowed." >&2
   echo "Suggestion: Create a feature branch and open a pull request instead." >&2
   exit 2
@@ -124,8 +125,8 @@ fi
 # Check if pushing with current branch being main/master (bare push without explicit non-main destination)
 # Handles: git push, git push origin, git push --tags, git push -u origin (each as its own command, so
 # `git push && echo done` counts)
-if printf '%s\n' "$PUSHES" | grep -qE '\bgit\s+push(\s+(-[a-zA-Z]|--[a-zA-Z-]+=?\S*)\s*)*\s*($|2>)' || \
-   printf '%s\n' "$PUSHES" | grep -qE '\bgit\s+push\s+(--[a-zA-Z-]+=?\S*\s+|-[a-zA-Z]\s+\S*\s+)*origin\s*($|2>)'; then
+if grep -qE '\bgit\s+push(\s+(-[a-zA-Z]|--[a-zA-Z-]+=?\S*)\s*)*\s*($|2>)' <<<"$PUSHES" || \
+   grep -qE '\bgit\s+push\s+(--[a-zA-Z-]+=?\S*\s+|-[a-zA-Z]\s+\S*\s+)*origin\s*($|2>)' <<<"$PUSHES"; then
   # Note: returns "" in non-git directories — branch check silently passes (known limitation)
   CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
   if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then

@@ -242,6 +242,18 @@ for p in claude codex cursor; do
   check "malformed $p: no deny" "$(jq -r .decision "$WORK/results.jsonl" 2>/dev/null | grep -c deny)" "0"
 done
 
+# A destructive command at 2 MB must still deny on every provider (#4318): a fail-open at that size would read "abstain" here.
+for p in claude codex cursor; do
+  case $p in cursor) H=beforeShellExecution ;; *) H=PreToolUse ;; esac
+  fx "$p/bigdeny/rm" "$(jq -n --arg h "$H" '{events:[
+    {n:1,hook:$h,script:"block-destructive.sh",padBytes:2097152,payload:{session_id:"s1",conversation_id:"s1",hook_event_name:$h,tool_name:"Bash",tool_input:{command:"rm -rf build"},command:"rm -rf build"}}],
+    expect:[{event:1,decision:"deny",textContains:"is destructive"}]}')"
+  run "$WORK/fx/$p/bigdeny" --out "$WORK/results.jsonl" --hooks-dir "$HOOKS"
+  check "2 MB destructive $p: exit 0" "$RC" "0"
+  check "2 MB destructive $p: denied" "$(jq -r .decision "$WORK/results.jsonl" 2>/dev/null | tr '\n' ' ')" "deny "
+  check "2 MB destructive $p: the row passes" "$(jq -r .status "$WORK/results.jsonl" 2>/dev/null | tr '\n' ' ')" "pass "
+done
+
 # --- Expectation checks: a wrong decision, textContains, advise, pendingHook, unsupported. ---
 fx claude/expect/wrong '{"events":[{"n":1,"hook":"PreToolUse","script":"block-destructive.sh","payload":{"session_id":"s1","tool_name":"Bash","tool_input":{"command":"ls"}}}],
   "expect":[{"event":1,"decision":"deny"}]}'

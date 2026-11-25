@@ -9,7 +9,7 @@ public static class ConnectionPresets
     private static readonly string[] _requiredText = ["id", "displayName", "kind", "authorizeUrl", "tokenUrl", "hostGroup", "signInNote"];
     private static readonly string[] _httpsUrls = ["authorizeUrl", "tokenUrl", "revokeUrl", "probeUrl", "deviceCodeUrl"];
 
-    /// <summary>Parses one preset's JSON (camelCase keys: id (read as Key), displayName, kind, authorizeUrl, tokenUrl, revokeUrl, defaultScopes, hostGroup, loopbackAllowed, signInNote, pollableEvents, probeUrl, and the optional clientId and deviceCodeUrl of first-run spec decision 15a).</summary>
+    /// <summary>Parses one preset's JSON (camelCase keys: id (read as Key), displayName, kind, authorizeUrl, tokenUrl, revokeUrl, defaultScopes, hostGroup, loopbackAllowed, signInNote, pollableEvents, probeUrl, the optional clientId and deviceCodeUrl of first-run spec decision 15a, and the optional auth order of #4357).</summary>
     /// <param name="json">The file's text.</param>
     /// <returns>The preset, or invalid input naming the key that is wrong.</returns>
     public static Result<ConnectionPreset> Parse(string json)
@@ -51,11 +51,35 @@ public static class ConnectionPresets
             return Bad("'kind', 'defaultScopes' or 'loopbackAllowed' is missing or has the wrong type");
         }
 
+        var auth = Auth(root);
+        if (auth is null)
+        {
+            return Bad("'auth' is not a list of \"key\" and \"oauth\", each at most once");
+        }
+
         return new ConnectionPreset(text["id"], text["displayName"], kind.Value, text["authorizeUrl"], text["tokenUrl"], optional["revokeUrl"], scopes, text["hostGroup"], loopback, text["signInNote"], [.. PollableEvents.For(text["id"])], optional["probeUrl"])
         {
             ShippedClient = Text(root, "clientId"),
             DeviceCodeUrl = optional["deviceCodeUrl"],
+            Auth = auth,
         };
+    }
+
+    // Left out it is oauth only; given, it is a non-empty list of "key" and "oauth" with no repeat.
+    private static List<string>? Auth(JsonElement root)
+    {
+        if (!root.TryGetProperty("auth", out _))
+        {
+            return [ConnectionPreset.OAuthAuth];
+        }
+
+        if (Strings(root, "auth") is not { Count: > 0 } listed)
+        {
+            return null;
+        }
+
+        var known = listed.TrueForAll(static a => string.Equals(a, ConnectionPreset.KeyAuth, StringComparison.Ordinal) || string.Equals(a, ConnectionPreset.OAuthAuth, StringComparison.Ordinal));
+        return known && new HashSet<string>(listed, StringComparer.Ordinal).Count == listed.Count ? listed : null;
     }
 
     private static string? PlainHttp(Dictionary<string, string> text, Dictionary<string, string?> optional) =>

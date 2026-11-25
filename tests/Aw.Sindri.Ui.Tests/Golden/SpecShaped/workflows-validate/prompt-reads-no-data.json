@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "hash": "sha256:0000000000000000000000000000000000000000000000000000000000000002",
+  "findings": [
+    {
+      "code": "GRAPH-PROMPT-001",
+      "severity": "warning",
+      "nodes": [
+        "agent"
+      ],
+      "field": "config.prompt",
+      "message": "prompt node 'agent' reads no data: its question has no {{...}} reference and only the trigger runs before it, so the model answers about nothing",
+      "fix": "add a step before 'agent' that fetches the data, then reference its output in the question, such as {{step.field}}",
+      "id": "GRAPH-PROMPT-001:agent:config.prompt",
+      "node": "agent",
+      "cause": "prompt node 'agent' reads no data: its question has no {{...}} reference and only the trigger runs before it, so the model answers about nothing"
+    }
+  ]
+}
