@@ -113,6 +113,35 @@ public sealed class RunFailureTests
         Assert.DoesNotContain("node '", failed.Name, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task A_fix_with_only_a_label_is_a_button_that_opens_the_failed_step()
+    {
+        var served = Golden("workflow-runs-run", "failed");
+        AgentNode(served)["failure"]!["fixCommand"] = null;   // SND-CODE-004's "Open Check": a label, no command
+        _f.ServeRun(served);
+        var page = await _f.Shown(Token);
+        await page.OpenWorkflow(Slug, Token);
+        await page.OpenRun(RunId, Token);
+
+        var failure = page.Run.Failure!;
+        Assert.Equal((true, false, "Choose an agent"), (failure.HasOpenFix, failure.HasCopyFix, failure.OpenText));
+
+        await page.OpenFailedStep(Token);
+
+        Assert.True(page.IsRuns);   // back on the workflow, where the graph is
+        Assert.Equal("agent", page.Runs.Graph!.SelectedId);
+    }
+
+    [Fact]
+    public async Task A_command_fix_is_a_copy_button_and_not_an_open_button()
+    {
+        _f.ServeRun("failed");
+
+        var run = await _f.OpenedRun(Token);
+
+        Assert.Equal((true, false), (run.Failure!.HasCopyFix, run.Failure.HasOpenFix));
+    }
+
     // The run answer lists nodes in step order, so the failed agent node is found by name, not by index.
     private static JsonObject AgentNode(JsonNode served) =>
         served["nodes"]!.AsArray().Single(n => (string?)n!["node"] == "agent")!.AsObject();

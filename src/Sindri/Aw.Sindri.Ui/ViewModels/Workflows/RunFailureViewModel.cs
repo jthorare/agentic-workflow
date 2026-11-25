@@ -24,6 +24,7 @@ internal sealed class RunFailureViewModel : ObservableObject
         SentenceText = failure.Sentence;
         DetailText = detail;
         Name = Labels.WfFailureName(HeadingText, SentenceText);
+        (HasOpenFix, OpenText) = (false, string.Empty);   // the label-only fix is not a button yet
         Fix = clipboard is not null && _command is { Length: > 0 } command
             ? new CopyAction(clipboard, clock, (failure.FixLabel ?? Labels.Copy) + " " + command, failure.FixLabel)
             : null;
@@ -37,6 +38,12 @@ internal sealed class RunFailureViewModel : ObservableObject
 
     /// <summary>The copy fix: its label is the fix's words, then "Copied"; null when the fix has no command or there is no clipboard.</summary>
     public CopyAction? Fix { get; }
+
+    /// <summary>True when the fix has a label but no command: its button opens the failed step.</summary>
+    public bool HasOpenFix { get; }
+
+    /// <summary>The open button's words (the fix's label); empty with no such fix.</summary>
+    public string OpenText { get; }
 
     /// <summary>True when the fix copies a command.</summary>
     public bool HasCopyFix => Fix is not null;
