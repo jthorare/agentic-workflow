@@ -35,4 +35,11 @@ public sealed record LensSymbols(SymbolsState State, string? Reason, IReadOnlyLi
     /// <summary>The code that explains an unavailable answer, or null.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Code { get; init; }
+
+    /// <summary>
+    /// With several repos in scope and an unavailable band, the repos whose index gives the band its state and reason, by name (#3861: "No code index for aw-split-panes yet");
+    /// null otherwise (one repo in scope, or a band that answers).
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<string>? Repos { get; init; }
 }

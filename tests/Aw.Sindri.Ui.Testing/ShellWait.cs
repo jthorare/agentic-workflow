@@ -13,7 +13,25 @@ internal static class ShellWait
     /// <param name="condition">What to wait for; read on the shell's thread.</param>
     /// <param name="cancellationToken">Cancels the wait.</param>
     /// <returns>A task that completes when the condition holds.</returns>
-    internal static async Task Until(ShellViewModel shell, Func<bool> condition, CancellationToken cancellationToken)
+    internal static Task Until(ShellViewModel shell, Func<bool> condition, CancellationToken cancellationToken) =>
+        Wait(shell, run: null, condition, cancellationToken);
+
+    /// <summary>
+    /// Completes when <paramref name="condition"/> holds; fails with the run's own exception should the shell's run end first
+    /// (a view that throws in the connect pass ends it, and nothing changes after that), else after 20 s without it.
+    /// </summary>
+    /// <param name="shell">The shell.</param>
+    /// <param name="run">The task the shell's Run returned.</param>
+    /// <param name="condition">What to wait for; read on the shell's thread.</param>
+    /// <param name="cancellationToken">Cancels the wait.</param>
+    /// <returns>A task that completes when the condition holds.</returns>
+    internal static Task Until(ShellViewModel shell, Task run, Func<bool> condition, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        return Wait(shell, run, condition, cancellationToken);
+    }
+
+    private static async Task Wait(ShellViewModel shell, Task? run, Func<bool> condition, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(shell);
         ArgumentNullException.ThrowIfNull(condition);
@@ -37,7 +55,8 @@ internal static class ShellWait
         {
             if (!condition())
             {
-                await held.Task.WaitAsync(_bound, cancellationToken).ConfigureAwait(true);
+                var woke = run is null ? held.Task : Task.WhenAny(held.Task, run);
+                await woke.WaitAsync(_bound, cancellationToken).ConfigureAwait(true);
             }
         }
         finally
@@ -47,8 +66,20 @@ internal static class ShellWait
 
         if (!condition())
         {
-            throw new InvalidOperationException("the condition never held");
+            await Fail(run).ConfigureAwait(true);
         }
+    }
+
+    // The wait woke without the condition: a faulted or cancelled run says why here, at once, not as a 20 s timeout (#4383).
+    private static async Task Fail(Task? run)
+    {
+        if (run is { IsCompleted: true })
+        {
+            await run.ConfigureAwait(true);
+            throw new InvalidOperationException("the shell's run ended before the condition held");
+        }
+
+        throw new InvalidOperationException("the condition never held");
     }
 
     private static List<INotifyPropertyChanged> Sources(ShellViewModel shell) =>

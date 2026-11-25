@@ -78,12 +78,20 @@ never the socket name or kind: a lane socket (`tmux -L sindri-v4`) and another h
 are foreign, so they give no row. A foreign claude or codex process found through `/proc` gives no row either. Point the
 scratch home's tmux at its folder (`TMUX_TMPDIR=$AW_SINDRI_HOME/tmux`) for its sessions to count as own.
 
+The file is not under `AW_SINDRI_HOME`. Sindri reads `AW_LAUNCHER_CONFIG` when it is set, else `$AW_STATE_DIR/launcher.json`
+(default `~/.agentic-workflow/launcher.json`). A scratch home that sets only `AW_SINDRI_HOME` reads the box's real file and
+gets its scope, usually `all`. To get `own`, set `AW_LAUNCHER_CONFIG` to the scratch home's own file (as
+`scripts/sindri-ui-fixture.sh` does) or point `AW_STATE_DIR` at a scratch folder.
+
 Limits. The real launcher keeps its sockets in tmux's default folder today, so under `own` a session it launched there
 counts only through its launch record. The check reads this home's launch files once per pass, and an unreadable folder
-means no launched row. Paths are compared as text; a symlinked home folder is not resolved.
+means no launched row. Paths are compared as text; a symlinked home folder is not resolved. Under `own`, a session can be
+missing for one pass: an environment read that times out hides that session for the pass, and a Seatbelt launch (macOS)
+stays hidden until its first report.
 
-An unknown value fails closed. `"scope": "onw"`, or any value but `"all"` in a `sessions` section that is otherwise
-invalid, is read as `own` and shows a problem row (`SND-LAUNCH-011`, 'sessions.scope is 'all' or 'own''). A launcher.json
+An unknown value fails closed. `"scope": "onw"`, `"scope": null`, or any value but `"all"` in a `sessions` section that is
+otherwise invalid, is read as `own` and shows a problem row (`SND-LAUNCH-011`, 'sessions.scope is 'all' or 'own''). The
+launcher.json row then says sessions.scope is read as `own`. A launcher.json
 that is not valid JSON or has no `"schema": 1` still gives the defaults (`all`).
 
 The bash reader (`scripts/launcher-lib.sh`) refuses unknown keys, so CO-0 adds `sessions` to `x-aw-keys.root` and the

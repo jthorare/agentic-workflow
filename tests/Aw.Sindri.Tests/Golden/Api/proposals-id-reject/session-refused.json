@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+  "title": "SND-AUTH-002",
+  "status": 403,
+  "detail": "Rejecting a proposal is the owner's to do; a session can't (fix: ask the owner to run 'sindri proposal reject')",
+  "traceId": "<trace>"
+}

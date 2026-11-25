@@ -11,8 +11,9 @@ internal sealed partial class HealthViewModel
         AgentsRows = s is null
             ? []
             : [new(Labels.AgentsWorking, Count(s.Running ?? s.Live)), new(Labels.AgentsAsking, Count(s.Asking)), new(Labels.AgentsProblems, Count(s.Problems))];
-        HasAgentsProblems = s is { Problems: > 0 };   // an older answer has the count and no rows: the link still shows (#4012)
-        AgentsProblemLines = s is { Problems: > 0, ProblemRows: { } rows } ? [.. rows.Select(static p => new AgentProblemLine(p.Text, p.Code))] : [];
+        IsAgentsWatchingOff = string.Equals(s?.Watching, "off", StringComparison.Ordinal);   // #4316: the owner's choice, shown in place of problems
+        HasAgentsProblems = !IsAgentsWatchingOff && s is { Problems: > 0 };   // an older answer has the count and no rows: the link still shows (#4012)
+        AgentsProblemLines = HasAgentsProblems && s is { ProblemRows: { } rows } ? [.. rows.Select(static p => new AgentProblemLine(p.Text, p.Code))] : [];
     }
 
     private void ShowViewsCard()

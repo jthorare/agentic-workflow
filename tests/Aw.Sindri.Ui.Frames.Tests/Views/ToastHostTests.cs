@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -196,5 +197,37 @@ public sealed class ToastHostTests : IDisposable
 
         Assert.False(host.IsKeyboardFocusWithin);
         Assert.NotNull(window.FocusManager?.GetFocusedElement());
+    });
+
+    // The disabled-label ink the standard command buttons use (ControlStyles.axaml: Button.command-control:disabled TextBlock).
+    private static Color DisabledInk(Window window)
+    {
+        Assert.True(window.TryFindResource("Brush.InkTertiary", window.ActualThemeVariant, out var brush));
+        return ((ISolidColorBrush)brush!).Color;
+    }
+
+    private static Color LabelInk(Window window) =>
+        ((ISolidColorBrush)Named<Button>(window, "ToastUndo").GetVisualDescendants().OfType<TextBlock>().First().Foreground!).Color;
+
+    [Fact]
+    public Task A_disabled_Undo_dims_its_label_like_a_disabled_standard_button() => OnUi(async () =>
+    {
+        var (window, shell) = await Running();
+        shell.ShowToast(new ToastMessage("Step saved.", () => Task.FromResult<string?>(null), UndoAllowed: () => false));
+        Settle(window);
+
+        Assert.False(Named<Button>(window, "ToastUndo").IsEnabled);
+        Assert.Equal(DisabledInk(window), LabelInk(window));
+    });
+
+    [Fact]
+    public Task An_enabled_Undo_keeps_its_normal_label_ink() => OnUi(async () =>
+    {
+        var (window, shell) = await Running();
+        shell.ShowToast(new ToastMessage("Step saved.", () => Task.FromResult<string?>(null)));
+        Settle(window);
+
+        Assert.True(Named<Button>(window, "ToastUndo").IsEnabled);
+        Assert.NotEqual(DisabledInk(window), LabelInk(window));
     });
 }

@@ -37,8 +37,16 @@ public sealed class DetachedProcessStarterTests
     {
         var starter = new DetachedProcessStarter(static _ => throw new InvalidOperationException("the process is gone"));
 
-        var result = starter.Start(new ProcessLaunch("/x/sindri", ["--headless"], Path.Combine(Path.GetTempPath(), "sindri-start-test", "logs", "serve.log")));
+        var home = Directory.CreateTempSubdirectory("sindri-start-test-").FullName;
+        try
+        {
+            var result = starter.Start(new ProcessLaunch("/x/sindri", ["--headless"], Path.Combine(home, "logs", "serve.log")));
 
-        Assert.True(result.IsError);
+            Assert.True(result.IsError);
+        }
+        finally
+        {
+            Directory.Delete(home, recursive: true);
+        }
     }
 }

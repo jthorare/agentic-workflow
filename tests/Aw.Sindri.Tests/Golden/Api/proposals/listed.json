@@ -1,0 +1,26 @@
+{
+  "proposals": [
+    {
+      "id": "prp_00000000000000000000000000000005",
+      "kind": "SkillEdit",
+      "target": "skill:review",
+      "title": "Ask before widening the scope",
+      "state": "Proposed",
+      "tier": "Code",
+      "attempts": 0,
+      "heldReason": null,
+      "updatedAt": "2026-01-01T00:00:00.0000000Z"
+    },
+    {
+      "id": "prp_00000000000000000000000000000004",
+      "kind": "SkillEdit",
+      "target": "skill:review",
+      "title": "Run the tests before saying done",
+      "state": "Proposed",
+      "tier": "Code",
+      "attempts": 0,
+      "heldReason": null,
+      "updatedAt": "2026-01-01T00:00:00.0000000Z"
+    }
+  ]
+}

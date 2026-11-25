@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Kernel;
 
 namespace Aw.Sindri.Ui.Api;
@@ -10,6 +11,21 @@ internal static class SindriUiErrors
 
     /// <summary>SND-UI-002: nothing answered at the recorded endpoint, or not within 120 s.</summary>
     public static readonly ErrorDefinition Unreachable = new("SND-UI-002", ErrorKind.Unavailable, "Sindri's API doesn't answer");
+
+    /// <summary>SND-UI-002 for a call that passed its deadline: the words every such message carries, so a read can say it timed out instead of "unreachable".</summary>
+    internal const string DeadlineWords = "didn't answer within";
+
+    /// <summary>The message of an SND-UI-002 for a call that passed its deadline.</summary>
+    /// <param name="authority">The API's host and port.</param>
+    /// <param name="seconds">The deadline in seconds.</param>
+    /// <returns>The message, carrying <see cref="DeadlineWords"/>.</returns>
+    internal static string DeadlineMessage(string authority, double seconds) => string.Create(CultureInfo.InvariantCulture, $"{authority} {DeadlineWords} {seconds:0} s");
+
+    /// <summary>Whether an error is the deadline passing, as against nothing answering at all.</summary>
+    /// <param name="error">The error.</param>
+    /// <returns>True for an SND-UI-002 whose message carries <see cref="DeadlineWords"/>.</returns>
+    internal static bool IsDeadline(Error error) =>
+        string.Equals(error.Code, Unreachable.Code, StringComparison.Ordinal) && error.Message.Contains(DeadlineWords, StringComparison.Ordinal);
 
     /// <summary>SND-UI-003: the API answered, but not with the record this build reads.</summary>
     public static readonly ErrorDefinition BadAnswer = new("SND-UI-003", ErrorKind.Invalid, "Sindri's API gave an answer this app can't read");

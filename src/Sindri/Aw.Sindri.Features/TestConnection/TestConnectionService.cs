@@ -7,25 +7,25 @@ using Microsoft.Extensions.Logging;
 namespace Aw.Sindri.Features.TestConnection;
 
 /// <summary>
-/// Tests a connection: reads its secret and calls the probe URL (the connection's Config 'probeUrl', else its preset's). An unknown name is SND-CONN-001.
+/// Tests a connection: reads its secret and tries it (<see cref="KeyedCredentialCheck"/>: a key with a preset is asked of its service as on add, #4361; anything else calls the probe URL, the connection's Config
+/// 'probeUrl', else its preset's). An unknown name is SND-CONN-001.
 /// A rejected credential sets status 'error' (or 'needs-sign-in' for an oauth connection) and a reason; the answer is Ok false, not a failed call.
+/// A key check that could not reach its service (SND-CONN-019 no answer, SND-CONN-020 rate limited) answers Ok false and writes nothing: the row keeps its status.
 /// The reason is the failure's code and fixed title: a provider's refusal text is never shown, because it can repeat the token.
 /// The secret read and the probe run outside the command gate (the command is registered with AddUngatedCommand); only the status write takes it (#2349).
 /// </summary>
 /// <param name="store">The connections.</param>
 /// <param name="secrets">Reads the tokens.</param>
-/// <param name="presets">The shipped presets.</param>
-/// <param name="probe">Calls the probe URL.</param>
+/// <param name="check">Tries the stored credential (the key check or the probe URL).</param>
 /// <param name="writer">Records the status under the command gate.</param>
 /// <param name="logger">Where a refused test is reported (code only); null logs nothing.</param>
 /// <param name="mcp">Lists an mcp server's tools (the test of an mcp connection); the host always supplies it.</param>
-internal sealed partial class TestConnectionService(IConnectionStore store, IConnectionSecrets secrets, IConnectionPresetCatalog presets, IConnectionProbe probe, ConnectionStatusWriter writer, ILogger<TestConnectionService>? logger = null, IMcpConnectionClient? mcp = null)
+internal sealed partial class TestConnectionService(IConnectionStore store, IConnectionSecrets secrets, KeyedCredentialCheck check, ConnectionStatusWriter writer, ILogger<TestConnectionService>? logger = null, IMcpConnectionClient? mcp = null)
     : IService<TestConnectionRequest, TestConnectionResponse>
 {
     private readonly IConnectionStore _store = store;
     private readonly IConnectionSecrets _secrets = secrets;
-    private readonly IConnectionPresetCatalog _presets = presets;
-    private readonly IConnectionProbe _probe = probe;
+    private readonly KeyedCredentialCheck _check = check;
     private readonly ConnectionStatusWriter _writer = writer;
     private readonly ILogger? _logger = logger;
     private readonly IMcpConnectionClient? _mcp = mcp;
@@ -63,15 +63,20 @@ internal sealed partial class TestConnectionService(IConnectionStore store, ICon
             return await Failed(connection, tokens.Error, cancellationToken).ConfigureAwait(false);
         }
 
-        var url = connection.Config.GetValueOrDefault("probeUrl") ?? (connection.Preset is { } key ? _presets.Find(key)?.ProbeUrl : null);
-        if (url is null)
+        var tried = await _check.Try(connection, tokens.Value, cancellationToken).ConfigureAwait(false);
+        if (tried is null)
         {
             return await Record(connection, ConnectionStatus.Connected, "the stored secret was read; this connection has no probe URL to try it against", cancellationToken, ok: true).ConfigureAwait(false);
         }
 
-        var probed = await _probe.Probe(url, tokens.Value, cancellationToken).ConfigureAwait(false);
-        return probed.IsError
-            ? await Failed(connection, probed.Error, cancellationToken).ConfigureAwait(false)
+        if (tried.IsError && (tried.Error.Code == SindriErrors.ConnectionKeyUnchecked.Code || tried.Error.Code == SindriErrors.ConnectionKeyRateLimited.Code))
+        {
+            // the service was out of reach or rate limiting: that says nothing about the key, so the row keeps its status
+            return new TestConnectionResponse(ConnectionView.From(connection), Ok: false, ConnectionFailures.Reason(tried.Error));
+        }
+
+        return tried.IsError
+            ? await Failed(connection, tried.Error, cancellationToken).ConfigureAwait(false)
             : await Record(connection, ConnectionStatus.Connected, reason: null, cancellationToken, ok: true).ConfigureAwait(false);
     }
 

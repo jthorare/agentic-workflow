@@ -16,6 +16,9 @@ public sealed class FakeKeyCheck : IKeyCheck
     /// <summary>Gets or sets a value indicating whether the service cannot be reached (SND-CONN-019).</summary>
     public bool Unreachable { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether the service is rate limiting Sindri (SND-CONN-020).</summary>
+    public bool RateLimited { get; set; }
+
     /// <inheritdoc />
     public ValueTask<Result<Unit>> Check(ConnectionPreset preset, string key, CancellationToken cancellationToken)
     {
@@ -23,6 +26,7 @@ public sealed class FakeKeyCheck : IKeyCheck
         Calls.Add((preset.Key, key));
         return ValueTask.FromResult<Result<Unit>>(Refuses ? SindriErrors.ConnectionKeyRefused.With(preset.DisplayName + " refused the key")
             : Unreachable ? SindriErrors.ConnectionKeyUnchecked.With("could not reach " + preset.DisplayName)
+            : RateLimited ? SindriErrors.ConnectionKeyRateLimited.With(preset.DisplayName + " is rate limiting Sindri")
             : Unit.Value);
     }
 }
