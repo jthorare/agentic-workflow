@@ -46,6 +46,9 @@ public sealed class ShellStepSavedToastTests
         var newest = Golden("workflows-slug", "found");
         (newest["revision"], newest["latestRevision"]) = (3, 3);   // the found golden is at revision 2: the save makes 3
         _server.WorkflowNewestAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, newest.ToJsonString());
+        var applied = Golden("workflows-slug-ops", "ops-applied");
+        applied["revision"] = 3;   // the save's own answer: it made revision 3
+        _server.ApplyWorkflowOpsAnswer = new RouteAnswer(HttpStatusCode.OK, applied.ToJsonString());
         shell.Workflows.Editor.Fields.Single(static f => string.Equals(f.Name, "prompt", StringComparison.Ordinal)).Text = "Look twice";
         await shell.Workflows.Save(Token);
         return shell;
