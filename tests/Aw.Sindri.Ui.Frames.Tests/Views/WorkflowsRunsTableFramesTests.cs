@@ -100,4 +100,21 @@ public sealed class WorkflowsRunsTableFramesTests : FrameHost
         Assert.Equal("Compare 2", Named<Button>(window, "RunsCompare").Content);
         Assert.Equal(2, shell.Workflows.Runs.SelectedCount);
     });
+
+    [Fact]
+    public Task At_text_scale_1_3_a_run_row_holds_its_content() => OnUi(async () =>
+    {
+        var (window, _) = await Opened(1000);
+
+        await WorkflowsFitAsserts.AtScale(1.3, () =>
+        {
+            Settle(window);
+            foreach (var row in window.GetVisualDescendants().OfType<Border>().Where(b => b.Name == "RunRow" && b.IsEffectivelyVisible))
+            {
+                WorkflowsFitAsserts.AssertNothingClips(row, "a run row");
+            }
+
+            return Task.CompletedTask;
+        });
+    });
 }

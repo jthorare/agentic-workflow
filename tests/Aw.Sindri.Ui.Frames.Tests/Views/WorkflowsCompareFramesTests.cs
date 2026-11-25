@@ -93,4 +93,23 @@ public sealed class WorkflowsCompareFramesTests : FrameHost
 
         await Until(window, () => shell.Workflows.IsRuns, "Esc never went back to the runs");
     });
+
+    [Fact]
+    public Task At_text_scale_1_3_every_compare_line_holds_its_content() => OnUi(async () =>
+    {
+        var (window, _) = await Compared(1000);
+
+        await WorkflowsFitAsserts.AtScale(1.3, () =>
+        {
+            Settle(window);
+            var lines = window.GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("cmpline") && b.IsEffectivelyVisible).ToList();
+            Assert.NotEmpty(lines);
+            foreach (var line in lines)
+            {
+                WorkflowsFitAsserts.AssertNothingClips(line, "a compare line");
+            }
+
+            return Task.CompletedTask;
+        });
+    });
 }
