@@ -55,9 +55,14 @@ internal sealed partial class WorkflowEditorSheet : UserControl
             return;
         }
 
-        if (e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None && DataContext is WorkflowsPageViewModel { IsSettingsOpen: true })
+        if (e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None && DataContext is WorkflowsPageViewModel { IsSettingsOpen: true } open)
         {
-            Close();
+            open.RequestCloseSheet();   // Escape asks like Done when a field changed (#3655)
+            if (!open.AsksSaveFirst)
+            {
+                this.FindAncestorOfType<WorkflowsPage>()?.FocusEdit();
+            }
+
             e.Handled = true;
             return;
         }

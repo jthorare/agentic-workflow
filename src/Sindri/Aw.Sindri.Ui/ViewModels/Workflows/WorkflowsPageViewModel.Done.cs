@@ -41,7 +41,16 @@ internal sealed partial class WorkflowsPageViewModel
     }
 
     /// <summary>Escape with the sheet open: asks like Done when a field changed, else closes the sheet (edit mode stays on).</summary>
-    internal void RequestCloseSheet() => CloseSettings();   // red stub: the old Escape, which drops typed text
+    internal void RequestCloseSheet()
+    {
+        if (Editor.Fields.Any(static f => f.IsChanged))
+        {
+            AsksSaveFirst = true;
+            return;
+        }
+
+        CloseSettings();
+    }
 
     /// <summary>The question's Discard: leaves edit mode and drops the typed fields.</summary>
     internal void DiscardAndLeave()
@@ -58,6 +67,11 @@ internal sealed partial class WorkflowsPageViewModel
     /// <returns>A task that completes when the save is answered.</returns>
     internal async Task SaveAndLeave(CancellationToken cancellationToken)
     {
+        if (!IsSettingsOpen || !CanSave)
+        {
+            return;   // Save would send nothing (a required field is empty, a one-of is not met): the question stays, and leaving would drop the typed text
+        }
+
         AsksSaveFirst = false;
         await Save(cancellationToken).ConfigureAwait(true);
         LeaveIfSaved();

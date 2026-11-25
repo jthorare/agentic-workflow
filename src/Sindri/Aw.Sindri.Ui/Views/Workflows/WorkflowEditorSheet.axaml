@@ -73,7 +73,7 @@
           <TextBlock Classes="body-strong" Text="{Binding AskSaveText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
         <StackPanel Orientation="Horizontal" Spacing="8">
-          <Button x:Name="EditorAskSave" Classes="accent" Content="{Binding SaveText}" Click="OnAskSave" AutomationProperties.Name="{Binding SaveText}" />
+          <Button x:Name="EditorAskSave" Classes="accent" Content="{Binding SaveText}" IsEnabled="{Binding CanSave}" Click="OnAskSave" AutomationProperties.Name="{Binding SaveText}" />
           <Button x:Name="EditorAskDiscard" Content="{Binding AskDiscardText}" Click="OnAskDiscard" AutomationProperties.Name="{Binding AskDiscardText}" />
           <Button x:Name="EditorAskKeep" Content="{Binding AskKeepText}" Click="OnAskKeep" AutomationProperties.Name="{Binding AskKeepText}" />
         </StackPanel>

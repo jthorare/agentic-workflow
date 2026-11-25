@@ -86,6 +86,7 @@ internal sealed partial class WorkflowsPageViewModel
             return;
         }
 
+        AsksSaveFirst = false;   // a question asked on another step's sheet does not carry over
         Editor.ClearPendingStep();   // Step settings on a node leaves a new step that was being filled in
         Editor.ClearRefusal();   // an earlier refusal (a graph edit, or the new step just left) is not shown on this sheet, not even while it reads (#3999)
         OnChanged(nameof(IsNewStep));
@@ -136,6 +137,7 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>Closes the sheet; edit mode stays on. A new step being filled in is dropped: nothing was sent, nothing is added.</summary>
     internal void CloseSettings()
     {
+        AsksSaveFirst = false;   // the question belongs to the sheet it was asked on
         Editor.ClearPendingStep();
         Editor.ClearRefusal();   // the sheet's refusal is not left on the page line once the sheet is gone (#3944)
         (IsSettingsOpen, GraphEdit.SheetOpen) = (false, false);
