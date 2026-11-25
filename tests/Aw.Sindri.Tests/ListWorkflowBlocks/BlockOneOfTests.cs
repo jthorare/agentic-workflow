@@ -6,7 +6,7 @@ using Aw.Sindri.Features.ListWorkflowBlocks;
 
 namespace Aw.Sindri.Tests.ListWorkflowBlocks;
 
-/// <summary>GET /sindri/workflows/blocks: a block with an "exactly one of these fields" rule serves it as <c>oneOf</c>, so the editor keeps Save off until the rule holds (#4359).</summary>
+/// <summary>GET /sindri/workflows/blocks: a block with an "exactly one of these fields" rule serves it as "oneOf", so the editor keeps Save off until the rule holds (#4359).</summary>
 [Lane(TestLane.Unit)]
 public sealed class BlockOneOfTests
 {

@@ -6,7 +6,7 @@ using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 namespace Aw.Sindri.Ui.Tests.Workflows;
 
 /// <summary>
-/// #4359: a Wait has no required field, but a wait needs exactly one of "Wait for" and "Wait until". The blocks list serves that as <c>oneOf</c>; Save stays off, with a line, until it holds.
+/// #4359: a Wait has no required field, but a wait needs exactly one of "Wait for" and "Wait until". The blocks list serves that as "oneOf"; Save stays off, with a line, until it holds.
 /// </summary>
 [Lane(TestLane.Unit)]
 public sealed class AddStepOneOfTests
