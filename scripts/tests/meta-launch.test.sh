@@ -576,6 +576,24 @@ tmux new-session -d -s t1-api "env AW_LAUNCHER_CONFIG=$WORK/l6.json AW_META_NO_S
 waitfor '[ "$(jq -r .processName "$AW_STATE_DIR/meta/lane-sessions/api.agent" 2> /dev/null)" = node ]'
 check "an npm-shaped agent (a node wrapper): the .agent record carries the name the pane shows" "$(jq -r .processName "$AW_STATE_DIR/meta/lane-sessions/api.agent"):$(tmux display-message -p -t =t1-api: '#{pane_current_command}')" "node:node"
 tmux kill-session -t =t1-api 2> /dev/null
+# #4354: while the foreground leader is a zombie, ps shows no name (macOS `ps -o args=` prints "<defunct>", Linux "[name] <defunct>").
+# The recorder must wait for a live leader: a recorded "<defunct>" made every wake "lane down: no <defunct> in its pane".
+# The fake ps answers the first three `-o args=` asks with "<defunct>", then hands over to the real ps.
+mkdir -p "$WORK/fakeps"; : > "$WORK/fakeps.calls"
+{
+  echo '#!/usr/bin/env bash'
+  echo "calls=\"$WORK/fakeps.calls\""
+  echo 'case " $* " in *" -o args= "*) if [ "$(wc -l < "$calls")" -lt 3 ]; then echo args >> "$calls"; echo "<defunct>"; exit 0; fi ;; esac'
+  echo "exec $(command -v ps) \"\$@\""
+} > "$WORK/fakeps/ps"
+chmod +x "$WORK/fakeps/ps"
+find "$AW_STATE_DIR/meta/lane-sessions" -mindepth 1 -delete 2> /dev/null
+tmux new-session -d -s t1-api "env PATH=$WORK/fakeps:$PATH AW_LAUNCHER_CONFIG=$WORK/l4.json AW_META_NO_SHELL=1 AW_META_ID_WAIT=1 AW_META_ID_GRACE=1 bash $DIR/meta-lane.sh t1 api"
+waitfor '[ "$(tmux display-message -p -t =t1-api: "#{pane_current_command}")" = codex ] && [ "$(wc -l < "$WORK/fakeps.calls")" -ge 3 ]'
+sleep 1   # the recorder polls every 0.2 s: give it time to write a wrong name
+check "a zombie foreground leader (<defunct>) is never recorded as the lane's processName" "$(jq -r .processName "$AW_STATE_DIR/meta/lane-sessions/api.agent" 2> /dev/null)" "codex"
+tmux kill-session -t =t1-api 2> /dev/null
+waitfor '! pgrep -f "^codex 60$" > /dev/null' || { echo "not ok - the <defunct> case's agent (codex 60) outlived its session"; fail=1; }
 # no processName/transcripts surprises: the pane check uses the catalog's processName.
 mkdir -p "$WORK/fakebin2"; cp "$SLEEPBIN" "$WORK/fakebin2/codex"
 : > "$ids/api.exited"
