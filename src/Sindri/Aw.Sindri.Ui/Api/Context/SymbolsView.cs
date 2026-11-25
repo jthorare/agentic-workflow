@@ -12,6 +12,7 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="Unresolved">How many call sites the index could not tie to a symbol (callers and callees only).</param>
 /// <param name="Code">The block's SND-CODEIDX code that explains the state.</param>
 /// <param name="Files">The symbols each listed file defines (the file map only).</param>
+/// <param name="Repos">The lenses code band only: with several repos in scope and no answer, the repos whose index gives that state (#3861); null otherwise.</param>
 internal sealed record SymbolsView(
     string State,
     string? Reason,
@@ -21,4 +22,5 @@ internal sealed record SymbolsView(
     bool AsOfMismatch = false,
     int Unresolved = 0,
     string? Code = null,
-    IReadOnlyList<FileSymbolsEntry>? Files = null);
+    IReadOnlyList<FileSymbolsEntry>? Files = null,
+    IReadOnlyList<string>? Repos = null);

@@ -11,7 +11,7 @@ A suite removes every temp dir it makes. Each suite that called `mktemp` with no
 Two checks guard this. Each guards a different place.
 
 1. The runner's per-suite check (`scripts/ci/bash-tests.sh`). Each suite gets its own `TMPDIR` inside its sandbox, and the runner deletes the sandbox afterwards. Before the delete, the runner lists what the suite left at the top of that `TMPDIR`. A leftover appends `bash-tests: <suite> left in TMPDIR: <names>` to the suite's log, fails the suite and marks its `FAIL` line `(left files in TMPDIR)`. `scripts/tests/ci-bash-tests.test.sh` tests it.
-2. `scripts/ci/tmp-leak-check.sh` (outer `TMPDIR`). CI's "Bash tests" job runs `bash scripts/ci/tmp-leak-check.sh -- bash scripts/ci/bash-tests.sh`. The check lists the `aw-*` and `tmp.*` entries in `${TMPDIR:-/tmp}` before and after the command. It exits 1 and names each new entry still there. When the command fails, its own exit code wins. It deletes nothing. It catches what escapes a suite's sandbox: the runner itself, or a suite that writes to an explicit `/tmp` path. `scripts/tests/tmp-leak-check.test.sh` tests it.
+2. `scripts/ci/tmp-leak-check.sh` (outer `TMPDIR`). CI's "Bash tests" job runs `bash scripts/ci/tmp-leak-check.sh -- bash scripts/ci/bash-tests.sh`. The check lists the `aw-*`, `sindri-*` and `tmp.*` entries in `${TMPDIR:-/tmp}` before and after the command. It exits 1 and names each new entry still there. When the command fails, its own exit code wins. It deletes nothing. It catches what escapes a suite's sandbox: the runner itself, or a suite that writes to an explicit `/tmp` path. `scripts/tests/tmp-leak-check.test.sh` tests it.
 
 To check a run on your own box, give it a private `TMPDIR` so other runs do not show up as leaks:
 
@@ -131,7 +131,7 @@ bash scripts/tests/signal-suites-ignored-hup.test.sh   # agent-token.test.sh, fo
 bash scripts/tests/ci-changed-areas.test.sh
 bash scripts/tests/ci-bash-tests.test.sh
 bash scripts/tests/ci-runner-parity.test.sh   # the macos-15 runner's conditions on any box (#2534, #2584, #2757): scans the suites for forms bash 3.2 or BSD tools reject, then reruns them with BSD-style sed, touch, find and wc, without setsid and timeout, with TMPDIR behind a symlink and without /proc/meminfo; where a faked condition is native (macOS), that part prints SKIP, since bash-tests.sh already ran the suite there (#4133)
-bash scripts/tests/tmp-leak-check.test.sh   # scripts/ci/tmp-leak-check.sh: a new aw-* or tmp.* entry the command leaves is named and exits 1, a clean command exits 0, the command's own exit code wins, old entries are ignored, nothing is deleted, usage exits 2 (#3262)
+bash scripts/tests/tmp-leak-check.test.sh   # scripts/ci/tmp-leak-check.sh: a new aw-*, sindri-* or tmp.* entry the command leaves is named and exits 1, a clean command exits 0, the command's own exit code wins, old entries are ignored, nothing is deleted, usage exits 2 (#3262)
 bash scripts/tests/ci-lane-budgets.test.sh
 bash scripts/tests/tmux-isolation.test.sh   # scripts/ci/tmux-isolation.sh: no test runs a tmux outside scripts/test-tmux.sh, -L, -S or AW_TMUX
 bash scripts/tests/test-ports.test.sh   # scripts/ci/test-ports.sh: no *.test.sh binds a literal listener port or assigns digits to a *PORT variable without a "test-ports: ok <reason>" waiver (#2597)
