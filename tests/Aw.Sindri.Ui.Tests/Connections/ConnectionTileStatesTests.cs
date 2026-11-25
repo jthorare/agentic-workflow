@@ -51,6 +51,23 @@ public sealed class ConnectionTileStatesTests
         Assert.Equal(("Try again", true), (tile.PrimaryText, tile.CanPress));
     }
 
+    // #4368 review: clearing the input that survived the failed try takes "Try again" away, never a greyed one.
+    [Fact]
+    public async Task Clearing_the_client_ID_after_a_failed_sign_in_reads_Connect_not_a_greyed_Try_again()
+    {
+        var tile = await Tile("spotify");
+        await tile.Connect(Token);
+        tile.ClientId = "client-123";
+        _f.Server.ConnectionWriteError = new Kernel.Error("SND-CONN-006", Kernel.ErrorKind.Unavailable, "The connection's secret store is not available");
+        await tile.Primary(Token);
+
+        tile.ClientId = string.Empty;
+
+        Assert.Equal(("Connect", false), (tile.PrimaryText, tile.CanPress));
+        tile.ClientId = "client-456";
+        Assert.Equal(("Try again", true), (tile.PrimaryText, tile.CanPress));
+    }
+
     // #4368: the client secret went with the failed try, so the same press can't run again; the button reads Connect and waits for the secret.
     [Fact]
     public async Task A_failed_sign_in_that_spent_the_client_secret_reads_Connect_not_Try_again()

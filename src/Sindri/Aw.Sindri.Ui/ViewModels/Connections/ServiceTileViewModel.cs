@@ -17,8 +17,8 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     internal ServiceTileViewModel(ServiceTile service, ConnectionActions actions, Func<Task> changed, TimeProvider clock)
     {
         (Service, _actions, _changed, _clock) = (service, actions, changed, clock);
-        Token.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress));
-        ClientSecret.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress));
+        Token.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress), nameof(PrimaryText), nameof(HasPrimary));
+        ClientSecret.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress), nameof(PrimaryText), nameof(HasPrimary));
     }
 
     /// <summary>The service this tile is for.</summary>
@@ -49,7 +49,7 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
         set
         {
             field = value ?? string.Empty;
-            Raise(nameof(ClientId), nameof(CanSend), nameof(BlockedReason), nameof(CanPress));
+            Raise(nameof(ClientId), nameof(CanSend), nameof(BlockedReason), nameof(CanPress), nameof(PrimaryText), nameof(HasPrimary));
         }
     } = string.Empty;
 
@@ -136,7 +136,7 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     public bool HasReason => ReasonText.Length > 0;
 
     /// <summary>The label of the tile's one primary button; empty when it has none (a connected tile, or a sign-in running).</summary>
-    public string PrimaryText => IsWorking ? string.Empty : NeedsAttention ? Labels.TileReconnect : IsOffered ? (HasError && CanRetry ? Labels.TryAgain : ConnectText) : string.Empty;
+    public string PrimaryText => IsWorking ? string.Empty : NeedsAttention ? Labels.TileReconnect : IsOffered ? (HasError && CanRetry && BlockedReason.Length == 0 ? Labels.TryAgain : ConnectText) : string.Empty;
 
     /// <summary>True when the tile has a primary button.</summary>
     public bool HasPrimary => PrimaryText.Length > 0;
