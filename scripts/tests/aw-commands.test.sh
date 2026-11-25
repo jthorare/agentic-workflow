@@ -238,4 +238,29 @@ check "aw-pr-watch: argv is a command plus one word per param" "$(jq -c .run.arg
 check "aw-pr-watch: it has detect rules" "$(jq -r '.detect.all | length > 0' <<< "$PW" 2> /dev/null)" "true"
 check "aw-pr-watch: show fills the params" "$(cd "$ROOT" && AW_COMMANDS_TOOLKIT="$ROOT/config/commands.toolkit.json" bash "$CLI" show aw-pr-watch --set repo=acme/app --set pr=7 --json | jq -c .invocation)" '["aw-pr-watch","--repo","acme/app","--pr","7"]'
 
+# --- #4294: search matches whole words, show --set refuses an undeclared name, the CLI works where readlink has no -f ---
+WS="$WORK/words/commands.json"
+catalog "$WS" \
+  "$(entry tk-decide 'Decide the next step' '["decide"]' '["true"]' any)" \
+  "$(entry tk-ci 'Read the build result' '["ci"]' '["true"]' any)"
+out="$(cd "$WORK" && AW_COMMANDS_TOOLKIT="$WS" bash "$CLI" search ci 2>&1)"
+lacks "search: 'ci' does not match inside the word 'decide'" "$out" "tk-decide"
+has "search: 'ci' lists the entry with the term ci" "$out" "tk-ci"
+SP="$WORK/setp/commands.json"
+catalog "$SP" \
+  "$(entry tk-plain 'Do a thing' '["thing"]' '["true"]' any)" \
+  "$(entry tk-param 'Take a param' '["param"]' '["true","{pr}"]' any | jq -c '.params = [{"name":"pr","required":true,"description":"the pull request number"}]')"
+err="$(cd "$WORK" && AW_COMMANDS_TOOLKIT="$SP" bash "$CLI" show tk-param --set nope=1 2>&1 > /dev/null)"; rc=$?
+check "show --set: an undeclared name is exit 2" "$rc" "2"
+has "show --set: stderr names the declared param" "$err" "pr"
+(cd "$WORK" && AW_COMMANDS_TOOLKIT="$SP" bash "$CLI" show tk-plain --set nope=1 > /dev/null 2>&1); check "show --set: any name on an entry with no params is exit 2" "$?" "2"
+mkdir -p "$WORK/rl-bin" "$WORK/rl-link"
+REAL_RL="$(command -v readlink)"
+printf '#!/bin/sh\nfor a in "$@"; do [ "$a" = "-f" ] && exit 1; done\nexec "%s" "$@"\n' "$REAL_RL" > "$WORK/rl-bin/readlink"
+chmod +x "$WORK/rl-bin/readlink"
+ln -s "$CLI" "$WORK/rl-link/aw-commands"
+out="$(cd "$WORK" && env -u AW_COMMANDS_TOOLKIT PATH="$WORK/rl-bin:$PATH" bash "$WORK/rl-link/aw-commands" list 2>&1)"; rc=$?
+check "readlink without -f: list through a symlink is exit 0" "$rc" "0"
+has "readlink without -f: the toolkit's aw-pr-watch lists" "$out" "aw-pr-watch"
+
 [ "$fail" = 0 ] && echo "all aw-commands tests passed" || { echo "aw-commands tests FAILED"; exit 1; }
