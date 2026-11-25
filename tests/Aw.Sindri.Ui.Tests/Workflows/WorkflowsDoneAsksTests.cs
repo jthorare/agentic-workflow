@@ -143,10 +143,16 @@ public sealed class WorkflowsDoneAsksTests
     }
 
     [Fact]
-    public async Task Save_in_the_question_with_a_required_field_empty_sends_nothing_and_keeps_edit_mode_the_sheet_and_the_question()
+    public async Task Save_in_the_question_on_a_new_step_that_cannot_save_yet_sends_nothing_and_keeps_edit_mode_the_sheet_and_the_question()
     {
-        var page = await WithATypedField();
-        page.Editor.Fields[0].Text = string.Empty;   // the required prompt cleared: changed, so Done asks, and Save is off
+        // review's repro: Add step, type into a field, leave what the step needs empty (a new Wait needs Wait for or Wait until): Save is off, and Done still asks
+        _f.Server.WorkflowBlocksAnswer = RouteAnswer.Api("workflows-blocks", "listed");
+        var page = await _f.Shown(Token);
+        await page.OpenWorkflow(Slug, Token);
+        await page.GraphEdit.BeginAdd(Token);
+        await page.GraphEdit.AddStep(page.GraphEdit.Groups.SelectMany(static g => g.Blocks).Single(b => string.Equals(b.Type, "wait", StringComparison.Ordinal)), Token);
+        page.Editor.Fields.Single(f => string.Equals(f.Name, "timezone", StringComparison.Ordinal)).Text = "UTC";
+        Assert.False(page.CanSave);
         page.RequestDone();
         Assert.True(page.AsksSaveFirst);
 
