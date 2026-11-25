@@ -61,6 +61,15 @@ public sealed class WorkflowsUndoTests
     }
 
     [Fact]
+    public async Task Saving_a_step_that_exists_keeps_its_sheet_open_and_still_offers_the_undo()
+    {
+        var page = await SavedAgent();   // the Save button's path: only a NEW step's sheet closes on save
+
+        Assert.True(page.IsSettingsOpen);
+        _ = Assert.Single(_saved);
+    }
+
+    [Fact]
     public async Task A_refused_save_offers_no_undo()
     {
         var page = await SheetOnAgent();
