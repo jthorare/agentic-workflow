@@ -11,8 +11,8 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>True while the editor sheet is open on a step that does not exist yet (Add step picked a kind; Save sends the add_node).</summary>
     public bool IsNewStep => Editor.HasPendingStep;
 
-    /// <summary>The name of the field the sheet focuses when it opens: the first required field, else the first field, else empty.</summary>
-    public string FocusFieldName => (Editor.Fields.FirstOrDefault(static f => f.IsRequired) ?? Editor.Fields.FirstOrDefault())?.Name ?? string.Empty;
+    /// <summary>The name of the field the sheet focuses: the field a finding's fix named while the sheet stays open, else the first required field, else the first field, else empty.</summary>
+    public string FocusFieldName => FixFieldName ?? (Editor.Fields.FirstOrDefault(static f => f.IsRequired) ?? Editor.Fields.FirstOrDefault())?.Name ?? string.Empty;
 
     // Add step picked a kind: the sheet opens on that kind's settings, nothing is sent.
     private void BeginNewStep(WorkflowBlock block, string id, string? after)

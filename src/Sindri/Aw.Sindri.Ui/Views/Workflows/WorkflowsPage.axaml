@@ -152,6 +152,10 @@
           <wv:GraphEditBar x:Name="RunsEdit" DataContext="{Binding GraphEdit}" />
           <Button x:Name="WorkflowEditDone" Grid.Column="1" VerticalAlignment="Top" Content="{Binding DoneText}" Click="OnDone" AutomationProperties.Name="{Binding DoneText}" />
         </Grid>
+        <!-- How many things the server's validation found (#3803); each step's own show as a mark on its card. -->
+        <Border x:Name="FindingsHead" IsVisible="{Binding Findings.HasFindings}" AutomationProperties.Name="{Binding Findings.HeaderText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption" Text="{Binding Findings.HeaderText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
         <Border x:Name="RunsStagePanel" Classes="panel" Height="320">
           <wv:GraphStage x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" TextScale="{Binding TextScale}" />
         </Border>
@@ -162,6 +166,8 @@
           </Border>
           <Button x:Name="StepSettings" VerticalAlignment="Center" IsVisible="{Binding CanOpenSettings}" Content="{Binding StepSettingsText}" Click="OnStepSettings" AutomationProperties.Name="{Binding StepSettingsText}" />
         </StackPanel>
+        <!-- The selected step's findings while the sheet is shut; the sheet lists them itself (#3803). -->
+        <wv:WorkflowFindingsList x:Name="StepFindingsUnderGraph" IsVisible="{Binding ShowsStepFindingsUnderGraph}" />
         <Border x:Name="RunsUnplacedName" IsVisible="{Binding Runs.Graph.HasUnplaced}" AutomationProperties.Name="{Binding Runs.Graph.UnplacedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption subtle" Text="{Binding Runs.Graph.UnplacedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>

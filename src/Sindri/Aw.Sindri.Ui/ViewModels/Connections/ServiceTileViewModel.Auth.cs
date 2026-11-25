@@ -9,6 +9,9 @@ internal sealed partial class ServiceTileViewModel
     // True once the OAuth app was picked on a service that also takes a token.
     private bool OAuthPicked { get; set; }
 
+    // True when the failed try left its input whole, so the same press can run again (#4368): a refused token is gone, so the button goes back to "Add token", never a greyed "Try again".
+    private bool CanRetry { get; set; }
+
     /// <summary>True when Connect runs the browser sign-in: a service with no key, or one whose OAuth app was picked.</summary>
     public bool UsesOAuth => !Service.TakesKey || OAuthPicked;
 
@@ -22,7 +25,7 @@ internal sealed partial class ServiceTileViewModel
     public bool ShowUseToken => IsAsking && CanUseOAuth && UsesOAuth;
 
     /// <summary>The numbered steps above the token field.</summary>
-    public IReadOnlyList<string> TokenSteps => Labels.TileTokenSteps(Id);
+    public IReadOnlyList<TokenStep> TokenSteps => Labels.TileTokenSteps(Id);
 
     /// <summary>True when the steps show: the tile asks for a token.</summary>
     public bool ShowTokenSteps => IsAsking && TakesToken && TokenSteps.Count > 0;
