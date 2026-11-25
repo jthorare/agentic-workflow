@@ -30,7 +30,35 @@
           "scope-exception"
         ],
         "minDenyCaughtPercent": 80,
-        "allPassScenarios": ["judge-unavailable", "malformed-payload"],
+        "allPassScenarios": [
+          "judge-unavailable",
+          "malformed-payload"
+        ],
+        "minAdvisoryDays": 14,
+        "advisoryDaysOwnerCanShorten": true,
+        "wouldDenyReviewSample": 20
+      },
+      "evidence": null
+    },
+    "duplicate-script/1": {
+      "mode": "advisory",
+      "description": "The duplicate-script gate (#4221): a script that redoes a command-catalog helper gets the helper's invocation. Advisory until replay evidence meets the promotion criteria (#4257, docs/hooks/replay.md).",
+      "promotion": {
+        "minCapturedCases": 40,
+        "minCasesPerScenario": 5,
+        "minProviders": 2,
+        "scenarios": [
+          "duplicate-script",
+          "malformed-payload",
+          "state-reset"
+        ],
+        "noWrongBlockScenarios": [
+          "duplicate-script"
+        ],
+        "minDenyCaughtPercent": 80,
+        "allPassScenarios": [
+          "malformed-payload"
+        ],
         "minAdvisoryDays": 14,
         "advisoryDaysOwnerCanShorten": true,
         "wouldDenyReviewSample": 20

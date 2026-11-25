@@ -1,0 +1,1 @@
+{"session_id": "codex-dup-1", "transcript_path": null, "cwd": "/tmp", "hook_event_name": "PreToolUse", "model": "gpt-5.1-codex", "permission_mode": "default", "turn_id": "turn-1", "tool_name": "exec_command", "tool_input": {"cmd": "while true; do gh pr checks 7 --repo acme/app; sleep 60; done"}, "tool_use_id": "call_1"}

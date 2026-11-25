@@ -25302,6 +25302,11 @@ Aw.Sindri.Core.Connections.ConnectionPreset.ShippedClient.get -> string?
 Aw.Sindri.Core.Connections.ConnectionPreset.ShippedClient.init -> void
 Aw.Sindri.Core.Connections.ConnectionPreset.DeviceCodeUrl.get -> string?
 Aw.Sindri.Core.Connections.ConnectionPreset.DeviceCodeUrl.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.Auth.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Connections.ConnectionPreset.Auth.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.KeyFirst.get -> bool
+const Aw.Sindri.Core.Connections.ConnectionPreset.KeyAuth = "key" -> string!
+const Aw.Sindri.Core.Connections.ConnectionPreset.OAuthAuth = "oauth" -> string!
 Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization
 Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization.DeviceAuthorization(string! deviceCode, string! userCode, System.Uri! verificationUri, System.DateTimeOffset expiresAt, System.TimeSpan interval) -> void
 Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization.DeviceCode.get -> string!
@@ -25379,3 +25384,7 @@ Aw.Sindri.Core.Messages.IMessagesStore.Window(string! conversation, Aw.Sindri.Co
 Aw.Sindri.Core.Messages.IMessagesStore.Thread(string! conversation, Aw.Sindri.Core.Messages.MessageTs thread, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Messages.StoredThread!>!>
 Aw.Sindri.Core.Commands.MessageReadAccess
 static Aw.Sindri.Core.Commands.MessageReadAccess.ShowsText(Aw.Sindri.Core.Commands.CallerContext? caller) -> bool
+Aw.Sindri.Core.Connections.IKeyCheck
+Aw.Sindri.Core.Connections.IKeyCheck.Check(Aw.Sindri.Core.Connections.ConnectionPreset! preset, string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyRefused -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyUnchecked -> Aw.Kernel.ErrorDefinition!

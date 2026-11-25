@@ -199,7 +199,7 @@ if ! is_done_claim "$CLAIM_TEXT"; then
   # (Task 4, N2/R2). judge ask-check's own CLI contract is inverted from
   # every other subcommand here: exit 2 means "continue" (don't actually
   # stop), exit 0 means "ask" (a real stop is fine).
-  ASK_INPUT="$(jq -nc --arg t "$CLAIM_TEXT" '{transcriptTail: $t}')"
+  ASK_INPUT="$(jq -nc --rawfile t <(printf '%s' "$CLAIM_TEXT") '{transcriptTail: $t}')"
   ASK_INPUT="$(aw_images_attach "$ASK_INPUT" "$(turn_images)")"
   set +e
   printf '%s' "$ASK_INPUT" | AW_SESSION_ID="$SESSION_ID" judge ask-check > /dev/null 2>&1

@@ -10,13 +10,16 @@ internal sealed class ConfigFieldViewModel : ObservableObject
         Name = field.Name;
         Type = field.Type;
         IsRequired = field.Required;
-        Caption = Labels.WfFieldCaption(field.Caption.Length > 0 ? field.Caption : field.Name, field.Required);
+        _label = field.Caption.Length > 0 ? field.Caption : field.Name;
+        Caption = Labels.WfFieldCaption(_label, field.Required);
         IsClosedList = field.Choices is { Count: > 0 };
         Presets = (IsClosedList ? field.Choices : field.Presets) ?? [];
         HidesRawText = !IsClosedList && Presets.Any(p => !string.Equals(p.Label, p.Value, StringComparison.Ordinal));
         (Text, Original) = (text, text);
         ShowAdvanced = text.Length > 0 && SelectedPreset is null;   // a value no preset names must be seen, not hidden
     }
+
+    private readonly string _label;   // the caption without "(required)"
 
     /// <summary>The values to pick from: the closed list when the field has one, else its presets; empty when it has neither.</summary>
     public IReadOnlyList<WorkflowBlockChoice> Presets { get; }
@@ -72,7 +75,7 @@ internal sealed class ConfigFieldViewModel : ObservableObject
     /// <summary>The text being edited: a text list has one item per line, an object is JSON.</summary>
     public string Text { get; set { Set(ref field, value); OnChanged(nameof(IsOn)); OnChanged(nameof(IsChanged)); OnChanged(nameof(SelectedPreset)); } }
 
-    /// <summary>The hint the empty text box shows: a new step's example value that names a step the workflow lacks, so it was not filled in (#3944); empty otherwise.</summary>
+    /// <summary>The hint the empty text box shows: a new step's example value, with a step the new one can't read named "&lt;step id&gt;" (#3944, #4272); empty for an existing step.</summary>
     public string Placeholder { get; init; } = string.Empty;
 
     /// <summary>The text the field had when the form was made: Save sends only the fields that differ from it.</summary>
@@ -101,4 +104,14 @@ internal sealed class ConfigFieldViewModel : ObservableObject
 
     /// <summary>True when there is a line under the field.</summary>
     public bool HasError => ErrorText.Length > 0;
+
+    /// <summary>The line that says why a new step's Save is off ("Fill in Title to save."), on its first empty required field only; empty otherwise (#4330).</summary>
+    public string NeedText { get; private set { Set(ref field, value); OnChanged(nameof(HasNeed)); } } = string.Empty;
+
+    /// <summary>True when the field shows <see cref="NeedText"/>.</summary>
+    public bool HasNeed => NeedText.Length > 0;
+
+    /// <summary>Shows or clears the "why Save is off" line.</summary>
+    /// <param name="needed">True on the first empty required field of a new step.</param>
+    internal void MarkNeeded(bool needed) => NeedText = needed ? Labels.WfFieldNeededToSave(_label) : string.Empty;
 }

@@ -33,5 +33,5 @@ OUT="$(printf '%s' "$INPUT" | AW_LOG_LEVEL=none "$META" outbox-record 2> /dev/nu
 [ "$rc" = 0 ] || { failopen "meta-exit-$rc"; exit 0; }
 W="$(printf '%s\n' "$OUT" | grep -m1 '^aw-meta: warning: ')"
 [ -n "$W" ] || exit 0
-jq -nc --arg m "$W" '{hookSpecificOutput: {hookEventName: "PostToolUse", additionalContext: $m}}' 2> /dev/null || true
+jq -nc --rawfile m <(printf '%s' "$W") '{hookSpecificOutput: {hookEventName: "PostToolUse", additionalContext: $m}}' 2> /dev/null || true
 exit 0

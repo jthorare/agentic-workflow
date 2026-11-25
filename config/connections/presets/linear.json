@@ -2,6 +2,7 @@
   "id": "linear",
   "displayName": "Linear",
   "kind": "oauth",
+  "auth": ["key", "oauth"],
   "authorizeUrl": "https://linear.app/oauth/authorize",
   "tokenUrl": "https://api.linear.app/oauth/token",
   "revokeUrl": "https://api.linear.app/oauth/revoke",
