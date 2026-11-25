@@ -79,6 +79,35 @@ public sealed class LensesSymbolCoverageTests
         var view = await Ask(index: null, TwoRepos);
 
         Assert.Equal((SymbolsState.Unavailable, "index not built", "file"), (view.Bands.Code.Symbols.State, view.Bands.Code.Symbols.Reason, view.Coverage.Code.Level));
+        Assert.Equal(["aw-split-panes"], view.Bands.Code.Symbols.Repos);   // #3861: the band names the repo to build
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task One_repo_in_scope_names_no_repo()
+    {
+        var view = await Ask(index: null);
+
+        Assert.Equal(SymbolsState.Unavailable, view.Bands.Code.Symbols.State);
+        Assert.Null(view.Bands.Code.Symbols.Repos);
+    }
+
+    // #3861: the repos named are the ones at the band's state and reason; a repo that answers, or one down for another reason, is not named.
+    [Fact, Trait("Lane", "unit")]
+    public void Joined_repos_name_each_repo_with_the_bands_reason()
+    {
+        var ok = new LensSymbols(SymbolsState.Ok, Reason: null, []) { Files = [], Repos = ["web"] };
+        var api = LensSymbols.Unavailable with { Repos = ["api"] };
+        var docs = LensSymbols.Unavailable with { Repos = ["docs"] };
+        var damaged = LensSymbols.Unavailable with { Reason = "index damaged", Repos = ["old"] };
+
+        var two = Features.GetLenses.RepoSymbols.Join([ok, api, docs]);
+        var answered = Features.GetLenses.RepoSymbols.Join([ok, new LensSymbols(SymbolsState.Stale, "stale", []) { Files = [], Repos = ["api"] }]);
+        var worst = Features.GetLenses.RepoSymbols.Join([api, damaged]);
+
+        Assert.Equal(["api", "docs"], two.Repos);
+        Assert.Null(answered.Repos);
+        Assert.Equal("index not built", worst.Reason);
+        Assert.Equal(["api"], worst.Repos);
     }
 
     // The choice for files in 2 repos: the band's state is the worst repo's, with that repo's own reason, and the repos that answered keep their symbols.

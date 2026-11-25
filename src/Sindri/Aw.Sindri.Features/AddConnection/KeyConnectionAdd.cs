@@ -7,7 +7,7 @@ namespace Aw.Sindri.Features.AddConnection;
 
 /// <summary>
 /// The key half of <see cref="AddConnectionService"/>: a rest, cli or keyed mcp connection. It takes the key the CLI sent (read from the CLI's own environment) or, for an agent, the variable named by --key-env
-/// in serve's environment. A rest key for a preset is checked with its service first (#4357, <see cref="IKeyCheck"/>: SND-CONN-018 refused, SND-CONN-019 not reached); only then is it stored and the row
+/// in serve's environment. The key is trimmed of whitespace (a paste's trailing newline). A rest key for a preset is checked with its service first (#4357, <see cref="IKeyCheck"/>: SND-CONN-018 refused, SND-CONN-019 not reached, SND-CONN-020 rate limited); only then is it stored and the row
 /// written as connected. A failed insert deletes the stored secret again.
 /// </summary>
 /// <param name="store">The connections.</param>
@@ -33,22 +33,22 @@ internal sealed class KeyConnectionAdd(IConnectionStore store, IConnectionSecret
             return key.Error;
         }
 
-        if (key.Value is null)
+        // a pasted key often ends in a newline: the check and the store both see it trimmed, and a key of only whitespace is no key
+        var pasted = key.Value?.Trim();
+        if (string.IsNullOrEmpty(pasted))
         {
-            return SindriErrors.InvalidInput.With(preset is { KeyFirst: true }
-                ? $"a {preset.DisplayName} connection takes a key: pass --key-env NAME (the environment variable that holds your API key or personal access token), or --kind oauth for a browser sign-in with your own OAuth app"
-                : $"a {ConnectionWire.Name(kind)} connection needs --key-env NAME (the environment variable that holds the key)");
+            return NoKey(kind, preset);
         }
 
         // a rest key for a preset is asked of its service first: a refused or unchecked key is never stored and no row says connected
-        if (kind == ConnectionKind.Rest && preset is not null && await keys.Check(preset, key.Value, cancellationToken).ConfigureAwait(false) is { IsError: true } refused)
+        if (kind == ConnectionKind.Rest && preset is not null && await keys.Check(preset, pasted, cancellationToken).ConfigureAwait(false) is { IsError: true } refused)
         {
             return refused.Error;
         }
 
         var now = time.GetUtcNow();
         var row = new Connection(name, kind, preset?.Key, KeyConfig(kind, preset, request), SecretPointer: null, ConnectionStatus.Connected, StatusReason: null, callers.Current?.Actor ?? "unknown", now, now, LastRefreshedAt: null);
-        return await Save(row, key.Value, cancellationToken).ConfigureAwait(false);
+        return await Save(row, pasted, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>The value the CLI sent wins; otherwise the variable named by the flag is read from serve's environment (an agent has no other way). Neither given is no value; a name that is unset is an error that says whose environment.</summary>
@@ -73,6 +73,12 @@ internal sealed class KeyConnectionAdd(IConnectionStore store, IConnectionSecret
             ? read
             : SindriErrors.InvalidInput.With($"the environment variable {variable} is not set or is empty in the environment of the running Sindri (fix: export it where `sindri` runs, or run `sindri connection add ... {flag} {variable}` from a terminal, which sends its own value)");
     }
+
+    // The add named no key, or one of only whitespace.
+    private static Error NoKey(ConnectionKind kind, ConnectionPreset? preset) =>
+        SindriErrors.InvalidInput.With(preset is { KeyFirst: true }
+            ? $"a {preset.DisplayName} connection takes a key: pass --key-env NAME (the environment variable that holds your API key or personal access token), or --kind oauth for a browser sign-in with your own OAuth app"
+            : $"a {ConnectionWire.Name(kind)} connection needs --key-env NAME (the environment variable that holds the key)");
 
     // Stores the key, then writes the row pointing at it; a failed insert deletes the key again.
     private async ValueTask<Result<AddConnectionResponse>> Save(Connection draft, string key, CancellationToken cancellationToken)

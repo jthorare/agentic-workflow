@@ -106,6 +106,11 @@
   <Style Selector="Button.copy">
     <Setter Property="Padding" Value="8,2" />
   </Style>
+  <!-- A disabled copy-class button (the toast's Undo while a newer edit holds it off) dims its label like a disabled command button: the caption class sets a Foreground
+       of its own, which the button's disabled Foreground does not reach. -->
+  <Style Selector="Button.copy:disabled TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkTertiary}" />
+  </Style>
   <Style Selector="Border.pending-line">
     <Setter Property="Padding" Value="2,2" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.XS}" />

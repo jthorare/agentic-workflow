@@ -43,6 +43,9 @@ public static partial class SindriErrors
     /// <summary>SND-CONN-019: Sindri could not reach the service to check the pasted key (#4357); nothing was stored.</summary>
     public static readonly ErrorDefinition ConnectionKeyUnchecked = new("SND-CONN-019", ErrorKind.Unavailable, "Sindri could not reach the service to check the key");
 
+    /// <summary>SND-CONN-020: the service is rate limiting Sindri (a 429, or a 403 with Retry-After or no requests left), so the pasted key was not checked (#4422); nothing was stored.</summary>
+    public static readonly ErrorDefinition ConnectionKeyRateLimited = new("SND-CONN-020", ErrorKind.RateLimited, "The service is rate limiting Sindri; the key was not checked");
+
     /// <summary>SND-CONN-015: an active workflow's connection_event trigger names the connection, so a rename would stop it firing.</summary>
     public static readonly ErrorDefinition ConnectionWatched = new("SND-CONN-015", ErrorKind.Conflict, "An active workflow's trigger watches this connection");
 

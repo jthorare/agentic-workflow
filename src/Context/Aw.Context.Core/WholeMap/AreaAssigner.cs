@@ -69,7 +69,8 @@ internal sealed class AreaAssigner
             }
         }
 
-        foreach (var node in graph.Nodes.Where(n => _kinds.ContainsKey(n.Key.Value) && PageKinds.IsPage(n, graph.Edges)))
+        var components = PageKinds.ComponentImplemented(graph.Edges);
+        foreach (var node in graph.Nodes.Where(n => _kinds.ContainsKey(n.Key.Value) && PageKinds.IsPageIn(n, components)))
         {
             _ = _pages.Add(node.Key.Value);
         }
@@ -119,8 +120,10 @@ internal sealed class AreaAssigner
     // The next set of area-features: each one holding over half the nodes or over the cap is replaced by its child features, and so is the largest when there are fewer than 3; null when nothing can be.
     private HashSet<string>? Deeper(HashSet<string> set)
     {
-        var sizes = set.ToDictionary(a => a, a => _areas.Values.Count(v => v.Area == a), StringComparer.Ordinal);
-        var children = set.ToDictionary(a => a, a => _parents.Where(p => p.Value.Count > 0 && p.Value[0] == a && p.Key != a).Select(p => p.Key).ToList(), StringComparer.Ordinal);
+        var counted = _areas.Values.GroupBy(v => v.Area, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Count(), StringComparer.Ordinal);
+        var sizes = set.ToDictionary(a => a, a => counted.GetValueOrDefault(a), StringComparer.Ordinal);
+        var childrenOf = ChildrenByParent();
+        var children = set.ToDictionary(a => a, a => childrenOf.GetValueOrDefault(a) ?? [], StringComparer.Ordinal);
         var replaced = set.Where(a => children[a].Count > 0 && (sizes[a] * 2 > _kinds.Count || sizes[a] > _areaCap)).ToHashSet(StringComparer.Ordinal);
         if (replaced.Count == 0 && set.Count < 3)
         {
@@ -133,6 +136,10 @@ internal sealed class AreaAssigner
 
         return replaced.Count == 0 ? null : [.. set.Except(replaced, StringComparer.Ordinal), .. replaced.SelectMany(a => children[a])];
     }
+
+    // Each feature under its smallest parent, in one pass over the parents, not one pass per area-feature: with no part-of edges every feature is its own area (#4363).
+    private Dictionary<string, List<string>> ChildrenByParent() =>
+        _parents.Where(p => p.Value.Count > 0 && p.Value[0] != p.Key).GroupBy(p => p.Value[0], StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Select(p => p.Key).ToList(), StringComparer.Ordinal);
 
     private static void Add(Dictionary<string, List<string>> index, string key, string value)
     {

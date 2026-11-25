@@ -7,6 +7,7 @@ using Aw.Transcripts.Core.Ports;
 using Aw.Transcripts.Core.Refs;
 using Aw.Transcripts.Core.Sessions;
 using Aw.Transcripts.Core.Turns;
+using Aw.Transcripts.Infrastructure;
 using Aw.Transcripts.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
@@ -167,6 +168,104 @@ public sealed class TranscriptsCliTests : IDisposable
 
         Assert.Contains("  red \\x1b[31mtext\\x1b]52;c;Zm9v\\x07\n  next\tline\n", run.Stdout, StringComparison.Ordinal);
         Assert.DoesNotContain('\u001b', run.Stdout);
+    }
+
+    private const string FixtureId = "00000000-0000-7000-8000-00000000000";
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task List_json_counts_the_typed_prompts_of_each_Codex_fixture_rollout()
+    {
+        using var codex = CodexFixtureRoot();
+
+        var run = await RunOnCodex(codex, "list", "--json");
+
+        Assert.Equal(0, run.Exit);
+        using var document = JsonDocument.Parse(run.Stdout);
+        var turns = document.RootElement.GetProperty("sessions").EnumerateArray()
+            .Select(s => $"{s.GetProperty("repo").GetString()}={s.GetProperty("humanTurns").GetInt32().ToString(System.Globalization.CultureInfo.InvariantCulture)}")
+            .Order(StringComparer.Ordinal)
+            .ToList();
+        Assert.Equal(
+            [
+                "/work/fixture-a=2", // response-only: two typed prompts, the AGENTS.md and environment wrappers stay out
+                "/work/fixture-b=2", // dual records, event_msg first for one prompt and response_item first for the other
+                "/work/fixture-c=4", // resumed: two dual prompts, a compaction summary (not counted), then two response-only prompts
+                "/work/fixture-d=0", // wrappers and a compaction summary only
+            ],
+            turns);
+    }
+
+    [Theory, Trait("Lane", "integration")]
+    [InlineData("a", new[] { "alpha one", "alpha two" })]
+    [InlineData("b", new[] { "beta one", "beta two" })]
+    [InlineData("c", new[] { "gamma one", "gamma two", "gamma three", "gamma four" })]
+    [InlineData("d", new string[0])]
+    public async Task Show_prints_each_typed_prompt_of_a_Codex_fixture_rollout_once(string session, string[] prompts)
+    {
+        using var codex = CodexFixtureRoot();
+        var path = Directory.EnumerateFiles(codex.Path, $"*{FixtureId}{session}.jsonl", SearchOption.AllDirectories).Single();
+
+        var run = await RunOnCodex(codex, "show", TranscriptRefs.ForFile(TranscriptProvider.Codex, path).Value);
+
+        Assert.Equal(0, run.Exit);
+        Assert.Equal(prompts.Length, run.Stdout.Split('\n').Count(l => l.StartsWith("human ", StringComparison.Ordinal)));
+        foreach (var prompt in prompts)
+        {
+            Assert.Equal(1, Occurrences(run.Stdout, $"\n  {prompt}\n"));
+        }
+
+        Assert.DoesNotContain("AGENTS.md", run.Stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("environment_context", run.Stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("ran out of context", run.Stdout, StringComparison.Ordinal);
+    }
+
+    private static int Occurrences(string text, string part)
+    {
+        var count = 0;
+        for (var at = text.IndexOf(part, StringComparison.Ordinal); at >= 0; at = text.IndexOf(part, at + part.Length, StringComparison.Ordinal))
+        {
+            count++;
+        }
+
+        return count;
+    }
+
+    private static TempDirectory CodexFixtureRoot()
+    {
+        var root = new TempDirectory();
+        var source = Path.Combine(AppContext.BaseDirectory, "Transcripts", "Fixtures", "codex-4222", "sessions");
+        foreach (var file in Directory.EnumerateFiles(source, "*.jsonl", SearchOption.AllDirectories))
+        {
+            var target = Path.Combine(root.Path, Path.GetRelativePath(source, file));
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(target)!); // why: a relative path under the root always has a parent
+            File.Copy(file, target);
+            File.SetLastWriteTimeUtc(target, new DateTime(2026, 11, 1, 11, 0, 0, DateTimeKind.Utc));
+        }
+
+        return root;
+    }
+
+    private async Task<CliRun> RunOnCodex(TempDirectory codex, params string[] args)
+    {
+        var collection = Composition.Compose(new ServiceCollection(), name => name == "AW_SINDRI_HOME" ? _home.Path : null, new FakeTimeProvider(_now));
+        _ = collection.AddTranscriptsInfrastructure([new TranscriptRoot(TranscriptProvider.Codex, codex.Path)]);
+        var provider = collection.BuildServiceProvider();
+        await using var disposeProvider = provider;
+        await using var scope = provider.CreateAsyncScope();
+        var stdout = new StringWriter();
+        var stderr = new StringWriter();
+        var output = new Output(stdout, stderr, scope.ServiceProvider.GetRequiredService<JsonSerializerOptions>());
+
+        var exit = await TranscriptsCommand.Run(args, scope.ServiceProvider, output, fence: false, TestContext.Current.CancellationToken);
+
+        return new CliRun(exit, stdout.ToString(), stderr.ToString());
+    }
+
+    private sealed class TempDirectory : IDisposable
+    {
+        public string Path { get; } = Directory.CreateTempSubdirectory("aw-codex-4222-").FullName;
+
+        public void Dispose() => Directory.Delete(Path, recursive: true);
     }
 
     private Task<CliRun> Run(bool fence, params string[] args) =>
