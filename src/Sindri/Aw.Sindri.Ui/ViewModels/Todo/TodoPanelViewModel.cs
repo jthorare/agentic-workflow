@@ -240,7 +240,7 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
         (OverdueCount, ToSortOutCount) = (split.Overdue.Count, toSortOut);
         CountLine = Labels.TodoCountLine(open, split.Overdue.Count, toSortOut);
         (IsEmpty, EmptyText) = (open == 0, open == 0 ? Labels.TodoEmpty : string.Empty);
-        RaiseSlots();
+        TakeSlots(slots);
         (ShowsShowAll, ShowAllText) = (!IsExpanded && shown.Open.Count > CollapsedRows - slots, Labels.TodoShowAll(open));
         DoneToggleText = ShowsDone ? Labels.TodoHideDone : Labels.TodoShowDone;
         DoneToggleName = Labels.TodoShowDoneName(listed);

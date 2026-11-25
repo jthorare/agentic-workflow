@@ -66,8 +66,8 @@
       <!-- Collapsed: one body of a fixed height in every state (spec D13, §3.4): five row slots on top, the Show all slot below
            (Show all on the left, the error line on the right). The rows, the skeleton and the empty sentence draw in the slots;
            none of them changes the height, so Needs you below never moves. TodoPanel.axaml.cs sets the height from Row.Height.Default.
-           With nothing to show in the Show all slot, the body drops it and the From elsewhere line moves up under the last row; the
-           spare slot under the line (TodoSpareSlot) keeps the card's height (#2908). -->
+           With nothing to show in the Show all slot, the body takes only the slots its rows fill and the From elsewhere line moves up
+           under the last row; the spare slots under the line (TodoSpareSlot) keep the card's height (#2908). -->
       <Grid x:Name="TodoCollapsed" Grid.Row="1" RowDefinitions="*,Auto" ClipToBounds="True" IsVisible="{Binding !IsExpanded}">
         <StackPanel>
           <!-- The attention rows (a conflict or the hold, todo spec §3.1, D13) take the first slots, inside the five. -->
@@ -198,8 +198,8 @@
         <tv:FromElsewhereLine x:Name="TodoElsewhere" VerticalAlignment="Center" DataContext="{Binding $parent[Window].((shell:ShellViewModel)DataContext).Elsewhere}" />
       </Border>
 
-      <!-- The empty Show all slot's row, moved under the From elsewhere line (#2908): the collapsed card keeps one height (D13) and the
-           line sits right under the last todo. TodoPanel.axaml.cs sets its height: one row, or 0 while the Show all slot holds something. -->
+      <!-- The slots the collapsed body leaves empty, moved under the From elsewhere line (#2908): the collapsed card keeps one height (D13)
+           and the line sits right under the last todo. TodoPanel.axaml.cs sets its height: the spare slots, 0 while all six are filled. -->
       <Border x:Name="TodoSpareSlot" Grid.Row="3" Height="0" IsVisible="{Binding !IsExpanded}" AutomationProperties.AccessibilityView="Raw" />
     </Grid>
   </Border>

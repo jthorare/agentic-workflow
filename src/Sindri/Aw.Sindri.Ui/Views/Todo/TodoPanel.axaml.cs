@@ -62,21 +62,20 @@ internal sealed partial class TodoPanel : UserControl
     }
 
     // The collapsed panel is five row slots and the Show all slot tall in every state (D13): one row height, Row.Height.Default, the one the
-    // skeleton bars and the rows already use. An empty Show all slot moves under the From elsewhere line (#2908): the body loses one slot and
-    // the spare slot below the line gains it, so the line sits right under the last row and the card keeps its height.
+    // skeleton bars and the rows already use. The body takes the slots its rows fill (all six with Show all, the error line or the skeleton), so
+    // the From elsewhere line sits right under the last todo; the spare slot under the line takes the rest and the card keeps its height (#2908).
     private void FixCollapsedHeight()
     {
         var row = this.TryFindResource("Row.Height.Default", ActualThemeVariant, out var found) && found is double height ? height : DefaultRowHeight;
         var open = Panel is { IsAttentionOpen: true };
-        var spare = !open && Panel is { HasSpareSlot: true } ? 1 : 0;
         if (this.FindControl<Grid>("TodoCollapsed") is { } collapsed)
         {
-            collapsed.Height = open ? double.NaN : row * ((Panel?.CollapsedSlots ?? CollapsedSlots) - spare);   // five rows and the Show all slot, or one line when the list is empty
+            collapsed.Height = open ? double.NaN : row * (Panel?.BodySlots ?? CollapsedSlots);   // the rows' slots, or one line when the list is empty
         }
 
         if (this.FindControl<Border>("TodoSpareSlot") is { } slot)
         {
-            slot.Height = row * spare;
+            slot.Height = open ? 0 : row * (Panel?.SpareSlots ?? 0);
         }
     }
 
@@ -92,7 +91,7 @@ internal sealed partial class TodoPanel : UserControl
     private void OnPanelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (string.Equals(e.PropertyName, nameof(TodoPanelViewModel.IsAttentionOpen), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(TodoPanelViewModel.CollapsedSlots), StringComparison.Ordinal)
-            || string.Equals(e.PropertyName, nameof(TodoPanelViewModel.HasSpareSlot), StringComparison.Ordinal))
+            || string.Equals(e.PropertyName, nameof(TodoPanelViewModel.BodySlots), StringComparison.Ordinal))
         {
             FixCollapsedHeight();
         }
