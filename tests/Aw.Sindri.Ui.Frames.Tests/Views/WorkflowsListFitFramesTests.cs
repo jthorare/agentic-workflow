@@ -15,7 +15,7 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 [Collection(HeadlessWindows.Name)]
 public sealed class WorkflowsListFitFramesTests : FrameHost
 {
-    private const string LongName = "Nightly drift check of every repo we keep for the team";
+    private const string LongName = "Nightly drift check of every repo we keep for the team, with the release notes, the open pull requests and the flaky test report";   // wider than the Name column's 360 px maximum, so it trims at any width
 
     private async Task<Window> Shown(double width, string name)
     {
@@ -41,7 +41,7 @@ public sealed class WorkflowsListFitFramesTests : FrameHost
         var triggerLeft = trigger.TranslatePoint(default, window)!.Value.X;
 
         Assert.True(titleRight <= triggerLeft, string.Create(CultureInfo.InvariantCulture, $"the title ends at x={titleRight}, past the Trigger column at x={triggerLeft}"));
-        Assert.True(title.Bounds.Width < title.TextLayout.Width + 1 && cell.Bounds.Width <= 200.5, string.Create(CultureInfo.InvariantCulture, $"the title is {title.Bounds.Width} px in a {cell.Bounds.Width} px cell: it should be trimmed"));
+        Assert.True(title.Bounds.Width <= cell.Bounds.Width + 0.5 && cell.Bounds.Width <= 360.5, string.Create(CultureInfo.InvariantCulture, $"the title is {title.Bounds.Width} px in a {cell.Bounds.Width} px cell: it should trim inside it"));
     });
 
     [Fact]
