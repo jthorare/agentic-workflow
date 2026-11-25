@@ -242,12 +242,15 @@
         </Border>
         <Button x:Name="RunRetry" Content="{Binding Run.RetryText}" Click="OnRetryRun" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Run.RetryText}" />
       </StackPanel>
-      <Border x:Name="RunFailureName" Classes="callout fail" IsVisible="{Binding Run.HasFailure}" AutomationProperties.Name="{Binding Run.Failure.Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+      <Border x:Name="RunFailureName" Classes="run-failure" IsVisible="{Binding Run.HasFailure}" AutomationProperties.Name="{Binding Run.Failure.Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
         <StackPanel Spacing="8">
           <TextBlock Classes="body-strong" Text="{Binding Run.Failure.HeadingText}" AutomationProperties.AccessibilityView="Raw" />
           <SelectableTextBlock Classes="body" Text="{Binding Run.Failure.SentenceText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           <Button x:Name="RunFailureFix" Classes="copy" Click="OnCopyRunFix" HorizontalAlignment="Left" IsVisible="{Binding Run.Failure.HasCopyFix, FallbackValue=False}" AutomationProperties.Name="{Binding Run.Failure.Fix.Announcement}">
             <TextBlock Classes="caption" Text="{Binding Run.Failure.Fix.Label}" AutomationProperties.AccessibilityView="Raw" />
+          </Button>
+          <Button x:Name="RunFailureOpen" Classes="copy" Click="OnOpenFailedStep" HorizontalAlignment="Left" IsVisible="{Binding Run.Failure.HasOpenFix, FallbackValue=False}" AutomationProperties.Name="{Binding Run.Failure.OpenText}">
+            <TextBlock Classes="caption" Text="{Binding Run.Failure.OpenText}" AutomationProperties.AccessibilityView="Raw" />
           </Button>
           <Expander x:Name="RunFailureDetails" Header="{Binding Run.Failure.DetailsHeading}" AutomationProperties.Name="{Binding Run.Failure.DetailsHeading}">
             <SelectableTextBlock Classes="caption mono" Text="{Binding Run.Failure.DetailText}" TextWrapping="Wrap" />

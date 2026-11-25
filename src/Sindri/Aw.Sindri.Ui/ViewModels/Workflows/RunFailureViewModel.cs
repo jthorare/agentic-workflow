@@ -17,14 +17,17 @@ internal sealed class RunFailureViewModel : ObservableObject
     /// <param name="detail">The engine's text for Details: the run's error, else the node run's.</param>
     /// <param name="clipboard">Where the fix copies its command; null shows no copy button.</param>
     /// <param name="clock">The clock "Copied" times out on.</param>
-    internal RunFailureViewModel(StepFailureView failure, string detail, IClipboard? clipboard, TimeProvider clock)
+    /// <param name="node">The id of the node that failed: a fix with only a label opens it.</param>
+    internal RunFailureViewModel(StepFailureView failure, string detail, IClipboard? clipboard, TimeProvider clock, string node)
     {
         _command = failure.FixCommand;
         HeadingText = Labels.WfFailedAt(failure.Step);
         SentenceText = failure.Sentence;
         DetailText = detail;
         Name = Labels.WfFailureName(HeadingText, SentenceText);
-        (HasOpenFix, OpenText) = (false, string.Empty);   // the label-only fix is not a button yet
+        Node = node;
+        HasOpenFix = _command is not { Length: > 0 } && failure.FixLabel is { Length: > 0 };   // "Open Check": a label with no command
+        OpenText = HasOpenFix ? failure.FixLabel! : string.Empty;   // why: HasOpenFix holds, so the label is set
         Fix = clipboard is not null && _command is { Length: > 0 } command
             ? new CopyAction(clipboard, clock, (failure.FixLabel ?? Labels.Copy) + " " + command, failure.FixLabel)
             : null;
@@ -38,6 +41,9 @@ internal sealed class RunFailureViewModel : ObservableObject
 
     /// <summary>The copy fix: its label is the fix's words, then "Copied"; null when the fix has no command or there is no clipboard.</summary>
     public CopyAction? Fix { get; }
+
+    /// <summary>The id of the node that failed.</summary>
+    internal string Node { get; }
 
     /// <summary>True when the fix has a label but no command: its button opens the failed step.</summary>
     public bool HasOpenFix { get; }

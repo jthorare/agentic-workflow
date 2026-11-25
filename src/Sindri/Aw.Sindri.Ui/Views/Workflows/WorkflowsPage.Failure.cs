@@ -15,6 +15,18 @@ internal sealed partial class WorkflowsPage
             await failure.CopyFix(CancellationToken.None).ConfigureAwait(true);
         }
     }
+
+    private async void OnOpenFailedStep(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            await page.OpenFailedStep(CancellationToken.None).ConfigureAwait(true);
+            if (page.IsSettingsOpen)
+            {
+                FocusEditorField();   // the sheet opened on the failed step: the keyboard goes into it
+            }
+        }
+    }
 #pragma warning restore MA0155
 }
 #pragma warning restore MA0182
