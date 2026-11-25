@@ -16,6 +16,43 @@ failopen() {
     done
   ) > /dev/null 2>&1 || true
 }
+# HOOK-WATCHDOG (#3778): the host timeout is a backstop; the hook ends itself first. The whole script runs in a child bash
+# that a watchdog kills after a WALL-CLOCK budget (AW_DONE_GATE_BUDGET_MS, default 10000 ms), counted from the hook's start and covering every
+# command, not a count of sleep passes. On a spent budget it writes one failopen `timeout` row and the hook prints nothing.
+# The output is printed only at the very end, so a kill never leaves a half answer. A normal run ends the watchdog.
+if [ -z "${AW_HOOK_WD_INNER:-}" ] && [ -z "${AW_JUDGE_CHILD:-}" ]; then
+  _aw_ms="${AW_DONE_GATE_BUDGET_MS:-10000}"; case "$_aw_ms" in '' | *[!0-9]*) _aw_ms=10000 ;; esac
+  # Kill a process and everything under it, by pid only: _aw_kill_tree from config/lib/kill-tree.sh, installed beside
+  # failopen.sh. Without the lib (an older install) the fallback below is the lib's line word for word
+  # (config/lib/tests/kill-tree.test.sh), so a timed-out script still leaves no judge running.
+  for _aw_f in "$(cd "$(dirname "${BASH_SOURCE[0]}")" 2> /dev/null && pwd)/lib/kill-tree.sh" "$(cd "$(dirname "${BASH_SOURCE[0]}")" 2> /dev/null && pwd)/../lib/kill-tree.sh"; do
+    if [ -f "$_aw_f" ]; then . "$_aw_f" 2> /dev/null && break; fi
+  done
+  type _aw_kill_tree > /dev/null 2>&1 || _aw_kill_tree() { local _c _k; kill -STOP "$1" 2> /dev/null; _k="$(pgrep -P "$1" 2> /dev/null)"; kill -9 "$1" 2> /dev/null; for _c in $_k; do _aw_kill_tree "$_c"; done; return 0; }
+  # The script's temp files go in a dir this bash owns and removes on every path: a killed script runs no EXIT trap.
+  _aw_tmp="$(mktemp -d 2> /dev/null)" || _aw_tmp=""
+  AW_HOOK_WD_INNER=1 AW_HOOK_WD_TMP="$_aw_tmp" "$BASH" "${BASH_SOURCE[0]}" "$@" 0<&0 &
+  _aw_child=$!
+  (
+    set +eu
+    sleep "$((_aw_ms / 1000)).$(printf '%03d' "$((_aw_ms % 1000))")" 2> /dev/null || exit 0
+    [ -z "$_aw_tmp" ] || : > "$_aw_tmp/.wd-fired"
+    failopen timeout
+    _aw_kill_tree "$_aw_child"
+  ) > /dev/null 2>&1 < /dev/null &
+  _aw_wd=$!
+  trap '_aw_kill_tree "$_aw_child"; kill "$_aw_wd" 2> /dev/null; [ -z "$_aw_tmp" ] || rm -rf "$_aw_tmp"; exit 0' TERM
+  _aw_rc=0
+  { wait "$_aw_child"; } 2> /dev/null || _aw_rc=$?
+  # A watchdog that fired is left to finish killing the tree under the script; any other is ended here.
+  if [ -z "$_aw_tmp" ] || [ ! -e "$_aw_tmp/.wd-fired" ]; then
+    pkill -P "$_aw_wd" 2> /dev/null
+    kill "$_aw_wd" 2> /dev/null
+  fi
+  [ -z "$_aw_tmp" ] || rm -rf "$_aw_tmp"
+  if [ "$_aw_rc" -eq 137 ]; then _aw_rc=0; fi
+  exit "$_aw_rc"
+fi
 # The images a hook sends the judge (config/lib/image-paths.sh, installed beside failopen.sh). Without it the hook sends none, as before.
 for _aw_f in "$(cd "$(dirname "${BASH_SOURCE[0]}")" 2> /dev/null && pwd)/lib/image-paths.sh" "$(cd "$(dirname "${BASH_SOURCE[0]}")" 2> /dev/null && pwd)/../lib/image-paths.sh"; do
   if [ -f "$_aw_f" ]; then . "$_aw_f" 2> /dev/null && break; fi
@@ -162,7 +199,7 @@ if ! is_done_claim "$CLAIM_TEXT"; then
   # (Task 4, N2/R2). judge ask-check's own CLI contract is inverted from
   # every other subcommand here: exit 2 means "continue" (don't actually
   # stop), exit 0 means "ask" (a real stop is fine).
-  ASK_INPUT="$(jq -nc --arg t "$CLAIM_TEXT" '{transcriptTail: $t}')"
+  ASK_INPUT="$(jq -nc --rawfile t <(printf '%s' "$CLAIM_TEXT") '{transcriptTail: $t}')"
   ASK_INPUT="$(aw_images_attach "$ASK_INPUT" "$(turn_images)")"
   set +e
   printf '%s' "$ASK_INPUT" | AW_SESSION_ID="$SESSION_ID" judge ask-check > /dev/null 2>&1
@@ -184,10 +221,10 @@ fi
 # claim must then mention UI evidence. stop_hook_active already exited above,
 # so this can block at most once per stop, never loop. SESSION_ID is only used
 # as a file name when it matches the same character set the sorter enforces.
-if printf '%s' "$SESSION_ID" | grep -qE '^[A-Za-z0-9._-]{1,80}$' && [ "${SESSION_ID#*..}" = "$SESSION_ID" ]; then
+if grep -qE '^[A-Za-z0-9._-]{1,80}$' <<<"$SESSION_ID" && [ "${SESSION_ID#*..}" = "$SESSION_ID" ]; then
   SORT_FILE="$SESSIONS_DIR/$SESSION_ID.sort.json"
   if [ -f "$SORT_FILE" ] && [ "$(jq -r '.requirements.uiEvidence // false' "$SORT_FILE" 2>/dev/null)" = "true" ]; then
-    if ! printf '%s' "$CLAIM_TEXT" | grep -qiE '(screenshot|ui-evidence|playwright|verify-web|verify-ios|snapshot_ui|\.png\b)'; then
+    if ! grep -qiE '(screenshot|ui-evidence|playwright|verify-web|verify-ios|snapshot_ui|\.png\b)' <<<"$CLAIM_TEXT"; then
       echo "This session changes the UI (judged from your prompt). Show UI evidence (a screenshot, a Playwright/ui-evidence run or an iOS snapshot) before claiming done." >&2
       exit 2
     fi
@@ -197,9 +234,19 @@ fi
 
 # judge says "no brief for …" (exit 1) when there simply is none. Any other
 # failure falls to the RF-2 evidence check below.
-BRIEF_ERR="$(mktemp 2>/dev/null)" || BRIEF_ERR=/dev/null
+# judge runs as a DIRECT child of this bash (in the background, output to a file), so the watchdog's tree kill reaches it
+# on a spent budget. Inside $( … ) it can be a grandchild (bash 3.2 always forks one) and outlive the hook (#3778).
+BRIEF_ERR="$(mktemp "${AW_HOOK_WD_TMP:-${TMPDIR:-/tmp}}/aw-hook.XXXXXX" 2>/dev/null)" || BRIEF_ERR=/dev/null
+BRIEF_OUT="$(mktemp "${AW_HOOK_WD_TMP:-${TMPDIR:-/tmp}}/aw-hook.XXXXXX" 2>/dev/null)" || BRIEF_OUT=""
 BRIEF_RC=0
-BRIEF_JSON="$(judge brief get "task:$SESSION_ID" 2>"$BRIEF_ERR")" || BRIEF_RC=$?
+if [ -n "$BRIEF_OUT" ]; then
+  judge brief get "task:$SESSION_ID" > "$BRIEF_OUT" 2>"$BRIEF_ERR" &
+  { wait "$!"; } 2>/dev/null || BRIEF_RC=$?
+  BRIEF_JSON="$(cat "$BRIEF_OUT" 2>/dev/null)"
+  rm -f "$BRIEF_OUT"
+else
+  BRIEF_JSON="$(judge brief get "task:$SESSION_ID" 2>"$BRIEF_ERR")" || BRIEF_RC=$?
+fi
 if [ "$BRIEF_RC" -ne 0 ] && ! grep -q '^no brief for' "$BRIEF_ERR" 2>/dev/null; then
   failopen "judge-brief-exit-$BRIEF_RC"
 fi
@@ -207,7 +254,7 @@ fi
 
 if [ -z "$BRIEF_JSON" ]; then
   # RF-2: no brief at all — only check that SOME evidence is mentioned.
-  if printf '%s' "$CLAIM_TEXT" | grep -qiE '(https?://|npm (run|test)|pytest|vitest|PR #[0-9]+|dotnet (test|build|run)|cargo (test|build|nextest)|go (test|build|vet)|xunit|[0-9]+ passed|passed!)'; then
+  if grep -qiE '(https?://|npm (run|test)|pytest|vitest|PR #[0-9]+|dotnet (test|build|run)|cargo (test|build|nextest)|go (test|build|vet)|xunit|[0-9]+ passed|passed!)' <<<"$CLAIM_TEXT"; then
     exit 0
   fi
   echo "Claiming done with no evidence mentioned (no command output, no PR link, no test run). Show the proof." >&2

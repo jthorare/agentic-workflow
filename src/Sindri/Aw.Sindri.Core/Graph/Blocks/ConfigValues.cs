@@ -29,4 +29,7 @@ internal static class ConfigValues
         JsonValue v when v.TryGetValue<string>(out var text) && bool.TryParse(text, out var parsed) => parsed,
         _ => null,
     };
+
+    /// <summary>Whether a literal still holds a '{{...}}' reference, so only the run can know its value.</summary>
+    internal static bool IsReference(string text) => text.Contains("{{", StringComparison.Ordinal);
 }

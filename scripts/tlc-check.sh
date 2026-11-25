@@ -59,6 +59,9 @@ check_models() {
   return 0
 }
 
+# last_bg: sets LAST_BG to $! (empty before any background job). bash 3.2 (macOS) calls an unset $! under `set -u` an error, even as ${!:-}.
+last_bg() { case $- in *u*) set +u; LAST_BG="$!"; set -u ;; *) LAST_BG="$!" ;; esac; }
+
 # run_timed <seconds>: runs tlc.sh for $spec/$cfg in its own process group (bash job control, 'set -m': portable to macOS,
 # which has no setsid binary), output to $tout. Sets rc; 124 marks the timeout.
 run_timed() {
@@ -67,7 +70,7 @@ run_timed() {
   # set before the check starts; a signal after the '&' but before CHILD_PID is set finds the check through $! (it differs
   # from PREV_BG once the check exists).
   CHILD_PID=""
-  PREV_BG="${!:-}"
+  last_bg; PREV_BG="$LAST_BG"
   trap 'abort_timed 143' TERM
   trap 'abort_timed 130' INT
   trap 'abort_timed 129' HUP
@@ -94,7 +97,8 @@ run_timed() {
 abort_timed() {
   local grace=0
   trap - TERM INT HUP
-  if [ -z "$CHILD_PID" ] && [ -n "${!:-}" ] && [ "${!:-}" != "$PREV_BG" ]; then CHILD_PID="$!"; fi
+  last_bg
+  if [ -z "$CHILD_PID" ] && [ -n "$LAST_BG" ] && [ "$LAST_BG" != "$PREV_BG" ]; then CHILD_PID="$LAST_BG"; fi
   if [ -n "$CHILD_PID" ]; then
     kill -TERM -- "-$CHILD_PID" 2>/dev/null || true
     while kill -0 "$CHILD_PID" 2>/dev/null && [ "$grace" -lt 5 ]; do sleep 1; grace=$((grace + 1)); done

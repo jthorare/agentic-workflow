@@ -32,6 +32,9 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly HashSet<string> _startedHere = new(StringComparer.Ordinal);
 
+    // why: a promoted queued run keeps the start time it had when it was queued, so the live sweep (issue 2999) must not take a run whose launch call has not returned for an orphan; added under the gate, removed when the launch ends
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte> _launching = new(StringComparer.Ordinal);
+
     /// <summary>Starts, queues or skips one run.</summary>
     /// <param name="request">The trigger.</param>
     /// <param name="cancellationToken">Cancels the start.</param>
@@ -41,7 +44,7 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
         ArgumentNullException.ThrowIfNull(request);
         var id = WorkflowRunId.Of(request.Slug, request.Revision, request.Occurrence);
         var run = new WorkflowRun(id, request.Workflow, request.Revision, request.Trigger, WorkflowRunStatus.Running,
-            Outputs: null, Error: null, ItemId: null, _clock.GetUtcNow(), EndedAt: null);
+            Outputs: null, Error: null, ItemId: null, _clock.GetUtcNow(), EndedAt: null, request.Mode);
         // why: the in-flight check and the insert are one store call, so concurrent triggers cannot both start.
         var admitted = await Admit(run, request.Concurrency, cancellationToken).ConfigureAwait(false);
         if (admitted.IsError)
@@ -52,6 +55,11 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
         if (admitted.Value == GraphStartKind.Skipped)
         {
             Skipped(_logger, id.Value, request.Slug.Value);
+        }
+
+        if (admitted.Value != GraphStartKind.Skipped && request.Restored is { Count: > 0 } restored && await Restore(id, restored, cancellationToken).ConfigureAwait(false) is { } unrestored)
+        {
+            return unrestored;
         }
 
         if (admitted.Value != GraphStartKind.Started)
@@ -72,6 +80,23 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
         }
 
         return new GraphStart(GraphStartKind.Started, id);
+    }
+
+    // A re-run from a step (spec §7.3): the node runs taken from the source run are stored under the new run before its walk starts (or before it leaves the queue), so the walk finds them.
+    // If one can't be stored the run is failed, not left half-restored, and the caller sees why.
+    private async ValueTask<Error?> Restore(WorkflowRunId id, IReadOnlyList<NodeRun> restored, CancellationToken cancellationToken)
+    {
+        foreach (var row in restored)
+        {
+            var stored = await _runs.RecordNodeRun(row, cancellationToken).ConfigureAwait(false);
+            if (stored.IsError)
+            {
+                _ = await _runs.SetStatus(id, WorkflowRunStatus.Failed, outputs: null, $"{stored.Error.Code}: could not restore '{row.NodeId.Value}'", cancellationToken).ConfigureAwait(false);
+                return stored.Error;
+            }
+        }
+
+        return null;
     }
 
     /// <inheritdoc />
@@ -124,6 +149,21 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
         }
     }
 
+    /// <inheritdoc />
+    public async ValueTask<Result<IReadOnlyList<WorkflowRun>>> RunningNotLaunching(CancellationToken cancellationToken)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var running = await _runs.Running(cancellationToken).ConfigureAwait(false);
+            return running.Map(list => (IReadOnlyList<WorkflowRun>)[.. list.Where(r => !_launching.ContainsKey(r.Id.Value))]);
+        }
+        finally
+        {
+            _ = _gate.Release();
+        }
+    }
+
     /// <summary>The store's admit, with the run recorded as started here before the write can be seen and forgotten again when it did not become a running run.</summary>
     private async ValueTask<Result<GraphStartKind>> Admit(WorkflowRun run, GraphConcurrency mode, CancellationToken cancellationToken)
     {
@@ -135,6 +175,11 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
             if (added && (admitted.IsError || admitted.Value != GraphStartKind.Started))
             {
                 _ = _startedHere.Remove(run.Id.Value);
+            }
+
+            if (admitted.IsSuccess && admitted.Value == GraphStartKind.Started)
+            {
+                _launching[run.Id.Value] = 0;
             }
 
             return admitted;
@@ -155,6 +200,7 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
             if (promoted.IsSuccess && promoted.Value is { } run)
             {
                 _ = _startedHere.Add(run.Id.Value);
+                _launching[run.Id.Value] = 0;
             }
 
             return promoted;
@@ -165,10 +211,22 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
         }
     }
 
-    private static bool Unreachable(Error error) =>
+    internal static bool Unreachable(Error error) =>
         string.Equals(error.Code, SindriErrors.EngineUnavailable.Code, StringComparison.Ordinal) || string.Equals(error.Code, SindriErrors.NotRunning.Code, StringComparison.Ordinal);
 
     private async ValueTask<Result<bool>> Launch(WorkflowRun run, bool fromQueue, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await LaunchCore(run, fromQueue, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _ = _launching.TryRemove(run.Id.Value, out _);
+        }
+    }
+
+    private async ValueTask<Result<bool>> LaunchCore(WorkflowRun run, bool fromQueue, CancellationToken cancellationToken)
     {
         var launched = await _launcher.Launch(run, cancellationToken).ConfigureAwait(false);
         if (launched.IsSuccess)
@@ -198,7 +256,7 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
             try
             {
                 await _mirror.AppendStarted(ended.Value, cancellationToken).ConfigureAwait(false);
-                await _mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(run.Id, GraphMirror.Name(WorkflowRunStatus.Failed), _mirror.Clean(launched.Error.Message), GraphMirror.By),
+                await _mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(run.Id, GraphMirror.Name(WorkflowRunStatus.Failed), _mirror.Clean(launched.Error.Message), GraphMirror.By, run.Mode),
                     $"{EventTypes.WorkflowRunFinished}:{run.Id.Value}", ended.Value.ItemId?.Value, cancellationToken).ConfigureAwait(false);
             }
             catch (InvalidOperationException e)   // boundary: GraphMirror throws when the lease is gone or the append fails; the run is already Failed, so say so in the log

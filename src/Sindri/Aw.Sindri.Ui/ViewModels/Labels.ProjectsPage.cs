@@ -33,11 +33,11 @@ internal static partial class Labels
     /// <summary>A card of a project the store no longer holds.</summary>
     internal const string ProjectGone = "no longer synced from Linear";
 
-    /// <summary>The page width from which cards sit two across.</summary>
-    internal const double ProjectsTwoColumnsFrom = 560;
+    /// <summary>The quiet line under the Projects title when Linear is not set up.</summary>
+    internal const string LinearNotConnected = "Linear not connected";
 
-    /// <summary>The page width from which cards sit three across (the mockup README moved it from 900 so names aren't cut at a 1,000 px window).</summary>
-    internal const double ProjectsThreeColumnsFrom = 1040;
+    /// <summary>The announcement when a project's sheet was open and the project was removed from somewhere else.</summary>
+    internal const string ProjectRemovedElsewhere = "Removed elsewhere";
 
     /// <summary>The longest note the card's face shows, in characters.</summary>
     internal const int ProjectNoteFaceMax = 80;
@@ -45,18 +45,31 @@ internal static partial class Labels
     /// <summary>The page when a read failed: the reason follows.</summary>
     internal static string ProjectsFailed(Error error) => "Couldn't read the projects just now. " + InstanceRefused(error);
 
-    /// <summary>One source's part of the freshness line: its name, then its served text. Context's text already names it ("Context is not answering").</summary>
+    /// <summary>One source's part of the freshness line: its name, then its served text. Context's text already names it ("Context is not answering").
+    /// Sindri's row is served only when its own PR, check and agent read failed, and its text is that error's first line, so the app says what is missing instead.</summary>
     internal static string ProjectFreshnessPart(string source, string text) => source switch
     {
         "linear-projects" => "Linear projects " + text,
         "linear" => "Linear issues " + text,
         "github" => "GitHub " + text,
         "context" => text,
+        "sindri" => ProjectSindriFactsMissing,
         _ => source + " " + text,
     };
 
+    /// <summary>The freshness line's part when Sindri couldn't read its own PR, check and agent facts for the cards.</summary>
+    internal const string ProjectSindriFactsMissing = "PRs, checks and agents couldn't be read just now";
+
     /// <summary>The freshness line's last part.</summary>
     internal static string ProjectViewer(string viewer) => "Linear says you're " + viewer;
+
+    /// <summary>The freshness line's last part while Sindri has no working Linear key: the name is what Linear said earlier, not a live answer.</summary>
+    internal static string ProjectViewerLastSeen(string viewer) => "last seen as " + viewer;
+
+    /// <summary>What is wrong when Sindri has no Linear key, in plain words; the button beside it connects Linear.</summary>
+    /// <param name="lastRead">When Linear was last read, as "14m ago"; empty when it never was.</param>
+    /// <returns>The sentence.</returns>
+    internal static string ProjectsNoKey(string lastRead) => "Sindri has no Linear key, so projects aren't refreshing." + (lastRead.Length > 0 ? " Last read " + lastRead + "." : string.Empty);
 
     /// <summary>A project state's word; a state this build doesn't know is shown as served, first letter up.</summary>
     internal static string ProjectStateWord(string? state) => state switch

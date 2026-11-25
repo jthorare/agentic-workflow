@@ -1,0 +1,181 @@
+using System.ComponentModel;
+using System.Text.Json.Nodes;
+using Aw.Sindri.Ui.Api.Workflows;
+
+namespace Aw.Sindri.Ui.ViewModels.Workflows;
+
+/// <summary>The workflow editor's logic (<see cref="OpsEditor"/>, continued): a step the person is adding. Its form is made from the block, and nothing reaches the server until Save sends one add_node.</summary>
+internal sealed partial class OpsEditor
+{
+    private PendingStep? _pending;
+
+    // A step the person is filling in: nothing of it exists on the server until Save sends the add_node.
+    private sealed record PendingStep(string Id, string Type, string? After);
+
+    /// <summary>True while the form is for a step that does not exist yet.</summary>
+    internal bool HasPendingStep => _pending is not null;
+
+    /// <summary>True when every required field of the form has text.</summary>
+    internal bool RequiredFilled => Fields.All(f => !f.IsRequired || !string.IsNullOrWhiteSpace(f.Text));
+
+    /// <summary>True when each "exactly one of" group the block declares (a wait's "Wait for" and "Wait until") has exactly one field with text (#4359).</summary>
+    internal bool OneOfMet => OneOfProblem() is null;
+
+    /// <summary>Makes the form of a step that does not exist yet, from its block's config fields; nothing is sent.</summary>
+    /// <param name="block">The block picked.</param>
+    /// <param name="id">The id the new node gets.</param>
+    /// <param name="after">The node the new one follows, or null for none.</param>
+    internal void BeginNewStep(WorkflowBlock block, string id, string? after)
+    {
+        ClearRefusal();   // a refusal belongs to the save that caused it: the new step's sheet opens without it (#3999)
+        _pending = new PendingStep(id, block.Type, after);
+        Fields.Clear();
+        var example = block.ExampleConfig ?? default;   // the block's example settings: only ever a hint, never a value, so Save can't send a title nobody typed ("Drifted" before #4330, #4272)
+        var steps = Upstream(after);   // the validator lets a step read only steps upstream of it (GRAPH-REF-003 a missing one, GRAPH-REF-001 one that runs later)
+        var near = HintStepOf(after);
+        foreach (var field in block.Config)
+        {
+            var boolean = string.Equals(field.Type, "boolean", StringComparison.Ordinal);
+            var hint = ExampleReferences.Hint(block.Type, field.Name, EditorFieldText.Of(example, field), steps, near);   // a step the new one can't read shows as the step it follows, else "<step id>" (#3944, #4272, #4330)
+            var form = new ConfigFieldViewModel(field, boolean && field.Required ? "false" : string.Empty) { Placeholder = hint };   // why: a required check box shows a value, and the value it shows is the one sent
+            AddWatched(form);
+        }
+
+        NodeHeading = Labels.WfEditorNewStep(block.Title);
+        NodeIdLine = string.Empty;   // a new step has no id until it is saved
+
+        OnChanged(nameof(HasPendingStep));
+    }
+
+    // The step a new one follows, with its block's outputs, for the hint (#4330); null when it follows none.
+    private HintStep? HintStepOf(string? after)
+    {
+        if (after is null)
+        {
+            return null;
+        }
+
+        var type = Nodes.FirstOrDefault(n => string.Equals(n.Id, after, StringComparison.Ordinal))?.Type;
+        var block = Groups.SelectMany(static g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, type, StringComparison.Ordinal));
+        return new HintStep(after, block is null ? [] : [.. block.Outputs.Keys]);
+    }
+
+    // Adds a field to the form and hooks it so a change of its text recomputes the "why Save is off" lines; each add recomputes them, so a saved step opens with its line (#4369).
+    private void AddWatched(ConfigFieldViewModel form)
+    {
+        form.PropertyChanged += OnPendingFieldChanged;
+        Fields.Add(form);
+        MarkNeeded();
+    }
+
+    // The "exactly one of" groups of the block the form is for: the new step's block, else the selected step's.
+    private IReadOnlyList<IReadOnlyList<string>> OneOfGroups()
+    {
+        var type = _pending?.Type ?? Nodes.FirstOrDefault(n => string.Equals(n.Id, _selected, StringComparison.Ordinal))?.Type;
+        return Groups.SelectMany(static g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, type, StringComparison.Ordinal))?.OneOf ?? [];
+    }
+
+    // The first group with none or two fields filled: the group's first field and the line it shows; null when every group has exactly one.
+    private (ConfigFieldViewModel Field, string Line)? OneOfProblem()
+    {
+        foreach (var group in OneOfGroups())
+        {
+            var fields = Fields.Where(f => group.Contains(f.Name, StringComparer.Ordinal)).ToList();
+            var filled = fields.Count(static f => !string.IsNullOrWhiteSpace(f.Text));
+            if (fields.Count > 1 && filled != 1)
+            {
+                return (fields[0], filled == 0
+                    ? Labels.WfFieldNeededToSave(string.Join(" or ", fields.Select(static f => f.Label)))
+                    : Labels.WfFieldOnlyOne(string.Join(" and ", fields.Select(static f => f.Label))));
+            }
+        }
+
+        return null;
+    }
+
+    private void OnPendingFieldChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(ConfigFieldViewModel.Text), StringComparison.Ordinal))
+        {
+            MarkNeeded();
+        }
+    }
+
+    // Says why Save is off: a line on a new step's first empty required field (#4330), and on the first field of an "exactly one of" group that has none or two (#4359).
+    private void MarkNeeded()
+    {
+        var first = _pending is null ? null : Fields.FirstOrDefault(static f => f.IsRequired && string.IsNullOrWhiteSpace(f.Text));
+        var oneOf = OneOfProblem();
+        foreach (var field in Fields)
+        {
+            field.MarkNeeded(ReferenceEquals(field, first) ? Labels.WfFieldNeededToSave(field.Label) : oneOf is { } o && ReferenceEquals(field, o.Field) ? o.Line : string.Empty);
+        }
+    }
+
+    // True while FailureText is Sindri's refusal of an edit (or an unsure answer), not a failed read: closing the sheet drops the edit, so its refusal goes too (#3944).
+    private bool _refused;
+
+    /// <summary>Clears the failure line when it is the refusal of an edit the closed sheet held; a failed read after a save ("The edit was saved, but ...") stays.</summary>
+    internal void ClearRefusal()
+    {
+        if (_refused)
+        {
+            (FailureText, _refused) = (string.Empty, false);
+        }
+    }
+
+    /// <summary>Drops the new step being filled in, with whatever was typed.</summary>
+    internal void ClearPendingStep()
+    {
+        if (_pending is null)
+        {
+            return;
+        }
+
+        _pending = null;
+        Fields.Clear();
+        NodeHeading = string.Empty;
+        NodeIdLine = string.Empty;
+        OnChanged(nameof(HasPendingStep));
+    }
+
+    /// <summary>Sends the new step as ONE add_node with the filled config (and a connect from the node it follows). A field with a problem sends nothing.</summary>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>True when the server applied the edit.</returns>
+    internal async Task<bool> AddPendingStep(CancellationToken cancellationToken)
+    {
+        if (_pending is not { } step)
+        {
+            return false;
+        }
+
+        var config = new JsonObject();
+        var blocked = false;
+        foreach (var field in Fields)
+        {
+            var (value, problem) = EditorFieldText.Parse(field, field.Text);
+            field.ErrorText = problem;
+            blocked |= problem.Length > 0;
+            if (value is not null)
+            {
+                config[field.Name] = value;
+            }
+        }
+
+        if (blocked)
+        {
+            return false;
+        }
+
+        var add = new JsonObject { ["op"] = "add_node", ["id"] = step.Id, ["type"] = step.Type };
+        if (config.Count > 0)
+        {
+            add["config"] = config;
+        }
+
+        var ops = step.After is null
+            ? new JsonArray((JsonNode)add)
+            : new JsonArray(add, new JsonObject { ["op"] = "connect", ["from"] = step.After, ["to"] = step.Id });
+        return await Send(ops, cancellationToken).ConfigureAwait(true);
+    }
+}

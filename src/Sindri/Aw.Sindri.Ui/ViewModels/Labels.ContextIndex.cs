@@ -29,6 +29,12 @@ internal static partial class Labels
     /// <summary>A source that is pulling.</summary>
     internal const string ContextSourcePulling = "pulling";
 
+    /// <summary>A source on its first pass (phase recent or backfill) that is pulling or between pulls (#4035).</summary>
+    internal const string ContextSourceFirstSync = "first sync";
+
+    /// <summary>A source reading its stored records again (the server's reReading, #4084) that is pulling or between pulls.</summary>
+    internal const string ContextSourceReReading = "reading again";
+
     /// <summary>A source between pulls.</summary>
     internal const string ContextSourceIdle = "idle";
 
@@ -63,6 +69,11 @@ internal static partial class Labels
     /// <returns>"200 records".</returns>
     internal static string ContextRecords(int records) =>
         string.Create(CultureInfo.InvariantCulture, $"{records} {(records == 1 ? "record" : "records")}");
+
+    /// <summary>How many records a source on its first pass holds so far (#4035).</summary>
+    /// <param name="records">The count.</param>
+    /// <returns>"12400 records so far".</returns>
+    internal static string ContextRecordsSoFar(int records) => ContextRecords(records) + " so far";
 
     /// <summary>The words when a source has records but its last commit is unknown.</summary>
     internal const string ContextNothingCommitted = "nothing committed yet";
@@ -120,6 +131,13 @@ internal static partial class Labels
     /// <param name="pending">The count.</param>
     /// <returns>"Not embedded yet: 12 records".</returns>
     internal static string ConceptsNotEmbedded(int pending) => "Not embedded yet: " + ContextRecords(pending);
+
+    /// <summary>The backlog bar's sentence.</summary>
+    /// <param name="embedded">Records with a vector.</param>
+    /// <param name="total">Embedded plus pending.</param>
+    /// <returns>"30 of 60 records embedded".</returns>
+    internal static string RecordsEmbedded(int embedded, int total) =>
+        string.Create(CultureInfo.InvariantCulture, $"{embedded} of {total} records embedded");
 
     /// <summary>Groups waiting for the model to name them.</summary>
     /// <param name="queued">The count.</param>

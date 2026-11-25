@@ -7,6 +7,7 @@ unset TMUX
 for v in $(compgen -e | grep -E '^AW_(HEAVY|SESSION_HEAVY)'); do unset "$v"; done   # this suite may itself run under a heavy job
 unset DOTNET_PROCESSOR_COUNT MSBUILDDISABLENODEREUSE
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "$DIR/../lib/test-portable.sh"   # timeout and touch_ago for macOS (no GNU timeout, no touch -d)
 HEAVY="$DIR/../heavy.sh"
 fail=0
 pids=()

@@ -60,7 +60,16 @@
       ],
       "notes": null,
       "synced": true,
-      "version": 0
+      "version": 0,
+      "truth": {
+        "openPrs": [],
+        "openItems": 0,
+        "doneItems": 0,
+        "totalItems": 0,
+        "runningAgents": 0,
+        "health": null,
+        "blockedOnYou": false
+      }
     },
     {
       "id": "linear:project/00000000-0000-4000-8000-000000000005",
@@ -90,9 +99,19 @@
       ],
       "notes": null,
       "synced": true,
-      "version": 0
+      "version": 0,
+      "truth": {
+        "openPrs": [],
+        "openItems": 0,
+        "doneItems": 0,
+        "totalItems": 0,
+        "runningAgents": 0,
+        "health": null,
+        "blockedOnYou": false
+      }
     }
   ],
   "finished": [],
-  "hidden": []
+  "hidden": [],
+  "emptyCode": null
 }

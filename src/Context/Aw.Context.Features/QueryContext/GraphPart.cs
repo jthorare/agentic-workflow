@@ -1,3 +1,4 @@
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Packing;
 using Aw.Context.Core.Ranking;
 using Aw.Context.Core.Results;
@@ -14,6 +15,9 @@ namespace Aw.Context.Features.QueryContext;
 internal sealed record GraphPart(IReadOnlyList<PackCandidate> Candidates, IReadOnlyDictionary<string, Citation> Cites, IReadOnlyList<string> Anchors,
     string? MapVersion, IReadOnlyList<string> Suggested)
 {
+    /// <summary>The <see cref="Suggested"/> nodes with their labels and kinds, in the same order (#2809).</summary>
+    internal IReadOnlyList<AnchorChoice> Choices { get; init; } = [];
+
     /// <summary>Intent against intent: checked decision pairs that contradict on a reached node (spec §8.4).</summary>
     internal IReadOnlyList<ResultConflict> Conflicts { get; init; } = [];
 

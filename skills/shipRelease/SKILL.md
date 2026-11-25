@@ -1,7 +1,7 @@
 ---
 name: shipRelease
 description: "Use when a branch is finished and the person wants it out the door: sync it with the base branch, run the tests, check coverage, then publish the branch and create the pull request, and hand off to landAndDeploy (skip with --no-deploy). Not for waiting on a merge or deploying a PR that is already open (landAndDeploy), or watching a live release (canary)."
-argument-hint: "[--base main] [--skip-docs] [--no-deploy] [--min-coverage <pct>]"
+argument-hint: "[--base main] [--skip-docs] [--no-deploy] [--no-champion] [--min-coverage <pct>]"
 allowed-tools: Bash(git *), Bash(gh *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo *), Bash(go *), Bash(bundle *), Bash(coverage *), Bash(ls *), Bash(cat *), Bash(mkdir *), Bash(test *), Bash(SHARED_DIR=*), Bash(source *), Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
 <!-- MEMORY: SKIP -->
@@ -27,6 +27,7 @@ Every run ends with the [Result block](#result-block), whatever the outcome: don
    - `--base <branch>` — the base branch to rebase onto and target for the PR. Default: `main`.
    - `--skip-docs` — if present, skip the `/syncDocs` invocation in the final auto-chain step.
    - `--no-deploy` — if present, skip the `/landAndDeploy` auto-chain (Step 7) and fall through directly to `/syncDocs`. Use for release-branch workflows where merge happens elsewhere or deployment is manual.
+   - `--no-champion` — if present, skip the PR champion loop (Step 6.5).
    - `--min-coverage <pct>` — optional. If coverage is measurable and below this threshold, **stop** before push and report.
 
 3. Derive the current branch name:
@@ -126,6 +127,10 @@ Build the PR body from the template in `$SHARED_DIR/pr-body.md` (read it; re-sou
 
 Create the PR with `gh pr create --base {base} --head {branch} --title "{branch}" --body "..."` (adding `--draft` when the rule above applies). Capture the PR URL and number for the report and the next step.
 
+## Step 6.5: PR champion loop
+
+Unless `--no-champion` was passed, read `$SHARED_DIR/pr-champion.md` and follow it on the PR from Step 6: review and address to zero blocking findings, `gh pr ready`, then watch bot and human comments, CI and conflicts until the PR is merge-ready. It never merges. A PR opened as a draft under the draft-only rule (Step 6) stays a draft: run only the review loop and the watch, and skip `gh pr ready`; say why in the report. When the loop reports merge-ready (or stops), continue to Step 7. `/landAndDeploy --wait` waits for the human merge, so the two do not fight.
+
 ## Step 7: Auto-chain `/landAndDeploy`
 
 Unless `--no-deploy` was passed, first write the structured ship→deploy handoff (read + deleted by `/landAndDeploy`):
@@ -167,7 +172,7 @@ If Step 7 was skipped (because `--no-deploy` was passed) and `--skip-docs` was *
 /syncDocs
 ```
 
-If Step 7 ran, do **not** invoke `/syncDocs` here — the `canary → syncDocs` chain handles it.
+If Step 7 ran, do **not** invoke `/syncDocs` here — the `canary → syncDocs` chain runs it.
 
 If `--skip-docs` was passed, skip this step.
 

@@ -39,8 +39,18 @@ public static class ProjectCards
             FreshnessRows(inputs, now),
             [.. open.OrderBy(static c => GroupRank(c.State)).ThenByDescending(static c => c.LastActivity.HasValue).ThenByDescending(static c => c.LastActivity).ThenBy(static c => c.Name, StringComparer.Ordinal)],
             [.. finished.OrderByDescending(static c => c.FinishedAt.HasValue).ThenByDescending(static c => c.FinishedAt).ThenBy(static c => c.Name, StringComparer.Ordinal)],
-            [.. hidden.OrderBy(static c => c.Name, StringComparer.Ordinal)]);
+            [.. hidden.OrderBy(static c => c.Name, StringComparer.Ordinal)])
+        {
+            EmptyCode = EmptyCodeOf(inputs, snapshot),
+        };
     }
+
+    // The reason behind EmptySentence's two Linear branches, in the same order; null for every other sentence.
+    private static ProjectsEmptyCode? EmptyCodeOf(ProjectPageInputs inputs, ProjectFactsSnapshot? snapshot) =>
+        snapshot is null ? null
+        : !inputs.LinearConfigured && inputs.Attached.Count == 0 ? ProjectsEmptyCode.LinearMissing
+        : inputs.LinearTokenMissing ? ProjectsEmptyCode.LinearKeyMissing
+        : null;
 
     private static int AddLed(ProjectPageInputs inputs, ProjectFactsSnapshot? snapshot, (List<ProjectCard> Open, List<ProjectCard> Finished, List<ProjectCard> Hidden) lists, DateTimeOffset now, bool all)
     {

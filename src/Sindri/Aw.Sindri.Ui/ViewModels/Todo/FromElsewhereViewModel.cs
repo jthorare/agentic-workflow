@@ -6,7 +6,7 @@ namespace Aw.Sindri.Ui.ViewModels.Todo;
 
 /// <summary>
 /// The From elsewhere line under the Todo panel's rows (todo spec §3.1, §3.4, §3.5, D4): read-only counts of the PRs waiting on the owner's
-/// review, the Linear issues assigned to them and the Needs you rows. Each part is a link; nothing is copied into the todo store.
+/// review and the Linear issues assigned to them (Needs you is the panel right below, so the line does not count it). Each part is a link; nothing is copied into the todo store.
 /// Reviews and Needs you are fed by the shell from the view models that already read them; Linear is read here, because Work's list
 /// reads only while Work is shown.
 /// </summary>
@@ -18,7 +18,8 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
     private (bool Loading, int Waiting, bool Failed) _reviews = (Loading: true, Waiting: 0, Failed: false);
     private LinearState _linear = LinearState.Loading;
     private int _assigned;
-    private int _needsYou;
+    private bool _viewsStalled;
+    private bool _profileMissing;
     private Uri? _url;
     private int _reads;
 
@@ -37,7 +38,7 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
     /// <summary>True until the Reviews and Linear reads have answered once.</summary>
     public bool IsLoading { get; private set => Set(ref field, value); } = true;
 
-    /// <summary>The parts that are drawn, in order: Reviews, Linear, Needs you.</summary>
+    /// <summary>The parts that are drawn, in order: Reviews, Linear.</summary>
     public IReadOnlyList<ElsewherePartViewModel> Parts { get; private set => Set(ref field, value); } = [];
 
     /// <summary>The line's name for a screen reader.</summary>
@@ -45,10 +46,10 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
     public string Name => Labels.ElsewhereName;
 #pragma warning restore CA1822, MA0041
 
-    /// <summary>A part was pressed (Reviews, Linear connected, or Needs you); the shell moves there.</summary>
+    /// <summary>A part was pressed (Reviews or Linear connected); the shell moves there.</summary>
     internal event EventHandler<ElsewherePartEventArgs>? OpenRequested;
 
-    /// <summary>"Linear not connected" was pressed; the shell opens Settings, Connections.</summary>
+    /// <summary>Connect Linear was pressed; the shell opens Settings, Connections.</summary>
     internal event EventHandler? ConnectRequested;
 
     /// <summary>Retry on the Reviews part was pressed; the shell reads Reviews again.</summary>
@@ -64,11 +65,19 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
         Show();
     }
 
-    /// <summary>Takes the Needs you count.</summary>
-    /// <param name="count">Rows in Needs you.</param>
-    internal void SetNeedsYou(int count)
+    /// <summary>Takes whether there is no profile yet: nothing is connected then, so the line offers Connect GitHub and Connect Linear instead of failed reads with Retry.</summary>
+    /// <param name="missing">True on a home with no profile.</param>
+    internal void SetProfileMissing(bool missing)
     {
-        _needsYou = count;
+        _profileMissing = missing;
+        Show();
+    }
+
+    /// <summary>Takes whether the views are stalled: Reviews and Linear may then never answer, and the line says what is stale instead of checking forever.</summary>
+    /// <param name="stalled">True while the views are stalled.</param>
+    internal void SetViewsStalled(bool stalled)
+    {
+        _viewsStalled = stalled;
         Show();
     }
 
@@ -100,7 +109,7 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
     /// <param name="part">Which.</param>
     internal void Open(ElsewherePart part)
     {
-        if (part == ElsewherePart.Linear && _linear == LinearState.NotConnected)
+        if (_profileMissing || (part == ElsewherePart.Linear && _linear == LinearState.NotConnected))
         {
             ConnectRequested?.Invoke(this, EventArgs.Empty);
             return;
@@ -129,13 +138,20 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
     // Nothing is raised when the words and every part are what they were: the view rebuilds its buttons (and loses the arrow-key stop) on every change.
     private void Show()
     {
-        if (_reviews.Loading || _linear == LinearState.Loading)
+        if (_profileMissing)
         {
-            Apply(isLoading: true, Labels.ElsewhereChecking, []);
+            var connect = new[] { Part(ElsewherePart.Reviews, Labels.ElsewhereReviewsNotConnected, "Connections", isAction: true), Part(ElsewherePart.Linear, Labels.ElsewhereLinearNotConnected, "Connections", isAction: true) };
+            Apply(isLoading: false, string.Join(" · ", connect.Select(p => p.Text)), connect);
             return;
         }
 
-        var parts = new[] { ReviewsPart(), LinearPart(), NeedsYouPart() }.OfType<ElsewherePartViewModel>().ToList();
+        if (_reviews.Loading || _linear == LinearState.Loading)
+        {
+            Apply(isLoading: !_viewsStalled, _viewsStalled ? Labels.ElsewhereStale : Labels.ElsewhereChecking, []);
+            return;
+        }
+
+        var parts = new[] { ReviewsPart(), LinearPart() }.OfType<ElsewherePartViewModel>().ToList();
         Apply(isLoading: false, parts.Count == 0 ? Labels.ElsewhereNothing : string.Join(" · ", parts.Select(p => p.Text)), parts);
     }
 
@@ -158,15 +174,12 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
     private ElsewherePartViewModel? LinearPart() => _linear switch
     {
         LinearState.Failed => Part(ElsewherePart.Linear, Labels.ElsewhereLinearFailed, "Linear", retryName: "Linear"),
-        LinearState.NotConnected => Part(ElsewherePart.Linear, Labels.ElsewhereLinearNotConnected, "Settings, Connections"),
+        LinearState.NotConnected => Part(ElsewherePart.Linear, Labels.ElsewhereLinearNotConnected, "Connections", isAction: true),
         LinearState.Ready when _assigned > 0 => Part(ElsewherePart.Linear, Labels.ElsewhereLinear(_assigned), "Linear"),
         LinearState.Loading or LinearState.Ready or LinearState.NotShown => null,
         _ => throw new InvalidOperationException(_linear.ToString()),
     };
 
-    private ElsewherePartViewModel? NeedsYouPart() =>
-        _needsYou > 0 ? Part(ElsewherePart.NeedsYou, Labels.ElsewhereNeedsYou(_needsYou), "Needs you") : null;
-
-    private static ElsewherePartViewModel Part(ElsewherePart part, string text, string target, string? retryName = null) =>
-        new(part, text, Labels.ElsewhereOpens(target, text), retryName is not null, retryName is null ? string.Empty : Labels.ElsewhereRetryName(retryName));
+    private static ElsewherePartViewModel Part(ElsewherePart part, string text, string target, string? retryName = null, bool isAction = false) =>
+        new(part, text, Labels.ElsewhereOpens(target, text), retryName is not null, retryName is null ? string.Empty : Labels.ElsewhereRetryName(retryName), isAction);
 }

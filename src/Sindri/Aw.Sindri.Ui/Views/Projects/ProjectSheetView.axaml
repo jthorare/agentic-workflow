@@ -7,7 +7,7 @@
              x:DataType="pvm:ProjectSheetViewModel">
   <!-- A project card's sheet (projects page spec §3.2) inside the shell's sheet: every field of the card, its links, then the actions its origin allows. Remove asks inline
        and puts focus on Keep; a save shows "Saving…" and its error under the button; a stale version says so with Reload. Every named line is a Border the screen reader
-       reads as one text (a TextBlock's peer ignores a Name). Notes are read-only here. -->
+       reads as one text (a TextBlock's peer ignores a Name). Notes are edited through the page's row of the project (ProjectNotesEditor), read-only when the page has none. -->
   <StackPanel x:Name="ProjectSheet" Spacing="{StaticResource Space.MD}">
     <TextBlock x:Name="ProjectLoading" Classes="body muted" Text="{Binding LoadingText}" IsVisible="{Binding IsLoading}" AutomationProperties.Name="{Binding LoadingText}" />
     <TextBlock x:Name="ProjectProblem" Classes="body" Text="{Binding ProblemText}" IsVisible="{Binding IsProblem}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ProblemText}" />
@@ -28,7 +28,7 @@
           </Border>
         </StackPanel>
         <Border x:Name="ProjectState" AutomationProperties.Name="{Binding StateText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-          <StackPanel Orientation="Horizontal" Spacing="6" AutomationProperties.AccessibilityView="Raw">
+          <StackPanel Orientation="Horizontal" Spacing="8" AutomationProperties.AccessibilityView="Raw">
             <TextBlock Classes="body" Text="{Binding StateText}" />
             <TextBlock Classes="body" Foreground="{DynamicResource Brush.Ink}" Text="{Binding HealthWord, StringFormat='· {0}'}" IsVisible="{Binding HealthWord, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           </StackPanel>
@@ -57,10 +57,14 @@
         <TextBlock Classes="body" Text="{Binding Description}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
 
-      <StackPanel Spacing="4" IsVisible="{Binding Notes, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+      <StackPanel Spacing="4" IsVisible="{Binding HasNotesPlace}">
         <TextBlock Classes="eyebrow" Text="{Binding NotesHeading}" AutomationProperties.AccessibilityView="Raw" />
-        <Border x:Name="ProjectNotes" AutomationProperties.Name="{Binding Notes}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <Border x:Name="ProjectNotes" IsVisible="{Binding ShowsReadOnlyNotes}" AutomationProperties.Name="{Binding Notes}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body" Text="{Binding Notes}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <!-- Issue 3717: the notes are edited here, through the page's row of the project (the rows have no notes area). -->
+        <Border x:Name="ProjectNotesPlace" IsVisible="{Binding HasNotesCard}">
+          <views:ProjectNotesEditor x:Name="ProjectNotesEditorView" DataContext="{Binding NotesCard}" />
         </Border>
       </StackPanel>
 
@@ -123,20 +127,22 @@
         </StackPanel>
       </Border>
 
-      <StackPanel x:Name="ProjectStateForm" Spacing="6" IsVisible="{Binding CanSetState}">
+      <StackPanel x:Name="ProjectStateForm" Spacing="8" IsVisible="{Binding CanSetState}">
         <TextBlock Classes="eyebrow" Text="{Binding StateLabel}" AutomationProperties.AccessibilityView="Raw" />
-        <ComboBox x:Name="ProjectStatePick" ItemsSource="{Binding StateChoices}" SelectedItem="{Binding SelectedState, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding StateLabel}">
-          <ComboBox.ItemTemplate>
-            <DataTemplate x:DataType="pvm:ProjectStateChoice"><TextBlock Text="{Binding Word}" /></DataTemplate>
-          </ComboBox.ItemTemplate>
-        </ComboBox>
+        <ItemsControl x:Name="ProjectStateChips" ItemsSource="{Binding StateChips}" IsEnabled="{Binding !IsSaving}" AutomationProperties.Name="{Binding StateLabel}">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="pvm:ProjectStateChip">
+              <Button x:Name="ProjectStateChip" Classes.accent="{Binding IsPicked}" Content="{Binding Word}" Click="OnPickState" Margin="0,0,8,8" AutomationProperties.Name="{Binding Word}" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
         <WrapPanel Orientation="Horizontal">
-          <Button x:Name="ProjectSetState" Content="{Binding SetStateText}" IsEnabled="{Binding !IsSaving}" Click="OnSetState" Margin="0,0,8,0" AutomationProperties.Name="{Binding SetStateText}" />
           <Button x:Name="ProjectClearState" Content="{Binding UseLinearStateText}" IsVisible="{Binding CanClearState}" IsEnabled="{Binding !IsSaving}" Click="OnClearState" AutomationProperties.Name="{Binding UseLinearStateText}" />
         </WrapPanel>
       </StackPanel>
 
-      <StackPanel x:Name="ProjectEditForm" Spacing="6" IsVisible="{Binding IsEditing}">
+      <StackPanel x:Name="ProjectEditForm" Spacing="8" IsVisible="{Binding IsEditing}">
         <StackPanel Spacing="2" IsVisible="{Binding CanEditName}">
           <TextBlock Classes="caption subtle" Text="{Binding NameLabel}" AutomationProperties.AccessibilityView="Raw" />
           <TextBox x:Name="ProjectEditName" Text="{Binding EditName, Mode=TwoWay}" AutomationProperties.Name="{Binding NameLabel}" />
@@ -149,13 +155,17 @@
           <TextBlock Classes="caption subtle" Text="{Binding LinksLabel}" AutomationProperties.AccessibilityView="Raw" />
           <TextBox x:Name="ProjectEditLinks" Text="{Binding EditLinks, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding LinksLabel}" />
         </StackPanel>
+        <StackPanel Spacing="2">
+          <TextBlock Classes="caption subtle" Text="{Binding EditNotesLabel}" AutomationProperties.AccessibilityView="Raw" />
+          <TextBox x:Name="ProjectEditNotes" Text="{Binding EditNotes, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding EditNotesLabel}" />
+        </StackPanel>
         <StackPanel Orientation="Horizontal" Spacing="8">
           <Button x:Name="ProjectSave" Content="{Binding SaveText}" IsEnabled="{Binding !IsSaving}" Click="OnSave" AutomationProperties.Name="{Binding SaveText}" />
           <Button x:Name="ProjectCancelEdit" Content="{Binding CancelEditText}" IsEnabled="{Binding !IsSaving}" Click="OnCancelEdit" AutomationProperties.Name="{Binding CancelEditText}" />
         </StackPanel>
       </StackPanel>
 
-      <StackPanel Spacing="6" IsVisible="{Binding SaveError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+      <StackPanel Spacing="8" IsVisible="{Binding SaveError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
         <Border x:Name="ProjectSaveError" AutomationProperties.Name="{Binding SaveError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding SaveError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>

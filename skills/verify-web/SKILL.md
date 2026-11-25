@@ -124,7 +124,7 @@ Drive invalid input / unknown routes through the journey tools above; assert vis
 
 ### `responsive`
 
-`mcp: playwright/browser_resize` to the three CD4 viewports — mobile 375×812, tablet 768×1024, desktop 1440×900 — re-snapshot (and re-screenshot if visual lens is active) at each; artifacts keep the `{run-id}/{check}-{viewport}.png` naming.
+`mcp: playwright/browser_resize` to the three CD4 viewports (mobile 375×812, tablet 768×1024, desktop 1440×900), re-snapshot (and re-screenshot if visual lens is active) at each; artifacts keep the `{run-id}/{check}-{viewport}.png` naming.
 
 **Layout claims must be falsifiable:** bind every layout/styling check to a screens.json baseline, a design token, or an explicit user criterion — never a free-floating "positioned as expected".
 

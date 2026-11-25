@@ -211,10 +211,11 @@ public sealed class EvaluateTests : IDisposable
     public async Task Advance_report_resolves_only_with_a_passing_run_and_a_resolved_verdict()
     {
         var c1 = await _w.Candidate();
+        _w.Repos.Write("/state/sweep.md", "## Where else we checked\n\n| Surface | Variant | Status |\n|---|---|---|\n| Login screen | web | fixed |\n\n## Prevention decision\n\nnew mechanism: analyzer\n");
         Assert.Contains("run: none, judge: none", World.Refused(await Report(c1), BugFixErrors.ReportRefused).Message, StringComparison.Ordinal);
         _ = World.Ok(await _w.RunAgainst(c1));
         _ = World.Ok(await Judge(c1));
-        Assert.Equal("advance report --candidate c1", World.Ok(await Resume()).Next);
+        Assert.Equal("advance report --candidate c1 --sweep <sweep.md>", World.Ok(await Resume()).Next);
 
         var result = World.Ok(await Report(c1));
 
@@ -269,7 +270,7 @@ public sealed class EvaluateTests : IDisposable
         _w.Run<JudgeCandidateRequest, JudgeCandidateResponse>(new JudgeCandidateRequest(World.State, candidate));
 
     private Task<Result<AdvanceReportResponse>> Report(CandidateId candidate) =>
-        _w.Run<AdvanceReportRequest, AdvanceReportResponse>(new AdvanceReportRequest(World.State, candidate, Unresolved: false));
+        _w.Run<AdvanceReportRequest, AdvanceReportResponse>(new AdvanceReportRequest(World.State, candidate, Unresolved: false, "/state/sweep.md"));
 
     private Task<Result<ResumeResponse>> Resume() => _w.Run<ResumeRequest, ResumeResponse>(new ResumeRequest(World.State));
 }

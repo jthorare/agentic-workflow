@@ -12,6 +12,21 @@ public sealed record MergeFacts
     /// <summary>The latest gate run for it, if any.</summary>
     public GateRecord? Gate { get; init; }
 
+    /// <summary>The reviewer's OK and the lane's counts from the inbox; null when the team has no reviewer lane.</summary>
+    public ReviewFacts? Review { get; init; }
+
+    /// <summary>Whether the team gates in CI (gate.mode "ci"): the gate record is a read of the pull request's required checks, so the scope, main and test-log checks don't apply.</summary>
+    public bool CiGate { get; init; }
+
+    /// <summary>In ci mode: GitHub's merge state of the pull request now, read at merge time (null when the read failed, see <see cref="LiveError"/>).</summary>
+    public string? LiveMergeState { get; init; }
+
+    /// <summary>In ci mode: GitHub's review decision of the pull request now, read at merge time (null when the read failed).</summary>
+    public string? LiveReviewDecision { get; init; }
+
+    /// <summary>In ci mode: why the live read of the merge state and review decision failed; null when it worked.</summary>
+    public string? LiveError { get; init; }
+
     /// <summary>The pull request's head now.</summary>
     public required string CurrentHead { get; init; }
 
@@ -20,6 +35,12 @@ public sealed record MergeFacts
 
     /// <summary>The tree merging the gated head onto the current main gives ("git merge-tree --write-tree"); null when not computed, or when it conflicts.</summary>
     public string? MergedTree { get; init; }
+
+    /// <summary>Whether the pull request's base branch has a GitHub merge queue, which re-tests the merged tree itself; read only when main moved past the gate.</summary>
+    public bool BaseHasMergeQueue { get; init; }
+
+    /// <summary>Whether merging the gated head onto the current main conflicts; read only with a merge queue on the base branch, where a conflict still refuses (the queue would drop it).</summary>
+    public bool MergeConflicts { get; init; }
 
     /// <summary>Whether the pull request is a draft.</summary>
     public bool IsDraft { get; init; }

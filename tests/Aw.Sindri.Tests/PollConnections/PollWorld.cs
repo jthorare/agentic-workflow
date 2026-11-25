@@ -43,6 +43,8 @@ internal sealed class PollWorld
 
     public PollWake Wake { get; } = new();
 
+    public RecentEvents Recent { get; } = new();
+
     public static ConnectionName Name { get; } = ConnectionSamples.Name();
 
     public static EventKind Kind { get; } = new(KindText);
@@ -85,7 +87,7 @@ internal sealed class PollWorld
 
     public Func<string, int>? Occurrence { get; set; }
 
-    public PollRound Round() => new(Starter, Cursors, Connections.Events(), Connections.Clock, Runs, Occurrence);
+    public PollRound Round() => new(Starter, Cursors, Connections.Events(), Connections.Clock, Runs, Recent, Occurrence);
 
     public CatchUp CatchUp() => new(Round(), Connections.Events());
 

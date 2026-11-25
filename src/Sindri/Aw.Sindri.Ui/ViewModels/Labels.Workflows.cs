@@ -23,14 +23,8 @@ internal static partial class Labels
     /// <summary>The list when there are none.</summary>
     internal const string WfNone = "No workflows yet.";
 
-    /// <summary>The head when there are none.</summary>
-    internal const string WfHeadNone = "No workflows";
-
     /// <summary>The action beside a failed read.</summary>
     internal const string WfTryAgain = "Try again";
-
-    /// <summary>The action that goes up one level.</summary>
-    internal const string WfBack = "Back";
 
     /// <summary>The list's head: "2 workflows · 1 active".</summary>
     /// <param name="total">Workflows listed.</param>
@@ -50,7 +44,8 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string WfRevision(int? active, int latest) => active switch
     {
-        null => string.Create(CultureInfo.InvariantCulture, $"Newest revision {latest}"),
+        _ when latest < 2 => string.Empty,   // a first revision is not news: "Revision 1" says nothing the row doesn't
+        null => string.Empty,   // no active revision: no revision words, so a new workflow doesn't say "Newest revision 2" for the rename's bump
         { } a when a == latest => string.Create(CultureInfo.InvariantCulture, $"Revision {a}"),
         { } a => string.Create(CultureInfo.InvariantCulture, $"Revision {a} active, {latest} newest"),
     };
@@ -59,7 +54,7 @@ internal static partial class Labels
     /// <param name="by">"owner" or "session:&lt;id&gt;".</param>
     /// <param name="age">How long since.</param>
     /// <returns>The words.</returns>
-    internal static string WfChangedBy(string by, TimeSpan age) => "Changed by " + by + ", " + Age(age) + " ago";
+    internal static string WfChangedBy(string by, TimeSpan age) => "Changed by " + WfActor(by) + ", " + (age.TotalSeconds < 10 ? "just now" : Age(age) + " ago");
 
     /// <summary>A workflow row's accessible name.</summary>
     /// <param name="name">The workflow's name.</param>
@@ -67,7 +62,7 @@ internal static partial class Labels
     /// <param name="revision">The revision words in lower case.</param>
     /// <param name="changed">Who changed it, in lower case.</param>
     /// <returns>The words.</returns>
-    internal static string WfRowName(string name, string word, string revision, string changed) => string.Join(", ", name, word, revision, changed);
+    internal static string WfRowName(string name, string word, string revision, string changed) => string.Join(", ", new[] { name, word, revision, changed }.Where(static p => p.Length > 0));
 
     /// <summary>The runs list before its first answer.</summary>
     internal const string WfRunsReading = "Reading runs…";
@@ -96,12 +91,13 @@ internal static partial class Labels
     /// <summary>The line under a workflow's name: which revision, how big, who made it.</summary>
     /// <param name="shown">The revision shown.</param>
     /// <param name="latest">The newest revision.</param>
-    /// <param name="nodes">How many nodes the graph has.</param>
-    /// <param name="createdBy">Who made the workflow.</param>
+    /// <param name="nodes">How many steps the graph has.</param>
+    /// <param name="createdBy">Who made the workflow, as served: the person's own actor reads "you".</param>
+    /// <param name="hasActive">True when a revision is active; without one, or while the workflow has only its first revision (like the list row, #2845), the line says no revision.</param>
     /// <returns>The words.</returns>
-    internal static string WfDetail(int shown, int latest, int nodes, string createdBy) => string.Create(
+    internal static string WfDetail(int shown, int latest, int nodes, string createdBy, bool hasActive) => string.Create(
         CultureInfo.InvariantCulture,
-        $"{(shown == latest ? $"Revision {shown}" : $"Revision {shown} of {latest}")} · {nodes} {(nodes == 1 ? "node" : "nodes")} · created by {createdBy}");
+        $"{(hasActive && latest >= 2 ? (shown == latest ? $"Revision {shown} · " : $"Revision {shown} of {latest} · ") : string.Empty)}{nodes} {(nodes == 1 ? "step" : "steps")} · created by {WfActor(createdBy)}");
 
     /// <summary>A trigger kind as a word ("manual" is "Manual").</summary>
     /// <param name="kind">The kind as served.</param>
@@ -118,6 +114,7 @@ internal static partial class Labels
     /// <returns>The glyph and the word.</returns>
     internal static (string Glyph, string Word) WfChip(string status) => status switch
     {
+        "starting" => ("◌", "Starting"),
         "queued" => ("◌", "Queued"),
         "running" => ("●", "Running"),
         "waiting" => ("◐", "Waiting"),
@@ -151,19 +148,14 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string WfRunTitle(string id) => "Run " + id;
 
-    /// <summary>What started a run.</summary>
-    /// <param name="kind">The trigger's kind, as served.</param>
-    /// <returns>The words.</returns>
-    internal static string WfStartedBy(string kind) => "Started by " + kind;
-
-    /// <summary>A run row's trigger when the object has no kind.</summary>
-    internal const string WfUnknownTrigger = "an unknown trigger";
-
     /// <summary>The heading over a run's outputs.</summary>
     internal const string WfOutputsHeading = "What the run produced";
 
     /// <summary>The heading over a node's input.</summary>
     internal const string WfInputHeading = "Input";
+
+    /// <summary>The heading over a code step's body.</summary>
+    internal const string WfCodeHeading = "Code";
 
     /// <summary>The heading over a node's output.</summary>
     internal const string WfOutputHeading = "Output";
@@ -178,10 +170,13 @@ internal static partial class Labels
     internal static string WfNodeItems(string node, int count) => string.Create(CultureInfo.InvariantCulture, $"{node} · {count} items");
 
     /// <summary>One item of a for_each node.</summary>
-    /// <param name="index">The item's position, from 0.</param>
+    /// <param name="index">The item's position as served, counted from 1.</param>
     /// <param name="count">How many items.</param>
     /// <returns>The words.</returns>
-    internal static string WfItemTitle(int index, int count) => string.Create(CultureInfo.InvariantCulture, $"Item {index + 1} of {count}");
+    internal static string WfItemTitle(int index, int count) => string.Create(CultureInfo.InvariantCulture, $"Item {index} of {count}");
+
+    /// <summary>The title of a collect step's own row (its result), above its item rows.</summary>
+    internal const string WfCollectResultTitle = "Result";
 
     /// <summary>A node run's accessible name.</summary>
     /// <param name="title">The node or item.</param>

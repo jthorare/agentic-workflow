@@ -89,16 +89,40 @@ internal sealed partial class ProjectCardViewModel : ObservableObject
     /// <param name="card">The card as served now.</param>
     internal void Update(ProjectCardView card)
     {
+        if (Same(Card, card))
+        {
+            return;   // the same project as before: nothing to redraw
+        }
+
         Card = card;
         Derive();
     }
+
+    // Records compare their list members by reference, so a new serving of the same project is never equal; compare the lists by their items.
+    private static bool Same(ProjectCardView kept, ProjectCardView served) =>
+        kept == (served with { Repos = kept.Repos, Links = kept.Links, Truth = kept.Truth })
+        && kept.Repos.SequenceEqual(served.Repos, StringComparer.Ordinal)
+        && kept.Links.SequenceEqual(served.Links)
+        && SameTruth(kept.Truth, served.Truth);
+
+    private static bool SameTruth(ProjectTruthView? kept, ProjectTruthView? served) =>
+        kept is null || served is null
+            ? kept == served
+            : kept == (served with { OpenPrs = kept.OpenPrs }) && kept.OpenPrs.SequenceEqual(served.OpenPrs);
+
+    // A finished project (done or canceled) has no health: the word and the dot mean nothing once it is over.
+    private bool IsFinished => string.Equals(Card.State, "done", StringComparison.Ordinal) || string.Equals(Card.State, "canceled", StringComparison.Ordinal) || string.Equals(Card.State, "cancelled", StringComparison.Ordinal);
 
     private void Derive()
     {
         OnChanged(nameof(Name));
         OnChanged(nameof(Version));
+        OnChanged(nameof(EditName));
+        OnChanged(nameof(SaveName));
+        OnChanged(nameof(CancelName));
+        OnChanged(nameof(ReloadName));
         OriginChip = Labels.ProjectOriginChip(Card.Origin);
-        HealthWord = Labels.ProjectHealthWord(Card.Health);
+        HealthWord = IsFinished ? null : Labels.ProjectHealthWord(Card.Health);
         HealthTone = HealthWord is null ? ChipTone.Neutral : Card.Health switch
         {
             "onTrack" => ChipTone.Ok,
@@ -118,6 +142,7 @@ internal sealed partial class ProjectCardViewModel : ObservableObject
         Footer = Parts();
         OnChanged(nameof(FooterText));
         AccessibleName = Spoken();
+        DeriveRow();
     }
 
     private static string? Face(string? note)

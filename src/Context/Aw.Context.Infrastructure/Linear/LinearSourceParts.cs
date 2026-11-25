@@ -9,6 +9,9 @@ namespace Aw.Context.Infrastructure.Linear;
 /// <param name="Logger">The log; it gets operations, statuses and codes, never the key.</param>
 internal sealed record LinearSourceParts(HttpClient Http, Func<string, string?> Environment, TimeProvider Clock, ILogger<LinearClient> Logger)
 {
+    /// <summary>The host's read-key order (connection first, then the pointer), or null for the pointer alone.</summary>
+    public Core.Linear.ILinearReadCredential? Credential { get; init; }
+
     /// <summary>How long Linear gets to answer each fetch, versions and probe call (a search uses the query's own deadline); 4 s.</summary>
     public TimeSpan CallDeadline { get; init; } = TimeSpan.FromSeconds(15);
 }

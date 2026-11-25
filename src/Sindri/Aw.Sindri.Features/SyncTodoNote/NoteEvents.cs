@@ -83,7 +83,7 @@ internal sealed class NoteEvents(SyncDeps d, IReadOnlyDictionary<TodoId, long> v
         if (merged.Hold is NoteHoldOutcome.Opened or NoteHoldOutcome.Replaced && merged.HoldNow is { } now)
         {
             var changes = now.Changes.Select(c => new TodoHeldChange(c.Id, Kind(c.Kind), c.NoteLine is null ? null : d.Scrubber.Scrub(c.NoteLine))).ToList();
-            put = await Put(EventTypes.TodoNoteHeld, new TodoNoteHeld(changes, noteHash, Service), $"todo.note.held:{noteHash}", versioned: false, cancellationToken).ConfigureAwait(false);
+            put = await Put(EventTypes.TodoNoteHeld, new TodoNoteHeld(changes, noteHash, Service, OpenInBase: now.OpenInBase), $"todo.note.held:{noteHash}", versioned: false, cancellationToken).ConfigureAwait(false);
         }
         else if (merged.Hold == NoteHoldOutcome.Dissolved && open is not null)
         {

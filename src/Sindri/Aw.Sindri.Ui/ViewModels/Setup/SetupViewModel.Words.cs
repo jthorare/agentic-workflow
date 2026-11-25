@@ -10,8 +10,8 @@ internal sealed partial class SetupViewModel
     /// <summary>Home's line as assistive technology reads it: its words first, then how far setup is.</summary>
     public string HomeLineName => Labels.SetupHomeLine + ", " + CountText + (HomeStepText.Length > 0 ? ". " + Labels.SetupNext(HomeStepText) : string.Empty);
 
-    /// <summary>The Continue control as assistive technology reads it: its word first, then the step.</summary>
-    public string ContinueName => ContinueText + ", " + HomeStepText;
+    /// <summary>The next-step control as assistive technology reads it: the step it opens.</summary>
+    public string ContinueName => ContinueText;
 
     /// <summary>The one line under the lead.</summary>
     public string SubText => Labels.SetupSubline;

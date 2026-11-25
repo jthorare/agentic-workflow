@@ -14,4 +14,10 @@ public interface IWorktreeFiles
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The newest time, or an error when the directory can't be read (the caller then keeps the worktree).</returns>
     public ValueTask<Result<DateTimeOffset>> NewestChange(string directory, IReadOnlyCollection<string> skipNames, CancellationToken cancellationToken);
+
+    /// <summary>The worktree root the repo's owner configured: $AW_WORKTREE_ROOT, else "root" in &lt;repo&gt;/.agentic-workflow/worktrees.json.</summary>
+    /// <param name="repo">The team's shared checkout.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The raw text, or null when nothing is set; a missing or malformed file counts as nothing.</returns>
+    public ValueTask<Result<string?>> ConfiguredRoot(string repo, CancellationToken cancellationToken);
 }

@@ -26,7 +26,6 @@ public sealed class SessionHomeTests : IDisposable
     {
         _real = _root + "/sindri";
         _ = Directory.CreateDirectory(_real + "/launches");
-        _ = Directory.CreateDirectory(_real + "/approved");
         File.WriteAllText(_real + "/launches/marker", "real");
         File.WriteAllText(_real + "/control.json", "{}");
     }
@@ -46,12 +45,12 @@ public sealed class SessionHomeTests : IDisposable
     }
 
     [Fact]
-    public void Launches_and_approved_are_links_to_the_real_folders()
+    public void Launches_is_a_link_to_the_real_folder_and_there_is_no_approved_link()
     {
         var home = SessionHome.Create(_real, _one, "s", _endpoint);
 
         Assert.Equal(_real + "/launches", new DirectoryInfo(home + "/launches").LinkTarget);
-        Assert.Equal(_real + "/approved", new DirectoryInfo(home + "/approved").LinkTarget);
+        Assert.False(Path.Exists(home + "/approved"));   // issue 2832: serve removes <home>/approved at start (#2258), so nothing may point at it
         Assert.True(File.Exists(home + "/launches/marker"));
     }
 
@@ -93,7 +92,6 @@ public sealed class SessionHomeTests : IDisposable
 
         Assert.False(Directory.Exists(home));
         Assert.True(File.Exists(_real + "/launches/marker"));
-        Assert.True(Directory.Exists(_real + "/approved"));
         SessionHome.Remove(home);   // a missing home is fine
     }
 

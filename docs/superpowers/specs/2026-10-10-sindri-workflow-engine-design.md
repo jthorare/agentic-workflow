@@ -818,7 +818,7 @@ So the app is a full desk client: it starts workflows (scoping included), answer
 cancels, completes desk tasks and hands work off to a session (API P10, `OpenItem`). `protected` actions show the
 CLI to copy until passkeys exist.
 
-**The agent variables are probed, not guessed.** P2 records what each harness actually sets (Claude Code, Codex in
+**The agent variables are probed, not guessed.** P2 records what each harness sets (Claude Code, Codex in
 each sandbox mode, Cursor's agent and its integrated terminal) and pins the result in a golden test. That list is the
 one API §6 reads. The probe records the whole process ancestry, not just names: Claude Code can run as `node`, and
 Cursor's app hosts both the human's terminal and its agent, so the parent-process check matches the ancestry pattern

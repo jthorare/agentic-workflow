@@ -18,7 +18,7 @@
     <ItemsControl x:Name="SheetRowDetails" ItemsSource="{Binding PrimaryDetails}" IsVisible="{Binding PrimaryDetails.Count}">
       <ItemsControl.ItemTemplate>
         <DataTemplate x:DataType="ny:SheetDetail">
-          <StackPanel Spacing="2" Margin="0,0,0,6">
+          <StackPanel Spacing="2" Margin="0,0,0,8">
             <TextBlock Classes="caption subtle" Text="{Binding Label}" />
             <TextBlock Classes="mono" Text="{Binding Value}" TextWrapping="Wrap" />
             <TextBlock Classes="caption subtle" Text="{Binding Hint}" IsVisible="{Binding Hint, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap" />
@@ -32,7 +32,7 @@
       <ItemsControl ItemsSource="{Binding MoreDetails}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="ny:SheetDetail">
-            <StackPanel Spacing="2" Margin="0,0,0,6">
+            <StackPanel Spacing="2" Margin="0,0,0,8">
               <TextBlock Classes="caption subtle" Text="{Binding Label}" />
               <TextBlock Classes="mono" Text="{Binding Value}" TextWrapping="Wrap" />
             </StackPanel>

@@ -30,8 +30,36 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
     /// <summary>True when there is a message to show.</summary>
     public bool HasMessage => Message.Length > 0;
 
+    /// <summary>The command that resumes the paused service, once for the whole card; empty when no repo is paused.</summary>
+    public string PausedCommand { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>True when a line is paused, so the card's foot names the command.</summary>
+    public bool HasPausedCommand => PausedCommand.Length > 0;
+
+    /// <summary>The words above the command.</summary>
+    public string PausedNote { get; } = Labels.CodeIndexPausedNote;
+
     /// <summary>The state in a word at the heading's right: "ok" or "needs a look"; empty with no lines.</summary>
     public string Word { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The mark beside <see cref="Word"/> (#4331): the ok check for "ok", the attention mark for "needs a look", none while building or queued and with no lines.</summary>
+    public StateGlyph Glyph
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(HasGlyph));
+        }
+    } = StateGlyph.None;
+
+    /// <summary>True when there is a mark to draw, so a card with none leaves no gap before its word.</summary>
+    public bool HasGlyph => Glyph != StateGlyph.None;
+
+    // The newest read's number: an older read that answers late shows nothing over a newer one's.
+    private int _reads;
+
+    private bool IsOld(int round, CancellationToken cancellationToken) => round != _reads || cancellationToken.IsCancellationRequested;
 
     /// <summary>Reads the status and shows it.</summary>
     /// <param name="url">The API's base URL.</param>
@@ -39,11 +67,19 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
     /// <returns>A task that completes when the answer is shown.</returns>
     internal async Task Refresh(Uri url, CancellationToken cancellationToken)
     {
+        var round = ++_reads;
         var read = await api.CodeIndexStatus(url, cancellationToken).ConfigureAwait(true);
+        if (IsOld(round, cancellationToken))
+        {
+            return;   // a newer read started, or this one was cancelled: its answer is old
+        }
+
         if (read.IsError)
         {
             Lines = [];
             Word = string.Empty;
+            Glyph = StateGlyph.None;
+            ShowCommand(paused: false);
             Show(Labels.CodeIndexUnreadable);
             return;
         }
@@ -52,8 +88,16 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         var health = (read.Value.Health ?? []).ToDictionary(h => h.Repo, StringComparer.Ordinal);
         var views = repos.Select(r => (Repo: r, Health: health.GetValueOrDefault(r.Repo))).ToList();
         Lines = [.. views.Select(v => new CodeIndexLine(Line(v.Repo, v.Health)))];
-        Word = repos.Count == 0 ? string.Empty : views.TrueForAll(v => Fine(v.Repo, v.Health)) ? Labels.CodeIndexOk : Labels.CodeIndexNeedsLook;
+        Word = repos.Count == 0 ? string.Empty : WordOf(views);
+        Glyph = GlyphOf(Word);
+        ShowCommand(views.Exists(static v => IsPaused(StateOf(v.Repo, v.Health), v.Health)));
         Show(repos.Count == 0 ? Labels.CodeIndexNone : string.Empty);
+    }
+
+    private void ShowCommand(bool paused)
+    {
+        PausedCommand = paused ? Labels.CodeIndexResumeCommand : string.Empty;
+        OnChanged(nameof(HasPausedCommand));
     }
 
     private void Show(string message)
@@ -62,23 +106,47 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         OnChanged(nameof(HasMessage));
     }
 
+    // The server's needsLook is the only look (#3430): the card keeps no list of state words. With no repo flagged, a build running reads "building"
+    // and a build queued "build queued"; everything else is "ok". A repo with no health row (a server that predates it) is not a look.
+    private static string WordOf(List<(CodeIndexRepoView Repo, CodeIndexHealthView? Health)> views)
+    {
+        if (views.Exists(static v => v.Health?.NeedsLook == true))
+        {
+            return Labels.CodeIndexNeedsLook;
+        }
+
+        if (views.Exists(static v => Is(v, "building")))
+        {
+            return Labels.CodeIndexBuilding;
+        }
+
+        return views.Exists(static v => Is(v, "queued")) ? Labels.CodeIndexQueued : Labels.CodeIndexOk;
+    }
+
+    // ok draws the check and needs a look the attention mark; building, build queued and no word draw none.
+    private static StateGlyph GlyphOf(string word) => word switch
+    {
+        Labels.CodeIndexOk => StateGlyph.Ok,
+        Labels.CodeIndexNeedsLook => StateGlyph.Warning,
+        _ => StateGlyph.None,
+    };
+
+    private static bool Is((CodeIndexRepoView Repo, CodeIndexHealthView? Health) view, string state) => string.Equals(StateOf(view.Repo, view.Health), state, StringComparison.Ordinal);
+
     private static bool One(string state, params string[] words) => words.Contains(state, StringComparer.Ordinal);
 
-    // stale, building and waiting override the file state; the other health states are the file's own.
+    // stale, building, waiting, queued and unbuildable override the file state; the other health states are the file's own.
     private static string StateOf(CodeIndexRepoView repo, CodeIndexHealthView? health) =>
-        health is { } h && One(h.State, "stale", "building", "waiting") ? h.State : repo.State;
-
-    private static bool Fine(CodeIndexRepoView repo, CodeIndexHealthView? health) =>
-        string.Equals(StateOf(repo, health), "ok", StringComparison.Ordinal) && repo.Layers.All(static l => One(l.State, "ok", "disabled", "pending"));
+        health is { } h && One(h.State, "stale", "building", "waiting", "queued", "unbuildable") ? h.State : repo.State;
 
     private string Line(CodeIndexRepoView repo, CodeIndexHealthView? health)
     {
-        var word = StateWords(StateOf(repo, health), health);
         if (repo.Commit is not { Length: > 0 } commit)
         {
-            return repo.Repo + ": " + word;
+            return NoCommitLine(repo, health);
         }
 
+        var word = StateWords(StateOf(repo, health), health);
         var age = repo.BuiltAt is { } built ? ", " + Labels.CodeIndexAge(clock.GetUtcNow() - built) : string.Empty;
         var state = string.Equals(StateOf(repo, health), "ok", StringComparison.Ordinal) ? string.Empty : " (" + word + ")";
         var shown = repo.Layers.Where(Shown).Select(l => Words(l, health)).ToList();
@@ -91,11 +159,28 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         return repo.Repo + " @ " + commit[..Math.Min(ShortSha, commit.Length)] + age + state + (layers.Length == 0 ? string.Empty : ", " + layers);
     }
 
+    // A repo with no commit: the server's look words when it flags the repo and no pause holds the build (#3515: a flagged repo with no build yet never reads as plain "build queued"),
+    // else the state's words; "build queued" reads "first build queued" here, since a repo never built has no rebuild to wait for (#3602).
+    private static string NoCommitLine(CodeIndexRepoView repo, CodeIndexHealthView? health)
+    {
+        if (health is { NeedsLook: true, Paused: false, LookWords: { Length: > 0 } lookWords })
+        {
+            return lookWords;
+        }
+
+        var word = StateWords(StateOf(repo, health), health);
+        return repo.Repo + ": " + (string.Equals(word, Labels.CodeIndexQueued, StringComparison.Ordinal) ? Labels.CodeIndexFirstBuildQueued : word);
+    }
+
     private static bool Shown(CodeIndexLayerView layer) => _named.Contains(layer.Layer, StringComparer.Ordinal) || !One(layer.State, "ok", "disabled");
 
-    // While waiting, the server's own words ("waiting for a free build slot", "retrying in N min") replace the state's.
-    private static string StateWords(string state, CodeIndexHealthView? health) =>
-        string.Equals(state, "waiting", StringComparison.Ordinal) && health?.Waiting is { Length: > 0 } waiting ? waiting : Labels.CodeIndexState(state);
+    private static bool IsPaused(string state, CodeIndexHealthView? health) => health?.Paused == true && One(state, "missing", "stale", "waiting", "queued");
+
+    // While waiting, the server's own words ("retrying in N min") replace the state's.
+    // While paused, no retry or build comes: the line names the pause instead of promising one (#3561).
+    private static string StateWords(string state, CodeIndexHealthView? health) => IsPaused(state, health)
+        ? (One(state, "waiting", "queued") ? string.Empty : Labels.CodeIndexState(state) + " · ") + Labels.CodeIndexPaused
+        : string.Equals(state, "waiting", StringComparison.Ordinal) && health?.Waiting is { Length: > 0 } waiting ? waiting : Labels.CodeIndexState(state);
 
     // The health's percent is the server's figure for the embeddings layer; the layer's own detail is the fallback.
     private static string Words(CodeIndexLayerView layer, CodeIndexHealthView? health) =>

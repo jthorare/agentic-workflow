@@ -11,6 +11,7 @@ namespace Aw.UiDriver.Core;
 [JsonSerializable(typeof(TypeRequest))]
 [JsonSerializable(typeof(KeyRequest))]
 [JsonSerializable(typeof(ScrollRequest))]
+[JsonSerializable(typeof(HoverRequest))]
 [JsonSerializable(typeof(WaitForRequest))]
 [JsonSerializable(typeof(ScreenshotRequest))]
 [JsonSerializable(typeof(WindowRequest))]

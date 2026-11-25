@@ -86,11 +86,10 @@ internal sealed class LinuxSandboxFixture(string sindriHome, Func<string, string
         return Build(repo, worktree, runDirectory, runArea, netDir) with { Policy = new StepPolicy([], StepPermissionMode.Default, worktree) };
     }
 
-    /// <summary>Makes what the plan binds from Sindri's home, the way a launch's Stage does: the launches and approved folders, and the fixture launch's session home with a real control.json.</summary>
+    /// <summary>Makes what the plan binds from Sindri's home, the way a launch's Stage does: the launches folder, and the fixture launch's session home with a real control.json.</summary>
     private void MakeSessionHome()
     {
         OwnerOnly.EnsureDirectory(Path.Combine(sindriHome, "launches"));
-        OwnerOnly.EnsureDirectory(Path.Combine(sindriHome, "approved"));
         // why: a record of its own, not a link to the real control.json: that file may not exist yet, and a missing bind source fails bwrap before any canary runs.
         var control = new ControlEndpoint(new Uri($"http://127.0.0.1:{FixturePort}"), Environment.ProcessId, Epoch: 0);
         _ = SessionHome.Create(sindriHome, _launch, Convert.ToHexString(RandomNumberGenerator.GetBytes(32)), control);   // a fresh throw-away secret; the same home each run, replaced by Create

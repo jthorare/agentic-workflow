@@ -9,6 +9,9 @@
   <x:Double x:Key="Size.Icon">16</x:Double>
   <!-- The "." keycap's dot (R6): 4.5 px at text scale 1, scaled with the type ramp. -->
   <x:Double x:Key="Size.KeyDot">4.5</x:Double>
+  <!-- A keycap's narrowest width (R6): its height at text scale 1 (the Kbd line, 16, and the cap's 1 px padding above and
+       below), so a one-character cap is never narrower than it is tall; scaled with the type ramp. -->
+  <x:Double x:Key="Size.KeyCap">18</x:Double>
 
   <!-- ✓ ok -->
   <StreamGeometry x:Key="Icon.Ok">M3,8.5 L6.5,12 L13,4.5</StreamGeometry>

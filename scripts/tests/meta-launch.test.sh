@@ -21,7 +21,7 @@ AW_TEST_TMUX=t1
 # normalized transcript: the dry-run, the Warp YAML, every tmux command the launcher issues (a recording shim in front of
 # tmux), and the claude command lines meta-lane.sh runs (fresh with a multi-line prompt, resumed, no prompt, with
 # AW_META_CLAUDE_ARGS, the meta lane's role-set). The committed golden began as the scripts' output before SL-1 and
-# has since gained only the team's `-L <team>` and the legacy-socket check lines (`bash meta-launch.test.sh --print-golden
+# has since gained only the team's `-L <team>`, the legacy-socket check lines and remain-on-exit (#2856) (`bash meta-launch.test.sh --print-golden
 # <scripts dir>` regenerates it; review the diff); the test compares the current scripts to it.
 golden_transcript() {
   local S="$1" G; G="$(mktemp -d)"
@@ -29,6 +29,7 @@ golden_transcript() {
     export HOME="$G/home" AW_STATE_DIR="$G/state" AW_WARP_LAUNCH_DIR="$G/warp" CALLS="$G/calls"
     unset TMUX AW_LAUNCHER_CONFIG
     for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done
+    export AW_META_NO_OOM_CHECK=1   # a runner whose systemd policy is stop would add a stderr line (oom-policy.test.sh covers it)
     export AW_META_NO_STALE_CHECK=1   # the stub aw-meta has no version command: the staleness check (meta-version.test.sh) would add a warning and a call
     export AW_META_LEGACY_TMUX_SOCKET=legacy-golden   # the launcher's legacy-socket check looks here (a private socket, empty), never at tmux's default
     mkdir -p "$HOME/.claude/projects/p" "$G/repo" "$G/prompts" "$AW_STATE_DIR/meta" "$G/shim"
@@ -100,6 +101,7 @@ export AW_META_CLAUDE="$WORK/claude" AW_META_BIN="$WORK/aw-meta" AW_META_NO_SHEL
 mkdir -p "$WORK/guard"
 for o in open xdg-open; do printf '#!/usr/bin/env bash\necho "$1" > "%s"\n' "$WORK/opened.guard" > "$WORK/guard/$o"; chmod +x "$WORK/guard/$o"; done
 export PATH="$WORK/guard:$PATH"
+export AW_META_NO_OOM_CHECK=1
 export AW_META_NO_STALE_CHECK=1   # the stub aw-meta has no version command; the staleness check has its own suite (meta-version.test.sh)
 export AW_META_LEGACY_TMUX_SOCKET=t1-legacy   # the launcher's legacy (default-socket) check goes to this private socket, never the real default
 cfg="$AW_STATE_DIR/meta/team.json"
@@ -129,8 +131,11 @@ id="$(cat "$AW_STATE_DIR/meta/lane-sessions/api")"
 check "fresh: id recorded" "$(printf '%s' "$id" | grep -cE '^[0-9a-f-]{36}$')" "1"
 check "fresh: session id, stable name, kickoff prompt" "$(cat "$CALLS")" "--session-id|$id|-n|t1-api|API kickoff|"
 : > "$CALLS"; touch "$HOME/.claude/projects/p/$id.jsonl"
+# The resume must not rewrite lane-sessions/<lane>: its mtime is the session's start, which lane-recycle checks a digest against (#2691).
+touch -t 200101010000 "$AW_STATE_DIR/meta/lane-sessions/api"; touch -t 200101010001 "$WORK/api-recorded-ref"
 bash "$DIR/meta-lane.sh" t1 api
 check "transcript exists: resumes the same id" "$(cat "$CALLS")" "--resume|$id|-n|t1-api|"
+check "resume of the recorded id: lane-sessions/<lane> not rewritten (mtime kept)" "$([ "$AW_STATE_DIR/meta/lane-sessions/api" -nt "$WORK/api-recorded-ref" ] && echo rewritten || echo kept)" "kept"
 : > "$CALLS"
 bash "$DIR/meta-lane.sh" t1 ui
 check "no prompt file: starts without a prompt" "$(cut -d'|' -f3,4 "$CALLS")" "-n|t1-ui"
@@ -181,6 +186,17 @@ tmux kill-session -t t1-api; tmux new-session -d -s t1-api bash   # claude exite
 : > "$AW_STATE_DIR/meta/lane-sessions/api.exited"                       # as meta-lane.sh leaves it
 OUT="$(bash "$DIR/meta-launch.sh" --no-open --lanes api)"
 check "rerun: a lane whose claude exited is restarted in place" "$(head -1 <<< "$OUT")" "tmux t1-api: restarted (claude had exited)"
+check "rerun: the restarted pane keeps remain-on-exit" "$(tmux show-options -w -t =t1-api: remain-on-exit)" "remain-on-exit on"
+# #2856: the pane's process is killed (an OOM kill stops the whole pane); remain-on-exit keeps the dead pane and its session,
+# with no .exited marker (meta-lane.sh never got to write one), and the rerun restarts it in place.
+rm -f "$AW_STATE_DIR/meta/lane-sessions/api.exited"
+tmux kill-session -t t1-api; tmux new-session -d -s t1-api "sleep 600"; tmux set-option -w -t =t1-api: remain-on-exit on
+kill -9 "$(tmux display-message -p -t =t1-api: '#{pane_pid}')"
+for _ in $(seq 50); do [ "$(tmux display-message -p -t =t1-api: '#{pane_dead}')" = 1 ] && break; sleep 0.1; done
+check "killed pane: the session is kept, the pane dead" "$(tmux has-session -t =t1-api && tmux display-message -p -t =t1-api: '#{pane_dead}')" "1"
+OUT="$(bash "$DIR/meta-launch.sh" --no-open --lanes api)"
+check "rerun: a lane whose pane was killed is restarted in place" "$(head -1 <<< "$OUT")" "tmux t1-api: restarted (its pane had died)"
+check "rerun: the restarted pane is alive" "$(tmux display-message -p -t =t1-api: '#{pane_dead}')" "0"
 tmux kill-server 2> /dev/null
 OUT="$(bash "$DIR/meta-launch.sh" --no-open --lanes api)"
 check "after tmux died: recreated" "$(printf '%s\n' "$OUT" | head -1)" "tmux t1-api: started"
@@ -344,19 +360,19 @@ jq '.agent = "codex" | .routing = {models:{"claude-code":["opus"],codex:["gpt-5.
 OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
 check "a codex meta accepts a lane routed to codex" "$RC:$(grep -c "can't message" <<< "$OUT")" "0:0"
 # The lane script: the routed agent's argv, with the routed model as the CLI's own flag (codex -m, claude --model) right after the binary.
-cat > "$WORK/agent-model" <<'EOF2'
-#!/usr/bin/env bash
-printf '%s|' "$@" > "$CALLS.model"
-echo "$$" > "$CALLS.modelpid"
-exec sleep 600
-EOF2
-chmod +x "$WORK/agent-model"
-run_model_lane() { # lane: run meta-lane.sh against the stub until it has recorded its argv, then stop the stub by its recorded pid
+cp "$DIR/tests/fixtures/meta-launch/agent-model" "$WORK/agent-model"; chmod +x "$WORK/agent-model"
+run_model_lane() { # lane: run meta-lane.sh against the stub until it has recorded its argv, then stop the stub by its recorded pid; the lane script must then end (#2637)
   rm -f "$CALLS.model" "$CALLS.modelpid"
   AW_META_CLAUDE="$WORK/agent-model" AW_META_ID_WAIT=1 AW_META_ID_GRACE=0 AW_META_NO_SHELL=1 bash "$DIR/meta-lane.sh" t1 "$1" > "$WORK/lane.out" 2>&1 &
   local rp=$!
   waitfor '[ -s "$CALLS.modelpid" ]'
   [ -s "$CALLS.modelpid" ] && kill "$(cat "$CALLS.modelpid")" 2> /dev/null
+  waitfor '! kill -0 "$rp" 2> /dev/null'
+  check "run_model_lane $1: the lane script ends once its recorded stub is stopped (#2637)" "$(kill -0 "$rp" 2> /dev/null && echo running || echo ended)" "ended"
+  # the recorded pid may be a probe's while the real launch's sleep still runs: stop the pid recorded now, so the suite never blocks on it
+  kill -0 "$rp" 2> /dev/null && [ -s "$CALLS.modelpid" ] && kill "$(cat "$CALLS.modelpid")" 2> /dev/null
+  # a lane script that hangs on its own never runs the stub, so nothing above ends it: stop rp, the suite's own child, so the wait is bounded (#2643)
+  kill -0 "$rp" 2> /dev/null && kill "$rp" 2> /dev/null
   wait "$rp" 2> /dev/null
 }
 jq -n --arg c "$WORK/agent-model" '{schema:1, agents:{codex:{override:true, bin:$c}}}' > "$AW_STATE_DIR/launcher.json"
@@ -371,6 +387,29 @@ check "meta-lane.sh starts a routed Claude lane with --model <model> before the 
 cp "$WORK/cfg.route" "$cfg"
 run_model_lane ui
 check "a Claude lane with no routing entry gets no model flag" "$(grep -c -- '--model' "$CALLS.model")" "0"
+cp "$WORK/cfg.route" "$cfg"
+# team.json plugins (#2675): off minus keep.<lane> becomes one --settings argument right after the binary, fresh and resumed.
+PL_OFF='{"enabledPlugins":{"compound-engineering@compound-engineering-plugin":false,"superpowers@claude-plugins-official":false}}'
+jq '.plugins = {off:["superpowers@claude-plugins-official","compound-engineering@compound-engineering-plugin"], keep:{design:["compound-engineering@compound-engineering-plugin"]}}' "$WORK/cfg.route" > "$cfg"
+rm -f "$AW_STATE_DIR/meta/lane-sessions/ui"
+run_model_lane ui
+check "plugins.off: a fresh Claude lane gets --settings with the off ids sorted, right after the binary" "$(head -c "$(( ${#PL_OFF} + 12 ))" "$CALLS.model")" "--settings|$PL_OFF|"
+touch "$HOME/.claude/projects/p/$(cat "$AW_STATE_DIR/meta/lane-sessions/ui").jsonl"
+run_model_lane ui
+check "plugins.off: a resumed Claude lane gets it too" "$(head -c "$(( ${#PL_OFF} + 12 ))" "$CALLS.model")" "--settings|$PL_OFF|"
+jq '.plugins.keep = {ui:["compound-engineering@compound-engineering-plugin"]}' "$cfg" > "$WORK/cfg.p" && mv "$WORK/cfg.p" "$cfg"
+run_model_lane ui
+check "plugins.keep.<lane> removes that id from the settings" "$(head -c 200 "$CALLS.model" | cut -d'|' -f1-2)" '--settings|{"enabledPlugins":{"superpowers@claude-plugins-official":false}}'
+jq '.plugins.keep = {ui:["compound-engineering@compound-engineering-plugin","superpowers@claude-plugins-official"]}' "$cfg" > "$WORK/cfg.p" && mv "$WORK/cfg.p" "$cfg"
+run_model_lane ui
+check "plugins: keeping every id adds no --settings" "$(grep -c -- '--settings' "$CALLS.model")" "0"
+jq '.plugins = {off:"superpowers@claude-plugins-official"}' "$WORK/cfg.route" > "$cfg"
+rm -f "$CALLS.model"
+AW_META_CLAUDE="$WORK/agent-model" AW_META_NO_SHELL=1 bash "$DIR/meta-lane.sh" t1 ui > "$WORK/lane.out" 2>&1; RC=$?
+check "plugins: a malformed off exits 1 with the message and starts no agent" "$RC:$(grep -c -x 'meta-lane: team.json plugins: off is not an array of strings; the agent was not started' "$WORK/lane.out"):$([ -e "$CALLS.model" ] && echo started || echo none)" "1:1:none"
+jq '.plugins = {off:["-x"]}' "$WORK/cfg.route" > "$cfg"
+AW_META_CLAUDE="$WORK/agent-model" AW_META_NO_SHELL=1 bash "$DIR/meta-lane.sh" t1 ui > "$WORK/lane.out" 2>&1; RC=$?
+check "plugins: an id starting with - is refused" "$RC:$(grep -c 'an id is empty or starts with -' "$WORK/lane.out")" "1:1"
 cp "$WORK/cfg.route" "$cfg"
 unlink "$AW_STATE_DIR/launcher.json"
 rm -f "$LCFG"
@@ -499,8 +538,16 @@ if command -v script > /dev/null 2>&1; then
   jq --arg c "$WORK/codex-quiet" '.agents.codex.bin = $c' "$LCFG" > "$WORK/l5.json"
   find "$AW_STATE_DIR/meta/lane-sessions" -mindepth 1 -delete 2> /dev/null
   pty_cmd="env AW_LAUNCHER_CONFIG=$WORK/l5.json AW_META_NO_SHELL=1 AW_META_ID_WAIT=20 AW_META_ID_GRACE=1 bash $DIR/meta-lane.sh t1 api"
-  if script --version 2>&1 | grep -q util-linux; then script -qfec "$pty_cmd" /dev/null < /dev/null > /dev/null 2>&1 &   # util-linux
-  else script -q /dev/null bash -c "$pty_cmd" < /dev/null > /dev/null 2>&1 & fi   # BSD (macOS)
+  # why: a suite started under `setsid nohup` hands script(1) SIGHUP ignored, and the lane inherits it, so the pty's hangup
+  # can't end the lane (#2566). A signal ignored on entry can't be reset from bash: this python exec puts HUP, INT and TERM
+  # back to the default (the #2377 way). It execs, so `$!` is still script's pid.
+  dfl=(env)
+  command -v python3 > /dev/null 2>&1 && dfl=(python3 -c 'import os, signal, sys
+for s in (signal.SIGHUP, signal.SIGINT, signal.SIGTERM):
+    signal.signal(s, signal.SIG_DFL)
+os.execvp(sys.argv[1], sys.argv[1:])')
+  if script --version 2>&1 | grep -q util-linux; then "${dfl[@]}" script -qfec "$pty_cmd" /dev/null < /dev/null > /dev/null 2>&1 &   # util-linux
+  else "${dfl[@]}" script -q /dev/null bash -c "$pty_cmd" < /dev/null > /dev/null 2>&1 & fi   # BSD (macOS)
   sp=$!
   waitfor '[ "$(pgrep -f "^bash $DIR/meta-lane.sh t1 api$" | wc -l | tr -d " ")" -ge 2 ] && pgrep -f "^codex 60$" > /dev/null'
   lane_pids="$(pgrep -f "^bash $DIR/meta-lane.sh t1 api$")"; agent_pid="$(pgrep -f '^codex 60$' | head -1)"
@@ -638,7 +685,7 @@ chmod +x "$WORK/codex-idle"
 jq -n --arg c "$WORK/codex-idle" '{schema:1, agents:{codex:{override:true, bin:$c}}, meta:{lanesAgent:"codex", lanes:{meta:"codex"}}}' > "$WORK/idle.json"
 rm -f "$ids/idle" "$ids/idle.settled" "$ids/idle.ambiguous"
 OUT="$(AW_META_CONFIG="$WORK/team2.json" AW_LAUNCHER_CONFIG="$WORK/idle.json" AW_META_ID_WAIT=1 bash "$DIR/meta-launch.sh" --no-open --lanes idle,amb 2>&1)"; RC=$?
-check "an id that never arrives: the timeout message, exit 0, the next lane started" "$RC:$(grep -c 'lane idle has not reported its session id after 1s' <<< "$OUT"):$(grep -c 'tmux t1-amb: started' <<< "$OUT")" "0:1:1"
+check "an id that never arrives: the timeout message, exit 0, the next lane restarted" "$RC:$(grep -c 'lane idle has not reported its session id after 1s' <<< "$OUT"):$(grep -cF 'tmux t1-amb: restarted (its pane had died)' <<< "$OUT")" "0:1:1"   # killstubs above left amb's dead pane (remain-on-exit, #2856), so amb is restarted, never started fresh
 check "an id that never arrives: nothing recorded" "$(test -s "$ids/idle" && echo id || echo none)" "none"
 tmux kill-server 2> /dev/null; killstubs
 

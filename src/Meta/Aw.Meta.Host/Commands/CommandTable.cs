@@ -32,6 +32,9 @@ internal static class CommandTable
         OwnerAnswerCommand.Entry,
         OwnerAskCommand.Entry,
         LogAppendCommand.Entry,
+        ReportDefectCommand.Entry,
+        DelegateCommand.Entry,
+        DelegatedCommand.Entry,
         StatusCommand.Entry,
         QueueDropCommand.Entry,
         GateRunCommand.Entry,
@@ -42,6 +45,7 @@ internal static class CommandTable
         HealthCommand.Entry,
         WatchCommand.Entry,
         WorktreeListCommand.Entry,
+        EventsCommand.Entry,
         WorktreeSweepCommand.Entry,
         LaneSendCommand.Entry,
         LanesContextCommand.Entry,
@@ -100,6 +104,13 @@ internal static class CommandTable
         if (_entries.FirstOrDefault(e => e.Name == args[0]) is not { } entry)
         {
             return CommandOutput.Usage(io, $"unknown command '{args[0]}'", "<command> [arguments]");
+        }
+
+        // Only right after the command name: a value that reads "--help" (log-append --text --help) still runs the command.
+        if (args.Length > 1 && (string.Equals(args[1], "--help", StringComparison.Ordinal) || string.Equals(args[1], "-h", StringComparison.Ordinal)))
+        {
+            await io.Out.WriteLineAsync($"usage: aw-meta {entry.Spec.Usage}".AsMemory(), cancellationToken).ConfigureAwait(false);
+            return CommandOutput.Ok;
         }
 
         if (CommandLine.Parse(args[1..], entry.Spec, out var problem) is not { } line)

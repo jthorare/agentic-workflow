@@ -60,7 +60,7 @@ jobs:
     # macos-15 is a moving image label: BSD tool updates on it are accepted churn,
     # and they're what this job exists to catch.
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       CHANGED: ${{ needs.changes.outputs.bash }}
     steps:
@@ -79,23 +79,15 @@ jobs:
           node-version-file: .nvmrc
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         if: env.CHANGED == 'true'
+        # The SDK stays for the suites that dotnet-build a tool themselves: forge-fixture and cutover-clean-ts (#4276).
         with:
           global-json-file: global.json
           cache: true
           cache-dependency-path: "**/packages.lock.json"
-      - name: Publish the C# judge and sindri the suites call
-        if: env.CHANGED == 'true'
-        # The suites run the real binaries (hooks, installers, the nudge), never a TS build. Judge is the NativeAOT
-        # publish the hooks run; sindri is framework-dependent (the Temporal worker cannot be trimmed). The paths go to
-        # the later steps through GITHUB_ENV; scripts/ci/bash-tests.sh keeps them in every suite's environment.
-        run: |
-          dotnet publish src/Judge/Aw.Judge.Host/Aw.Judge.Host.csproj -c Release -o "$RUNNER_TEMP/cs-bin/judge" -nologo -v quiet
-          dotnet publish src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj -c Release -o "$RUNNER_TEMP/cs-bin/sindri" -nologo -v quiet
-          echo "AW_JUDGE_CS_BIN=$RUNNER_TEMP/cs-bin/judge/judge" >> "$GITHUB_ENV"
-          echo "AW_SINDRI_CS_BIN=$RUNNER_TEMP/cs-bin/sindri/sindri" >> "$GITHUB_ENV"
       - name: Run every tracked bash test suite
         if: env.CHANGED == 'true'
-        run: bash scripts/ci/bash-tests.sh
+        # The leak check fails the step when the run leaves a new aw-* or tmp.* entry in $TMPDIR (#3262); it deletes nothing.
+        run: bash scripts/ci/tmp-leak-check.sh -- bash scripts/ci/bash-tests.sh
       - name: setup.sh dry run on macOS (every provider)
         if: env.CHANGED == 'true'
         run: ./setup.sh --providers claude,codex,cursor --dry-run
@@ -107,6 +99,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # the prose step diffs from the base's merge-base, which needs the history
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -127,6 +121,23 @@ jobs:
           fi
       - name: Rule records name real checks
         run: node scripts/check-rules.mjs
+      - name: Sindri MCP tool examples match the last-known tools/list golden
+        # Here, not in the Bash tests job: a C# PR that changes a tool's schema (and its golden) runs only the .NET
+        # job and this one, and a skill PR that adds an `mcp: sindri/<tool>` call runs this one too (issue 4249).
+        run: |
+          npm ci --prefix scripts --ignore-scripts --no-audit --no-fund
+          node scripts/check-tool-examples.mjs
+      - name: Prose on the changed Markdown (Vale, scripts/check-prose.sh)
+        # Only hits on added lines fail, so a PR never inherits an old file's slop (issue 2919). The base is the PR's
+        # base, the merge group's base, or the pushed range's start; a run with no base (a dispatch, a new branch)
+        # checks nothing. The whole tree joins once the cleanup PRs land.
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
+        run: |
+          if [ -z "${BASE:-}" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            echo "no-op: no base commit to diff against"; exit 0
+          fi
+          AW_VALE_BIN="$(scripts/binaries-lock.sh fetch vale)" scripts/check-prose.sh --base "$BASE"
 
   dotnet:
     name: .NET build and test
@@ -223,13 +234,25 @@ jobs:
         # --report-xunit-ctrf-filename, or every project would write the same file.
         # Lane=heavy (real Docker, browsers, index builds) is left out: it runs only by hand, by a lane or the owner, never on
         # CI (owner, 2026-10-29; #1581). A test with no Lane trait still runs, so the lane cap below still finds it. Exit 8 is a project
-        # whose every test is heavy.
-        run: dotnet test --solution "$SLN" --no-build --configuration Release --results-directory TestResults --report-xunit-ctrf --filter-not-trait "Lane=heavy" --ignore-exit-code 8
+        # whose every test is heavy. tmp-leak-check fails the step when a test leaves an aw-* or tmp.* entry in $TMPDIR
+        # (#3262); it keeps dotnet test's own exit code when that fails.
+        run: bash scripts/ci/tmp-leak-check.sh -- dotnet test --solution "$SLN" --no-build --configuration Release --results-directory TestResults --report-xunit-ctrf --filter-not-trait "Lane=heavy" --ignore-exit-code 8
       - name: Per-test lane cap (LANE-TEST-001/002)
         if: steps.sln.outputs.run == 'true'
         # Each test's own time against its lane's budget (unit 10 s, integration 60 s), and exactly one
         # known Lane trait per test: the run above leaves out only Lane=heavy, so a test with none shows up (spec §4b.5).
         run: dotnet run --project tests/Aw.LaneCap.Testing --configuration Release --no-build -- TestResults
+      - name: Install bubblewrap for the sandboxed smoke steps
+        if: steps.sln.outputs.run == 'true'
+        # The Sindri smoke's code-node line runs a Code workflow node in the bubblewrap sandbox (#2725). Ubuntu
+        # runners ship without bwrap and block unprivileged user namespaces through AppArmor, so install it and
+        # load the same unconfined bwrap profile the sandbox doctor's SND-LAUNCH-014 fix prints (SandboxCopy.cs).
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bubblewrap
+          printf 'abi <abi/4.0>,\ninclude <tunables/global>\nprofile bwrap /usr/bin/bwrap flags=(unconfined) {\n  userns,\n  include if exists <local/bwrap>\n}\n' | sudo tee /etc/apparmor.d/bwrap >/dev/null
+          sudo apparmor_parser -r /etc/apparmor.d/bwrap
+          bwrap --ro-bind / / --unshare-user --unshare-net true && echo "bwrap: user namespace ok"
       - name: NativeAOT smoke tests
         if: steps.sln.outputs.run == 'true'
         # Each publishes for the runner's own RID (linux-x64), runs the native binary and
@@ -244,6 +267,15 @@ jobs:
             echo "== $smoke"
             bash "$smoke"
           done
+      - name: Remove bubblewrap after the smoke steps
+        if: always() && steps.sln.outputs.run == 'true'
+        # Only the smokes get bwrap. The later "Lane budgets per package" step reruns the Sindri tests, and with bwrap
+        # present the BubblewrapSandbox* contract tests stop skipping and need a network forwarder and hooks this
+        # runner doesn't have (7 failed on run 42977822531). They stay owner-box tests, as before this step existed.
+        run: |
+          sudo apt-get remove -y -qq bubblewrap
+          sudo rm -f /etc/apparmor.d/bwrap
+          ! command -v bwrap && echo "bwrap: removed"
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: steps.sln.outputs.run == 'true'
         with:

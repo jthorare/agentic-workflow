@@ -1,4 +1,5 @@
 using Aw.Kernel.Services;
+using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Memory;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.Commands;
@@ -23,6 +24,32 @@ internal static class MemoryServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         return services
             .AddScoped<MemoryEvents>()
+            .AddScoped<WorkflowMemoryPort>()   // the memory blocks of a workflow reach the slices through it (agent-first PR 13 follow-up)
+            .AddSingleton<IGraphMemoryPort>(static sp => new ScopedMemoryPort(
+                async (request, ct) =>
+                {
+                    var scope = sp.CreateAsyncScope();   // why: the engine's blocks are singletons, the memory handlers are scoped
+                    await using (scope.ConfigureAwait(false))
+                    {
+                        return await scope.ServiceProvider.GetRequiredService<WorkflowMemoryPort>().Recall(request, ct).ConfigureAwait(false);
+                    }
+                },
+                async (request, ct) =>
+                {
+                    var scope = sp.CreateAsyncScope();
+                    await using (scope.ConfigureAwait(false))
+                    {
+                        return await scope.ServiceProvider.GetRequiredService<WorkflowMemoryPort>().Remember(request, ct).ConfigureAwait(false);
+                    }
+                },
+                async (request, ct) =>
+                {
+                    var scope = sp.CreateAsyncScope();
+                    await using (scope.ConfigureAwait(false))
+                    {
+                        return await scope.ServiceProvider.GetRequiredService<WorkflowMemoryPort>().Forget(request, ct).ConfigureAwait(false);
+                    }
+                }))
             .AddScoped<IValidator<CreateMemoryRequest>, AcceptAllValidator<CreateMemoryRequest>>().AddCommand<CreateMemoryRequest, CreateMemoryResponse, CreateMemoryService>()
             .AddScoped<IValidator<WriteMemoryFactRequest>, AcceptAllValidator<WriteMemoryFactRequest>>().AddCommand<WriteMemoryFactRequest, WriteMemoryFactResponse, WriteMemoryFactService>()
             .AddScoped<IValidator<ForgetMemoryFactRequest>, AcceptAllValidator<ForgetMemoryFactRequest>>().AddCommand<ForgetMemoryFactRequest, ForgetMemoryFactResponse, ForgetMemoryFactService>()

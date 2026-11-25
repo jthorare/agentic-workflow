@@ -43,6 +43,7 @@ internal sealed class PrivateTmux : IDisposable
         }
 
         _ = Run(name, "kill-server");
+        RemoveSocket(socket);
         return null;
     }
 
@@ -57,7 +58,31 @@ internal sealed class PrivateTmux : IDisposable
         return made is [var pane, var pid] && int.TryParse(pid, CultureInfo.InvariantCulture, out var number) ? (pane, number) : null;
     }
 
-    public void Dispose() => _ = Run(_name, "kill-server");   // this -L socket only
+    public void Dispose()
+    {
+        _ = Run(_name, "kill-server");   // this -L socket only
+        RemoveSocket(Socket);
+    }
+
+    // tmux 3.4 leaves its socket file behind when the server exits, so each run left one aw-co2b-<pid> file in /tmp/tmux-<uid> (#2850).
+    private static void RemoveSocket(string? socket)
+    {
+        if (socket is not { Length: > 0 } || !Path.IsPathRooted(socket) || !Path.GetFileName(socket).StartsWith("aw-co2b-", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        try
+        {
+            File.Delete(socket);
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
 
     private static string? Run(string name, params string[] arguments)
     {

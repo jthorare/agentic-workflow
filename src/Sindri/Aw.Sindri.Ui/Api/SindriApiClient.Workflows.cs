@@ -13,8 +13,20 @@ internal sealed partial class SindriApiClient
         Get<WorkflowList>(api, WorkflowRoutes.List(), cancellationToken);
 
     /// <inheritdoc />
+    public Task<Result<WorkflowList>> WorkflowsIncludingArchived(Uri api, CancellationToken cancellationToken) =>
+        Get<WorkflowList>(api, WorkflowRoutes.ListAll(), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<WorkflowCreated>> CreateWorkflow(Uri api, string slug, string template, CancellationToken cancellationToken) =>
+        Call<WorkflowCreated>(api, HttpMethod.Post, WorkflowRoutes.Create(), cancellationToken, new CallOptions(Content: AwJson.Serialize(new CreateWorkflowBody(slug, template), Json)));
+
+    /// <inheritdoc />
     public Task<Result<WorkflowView>> Workflow(Uri api, string slug, CancellationToken cancellationToken) =>
         Get<WorkflowView>(api, WorkflowRoutes.One(slug), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<WorkflowView>> WorkflowNewest(Uri api, string slug, CancellationToken cancellationToken) =>
+        Get<WorkflowView>(api, WorkflowRoutes.Newest(slug), cancellationToken);
 
     /// <inheritdoc />
     public Task<Result<WorkflowRunList>> WorkflowRuns(Uri api, string slug, CancellationToken cancellationToken) =>
@@ -31,6 +43,10 @@ internal sealed partial class SindriApiClient
     /// <inheritdoc />
     public Task<Result<WorkflowRunCancelled>> CancelWorkflowRun(Uri api, string runId, CancellationToken cancellationToken) =>
         Call<WorkflowRunCancelled>(api, HttpMethod.Post, WorkflowRoutes.Cancel(runId), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<WorkflowRunSeen>> MarkWorkflowRunSeen(Uri api, string runId, CancellationToken cancellationToken) =>
+        Call<WorkflowRunSeen>(api, HttpMethod.Post, WorkflowRoutes.Seen(runId), cancellationToken);
 
     /// <inheritdoc />
     public Task<Result<AgentNodeControlled>> TakeOverAgentNode(Uri api, string runId, string node, int itemIndex, CancellationToken cancellationToken) =>

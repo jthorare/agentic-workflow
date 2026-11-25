@@ -38,7 +38,9 @@ public static class MetaInfrastructureServiceCollectionExtensions
             .AddScoped<IMetaConfig>(sp => new FileMetaConfig(settings.ConfigPath, new JsonSerializerOptions(sp.GetRequiredService<JsonSerializerOptions>()) { WriteIndented = true }))
             .AddSingleton<ITranscriptReader, FileTranscriptReader>()
             .AddScoped<ILaneSessions>(sp => new PaneLaneSessions(sp.GetRequiredService<ILanePane>(), sp.GetRequiredService<IProcessTable>(), settings.SessionsDirectory))
-            .AddSingleton<IClaudeTranscripts>(new ClaudeProjectsTranscripts(Path.Combine(settings.Paths.Home, ".claude", "projects")))
+            .AddSingleton(new ClaudeProjectsTranscripts(Path.Combine(settings.Paths.Home, ".claude", "projects")))
+            .AddSingleton<IClaudeTranscripts>(sp => sp.GetRequiredService<ClaudeProjectsTranscripts>())
+            .AddSingleton<ITranscriptLocator>(sp => sp.GetRequiredService<ClaudeProjectsTranscripts>())
             .AddCodexFiles(settings.Paths.Home)
             .AddSingleton<IDigestFiles, FileDigestFiles>()
             .AddSingleton<ILaneFiles>(new DirectoryLaneFiles(settings.LaneSessionsDirectory))
@@ -50,7 +52,7 @@ public static class MetaInfrastructureServiceCollectionExtensions
             .AddSingleton<IBuildInfo, AssemblyBuildInfo>()
             .AddSingleton<IHeavyReserve>(new FileHeavyReserve(settings.StateDirectory))
             .AddSingleton<ILogFiles, FileLogFiles>()
-            .AddSingleton<IWorktreeFiles, DirectoryWorktreeFiles>()
+            .AddSingleton<IWorktreeFiles>(_ => new DirectoryWorktreeFiles(environment))
             .AddSingleton<IBugfixRecords>(new FileBugfixRecords(Path.Combine(Path.GetDirectoryName(settings.Layout.MetaRoot) ?? settings.Layout.MetaRoot, "bugfix")))
             .AddSingleton<IDelay>(sp => new ClockDelay(sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<ICommandRunner, SystemCommandRunner>()
@@ -69,7 +71,8 @@ public static class MetaInfrastructureServiceCollectionExtensions
         .AddScoped<IGateStore, SqliteGateStore>()
         .AddScoped<IKeyValueStore, SqliteKeyValueStore>()
         .AddScoped<IBoardStore, SqliteBoardStore>()
-        .AddScoped<ILaneMail, SqliteLaneMail>();
+        .AddScoped<ILaneMail, SqliteLaneMail>()
+        .AddScoped<IMetaEventStore, SqliteMetaEventStore>();
 
     // Codex's own files, read-only: its session rollouts and its model list.
     private static IServiceCollection AddCodexFiles(this IServiceCollection services, string home) =>

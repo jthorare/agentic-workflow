@@ -13,6 +13,7 @@ using Aw.Sindri.Tests.Server;
 using Aw.Sindri.Tests.Workflows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
 
 namespace Aw.Sindri.Tests.Callers;
@@ -22,8 +23,15 @@ public sealed class ServeCallerTests : IDisposable
 {
     private static readonly TimeSpan _prompt = TimeSpan.FromSeconds(10);
     private readonly TempHome _home = new();
+    private readonly StringWriter _said = new(System.Globalization.CultureInfo.InvariantCulture);   // why: #2881 answered 500 on CI with nothing to say why; serve's own lines go in the failure message
+    private readonly ListLoggerFactory _logs = new();   // why: a 500's cause is only in serve's log; fields, not locals, so they outlive serve's task (CA2025)
 
-    public void Dispose() => _home.Dispose();
+    public void Dispose()
+    {
+        _said.Dispose();
+        _logs.Dispose();
+        _home.Dispose();
+    }
 
     private SindriSettings Settings => new(_home.Path, Path.Combine(_home.Path, "profile", "profile.yaml"));
 
@@ -33,7 +41,11 @@ public sealed class ServeCallerTests : IDisposable
     public async Task Serve_mints_the_token_only_after_taking_the_lease()
     {
         var ct = TestContext.Current.CancellationToken;
-        var serve = ServeCommand.Run(Environment, TimeProvider.System, TextWriter.Null, NoTemporal.Use);
+        var serve = ServeCommand.Run(Environment, TimeProvider.System, _said, services =>
+        {
+            NoTemporal.Use(services);
+            _ = services.Replace(ServiceDescriptor.Singleton<ILoggerFactory>(_logs));
+        });
         var url = await Endpoint(ct);
         var token = (await new FileHumanToken(Settings).Read(ct)).Value;
         Assert.NotNull(token);
@@ -47,7 +59,8 @@ public sealed class ServeCallerTests : IDisposable
 
         Assert.Equal(1, second);
         Assert.Equal(token, afterRefusal);
-        Assert.Equal((HttpStatusCode.OK, HttpStatusCode.OK), (status.Status, stop.Status));
+        Assert.True(status.Status == HttpStatusCode.OK && stop.Status == HttpStatusCode.OK,
+            $"status {status.Status}: {status.Body}\nstop {stop.Status}: {stop.Body}\nlogged exceptions: {Thrown()}\nserve said: {_said}\nserve logged:\n{string.Join('\n', _logs.Logger.Lines)}");
         Assert.Equal(0, code);
         Assert.Null((await new FileHumanToken(Settings).Read(ct)).Value);   // removed with control.json
     }
@@ -104,6 +117,11 @@ public sealed class ServeCallerTests : IDisposable
         Assert.True((await stores.Lease.Read(ct)).Value!.Released);   // why: serve took the lease, so a row exists
         Assert.False(File.Exists(Settings.TokenPath));
     }
+
+    // why: #2881: lane-budgets.mjs shows only 15 lines of a failed test, and serve's 9 hosting lines used them all, so the exception below them was cut off. The cause goes first, on one line.
+    private string Thrown() => string.Join(" || ", _logs.Logger.Exceptions.Select(static e =>
+        string.Join(' ', (e is Microsoft.Data.Sqlite.SqliteException sqlite ? $"{e.GetType().Name} code {sqlite.SqliteErrorCode.ToString(System.Globalization.CultureInfo.InvariantCulture)}/{sqlite.SqliteExtendedErrorCode.ToString(System.Globalization.CultureInfo.InvariantCulture)}: {e.Message} at {e.StackTrace}" : $"{e.GetType().Name}: {e.Message} at {e.StackTrace}")
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Take(6))));
 
     /// <summary>The endpoint serve recorded once it listens.</summary>
     private async Task<Uri> Endpoint(CancellationToken ct, int limitMs = 10_000)

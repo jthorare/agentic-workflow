@@ -8,13 +8,13 @@ public static partial class MessageClassifier
 {
     private const string OwnerQuestionPrefix = "OWNER QUESTION";
 
-    /// <summary>Classifies <paramref name="body"/>: an owner question, a ready notice, a lane announcement or a request.</summary>
+    /// <summary>Classifies <paramref name="body"/>: an owner question, a ready notice, a lane announcement or a request. A leading STATUS: or ACTION: tag is read past (#2651).</summary>
     /// <param name="body">The message text.</param>
     /// <returns>The classification.</returns>
     public static Classification Classify(string body)
     {
         ArgumentNullException.ThrowIfNull(body);
-        var text = body.Trim();
+        var text = NoticeRule.StripTag(body.Trim());
         if (text.StartsWith(OwnerQuestionPrefix, StringComparison.Ordinal))
         {
             return new Classification(MessageKind.OwnerQuestion);

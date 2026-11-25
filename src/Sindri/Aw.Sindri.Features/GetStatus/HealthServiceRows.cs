@@ -14,13 +14,19 @@ namespace Aw.Sindri.Features.GetStatus;
 /// <param name="stalled">The agent runs idle past their launch's idle time (issue #1000); none when this build has no launcher.</param>
 /// <param name="builds">The running and installed build stamps; none outside an install.</param>
 /// <param name="clock">Now, for how long a stalled launch still counts; none counts them all.</param>
+/// <param name="sources">The context sources' health rows (#4010); none when the build has no context engine.</param>
 internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInService> builtIns, ICodeIndexHealth? codeIndex = null, IStalledAgentRuns? stalled = null,
-    IBuildStamps? builds = null, TimeProvider? clock = null)
+    IBuildStamps? builds = null, TimeProvider? clock = null, IContextSourceHealth? sources = null)
 {
     /// <summary>What the health reads besides the views and the services: the code index's problems and now (for how long ago a service failed).</summary>
     /// <param name="codeIndexProblems">The code index's problems.</param>
     /// <returns>The context.</returns>
     public HealthContext Context(IReadOnlyList<HealthProblem>? codeIndexProblems) => new(codeIndexProblems, clock?.GetUtcNow());
+
+    /// <summary>What the scheduler would run before it first publishes: the approved profile's services (none when there is no approved profile) and the built-ins, as the services list shows them (#3623).</summary>
+    /// <param name="approved">The approved profile, or null.</param>
+    /// <returns>One schedule per service.</returns>
+    public IReadOnlyList<ServiceSchedule> Scheduled(LoadedProfile? approved) => ServiceSchedule.From(approved?.Profile, builtIns, DateTimeOffset.MinValue);
 
     /// <summary>The report with the stale build problem (#1032) when the running build is not the one 'bin/cs/current' names.</summary>
     /// <param name="report">The report so far.</param>
@@ -32,13 +38,13 @@ internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInSe
     /// <returns>The count; 0 when this build has no launcher.</returns>
     public async ValueTask<int> Stalled(CancellationToken cancellationToken) => stalled is null ? 0 : (await stalled.Find(cancellationToken).ConfigureAwait(false)).Count;
 
-    /// <summary>How many agent sessions sat idle and were ended with no report, and were not relaunched (issue #1265), from the launches view.</summary>
+    /// <summary>How many agent sessions sat idle and were ended with no report, and were not relaunched (issue #1265), from the launches view, read by the idle launches (issue #2786).</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The count; 0 when the launches view can't be read (status is where that is reported).</returns>
     public async ValueTask<int> IdleAgents(CancellationToken cancellationToken)
     {
-        var launches = await views.List<LaunchRow>(ViewNames.Launches, cancellationToken).ConfigureAwait(false);
-        return launches.IsSuccess ? StalledLaunches.Find(launches.Value, clock?.GetUtcNow()).Count : 0;
+        var found = await StalledLaunches.Read(views, clock?.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        return found.IsSuccess ? found.Value.Count : 0;
     }
 
     /// <summary>The rows that count for health.</summary>
@@ -57,4 +63,11 @@ internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInSe
     /// <returns>The problems; none when there is no index port or nothing to read.</returns>
     public async ValueTask<IReadOnlyList<HealthProblem>> CodeIndexProblems(LoadedProfile? approved, CancellationToken cancellationToken) =>
         codeIndex is null ? [] : await codeIndex.Problems(approved, cancellationToken).ConfigureAwait(false);
+
+    /// <summary>The context sources that need a look, one problem each (#4010).</summary>
+    /// <param name="approved">The approved profile, or null before the first approval.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The problems; none when there is no context port or nothing to read.</returns>
+    public async ValueTask<IReadOnlyList<HealthProblem>> SourceProblems(LoadedProfile? approved, CancellationToken cancellationToken) =>
+        sources is null ? [] : await sources.Problems(approved, cancellationToken).ConfigureAwait(false);
 }

@@ -763,6 +763,7 @@
           "Aw.Kernel.Data": "[1.0.0, )",
           "Aw.Redaction": "[1.0.0, )",
           "Aw.Sindri.Core": "[1.0.0, )",
+          "Microsoft.CodeAnalysis.CSharp": "[5.9.0, 5.9.0]",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]",
           "ModelContextProtocol.Core": "[2.2.0, 2.2.0]",
           "YamlDotNet": "[18.1.0, 18.1.0]"
@@ -788,6 +789,39 @@
           "Temporalio": "[1.20.0, 1.20.0]"
         }
       },
+      "aw.transcripts.core": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Kernel": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]",
+          "Vogen": "[8.0.7, 8.0.7]"
+        }
+      },
+      "aw.transcripts.features": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Kernel": "[1.0.0, )",
+          "Aw.Transcripts.Core": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]"
+        }
+      },
+      "aw.transcripts.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Kernel": "[1.0.0, )",
+          "Aw.Redaction": "[1.0.0, )",
+          "Aw.Transcripts.Core": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]"
+        }
+      },
+      "aw.transcripts.testing": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Kernel.Testing": "[1.0.0, )",
+          "Aw.Transcripts.Core": "[1.0.0, )",
+          "Aw.Transcripts.Features": "[1.0.0, )"
+        }
+      },
       "sindri": {
         "type": "Project",
         "dependencies": {
@@ -811,6 +845,8 @@
           "Aw.Sindri.Features": "[1.0.0, )",
           "Aw.Sindri.Infrastructure": "[1.0.0, )",
           "Aw.Sindri.Workflows": "[1.0.0, )",
+          "Aw.Transcripts.Core": "[1.0.0, )",
+          "Aw.Transcripts.Infrastructure": "[1.0.0, )",
           "ModelContextProtocol.AspNetCore": "[2.2.0, 2.2.0]",
           "SkiaSharp.NativeAssets.Linux.NoDependencies": "[3.119.4, 3.119.4]",
           "SkiaSharp.NativeAssets.Win32": "[3.119.4, 3.119.4]",

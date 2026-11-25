@@ -236,6 +236,20 @@ public sealed class LinearIssueReadsTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_state_change_is_stored_with_both_state_names_so_the_strip_needs_no_state_list()
+    {
+        var marker = _world.Clock.GetUtcNow();
+        _world.Clock.Advance(TimeSpan.FromHours(1));
+        await _world.Update(Id("ENG-1"), new JsonObject { ["stateId"] = _world.Linear.StateId("ENG", "In Progress") });
+        _ = await _world.Tick();
+
+        var since = await Facade(i => i.IssueSince(marker, ExternalId.From(_ada), _world.Scope, Ct));
+
+        var change = Assert.Single(since.Changes, static c => c.Field == "state");
+        Assert.Equal(("Todo", "In Progress"), (change.OldName, change.NewName));
+    }
+
+    [Fact]
     public async Task A_teammates_state_move_absorbed_by_an_owner_priority_save_shows_in_since()
     {
         var marker = _world.Clock.GetUtcNow();

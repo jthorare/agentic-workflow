@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
@@ -20,8 +21,8 @@ internal sealed partial class ShellViewModel
     /// <summary>True when the sheet is the Add project sheet.</summary>
     public bool IsProjectAddSheet => SheetLink?.Kind == DeepLinkKind.ProjectAdd;
 
-    /// <summary>True when the sheet's title is a name, not an id (a project's, or "Add project"): it is not set in mono.</summary>
-    public bool SheetTitleIsMono => !IsProjectSheet && !IsProjectAddSheet && !IsPinSheet && !IsLibrarySheet && !IsFixTaskSheet;
+    /// <summary>True when the sheet's title is an id, not a name (a project's, "Add project", or a session's provider and title, #3872): a name is not set in mono.</summary>
+    public bool SheetTitleIsMono => !IsProjectSheet && !IsProjectAddSheet && !IsPinSheet && !IsLibrarySheet && !IsFixTaskSheet && !IsSessionSheet;
 
     /// <summary>True when the sheet's subject is a project.</summary>
     public bool IsProjectSheet => SheetLink?.Kind == DeepLinkKind.Project;
@@ -34,6 +35,9 @@ internal sealed partial class ShellViewModel
 
     /// <summary>True on Projects.</summary>
     public bool IsProjects => CurrentPage == PageId.Projects;
+
+    // The Projects page's own keys (1 to 4, O, B, J / K, Enter; issue 3717) belong to the page and never to the sheet.
+    private bool ProjectsKeyPressed(string key, bool inSheet) => !inSheet && IsProjects && Projects.Press(key);
 
     [MemberNotNull(nameof(Projects), nameof(ProjectSheet), nameof(ProjectAdd))]
     private void InitProjects(ILauncher launcher)
@@ -56,25 +60,39 @@ internal sealed partial class ShellViewModel
             OpenerProject = Uri.UnescapeDataString(e.Link.Subject ?? string.Empty);   // Esc comes back to this card, after the sheet's own opening cleared it
         };
         ProjectSheet.Done += OnProjectDone;
+        Projects.Laid += OnProjectsLaid;
         WireProjectAdd();
-        ProjectSheet.PropertyChanged += (_, e) =>
+        ProjectSheet.PropertyChanged += OnProjectSheetChanged;
+    }
+
+    private void OnProjectsLaid(object? sender, EventArgs e)
+    {
+        if (IsProjectSheet && SheetLink?.Subject is { } subject)
         {
-            if (string.Equals(e.PropertyName, nameof(ProjectSheetViewModel.Heading), StringComparison.Ordinal))
-            {
-                Changed(nameof(SheetTitle), nameof(SheetName), nameof(EdgeTabName), nameof(EdgeTabText));
-            }
-            else if (string.Equals(e.PropertyName, nameof(ProjectSheetViewModel.Announcement), StringComparison.Ordinal) && ProjectSheet.Announcement.Length > 0)
-            {
-                _line.Say(ProjectSheet.Announcement);
-            }
-        };
+            ProjectSheet.EditNotesWith(Projects.CardOf(Uri.UnescapeDataString(subject)));   // a sheet opened before the page read gets its row now
+        }
+    }
+
+    private void OnProjectSheetChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(ProjectSheetViewModel.Heading), StringComparison.Ordinal))
+        {
+            Changed(nameof(SheetTitle), nameof(SheetName), nameof(EdgeTabName), nameof(EdgeTabText));
+        }
+        else if (string.Equals(e.PropertyName, nameof(ProjectSheetViewModel.Announcement), StringComparison.Ordinal) && ProjectSheet.Announcement.Length > 0)
+        {
+            _line.Say(ProjectSheet.Announcement);
+        }
     }
 
     // The Add project sheet: the page's button opens it, Cancel closes it, and an added project closes it with the sentence said.
     private void WireProjectAdd()
     {
+        Projects.ConnectRequested += (_, _) => GoTo(PageId.Connections);
+        ProjectAdd.ConnectRequested += (_, _) => GoTo(PageId.Connections);
         Projects.AddRequested += (_, _) =>
         {
+            ProjectAdd.SetLinearConnected(!Projects.IsLinearMissing);
             OpenSheet(DeepLink.ProjectAdd);
             OpenerAdd = true;   // Esc comes back to the button, after the sheet's own opening cleared it
         };
@@ -103,6 +121,7 @@ internal sealed partial class ShellViewModel
         }
 
         ProjectSheet.Show(subject);
+        ProjectSheet.EditNotesWith(Projects.CardOf(Uri.UnescapeDataString(subject)));   // the rows have no notes area: the sheet edits the notes through the project's row
         if (Health.ApiUrl() is { } url)
         {
             _ = ProjectSheet.Open(url, subject, CancellationToken.None);

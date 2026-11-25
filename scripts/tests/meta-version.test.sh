@@ -75,7 +75,7 @@ check "install-meta.sh and the NativeAOT smoke carry no copy of the list" "$(gre
 
 # the launcher: one stderr line, not fatal, switched off by AW_META_NO_STALE_CHECK=1
 if command -v tmux > /dev/null 2>&1 && command -v jq > /dev/null 2>&1; then
-  cp "$DIR/meta-launch.sh" "$DIR/launcher-lib.sh" "$DIR/meta-team-lib.sh" "$DIR/meta-version-lib.sh" "$DIR/meta-build-paths.txt" "$R/scripts/"
+  cp "$DIR/meta-launch.sh" "$DIR/launcher-lib.sh" "$DIR/meta-team-lib.sh" "$DIR/meta-version-lib.sh" "$DIR/meta-oom-lib.sh" "$DIR/meta-build-paths.txt" "$R/scripts/"
   cp -r "$DIR/../config/launcher" "$R/config/"
   mkdir -p "$R/schemas"; cp "$DIR/../schemas/launcher.schema.json" "$R/schemas/"
   commit launcher > /dev/null

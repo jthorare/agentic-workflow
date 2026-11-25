@@ -77,12 +77,15 @@ public static class BugFixErrors
     /// <summary>AW-BUGFIX-023: the bug fix's digest.key is missing or malformed, so environment digests can't be compared.</summary>
     public static readonly ErrorDefinition DigestKeyMissing = new("AW-BUGFIX-023", ErrorKind.Unavailable, "Digest key missing");
 
+    /// <summary>AW-BUGFIX-024: a resolved report has no usable sweep (the "Where else we checked" table is empty or malformed and the Prevention decision is not an existing guard or deferred).</summary>
+    public static readonly ErrorDefinition SweepRefused = new("AW-BUGFIX-024", ErrorKind.Conflict, "Sweep refused");
+
     /// <summary>Every BugFix error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
     [
         Invalid, StateMissing, StateCorrupt, FileUnreadable, WrongPhase, HandoffRefused, NotReproduced, CheckNotFrozen,
         EvidenceRefused, AttemptRefused, CandidateRefused, CommandRefused, UnknownCandidate, RunRefused, JudgeRefused,
         JudgeUnavailable, UiEvidenceUnavailable, GitFailed, ReportRefused, DirtyTree, StateBusy, StorageFailed,
-        DigestKeyMissing,
+        DigestKeyMissing, SweepRefused,
     ];
 }

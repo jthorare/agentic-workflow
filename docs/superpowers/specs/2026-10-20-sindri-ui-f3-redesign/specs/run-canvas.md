@@ -232,7 +232,7 @@ Fixtures: `tests/Aw.Sindri.Ui.Testing/FixtureInstances.cs` gets a line run for e
 3. "Approve the merge" and every other protected step: the exact catalog id comes from `StatusAnswer.ActionId` per instance; verify it exists for the line's last step (`CompleteStep` is `desk` in the catalog; the human-only refusal is gone, so the caller class in `Authorization.cs` decides who reaches it).
 4. Whether a failed (terminal) instance serves `takeover` in `Actions[]`; the prototype offers it. Engine F5 decides; the UI draws only what `Actions` carries.
 5. Card radius 12 vs the prototype's 16, same as context open item 2; and the prototype's 85% default zoom is not built (we open at 100%, Q8).
-6. A line run with many stages beyond the recipe's four (a different recipe): the layout handles any count, but the minimap and `Fit` floor at 30%; confirm that is readable.
+6. A line run with many stages beyond the recipe's four (a different recipe): the layout fits any count, but the minimap and `Fit` floor at 30%; confirm that is readable.
 7. The finished-runs list needs the api `recipe` + history query (`run-list-by-workflow`); until then only open runs appear and the user reaches finished ones from Workflows.
 8. Shell chrome (rail, header 56 vs 52 px, page title) belongs to the workflows and shell specs; this spec assumes a 52 px page header inside the existing top-bar shell.
 

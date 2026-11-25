@@ -25,7 +25,7 @@ internal static class AnswerQuestionEndpoint
             }
 
             var by = callers.Current?.Actor ?? "service:host";
-            return (await service.Handle(new AnswerQuestionRequest(parsedRun, parsedNode, body?.Text, body?.Choice, by), ct).ConfigureAwait(false)).ToHttpResult();
+            return (await service.Handle(new AnswerQuestionRequest(parsedRun, parsedNode, body?.Text, body?.Choice, by, body?.Item), ct).ConfigureAwait(false)).ToHttpResult();
         });
         return group;
     }

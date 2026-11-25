@@ -10,47 +10,78 @@ public sealed class TokenTests
     private static readonly TokenFile _tokens = TokenFile.Load();
 
     // §14.1, every row with a resource key.
-    public static TheoryData<string, string> Colours => new()
+    private static readonly (string, string)[] _colourRows =
+    [
+        ("Canvas", "#08090a"),
+        ("Surface1", "#141517"),
+        ("Surface2", "#1c1d20"),
+        ("Surface3", "#222326"),
+        ("Surface4", "#26272a"),
+        ("Hairline", "#0fffffff"),
+        ("HairlineStrong", "#34343a"),
+        ("HairlineTertiary", "#3e3e44"),
+        ("Ink", "#f7f8f8"),
+        ("InkMuted", "#d0d6e0"),
+        ("InkSubtle", "#8a8f98"),
+        ("InkTertiary", "#74787f"),
+        ("Primary", "#5e6ad2"),
+        ("PrimaryHover", "#828fff"),
+        ("PrimaryHoverFill", "#535fc6"),
+        ("PrimaryPressed", "#4c57be"),
+        ("OnPrimary", "#ffffff"),
+        ("ErrorFill", "#c93c3c"),   // the danger primary button's fill (white 5.0:1); Error itself reads 3.5:1 under white
+        ("ErrorFillHover", "#b83232"),
+        ("ErrorFillPressed", "#a82c2c"),
+        ("Success", "#2eb75b"),
+        ("Overlay", "#000000"),
+        ("Attention", "#f2994a"),
+        ("Error", "#eb5757"),
+        ("AttentionSoft", "#291d13"),
+        ("AttentionSoft.Hover", "#32261c"),   // an attention row lifts within its own colour: AttentionSoft one step up
+        ("AttentionSoft.Pressed", "#382c22"),   // and two steps up
+        ("AttentionFill", "#67482f"),   // the hold button's fill: Attention at 35 % over Surface2
+        ("PrimarySoft", "#202442"),
+        ("ErrorSoft", "#281415"),
+        ("ErrorChipText", "#ee6060"),
+        ("SuccessSoft", "#0d2115"),
+        ("Wire", "#686870"),
+        ("WireHi", "#8a8f98"),
+        ("LaneFill", "#05ffffff"),
+        ("RingAnchor", "#d0d6e0"),
+        ("Violet", "#a78bfa"),
+        ("VioletSoft", "#1d1a29"),
+        ("Area1", "#7aa2f7"),
+        ("Area2", "#e0af68"),
+        ("Area3", "#7bd88f"),
+        ("Area4", "#c792ea"),
+        ("Area5", "#5fd4e0"),
+        ("Area6", "#ff9e8f"),
+    ];
+
+    // A colour that only feeds role brushes (Brush.Clickable.PressedBorder), so it has no Brush.<name> (#3505).
+    private static readonly string[] _brushlessColours = ["Outline"];
+
+    public static TheoryData<string, string> Colours
     {
-        { "Canvas", "#010102" },
-        { "Surface1", "#0f1011" },
-        { "Surface2", "#141516" },
-        { "Surface3", "#18191a" },
-        { "Surface4", "#191a1b" },
-        { "Hairline", "#23252a" },
-        { "HairlineStrong", "#34343a" },
-        { "HairlineTertiary", "#3e3e44" },
-        { "Ink", "#f7f8f8" },
-        { "InkMuted", "#d0d6e0" },
-        { "InkSubtle", "#8a8f98" },
-        { "InkTertiary", "#62666d" },
-        { "Primary", "#5e6ad2" },
-        { "PrimaryHover", "#828fff" },
-        { "PrimaryHoverFill", "#535fc6" },
-        { "PrimaryPressed", "#4c57be" },
-        { "OnPrimary", "#ffffff" },
-        { "Success", "#27a644" },
-        { "Overlay", "#000000" },
-        { "Attention", "#f2994a" },
-        { "Error", "#eb5757" },
-        { "AttentionSoft", "#23160c" },
-        { "AttentionFill", "#624328" },   // the hold button's fill: Attention at 35 % over Surface2
-        { "PrimarySoft", "#1d2036" },
-        { "ErrorSoft", "#220d0e" },
-        { "SuccessSoft", "#06180b" },
-        { "Wire", "#4a4a52" },
-        { "WireHi", "#8a8f98" },
-        { "LaneFill", "#05ffffff" },
-        { "RingAnchor", "#d0d6e0" },
-        { "Violet", "#a78bfa" },
-        { "VioletSoft", "#170f2a" },
-        { "Area1", "#7aa2f7" },
-        { "Area2", "#e0af68" },
-        { "Area3", "#7bd88f" },
-        { "Area4", "#c792ea" },
-        { "Area5", "#5fd4e0" },
-        { "Area6", "#ff9e8f" },
-    };
+        get
+        {
+            var data = new TheoryData<string, string>();
+            foreach (var r in _colourRows)
+            {
+                data.Add(r.Item1, r.Item2);
+            }
+
+            return data;
+        }
+    }
+
+    // Control boundaries (pressed, focus, selected) at 3:1 on the pressed fill (#3190, #3517). Colour only: nothing draws Brush.Outline, the controls use Brush.Clickable.PressedBorder (#3505).
+    [Fact]
+    public void Outline_is_a_colour_with_no_brush_of_its_own()
+    {
+        Assert.Equal("#767b82", _tokens.Color("Outline"));
+        Assert.False(_tokens.Resources.ContainsKey("Brush.Outline"));
+    }
 
     [Theory]
     [MemberData(nameof(Colours))]
@@ -65,39 +96,156 @@ public sealed class TokenTests
     [Fact]
     public void Every_colour_is_one_of_the_spec_tokens_and_every_brush_has_its_colour()
     {
-        var spec = Colours.Select(row => row.Data.Item1).ToHashSet(StringComparer.Ordinal);
+        var spec = Colours.Select(row => row.Data.Item1).Concat(_brushlessColours).ToHashSet(StringComparer.Ordinal);
         var colours = Names("Color.");
         var brushes = Names("Brush.");
 
         Assert.Empty(colours.Except(spec, StringComparer.Ordinal));
-        Assert.Equal(colours.Order(StringComparer.Ordinal), brushes.Order(StringComparer.Ordinal));
+        Assert.Equal(colours.Except(_brushlessColours, StringComparer.Ordinal).Order(StringComparer.Ordinal), brushes.Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void A_clickable_surface_rests_on_the_hover_colour_at_zero_alpha()
+    {
+        // #2535: the colour ease blends each channel straight, so a rest fill of another colour (Transparent is #00FFFFFF) passes through it.
+        var hover = _tokens.Resources["Brush.Clickable.Hover"].Attribute("Color")!.Value.Trim().ToLowerInvariant();
+        var rest = _tokens.Resources["Brush.Clickable.Rest"].Attribute("Color")!.Value.Trim().ToLowerInvariant();
+
+        Assert.Matches("^#[0-9a-f]{6}$", hover);
+        Assert.Equal("#00" + hover[1..], rest);
+    }
+
+    [Fact]
+    public void Every_clickable_surface_gets_its_rest_fill_before_any_surface_look()
+    {
+        // A Border with no background is not hit-tested (#2535). The fill is the first surface style in the app, so each surface's own fill,
+        // declared later, replaces it, and ClickableStyles, last, lifts it.
+        var app = XDocument.Load(Path.Combine(UiSource.Library, "Views", "SindriApp.axaml"));
+        var styles = app.Descendants().Single(e => e.Name.LocalName == "Application.Styles").Elements().ToList();
+        var rest = styles.FindIndex(e => e.Name.LocalName == "Style" && e.Attribute("Selector")?.Value == "Border.clickable");
+        int Include(string file) => styles.FindIndex(e => e.Name.LocalName == "StyleInclude" && (e.Attribute("Source")?.Value.EndsWith(file, StringComparison.Ordinal) ?? false));
+
+        Assert.True(rest >= 0, "SindriApp.axaml has no Border.clickable rest style");
+        Assert.Equal("{DynamicResource Brush.Clickable.Rest}", styles[rest].Elements().Single(e => e.Attribute("Property")?.Value == "Background").Attribute("Value")?.Value);
+        Assert.True(rest < Include("QueueStyles.axaml") && rest < Include("NeedsYouStyles.axaml"), "the rest fill comes after a surface look");
+        Assert.True(rest < styles.FindIndex(e => e.Attribute("Selector")?.Value == "Border.card"), "the rest fill comes after Border.card");
+        Assert.Equal(styles.Count - 1, Include("ClickableStyles.axaml"));
     }
 
     [Fact]
     public void The_overlay_brush_is_the_scrim_at_60_percent() =>
         Assert.Equal("0.6", _tokens.Resources["Brush.Overlay"].Attribute("Opacity")?.Value);
 
-    // §14.2: base sizes and line heights at scale 1.0, and one Double text-scale resource.
-    public static TheoryData<string, double, double> Ramp => new()
+    // §14.2 and the 2026-11 measured pass (docs/csharp/sindri-ui-design.md): size, line height and weight at scale 1.0.
+    public static TheoryData<string, double, double, string> Ramp => new()
     {
-        { "PageTitle", 20, 24 },
-        { "DetailTitle", 18, 22.5 },
-        { "Body", 13, 19.5 },
-        { "BodyStrong", 13, 19.5 },
-        { "Caption", 12, 16.8 },
-        { "Eyebrow", 11, 14.3 },
-        { "Button", 13, 15.6 },
-        { "Mono", 12, 18 },
-        { "Kbd", 11, 14.3 },
+        { "Display", 40, 44, "SemiBold" },
+        { "PageTitle", 24, 32, "SemiBold" },
+        { "SectionTitle", 15, 22, "SemiBold" },
+        { "DetailTitle", 20, 28, "SemiBold" },
+        { "Body", 13, 20, "Normal" },
+        { "BodyStrong", 13, 20, "Medium" },
+        { "Caption", 12, 18, "Normal" },
+        { "Eyebrow", 11, 16, "Normal" },
+        { "Button", 13, 15.6, "Medium" },
+        { "Mono", 12, 18, "Normal" },
+        { "Kbd", 11, 16, "Medium" },
     };
 
     [Theory]
     [MemberData(nameof(Ramp))]
-    public void Each_type_step_has_its_size_and_line_height(string step, double size, double lineHeight)
+    public void Each_type_step_has_its_size_line_height_and_weight(string step, double size, double lineHeight, string weight)
     {
         Assert.Equal(size, _tokens.Number($"Type.{step}.Size"));
         Assert.Equal(lineHeight, _tokens.Number($"Type.{step}.LineHeight"), 3);
+        Assert.Equal(weight, _tokens.Resources[$"Type.{step}.Weight"].Value.Trim());
     }
+
+    [Theory]
+    [InlineData("Compact", 28)]
+    [InlineData("Default", 32)]
+    [InlineData("Data", 36)]
+    [InlineData("Comfortable", 40)]
+    public void Each_row_height_has_its_value(string name, double height) => Assert.Equal(height, _tokens.Number($"Row.Height.{name}"));
+
+    // Every TextBlock class reads its step's size, line height and weight from the tokens; no literal size is left.
+    [Theory]
+    [InlineData("display", "Display")]
+    [InlineData("page-title", "PageTitle")]
+    [InlineData("section-title", "SectionTitle")]
+    [InlineData("detail-title", "DetailTitle")]
+    [InlineData("body", "Body")]
+    [InlineData("body-strong", "BodyStrong")]
+    [InlineData("caption", "Caption")]
+    [InlineData("eyebrow", "Eyebrow")]
+    [InlineData("button", "Button")]
+    [InlineData("mono", "Mono")]
+    [InlineData("kbd", "Kbd")]
+    public void Each_type_class_reads_its_tokens(string name, string step)
+    {
+        var style = TypographyStyles().Single(s => Selects(s, "TextBlock." + name));
+        string? Setter(string property) => style.Elements().Single(e => Attr(e, "Property") == property).Attribute("Value")?.Value;
+
+        Assert.Equal($"{{DynamicResource Type.{step}.Size}}", Setter("FontSize"));
+        Assert.Equal($"{{DynamicResource Type.{step}.LineHeight}}", Setter("LineHeight"));
+        Assert.Equal($"{{DynamicResource Type.{step}.Weight}}", Setter("FontWeight"));
+    }
+
+    // The inspora pass: tracking (px) per class, from the token PR spec.
+    [Theory]
+    [InlineData("display", "-0.8")]
+    [InlineData("page-title", "-0.24")]
+    [InlineData("section-title", "0")]
+    [InlineData("body", "-0.13")]
+    [InlineData("caption", "-0.24")]
+    [InlineData("mono", "0")]
+    public void Each_type_class_has_its_tracking(string name, string tracking)
+    {
+        var style = TypographyStyles().Single(s => Selects(s, "TextBlock." + name));
+
+        Assert.Equal(tracking, style.Elements().Single(e => Attr(e, "Property") == "LetterSpacing").Attribute("Value")?.Value);
+    }
+
+    // Code reads as typed (#4087): each mono class's own style turns JetBrains Mono's ligatures off.
+    [Theory]
+    [InlineData("TextBlock.mono")]
+    [InlineData("SelectableTextBlock.mono")]
+    [InlineData("TextBlock.kbd")]
+    public void Each_mono_class_turns_ligatures_off(string selector)
+    {
+        var style = TypographyStyles().Single(s => Selects(s, selector));
+
+        Assert.Equal("-calt, -liga", style.Elements().Single(e => Attr(e, "Property") == "FontFeatures").Attribute("Value")?.Value);
+    }
+
+    [Fact]
+    public void The_chart_inset_is_Surface2_and_a_floating_layer_has_its_shadow()
+    {
+        Assert.Equal("{StaticResource Color.Surface2}", _tokens.Resources["Brush.Chart.Inset"].Attribute("Color")?.Value);
+        Assert.Equal("0 8 24 0 #66000000", _tokens.Resources["Shadow.Float"].Value.Trim());
+    }
+
+    [Fact]
+    public void A_card_has_no_border_and_Space_LG_padding_and_a_status_chip_is_Radius_SM()
+    {
+        var app = XDocument.Load(Path.Combine(UiSource.Library, "Views", "SindriApp.axaml"));
+        var card = app.Descendants().Single(e => e.Name.LocalName == "Style" && e.Attribute("Selector")?.Value == "Border.card");
+        string? Setter(string property) => card.Elements().Single(e => Attr(e, "Property") == property).Attribute("Value")?.Value;
+
+        Assert.Equal("0", Setter("BorderThickness"));
+        Assert.Equal("{StaticResource Space.LG.Thickness}", Setter("Padding"));
+        Assert.DoesNotContain(card.Elements(), e => Attr(e, "Property") == "BorderBrush");
+
+        var chip = XDocument.Load(Path.Combine(UiSource.Theme, "StatusChip.axaml")).Descendants()
+            .First(e => e.Name.LocalName == "Style" && e.Attribute("Selector")?.Value == "Border.status-chip");
+        Assert.Equal("{StaticResource Radius.SM}", chip.Elements().Single(e => Attr(e, "Property") == "CornerRadius").Attribute("Value")?.Value);
+    }
+
+    [Fact]
+    public void Typography_has_no_literal_font_size_or_line_height() =>
+        Assert.DoesNotContain(
+            TypographyStyles().SelectMany(s => s.Elements()),
+            e => (string.Equals(Attr(e, "Property"), "FontSize", StringComparison.Ordinal) || string.Equals(Attr(e, "Property"), "LineHeight", StringComparison.Ordinal) || string.Equals(Attr(e, "Property"), "FontWeight", StringComparison.Ordinal)) && !(Attr(e, "Value") ?? "").StartsWith("{DynamicResource", StringComparison.Ordinal));
 
     [Fact]
     public void The_text_scale_starts_at_one() => Assert.Equal(1.0, _tokens.Number("Type.Scale"));
@@ -106,7 +254,7 @@ public sealed class TokenTests
     public static TheoryData<string, double> Numbers => new()
     {
         { "Space.XXS", 4 }, { "Space.XS", 8 }, { "Space.SM", 12 }, { "Space.MD", 16 }, { "Space.LG", 24 }, { "Space.XL", 32 }, { "Space.XXL", 48 },
-        { "Size.Row", 36 }, { "Size.RowComfortable", 40 }, { "Size.TopBar", 48 }, { "Size.Sheet", 520 }, { "Size.SheetMin", 420 }, { "Size.SheetMax", 760 },
+        { "Size.PanelHeader", 36 }, { "Size.TopBar", 48 }, { "Size.Sheet", 520 }, { "Size.SheetMin", 420 }, { "Size.SheetMax", 760 },
         { "Size.SheetCoversBelow", 1100 }, { "Size.WindowMinWidth", 1000 }, { "Size.WindowMinHeight", 600 },
         { "Size.PanelGap", 16 }, { "Size.Control", 30 }, { "Size.FocusRing", 2 },
         { "Size.Inspector", 480 }, { "Size.InspectorMin", 360 }, { "Size.BoardMin", 1230 }, { "Size.LaneMin", 200 }, { "Size.LaneMinLast", 150 },
@@ -126,6 +274,7 @@ public sealed class TokenTests
     [InlineData("Space.MD.Thickness", "16")]
     [InlineData("Motion.Instant", "0:0:0")]
     [InlineData("Motion.Fast", "0:0:0.120")]
+    [InlineData("Motion.Hover", "0:0:0.150")]
     [InlineData("Motion.Base", "0:0:0.180")]
     [InlineData("Motion.Pulse", "0:0:1.600")]
     [InlineData("Motion.Spin", "0:0:0.900")]
@@ -153,7 +302,9 @@ public sealed class TokenTests
 
     // §14.2: one TextBlock style class per type step.
     [Theory]
+    [InlineData("display")]
     [InlineData("page-title")]
+    [InlineData("section-title")]
     [InlineData("detail-title")]
     [InlineData("body")]
     [InlineData("body-strong")]
@@ -166,10 +317,17 @@ public sealed class TokenTests
     {
         var styles = XDocument.Load(Path.Combine(UiSource.Theme, "Typography.axaml")).Descendants().Where(e => e.Name.LocalName == "Style");
 
-        Assert.Contains(styles, s => s.Attribute("Selector")?.Value == "TextBlock." + name);
+        Assert.Contains(styles, s => Selects(s, "TextBlock." + name));
     }
 
+    private static IEnumerable<XElement> TypographyStyles() =>
+        XDocument.Load(Path.Combine(UiSource.Theme, "Typography.axaml")).Descendants().Where(e => e.Name.LocalName == "Style");
+
     private static string? Attr(XElement e, string name) => e.Attribute(name)?.Value;
+
+    // A style's selector may be a comma list ("TextBlock.caption, SelectableTextBlock.caption", #3785): it selects one of its parts exactly.
+    private static bool Selects(XElement style, string selector) =>
+        (Attr(style, "Selector") ?? "").Split(',', StringSplitOptions.TrimEntries).Contains(selector, StringComparer.Ordinal);
 
     private static List<string> Names(string prefix) =>
         [.. _tokens.Resources.Keys.Where(k => k.StartsWith(prefix, StringComparison.Ordinal) && !k[prefix.Length..].Contains('.', StringComparison.Ordinal)).Select(k => k[prefix.Length..])];

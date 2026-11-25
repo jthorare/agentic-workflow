@@ -47,6 +47,9 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string ResourceSizeOf(string size, string limit) => size + " of " + limit;
 
+    /// <summary>The size of a disk that has too many files to measure.</summary>
+    internal const string ResourceUnmeasured = "Too many files to measure";
+
     /// <summary>The page's one-line purpose.</summary>
     internal const string ResourcesPurpose = "What each owner holds: databases and folders, with their size. Purge deletes everything one owner holds, and is refused while that owner is active.";
 

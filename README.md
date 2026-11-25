@@ -1,6 +1,6 @@
 # Agentic Workflow
 
-A portable, provider-agnostic workflow toolkit for AI coding agents. It works the same way in **Claude Code**, **Codex**, and **Cursor**: 59 native skills plus 3 fetched external design packs (impeccable, emil-design-eng, taste-skill), a repo bootstrapper, safety hooks, a cheap-decision judge, Sindri (the C# control plane and workflow engine), and a token-efficiency tool (the rtk command rewriter).
+A portable, provider-agnostic workflow toolkit for AI coding agents. It works the same way in **Claude Code**, **Codex**, and **Cursor**: 59 native skills plus 5 fetched external packs (impeccable, emil-design-eng, taste-skill, tdd-artifact, ui-sdk), a repo bootstrapper, safety hooks, a cheap-decision judge, Sindri (the C# control plane and workflow engine), and a token-efficiency tool (the rtk command rewriter).
 
 There is one canonical core: skills, hook logic, MCP servers, and judge. Each provider gets a thin adapter on top. Skills describe *capabilities* ("ask the user", "spawn a subagent", "call an MCP tool"), and each provider maps those to its own tools. See [Providers](#providers) and [`planning/PROVIDERS.md`](planning/PROVIDERS.md).
 
@@ -26,14 +26,14 @@ This toolkit supports an end-to-end product workflow where **AI sessions replace
 /officeHours [feature or problem]
 ```
 
-**Human in the loop:** This is a back-and-forth collaboration. The agent proposes requirements and you push back. It drafts the technical design, and you redirect priorities and flag constraints it doesn't know about. Think of it as a YC office hours session: you leave with decisions made, not just options listed. It also gives structure to multi-team collaboration. Product and engineering can align on vision, scope, and trade-offs in a shared session before anyone writes a line of code. The output lands in `~/.agentic-workflow/<repo>/plans/<feature>/`: a canonical `plan.md` handoff plus per-owner docs:
+**Human in the loop:** This is a back-and-forth collaboration. The agent proposes requirements and you push back. It drafts the technical design, and you redirect priorities and flag constraints it doesn't know about. Think of it as a YC office hours session: you leave with decisions made, not just options listed. It also gives structure to multi-team collaboration. Product and engineering can align on vision, scope, and trade-offs in a shared session before anyone writes a line of code. The output lands in `~/.agentic-workflow/<repo>/plans/<feature>/`: a canonical `plan.md` handoff, which opens with the ROI and data-analysis plan (`skills/_shared/roi-analysis.md`), plus per-owner docs:
 
 | File | Owner | Contents |
 |------|-------|----------|
 | `product.md` | Product | Problem statement, EARS requirements, acceptance criteria, success metrics, MVP scope |
 | `engineering.md` | Engineering | Current state, approach, architecture decisions, open questions |
 | `design-brief.md` | Design | Experience goals, key interactions, UX requirements, design language reference |
-| `TASKS.md` | Engineering | Atomic task breakdown with `domain` tags for cross-team visibility |
+| `TASKS.md` | Engineering | Atomic task breakdown with `domain` tags for cross-team visibility, ending with the performance sweep and then the bug sweep (`skills/_shared/closing-sweeps.md`) |
 
 Each file is a standalone artifact. Everyone leaves the session with a doc they own, not a monolith that nobody owns.
 
@@ -93,7 +93,7 @@ The toolkit treats Claude Code, Codex, and Cursor as equal hosts. `setup.sh` ins
 
 | Feature | Claude Code | Codex | Cursor |
 |---------|-------------|-------|--------|
-| Native skills + external design packs | Yes | Yes | Yes |
+| Native skills + external packs | Yes | Yes | Yes |
 | Invocation | `/<name>` | `$<name>` | `/<name>` |
 | Skills installed to | `~/.claude/skills/` | `~/.codex/skills/` | `~/.cursor/skills/` |
 | Repo instructions | `CLAUDE.md` (symlink to `AGENTS.md`) + `.claude/rules` (symlink) | `AGENTS.md` (Rules Index) | `AGENTS.md` + `.cursor/rules/*.mdc` (symlinks) |
@@ -150,7 +150,7 @@ cd ~/repos/agentic-workflow
 The setup script:
 - Checks hard prerequisites (`jq`, Docker) and detects which provider CLIs are installed (or uses `--providers`)
 - Creates the `~/.agentic-workflow/toolkit` symlink and writes the `~/.agentic-workflow/providers` registry
-- Symlinks native skills, `/bootstrap`, and the external design packs (cloned at pinned commits from `EXTERNAL_PINS.env`) into each selected provider's skills directory
+- Symlinks native skills, `/bootstrap`, and the external packs (four cloned at pinned commits from `EXTERNAL_PINS.env`; ui-sdk from `vercel-labs/ui` is unpinned by the owner's decision and follows the upstream default branch) into each selected provider's skills directory
 - Installs the safety hooks (`block-destructive.sh`, `block-push-main.sh`, `detect-secrets.sh`, `rtk-rewrite.sh`) and session-context hooks for each provider. Claude Code uses them natively; Codex and Cursor go through their hook adapters.
 - Publishes the C# binaries (`sindri`, `sindri-ui`, `judge`, `aw-packets`, `bugfix-state`, `ui-evidence`, `aw-readiness`) with `scripts/install-cs.sh` into `$AW_STATE_DIR/bin/cs/` and links them into `~/.local/bin`; removes what an older TypeScript install left (`scripts/cutover-clean-ts.sh`)
 - Builds the Serena Docker images (base TS/Python image; opt-in C# and Swift extensions) and installs the `serena-docker` wrapper to `~/.local/bin/`
@@ -158,6 +158,8 @@ The setup script:
 - Configures `prism-mcp` (persistent memory, downloaded on first use) with its Mind Palace dashboard at `http://localhost:7180` (`PRISM_DASHBOARD_PORT`). The `prism-context.sh` session-start hook warns if the dashboard is unreachable; `/prismStatus` runs a full health check
 - Installs rtk
 - Installs [tldraw offline](https://github.com/tldraw/tldraw-offline), a local whiteboard agents can drive to draw diagrams (`brew install --cask tldraw` on macOS, the pinned AppImage on Linux; skip with `--no-tldraw`). Its agent skills come from the app: open it and choose **Develop → Install Agent Skills** (setup prints this until a provider has the skill), and keep the app open while an agent draws
+- With `--with-warp-layout` (opt-in, macOS, needs Warp.app), installs the Warp window layout (`scripts/warp-screen-layout/install.sh`, adds a block to `~/.zshrc`): Control-Option-1 through 0 tiles that many open Warp windows. Run setup from a Warp or Cursor terminal so the mover inherits that app's Accessibility access
+- Opt-in (`./setup.sh --with-mods`, or `scripts/install-mods.sh [--dry-run]`): installs the Claude Code mods in `mods/` (`pr-line`, a PR status line under the prompt, and `my-prs`, a `/prs` pane) through `claude plugin`; their options (bot reviewers, check prefixes, home repo) are set with `claude plugin configure <mod>`
 - **Claude Code only:** copies `settings.json`, installs the statusline and shell integration, and adds plugin marketplaces and plugins
 
 ## Contents
@@ -168,7 +170,7 @@ The setup script:
 
 | Stage | Skills |
 |-------|--------|
-| Ideation & planning | `withInterview`, `enhancePrompt`, `officeHours`, `autoplan`, `productReview`, `archReview`, `planDesignReview`, `planDevexReview`, `system-design`, `system-design-video` |
+| Ideation & planning | `withInterview`, `enhancePrompt`, `officeHours`, `autoplan`, `productReview`, `archReview`, `planDesignReview`, `planDevexReview`, `system-design`, `system-design-video`, `tdd-artifact` (external pack) |
 | Design | `design-analyze`, `design-language`, `design-evolve`, `design-shotgun`, `clickable-prototype`, `design-mockup`, `design-implement`, `design-refine`, `design-verify` (dispatchers auto-detect web/iOS and route to their `-web` / `-ios` sub-skills) |
 | Build & verify | `specToProvenPR`, `verify-app` (→ `verify-web`, `verify-ios`, `verify-desktop`), `ui-evidence`, `ui-before-after`, `formal-verify` |
 | C# scaffolds | `new-package`, `new-slice`, `new-toolkit` |

@@ -14,6 +14,9 @@ public sealed class StatusSessionsTests
 
     private GetStatusService Service() => new(_v.Slice.Held, new ProfileReads(_v.Slice.Profiles, _v.Slice.Profiles), _v.Slice.Store, _v.Progress, new HealthServiceRows(_v.Views, []), _snapshot);
 
+    // Live, asking, problems, running: the record also carries the problem rows (#4012), which these tests leave to StatusSessionProblemsTests.
+    private static (int, int, int, int) Counts(SessionStatus s) => (s.Live, s.Asking, s.Problems, s.Running);
+
     [Fact, Trait("Lane", "unit")]
     public async Task Status_counts_the_live_asking_and_problem_sessions_of_the_last_pass()
     {
@@ -21,7 +24,7 @@ public sealed class StatusSessionsTests
 
         var status = (await Service().Handle(new GetStatusRequest(), TestContext.Current.CancellationToken)).Value;
 
-        Assert.Equal(new SessionStatus(Live: 3, Asking: 1, Problems: 1, Running: 1), status.Sessions);
+        Assert.Equal((3, 1, 1, 1), Counts(status.Sessions!));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -29,6 +32,6 @@ public sealed class StatusSessionsTests
     {
         var status = (await Service().Handle(new GetStatusRequest(), TestContext.Current.CancellationToken)).Value;
 
-        Assert.Equal(new SessionStatus(0, 0, 0, 0), status.Sessions);
+        Assert.Equal((0, 0, 0, 0), Counts(status.Sessions!));
     }
 }

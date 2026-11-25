@@ -10,8 +10,9 @@ namespace Aw.Sindri.Infrastructure.Control;
 /// Starts '&lt;this binary&gt; serve' through /bin/sh with exec, so the pid is the control plane's, stdin is /dev/null and
 /// its output is appended to &lt;home&gt;/logs/serve.log (0600, under umask 077): the child keeps no pipe of the terminal
 /// that started it. It runs in its own session (perl's POSIX::setsid before the exec), so a Ctrl-C during the start wait
-/// or a kill of the starting terminal's process group doesn't reach it; without /usr/bin/perl it is a plain exec. When
-/// perl's exec fails it writes 'SND-CLI-002 exec &lt;path&gt;: &lt;reason&gt;' to the log, so the start reports why.
+/// or a kill of the starting terminal's process group doesn't reach it. A failed setsid or exec stops the start: perl writes
+/// 'SND-CLI-002 setsid: &lt;reason&gt;' or 'SND-CLI-002 exec &lt;path&gt;: &lt;reason&gt;' to the log, so the start reports why.
+/// Without /usr/bin/perl it is a plain exec, after one log line that doesn't start with 'SND-' saying serve is not detached.
 /// The log is appended to across runs, so the child's error line is looked for only past the length the log had before it
 /// started: an earlier run's 'SND-LEASE-001' isn't this child's.
 /// </summary>
@@ -50,7 +51,9 @@ internal sealed class ServeLauncher : IControlPlaneLauncher
         }
 
         var start = File.Exists(log) ? new FileInfo(log).Length : 0;
-        var detach = File.Exists(Perl) ? $"exec {Perl} -MPOSIX -e 'POSIX::setsid(); exec @ARGV or die \"SND-CLI-002 exec $ARGV[0]: $!\\n\"'" : "exec";
+        var detach = File.Exists(Perl)
+            ? $"exec {Perl} -MPOSIX -e 'POSIX::setsid() == -1 and die \"SND-CLI-002 setsid: $!\\n\"; exec @ARGV or die \"SND-CLI-002 exec $ARGV[0]: $!\\n\"'"
+            : "echo \"sindri: /usr/bin/perl not found, so serve runs in this terminal's session (not detached)\" >>\"$1\"; exec";
         var process = Process.Start(ChildEnvironment.Start("/bin/sh", ["-c", $"umask 077; {detach} \"$0\" serve </dev/null >>\"$1\" 2>&1", self, log]));
         if (process is null)
         {

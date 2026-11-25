@@ -43,7 +43,7 @@ The visual system is right and the semantic system is loose. The pages look like
 - **[P1] The topbar overflows at 1280 two ways.** The base's 220 px search pushes the health pill off the edge (eight files clip "◇ profile changed"); three files shrink the search to 192 px and clip the ⌘K kbd instead. *Fix once in the shell.* **/impeccable layout**
 - **[P1] Initial focus and single keys put the riskiest action first.** Take over pre-focused in workflow-project (↵ ↵ from the list is a takeover); Accept pre-focused on Home; Cancel X as a bare ghost button on every Agents row; "Accept all deterministic" commits 31 writes with no undo. *Fix:* focus the read action, move Cancel behind the chevron or a confirm, draw an undo state. **/impeccable harden**
 - **[P1] One glyph set, three legends.** ● is done, live, ok and Live; ◐ is in progress, with you, degraded and "2 in progress" (◐◐); ○ is not started and absent; with-you is ◎ on Home and Work and ◐ on Agents. *Fix:* one vocabulary and one legend, colour following the glyph identically. **/impeccable clarify**
-- **[P2] Five spellings of the protected label, all with the banned dash.** "Grant rounds — at a terminal", "Grant rounds — terminal", "Grant — terminal", "Approve at a terminal", "accept at a term." as passive text. *Fix:* one pattern without the dash, always a button. **/impeccable clarify**
+- **[P2] Five spellings of the protected label, all with the banned dash.** `"Grant rounds — at a terminal"`, `"Grant rounds — terminal"`, `"Grant — terminal"`, "Approve at a terminal", "accept at a term." as passive text. *Fix:* one pattern without the dash, always a button. **/impeccable clarify**
 - **[P2] Side-stripes and the always-pulsing band.** The stripes duplicate the chip and the word; the band pulses forever on all eleven pages, including three where nothing needs anyone. *Fix:* delete the bars, tint the row with `--attn-soft`, make the band static and present only while the needs-you count is non-zero. **/impeccable quieter**
 - **[P2] The item sheet is 520 wide while its frame is 760.** Facts wrap to three lines, Children 0 occupies a 164 px column for one sentence, the list behind loses Step, Agent and Since. *Fix:* 760 for every instance sheet; Children 0 as a footer line. **/impeccable layout**
 - **[P2] Type and padding floor (from B).** 10.5 px functional labels, 11.5 px body, text flush against chip and cell edges. *Fix:* floor functional text at 11 px and body at 12 px, two sizes below the title instead of six, 2 to 4 px inset on chips and kbd. **/impeccable typeset**
@@ -123,7 +123,7 @@ Passes the product slop test: one shell, one button vocabulary, one glyph set wi
 
 ## Minor Observations
 
-"needs you now" repeated under three chips; the failed-service row tinted orange beside a red ✕; two "since" values on the item sheet with no label; the behind-lists kept pre-fix column widths; "Pause in the menu" promised but not drawn; destructive before Keep in confirms; press transform on two pages only; no legend on Recipes; the Node panel stretched with empty surface; "Accept all deterministic" enabled above the toast; "212 queries / 7 d" on the SVG edge; the vertical sheet-tab handle is the one invented affordance; `--ink` and `--ink-muted` near-indistinguishable on dark.
+"needs you now" repeated under three chips; the failed-service row tinted orange beside a red ✕; two "since" values on the item sheet with no label; the behind-lists kept pre-fix column widths; "Pause in the menu" promised but not drawn; destructive before Keep in confirms; press transform on two pages only; no legend on Recipes; the Node panel stretched with empty surface; "Accept all deterministic" enabled above the toast; "212 queries / 7 d" on the SVG edge; the vertical sheet-tab grip is the one invented affordance; `--ink` and `--ink-muted` near-indistinguishable on dark.
 
 ## Questions to Consider
 
@@ -282,7 +282,7 @@ Target: `docs/superpowers/specs/2026-10-13-sindri-ui-screens-design/mockups/` at
 
 ## Anti-Patterns Verdict
 
-Not slop; every ban passes in source. Three things would make a Linear-fluent engineer pause: the vertical sheet handle on Home and Workflows, the dashed "Available with API P6" chip in product chrome, and Attach appearing in four shapes across five surfaces.
+Not slop; every ban passes in source. Three things would make a Linear-fluent engineer pause: the vertical sheet grip on Home and Workflows, the dashed "Available with API P6" chip in product chrome, and Attach appearing in four shapes across five surfaces.
 
 ## What's Working
 

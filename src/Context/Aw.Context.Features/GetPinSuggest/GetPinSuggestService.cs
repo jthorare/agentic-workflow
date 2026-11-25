@@ -124,7 +124,7 @@ internal sealed class GetPinSuggestService(ConceptReader reader, IIntentStore in
     // The mask the query pipeline builds (QueryPipeline.WithRecordStore): the audiences of the repos in scope (the repo a human named, when they named one), a human's Slack channels, and a session's map records.
     private static async ValueTask<Result<AudienceScope>> Audience(ContextSettings settings, ContextScope scope, string? repo, GraphSnapshot graph, CancellationToken cancellationToken)
     {
-        var resolved = ScopeRules.Resolve(settings, scope.Repos, scope.Caller);
+        var resolved = ScopeRules.Resolve(settings, scope.Repos, scope.Caller, scope.LeftOut);
         if (resolved.IsError && resolved.Error.Code != ContextErrors.UnknownAnchor.Code)
         {
             return resolved.Error;

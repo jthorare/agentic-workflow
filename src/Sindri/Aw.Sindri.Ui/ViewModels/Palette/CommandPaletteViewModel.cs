@@ -14,16 +14,6 @@ namespace Aw.Sindri.Ui.ViewModels.Palette;
 /// </summary>
 internal sealed partial class CommandPaletteViewModel : ObservableObject
 {
-    // The Sindri section's catalog rows, in its order.
-    private static readonly string[] _sindri = ["RebuildViews", "StopProcess"];
-
-    // §8's G-chords (and ⌘, for Settings), by page.
-    private static readonly (PageId Page, string Key)[] _pages =
-    [
-        (PageId.Home, "G H"), (PageId.Projects, "G P"), (PageId.Work, "G Q"), (PageId.Context, "G C"), (PageId.Agents, "G A"),
-        (PageId.System, "G ."), (PageId.Reviews, "G V"), (PageId.Jobs, "G J"), (PageId.Connections, "G O"), (PageId.Memory, "G M"), (PageId.Workflows, "G W"), (PageId.Resources, "G R"), (PageId.Settings, "⌘,"),
-    ];
-
     private readonly CatalogViewModel _catalog;
     private readonly Action<PageId> _goTo;
     private readonly Action? _openTodo;
@@ -46,6 +36,12 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
 
     /// <summary>Opens the Create item form, or null.</summary>
     internal Action? CreateItem { get; }
+
+    /// <summary>Opens the Add project sheet (the AttachProject entry, "Add project", runs it; issue 3717); null leaves that entry unrunnable.</summary>
+    internal Action? AddProject { get; init; }
+
+    /// <summary>Shows Settings filtered to the words it is given (a Settings entry runs it); null leaves the Settings section out (#3362).</summary>
+    internal Action<string>? OpenSetting { get; init; }
 
     /// <summary>Opens the quick-add box, or null.</summary>
     internal Action? NewTodo { get; }
@@ -168,6 +164,10 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
 
         switch (entry)
         {
+            case { SettingWords.Length: > 0 }:
+                OpenSetting?.Invoke(entry.SettingWords);
+                Close();
+                break;
             case { Page: { } page }:
                 // The page changes first, so the region the close hands focus back to already carries the new page's name.
                 _goTo(page);
@@ -194,12 +194,14 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
 
         var sindri = _sindri.Select(_catalog.For).OfType<ControlViewModel>().Select(c => PaletteEntry.For(c, Runs(c), NotRun(c), OpensForm(c)))
             .Append(PaletteEntry.For(PageId.System, "G ."));
-        return
-        [
-            new(Labels.PaletteActions, [.. actions]),
-            new(Labels.PaletteGoTo, [.. GoTo()]),
-            new(Labels.Sindri, [.. sindri]),
-        ];
+        List<PaletteSection> sections = [new(Labels.PaletteActions, [.. actions]), new(Labels.PaletteGoTo, [.. GoTo()])];
+        if (OpenSetting is not null)
+        {
+            sections.Add(new(Labels.PaletteSettings, SettingEntries()));
+        }
+
+        sections.Add(new(Labels.Sindri, [.. sindri]));
+        return sections;
     }
 
     // Home first, then Todo (G T, Home with the Todo panel focused), then the other pages.
@@ -217,13 +219,14 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
         (control.IsSendable && !control.IsDestructive) || control.Action == "StopProcess"
         || OpensForm(control) || (control.IsCopyOnly && control.CanCopy && !NeedsForm(control) && !ItemSheetViewModel.IsSheetAction(control.Action));
 
-    // Create item and Start workflow are done in a form or dialog of the app: with none to open (no shell) they are not a command to copy here, and not runnable.
+    // Create item, Add project and Start workflow are done in a form, sheet or dialog of the app: with none to open (no shell) they are not a command to copy here, and not runnable.
     private static bool NeedsForm(ControlViewModel control) => string.Equals(control.Action, "CreateItem", StringComparison.Ordinal)
+        || string.Equals(control.Action, "AttachProject", StringComparison.Ordinal)
         || string.Equals(control.Action, "StartInstance", StringComparison.Ordinal);
 
-    // Create item opens its form (when the shell has one).
+    // Create item opens its form and Add project its sheet (when the shell has them).
     private bool OpensForm(ControlViewModel control) =>
-        control.Action == "CreateItem" && CreateItem is not null;
+        (control.Action == "CreateItem" && CreateItem is not null) || (control.Action == "AttachProject" && AddProject is not null);
 
     // What a sendable row that Enter skips says instead of "ready": where it lives, or that the app has no sender for it.
     private static string NotRun(ControlViewModel control) =>

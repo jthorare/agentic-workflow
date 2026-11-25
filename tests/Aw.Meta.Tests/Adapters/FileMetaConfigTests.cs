@@ -92,6 +92,8 @@ public sealed class FileMetaConfigTests : IDisposable
     [InlineData("\"builders\":{\"maxPerLane\":0}")]
     [InlineData("\"builders\":{\"worktreeGb\":-4}")]
     [InlineData("\"heavy\":{\"cap\":0}")]
+    [InlineData("\"defects\":{\"dailyCap\":0}")]
+    [InlineData("\"defects\":{\"dailyCap\":-2}")]
     public async Task A_threshold_outside_its_range_is_AW_META_003(string key)
     {
         var (config, _) = Make(Base + "," + key + "}");
@@ -100,6 +102,37 @@ public sealed class FileMetaConfigTests : IDisposable
 
         Assert.Equal(MetaErrors.ConfigInvalid.Code, loaded.Error.Code);
         Assert.Contains("must be", loaded.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_blank_defects_repo_is_AW_META_003()
+    {
+        var (config, _) = Make(Base + ",\"defects\":{\"repo\":\"  \"}}");
+
+        var loaded = await config.Load(CancellationToken.None);
+
+        Assert.Equal(MetaErrors.ConfigInvalid.Code, loaded.Error.Code);
+        Assert.Contains("defects.repo", loaded.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_team_file_without_defects_reads_the_default_repo_and_cap()
+    {
+        var (config, _) = Make(Base + "}");
+
+        var defects = (await config.Load(CancellationToken.None)).Value.Defects;
+
+        Assert.Equal(("jthorare/agentic-workflow", 3), (defects.Repo, defects.DailyCap));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_defects_block_with_only_a_repo_reads_the_default_cap()
+    {
+        var (config, _) = Make(Base + ",\"defects\":{\"repo\":\"x/y\"}}");
+
+        var defects = (await config.Load(CancellationToken.None)).Value.Defects;
+
+        Assert.Equal(("x/y", 3), (defects.Repo, defects.DailyCap));
     }
 
     [Fact, Trait("Lane", "integration")]

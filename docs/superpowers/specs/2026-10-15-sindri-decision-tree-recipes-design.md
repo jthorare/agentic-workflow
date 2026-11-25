@@ -13,7 +13,7 @@ chain the blocks as child workflows. A better review loop or evidence block then
 later one, at once.
 
 The new mechanism is the **decision tree**: a recipe declares several fixed branches, and a judge Step picks one at run
-time from what the work actually is. A branch can diverge for one step and reconverge, or diverge into a separate path.
+time from what the work is. A branch can diverge for one step and reconverge, or diverge into a separate path.
 The first use is choosing which evidence proves a change.
 
 Recipes stay schema 1, with one additive form: a `produces` entry may rename a child's output (§8.4). There is no new
@@ -689,12 +689,12 @@ found anything CRITICAL. Revision 2 fixes every HIGH and MEDIUM finding as follo
   (§8.2). Sindri reaches Judge through a `cli` edge (§8.3). Descriptor hashes stay put (§8.1). The phase graph is
   rebuilt: descriptors land in DT-V and DT-R, and DT-B needs P7 and the evidence activity. All recipes live in one
   directory (§4). `behaviourWrong` is in §4.1. Reproduce reports Step outcomes (§5.5), and there is one attempt
-  counter (§6.1). Child `cancelled` is handled (§3.5). The edges and the Evidence Judge adapter are declared (§8.8).
+  counter (§6.1). Child `cancelled` is covered (§3.5). The edges and the Evidence Judge adapter are declared (§8.8).
   The wrong rule id is fixed (`RCP-CAP-002`), and the CLIs get a `confidence` field (§8.3).
 - **Design:** §9 is new: the desk choice, empty states, the choice control, the route column, and the deep-child NOW
   cell. The route lists `uncertain` last (`RCP-CHOICE-006`). `fact:decision` is type `payload`. Judge failures go to
   the desk. The route parks instead of retrying. The `next` texts are instructions. `other` asks once.
-- **Devex:** the desk twin copies nothing (`from:`). The choices grammar handles a colon in the criterion, and an
+- **Devex:** the desk twin copies nothing (`from:`). The choices grammar accepts a colon in the criterion, and an
   unquoted entry gets its own message. There is a sample `uncertain` eval and a placeholder `fact:decision`. Each
   phase lists its docs, and the approval order is written down. The seed template and the pinning rule are in §7.
 - **Security:** Jev is opt-in, and every Judge-calling block takes the profile's providers (DT8, §3.4). `evidence-db`

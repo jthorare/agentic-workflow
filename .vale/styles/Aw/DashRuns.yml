@@ -1,0 +1,7 @@
+# The slop list, em-dash runs: one dash aside per sentence at most. Split the sentence or use a colon.
+extends: occurrence
+message: "More than one dash in this sentence. Split it in two, or use a colon or parens."
+level: error
+scope: sentence
+max: 1
+token: '—|\s–\s|\s--\s'

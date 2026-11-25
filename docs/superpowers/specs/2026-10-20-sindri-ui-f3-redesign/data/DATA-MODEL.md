@@ -1,4 +1,4 @@
-# Sindri workflow data model (what the UI can really show)
+# Sindri workflow data model (what the UI can show)
 
 Source: repo `~/repos/agentic-workflow`, **read from git branch `batch/2026-10-19a` (7626e709a)**, extracted to
 `data/_src/` (read-only copy; paths below are repo-relative and exist in that copy). The detached HEAD of the working tree
@@ -45,7 +45,7 @@ reference `docs/csharp/sindri-workflow.md:266` (States), `:287` (Transitions).
 Recipe standing (from `recipe list`): `approved` \| `unapproved` \| `revoked`; stale marks `pin-drift`, `child-stale`,
 `legacy-shape` (`docs/csharp/sindri-workflow.md:151` area). Only approved recipes can start instances.
 
-**What the API actually serves of a recipe** (`Views/RecipeView.cs`, goldens `Golden/Api/workflow-recipe/*.json`): `{id, hash, version, name, inputs[], outputs[], urgency, orderedBy, states[{id, order, branchOf}], loops[{name, from, to, cap}]}`. **No transitions (edges), no Step per state, no state kind, no timeouts, no description.** The graph in `sample.json.recipes` is built from the YAML and its normalized long form; to draw edges in the real app, a new read (the full normalized recipe, `recipe validate --json` `normalized`) must be served.
+**What the API serves of a recipe** (`Views/RecipeView.cs`, goldens `Golden/Api/workflow-recipe/*.json`): `{id, hash, version, name, inputs[], outputs[], urgency, orderedBy, states[{id, order, branchOf}], loops[{name, from, to, cap}]}`. **No transitions (edges), no Step per state, no state kind, no timeouts, no description.** The graph in `sample.json.recipes` is built from the YAML and its normalized long form; to draw edges in the real app, a new read (the full normalized recipe, `recipe validate --json` `normalized`) must be served.
 
 ### State (`Recipe/RecipeState.cs:22`, `StateKind.cs:7`)
 

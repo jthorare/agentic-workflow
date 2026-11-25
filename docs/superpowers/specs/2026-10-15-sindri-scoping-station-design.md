@@ -598,10 +598,10 @@ severity: fail | warn }] }`, written as `fact:findings` and printed by `--json`.
   and cap: after a failed gap sync the check waits 1 h, then doubles up to 24 h; after 3 failures in a row it stops
   starting syncs for the gap until the profile changes or a sync succeeds (any sync, such as the owner's
   `sindri context sources sync`). The scoping steps stay read-only: they only read the `sync` pair. The stop's row
-  reads, by the pair, in five sentences: `sync: null` "not searched: never synced — a sync starts shortly"; queued
-  "not searched: never synced — sync queued"; running "not searched: never synced — sync running"; finished "not
-  searched: never synced — synced since; rescope to include it"; failed "not searched: never synced — the sync
-  failed (<code>); retrying at <time>" or "…stopped after 3 failures: run `sindri context sources sync` once it's
+  reads, by the pair, in five sentences: `sync: null` `"not searched: never synced — a sync starts shortly"`; queued
+  `"not searched: never synced — sync queued"`; running `"not searched: never synced — sync running"`; finished `"not
+  searched: never synced — synced since; rescope to include it"`; failed `"not searched: never synced — the sync
+  failed (<code>); retrying at <time>"` or "…stopped after 3 failures: run `sindri context sources sync` once it's
   fixed". (A source whose sync failed before the read carries its own error code and regathers; the failed sentence
   shows when the job fails after the gather.) Approval is allowed in every one of these states. The owner's
   `rescope` (or a `regather` for another reason) reads the history lens again and picks the synced source up;

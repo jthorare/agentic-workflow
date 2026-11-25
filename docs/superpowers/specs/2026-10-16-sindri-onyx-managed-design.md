@@ -1,4 +1,4 @@
-# Sindri-managed Onyx: Sindri stands up Onyx, the owner only logs in and connects
+# Sindri-run Onyx: Sindri stands up Onyx, the owner only logs in and connects
 
 > **Superseded by 2026-10-27** (`2026-10-27-sindri-owned-index-design.md`): Onyx is removed; Sindri reads GitHub, Slack and Linear itself. Kept as history.
 
@@ -35,13 +35,13 @@ Slack (OAuth, in Onyx's UI). From then on every `sindri-app` (through `serve`) k
 
 | # | Decision | By |
 |---|---|---|
-| O1 | Sindri stands Onyx up as a managed dependency: fetches the pinned pieces, writes the config, starts and stops the containers, bootstraps the admin and the key. The owner's only manual steps are signing in and connecting sources (OAuth) in Onyx's UI | owner, 2026-10-16 |
+| O1 | Sindri stands Onyx up as a Sindri-run dependency: fetches the pinned pieces, writes the config, starts and stops the containers, bootstraps the admin and the key. The owner's only manual steps are signing in and connecting sources (OAuth) in Onyx's UI | owner, 2026-10-16 |
 | O2 | Sindri may send the Onyx requests needed to mint its own key **at setup only**, beyond the five-request allowlist of `docs/sindri/onyx.md` §7. The query adapter's allowlist stays exactly five (§5) | owner, 2026-10-16 |
 | O3 | The owner does Onyx's initial setup, not Sindri: the owner registers their own account in Onyx's UI (Onyx makes the first registered user the admin), so connectors and their OAuth grants are the owner's. Sindri never registers the owner's account and never stores the owner's password; to set up its own dedicated user and token it asks for the owner's Onyx login once at the terminal (§4.1 step 7) and forgets it. The one account Sindri does register is its own dedicated user (O7) | owner, 2026-10-16 |
 | O7 | Revised 2026-10-19 after the first real run: Onyx CE gates `/admin/api-key` and the user-group list at the Business tier (402, `tier_gate`), so a service-account key can't be made. Sindri registers **one dedicated admin user**, `sindri@example.com`, with a random password it never stores or prints, and uses a **personal access token** of that user (CE, unscoped, no expiry) as its key. The query side already sends Bearer, so it is unchanged. The allowlist of §5.2 becomes ten requests (nine routes and a delete pattern) | owner, 2026-10-19 |
 | O3a **(SO-15)** | The owner's Onyx admin login for step 7 may be given in the app as well as at the terminal, in two calls: `POST /onyx/setup` starts the stack and the job waits for the owner's browser sign-up, then `POST /onyx/account` (a form) carries the login; the password is a secret type, used once and dropped, never logged, recorded or stored in a job. From setup-once A7b, `setup.sh` no longer runs `onyx up` unless `--with-onyx` (it opens the app, where Onyx is the last step; until then it keeps the default). The terminal command `sindri-app onyx up` stays | owner, 2026-10-19 (pending Q4 in the setup-once spec) |
-| O4 | `serve` starts a managed Onyx and `stop` stops it (containers stopped, volumes kept). An unmanaged Onyx (today's manual setup) is never touched | builder's call; owner to confirm |
-| O6 | `sindri-app` (#278) is the entry point. Bare `sindri-app` at a terminal, on a box where Onyx isn't set up (no `context.sources.onyx` in the profile, or a managed one whose `onyx up` never finished), offers the setup before it starts the control plane: "Set up Onyx (Sindri's business-context search) now? [Y/n]". Yes runs §4.1 in that terminal; no starts Sindri without it and leaves a needs-you row "Set up Onyx: `sindri-app onyx up`", and the offer isn't repeated until the owner runs it. Not at a terminal (stdin isn't a tty), or in an agent session: no offer, the needs-you row only | owner, 2026-10-16 (the entry point); the offer's wording and the once-only rule are the writer's calls |
+| O4 | `serve` starts a Sindri-run Onyx and `stop` stops it (containers stopped, volumes kept). An unmanaged Onyx (today's manual setup) is never touched | builder's call; owner to confirm |
+| O6 | `sindri-app` (#278) is the entry point. Bare `sindri-app` at a terminal, on a box where Onyx isn't set up (no `context.sources.onyx` in the profile, or a Sindri-run one whose `onyx up` never finished), offers the setup before it starts the control plane: "Set up Onyx (Sindri's business-context search) now? [Y/n]". Yes runs §4.1 in that terminal; no starts Sindri without it and leaves a needs-you row "Set up Onyx: `sindri-app onyx up`", and the offer isn't repeated until the owner runs it. Not at a terminal (stdin isn't a tty), or in an agent session: no offer, the needs-you row only | owner, 2026-10-16 (the entry point); the offer's wording and the once-only rule are the writer's calls |
 | O5 | Docker itself is a prerequisite, not something Sindri installs (Docker Desktop needs an interactive install and admin rights). Sindri detects it and says how to get it | builder's call; owner to confirm |
 
 ## 2. Goals, non-goals, anti-goals
@@ -55,7 +55,7 @@ Slack (OAuth, in Onyx's UI). From then on every `sindri-app` (through `serve`) k
   self-hosted embeddings, no cloud LLM or embedding provider, the one-user sizing of its "A one-user dev box".
 - Idempotent: rerunning `sindri onyx up` on a set-up box changes nothing and ends in the same state; an interrupted run
   resumes.
-- Lifecycle tied to Sindri: `serve` ensures a managed Onyx is up, `stop` stops it, doctor reports it.
+- Lifecycle tied to Sindri: `serve` ensures a Sindri-run Onyx is up, `stop` stops it, doctor reports it.
 
 **Non-goals**
 - Connecting sources. Linear, Slack and docs-space connectors stay the owner's, in Onyx's UI with company OAuth and the
@@ -75,7 +75,7 @@ Slack (OAuth, in Onyx's UI). From then on every `sindri-app` (through `serve`) k
 
 ## 3. Terms
 
-- **Managed Onyx:** the profile says `context.sources.onyx.managed: true`. Sindri owns its files under
+- **Sindri-run Onyx:** the profile says `context.sources.onyx.managed: true`. Sindri owns its files under
   `$AW_SINDRI_HOME/onyx/` and its compose project `sindri-onyx-<8 hex>` (per Sindri home: the first 8 hex digits of the
   sha256 of the full `AW_SINDRI_HOME` path, recorded in `state.json`). Without `managed` (or `false`), Onyx is the owner's,
   as today, and none of §4 runs.
@@ -304,7 +304,7 @@ lists them instead.
    pinned files, start, your account in the browser, Sindri's key and the profile section with its approval. `--no-onyx` opts
    out; `--dry-run` / `AW_DRY_RUN=1` prints the step and runs nothing; without a terminal the step prints the command
    (`<checkout>/scripts/sindri-app.sh onyx up`: the `sindri-app` link exists only once that script has run) instead of asking; a rerun on a set-up box is `onyx up`'s no-op; a failed `onyx up` is reported at the
-   very end of setup (exit 1) after everything else is installed. An agent session running setup is still refused by
+   end of setup (exit 1) after everything else is installed. An agent session running setup is still refused by
    `onyx up` itself (SND-AUTH-002): the script never works around it. This amends the earlier rule that nothing in `setup.sh`
    points at the C# build (AGENTS.md "C# build"): the Onyx step is the one exception, and it uses `sindri-app`, which builds
    the C# `sindri` on demand, so setup now needs the .NET toolchain `sindri-app` installs on first run.
@@ -313,7 +313,7 @@ lists them instead.
 
 Settled after the builder check (2026-10-16, the writer's calls):
 - **Another Onyx already on the box** (an unmanaged stack, or anything else on port 3000): never adopted, migrated or
-  stopped. Step 1 picks the next free loopback port for the managed one and preflight's memory check counts what Docker
+  stopped. Step 1 picks the next free loopback port for the Sindri-run one and preflight's memory check counts what Docker
   already uses, refusing with `SND-ONYX-003` when two stacks won't fit. The compose project of this Sindri home (`sindri-onyx-<8 hex>`) is Sindri's
   own and is reused; another home's project is never touched.
 - **Disk:** preflight refuses with the measured need, where it's needed (Docker's data root, `$AW_SINDRI_HOME`) and how

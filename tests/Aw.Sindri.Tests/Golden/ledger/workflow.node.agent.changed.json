@@ -1,0 +1,13 @@
+{
+  "runId": "nightly@3:12",
+  "nodeId": "agent",
+  "itemIndex": 0,
+  "state": "waiting-on-you",
+  "waitingOn": "the owner",
+  "lastTool": "Bash",
+  "lastToolAt": "2026-11-12T10:00:00.0000000Z",
+  "launchId": "LCH-00000000000000000000000000000001",
+  "branch": "sindri/agent-1",
+  "deadline": "2026-11-12T12:00:00.0000000Z",
+  "by": "service:workflow"
+}

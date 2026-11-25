@@ -139,16 +139,16 @@ internal static partial class Labels
     /// <returns>The heading.</returns>
     internal static string Group(string group) => _groups.TryGetValue(group, out var label) ? label : group;
 
-    /// <summary>Home's left panel header (§12.4): "RUNNING N · WITH YOU N".</summary>
+    /// <summary>Home's left panel header (§12.4): "Running N · with you N".</summary>
     /// <param name="running">The running group's count.</param>
     /// <param name="withYou">The with-you group's count.</param>
     /// <returns>The header.</returns>
-    internal static string RunningHeader(int running, int withYou) => string.Create(CultureInfo.InvariantCulture, $"RUNNING {running} · WITH YOU {withYou}");
+    internal static string RunningHeader(int running, int withYou) => string.Create(CultureInfo.InvariantCulture, $"Running {running} · with you {withYou}");
 
-    /// <summary>Home's right panel header (§12.4): "QUEUED N".</summary>
+    /// <summary>Home's right panel header (§12.4): "Queued N".</summary>
     /// <param name="queued">The queued group's count.</param>
     /// <returns>The header.</returns>
-    internal static string QueuedHeader(int queued) => string.Create(CultureInfo.InvariantCulture, $"QUEUED {queued}");
+    internal static string QueuedHeader(int queued) => string.Create(CultureInfo.InvariantCulture, $"Queued {queued}");
 
     /// <summary>A capped panel's link (§3.2): "Show all N in Queue".</summary>
     /// <param name="count">How many rows the group holds.</param>

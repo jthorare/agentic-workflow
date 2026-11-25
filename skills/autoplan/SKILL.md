@@ -16,7 +16,7 @@ Every run ends with the [Result block](#result-block), whatever the outcome: don
 
 ## Overview
 
-Dispatches five subagents in parallel — product, architecture, design, devex, security — each writing its own review file directly into the feature dir. After all return, consolidates: dedupes findings into one normalized severity table, surfaces cross-lens tensions (e.g., "product wants X but security blocks Y"), derives an overall verdict, recommends top 3 next actions. One command for full plan vetting.
+Dispatches five subagents in parallel (product, architecture, design, devex, security), each writing its own review file directly into the feature dir. After all return, consolidates: dedupes findings into one normalized severity table, surfaces cross-lens tensions (e.g., "product wants X but security blocks Y"), derives an overall verdict, recommends top 3 next actions. One command for full plan vetting.
 
 ## Inputs
 
@@ -38,6 +38,7 @@ Dispatches five subagents in parallel — product, architecture, design, devex, 
 
    - **`productReview` agent** → "Invoke the `productReview` skill with `--plan <plan-path> --output <feature-dir>/product-review.md`" — append `--mode <mode>` when `--mode` was given.
    - **`archReview` agent** → "Invoke the `archReview` skill with `--plan <plan-path> --output <feature-dir>/arch-review.md`."
+     Add to that prompt: "Schema check: every new table must say why a column (usually a foreign key) on an existing table can't hold it. A new table without that reason is a finding. Source check: every number, limit and rule in the plan must carry `owner decision (<where>)` or `agent default`; list each untagged one as a finding, to move to open questions."
      (When the plan has a state machine, protocol or concurrency, the archReview agent runs the formal check itself; autoplan has no formal-verify step and does not run it again.)
    - **`planDesignReview` agent** → "Invoke the `planDesignReview` skill with `--plan <plan-path> --output <feature-dir>/design-review.md`."
    - **`planDevexReview` agent** → "Invoke the `planDevexReview` skill with `--plan <plan-path> --output <feature-dir>/devex-review.md`."
@@ -120,7 +121,7 @@ All under `$AW_DIR/plans/<feature>/`: `product-review.md` · `arch-review.md` ·
 
 ## Next steps
 
-- If the overall verdict is **not BLOCKED** — `/specToProvenPR <feature-dir>/plan.md` — hand the vetted plan to staged implementation; the consolidated review and lens files ride along in the feature dir
+- If the overall verdict is **not BLOCKED**: `/specToProvenPR <feature-dir>/plan.md` — hand the vetted plan to staged implementation; the consolidated review and lens files ride along in the feature dir
 - If **BLOCKED** — address the CRITICAL findings (edit the plan or re-run `/officeHours`), then re-run `/autoplan`
 - `/design-shotgun` — if visual exploration is recommended by the design lens
 

@@ -17,6 +17,9 @@ internal sealed class SqliteMessageStore(MetaDatabase database) : IMessageStore
         return rows.IsError ? rows.Error : rows.Value.Count == 0 ? 0L : rows.Value[0];
     }
 
+    public ValueTask<Result<IReadOnlyList<string>>> Transcripts(CancellationToken cancellationToken) =>
+        database.Query(MessageSql.AllTranscripts, reader => reader.GetString(0), cancellationToken);
+
     public ValueTask<Result<IReadOnlyList<MessageId>>> RecordInbound(string transcript, long offset, IReadOnlyList<InboxMessage> messages, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(messages);
@@ -57,6 +60,26 @@ internal sealed class SqliteMessageStore(MetaDatabase database) : IMessageStore
                 return changed.IsError ? changed.Error
                     : changed.Value == 0 ? MetaErrors.MessageNotFound.With($"no message {id.Value}")
                     : Results.Ok();
+            },
+            cancellationToken);
+    }
+
+    public ValueTask<Result<Unit>> MarkShown(IReadOnlyList<MessageId> ids, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+        return database.Write(
+            async work =>
+            {
+                foreach (var id in ids)
+                {
+                    var changed = await SqliteQueries.Execute(work, MessageSql.MarkShown(id, at), cancellationToken).ConfigureAwait(false);
+                    if (changed.IsError)
+                    {
+                        return changed.Error;
+                    }
+                }
+
+                return Results.Ok();
             },
             cancellationToken);
     }

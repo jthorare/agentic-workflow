@@ -62,6 +62,7 @@ internal sealed partial class SetupViewModel
         {
             row.Repo = new SetupRepoFormViewModel(() => _url, _api, _folders, () => Ready("AddRepo"), note => Started(row, note));
             row.Repo.Update(row.Step);
+            row.OpenIfFailedWithBody();
         }
     }
 

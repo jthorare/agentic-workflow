@@ -29,6 +29,8 @@
 #   AW_META_BIN         the installed aw-meta (default $AW_STATE_DIR/bin/aw-meta); a launch warns on stderr (one line, never fatal) when
 #                       its commit stamp (`aw-meta version`) is older than the Meta sources of this checkout (scripts/meta-version-lib.sh)
 #   AW_META_NO_STALE_CHECK=1  skip that check
+#   a launch also warns on stderr (one line, never fatal) when systemd's DefaultOOMPolicy for the user manager is not continue
+#   (scripts/meta-oom-lib.sh, #2931); AW_META_NO_OOM_CHECK=1 skips that check
 set -euo pipefail
 self="$0"   # through the ~/.local/bin/aw-meta-launch symlink too; no readlink -f (older macOS has none)
 while [ -L "$self" ]; do
@@ -62,6 +64,8 @@ state_dir="${AW_STATE_DIR:-$HOME/.agentic-workflow}"
 . "$here/meta-team-lib.sh"
 # shellcheck source=meta-version-lib.sh
 . "$here/meta-version-lib.sh"
+# shellcheck source=meta-oom-lib.sh
+. "$here/meta-oom-lib.sh"
 
 # --init-launcher: detect this box's terminal and write launcher.json (spec section 4, "The generator"): no GUI session
 # is print; else Warp when present; else $TERM_PROGRAM when it names a terminal in config/launcher/terminals.json; else
@@ -114,6 +118,8 @@ if [ "$init" = 1 ]; then init_launcher; exit $?; fi
 command -v tmux > /dev/null || { echo "meta-launch: tmux is not installed" >&2; exit 1; }
 # A binary older than the Meta sources this launcher runs from is the usual reason a fix "didn't take" after a reinstall that was skipped.
 [ "${AW_META_NO_STALE_CHECK:-0}" = 1 ] || meta_stale_line "${AW_META_BIN:-$state_dir/bin/aw-meta}" "$here/.." >&2
+# One OOM kill in a lane's pane stops the whole pane under systemd's default policy; the line names the drop-in install-meta.sh writes.
+[ "${AW_META_NO_OOM_CHECK:-0}" = 1 ] || meta_oom_warn_line "aw-meta-launch:" >&2
 if [ -n "${AW_META_CONFIG:-}" ] && [ -z "$team_sel" ]; then   # an explicit config names its team: the state directory follows it
   team_sel="$(jq -r 'if (.team | type) == "string" then .team else empty end' "$AW_META_CONFIG" 2> /dev/null || true)"
 fi
@@ -264,18 +270,31 @@ if [ "$allow_legacy" != 1 ] && [ "$team" != default ]; then
 fi
 
 # 1. tmux sessions: create the missing ones (detached), keep the live ones.
+# Every lane pane keeps remain-on-exit on (#2856): when the pane's process is killed (the kernel's OOM killer took chrome
+# in a lane's pane, and systemd then stopped the whole pane), tmux keeps the dead pane and the session instead of
+# closing them, and the next run restarts it in place.
+remain_on_exit() { # session
+  if [ "$dry" = 1 ]; then echo "[dry-run] ${tmux_t[*]} set-option -w -t =$1: remain-on-exit on"
+  # A lane that ended already (refused at start, its session gone) has no window to set: never a launch failure.
+  else "${tmux_t[@]}" set-option -w -t "=$1:" remain-on-exit on > /dev/null 2>&1 || true; fi
+}
+pane_dead() { [ "$("${tmux_t[@]}" display-message -p -t "=$1:" '#{pane_dead}' 2> /dev/null)" = 1 ]; }
+restart() { # lane session reason
+  if [ "$dry" = 1 ]; then echo "[dry-run] ${tmux_t[*]} respawn-pane -k -t $2 -c $repo$(lane_env_str "$1") $(lane_cmd "$1")"; return; fi
+  mark_start "$1"
+  "${tmux_t[@]}" respawn-pane -k -t "=$2:" -c "$repo" -e "AW_META_CONFIG=$config" "${env_args[@]}" -e "AW_META_LANE=$1" ${lc_env[@]+"${lc_env[@]}"} "$(lane_cmd "$1")"
+  echo "tmux $2: restarted ($3)"
+  wait_reported "$1"
+}
 for l in "${L[@]}"; do
   s="$team-$l"
   if "${tmux_t[@]}" has-session -t "=$s" 2> /dev/null; then
-    # Claude exited or crashed and the pane fell back to its shell (meta-lane.sh left <lane>.exited): start the lane
-    # again in place, resumed by id. A pane still running claude is never touched.
-    if [ ! -f "$meta_dir/lane-sessions/$l.exited" ] || claude_in_pane "$s" "$(proc_of "$l")"; then echo "tmux $s: running"
-    elif [ "$dry" = 1 ]; then echo "[dry-run] ${tmux_t[*]} respawn-pane -k -t $s -c $repo$(lane_env_str "$l") $(lane_cmd "$l")"
-    else
-      mark_start "$l"
-      "${tmux_t[@]}" respawn-pane -k -t "=$s:" -c "$repo" -e "AW_META_CONFIG=$config" "${env_args[@]}" -e "AW_META_LANE=$l" ${lc_env[@]+"${lc_env[@]}"} "$(lane_cmd "$l")"
-      echo "tmux $s: restarted (claude had exited)"
-      wait_reported "$l"
+    # The pane's process was killed and remain-on-exit kept the dead pane: start the lane again in place.
+    # Claude exited or crashed and the pane fell back to its shell (meta-lane.sh left <lane>.exited): the same, resumed by id.
+    # A pane still running claude is never touched.
+    if pane_dead "$s"; then restart "$l" "$s" "its pane had died"
+    elif [ ! -f "$meta_dir/lane-sessions/$l.exited" ] || claude_in_pane "$s" "$(proc_of "$l")"; then echo "tmux $s: running"
+    else restart "$l" "$s" "claude had exited"
     fi
   elif [ "$dry" = 1 ]; then echo "[dry-run] ${tmux_t[*]} new-session -d -s $s -c $repo$(lane_env_str "$l") $(lane_cmd "$l")"
   else
@@ -284,12 +303,14 @@ for l in "${L[@]}"; do
     echo "tmux $s: started"
     wait_reported "$l"
   fi
+  remain_on_exit "$s"
 done
 
 # 2. Warp launch configuration: the first lane on the left, the others stacked on the right.
 # The pane attaches, or creates the session itself with the same command as step 1, so a session that is missing when
 # Warp opens (a --lanes run, a lane that exited) still runs the lane instead of a plain shell under its name.
-attach() { printf 'tmux -L %s new -A -s %s -c %s -e AW_META_CONFIG=%s%s%s %s' "$team" "$team-$1" "$repo" "$config" "$(lane_env_str "$1")" "$lc_str" "$(shq "$(lane_cmd "$1")")"; }
+# A session the pane creates gets remain-on-exit too, as in step 1.
+attach() { printf 'tmux -L %s new -A -s %s -c %s -e AW_META_CONFIG=%s%s%s %s \\; set-option -w remain-on-exit on' "$team" "$team-$1" "$repo" "$config" "$(lane_env_str "$1")" "$lc_str" "$(shq "$(lane_cmd "$1")")"; }
 pane() { # indent lane
   printf '%s- cwd: %s\n%s  commands:\n%s    - exec: %s\n' "$1" "$repo" "$1" "$1" "$(attach "$2")"
 }

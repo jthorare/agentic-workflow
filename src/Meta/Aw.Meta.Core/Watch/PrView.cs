@@ -6,4 +6,11 @@ namespace Aw.Meta.Core.Watch;
 /// <param name="IsDraft">Whether it is a draft.</param>
 /// <param name="Head">The head commit.</param>
 /// <param name="Mergeable">MERGEABLE, CONFLICTING or UNKNOWN.</param>
-public sealed record PrView(int Number, PrState State, bool IsDraft, string Head, string Mergeable);
+public sealed record PrView(int Number, PrState State, bool IsDraft, string Head, string Mergeable)
+{
+    /// <summary>The head branch name; empty when the poll did not ask for it.</summary>
+    public string HeadBranch { get; init; } = "";
+
+    /// <summary>The base branch name; empty when the poll did not ask for it.</summary>
+    public string BaseBranch { get; init; } = "";
+}

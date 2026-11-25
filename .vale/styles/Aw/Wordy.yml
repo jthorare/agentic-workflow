@@ -1,0 +1,20 @@
+# The slop list, wordy forms: each has a short word that says the same thing.
+extends: substitution
+message: "Use '%s' instead of '%s'."
+level: error
+ignorecase: true
+swap:
+  utiliz(?:e|es|ed|ing): use
+  leverag(?:e|es|ed|ing): use
+  facilitat(?:e|es|ed|ing): help|let
+  in order to: to
+  prior to: before
+  due to the fact that: because
+  at this point in time: now
+  whether or not: whether
+  a number of: some|the count
+  commenc(?:e|es|ed|ing): start
+  in the event that: if
+  for the purpose of: to|for
+  with regard to: about
+  in terms of: in|for

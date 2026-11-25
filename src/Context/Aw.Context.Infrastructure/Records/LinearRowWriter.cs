@@ -58,9 +58,15 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
             return stored.Error;
         }
 
+        var oldName = await SqliteQueries.List(session, new SqlStatement(LinearSql.StoredStateName, c => c.Bind("@key", key.Value)), SideRowReads.Text, cancellationToken).ConfigureAwait(false);
+        if (oldName.IsError)
+        {
+            return ContextDatabase.Translate(oldName.Error);
+        }
+
         return await UpsertIssue(session, key, side.Issue, cancellationToken).ConfigureAwait(false)
             ?? await ReplaceComments(session, key, side.Issue.Comments, cancellationToken).ConfigureAwait(false)
-            ?? await LogChanges(session, key, new Prior(stored.Value, newRecord), side, cancellationToken).ConfigureAwait(false)
+            ?? await LogChanges(session, key, new Prior(stored.Value, newRecord, oldName.Value.Count > 0 ? oldName.Value[0] : null), side, cancellationToken).ConfigureAwait(false)
             ?? await SqliteRecordStore.Exec(session, LinearSql.PruneChanges, c => c.Bind("@cutoff", _clock.GetUtcNow() - ChangeRetention), cancellationToken).ConfigureAwait(false);
     }
 
@@ -70,7 +76,7 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
             ?? await SqliteRecordStore.Exec(session, LinearSql.DeleteIssue, c => c.Bind("@key", key.Value), cancellationToken).ConfigureAwait(false);
 
     private static ValueTask<Error?> UpsertIssue(ISqliteSession session, RecordKey key, LinearIssueSide issue, CancellationToken cancellationToken) =>
-        SqliteRecordStore.Exec(session, LinearSql.UpsertIssue, c => Bind(c, issue.Fields, issue.Description)
+        SqliteRecordStore.Exec(session, LinearSql.UpsertIssue, c => Bind(c, issue.Fields, issue.Description).Bind("@stateName", issue.StateName)
             .Bind("@key", key.Value), cancellationToken);
 
     private static SqliteCommand Bind(SqliteCommand c, LinearIssueFields f, string? description) => c
@@ -139,7 +145,7 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
         }
 
         return before.StateId != after.StateId
-            ? await Log(session, key, new Change("state", before.StateId, after.StateId, side.Written.HasFlag(LinearWrittenFields.State)), at, cancellationToken).ConfigureAwait(false)
+            ? await Log(session, key, new Change("state", before.StateId, after.StateId, side.Written.HasFlag(LinearWrittenFields.State), prior.StateName, side.Issue.StateName), at, cancellationToken).ConfigureAwait(false)
             : null;
     }
 
@@ -162,7 +168,9 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
             .Bind("@old", change.Old?.Value)
             .Bind("@new", change.New?.Value)
             .Bind("@at", at)
-            .Bind("@via", change.Written ? "write-through" : "feed"), cancellationToken);
+            .Bind("@via", change.Written ? "write-through" : "feed")
+            .Bind("@oldName", change.OldName)
+            .Bind("@newName", change.NewName), cancellationToken);
 
     private static async ValueTask<Result<LinearIssueFields?>> StoredFields(ISqliteSession session, RecordKey key, CancellationToken cancellationToken)
     {
@@ -194,7 +202,7 @@ internal sealed class LinearRowWriter(TimeProvider? clock = null) : ISideRowWrit
 
     private static string Labels(IReadOnlyList<ExternalId> ids) => DesignDocJson.Strings([.. ids.Select(static i => i.Value)]);
 
-    private sealed record Prior(LinearIssueFields? Fields, bool NewRecord);
+    private sealed record Prior(LinearIssueFields? Fields, bool NewRecord, string? StateName = null);
 
-    private sealed record Change(string Field, ExternalId? Old, ExternalId? New, bool Written);
+    private sealed record Change(string Field, ExternalId? Old, ExternalId? New, bool Written, string? OldName = null, string? NewName = null);
 }

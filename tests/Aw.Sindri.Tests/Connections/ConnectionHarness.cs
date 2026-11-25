@@ -11,9 +11,11 @@ using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Features.ListConnections;
 using Aw.Sindri.Features.RefreshConnections;
 using Aw.Sindri.Features.RemoveConnection;
+using Aw.Sindri.Features.RenameConnection;
 using Aw.Sindri.Features.TestConnection;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
+using Aw.Sindri.Testing.Workflow;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
 
@@ -27,7 +29,11 @@ internal sealed class ConnectionHarness
         Ledger = new InMemorySindriStore(new FakeTimeProvider(KnownInstants.Epoch), LedgerProbe);
         Callers = new AsyncLocalCallerContextAccessor(Ids);
         Presets = new FakeConnectionPresets(Linear);
+        Workflows = new InMemoryWorkflowStore(Clock);
     }
+
+    /// <summary>The workflows a rename checks for triggers that watch the connection.</summary>
+    public InMemoryWorkflowStore Workflows { get; }
 
     /// <summary>A linear-shaped preset (no client id, https endpoints, a probe URL).</summary>
     public static ConnectionPreset Linear { get; } = new(
@@ -65,6 +71,9 @@ internal sealed class ConnectionHarness
 
     public FakeConnectionProbe Probe { get; } = new();
 
+    /// <summary>Gets the check a pasted key goes through before it is stored (#4357).</summary>
+    public FakeKeyCheck Keys { get; } = new();
+
     /// <summary>Gets the command gate the test slice's status write waits for.</summary>
     internal CommandGateLock Gate { get; } = new();
 
@@ -81,7 +90,7 @@ internal sealed class ConnectionHarness
     public ICallerContextAccessor Callers { get; }
 
     public AddConnectionService Add(ISignInSession? signIn = null)
-        => new(Store, Secrets, Presets, Environment, Clock, Callers, new OAuthSignInFlow(Store, Secrets, signIn ?? SignIn, new CommandGateAccess(Gate, Clock), Outcomes, Events(), new TypedLog<OAuthSignInFlow>(Logs)));
+        => new(Store, Presets, Environment, Callers, new OAuthSignInFlow(Store, Secrets, signIn ?? SignIn, new CommandGateAccess(Gate, Clock), Outcomes, Events(), new TypedLog<OAuthSignInFlow>(Logs)), new KeyConnectionAdd(Store, Secrets, Environment, Clock, Callers, Keys));
 
     /// <summary>Gets the lease the connection events are fenced by; empty until <see cref="Hold"/>.</summary>
     public HeldLease Held { get; } = new();
@@ -103,6 +112,8 @@ internal sealed class ConnectionHarness
     public GetConnectionService Get() => new(Store, Outcomes);
 
     public RemoveConnectionService Remove() => new(Store, Secrets, Events());
+
+    public RenameConnectionService Rename() => new(Store, Secrets, Events(), Workflows);
 
     /// <summary>The sign-in-again slice over the harness's ports and the same sign-in flow Add builds.</summary>
     /// <returns>The service.</returns>

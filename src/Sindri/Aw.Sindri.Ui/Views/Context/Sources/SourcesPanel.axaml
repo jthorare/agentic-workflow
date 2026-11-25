@@ -14,7 +14,7 @@
     <ItemsControl x:Name="SourceRows" ItemsSource="{Binding Rows}">
       <ItemsControl.ItemTemplate>
         <DataTemplate x:DataType="ctx:SourceRowViewModel">
-          <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="12" MinHeight="36" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="12" MinHeight="{StaticResource Row.Height.Default}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="body" Text="{Binding Source}" VerticalAlignment="Center" TextWrapping="Wrap" />
             <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding When}" VerticalAlignment="Center" />
             <TextBlock Grid.Column="2" Classes="caption" Text="{Binding Sure}" VerticalAlignment="Center" TextWrapping="Wrap" />

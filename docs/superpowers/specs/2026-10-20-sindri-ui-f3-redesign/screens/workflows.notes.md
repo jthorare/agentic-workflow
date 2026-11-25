@@ -47,7 +47,7 @@ Not a gap but mockup-authored: "Paused, needs you" has no sample run; the "Merge
 - Board: horizontal `ScrollViewer` of lanes; each lane a `Border` with a header grid and an `ItemsRepeater` (`StackLayout`, spacing 8) of card `ContentControl`s. Lanes use `*` columns with `MinWidth` 200 (Done 150) inside a `UniformGrid`-like panel; `MinWidth` 1230 on the host gives the scroll.
 - List: `ItemsRepeater` over a flattened list of group rows and run rows with a `DataTemplate` selector; fixed row height 36, grid columns as in the CSS, hide columns by a `Width` binding from a size-band view model (container queries have no Avalonia equivalent).
 - Inspector: a right `Border` of `MinWidth` 360, `Width` = min(480, 48% of the window), a `GridSplitter`-style grip optional. Status badge is one `UserControl` taking a status enum (glyph path plus word); the spinner glyph is an animated `RotateTransform` that respects reduced motion.
-- Segmented controls: `ListBox` with `ToggleButton` items styled as in the CSS. Key handling at the page `KeyDown` (J, K, Enter, Esc, V, `/`).
+- Segmented controls: `ListBox` with `ToggleButton` items styled as in the CSS. Key dispatch at the page `KeyDown` (J, K, Enter, Esc, V, `/`).
 - Annotations are a mockup-only device; do not build.
 
 ## Update: volume, statuses, one status word

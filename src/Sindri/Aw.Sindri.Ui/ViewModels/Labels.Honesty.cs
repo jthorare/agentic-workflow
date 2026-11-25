@@ -8,4 +8,7 @@ internal static partial class Labels
 
     /// <summary>The Code index, named in the headline when its card needs a look.</summary>
     internal const string CodeIndexLookName = "code index";
+
+    /// <summary>The profile, named in the headline when its file can't be read.</summary>
+    internal const string ProfileLookName = "profile";
 }

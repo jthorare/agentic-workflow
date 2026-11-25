@@ -19,6 +19,9 @@ fail() { FAIL=$((FAIL + 1)); echo "  FAIL $1"; }
 . "$REPO/scripts/lib/ensure-scripts-deps.sh"
 ensure_scripts_deps "$REPO/scripts" || exit 1
 
+# sedi EXPR FILE: in-place edit that works with GNU and BSD sed (`sed -i EXPR` reads EXPR as the backup suffix on macOS).
+sedi() { sed "$1" "$2" > "$2.new" && mv "$2.new" "$2"; }
+
 run() { set +e; OUT="$(node "$CHECK" --root "$1" 2>&1)"; RC=$?; set -e; }
 expect_rc() { if [ "$RC" -eq "$2" ]; then ok "$1 (exit $RC)"; else fail "$1: exit $RC, want $2"; printf '%s\n' "$OUT" | sed 's/^/      | /'; fi; }
 expect_out() { if printf '%s\n' "$OUT" | has -F -- "$2"; then ok "$1"; else fail "$1: output lacks '$2'"; printf '%s\n' "$OUT" | sed 's/^/      | /'; fi; }
@@ -35,7 +38,8 @@ tree() {
 skill() {
   local d="$1/skills/$2"
   mkdir -p "$d"
-  local json="${3:-{\"skill\":\"$2\",\"verdict\":\"PASS\",\"feature_dir\":\"/x/plans/p\",\"artifacts\":[\"/x/plans/p/report.md\"],\"summary\":\"s\"\}}"
+  local json="${3:-}"   # a default with braces inside ${3:-...} parses differently in bash 3.2 (macOS), so it is set apart
+  [ -n "$json" ] || json="{\"skill\":\"$2\",\"verdict\":\"PASS\",\"feature_dir\":\"/x/plans/p\",\"artifacts\":[\"/x/plans/p/report.md\"],\"summary\":\"s\"}"
   printf -- '---\nname: %s\n---\n\nBody.\n\n## Result block\n\n```aw-result\n%s\n```\n\n## Next steps\n\n- none\n' "$2" "$json" > "$d/SKILL.md"
 }
 
@@ -74,57 +78,57 @@ echo "refusals"
 T="$(tree badyaml)"; skill "$T" alpha; printf 'schema: 1\nblocks: [oops\n' > "$T/skills/alpha/block.yaml"
 run "$T"; expect_rc "YAML that does not parse fails" 1; expect_out "names the file" "skills/alpha/block.yaml: not valid YAML"
 
-T="$(tree schema)"; skill "$T" alpha; valid "$T" alpha alpha; sed -i '/sentence:/d' "$T/skills/alpha/block.yaml"
+T="$(tree schema)"; skill "$T" alpha; valid "$T" alpha alpha; sedi '/sentence:/d' "$T/skills/alpha/block.yaml"
 run "$T"; expect_rc "a manifest the schema refuses fails" 1; expect_out "names the missing field" "schema: /blocks/0 must have required property 'sentence'"
 
-T="$(tree comma)"; skill "$T" alpha; valid "$T" alpha alpha; sed -i 's/label: Plan folder,/label: Plan folder (a path, or a link),/' "$T/skills/alpha/block.yaml"
+T="$(tree comma)"; skill "$T" alpha; valid "$T" alpha alpha; sedi 's/label: Plan folder,/label: Plan folder (a path, or a link),/' "$T/skills/alpha/block.yaml"
 run "$T"; expect_rc "an unquoted comma in a flow-map label fails" 1; expect_out "names the extra property" "must NOT have additional properties"
 
 T="$(tree dupid)"; skill "$T" alpha; valid "$T" alpha same; skill "$T" beta; valid "$T" beta same
 run "$T"; expect_rc "a block id used twice fails" 1; expect_out "names the first file" "id also used in skills/alpha/block.yaml"
 
-T="$(tree slot)"; skill "$T" alpha; valid "$T" alpha alpha; sed -i 's/"{plan}"/"{plan}", "{nope}"/' "$T/skills/alpha/block.yaml"
+T="$(tree slot)"; skill "$T" alpha; valid "$T" alpha alpha; sedi 's/"{plan}"/"{plan}", "{nope}"/' "$T/skills/alpha/block.yaml"
 run "$T"; expect_rc "an args slot that is no input fails" 1; expect_out "names the slot" "args names 'nope', which is not a declared input"
 
-T="$(tree flag)"; skill "$T" alpha; valid "$T" alpha alpha; sed -i 's/input: mode }/input: modes }/' "$T/skills/alpha/block.yaml"
+T="$(tree flag)"; skill "$T" alpha; valid "$T" alpha alpha; sedi 's/input: mode }/input: modes }/' "$T/skills/alpha/block.yaml"
 run "$T"; expect_rc "a flag item naming no input fails" 1; expect_out "names the input" "args names 'modes'"
 
-T="$(tree required)"; skill "$T" alpha; valid "$T" alpha alpha; sed -i 's/args: \["{plan}", /args: [/' "$T/skills/alpha/block.yaml"
+T="$(tree required)"; skill "$T" alpha; valid "$T" alpha alpha; sedi 's/args: \["{plan}", /args: [/' "$T/skills/alpha/block.yaml"
 run "$T"; expect_rc "a required input missing from args fails" 1; expect_out "names the input" "required input 'plan' does not appear in args"
 
-T="$(tree success)"; skill "$T" alpha; valid "$T" alpha alpha; sed -i 's/success: pass/success: done/' "$T/skills/alpha/block.yaml"
+T="$(tree success)"; skill "$T" alpha; valid "$T" alpha alpha; sedi 's/success: pass/success: done/' "$T/skills/alpha/block.yaml"
 run "$T"; expect_rc "a success outcome that is not mapped fails" 1; expect_out "names it" "success 'done' is not one of the mapped outcomes"
 
-T="$(tree values-path)"; skill "$T" alpha; valid "$T" alpha alpha; sed -i 's/mode: { type: text,/mode: { type: path,/' "$T/skills/alpha/block.yaml"
+T="$(tree values-path)"; skill "$T" alpha; valid "$T" alpha alpha; sedi 's/mode: { type: text,/mode: { type: path,/' "$T/skills/alpha/block.yaml"
 run "$T"; expect_rc "values on a path input fail" 1; expect_out "names the input" "input 'mode' has values but is a path input"
 
-T="$(tree values-empty)"; skill "$T" alpha; valid "$T" alpha alpha; sed -i 's/values: \[mvp, growth\]/values: []/' "$T/skills/alpha/block.yaml"
+T="$(tree values-empty)"; skill "$T" alpha; valid "$T" alpha alpha; sedi 's/values: \[mvp, growth\]/values: []/' "$T/skills/alpha/block.yaml"
 run "$T"; expect_rc "an empty values list fails" 1; expect_out "names the rule" "/blocks/0/inputs/mode/values must NOT have fewer than 1 items"
 
-T="$(tree from-key)"; skill "$T" alpha; valid "$T" alpha alpha; sed -i 's/from: feature_dir/from: plan_dir/' "$T/skills/alpha/block.yaml"
+T="$(tree from-key)"; skill "$T" alpha; valid "$T" alpha alpha; sedi 's/from: feature_dir/from: plan_dir/' "$T/skills/alpha/block.yaml"
 run "$T"; expect_rc "an output reading a key the aw-result block lacks fails" 1; expect_out "names the key" "output 'featureDir' reads 'plan_dir', which is not a key of the aw-result block"
 
-T="$(tree from-artifact)"; skill "$T" alpha; valid "$T" alpha alpha; sed -i 's/artifacts\[report.md\]/artifacts[other.md]/' "$T/skills/alpha/block.yaml"
+T="$(tree from-artifact)"; skill "$T" alpha; valid "$T" alpha alpha; sedi 's/artifacts\[report.md\]/artifacts[other.md]/' "$T/skills/alpha/block.yaml"
 run "$T"; expect_rc "an artifact file name the example lacks fails" 1; expect_out "names the file and what exists" "reads artifacts[other.md], which no path in the aw-result example's artifacts ends in (it has: report.md)"
 
-T="$(tree outcome-from)"; skill "$T" alpha; valid "$T" alpha alpha; sed -i 's/from: verdict/from: status/' "$T/skills/alpha/block.yaml"
+T="$(tree outcome-from)"; skill "$T" alpha; valid "$T" alpha alpha; sedi 's/from: verdict/from: status/' "$T/skills/alpha/block.yaml"
 run "$T"; expect_rc "outcomes.from naming a missing key fails" 1; expect_out "names the key" "outcomes.from 'status' is not a key of the aw-result block"
 
-T="$(tree long-fact)"; skill "$T" alpha; valid "$T" alpha this-block-id-is-written-out-and-it-is-rather-long-indeed; sed -i 's/featureDir:/featureDirectoryOfTheRun:/' "$T/skills/alpha/block.yaml"
+T="$(tree long-fact)"; skill "$T" alpha; valid "$T" alpha this-block-id-is-written-out-and-it-is-rather-long-indeed; sedi 's/featureDir:/featureDirectoryOfTheRun:/' "$T/skills/alpha/block.yaml"
 run "$T"; expect_rc "a fact key over 64 characters fails" 1; expect_out "names the key" "fact key 'fact:thisBlockIdIsWrittenOutAndItIsRatherLongIndeedFeatureDirectoryOfTheRun' is"
 
-T="$(tree dup-fact)"; skill "$T" alpha; valid "$T" alpha a-b; sed -i 's/featureDir:/cD:/' "$T/skills/alpha/block.yaml"
-skill "$T" beta; valid "$T" beta a; sed -i 's/featureDir:/bCD:/' "$T/skills/beta/block.yaml"
+T="$(tree dup-fact)"; skill "$T" alpha; valid "$T" alpha a-b; sedi 's/featureDir:/cD:/' "$T/skills/alpha/block.yaml"
+skill "$T" beta; valid "$T" beta a; sedi 's/featureDir:/bCD:/' "$T/skills/beta/block.yaml"
 run "$T"; expect_rc "two blocks deriving one fact key fail" 1; expect_out "names the key" "fact key 'fact:aBCD' is also derived in"
 
 T="$(tree no-skill-md)"; skill "$T" alpha; valid "$T" alpha alpha; rm "$T/skills/alpha/SKILL.md"
 run "$T"; expect_rc "a manifest with no SKILL.md fails" 1; expect_out "names it" "no SKILL.md beside it"
 
-T="$(tree no-result)"; skill "$T" alpha; valid "$T" alpha alpha; sed -i '/^```aw-result/,/^```$/d' "$T/skills/alpha/SKILL.md"
+T="$(tree no-result)"; skill "$T" alpha; valid "$T" alpha alpha; sedi '/^```aw-result/,/^```$/d' "$T/skills/alpha/SKILL.md"
 run "$T"; expect_rc "a Result block with no aw-result fence fails" 1; expect_out "names the count" "the Result block has 0 aw-result blocks"
 
 T="$(tree two-result)"; skill "$T" alpha; valid "$T" alpha alpha
-sed -i 's/^## Next steps$/```aw-result\n{"skill":"alpha"}\n```\n\n## Next steps/' "$T/skills/alpha/SKILL.md"
+awk '/^## Next steps$/ { print "```aw-result"; print "{\"skill\":\"alpha\"}"; print "```"; print "" } { print }' "$T/skills/alpha/SKILL.md" > "$T/SKILL.new" && mv "$T/SKILL.new" "$T/skills/alpha/SKILL.md"
 run "$T"; expect_rc "two aw-result fences fail" 1; expect_out "names the count" "the Result block has 2 aw-result blocks"
 
 T="$(tree bad-json)"; skill "$T" alpha '{ "skill": "alpha", '; valid "$T" alpha alpha

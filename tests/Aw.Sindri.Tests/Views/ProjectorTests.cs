@@ -40,6 +40,18 @@ public sealed class ProjectorTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Projector_folds_pages_of_1000_while_more_than_1000_events_behind_then_pages_of_100()
+    {
+        await Append(2300);
+
+        var pass = await Projector().CatchUp(Token);
+
+        Assert.Equal(ProjectorPass.CaughtUp, pass);
+        Assert.Equal([1000, 1000, 100, 100, 100], _reader.Pages);
+        Assert.True(_progress.Current is { Cursor: 2300, LedgerHead: 2300, Stalled: false });
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_throwing_projection_stalls_at_that_sequence_and_logs_SND_VIEW_001()
     {
         var projector = Projector();

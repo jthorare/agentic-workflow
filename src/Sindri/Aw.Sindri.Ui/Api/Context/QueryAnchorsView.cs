@@ -5,4 +5,11 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="SuggestedAnchors">SuggestedAnchors, as served.</param>
 internal sealed record QueryAnchorsView(
     IReadOnlyList<string> Anchors,
-    IReadOnlyList<string> SuggestedAnchors);
+    IReadOnlyList<string> SuggestedAnchors)
+{
+    /// <summary>The suggestions with their labels and kinds (#2809); null from a server that does not send them.</summary>
+    public IReadOnlyList<QueryChoiceView>? Suggestions { get; init; }
+
+    /// <summary>The answer's sections with their items (#2974); null from a server that does not send them.</summary>
+    public IReadOnlyList<QuerySectionView>? Sections { get; init; }
+}

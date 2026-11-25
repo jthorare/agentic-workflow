@@ -46,6 +46,7 @@
   check: skip when .state is published, published-without-waiting or published-by-hand (no map is a non-zero exit)
 + AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri context map refresh
   check: builds a draft, cleans the review queue and promotes it as you (no typed phrase); with the index built it is not held; exit 0
+  check: on SND-JOB-409 (the map service already runs a refresh) follow the named job with 'jobs show <id> --json' every 10 s until it ends; fail unless it succeeded
 + AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri context map status --json
   check: wait up to 1020 s (every 10 s) while .state is held or overdue (waitForIndexMinutes 15 plus two ticks); fail on published-stale or anything else
 

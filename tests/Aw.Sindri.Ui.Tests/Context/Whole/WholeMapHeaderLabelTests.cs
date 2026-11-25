@@ -71,7 +71,8 @@ public sealed class WholeMapHeaderLabelTests
         Expect.True(labels.Count > 0, "no header glyph runs found");
         foreach (var (left, top, bottom, rule) in labels)
         {
-            Expect.True(bottom <= rule, string.Create(CultureInfo.InvariantCulture, $"header label at x={left} runs from y={top} to y={bottom}, below its header rule at y={rule} (scale {scale})"));
+            // The canvas sets the label at rule - height, so adding the height back can land a rounding step past the rule.
+            Expect.True(bottom <= rule + 0.001, string.Create(CultureInfo.InvariantCulture, $"header label at x={left} runs from y={top} to y={bottom}, below its header rule at y={rule} (scale {scale})"));
         }
     }
 }

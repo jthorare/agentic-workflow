@@ -66,7 +66,7 @@ cost no model turn. Three principles follow, and every section below applies the
 Plans 1–6 built the control room: measurement, the ledger, the code index, scoping, offline self-evolution and
 the dashboard. Nothing yet takes a designed project to merged code without the human dispatching it, and every
 agent session still starts heavy: memory bootstrap on the first turn, then every skill and subagent definition
-loaded whether or not the task needs it. This addendum defines the production line and the context discipline
+loaded regardless of whether the task needs it. This addendum defines the production line and the context discipline
 it depends on.
 
 **The target pipeline:**
@@ -331,7 +331,7 @@ Out-of-scope actions are refused by the gate (§8.1) and the container, never le
 | File reads | Repo plus `read` refs; secrets and deny paths from the profile | Mounts (§8.2) and the gate |
 | Commands | The lens's command allowlist (for example only the data lens may run migrations, only the performance lens may run load tests) | The gate (`SND-GATE-1xx`) |
 | Network | Model proxy; package registry only when the task may change dependencies; the environment endpoints the evidence plan needs | The egress proxy (§8.2) |
-| MCP servers and tools | The lens's allowlist, read-only by default | The image's managed settings and the gate |
+| MCP servers and tools | The lens's allowlist, read-only by default | The image's `managed settings` and the gate |
 | Skills and subagents | The lens's allowlist | Session image settings (§17.8) |
 | Budgets | `budget` | The model proxy and the tick |
 
@@ -425,7 +425,7 @@ trust-tiered pack under §8.3, then evaluated like any other artifact):
 | UI design | Components, styles, tokens | `design-parity`, `a11y` |
 | UX design | Flows, navigation, forms, empty and error states | `ui-browser`, `behavior-sim` |
 | Database and data | Schema, migrations, queries | `migration`, `test` |
-| Security | Auth, input handling, secrets, dependencies, permissions | `security` |
+| Security | Auth, input validation, secrets, dependencies, permissions | `security` |
 | Performance | Hot paths, queries, bundles, build time | `perf`, `trace` |
 | Infrastructure and deploy | CI, containers, IaC, environments | `cli-transcript`, deploy dry-run |
 | Integrations | Third-party APIs, webhooks, connectors | `api-transcript` against mocks |
@@ -466,7 +466,7 @@ subagent's description into context. Sindri sessions start from an **injection p
 | Today (host sessions) | Sindri sessions |
 |---|---|
 | Memory bootstrap on the first turn (Prism `session_bootstrap`) | No memory bootstrap. Memory arrives through the context graph as cited pack sections |
-| All skills and subagents listed | Only the lens's `skills` and `agents`, set in the session image's managed settings |
+| All skills and subagents listed | Only the lens's `skills` and `agents`, set in the session image's `managed settings` |
 | All MCP servers connected | Only the lens's `mcp` allowlist |
 | Global rules and CLAUDE.md in full | Selected rules (§17.6) plus the repo's agent file trimmed to the sections the injection plan names |
 | Context grows by tool output | Per-section budgets, relaunch on overflow (§17.5) |
@@ -557,7 +557,7 @@ interface EvidenceProvider {
 | `perf` (benchmark, bundle size, type-check time) | Hot paths, build budgets |
 | `a11y` (axe scan) | UI |
 | `design-parity` (pixel diff against a mockup or design file) | UI with a design source |
-| `security` (`/cso` diff mode, dependency audit) | Auth, input handling, dependencies |
+| `security` (`/cso` diff mode, dependency audit) | Auth, input validation, dependencies |
 | `trace` (log or telemetry query on a preview) | Jobs, async flows |
 | `docs` (render and link check) | Docs |
 | `recording` (screen or simulator video of the flow) | Any UI, as proof |
@@ -729,7 +729,7 @@ These resolve the /autoplan findings C1–C17. Where a rule here conflicts with 
 - **Imported lens and subagent packs** enter as prompt text at the lowest trust tier. Their capability fields are
   dropped on import and must be re-declared through approval. Upstream upgrades of imported packs never self-adopt.
 
-### What the sandbox really enforces (C3, C4, C5)
+### What the sandbox enforces (C3, C4, C5)
 | Control | Pattern (cooperative agent; hooks) | Boundary (holds against a hostile agent) |
 |---|---|---|
 | Writes | `PreToolUse` path guard; `PostToolUse` tree check | The sindri-side verifier refuses any bundle with out-of-scope paths (§8.5) |
@@ -739,7 +739,7 @@ These resolve the /autoplan findings C1–C17. Where a rule here conflicts with 
 | Budgets | — | The model proxy and the tick |
 | Holdouts | — | Stored in sindri-private state, mounted **only** into evaluator Steps, never committed; a canary example in each set detects leaks |
 - The per-session settings overlay lives in the read-only `/sindri` mount. The gate, the Stop gate and the safety
-  hooks are in root-owned managed settings that the overlay can't disable.
+  hooks are in root-owned `managed settings` that the overlay can't disable.
 - Rule checks that run repo-controlled config (for example a repo's eslint or analyzer config) run in the
   **phase-2** verifier, never in the phase-1 verifier, which runs no repo code.
 - **The holdout store's path and format are open** (readiness design §9 R16). The R1b packet build (#142) checks only
@@ -1145,7 +1145,7 @@ Every human gate and approval-tier rule gets a **gate record** (a registered art
 - **Triage accuracy** has two parts, both judged after the fact:
   - the share of items routed to auto-start or a micro-packet that later needed the desk (an amendment, a scope
     expansion, or a product question after freeze);
-  - the share of items sent to the desk that a micro-packet could have handled.
+  - the share of items sent to the desk that a micro-packet could have answered.
 - **Monthly tune report** (in the digest):
   - merged items;
   - human-minutes;
@@ -1628,7 +1628,7 @@ packet, and **every edit re-runs the relevant part of the same pipeline, scoped 
 | **Narrow or widen** a write scope | `packet validate`'s write-scope rules (exists or declared new, no overlap with concurrent tasks) plus a neighbours query on the new paths | Validation result and any newly reachable tests or callers |
 | **Run the open queries** of a capped map | One round per query | As for Add |
 | **Several at once** ("add X but remove Y") | All the edits are planned as **one change set** and re-run together: retrieval seeded by X skips Y and anything removed with it, and the dependency check for Y counts X as present | One combined preview of everything the change set adds, removes and leaves uncovered |
-| **Restore** ("remove A — actually A was right") | Brings A back from its tombstone with its citations and provenance. If A's removal took knock-on items with it, they are offered back too, one by one | A, plus the knock-on items to accept or leave out, and any coverage A's return closes |
+| **Restore** ("remove A — A was right") | Brings A back from its tombstone with its citations and provenance. If A's removal took knock-on items with it, they are offered back too, one by one | A, plus the knock-on items to accept or leave out, and any coverage A's return closes |
 | **Undo** a change set, or go back to a revision | Reverts every edit in that change set (or every change set after the revision), then re-runs the checks | The packet as it was, with the reverted change sets kept in history |
 
 Commands: `sindri packet edit <id> add|remove|prune|ask|narrow|widen|restore …` and `sindri packet undo <id>
@@ -1706,7 +1706,7 @@ Safety doesn't change, because UI actions go through the same gates as CLI verbs
 
 ### 17.27.1 One command layer, two clients
 
-- Every action is a **command**: a typed request handled by one handler. The handler does the validation, writes
+- Every action is a **command**: a typed request served by one handler. The handler does the validation, writes
   the ledger record and the audit entry, and returns `SND-*` errors. Readiness §4b.1 already shapes each use case
   as a slice with "an endpoint or CLI mapping". This makes both mappings required.
 - The CLI and the UI are two clients of the same handlers. The UI holds **no logic of its own**: no extra checks,
@@ -1880,7 +1880,7 @@ event trail. A **recipe** supplies:
 3. its loop caps, timeouts and budget;
 4. its `next` texts;
 5. its eval suite: replayed event logs with expected states, plus the failure cases (gate refusal, timeout,
-   no-progress, takeover) it must handle.
+   no-progress, takeover) it must survive.
 
 A **block** supplies the code, once, for every recipe that names it:
 - gates, as deterministic checks or judge questions;
@@ -1911,7 +1911,7 @@ A tool with no branching that needs an agent or a gate stays a block. Wrapping i
 | Item lifecycle | triaged → startable → claimed → running → done | Router table (§7.1), the claim ref (§9.4), budget |
 | Step contract | produce → checks → verify → (revise)* → done | Per-Step deterministic checks and verifier (§6 table) |
 | Direction check | requested → position → challenge(n) → reply(n) → verdict → delivered | Leg timeouts, `maxExchanges`, the verdict judge question |
-| Ship and stack | draft → undrafted → fix rounds → green → re-draft → next level | Reviewer and CI state from adapters, PR lease, receipt for `epicMerge` |
+| Ship and stack | draft → undrafted → fix rounds → green → re-draft → next layer | Reviewer and CI state from adapters, PR lease, receipt for `epicMerge` |
 | Standing workflow | fired → working → reported / proposed / acted | Autonomy tier (§17.9) as a gate on effects |
 | Bug-fix worker | intake → investigate → reproduce → fix → evaluate → report | Frozen check, clean tree, registered runs, judge resolution-check once per candidate (the rules in `docs/csharp/bugfix.md`) |
 | Feature worker | plan → evidence plan → implement → prove → review loop → ready | Plan before code, evidence plan satisfied, review rounds (§17.11), ship contract |

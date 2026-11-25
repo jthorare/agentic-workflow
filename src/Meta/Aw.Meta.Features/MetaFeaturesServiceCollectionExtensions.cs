@@ -5,6 +5,9 @@ using Aw.Meta.Core.Ports;
 using Aw.Meta.Core.Worktrees;
 using Aw.Meta.Features.BoardLine;
 using Aw.Meta.Features.CheckMerge;
+using Aw.Meta.Features.Delegate;
+using Aw.Meta.Features.Delegated;
+using Aw.Meta.Features.DelegateDrop;
 using Aw.Meta.Features.GateRerun;
 using Aw.Meta.Features.GateRun;
 using Aw.Meta.Features.Health;
@@ -26,6 +29,8 @@ using Aw.Meta.Features.OwnerAnswer;
 using Aw.Meta.Features.OwnerAsk;
 using Aw.Meta.Features.QueueDrop;
 using Aw.Meta.Features.QueueGate;
+using Aw.Meta.Features.ReadEvents;
+using Aw.Meta.Features.ReportDefect;
 using Aw.Meta.Features.Roles;
 using Aw.Meta.Features.Routing;
 using Aw.Meta.Features.ShowVersion;
@@ -106,6 +111,7 @@ public static class MetaFeaturesServiceCollectionExtensions
         .Plain<LanesContextService, LanesContextRequest, LanesContextResponse>()
         .AddScoped<RecycleGuard>()
         .AddScoped<RecycleRunner>()
+        .AddScoped<RecycleSettler>()
         .AddScoped<SwitchRunner>()
         .AddScoped<RecycleWaiter>()
         .AddScoped<LaneRecycleService>()
@@ -132,9 +138,23 @@ public static class MetaFeaturesServiceCollectionExtensions
         .Validated<AskOwnerService, AskOwnerRequest, AskOwnerResponse>();
 
     private static IServiceCollection AddReportSlices(this IServiceCollection services) => services
+        .AddScoped<ReadEventsService>()
+        .AddScoped<IValidator<ReadEventsRequest>, ReadEventsValidator>()
+        .Validated<ReadEventsService, ReadEventsRequest, ReadEventsResponse>()
         .AddScoped<AppendLogService>()
         .AddScoped<IValidator<AppendLogRequest>, AppendLogValidator>()
         .Validated<AppendLogService, AppendLogRequest, AppendLogResponse>()
+        .AddScoped<ReportDefectService>()
+        .AddScoped<IValidator<ReportDefectRequest>, ReportDefectValidator>()
+        .Validated<ReportDefectService, ReportDefectRequest, ReportDefectResponse>()
+        .AddScoped<DelegateService>()
+        .AddScoped<IValidator<DelegateRequest>, DelegateValidator>()
+        .Validated<DelegateService, DelegateRequest, DelegateResponse>()
+        .AddScoped<DelegatedService>()
+        .Plain<DelegatedService, DelegatedRequest, DelegatedResponse>()
+        .AddScoped<DelegateDropService>()
+        .AddScoped<IValidator<DelegateDropRequest>, DelegateDropValidator>()
+        .Validated<DelegateDropService, DelegateDropRequest, DelegateDropResponse>()
         .AddScoped<QueueDropService>()
         .AddScoped<IValidator<QueueDropRequest>, QueueDropValidator>()
         .Validated<QueueDropService, QueueDropRequest, QueueDropResponse>()
@@ -156,6 +176,8 @@ public static class MetaFeaturesServiceCollectionExtensions
         .AddScoped<CheckMergeService>()
         .AddScoped<IValidator<CheckMergeRequest>, CheckMergeValidator>()
         .Validated<CheckMergeService, CheckMergeRequest, CheckMergeResponse>()
+        .AddScoped<MergeRecorder>()
+        .AddScoped<MergeEventWriter>()
         .AddScoped<MergeRunService>()
         .AddScoped<IValidator<MergeRunRequest>, MergeRunValidator>()
         .AddScoped<IService<MergeRunRequest, MergeRunResponse>>(static sp => new ValidatingService<MergeRunRequest, MergeRunResponse>(
@@ -166,6 +188,8 @@ public static class MetaFeaturesServiceCollectionExtensions
         .AddScoped<HostProbe>()
         .AddScoped<LaneCheck>()
         .AddScoped<OrphanKiller>()
+        .AddScoped<OomPolicyCheck>()
+        .AddScoped<ScriptStaleCheck>()
         .AddScoped<HealthService>()
         .Plain<HealthService, HealthRequest, HealthResponse>()
         .AddScoped<UsageService>()
@@ -177,6 +201,10 @@ public static class MetaFeaturesServiceCollectionExtensions
         .Validated<UsageWaitService, UsageWaitRequest, UsageWaitResponse>()
         .AddScoped<WatchSweeper>()
         .AddScoped<WatchPoller>()
+        .AddScoped<LaneReport>()
+        .AddScoped<GithubQueueWatch>()
+        .AddScoped<TeamPrInputs>()
+        .AddScoped<PollFollowUps>()
         .AddScoped<WatchService>()
         .AddScoped<IValidator<WatchRequest>, WatchValidator>()
         .Validated<WatchService, WatchRequest, WatchResponse>();

@@ -10,9 +10,10 @@ namespace Aw.Sindri.Features.Scrub;
 
 /// <summary>'sindri scrub' (cutover spec §6.2): redacts a text through the text scrubber (Aw.Redaction), scans the added lines of the staged diff, or installs the pre-commit hook.</summary>
 /// <param name="scrubber">Recognises and redacts secrets.</param>
+/// <param name="finder">Names the rule and value of each secret on a staged line.</param>
 /// <param name="git">The staged diff.</param>
 /// <param name="installer">Writes the hook.</param>
-internal sealed class ScrubService(ITextScrubber scrubber, IPreCommitGit git, IPreCommitInstaller installer) : IService<ScrubRequest, ScrubResponse>
+internal sealed class ScrubService(ITextScrubber scrubber, ISecretFinder finder, IPreCommitGit git, IPreCommitInstaller installer) : IService<ScrubRequest, ScrubResponse>
 {
     public async ValueTask<Result<ScrubResponse>> Handle(ScrubRequest request, CancellationToken cancellationToken)
     {
@@ -34,7 +35,7 @@ internal sealed class ScrubService(ITextScrubber scrubber, IPreCommitGit git, IP
             return added.Error;
         }
 
-        var findings = SecretScan.Findings(SindriErrors.ScrubStagedSecrets.Code, added.Value, scrubber);
+        var findings = SecretScan.Findings(SindriErrors.ScrubStagedSecrets.Code, added.Value, finder);
         if (findings.Count == 0)
         {
             return new ScrubResponse("No secrets in staged changes.\n");

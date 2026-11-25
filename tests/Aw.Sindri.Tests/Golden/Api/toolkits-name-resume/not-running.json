@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-TK-001",
+  "status": 409,
+  "detail": "Toolkit 'notes' isn't running (fix: toolkit_start)",
+  "traceId": "<trace>"
+}

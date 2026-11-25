@@ -61,6 +61,10 @@
     "RecipeRegistryCliTests",
     "RecipeApproveCliTests"
   ],
+  "plugins": {
+    "off": ["compound-engineering@compound-engineering-plugin", "superpowers@claude-plugins-official", "swift-lsp@claude-plugins-official", "github@claude-plugins-official"],
+    "keep": { "design": ["compound-engineering@compound-engineering-plugin"] }
+  },
   "routing": {
     "models": { "claude-code": ["opus", "sonnet", "haiku"], "codex": ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"] },
     "equivalents": { "opus": "gpt-5.5", "sonnet": "gpt-5.4", "haiku": "gpt-5.4-mini" },

@@ -10,4 +10,11 @@ namespace Aw.Meta.Core.Ports;
 /// <param name="Resolves">Whether it resolved the bug.</param>
 /// <param name="Finished">Whether the run is over.</param>
 /// <param name="ResolvedBy">The id of the candidate the run settled on, or null.</param>
-public sealed record BugfixCandidate(string Run, string Candidate, string Worktree, string Branch, string Commit, bool Evaluated, bool Resolves, bool Finished, string? ResolvedBy);
+public sealed record BugfixCandidate(string Run, string Candidate, string Worktree, string Branch, string Commit, bool Evaluated, bool Resolves, bool Finished, string? ResolvedBy)
+{
+    /// <summary>The run's GitHub issue number, when its ticket is a GitHub issue (`source` github, `id` #N); null for any other ticket.</summary>
+    public int? Issue { get; init; }
+
+    /// <summary>Whether this row is the run's red tree (the baseline evidence's checkout and commit) rather than a candidate; its branch is not recorded.</summary>
+    public bool Baseline { get; init; }
+}

@@ -134,7 +134,7 @@ These resolve the spec's open points; each one is restated in `docs/sindri/dashb
   - While you iterate, run only the task's own vitest files.
   - Run `npm test && npm run typecheck && npm run test:coverage` once per task, right before its commit.
   - The Playwright files are part of `npm test` (Task 10 onward).
-  - Never run two of these at once, and skip `npm install` unless a dependency is actually missing. The one new dependency is `playwright` in Task 10.
+  - Never run two of these at once, and skip `npm install` unless a dependency is missing. The one new dependency is `playwright` in Task 10.
 - **Tracking and commits.** Tick each step's checkbox in this plan file in the same commit that completes it. Commit format `type: short description`, ending with the session's attribution trailer (written below as `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`).
 
 ## Review Focus
@@ -8608,7 +8608,7 @@ git commit -m "docs: sindri dashboard and fleet docs, evidence script, spec deci
   - Claude Code, Codex and Cursor, including sessions Sindri didn't start;
   - each with exactly one state in words; approvals and questions come from the `aw:fleet` spool, and Cursor rows are labelled `estimated`;
   - exit 1 when something needs you.
-- **Bounded and contained:** a missing or corrupt provider store, a recycled pid, a 50 MB or half-written transcript, 900 transcripts and a burst of 30 hooks are each handled as Review Focus 1–4 say, and each is pinned by a test.
+- **Bounded and contained:** a missing or corrupt provider store, a recycled pid, a 50 MB or half-written transcript, 900 transcripts and a burst of 30 hooks are each processed as Review Focus 1–4 say, and each is pinned by a test.
 - **Dashboard:**
   - `sindri dashboard` binds 127.0.0.1 only and refuses a taken port with `SND-DASH-001`;
   - tokens work once and change on restart, and Host, Origin and CSRF checks refuse everything else;

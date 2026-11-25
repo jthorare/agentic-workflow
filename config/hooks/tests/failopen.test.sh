@@ -14,13 +14,19 @@
 #   - no log line ever carries payload content.
 # Run: bash config/hooks/tests/failopen.test.sh
 set -uo pipefail
+
+# Temp-dir cleanup (#3262): every mktemp this suite makes is recorded and removed when it exits.
+__aw_tmp_reg="$(command mktemp)"
+mktemp() { local p; p="$(command mktemp "$@")" || return; printf '%s\n' "$p" >>"$__aw_tmp_reg"; printf '%s\n' "$p"; }
+__aw_tmp_clean() { local rc=$? p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null || true; rm -rf "$p" || true; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; exit "$rc"; }
+trap __aw_tmp_clean EXIT
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 HOOKS="$ROOT/config/hooks"
 LIBDIR="$ROOT/config/lib"
 fail=0
 # The cases set a lane's variables themselves ($LANE); the suite must not inherit another lane's or a Sindri launch's.
 # AW_META_DIR too: it would move the lane reply marker out of each case's AW_STATE_DIR into one shared dir, so a run (or a parallel run) that records a reply makes the next skip lane-reply.
-unset TMUX TMUX_PANE AW_META_DIR AW_META_CONFIG AW_META_TEAM AW_META_LANE AW_META_LANE_PID AW_META_LANE_AGENT AW_META_LANE_PROC AW_SINDRI_CHILD AW_SINDRI_LAUNCH AW_SINDRI_HOME AW_LAUNCHER_CONFIG AW_JUDGE_CHILD
+unset TMUX TMUX_PANE AW_META_DIR AW_META_CONFIG AW_META_TEAM AW_META_LANE AW_META_LANE_PID AW_META_LANE_AGENT AW_META_LANE_PROC AW_META_CALLER_PATH AW_SINDRI_CHILD AW_SINDRI_LAUNCH AW_SINDRI_HOME AW_LAUNCHER_CONFIG AW_JUDGE_CHILD
 SECRET="SENTINEL-PAYLOAD-7f3a"
 
 BASELINE="$HOOKS/tests/fixtures/failopen-baseline"

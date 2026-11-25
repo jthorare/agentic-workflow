@@ -72,6 +72,104 @@
       ]
     },
     {
+      "type": "home.act.failed",
+      "keyShape": "home.act.failed:<actId>",
+      "invalidates": [
+        "home"
+      ]
+    },
+    {
+      "type": "home.act.landed",
+      "keyShape": "home.act.landed:<actId>",
+      "invalidates": [
+        "home"
+      ]
+    },
+    {
+      "type": "home.act.sent",
+      "keyShape": "home.act.sent:<actId>",
+      "invalidates": [
+        "home"
+      ]
+    },
+    {
+      "type": "home.brief.written",
+      "keyShape": "home.brief.written:<ulid>",
+      "invalidates": [
+        "home"
+      ]
+    },
+    {
+      "type": "home.cursor.moved",
+      "keyShape": "home.cursor.moved:<ulid>",
+      "invalidates": [
+        "home"
+      ]
+    },
+    {
+      "type": "home.row.changed",
+      "keyShape": "home.row.changed:<rowId>:v<version>:<slot>",
+      "invalidates": [
+        "home"
+      ]
+    },
+    {
+      "type": "home.row.cleared",
+      "keyShape": "home.row.cleared:<rowId>:<slot>",
+      "invalidates": [
+        "home"
+      ]
+    },
+    {
+      "type": "home.row.done",
+      "keyShape": "home.row.done:<rowId>:v<version>",
+      "invalidates": [
+        "home"
+      ]
+    },
+    {
+      "type": "home.row.muted",
+      "keyShape": "home.row.muted:<rowId>:v<version>",
+      "invalidates": [
+        "home"
+      ]
+    },
+    {
+      "type": "home.row.raised",
+      "keyShape": "home.row.raised:<rowId>:<slot>",
+      "invalidates": [
+        "home"
+      ]
+    },
+    {
+      "type": "home.row.revived",
+      "keyShape": "home.row.revived:<rowId>:v<version>",
+      "invalidates": [
+        "home"
+      ]
+    },
+    {
+      "type": "home.row.seen",
+      "keyShape": "home.row.seen:<rowId>:v<version>",
+      "invalidates": [
+        "home"
+      ]
+    },
+    {
+      "type": "home.row.snoozed",
+      "keyShape": "home.row.snoozed:<rowId>:v<version>",
+      "invalidates": [
+        "home"
+      ]
+    },
+    {
+      "type": "home.row.woke",
+      "keyShape": "home.row.woke:<rowId>:v<version>",
+      "invalidates": [
+        "home"
+      ]
+    },
+    {
       "type": "item.created",
       "keyShape": "item.created:<itemId>",
       "invalidates": [
@@ -442,6 +540,13 @@
       ]
     },
     {
+      "type": "setup.first_workflow.created",
+      "keyShape": "setup.first_workflow.created",
+      "invalidates": [
+        "setup"
+      ]
+    },
+    {
       "type": "setup.step.changed",
       "keyShape": "setup.step.changed:<id>:<state>:<n>",
       "invalidates": [
@@ -450,14 +555,14 @@
     },
     {
       "type": "workflow.answered",
-      "keyShape": "workflow.answered:<run id>:<node id>",
+      "keyShape": "workflow.answered:<run id>:<node id>[:<item index>]",
       "invalidates": [
         "needs-you"
       ]
     },
     {
       "type": "workflow.question",
-      "keyShape": "workflow.question:<run id>:<node id>",
+      "keyShape": "workflow.question:<run id>:<node id>[:<item index>]",
       "invalidates": [
         "needs-you"
       ]

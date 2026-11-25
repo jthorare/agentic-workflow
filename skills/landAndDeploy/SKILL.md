@@ -137,8 +137,8 @@ source "$SHARED_DIR/repo-slug.sh"
 
 14. Branch on verdict:
     - **SUCCESS:** auto-**Invoke skill `canary`**, passing the release-id. If this skill received `--skip-docs` (directly or propagated from `/shipRelease`), forward `--skip-docs` to `/canary` so it suppresses its own `/syncDocs` auto-chain on HEALTHY.
-    - **DEGRADED:** do NOT silently stop — **Ask the user:** "Deploy is DEGRADED ({reason}). Proceed to /canary monitoring, roll back, or stop?" Options: `Proceed to canary` (invoke `/canary` with the release-id), `Roll back` (print the rollback path — `gh pr revert` or repo-specific — and stop), `Stop` (record the choice in deploy.md and exit).
-    - **FAILED:** already handled in step 9.
+    - **DEGRADED:** do NOT silently stop — **Ask the user:** "Deploy is DEGRADED ({reason}). Proceed to /canary monitoring, roll back, or stop?" Options: `Proceed to canary` (invoke `/canary` with the release-id), `Roll back` (print the rollback path, `gh pr revert` or repo-specific, and stop), `Stop` (record the choice in deploy.md and exit).
+    - **FAILED:** already covered in step 9.
 
 ## Outputs
 

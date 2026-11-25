@@ -7,14 +7,14 @@ namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>'run_workflow' inside a 'for_each' on the time-skipping server (PR 9): each item starts its own callee run, keyed by the item's position.</summary>
 [Lane(TestLane.Integration)]
-public sealed class ForEachRunWorkflowTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
+public sealed class ForEachRunWorkflowTests
 {
     private static readonly string[] _items = ["a", "b", "c"];
 
     [Fact]
     public async Task A_run_workflow_inside_for_each_starts_one_callee_run_per_item()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var callee = await rig.DefineCallee(GraphRig.Spec("unlimited", [GraphRig.Node("start", "workflow_call"), GraphRig.Node("a", "echo")], [GraphRig.Edge("start", "a")]));
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [

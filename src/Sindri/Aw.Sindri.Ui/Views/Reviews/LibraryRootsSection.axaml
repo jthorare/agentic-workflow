@@ -27,7 +27,7 @@
       <ItemsControl x:Name="LibraryFolders" AutomationProperties.Name="{Binding Title}" ItemsSource="{Binding Rows}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="rvm:LibraryFolderViewModel">
-            <StackPanel Spacing="{StaticResource Space.XS}" Margin="0,6">
+            <StackPanel Spacing="{StaticResource Space.XS}" Margin="0,8">
               <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.MD}" AutomationProperties.Name="{Binding AutomationName}">
                 <StackPanel Spacing="{StaticResource Space.XXS}">
                   <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">

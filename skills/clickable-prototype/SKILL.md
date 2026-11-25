@@ -92,7 +92,7 @@ SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"               # sets AW_DIR (fresh shell every call)
 MAIN=$(git rev-parse --show-toplevel)           # the checkout you were started in; never edit it
 SLUG=<slug>
-WT="$(dirname "$MAIN")/$(basename "$MAIN")-proto-$SLUG"
+WT="$(cd "$MAIN" && "${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/worktree-path.sh" proto-$SLUG)" || exit 1   # one worktree root per repo (AW_WORKTREE_ROOT, .agentic-workflow/worktrees.json)
 BASE=$(git -C "$MAIN" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || echo origin/main)
 git -C "$MAIN" fetch origin
 git -C "$MAIN" worktree add --no-track -b local-prototype/$SLUG "$WT" "$BASE"

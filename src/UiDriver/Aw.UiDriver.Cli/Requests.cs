@@ -34,6 +34,7 @@ internal static class Requests
             "type" => a.Value("--value") is { } value ? Json("type", new TypeRequest(value, selector, a.Has("--replace"))) : Missing("type", "--value"),
             "key" => a.Value("--chord") is { } chord ? Json("key", new KeyRequest(chord, selector)) : Missing("key", "--chord"),
             "scroll" => Json("scroll", new ScrollRequest(a.Real("--dx") ?? 0, a.Real("--dy") ?? 0, selector)),
+            "hover" => WithSelector(a, "hover", s => Json("hover", new HoverRequest(s, a.Has("--off")))),
             "wait-for" => WithSelector(a, "wait-for", s => Json("wait-for", new WaitForRequest(s, a.Value("--state"), a.Value("--expect-text"), a.Number("--wait-ms")))),
             "screenshot" => Json("screenshot", new ScreenshotRequest(selector)),
             "window" => Json("window", new WindowRequest(a.Number("--width"), a.Number("--height"))),

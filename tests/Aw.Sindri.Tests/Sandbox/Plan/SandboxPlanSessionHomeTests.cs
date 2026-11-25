@@ -29,19 +29,19 @@ public sealed class SandboxPlanSessionHomeTests
         Assert.True(At(plan, home + "-sessions", PlanMountKind.Deny) >= 0, "other launches' session homes are denied");
 
         // the masks make the mountpoints exist, then the binds go shallow to deep
-        string[] order = [home, home + "-sessions", home + "/launches", home + "/approved", session, session + "/control.json", session + "/gh-config"];
+        string[] order = [home, home + "-sessions", home + "/launches", session, session + "/control.json", session + "/gh-config"];
         var maskReal = At(plan, home, PlanMountKind.Tmpfs);
         var maskSessions = At(plan, home + "-sessions", PlanMountKind.Tmpfs);
         Assert.True(maskReal > denyReal && maskSessions > denyReal, "the masks follow the denies");
         Assert.True(maskReal >= 0 && maskSessions >= 0);
         var launches = At(plan, home + "/launches", PlanMountKind.ReadWrite);
-        var approved = At(plan, home + "/approved", PlanMountKind.ReadOnly);
         var sessionHome = At(plan, session, PlanMountKind.ReadOnly);
         var control = At(plan, session + "/control.json", PlanMountKind.ReadOnly);
         var ghConfig = At(plan, session + "/gh-config", PlanMountKind.ReadWrite);
-        Assert.All((int[])[launches, approved, sessionHome, control, ghConfig], i => Assert.True(i > Math.Max(maskReal, maskSessions)));
+        Assert.All((int[])[launches, sessionHome, control, ghConfig], i => Assert.True(i > Math.Max(maskReal, maskSessions)));
         Assert.True(sessionHome < control && sessionHome < ghConfig, "the session home is bound before what is inside it");
         Assert.All(order.Skip(2), p => Assert.Null(plan.Mounts.Last(m => string.Equals(m.Path, p, StringComparison.Ordinal)).Source));   // absolute, at their real paths
+        Assert.DoesNotContain(plan.Mounts, m => string.Equals(m.Path, home + "/approved", StringComparison.Ordinal));   // issue 2832: serve removes it at start, and a missing bind source fails bwrap
         Assert.DoesNotContain(plan.Mounts, m => m.Path.StartsWith(home + "/auth", StringComparison.Ordinal) && m.Kind != PlanMountKind.Deny);
     }
 
@@ -52,14 +52,14 @@ public sealed class SandboxPlanSessionHomeTests
     public void Session_home_links_resolve_for_a_custom_home_outside_the_state_directory() => AssertLinksResolve(SandboxPlannerTests.Build(Custom()), "/srv/sindri");
 
     [Fact, Trait("Lane", "unit")]
-    public void Nothing_binds_the_real_home_but_its_launches_and_approved_folders_and_the_run_areas()
+    public void Nothing_binds_the_real_home_but_its_launches_folder_and_the_run_areas()
     {
         var plan = SandboxPlannerTests.Build(Req.WriteScope);
 
         var bound = plan.Mounts.Where(m => m.Kind is PlanMountKind.ReadOnly or PlanMountKind.ReadWrite or PlanMountKind.PerLaunchDir && m.Path.StartsWith(Req.SindriHome + "/", StringComparison.Ordinal)).Select(m => m.Path);
 
         Assert.All(bound, p => Assert.True(
-            p.StartsWith(Req.SindriHome + "/launches", StringComparison.Ordinal) || p.StartsWith(Req.SindriHome + "/approved", StringComparison.Ordinal) || p.StartsWith(Req.SindriHome + "/workflow/", StringComparison.Ordinal), p));
+            p.StartsWith(Req.SindriHome + "/launches", StringComparison.Ordinal) || p.StartsWith(Req.SindriHome + "/workflow/", StringComparison.Ordinal), p));
     }
 
     [Fact, Trait("Lane", "unit")]

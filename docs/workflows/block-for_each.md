@@ -13,11 +13,12 @@ Outputs: `count` (number of items) and `batchSize`.
 Inside the loop:
 
 - `{{item}}` is the item, `{{itemIndex}}` its position counted from 1.
-- A node of the loop reads another node of the loop at the same item. A node after the `collect` reads only `collect`'s `items` and `count`, never a node of the loop.
+- A node of the loop reads another node of the loop at the same item. A node after the `collect` reads only `collect`'s `items`, `count` and `skipped`, never a node of the loop.
 - Every node of the loop has one run per item (`workflow_run_get` lists them with their `itemIndex`). `for_each` and `collect` themselves have one run each, at index 0.
-- A node that fails and says `stop` (the default) ends the loop: no later item runs, the `collect` fails with `node '<id>' failed on item N: <why>`, and the run follows the `collect`'s `onFailure`. Say `continue` on a node to let the loop go on without it.
+- A node that fails and says `stop` (the default) ends the loop: no later item runs, the `collect` fails with the bare `<why>` and the run's error is `node '<id>' failed on item N: <why>` (the node is named once, never nested), and the run follows the `collect`'s `onFailure`. Say `continue` on a node to let the loop go on without it.
+- A node that fails and says `skip-item` drops its item: its own row is `failed` with its error, the rest of that item's nodes (the `collect` too) are `skipped`, and the loop goes on with the next item. The run does not fail and its error stays empty. The `collect` leaves the item out of `items` and counts it in `skipped`. When every item is dropped, `items` is empty, `skipped` is the item count and the run goes on after the `collect`. Use it when one bad item must not throw away the good ones, such as one batch of 20 that a `prompt` can't label.
 
-The loop is what lies between the `for_each` and its one `collect`. Loops don't nest (start another workflow with `run_workflow`), and a node of the loop may be fed only from the loop. `sindri wf validate` reports both as `GRAPH-LOOP-001`. A `run_agent` node can't sit in the loop (an agent session doesn't run once per item): that is `GRAPH-LOOP-003`, and a run that reaches such a `for_each` fails it before any item runs. Run the agent in another workflow with `run_workflow`. A `wait` or `ask_owner` can't sit inside a loop (`GRAPH-LOOP-004`): put the per-item part in its own workflow and call it with `run_workflow`.
+The loop is what lies between the `for_each` and its one `collect`. Loops don't nest (start another workflow with `run_workflow`), and a node of the loop may be fed only from the loop. `sindri wf validate` reports both as `GRAPH-LOOP-001`. A `run_agent` node in the loop runs one agent per item (the launch id ends in the item's position, counted from 1). A `wait` can sit in the loop and sleeps once per item; an `ask_owner` can too and asks once per item (answer it with `--item`, see the `ask_owner` page).
 
 ## Example
 

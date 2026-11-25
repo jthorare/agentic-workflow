@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
+using Temporalio.Exceptions;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
 
@@ -14,6 +15,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// pipe of serve's, a terminal's Ctrl-C doesn't reach it, it outlives a serve that dies, and serve gets no SIGCHLD from it
 /// (a stopped child made the runtime's child reaping spin and hang every later Process wait). A start first looks for a
 /// server already running on the home's database: one that answers is adopted, one that doesn't is killed and replaced.
+/// A failed setsid or exec stops the start, and the reason is in the log.
 /// </summary>
 internal sealed class TemporalDevServer
 {
@@ -152,8 +154,16 @@ internal sealed class TemporalDevServer
             var (answer, problem) = await DevServerProbe.Ask(server.Frontend, start.Namespace, TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false);
             if (answer == DevServerAnswer.Ready)
             {
-                await DevServerProbe.RegisterSearchAttributes(server.Frontend, start.Namespace, cancellationToken).ConfigureAwait(false);
-                return true;
+                try
+                {
+                    await DevServerProbe.RegisterSearchAttributes(server.Frontend, start.Namespace, cancellationToken).ConfigureAwait(false);
+                    return true;
+                }
+                catch (RpcException e) when (e.Code == RpcException.StatusCode.Unimplemented)
+                {
+                    // why: a Temporal frontend always has the operator service; a listener without it is another process that took the picked port (a time-skipping test server, #3767). Keep waiting: our own server then exits on the taken port and the retry above picks new ports
+                    problem = e.Message;
+                }
             }
 
             if (waited.Elapsed > _readyWait)
@@ -203,7 +213,7 @@ internal sealed class TemporalDevServer
     private int Detach(string executable, string[] server, string log)
     {
         const string Script = "umask 077; log=$1; shift; "
-            + "if [ -x /usr/bin/perl ]; then /usr/bin/perl -MPOSIX -e 'POSIX::setsid(); exec @ARGV or die \"exec $ARGV[0]: $!\\n\"' \"$@\" </dev/null >>\"$log\" 2>&1 & "
+            + "if [ -x /usr/bin/perl ]; then /usr/bin/perl -MPOSIX -e 'POSIX::setsid() == -1 and die \"setsid: $!\\n\"; exec @ARGV or die \"exec $ARGV[0]: $!\\n\"' \"$@\" </dev/null >>\"$log\" 2>&1 & "
             + "else \"$@\" </dev/null >>\"$log\" 2>&1 & fi; echo $!";
         string[] arguments = [.. new[] { "-c", Script, "sh", log, executable }, .. server];
         var printed = DevServerProcesses.Capture(_start, "/bin/sh", arguments).Trim();

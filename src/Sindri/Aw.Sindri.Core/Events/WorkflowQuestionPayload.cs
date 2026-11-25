@@ -10,4 +10,13 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Default">What the node answers at its timeout, or null.</param>
 /// <param name="TimeoutAt">When the node stops waiting, or null for never.</param>
 /// <param name="By">Who posted it, as the envelope's actor reads.</param>
-public sealed record WorkflowQuestionPayload(WorkflowRunId Run, NodeId Node, string Question, IReadOnlyList<string> Choices, string? Default, DateTimeOffset? TimeoutAt, string By);
+public sealed record WorkflowQuestionPayload(WorkflowRunId Run, NodeId Node, string Question, IReadOnlyList<string> Choices, string? Default, DateTimeOffset? TimeoutAt, string By)
+{
+    /// <summary>The item's position inside a 'for_each' body (counted from 1) when the question is asked there; null otherwise.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public int? Item { get; init; }
+
+    /// <summary>The id of the workflow that waits for the answer when it is not the run's own (a loop batch's child); null otherwise.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? BatchWorkflow { get; init; }
+}

@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.ViewModels.Linear;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
@@ -26,7 +27,7 @@ internal sealed partial class ShellViewModel
                 Linear.SetShown(IsWork);
             }
         };
-        Linear.ConnectRequested += (_, _) => OpenLinearConnection();
+        Linear.ConnectRequested += (_, _) => GoTo(PageId.Connections);   // Connect Linear and Reconnect open the Connections page, a top tab
     }
 
     // L switches Work between Sindri and Linear from anywhere on the page; C creates an item, and on the Linear view opens the New issue dialog.
@@ -74,7 +75,7 @@ internal sealed partial class ShellViewModel
     /// <summary>Opens the New issue dialog (`C` on the Linear view, or its header button); the draft a close left is offered again.</summary>
     internal void OpenNewIssue()
     {
-        if (!NewIssue.IsOpen)
+        if (!NewIssue.IsOpen && Linear.CanCreate)
         {
             _ = NewIssue.Open(CancellationToken.None);
         }

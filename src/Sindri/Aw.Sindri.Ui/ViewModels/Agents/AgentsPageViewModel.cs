@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Sessions;
 using Aw.Sindri.Ui.Platform;
+using Aw.Sindri.Ui.Terminal;
 using Aw.Sindri.Ui.ViewModels.Components;
 using Aw.Sindri.Ui.ViewModels.Controls;
 
@@ -16,7 +17,10 @@ namespace Aw.Sindri.Ui.ViewModels.Agents;
 /// <param name="clipboard">Where Copy puts text.</param>
 /// <param name="clock">The clock the poll and the ages run on.</param>
 /// <param name="catalog">The command catalog, for the Focus row.</param>
-internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard clipboard, TimeProvider clock, CatalogViewModel catalog) : ObservableObject
+/// <param name="connector">Opens the terminal WebSocket; null: the pane never connects.</param>
+/// <param name="stopper">The stop route for the pane header's Stop; null: Stop is refused.</param>
+/// <param name="control">Stop and Interrupt for the terminal view's header; null until Serve's routes are wired (the buttons then answer "Couldn't stop it.").</param>
+internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard clipboard, TimeProvider clock, CatalogViewModel catalog, ISessionControl? control = null, ITerminalConnector? connector = null, ISessionStopper? stopper = null) : ObservableObject
 {
     private readonly Dictionary<string, SessionRowViewModel> _rows = new(StringComparer.Ordinal);
     private readonly Dictionary<string, EndedSessionViewModel> _ended = new(StringComparer.Ordinal);
@@ -32,6 +36,9 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
 
     /// <summary>Raised when the page should put focus on a row or its Focus line.</summary>
     internal event EventHandler<AgentFocusEventArgs>? FocusRequested;
+
+    /// <summary>Raised when N asks for the New agent form.</summary>
+    internal event EventHandler? NewAgentRequested;
 
     /// <summary>The API the page reads.</summary>
     internal ISindriApi Api { get; } = api;
@@ -54,6 +61,9 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
     /// <summary>One line per source problem (its text; the code stays out of the line), above the list.</summary>
     public ObservableCollection<string> ProblemLines { get; } = [];
 
+    /// <summary>True when the collector reports a problem line; the empty slot takes no room (#3710).</summary>
+    public bool HasProblems { get; private set => Set(ref field, value); }
+
     /// <summary>"3 live · 1 asking · 2 outside a workflow", as served and whatever the filters; empty until the first list.</summary>
     public string Head { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -75,10 +85,13 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
     public bool IsReading { get; private set { Set(ref field, value); OnChanged(nameof(ReadingText)); } } = true;
 
     /// <summary>The line that replaces the list when the collector can't run here (SND-SESSION-002); empty otherwise.</summary>
-    public string UnavailableText { get; private set { Set(ref field, value); OnChanged(nameof(IsUnavailable)); OnChanged(nameof(FiltersEnabled)); } } = string.Empty;
+    public string UnavailableText { get; private set { Set(ref field, value); OnChanged(nameof(IsUnavailable)); OnChanged(nameof(ShowsFilters)); OnChanged(nameof(FiltersEnabled)); } } = string.Empty;
 
     /// <summary>True while the collector can't run here.</summary>
     public bool IsUnavailable => UnavailableText.Length > 0;
+
+    /// <summary>True when the three filters show: not while sessions are unavailable, when there is nothing to filter.</summary>
+    public bool ShowsFilters => !IsUnavailable;
 
     /// <summary>True when the filters can be used.</summary>
     public bool FiltersEnabled => !IsUnavailable && !IsReading;
@@ -179,8 +192,10 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         OnChanged(nameof(HeadName));
         ObserveCounts(list.Counts.Live, list.Counts.Asking);
         Patch.To(ProblemLines, [.. list.Problems.Select(p => p.Text)]);
+        HasProblems = ProblemLines.Count > 0;
         ReplaceChoices(list);
         Apply(before, list);
+        FollowStarted();
     }
 
     private void Unavailable(string detail)
@@ -193,9 +208,12 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         OnChanged(nameof(HeadName));
         UnavailableText = Labels.SessionsUnavailable(detail);
         ProblemLines.Clear();
+        HasProblems = false;
         Groups.Clear();
         _groups.Clear();
         _rows.Clear();
+        RefreshColumns([]);   // no rows: the optional columns and the caption row go with them
+        OnChanged(nameof(HasColumns));
         Ended.Clear();
         _ended.Clear();
         (SelectedKey, IsEmpty, EmptyText) = (null, false, string.Empty);
@@ -226,7 +244,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
     private void Apply(IReadOnlyList<string> before, SessionList list)
     {
         var shownSessions = list.Sessions.Where(Matches).ToList();
-        var kept = shownSessions.Select(Row).ToList();
+        var kept = shownSessions.Select(Held).Select(Row).ToList();
         Head = IsFiltered
             ? Labels.AgentsFilteredHead(shownSessions.Count, list.Counts.Live, shownSessions.Count(s => string.Equals(s.State, "asking", StringComparison.Ordinal)))
             : Labels.AgentsHead(list.Counts.Live, list.Counts.Asking);
@@ -238,20 +256,10 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
             _ = _rows.Remove(gone);
         }
 
-        var outside = kept.Where(r => !r.IsLaunched).ToList();
-        var launched = kept.Where(r => r.IsLaunched).ToList();
-        var shown = new List<SessionGroupViewModel>();
-        if (launched.Count > 0)
-        {
-            shown.Add(Group(Labels.StartedBySindri, launched));
-        }
-
-        if (outside.Count > 0)
-        {
-            shown.Add(Group(Labels.OutsideWorkflow, outside));
-        }
-
+        var shown = ShownGroups(kept);
         Patch.To(Groups, shown);
+        OnChanged(nameof(HasAsking));   // after the patch: HasAsking reads Groups[0]
+        RefreshColumns(kept);
         OnChanged(nameof(HasColumns));
         ShowEnded(list);
         IsEmpty = kept.Count == 0;

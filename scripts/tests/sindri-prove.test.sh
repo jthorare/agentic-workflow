@@ -166,9 +166,9 @@ check "human_mode_strips_cr: no terminal control sequences in the output" "$(pri
 check "human_mode_strips_cr: the line itself is kept" "$(printf '%s\n' "$out" | tail -1)" "carriage"
 
 # --- port_is_zero ---
-out="$(AW_SINDRI_PORT=7410 prove "$H" status 2>&1 </dev/null)"
+out="$(AW_SINDRI_PORT=7410 prove "$H" status 2>&1 </dev/null)"  # test-ports: ok: a value for a stub sindri, nothing binds it
 contains "port_is_zero: verb mode" "$out" "AW_SINDRI_PORT=0"
-out="$(AW_SINDRI_PORT=7410 prove "$H" human status 2>&1 </dev/null)"
+out="$(AW_SINDRI_PORT=7410 prove "$H" human status 2>&1 </dev/null)"  # test-ports: ok: a value for a stub sindri, nothing binds it
 contains "port_is_zero: human mode" "$out" "AW_SINDRI_PORT=0"
 
 # --- curl_mode_reads_url_and_token_and_adds_headers ---

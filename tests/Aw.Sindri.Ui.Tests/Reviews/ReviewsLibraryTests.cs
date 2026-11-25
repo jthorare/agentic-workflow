@@ -141,7 +141,7 @@ public sealed class ReviewsLibraryTests
         var sheet = await Opened();
 
         Assert.False(sheet.IsLoading);
-        Assert.Contains("nope", sheet.Error, StringComparison.Ordinal);
+        Assert.Contains("Nope", sheet.Error, StringComparison.Ordinal);
         Assert.Empty(sheet.Sections);
     }
 }

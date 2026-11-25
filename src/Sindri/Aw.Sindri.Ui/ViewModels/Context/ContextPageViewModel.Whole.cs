@@ -1,4 +1,3 @@
-using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Platform;
@@ -36,47 +35,14 @@ internal sealed partial class ContextPageViewModel
         Whole.AreaOpenRequested += (_, e) => _ = OpenWholeArea(e.Value, CancellationToken.None);
         Whole.HomeRequested += (_, _) => MapHome();
         Whole.Panel.Launcher = Ports.Launcher ?? NullLauncher.Instance;
+        Whole.Panel.Clipboard = Ports.Clipboard;
         Whole.Panel.Loader = async (key, cancellationToken) => Ports.ApiUrl() is { } api ? await Ports.Api.Node(api, key, cancellationToken).ConfigureAwait(true) : null;
         Whole.Panel.WhyLoader = async (key, cancellationToken) => Ports.ApiUrl() is { } api ? await Ports.Api.Lenses(api, new LensesQuery([key], Depth: null, Draft: false, MapVersion: null), cancellationToken).ConfigureAwait(true) : null;
         Whole.NodeChosen += (_, e) => _ = ChooseWholeNode(e.Value, CancellationToken.None);
         Whole.PagesRetryRequested += (_, _) => _ = ReadWhole(CancellationToken.None);
-        Ports.Follow((_, cancellationToken) => FollowWhole(cancellationToken));
+        Follow((_, cancellationToken) => FollowWhole(cancellationToken));
     }
 
-    // After every event: a map not read yet is read; one that is drawn is read again when the stored map moved to another version (an import, a promote); an open concept's map follows the stored map too.
-    private Task FollowWhole(CancellationToken cancellationToken)
-    {
-        if (!_wholeWanted || Whole.IsLoading || Whole.IsFailed || (Concepts.IsOnStage && OpenedConceptId is null))
-        {
-            return Task.CompletedTask;
-        }
-
-        return Whole.IsReady ? ReadIfNewer(cancellationToken) : _conceptsRead ? ReadWhole(cancellationToken) : OpenFirst(cancellationToken);
-    }
-
-    // The cheap status says which version is current; the map is read again only when that is not the one drawn. A person's own answer (a query, an open feature) is left alone until they are back on the whole map.
-    private async Task ReadIfNewer(CancellationToken cancellationToken)
-    {
-        if (HasStack || Whole.IsZoomed || Whole.IsAreaOpen || Whole.Answer is not { } drawn || Ports.ApiUrl() is not { } api)
-        {
-            return;
-        }
-
-        var status = await Ports.Api.MapStatus(api, anchor: null, cancellationToken).ConfigureAwait(true);
-        if (!status.IsSuccess)
-        {
-            return;
-        }
-
-        var number = status.Value.Version.Number;
-        if (number == _rereadNumber || string.Equals(drawn.MapVersion, string.Create(CultureInfo.InvariantCulture, $"v{number}"), StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        _rereadNumber = number;   // a repo whose numbers differ from the answer's is read once per version, never in a loop
-        await ReadWhole(followed: number, cancellationToken).ConfigureAwait(true);
-    }
 
     /// <summary>The page was shown: the whole map is read once, with no starting point.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
@@ -84,10 +50,16 @@ internal sealed partial class ContextPageViewModel
     internal Task Opened(CancellationToken cancellationToken = default)
     {
         _wholeWanted = true;
+        ItemOpened(itemId: null);   // the page entered bare is no longer an item's
         NoteItem(string.Empty);   // an earlier See its context is over once the page is entered again
-        if (Whole.IsLoading || Concepts.IsOnStage)
+        if (Whole.IsLoading || Concepts.IsLoading || (Concepts.HasConcepts && OpenedConceptId is not null))
         {
             return Task.CompletedTask;
+        }
+
+        if (Concepts.HasConcepts)
+        {
+            return ReadConceptsIfNewer(cancellationToken);
         }
 
         return Whole.IsReady ? ReadIfNewer(cancellationToken) : OpenFirst(cancellationToken);
@@ -106,28 +78,38 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
+        var generation = _openGeneration;   // a first read or a repo switch that begins while this one is in flight makes its answer stale (#3697)
         Whole.Loading();
         ChangedWhole();
         try
         {
             var read = await Ports.Api.WholeMap(api, new WholeMapQuery("auto", Area: null, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId), cancellationToken).ConfigureAwait(true);
-            if (followed is { } version && OpenedConceptId is { } gone && !read.IsSuccess && string.Equals(read.Error.Code, GoneConceptCode, StringComparison.Ordinal))
+            if (generation == _openGeneration)
             {
-                await LeaveGoneConcept(gone, version, cancellationToken).ConfigureAwait(true);
-                return;
+                await DrawRead(api, read, followed, cancellationToken).ConfigureAwait(true);
             }
-
-            await DrawWhole(api, read, cancellationToken).ConfigureAwait(true);
         }
         finally
         {
-            if (Whole.IsLoading)
+            if (generation == _openGeneration && Whole.IsLoading)
             {
                 Whole.Failed();   // a read or a draw that threw is the failure row (Retry, Back), never "Reading the map" for good; the exception still goes to the caller
             }
 
             ChangedWhole();
         }
+    }
+
+    // The read's answer: an open concept the followed version lacks goes back to the list, anything else is drawn.
+    private async Task DrawRead(Uri api, Result<WholeMapView> read, int? followed, CancellationToken cancellationToken)
+    {
+        if (followed is { } version && OpenedConceptId is { } gone && !read.IsSuccess && string.Equals(read.Error.Code, GoneConceptCode, StringComparison.Ordinal))
+        {
+            await LeaveGoneConcept(gone, version, cancellationToken).ConfigureAwait(true);
+            return;
+        }
+
+        await DrawWhole(api, read, cancellationToken).ConfigureAwait(true);
     }
 
     // A Retry would ask for the same missing concept forever: the page goes back to the concepts, read again, with a line that says why.
@@ -146,7 +128,7 @@ internal sealed partial class ContextPageViewModel
         if (read.IsSuccess)
         {
             Whole.Show(read.Value);
-            NoteRepos(read.Value);
+            NoteRepos(read.Value.Repos);
             if (OpenedConceptId is { } opened)
             {
                 await MarkSuggestedSeen(opened).ConfigureAwait(true);
@@ -190,11 +172,11 @@ internal sealed partial class ContextPageViewModel
         if (read.IsSuccess)
         {
             Whole.ShowArea(read.Value);
-            Problem = string.Empty;
+            SetProblem(string.Empty);
         }
         else
         {
-            Problem = read.Error.Message;
+            ShowProblem(read.Error);
         }
 
         OnChanged(nameof(Problem));
@@ -216,6 +198,7 @@ internal sealed partial class ContextPageViewModel
     {
         OnChanged(nameof(Head));
         OnChanged(nameof(HasHead));
+        OnChanged(nameof(HeadDetail));
         OnChanged(nameof(ShowWhole));
         OnChanged(nameof(ShowWholeStatus));
         OnChanged(nameof(ShowRulesOlder));

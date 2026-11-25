@@ -211,12 +211,12 @@ packages:
     tier: 3
     projectPrefix: Aw.Sindri
     src: src/Sindri
-    bins: [sindri]
-    db: [sindri-app/ledger.db, sindri-app/views.db]
+    bins: [sindri, sindri-code-runner]
+    db: [sindri-app/ledger.db, sindri-app/views.db, sindri-app/messages.db]
     files: [sindri-app/control.json, sindri-app/auth/human.token, fleet]
     namespace: sindri
     routes: [/sindri/]
-    note: "built new in C# as an application (control plane, workflow engine, context retrieval; addendum §17.29, Q7), not ported; S1 (app shell: CLI and control plane, host lease, ledger, profile, API, scheduler, doctor) are in src/Sindri (the YAML recipe engine and the factory line were removed in issue 2258; workflow graphs replace them, `docs/csharp/sindri-graph.md`); API P2 adds the projector and its views (views.db: services, profile; read-your-writes, health, `sindri views rebuild`); API P3 adds items and the queue (views.db: items, item-aliases, item-timeline; `sindri queue`, `items`, `item add`, `item close`); API P5 adds the event stream, the ledger read and the events catalog (`GET /events`, `/ledger`, `/events/catalog`; `sindri ledger`, `status --follow`); API P6: jobs and services (the job runtime, `GET /jobs`, `POST /services/{name}/run|pause|resume`, `view_jobs`, the opt-in job-probe service; `sindri services`, `jobs`); Aw.Sindri.Workflows is the Temporal adapter (Infrastructure layer, namespace Aw.Sindri.Infrastructure.Workflows, AwAotCompatible=false for temporalio/sdk-dotnet#286; engine rev 8 §0); reaches lower tiers only through Core contracts, CLIs and the compose edges to Context and Judge (registration only), plus the tier-0 Redaction edge (RecordEvent's ledger scrub and, in Infrastructure, the desk notices' text)"
+    note: "built new in C# as an application (control plane, workflow engine, context retrieval; addendum §17.29, Q7), not ported; Aw.Sindri.CodeRunner is the second binary, sindri-code-runner (agent-first PR 9c): the process a Code node runs its compiled C# in, framework-dependent, referencing no Aw project (its contract is argv, stdin, stdout and the exit code), started by Infrastructure (Workflow/Code/SandboxedCodeRunner) through the process sandbox, from beside the sindri binary, and built before Aw.Sindri.Tests by a build-order reference; a process spawn inside one package, so no cli edge; S1 (app shell: CLI and control plane, host lease, ledger, profile, API, scheduler, doctor) are in src/Sindri (the YAML recipe engine and the factory line were removed in issue 2258; workflow graphs replace them, `docs/csharp/sindri-graph.md`); API P2 adds the projector and its views (views.db: services, profile; read-your-writes, health, `sindri views rebuild`); API P3 adds items and the queue (views.db: items, item-aliases, item-timeline; `sindri queue`, `items`, `item add`, `item close`); API P5 adds the event stream, the ledger read and the events catalog (`GET /events`, `/ledger`, `/events/catalog`; `sindri ledger`, `status --follow`); API P6: jobs and services (the job runtime, `GET /jobs`, `POST /services/{name}/run|pause|resume`, `view_jobs`, the opt-in job-probe service; `sindri services`, `jobs`); Aw.Sindri.Workflows is the Temporal adapter (Infrastructure layer, namespace Aw.Sindri.Infrastructure.Workflows, AwAotCompatible=false for temporalio/sdk-dotnet#286; engine rev 8 §0); reaches lower tiers only through Core contracts, CLIs and the compose edges to Context and Judge (registration only), plus the tier-0 Redaction edge (RecordEvent's ledger scrub and, in Infrastructure, the desk notices' text)"
 
   # ---- tier 4 ----
   - id: SindriUi
@@ -293,6 +293,12 @@ packages:
     projectPrefix: Aw.Sindri.Toolkit
     src: src/Toolkit
     note: "the SDK a toolkit project references (name, needs, typed tools, an MCP stdio host); packed alone into the SDK feed, so it has no repo references (no Kernel edge); toolkits live outside the repo and reference it through that feed, and Sindri never references it: Sindri talks to a toolkit over MCP stdio only (PR 15)"
+  - id: Transcripts
+    kind: package
+    tier: 1
+    projectPrefix: Aw.Transcripts
+    src: src/Transcripts
+    note: "the local agent transcript corpus: Claude Code, Codex and Cursor session files read as one provider-neutral list of sessions and human/assistant turns, with opaque refs and scrubbed text; no model calls (issue 3787)"
 
 edges:
   # ---- current: found in the source today ----
@@ -519,6 +525,11 @@ edges:
     status: planned
     note: "step.judge.choose (DT spec 3.1, 8.3) runs `judge choose --providers a,b` with the question on stdin, through the IJudgeChoice port and its CLI adapter (AW_SINDRI_JUDGE, set by sindri-app and the sandbox e2e to the C# judge published next to sindri, else judge on the PATH; AW_JUDGE_STATE_DIR is Sindri's own judge directory under its home), and the sandbox's hook canary (SandboxCanaries.cs, SB-2) runs `judge brief get task:selfcheck` inside a session, the hooks' own round trip, since the use cases live in Host and a project edge reaches only Core (spec 4c); Judge's stores never join Sindri's"
   - from: Sindri
+    to: Meta
+    kind: cli
+    status: planned
+    note: "the home-lanes collector (home spec §3.3, E1) runs `aw-meta lanes-context|status|usage|team-list --json`, read-only, through the IMetaTeamReader port and its CLI adapter (AW_SINDRI_AW_META, else aw-meta on the PATH); it never runs merge-run, gate-run or lane-recycle"
+  - from: Sindri
     to: Readiness
     kind: cli
     status: planned
@@ -697,6 +708,26 @@ edges:
     kind: compose
     status: current
     note: "Host calls AddConnectorsFeatures and AddConnectorsInfrastructure and nothing else from them"
+  - from: Sindri
+    to: Transcripts
+    kind: project
+    status: current
+    note: "Sindri's Host reads the local agent transcripts through ITranscriptCorpus in Aw.Transcripts.Core ('sindri transcripts list|show', issue 3787)"
+  - from: Sindri
+    to: Transcripts
+    kind: compose
+    status: current
+    note: "Sindri's Host calls AddTranscriptsInfrastructure (and nothing else from that project) in Composition"
+  - from: Transcripts
+    to: Kernel
+    kind: project
+    status: current
+    note: "Result, IService, ports (scaffolded by /new-package)"
+  - from: Transcripts
+    to: Redaction
+    kind: project
+    status: current
+    note: "turn text goes through the scrubber before it leaves the library (Aw.Transcripts.Infrastructure only)"
 
 exceptions:
   - rule: DEPS-CYCLE-001

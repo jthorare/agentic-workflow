@@ -10,9 +10,17 @@ using Microsoft.Extensions.Time.Testing;
 namespace Aw.Sindri.Tests.Commands.Chain;
 
 /// <summary>The chain as Program composes it (API spec §2.1): no command can skip a decorator, and queries get validation only.</summary>
-public sealed class ChainRegistrationTests
+public sealed class ChainRegistrationTests : IDisposable
 {
-    private static readonly string _stateRoot = Path.Combine(Path.GetTempPath(), "aw-sindri-chain-test");
+    private readonly string _stateRoot = Directory.CreateTempSubdirectory("aw-sindri-chain-test-").FullName;
+    public void Dispose()
+    {
+        if (Directory.Exists(_stateRoot))
+        {
+            Directory.Delete(_stateRoot, recursive: true);
+        }
+    }
+
 
     [Fact, Trait("Lane", "unit")]
     public void Every_registered_command_is_wrapped_gate_audit_authorize_validate_await_views_outermost_first()
@@ -23,7 +31,7 @@ public sealed class ChainRegistrationTests
             var commands = Registered(services, typeof(ICommand<>));
 
             Assert.NotEmpty(commands);
-            Assert.All(commands.Where(type => !IsStop(type) && !IsTestConnection(type) && !IsSignInConnection(type)), type => Assert.Equal(
+            Assert.All(commands.Where(type => !IsStop(type) && !IsRestart(type) && !IsTestConnection(type) && !IsSignInConnection(type) && !IsStartSession(type)), type => Assert.Equal(
                 [typeof(CommandGate<,>), typeof(AuditingService<,>), typeof(AuthorizingService<,>), typeof(ValidatingService<,>), typeof(AwaitingViews<,>), null],
                 Chain(scope.ServiceProvider.GetRequiredService(type))));
         }
@@ -41,6 +49,21 @@ public sealed class ChainRegistrationTests
             Assert.Equal(
                 [typeof(AuditingService<,>), typeof(AuthorizingService<,>), typeof(ValidatingService<,>), typeof(StoppingGate<,>), typeof(AwaitingViews<,>), null],
                 Chain(scope.ServiceProvider.GetRequiredService(stop)));
+        }
+    }
+
+    // A restart holds the gate from its open-set check through its stop, then stops the gate like the stop does (first-run spec decision 11).
+    [Fact, Trait("Lane", "unit")]
+    public void The_restart_runs_the_whole_chain_inside_a_gate_that_stops_once_serve_is_stopped()
+    {
+        var (services, scope) = Composed();
+        using (scope)
+        {
+            var restart = Assert.Single(Registered(services, typeof(ICommand<>)), IsRestart);
+
+            Assert.Equal(
+                [typeof(StoppingGate<,>), typeof(CommandGate<,>), typeof(AuditingService<,>), typeof(AuthorizingService<,>), typeof(ValidatingService<,>), typeof(AwaitingViews<,>), null],
+                Chain(scope.ServiceProvider.GetRequiredService(restart)));
         }
     }
 
@@ -73,6 +96,25 @@ public sealed class ChainRegistrationTests
                 Chain(scope.ServiceProvider.GetRequiredService(signIn)));
         }
     }
+
+    // A start makes a worktree, then a tmux session (up to 64 s): holding the gate that long blocks every other command. Only its ledger write takes the gate (A7, #3380).
+    [Fact, Trait("Lane", "unit")]
+    public void The_session_start_is_audited_and_authorized_but_does_not_hold_the_gate_while_it_starts()
+    {
+        var (services, scope) = Composed();
+        using (scope)
+        {
+            var start = Assert.Single(Registered(services, typeof(ICommand<>)), IsStartSession);
+
+            Assert.Equal(
+                [typeof(AuditingService<,>), typeof(AuthorizingService<,>), typeof(ValidatingService<,>), typeof(AwaitingViews<,>), null],
+                Chain(scope.ServiceProvider.GetRequiredService(start)));
+        }
+    }
+
+    private static bool IsStartSession(Type service) => service.GenericTypeArguments[0] == typeof(Features.StartSession.StartSessionRequest);
+
+    private static bool IsRestart(Type service) => service.GenericTypeArguments[0] == typeof(Features.RestartProcess.RestartProcessRequest);
 
     private static bool IsStop(Type service) => service.GenericTypeArguments[0] == typeof(Features.StopProcess.StopProcessRequest);
 
@@ -147,7 +189,7 @@ public sealed class ChainRegistrationTests
             ? service.GetType().GetProperty("Inner", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(service)
             : null;
 
-    private static (IServiceCollection Services, IServiceScope Scope) Composed()
+    private (IServiceCollection Services, IServiceScope Scope) Composed()
     {
         var services = Composition.Compose(new ServiceCollection(),
             name => name == "AW_STATE_DIR" ? _stateRoot : null, new FakeTimeProvider());

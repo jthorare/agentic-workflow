@@ -235,11 +235,11 @@ public sealed class ConnectionSecretsTests
         var world = new ConnectionHarness();
         var store = new SqliteConnectionStore(database);
         var oauth = new Features.AddConnection.OAuthSignInFlow(store, world.Secrets, world.SignIn, new Features.Commands.CommandGateAccess(world.Gate, world.Clock), world.Outcomes, world.Events());
-        var service = new Features.AddConnection.AddConnectionService(store, world.Secrets, world.Presets, world.Environment, world.Clock, world.Callers, oauth);
+        var service = new Features.AddConnection.AddConnectionService(store, world.Presets, world.Environment, world.Callers, oauth, new Features.AddConnection.KeyConnectionAdd(store, world.Secrets, world.Environment, world.Clock, world.Callers, world.Keys));
 
         var added = await service.Handle(ConnectionHarness.Rest("acme:sql") with { KeyEnv = null, Key = _canary }, Token);
         var signed = new FakeSignInSession();
-        var oauthService = new Features.AddConnection.AddConnectionService(store, world.Secrets, world.Presets, world.Environment, world.Clock, world.Callers, new Features.AddConnection.OAuthSignInFlow(store, world.Secrets, signed, new Features.Commands.CommandGateAccess(world.Gate, world.Clock), world.Outcomes, world.Events()));
+        var oauthService = new Features.AddConnection.AddConnectionService(store, world.Presets, world.Environment, world.Callers, new Features.AddConnection.OAuthSignInFlow(store, world.Secrets, signed, new Features.Commands.CommandGateAccess(world.Gate, world.Clock), world.Outcomes, world.Events()), new Features.AddConnection.KeyConnectionAdd(store, world.Secrets, world.Environment, world.Clock, world.Callers, world.Keys));
         var oauthAdd = oauthService.Handle(ConnectionHarness.Oauth(name: "linear:sql") with { ClientSecret = _secretCanary }, Token).AsTask();
         signed.Succeed(new TokenSet("access-sql", "refresh-sql", ExpiresAt: null));
         var oauthAdded = await oauthAdd;

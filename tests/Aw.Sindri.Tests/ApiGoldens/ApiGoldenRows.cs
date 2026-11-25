@@ -36,6 +36,18 @@ internal static class ApiGoldenRows
         return rows;
     }
 
+    /// <summary>The items of <paramref name="rows"/> whose index is <paramref name="shard"/> modulo <paramref name="shards"/>; the shards together hold every row exactly once.</summary>
+    public static List<(string Slug, string Scenario)> Slice(IReadOnlyList<(string Slug, string Scenario)> rows, int shard, int shards)
+    {
+        var slice = new List<(string Slug, string Scenario)>();
+        for (var i = shard; i < rows.Count; i += shards)
+        {
+            slice.Add(rows[i]);
+        }
+
+        return slice;
+    }
+
     public static async Task Match(string slug, string scenario, CancellationToken ct)
     {
         await using var host = await ApiScenarios.Start(slug, scenario, ct);

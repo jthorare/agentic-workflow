@@ -120,8 +120,11 @@ public sealed class CommandPaletteTests : IDisposable
         Assert.All(shell.Health.Catalog.Controls, c => Assert.Single(names, n => n.StartsWith(c.Label + ", ", StringComparison.Ordinal)));
         Assert.Contains("Run doctor, Copy: sindri doctor", names, StringComparer.Ordinal);
         Assert.Contains("Check launch targets again, " + Labels.CopyCli(shell.Health.Catalog.Row("ProbeLaunchTargets")!.Cli), names, StringComparer.Ordinal);   // why: the catalog serves the row
-        Assert.Equal(["Actions", "Go to", "Sindri"], Named<ItemsControl>(window, "PaletteSections").GetVisualDescendants().OfType<TextBlock>()
+        Assert.Equal(["Actions", "Go to", "Settings", "Sindri"], Named<ItemsControl>(window, "PaletteSections").GetVisualDescendants().OfType<TextBlock>()
             .Where(t => t.Classes.Contains("palette-heading")).Select(t => t.Text ?? string.Empty), StringComparer.Ordinal);
+        Assert.Equal(shell.Palette.Sections.Single(s => s.Heading == "Settings").Entries.Select(e => e.Label), names.Where(n => shell.Palette.Sections.Single(s => s.Heading == "Settings").Entries.Any(e => e.Label == n)), StringComparer.Ordinal);
+        Assert.Contains("Text size", names, StringComparer.Ordinal);
+        Assert.Contains("Reduce motion", names, StringComparer.Ordinal);
         Frame(window, "palette");
     });
 
@@ -249,7 +252,9 @@ public sealed class CommandPaletteTests : IDisposable
         Press(window, Key.K, PhysicalKey.K, _command, "k");
         var scroll = Named<ScrollViewer>(window, "PaletteScroll");
 
-        Assert.Equal(("CreateItem", 0d), (shell.Palette.Selected?.Id, scroll.Offset.Y));   // the first enabled action by name
+        // The first enabled action by name: "Add project" (AttachProject) runs since the Projects rows slice (issue 3717)
+        // and sorts before "Create item" (issue 4211).
+        Assert.Equal(("AttachProject", 0d), (shell.Palette.Selected?.Id, scroll.Offset.Y));
         var heading = Named<ItemsControl>(window, "PaletteSections").GetVisualDescendants().OfType<TextBlock>().First(t => t.Text == "Actions");
         Assert.True(heading.TranslatePoint(default, scroll) is { Y: >= 0 } at && at.Y < scroll.Viewport.Height, "the Actions heading is in view");
         Frame(window, "palette-top");
@@ -456,6 +461,53 @@ public sealed class CommandPaletteTests : IDisposable
         Assert.True(window.TryFindResource("Color.PrimaryHover", window.ActualThemeVariant, out var hover) && hover is Avalonia.Media.Color c && c == bar.Color);
 
         Press(window, Key.Down, PhysicalKey.ArrowDown);
-        Assert.Equal(0d, presenter.BorderThickness.Left);
+        Assert.False(HasBar(presenter), "the row the selection left draws no bar");
     });
+
+    // #2751: the selection only changes colours. Every row's label starts at the same x, selected or not, and an unselected
+    // row draws no bar, under the pointer too (Fluent's :pointerover sets the presenter's BorderBrush).
+    [Fact]
+    public Task Selecting_or_hovering_a_palette_row_never_moves_its_label() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected();
+        Press(window, Key.K, PhysicalKey.K, _command, "k");
+        var first = shell.Palette.Selected!.Label;
+        var selectedX = LabelX(window, first);
+
+        Assert.Equal([selectedX], LabelXs(window));
+        Press(window, Key.Down, PhysicalKey.ArrowDown);
+        var second = shell.Palette.Selected!.Label;
+        Assert.NotEqual(first, second, StringComparer.Ordinal);
+        Assert.Equal(selectedX, LabelX(window, first));
+        Assert.Equal(selectedX, LabelX(window, second));
+
+        var hovered = EntryButton(window, first);
+        var centre = hovered.TranslatePoint(new Point(hovered.Bounds.Width / 2, hovered.Bounds.Height / 2), window)!.Value;
+        window.MouseMove(centre, RawInputModifiers.None);
+        Settle(window);
+        Assert.True(hovered.IsPointerOver, "the pointer is over the unselected row");
+        Assert.False(HasBar(Presenter(hovered)), "a hovered unselected row draws no bar");
+        Assert.Equal(selectedX, LabelX(window, first));
+        Assert.Equal([selectedX], LabelXs(window));
+    });
+
+    private static Avalonia.Controls.Presenters.ContentPresenter Presenter(Button entry) =>
+        entry.GetVisualDescendants().OfType<Avalonia.Controls.Presenters.ContentPresenter>().First(p => p.Name == "PART_ContentPresenter");
+
+    // A visible left bar: some thickness in a brush that is not fully transparent.
+    private static bool HasBar(Avalonia.Controls.Presenters.ContentPresenter presenter) =>
+        presenter.BorderThickness.Left > 0 && presenter.BorderBrush is Avalonia.Media.ISolidColorBrush { Color.A: > 0 } brush && brush.Opacity > 0;
+
+    private static TextBlock Label(Button entry) => entry.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("entry-label"));
+
+    private static double LabelX(Window window, string label)
+    {
+        var text = Label(EntryButton(window, label));
+        return Math.Round(text.TranslatePoint(default, window)!.Value.X, 2, MidpointRounding.AwayFromZero);
+    }
+
+    // The distinct x of every drawn row's label (the spinner is hidden on every row here, so each label starts its row).
+    private static List<double> LabelXs(Window window) =>
+        [.. Named<Control>(window, "PaletteSections").GetVisualDescendants().OfType<Button>().Where(b => b.IsEffectivelyVisible)
+            .Select(b => Math.Round(Label(b).TranslatePoint(default, window)!.Value.X, 2, MidpointRounding.AwayFromZero)).Distinct()];
 }

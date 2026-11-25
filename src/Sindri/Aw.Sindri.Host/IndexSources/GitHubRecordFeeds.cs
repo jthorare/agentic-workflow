@@ -19,12 +19,14 @@ namespace Aw.Sindri.Host.IndexSources;
 /// <param name="readers">Makes the GitHub reader for a host, the private-host switch and the token.</param>
 internal sealed class GitHubRecordFeeds(ISecretPointers pointers, IGitHubConnectorFactory connectors, IConnectionStore connections, IConnectionSecrets connectionSecrets, Func<string?, bool, string, IGitHubReader> readers) : IExternalRecordFeeds
 {
+    private readonly ConnectionCredentials _credentials = new(connections, connectionSecrets, pointers);
+
     /// <inheritdoc />
     public IReadOnlyList<RecordFeed> For(ContextSettings settings, IReadOnlyList<ContextRepo> repos, Scrubbers scrubbers)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(repos);
-        if (settings.GitHub is not { Repos.Count: > 0 } github || Token(github.Token, connections, connectionSecrets, pointers) is not { } token
+        if (settings.GitHub is not { Repos.Count: > 0 } github || _credentials.TokenFor("github", github.Token) is not { } token
             || GitHubSettings.Create(github.Repos, github.Token, github.Host, github.AllowPrivateHost, commentCap: null) is not { IsSuccess: true } checkedSettings)
         {
             return [];
@@ -32,34 +34,5 @@ internal sealed class GitHubRecordFeeds(ISecretPointers pointers, IGitHubConnect
 
         var connector = connectors.Create(checkedSettings.Value, readers(github.Host, github.AllowPrivateHost, token), TimeSpan.FromDays(settings.Index.WindowDays));
         return [new ConnectorFeed(SourceId.From("github"), connector, new ProfileRepoMap(github.Repos, repos.Select(static r => r.Name)).Place, scrubbers, settings.LinearTeams)];
-    }
-
-    // why: the connected GitHub connection wins, so Reviews read with the credential the Connections page signed in (#2499: the
-    // owner's profile still names the old token the work org rejects); the profile's pointer is the fallback when no GitHub
-    // connection is connected
-    private static string? Token(string? pointer, IConnectionStore connections, IConnectionSecrets connectionSecrets, ISecretPointers pointers)
-    {
-        if (ConnectionToken(connections, connectionSecrets) is { } fromConnection)
-        {
-            return fromConnection;
-        }
-
-        return pointer is not null && SecretPointer.Parse(pointer) is { IsSuccess: true } parsed && pointers.Resolve(parsed.Value) is { IsSuccess: true } resolved
-            ? resolved.Value
-            : null;
-    }
-
-    private static string? ConnectionToken(IConnectionStore connections, IConnectionSecrets connectionSecrets)
-    {
-#pragma warning disable RS0030 // IExternalRecordFeeds.For is synchronous and the connection list is one local SQLite read; the host has no synchronization context to deadlock on
-        var listed = connections.List(CancellationToken.None).AsTask().GetAwaiter().GetResult();
-#pragma warning restore RS0030
-        if (listed.IsError)
-        {
-            return null;
-        }
-
-        var connection = listed.Value.Where(static c => c.Preset == "github" && c.Status == ConnectionStatus.Connected && c.SecretPointer is not null).OrderBy(static c => c.Name.ToString(), StringComparer.Ordinal).FirstOrDefault();
-        return connection?.SecretPointer is { } location && connectionSecrets.Read(location) is { IsSuccess: true } tokens ? tokens.Value.AccessToken : null;
     }
 }

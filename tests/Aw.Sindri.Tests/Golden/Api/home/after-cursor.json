@@ -1,0 +1,137 @@
+{
+  "asOf": {
+    "cursor": 1,
+    "ledgerHead": 1,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "counts": {
+    "needsYou": 6,
+    "moving": 0,
+    "snoozed": 0,
+    "done": 0
+  },
+  "needsYou": [
+    {
+      "id": "lane:recycle:ideas",
+      "version": 1,
+      "kind": "lane-recycle",
+      "group": "needs-you",
+      "title": "ideas: at 210k, recycle from a digest",
+      "facts": [
+        {
+          "kind": "why",
+          "text": "blocks 2"
+        },
+        {
+          "kind": "object",
+          "text": "ideas"
+        },
+        {
+          "kind": "from",
+          "text": "lane ideas"
+        }
+      ],
+      "waitsOn": "you",
+      "since": "2026-11-12T08:50:00.0000000Z",
+      "rank": {
+        "blocks": 2,
+        "weight": 4,
+        "sinceRank": 4,
+        "position": 4
+      },
+      "blocksList": [
+        {
+          "id": "gh:pr:jthorare/agentic-workflow#3078",
+          "title": "PR 3078",
+          "via": "item-of"
+        },
+        {
+          "id": "linear:issue:ENG-3014",
+          "title": "Issue 3014",
+          "via": "item-of"
+        }
+      ],
+      "links": [
+        {
+          "kind": "pr",
+          "id": "gh:pr:jthorare/agentic-workflow#3078",
+          "title": "PR 3078"
+        }
+      ],
+      "state": "open",
+      "snoozeUntil": null,
+      "doneAt": null,
+      "actions": [
+        "copy-digest-request",
+        "open-session"
+      ],
+      "source": {
+        "name": "home-lanes",
+        "readAt": "2026-11-12T09:10:00.0000000Z",
+        "connection": null
+      },
+      "repo": "demo"
+    },
+    {
+      "id": "gh:ready:jthorare/agentic-workflow#3101",
+      "version": 1,
+      "kind": "pr-ready-merge",
+      "group": "needs-you",
+      "title": "PR 3101 is ready to merge",
+      "facts": [
+        {
+          "kind": "why",
+          "text": "blocks 1"
+        },
+        {
+          "kind": "object",
+          "text": "#3101"
+        },
+        {
+          "kind": "from",
+          "text": "meta queue"
+        }
+      ],
+      "waitsOn": "you",
+      "since": "2026-11-12T08:40:00.0000000Z",
+      "rank": {
+        "blocks": 1,
+        "weight": 5,
+        "sinceRank": 3,
+        "position": 5
+      },
+      "blocksList": [
+        {
+          "id": "linear:issue:ENG-3040",
+          "title": "Issue 3040",
+          "via": "closes"
+        }
+      ],
+      "links": [
+        {
+          "kind": "issue",
+          "id": "linear:issue:ENG-3040",
+          "title": "Issue 3040"
+        }
+      ],
+      "state": "open",
+      "snoozeUntil": null,
+      "doneAt": null,
+      "actions": [
+        "merge",
+        "open"
+      ],
+      "source": {
+        "name": "home-lanes",
+        "readAt": "2026-11-12T09:10:00.0000000Z",
+        "connection": null
+      },
+      "repo": "demo"
+    }
+  ],
+  "moving": [],
+  "cursor": "gh:ready:jthorare/agentic-workflow#3101",
+  "degraded": []
+}

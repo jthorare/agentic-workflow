@@ -2650,7 +2650,7 @@ Everything here is offline and reads/writes only `eval_items`, `labels` and file
   - `eval.ts`: variant names `heuristic`, `blend`, `judge-only` for every `prompt-sort:<axis>` (they set the input's `mode`); `runEval` applies `collapseLabel(question, …)` to every result's label and decided prediction before scoring (so complexity and ambiguity compare in one space for both label sources, RF-6).
   - CLI: `judge prompt-sort import [--since 14d]`, `judge prompt-sort outcomes`, `judge prompt-sort adjudicate [--limit 80]`.
 
-Outcome-label rules (fixed here, applied to the transcript window that starts at the decision's timestamp and ends at the first later *new-task prompt* — a real prompt classified `other` with ≥ 10 words — or at the end of the session; only the next 6 hours count):
+Outcome-label rules (fixed here, applied to the transcript window that starts at the decision's timestamp and ends at the first later *new-task prompt* (a real prompt classified `other` with ≥ 10 words) or at the end of the session; only the next 6 hours count):
 
 | Axis | `yes` / positive label | negative label | no label |
 |---|---|---|---|

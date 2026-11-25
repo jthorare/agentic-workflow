@@ -120,6 +120,9 @@ public sealed class MetaWorld
     /// <summary>The messages to and from the non-Claude lanes, over <see cref="Messages"/>.</summary>
     public InMemoryLaneMail LaneMail { get; }
 
+    /// <summary>The event log.</summary>
+    public InMemoryMetaEventStore Events { get; } = new();
+
     /// <summary>A world with all its fakes.</summary>
     public MetaWorld()
     {
@@ -155,7 +158,10 @@ public sealed class MetaWorld
     public LaneHealthReader LaneHealth => new(LaneFiles, Beats, LaneMail, LaneGuard, Clock, LaneHealthOptions.Default);
 
     /// <summary>The inbox sync.</summary>
-    public InboxSync Sync => new(Transcripts, Messages, Owner, Clock);
+    public InboxSync Sync => new(Transcripts, Messages, Owner, Clock, new MetaTranscriptResolver(Messages, Sessions, new InMemoryTranscriptLocator(Transcripts)));
+
+    /// <summary>The merge readiness check merge-check and merge-run share, wired as the host wires it.</summary>
+    public MergeReadiness Readiness => new(Config, Gates, Repo, LogFiles, Messages, new LaneAddress(LaneFiles, LaneSessions, Sessions), Sync);
 
     /// <summary>The lane refresher.</summary>
     public LaneRefresher Refresher => new(Sessions, Messages, Lanes);
@@ -170,7 +176,10 @@ public sealed class MetaWorld
     public MetaSession Session => new(Messages, Config, Sessions);
 
     /// <summary>The stop-check sweep.</summary>
-    public MetaSweep Sweep => new(Sync, Refresher, Reader);
+    public MetaSweep Sweep => new(Sync, Refresher, Reader, Context, LaneFiles, Liveness);
+
+    /// <summary>The process table the sweep asks whether a recorded recycle waiter still runs.</summary>
+    public InMemoryProcessLiveness Liveness { get; } = new();
 
     /// <summary>The loop guard.</summary>
     public StopGuard Guard => new(Values, Log);

@@ -95,7 +95,7 @@ public sealed class LinearWorkSwitchTests
     {
         var work = await _f.Shown(Token);
 
-        Assert.Equal(("Linear · 3 new", "Linear, 3 new"), (work.LinearTabText, work.LinearTabName));
+        Assert.Equal(("Linear · 2 new", "Linear, 2 new"), (work.LinearTabText, work.LinearTabName));
     }
 
     [Fact]
@@ -116,7 +116,7 @@ public sealed class LinearWorkSwitchTests
 
         await work.Refresh(LinearFixture.Url, Token);
 
-        Assert.Equal(("Linear · 3 new", false), (work.LinearTabText, work.ShowsStrip));
+        Assert.Equal(("Linear · 2 new", false), (work.LinearTabText, work.ShowsStrip));
         Assert.Empty(_f.Server.LinearQueries);
     }
 }

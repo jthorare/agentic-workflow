@@ -90,7 +90,7 @@ internal sealed partial class FakeSindriApi
 
         if (!answer.IsSuccess)
         {
-            return SindriUiErrors.BadStatus.With(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{path} answered {(int)answer.Status}"));
+            return SindriUiErrors.BadStatus.With(SindriErrorReading.BadStatusMessage(path, answer.Status));
         }
 
         var read = AwJson.Deserialize<T>(body, SindriApiClient.Json);

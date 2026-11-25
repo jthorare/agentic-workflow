@@ -1,4 +1,5 @@
 using Aw.Context.Core.Code;
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Docs;
@@ -19,6 +20,7 @@ using Aw.Context.Core.Search;
 using Aw.Context.Core.Sync;
 using Aw.Context.Core.Trust;
 using Aw.Context.Core.Vectors;
+using Aw.Context.Infrastructure.ConceptAnswers;
 using Aw.Context.Infrastructure.ConceptScan;
 using Aw.Context.Infrastructure.ConceptSynthesis;
 using Aw.Context.Infrastructure.Docs;
@@ -68,7 +70,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<SqliteGraphStore>()
             .AddSingleton<IGraphStore>(sp => sp.GetRequiredService<SqliteGraphStore>())
             .AddSingleton<IProposalRuns>(sp => sp.GetRequiredService<SqliteGraphStore>())
-            .AddSingleton<IConceptHintStore, SqliteConceptHintStore>()
+            .AddSingleton<IConceptHintStore, SqliteConceptHintStore>().AddSingleton<IConceptAnswerStore, SqliteConceptAnswerStore>()
             .AddSingleton<IConceptSynthesisStore, SqliteConceptSynthesisStore>()
             .AddSingleton<IIntentStore, SqliteIntentStore>()
             .AddSingleton<IRecordStore, SqliteRecordStore>()
@@ -97,8 +99,14 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<IBriefSource, StoreBriefSource>()
             .AddSingleton<IAsOfDocs, AsOfDocsFactory>()
             .AddSingleton<IEvalStore, FileEvalStore>()
-            .AddSingleton(sp => new LinearSources(new LinearSourceParts(
-                LinearHttp.Client, environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<LinearClient>>())));
+            .AddLinearSources(environment);
+
+    private static IServiceCollection AddLinearSources(this IServiceCollection services, Func<string, string?> environment)
+        => services.AddSingleton(sp => new LinearSources(new LinearSourceParts(
+            LinearHttp.Client, environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<LinearClient>>())
+        {
+            Credential = sp.GetService<ILinearReadCredential>(),   // Sindri's connection-first order (#2508), when the host registers one
+        }));
 
     /// <summary>
     /// Adds the labeling pass ('context.labeling'): <see cref="ILabeler"/> over the host's <see cref="Core.Models.IModelPort"/>. The token cap
@@ -115,5 +123,5 @@ public static class ContextInfrastructureServiceCollectionExtensions
                 new ModelLabeler(sp.GetRequiredService<Core.Models.IModelPort>(), sp.GetRequiredService<IScrubberFactory>(), sp.GetService<Core.Models.IChoicePort>(), sp.GetService<Core.Models.IModelPromptBudget>()),
                 sp.GetRequiredService<ILabelCache>(), sp.GetRequiredService<IScrubberFactory>(), sp.GetService<Core.Models.IChoicePort>()))
             .AddSingleton<Core.Surfaces.ISurfacePicker>(sp => new Surfaces.SurfacePicker(sp.GetService<Core.Models.IChoicePort>(), sp.GetRequiredService<IScrubberFactory>()))
-            .AddSingleton<Core.Concepts.IConceptNamer>(sp => new ModelConceptNamer(sp.GetRequiredService<Core.Models.IModelPort>(), sp.GetRequiredService<IScrubberFactory>()));
+            .AddSingleton<IConceptNamer>(sp => new ModelConceptNamer(sp.GetRequiredService<Core.Models.IModelPort>(), sp.GetRequiredService<IScrubberFactory>()));
 }

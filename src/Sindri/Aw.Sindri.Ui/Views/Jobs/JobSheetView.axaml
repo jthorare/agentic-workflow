@@ -54,14 +54,14 @@
       </Panel>
 
       <!-- A job parked on a model limit says why and offers Resume, above its progress (context model routing, 8.2). -->
-      <StackPanel x:Name="JobPaused" Spacing="6" IsVisible="{Binding IsPaused}">
+      <StackPanel x:Name="JobPaused" Spacing="8" IsVisible="{Binding IsPaused}">
         <Border x:Name="JobPausedText" AutomationProperties.Name="{Binding PausedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body" Text="{Binding PausedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
         <controls:CommandControl x:Name="JobResume" HorizontalAlignment="Left" DataContext="{Binding Resume}" />
       </StackPanel>
 
-      <StackPanel x:Name="JobProgress" Spacing="6">
+      <StackPanel x:Name="JobProgress" Spacing="8">
         <TextBlock Classes="eyebrow" Text="{Binding ProgressHeading}" AutomationProperties.AccessibilityView="Raw" />
         <Border x:Name="JobNoProgress" IsVisible="{Binding HasNoProgress}" AutomationProperties.Name="{Binding NoProgressText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption quiet" Text="{Binding NoProgressText}" AutomationProperties.AccessibilityView="Raw" />
@@ -78,7 +78,7 @@
       </StackPanel>
 
       <!-- The model calls: one named row per try, in call order, one tab stop with Up, Down, Home and End moving between the rows (a ListBox), scrolling inside the sheet. -->
-      <StackPanel x:Name="JobModelCalls" Spacing="6" IsVisible="{Binding HasModelCalls}">
+      <StackPanel x:Name="JobModelCalls" Spacing="8" IsVisible="{Binding HasModelCalls}">
         <TextBlock Classes="eyebrow" Text="{Binding ModelCallsHeading}" AutomationProperties.AccessibilityView="Raw" />
         <Border x:Name="JobModelMore" IsVisible="{Binding HasModelMore}" AutomationProperties.Name="{Binding ModelMoreText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption quiet" Text="{Binding ModelMoreText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -112,7 +112,7 @@
           <ItemsControl x:Name="JobFields" ItemsSource="{Binding Fields}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="jb:JobFieldViewModel">
-                <Border Name="JobField" Margin="0,0,0,6" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                <Border Name="JobField" Margin="0,0,0,8" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                   <StackPanel Spacing="1" AutomationProperties.AccessibilityView="Raw">
                     <TextBlock Classes="caption subtle" Text="{Binding Label}" AutomationProperties.AccessibilityView="Raw" />
                     <TextBlock Classes="body mono" Text="{Binding Value}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -121,7 +121,7 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
-          <StackPanel x:Name="JobCliRow" Spacing="6" IsVisible="{Binding HasCli}">
+          <StackPanel x:Name="JobCliRow" Spacing="8" IsVisible="{Binding HasCli}">
             <TextBlock Classes="eyebrow" Text="{Binding CliLabel}" AutomationProperties.AccessibilityView="Raw" />
             <Border x:Name="JobCliLine" AutomationProperties.Name="{Binding Cli}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
               <TextBlock Classes="caption mono" Text="{Binding Cli}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />

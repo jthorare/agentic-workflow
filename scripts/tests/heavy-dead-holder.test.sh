@@ -10,6 +10,7 @@ unset TMUX
 for v in $(compgen -e | grep -E '^AW_(HEAVY|SESSION_HEAVY)'); do unset "$v"; done   # this suite may itself run under a heavy job
 unset DOTNET_PROCESSOR_COUNT MSBUILDDISABLENODEREUSE
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "$DIR/../lib/test-portable.sh"   # timeout and touch_ago for macOS (no GNU timeout, no touch -d)
 HEAVY="$DIR/../heavy.sh"
 LOCKS="$DIR/../../config/lib/locks.sh"
 fail=0
@@ -33,7 +34,7 @@ slot() {
   T="$WORK/$1"; SLOT="$T/state/locks/heavy-job.lock"
   mkdir -p "$SLOT"
   [ -z "$2" ] || printf '%s\n' "$3" > "$SLOT/$2"
-  [ -z "${4:-}" ] || touch -d "$4" "$SLOT"
+  [ -z "${4:-}" ] || touch_ago "$SLOT" "$4"
 }
 
 # wrapper / lockssh: try to take the slot within 6 s; prints "taken" (the job ran) or "kept" (still waiting).

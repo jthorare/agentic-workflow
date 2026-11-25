@@ -8,19 +8,93 @@ public static class MergeGate
 {
     private const string NoGate = "no gate recorded for this pull request";
 
-    /// <summary>Evaluates every precondition: gate, gate-result, head, main, order, draft. With no gate recorded, only
-    /// the gate check: the pull request isn't looked up then, so order and draft would report defaults, not facts.</summary>
+    /// <summary>Evaluates every precondition: gate, gate-result, head, main, order, draft. With no gate recorded and no reviewer
+    /// lane, only the gate check. With a reviewer lane (<see cref="MergeFacts.Review"/>), the review path (review, ready, counts, order, draft) is
+    /// enough on its own, with no check against main; a red gate recorded at the current head still refuses.</summary>
     /// <param name="facts">What is known about the pull request and main.</param>
     /// <returns>One check per precondition, in that order.</returns>
     public static IReadOnlyList<MergeCheck> Evaluate(MergeFacts facts)
     {
         ArgumentNullException.ThrowIfNull(facts);
-        var gate = facts.Gate;
-        if (gate is null)
+        if (facts.CiGate)
         {
-            return [new MergeCheck("gate", Ok: false, NoGate + "; run aw-meta gate-run " + facts.Pr.ToString(CultureInfo.InvariantCulture))];
+            return CiChecks(facts);
         }
 
+        var gate = facts.Gate;
+        var review = facts.Review is null ? null : ReviewChecks(facts, facts.Review);
+        if (gate is null || review is null || !review.All(check => check.Ok))
+        {
+            return gate is null ? NoGateChecks(facts, review) : GateChecks(facts, gate);
+        }
+
+        // A red gate recorded at this head still refuses; a gate at another head says nothing about it.
+        var red = gate.Head == facts.CurrentHead ? GateResult(gate, facts.FailingTests, facts.FailureCounts) : null;
+        return red is { Ok: false } ? [.. review, red] : review;
+    }
+
+    // A CI gate: the newest record must be the read of the pull request's required checks, passing, at the head now. Nothing is
+    // checked against main, no scope is planned and no test log is read. The record is from gate time, so the merge state and the
+    // review decision are read from GitHub again at merge time and must be CLEAN and APPROVED now; a failed read refuses. The
+    // review path adds the reviewer's OK, the ready line and the counts when the team has a reviewer lane.
+    private static MergeCheck[] CiChecks(MergeFacts facts)
+    {
+        var rest = facts.Review is null ? [Order(facts), Draft(facts)] : ReviewChecks(facts, facts.Review);
+        if (facts.Gate is not { } gate)
+        {
+            return [new MergeCheck("gate", Ok: false, NoGate + "; run aw-meta gate-run " + facts.Pr.ToString(CultureInfo.InvariantCulture) + " (it reads the required checks)"), .. rest];
+        }
+
+        if (!CiGate.IsCiRecord(gate))
+        {
+            return [new MergeCheck("gate", Ok: false, $"the newest gate run {gate.Run.ToString(CultureInfo.InvariantCulture)} ran {string.Join(", ", gate.Scopes)} locally, not CI; run aw-meta gate-run {facts.Pr.ToString(CultureInfo.InvariantCulture)} (gate.mode is ci)"), .. rest];
+        }
+
+        var failed = gate.Steps.Where(step => step.Verdict != GateVerdict.Pass).Select(step => $"{step.Name} ({step.Log})").ToList();
+        return
+        [
+            new MergeCheck("gate", Ok: true, $"CI gate run {gate.Run.ToString(CultureInfo.InvariantCulture)} at {gate.Head}"),
+            gate.Verdict == GateVerdict.Pass && failed.Count == 0
+                ? new MergeCheck("gate-result", Ok: true, "PASS")
+                : new MergeCheck("gate-result", Ok: false, $"{gate.Verdict}: {(failed.Count == 0 ? "no failing step recorded" : string.Join("; ", failed))}"),
+            gate.Head == facts.CurrentHead
+                ? new MergeCheck("head", Ok: true, "head unchanged since the CI gate")
+                : new MergeCheck("head", Ok: false, $"head moved from {gate.Head} to {facts.CurrentHead} since the CI gate"),
+            .. Live(facts),
+            .. rest,
+        ];
+    }
+
+    private static MergeCheck[] Live(MergeFacts facts)
+    {
+        if (facts.LiveError is not null || facts.LiveMergeState is null || facts.LiveReviewDecision is null)
+        {
+            var why = $"could not read the live state from GitHub: {facts.LiveError ?? "no answer"}";
+            return [new MergeCheck("merge-state", Ok: false, why), new MergeCheck("review-decision", Ok: false, why)];
+        }
+
+        var state = facts.LiveMergeState;
+        var decision = facts.LiveReviewDecision;
+        return
+        [
+            string.Equals(state, "CLEAN", StringComparison.Ordinal)
+                ? new MergeCheck("merge-state", Ok: true, "CLEAN now")
+                : new MergeCheck("merge-state", Ok: false, $"GitHub's merge state is {(state.Length == 0 ? "unknown" : state)} now, not CLEAN"),
+            string.Equals(decision, "APPROVED", StringComparison.Ordinal)
+                ? new MergeCheck("review-decision", Ok: true, "APPROVED now")
+                : new MergeCheck("review-decision", Ok: false, $"GitHub's review decision is {(decision.Length == 0 ? "none" : decision)} now, not APPROVED"),
+        ];
+    }
+
+    private static MergeCheck Draft(MergeFacts facts) => new("draft", !facts.IsDraft, facts.IsDraft ? "the pull request is a draft" : "ready for review");
+
+    // With a reviewer lane no gate is required (merge direct, #2894): the review checks alone decide, and a failing one says
+    // what is missing, so no "gate" check is added that would send meta to gate-run.
+    private static MergeCheck[] NoGateChecks(MergeFacts facts, MergeCheck[]? review) =>
+        review ?? [new MergeCheck("gate", Ok: false, NoGate + "; run aw-meta gate-run " + facts.Pr.ToString(CultureInfo.InvariantCulture))];
+
+    private static MergeCheck[] GateChecks(MergeFacts facts, GateRecord gate)
+    {
         return
         [
             new MergeCheck("gate", Ok: true, "gate run " + gate.Run.ToString(CultureInfo.InvariantCulture) + " at " + gate.Head),
@@ -31,6 +105,21 @@ public static class MergeGate
             Order(facts),
             new MergeCheck("draft", !facts.IsDraft, facts.IsDraft ? "the pull request is a draft" : "ready for review"),
         ];
+    }
+
+    // The review path: the reviewer's OK at the head (in review.mode counts: no standing HOLD), the lane's ready at the head, its
+    // counts, order and draft. Nothing is checked against main.
+    private static MergeCheck[] ReviewChecks(MergeFacts facts, ReviewFacts review)
+    {
+        var pr = facts.Pr.ToString(CultureInfo.InvariantCulture);
+        var ok = ReviewPath.Review(review, pr, facts.CurrentHead);
+        var ready = review.ReadySha is null
+            ? new MergeCheck("ready", Ok: false, $"no ready message for #{pr} naming a sha")
+            : ReviewProof.IsHead(review.ReadySha, facts.CurrentHead)
+                ? new MergeCheck("ready", Ok: true, $"ready at {review.ReadySha}")
+                : new MergeCheck("ready", Ok: false, $"the newest ready is at {review.ReadySha}, the head is {facts.CurrentHead}");
+        var counts = ReviewPath.Counts(review);
+        return [ok, ready, counts, Order(facts), new MergeCheck("draft", !facts.IsDraft, facts.IsDraft ? "the pull request is a draft" : "ready for review")];
     }
 
     private static MergeCheck GateResult(GateRecord gate, IReadOnlyDictionary<string, IReadOnlyList<string>> failing, IReadOnlyDictionary<string, (int Summarized, int Named)> counts)
@@ -113,21 +202,56 @@ public static class MergeGate
             return new MergeCheck("main", Ok: true, $"gate ran on main {gate.Main}");
         }
 
-        if (gate.Tree is null)
-        {
-            return new MergeCheck("main", Ok: false, $"gate ran on main {gate.Main}, main is {facts.CurrentMain}");
-        }
-
-        if (facts.MergedTree == gate.Tree)
+        if (gate.Tree is not null && facts.MergedTree == gate.Tree)
         {
             return new MergeCheck("main", Ok: true, gate.Stack.Count == 0
                 ? $"main moved from {gate.Main} to {facts.CurrentMain}, and the gated head merges onto it to the tested tree"
-                : $"the gated head merges onto main {facts.CurrentMain} to the tested tree (the gate stacked {string.Join(", ", gate.Stack.Select(s => "#" + s.Pr.ToString(CultureInfo.InvariantCulture)))})");
+                : $"the gated head merges onto main {facts.CurrentMain} to the tested tree (the gate stacked {StackList(gate)})");
+        }
+
+        if (QueueSettles(gate, facts) is { } queued)
+        {
+            return queued;
+        }
+
+        if (gate.Tree is null)
+        {
+            return new MergeCheck("main", Ok: false, NoTree(gate, facts));
         }
 
         return new MergeCheck("main", Ok: false, gate.Stack.Count == 0
             ? $"gate ran on main {gate.Main}, main is {facts.CurrentMain}, and the gated head no longer merges onto it to the tested tree"
-            : $"the gate stacked {string.Join(", ", gate.Stack.Select(s => "#" + s.Pr.ToString(CultureInfo.InvariantCulture)))}; merging the gated head onto main {facts.CurrentMain} does not give the tested tree");
+            : $"the gate stacked {StackList(gate)}; merging the gated head onto main {facts.CurrentMain} does not give the tested tree");
+    }
+
+    // A gate recorded without its tree: an unstacked one failed the fast path because main moved; a stacked one can't vouch even on the same main.
+    private static string NoTree(GateRecord gate, MergeFacts facts) => gate.Stack.Count == 0
+        ? $"gate ran on main {gate.Main}, main is {facts.CurrentMain}"
+        : gate.Main == facts.CurrentMain
+            ? $"gate ran on main {gate.Main} with a stack ({StackList(gate)}) and recorded no tree; main didn't move, but a stacked gate vouches only through its tested tree: gate again"
+            : $"gate ran on main {gate.Main} with a stack ({StackList(gate)}) and recorded no tree, main is {facts.CurrentMain}: gate again";
+
+    private static string StackList(GateRecord gate) => string.Join(", ", gate.Stack.Select(s => "#" + s.Pr.ToString(CultureInfo.InvariantCulture)));
+
+    // A merge queue re-tests the merged tree before it lands, so a main that moved past the gate is the queue's to settle. A head that
+    // conflicts with main is not: the queue would drop the pull request, so it refuses here. Null when the base has no merge queue.
+    private static MergeCheck? QueueSettles(GateRecord gate, MergeFacts facts)
+    {
+        if (!facts.BaseHasMergeQueue)
+        {
+            return null;
+        }
+
+        if (facts.MergeConflicts)
+        {
+            return new MergeCheck("main", Ok: false, gate.Main == facts.CurrentMain
+                ? $"gate ran on main {gate.Main} and main didn't move, but the gated head conflicts with it; the merge queue would drop it too"
+                : $"gate ran on main {gate.Main}, main is {facts.CurrentMain}, and the gated head conflicts with it; the merge queue would drop it too");
+        }
+
+        return new MergeCheck("main", Ok: true, gate.Main == facts.CurrentMain
+            ? $"the gated head does not merge to the tested tree on main {facts.CurrentMain}; GitHub's merge queue re-tests on the merged tree"
+            : $"main moved from {gate.Main} to {facts.CurrentMain}; GitHub's merge queue re-tests on the merged tree");
     }
 
     private static MergeCheck Order(MergeFacts facts)

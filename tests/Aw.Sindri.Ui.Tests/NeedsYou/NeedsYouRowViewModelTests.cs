@@ -26,6 +26,18 @@ public sealed class NeedsYouRowViewModelTests
     private static NeedsYouEntry Pulse(string id = "p") => new(id, NeedsYouUrgency.Pulse);
 
     [Fact]
+    public async Task A_decision_row_leads_with_the_question_and_keeps_the_id_for_the_tooltip()
+    {
+        var panel = await Panel();
+        panel.Update([new NeedsYouEntry("DEC-01a1c4", NeedsYouUrgency.Pulse) { Kind = "decision", ShownId = "DEC-01a1c4", Title = "Which retry budget should the sync worker use?" }]);
+
+        var row = panel.Rows[0];
+
+        Assert.Equal("Which retry budget should the sync worker use?", row.Title);
+        Assert.Contains("DEC-01a1c4", row.IdTip, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Pulse_row_pulses_until_seen_then_the_tint_clears()
     {
         var panel = await Panel();

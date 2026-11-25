@@ -53,17 +53,29 @@
             {
               "name": "connection",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "Connection",
+              "advanced": false,
+              "services": [
+                "github",
+                "linear",
+                "slack",
+                "google"
+              ]
             },
             {
               "name": "event",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "Event",
+              "advanced": false
             },
             {
               "name": "filter",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Only when",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -71,20 +83,14 @@
             "occurredAt": "string",
             "connection": "string",
             "event": "string",
-            "repo?": "string",
-            "number?": "string",
-            "title?": "string",
-            "url?": "string",
-            "author?": "string",
-            "ref?": "string",
-            "identifier?": "string",
-            "label?": "string",
-            "to?": "string",
-            "channel?": "string",
-            "ts?": "string",
-            "user?": "string",
-            "text?": "string",
-            "start?": "string"
+            "repo": "string",
+            "number": "number",
+            "title": "string",
+            "author": "string",
+            "url": "string",
+            "headSha": "string",
+            "baseRef": "string",
+            "draft": "boolean"
           },
           "branches": [
             "out"
@@ -132,16 +138,178 @@
             {
               "name": "cron",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "Runs at",
+              "presets": [
+                {
+                  "value": "0 7 * * 1-5",
+                  "label": "Every weekday at 7:00"
+                },
+                {
+                  "value": "0 9 * * *",
+                  "label": "Every day at 9:00"
+                },
+                {
+                  "value": "0 * * * *",
+                  "label": "Every hour"
+                },
+                {
+                  "value": "0 8 * * 1",
+                  "label": "Every Monday at 8:00"
+                }
+              ],
+              "advanced": false
             },
             {
               "name": "timezone",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Time zone",
+              "presets": [
+                {
+                  "value": "UTC",
+                  "label": "UTC"
+                },
+                {
+                  "value": "America/Anchorage",
+                  "label": "America/Anchorage"
+                },
+                {
+                  "value": "America/Chicago",
+                  "label": "America/Chicago"
+                },
+                {
+                  "value": "America/Denver",
+                  "label": "America/Denver"
+                },
+                {
+                  "value": "America/Halifax",
+                  "label": "America/Halifax"
+                },
+                {
+                  "value": "America/Los_Angeles",
+                  "label": "America/Los_Angeles"
+                },
+                {
+                  "value": "America/Mexico_City",
+                  "label": "America/Mexico_City"
+                },
+                {
+                  "value": "America/New_York",
+                  "label": "America/New_York"
+                },
+                {
+                  "value": "America/Phoenix",
+                  "label": "America/Phoenix"
+                },
+                {
+                  "value": "America/Sao_Paulo",
+                  "label": "America/Sao_Paulo"
+                },
+                {
+                  "value": "America/Toronto",
+                  "label": "America/Toronto"
+                },
+                {
+                  "value": "America/Vancouver",
+                  "label": "America/Vancouver"
+                },
+                {
+                  "value": "Asia/Dubai",
+                  "label": "Asia/Dubai"
+                },
+                {
+                  "value": "Asia/Hong_Kong",
+                  "label": "Asia/Hong_Kong"
+                },
+                {
+                  "value": "Asia/Kolkata",
+                  "label": "Asia/Kolkata"
+                },
+                {
+                  "value": "Asia/Seoul",
+                  "label": "Asia/Seoul"
+                },
+                {
+                  "value": "Asia/Shanghai",
+                  "label": "Asia/Shanghai"
+                },
+                {
+                  "value": "Asia/Singapore",
+                  "label": "Asia/Singapore"
+                },
+                {
+                  "value": "Asia/Tokyo",
+                  "label": "Asia/Tokyo"
+                },
+                {
+                  "value": "Australia/Melbourne",
+                  "label": "Australia/Melbourne"
+                },
+                {
+                  "value": "Australia/Sydney",
+                  "label": "Australia/Sydney"
+                },
+                {
+                  "value": "Europe/Amsterdam",
+                  "label": "Europe/Amsterdam"
+                },
+                {
+                  "value": "Europe/Berlin",
+                  "label": "Europe/Berlin"
+                },
+                {
+                  "value": "Europe/Dublin",
+                  "label": "Europe/Dublin"
+                },
+                {
+                  "value": "Europe/Helsinki",
+                  "label": "Europe/Helsinki"
+                },
+                {
+                  "value": "Europe/Lisbon",
+                  "label": "Europe/Lisbon"
+                },
+                {
+                  "value": "Europe/London",
+                  "label": "Europe/London"
+                },
+                {
+                  "value": "Europe/Madrid",
+                  "label": "Europe/Madrid"
+                },
+                {
+                  "value": "Europe/Paris",
+                  "label": "Europe/Paris"
+                },
+                {
+                  "value": "Europe/Stockholm",
+                  "label": "Europe/Stockholm"
+                },
+                {
+                  "value": "Europe/Warsaw",
+                  "label": "Europe/Warsaw"
+                },
+                {
+                  "value": "Europe/Zurich",
+                  "label": "Europe/Zurich"
+                },
+                {
+                  "value": "Pacific/Auckland",
+                  "label": "Pacific/Auckland"
+                },
+                {
+                  "value": "Pacific/Honolulu",
+                  "label": "Pacific/Honolulu"
+                }
+              ],
+              "advanced": false
             }
           ],
           "outputs": {
-            "scheduledFor": "string"
+            "scheduledFor": "string",
+            "localDate": "string",
+            "weekday": "string"
           },
           "branches": [
             "out"
@@ -230,27 +398,37 @@
             {
               "name": "url",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "Web address",
+              "advanced": false
             },
             {
               "name": "method",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Request type",
+              "advanced": false
             },
             {
               "name": "headers",
               "type": "object",
-              "required": false
+              "required": false,
+              "caption": "Headers",
+              "advanced": false
             },
             {
               "name": "body",
               "type": "object",
-              "required": false
+              "required": false,
+              "caption": "Request body",
+              "advanced": false
             },
             {
               "name": "expect",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Accepted answer codes",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -308,6 +486,300 @@
               }
             ]
           }
+        },
+        {
+          "type": "memory_search",
+          "title": "Recall",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "memory",
+              "type": "text",
+              "required": true,
+              "caption": "Memory",
+              "advanced": false
+            },
+            {
+              "name": "query",
+              "type": "text",
+              "required": true,
+              "caption": "What to look for",
+              "advanced": false
+            },
+            {
+              "name": "level",
+              "type": "text",
+              "required": false,
+              "caption": "How close a match",
+              "advanced": false
+            },
+            {
+              "name": "limit",
+              "type": "number",
+              "required": false,
+              "caption": "Most results",
+              "advanced": false
+            }
+          ],
+          "outputs": {
+            "facts": "array",
+            "mode": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "memory": "drift-check",
+            "query": "last checked commit and open PR",
+            "level": "balanced",
+            "limit": 5
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Recall what we checked",
+            "concurrency": "unlimited",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "workflow_call",
+                "config": {}
+              },
+              {
+                "id": "recall",
+                "type": "memory_search",
+                "config": {
+                  "memory": "drift-check",
+                  "query": "last checked commit and open PR"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "What we know",
+                  "body": "{{recall.facts}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "recall"
+              },
+              {
+                "from": "recall",
+                "to": "tell"
+              }
+            ]
+          }
+        },
+        {
+          "type": "skill_catalog",
+          "title": "Skill catalog",
+          "isTrigger": false,
+          "config": [],
+          "outputs": {
+            "skills": "array",
+            "count": "number"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {},
+          "exampleSpec": {
+            "version": 1,
+            "name": "List the skills",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "skills",
+                "type": "skill_catalog",
+                "config": {}
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "{{skills.count}} skills"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "skills"
+              },
+              {
+                "from": "skills",
+                "to": "tell"
+              }
+            ]
+          }
+        },
+        {
+          "type": "call_tool",
+          "title": "Toolkit tool",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "tool",
+              "type": "text",
+              "required": true,
+              "caption": "Tool",
+              "advanced": false
+            },
+            {
+              "name": "connection",
+              "type": "text",
+              "required": false,
+              "caption": "Connection",
+              "advanced": false,
+              "services": []
+            },
+            {
+              "name": "arguments",
+              "type": "object",
+              "required": false,
+              "caption": "Tool input",
+              "advanced": false
+            }
+          ],
+          "outputs": {
+            "result": "any"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "tool": "notes__add_note",
+            "arguments": {
+              "text": "{{triage.summary}}"
+            }
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Note each new issue",
+            "concurrency": "one-per-workflow",
+            "nodes": [
+              {
+                "id": "hourly",
+                "type": "schedule",
+                "config": {
+                  "cron": "0 * * * *"
+                }
+              },
+              {
+                "id": "issues",
+                "type": "call_tool",
+                "config": {
+                  "connection": "github:work",
+                  "tool": "list_issues",
+                  "arguments": {
+                    "owner": "acme",
+                    "repo": "web",
+                    "state": "open"
+                  }
+                }
+              },
+              {
+                "id": "save",
+                "type": "call_tool",
+                "config": {
+                  "tool": "notes__add_note",
+                  "arguments": {
+                    "text": "{{issues.result}}"
+                  }
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "hourly",
+                "to": "issues"
+              },
+              {
+                "from": "issues",
+                "to": "save"
+              }
+            ]
+          }
+        },
+        {
+          "type": "workflow_result",
+          "title": "Workflow result",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "workflow",
+              "type": "text",
+              "required": true,
+              "caption": "Workflow",
+              "advanced": false
+            },
+            {
+              "name": "run",
+              "type": "text",
+              "required": false,
+              "caption": "Run",
+              "advanced": false
+            }
+          ],
+          "outputs": {
+            "runId": "string",
+            "status": "string",
+            "finishedAt": "string?",
+            "outputs": "any?"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "workflow": "triage",
+            "run": "latest-succeeded"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Report",
+            "concurrency": "one-per-workflow",
+            "nodes": [
+              {
+                "id": "daily",
+                "type": "schedule",
+                "config": {
+                  "cron": "0 8 * * *"
+                }
+              },
+              {
+                "id": "result",
+                "type": "workflow_result",
+                "config": {
+                  "workflow": "triage",
+                  "run": "latest-succeeded"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Triage last ran {{result.finishedAt}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "daily",
+                "to": "result"
+              },
+              {
+                "from": "result",
+                "to": "tell"
+              }
+            ]
+          }
         }
       ]
     },
@@ -322,12 +794,16 @@
             {
               "name": "prompt",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "Question for the model",
+              "advanced": false
             },
             {
               "name": "output",
               "type": "object",
-              "required": true
+              "required": true,
+              "caption": "Answer shape",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -409,42 +885,58 @@
             {
               "name": "repo",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "Repository",
+              "advanced": false
             },
             {
               "name": "prompt",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "What the agent should do",
+              "advanced": false
             },
             {
               "name": "readOnlyRepos",
               "type": "text list",
-              "required": false
+              "required": false,
+              "caption": "Repositories it can read",
+              "advanced": false
             },
             {
               "name": "agent",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Agent",
+              "advanced": false
             },
             {
               "name": "outputs",
               "type": "object",
-              "required": false
+              "required": false,
+              "caption": "What it reports back",
+              "advanced": false
             },
             {
               "name": "timeout",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Stop after",
+              "advanced": false
             },
             {
               "name": "connections",
               "type": "text list",
-              "required": false
+              "required": false,
+              "caption": "Connections it can use",
+              "advanced": false
             },
             {
               "name": "resources",
               "type": "object",
-              "required": false
+              "required": false,
+              "caption": "Resources it needs",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -517,6 +1009,102 @@
       "group": "Logic",
       "blocks": [
         {
+          "type": "code",
+          "title": "Code",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "input",
+              "type": "text",
+              "required": false,
+              "caption": "Input",
+              "advanced": false
+            },
+            {
+              "name": "code",
+              "type": "text",
+              "required": true,
+              "caption": "Code",
+              "advanced": false
+            },
+            {
+              "name": "repo",
+              "type": "text",
+              "required": false,
+              "caption": "Repository",
+              "advanced": false
+            },
+            {
+              "name": "branch",
+              "type": "text",
+              "required": false,
+              "caption": "Branch",
+              "advanced": false
+            },
+            {
+              "name": "timeout",
+              "type": "text",
+              "required": false,
+              "caption": "Stop after",
+              "advanced": false
+            },
+            {
+              "name": "memoryMb",
+              "type": "number",
+              "required": false,
+              "caption": "Memory limit (MB)",
+              "advanced": false
+            }
+          ],
+          "outputs": {
+            "result": "any?"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "input": "{{triage.items}}",
+            "code": "return input!.AsArray().Where(i => i![\"score\"]!.GetValue<int>() > 100).Select(i => i![\"title\"]!.GetValue<string>()).ToArray();"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Titles over 100",
+            "concurrency": "one-per-workflow",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "filter",
+                "type": "code",
+                "config": {
+                  "input": "{{trigger.payload.items}}",
+                  "code": "return input!.AsArray().Where(i => i![\"score\"]!.GetValue<int>() > 100).Select(i => i![\"title\"]!.GetValue<string>()).ToArray();"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Over 100: {{filter.result}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "filter"
+              },
+              {
+                "from": "filter",
+                "to": "tell"
+              }
+            ]
+          }
+        },
+        {
           "type": "collect",
           "title": "Collect",
           "isTrigger": false,
@@ -524,12 +1112,15 @@
             {
               "name": "value",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "Value to collect",
+              "advanced": false
             }
           ],
           "outputs": {
             "items": "array",
-            "count": "number"
+            "count": "number",
+            "skipped": "number"
           },
           "branches": [
             "out"
@@ -616,17 +1207,23 @@
             {
               "name": "items",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "List to loop over",
+              "advanced": false
             },
             {
               "name": "maxItems",
               "type": "number",
-              "required": false
+              "required": false,
+              "caption": "Most items",
+              "advanced": false
             },
             {
               "name": "batchSize",
               "type": "number",
-              "required": false
+              "required": false,
+              "caption": "Items per batch",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -712,6 +1309,70 @@
           }
         },
         {
+          "type": "memory_forget",
+          "title": "Forget",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "memory",
+              "type": "text",
+              "required": true,
+              "caption": "Memory",
+              "advanced": false
+            },
+            {
+              "name": "fact",
+              "type": "text",
+              "required": false,
+              "caption": "Fact to forget",
+              "advanced": false
+            },
+            {
+              "name": "tag",
+              "type": "text",
+              "required": false,
+              "caption": "Forget everything tagged",
+              "advanced": false
+            }
+          ],
+          "outputs": {
+            "count": "number"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "memory": "drift-check",
+            "tag": "stale"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Forget stale notes",
+            "concurrency": "unlimited",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "workflow_call",
+                "config": {}
+              },
+              {
+                "id": "forget",
+                "type": "memory_forget",
+                "config": {
+                  "memory": "drift-check",
+                  "tag": "stale"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "forget"
+              }
+            ]
+          }
+        },
+        {
           "type": "condition",
           "title": "If",
           "isTrigger": false,
@@ -719,7 +1380,9 @@
             {
               "name": "when",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "Continue when",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -800,12 +1463,16 @@
             {
               "name": "items",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "List to check",
+              "advanced": false
             },
             {
               "name": "key",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "What makes an item the same",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -859,6 +1526,87 @@
           }
         },
         {
+          "type": "memory_write",
+          "title": "Remember",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "memory",
+              "type": "text",
+              "required": true,
+              "caption": "Memory",
+              "advanced": false
+            },
+            {
+              "name": "fact",
+              "type": "text",
+              "required": true,
+              "caption": "Fact to remember",
+              "advanced": false
+            },
+            {
+              "name": "tags",
+              "type": "text list",
+              "required": false,
+              "caption": "Tags",
+              "advanced": false
+            },
+            {
+              "name": "expires",
+              "type": "text",
+              "required": false,
+              "caption": "Forget after",
+              "advanced": false
+            }
+          ],
+          "outputs": {
+            "id": "string",
+            "action": "string",
+            "warning": "string?"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "memory": "drift-check",
+            "fact": "Checked api-repo at {{trigger.payload.commit}}",
+            "tags": [
+              "checks"
+            ],
+            "expires": "30d"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Remember a check",
+            "concurrency": "unlimited",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "workflow_call",
+                "config": {}
+              },
+              {
+                "id": "remember",
+                "type": "memory_write",
+                "config": {
+                  "memory": "drift-check",
+                  "fact": "Checked api-repo at {{trigger.payload.commit}}",
+                  "tags": [
+                    "checks"
+                  ],
+                  "expires": "30d"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "remember"
+              }
+            ]
+          }
+        },
+        {
           "type": "run_workflow",
           "title": "Run workflow",
           "isTrigger": false,
@@ -866,22 +1614,30 @@
             {
               "name": "workflow",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "Workflow to run",
+              "advanced": false
             },
             {
               "name": "payload",
               "type": "object",
-              "required": false
+              "required": false,
+              "caption": "Data to send",
+              "advanced": false
             },
             {
               "name": "wait",
               "type": "boolean",
-              "required": false
+              "required": false,
+              "caption": "Wait for it to finish",
+              "advanced": false
             },
             {
               "name": "waitSeconds",
               "type": "number",
-              "required": false
+              "required": false,
+              "caption": "Wait (seconds)",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -951,17 +1707,23 @@
             {
               "name": "duration",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Wait for",
+              "advanced": false
             },
             {
               "name": "until",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Wait until",
+              "advanced": false
             },
             {
               "name": "timezone",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Time zone",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -1011,7 +1773,13 @@
                 "to": "tell"
               }
             ]
-          }
+          },
+          "oneOf": [
+            [
+              "duration",
+              "until"
+            ]
+          ]
         }
       ]
     },
@@ -1026,22 +1794,30 @@
             {
               "name": "question",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "Question",
+              "advanced": false
             },
             {
               "name": "choices",
               "type": "text list",
-              "required": false
+              "required": false,
+              "caption": "Answers to offer",
+              "advanced": false
             },
             {
               "name": "timeout",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Stop waiting after",
+              "advanced": false
             },
             {
               "name": "default",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Answer if nobody replies",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -1126,26 +1902,35 @@
             {
               "name": "title",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "Title",
+              "advanced": false
             },
             {
               "name": "repo",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Repository",
+              "advanced": false
             },
             {
               "name": "body",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Details",
+              "advanced": false
             },
             {
               "name": "linearIssue",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Linear issue",
+              "advanced": false
             }
           ],
           "outputs": {
-            "itemId": "string"
+            "itemId": "string",
+            "warning": "string?"
           },
           "branches": [
             "out"
@@ -1191,12 +1976,16 @@
             {
               "name": "title",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "Title",
+              "advanced": false
             },
             {
               "name": "body",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Message",
+              "advanced": false
             }
           ],
           "outputs": {},
@@ -1204,7 +1993,7 @@
             "out"
           ],
           "exampleConfig": {
-            "title": "Drifted",
+            "title": "Workflow update",
             "body": "{{agent.summary}}"
           },
           "exampleSpec": {

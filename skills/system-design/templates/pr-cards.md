@@ -1,6 +1,6 @@
 # PR cards and deep dives
 
-`scripts/build_prs.py` turns `prs/pr-NN.md` (one markdown file per PR) into milestone-grouped cards and one shared `<dialog>` that holds each PR's deep dive. Put this placeholder in the TDD's PR-order section, after the diagram:
+`scripts/build_prs.py` turns `prs/pr-NN.md` (one markdown file per PR) into milestone-grouped cards and one shared `<dialog>` that holds each PR's `deep dive`. Put this placeholder in the TDD's PR-order section, after the diagram:
 
 ```html
 <!-- PR-CARDS -->
@@ -33,4 +33,4 @@ Sindri neighbors: callers, readers and writers of each touched symbol.
 - <test name>: what it proves (one list item per test; each becomes a TP row in doc.md)
 ```
 
-Screenshots of the pages a PR touches: pass `--shots shots.json`, a list of `{"prs": [4], "file": "shots/orders.png", "caption": "...", "page": "...", "route": "..."}` (`file` relative to the manifest). They render above the deep dive.
+Screenshots of the pages a PR touches: pass `--shots shots.json`, a list of `{"prs": [4], "file": "shots/orders.png", "caption": "...", "page": "...", "route": "..."}` (`file` relative to the manifest). They render above the `deep dive`.

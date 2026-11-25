@@ -9,12 +9,108 @@
     "source": "<home>/profile/profile.yaml",
     "modelPick": "off",
     "labelPick": "off",
-    "surfacePick": "off"
+    "surfacePick": "off",
+    "problemKind": null
   },
   "services": [
     {
       "name": "heartbeat",
       "every": "5s",
+      "lastRun": null
+    },
+    {
+      "name": "workflow-schedule",
+      "every": "1m",
+      "lastRun": null
+    },
+    {
+      "name": "setup",
+      "every": "1m",
+      "lastRun": null
+    },
+    {
+      "name": "context-sync-gaps",
+      "every": "1m",
+      "lastRun": null
+    },
+    {
+      "name": "context-map-refresh",
+      "every": "1m",
+      "lastRun": null
+    },
+    {
+      "name": "context-concept-scan",
+      "every": "1m",
+      "lastRun": null
+    },
+    {
+      "name": "index-embed",
+      "every": "1m",
+      "lastRun": null
+    },
+    {
+      "name": "context-upkeep",
+      "every": "15m",
+      "lastRun": null
+    },
+    {
+      "name": "index-sync",
+      "every": "5m",
+      "lastRun": null
+    },
+    {
+      "name": "index-decisions",
+      "every": "15m",
+      "lastRun": null
+    },
+    {
+      "name": "code-index-main-move",
+      "every": "1m",
+      "lastRun": null
+    },
+    {
+      "name": "code-index-embed",
+      "every": "1m",
+      "lastRun": null
+    },
+    {
+      "name": "messages-retention",
+      "every": "24h",
+      "lastRun": null
+    },
+    {
+      "name": "connection-refresh",
+      "every": "5m",
+      "lastRun": null
+    },
+    {
+      "name": "workflow-poll",
+      "every": "30s",
+      "lastRun": null
+    },
+    {
+      "name": "memory-expire",
+      "every": "1h",
+      "lastRun": null
+    },
+    {
+      "name": "toolkit-calls-expire",
+      "every": "1h",
+      "lastRun": null
+    },
+    {
+      "name": "todo-note",
+      "every": "24h",
+      "lastRun": null
+    },
+    {
+      "name": "home-runs",
+      "every": "1m",
+      "lastRun": null
+    },
+    {
+      "name": "home-lanes",
+      "every": "1m",
       "lastRun": null
     }
   ],
@@ -30,14 +126,27 @@
     "text": null
   },
   "health": {
-    "word": "healthy",
-    "problems": [],
-    "sentence": null
+    "word": "degraded",
+    "problems": [
+      {
+        "code": "SND-SESSION-001",
+        "text": "The claude-records source couldn't be read in the last pass",
+        "clause": "an agent session source failed"
+      }
+    ],
+    "sentence": "Sindri is degraded: an agent session source failed."
   },
   "sessions": {
     "live": 3,
     "asking": 1,
     "problems": 1,
-    "running": 1
+    "running": 1,
+    "problemRows": [
+      {
+        "source": "claude-records",
+        "code": "SND-SESSION-001",
+        "text": "The claude-records source couldn't be read in the last pass"
+      }
+    ]
   }
 }

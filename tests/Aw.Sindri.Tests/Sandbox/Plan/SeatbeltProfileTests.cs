@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Sandbox.Resources;
 using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
 
 namespace Aw.Sindri.Tests.Sandbox.Plan;
@@ -49,6 +50,18 @@ public sealed class SeatbeltProfileTests
         Assert.Contains(
             Lines(SeatbeltProfile.RenderProcess(ProcessPlan() with { Mounts = [.. ProcessPlan().Mounts.Select(m => SeatbeltProcessPlan.IsPrivateTmp(m) ? m with { Source = "/var/run-area/tmp" } : m)] }, "/var/run-area", p => p.StartsWith("/var", StringComparison.Ordinal) ? "/private" + p : p)),
             l => l.StartsWith("(allow ", StringComparison.Ordinal) && l.EndsWith("(subpath \"/private/var/run-area/tmp\"))", StringComparison.Ordinal));   // why: no deny covers /var here, so the rule is the write-only form; the point is the resolved path
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_read_only_path_of_a_process_under_the_emptied_home_is_readable_and_never_writable()
+    {
+        var repo = Req.Host.Home + "/repos/app";
+        var plan = ProcessPlan() with { Mounts = [.. ProcessPlan().Mounts, new PlanMount(repo, PlanMountKind.ReadOnly, Reason: "read-only for toolkit:triage")] };
+
+        var lines = Lines(SeatbeltProfile.RenderProcess(plan, Req.RunArea));
+
+        Assert.Contains($"(allow file-read* (subpath \"{repo}\"))", lines, StringComparer.Ordinal);   // the home is denied first; the path is let back in for reading only
+        Assert.DoesNotContain(lines, l => l.StartsWith("(allow file-write*", StringComparison.Ordinal) && l.Contains(repo, StringComparison.Ordinal));
+    }
 
     [Fact, Trait("Lane", "unit")]
     public void A_process_with_no_connection_opens_no_loopback_port()

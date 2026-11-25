@@ -31,7 +31,21 @@ internal sealed class PurgeResourcesService(IResourceFiles files, IWorkflowStore
             return refused;
         }
 
-        var purged = files.Purge(owner.Value);
+        // why: a run can start after the first check; the rename takes the folder away from it, the second check then decides
+        var staged = files.Stage(owner.Value);
+        if (staged.IsError)
+        {
+            return staged.Error;
+        }
+
+        var again = await Refusal(owner.Value, cancellationToken).ConfigureAwait(false);
+        if (again is not null)
+        {
+            var restored = staged.Value.Restore();
+            return restored.IsError ? restored.Error : again;
+        }
+
+        var purged = staged.Value.Delete();
         return purged.IsError ? purged.Error : new PurgeResourcesResponse(owner.Value.ToString(), purged.Value);
     }
 

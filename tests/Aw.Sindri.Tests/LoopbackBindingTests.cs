@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using Aw.Kernel;
 using Aw.Kernel.Telemetry;
@@ -151,6 +152,101 @@ public sealed class LoopbackBindingTests
         {
             Environment.SetEnvironmentVariable(variable, before);
         }
+    }
+
+    // #2930: the content root was the working directory, so the host's file watcher walked and watched every folder
+    // under it; serve started in ~ never wrote control.json. Whatever the working directory holds, the host neither
+    // roots its files there nor takes longer to start.
+    [Fact, Trait("Lane", "integration")]
+    public async Task The_working_directory_is_not_the_content_root_and_its_size_does_not_slow_the_start()
+    {
+        using var big = new TempHome();
+        for (var i = 0; i < 40; i++)
+        {
+            for (var j = 0; j < 100; j++)
+            {
+                _ = Directory.CreateDirectory(Path.Combine(big.Path, "d" + i.ToString(CultureInfo.InvariantCulture), "e" + j.ToString(CultureInfo.InvariantCulture)));
+            }
+        }
+
+        var before = Environment.CurrentDirectory;
+        Environment.CurrentDirectory = big.Path;
+        try
+        {
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            var app = LoopbackBinding.Build([], _ => null, new FakeTimeProvider());
+            await using (app)
+            {
+                _ = Pipeline.Configure(app);
+                await app.StartAsync(TestContext.Current.CancellationToken);
+                clock.Stop();
+
+                Assert.False(
+                    Path.GetFullPath(app.Environment.ContentRootPath).StartsWith(Path.GetFullPath(big.Path), StringComparison.Ordinal),
+                    $"content root {app.Environment.ContentRootPath} is inside the working directory (start took {clock.Elapsed})");
+                Assert.True(clock.Elapsed < TimeSpan.FromSeconds(5), $"start took {clock.Elapsed} with 4,000 folders under the working directory");
+            }
+        }
+        finally
+        {
+            Environment.CurrentDirectory = before;
+        }
+    }
+
+    // #3459: the builder's appsettings reload watcher cost one inotify instance per host, on a file the host never
+    // reads. A user gets 128 instances, so a few test runs side by side used them all.
+    [Fact, Trait("Lane", "integration")]
+    public async Task Building_hosts_opens_no_inotify_instance_per_host()
+    {
+        if (!Directory.Exists("/proc/self/fdinfo"))
+        {
+            Assert.Skip("inotify instances are counted through /proc, which only Linux has");
+        }
+
+        const int Hosts = 16;
+        var before = InotifyInstances();
+        var apps = new List<WebApplication>();
+        try
+        {
+            for (var i = 0; i < Hosts; i++)
+            {
+                apps.Add(LoopbackBinding.Build([], _ => null, new FakeTimeProvider()));
+            }
+
+            var added = InotifyInstances() - before;
+
+            // why: tests that run beside this one may open a few watchers of their own, never one per host here
+            Assert.True(added < Hosts, string.Create(CultureInfo.InvariantCulture, $"{Hosts} hosts added {added} inotify instances"));
+        }
+        finally
+        {
+            foreach (var app in apps)
+            {
+                await app.DisposeAsync();
+            }
+        }
+    }
+
+    /// <summary>How many of this process's file descriptors are inotify instances that watch something.</summary>
+    private static int InotifyInstances()
+    {
+        var count = 0;
+        foreach (var descriptor in Directory.EnumerateFiles("/proc/self/fdinfo"))
+        {
+            try
+            {
+                if (File.ReadLines(descriptor).Any(line => line.StartsWith("inotify wd:", StringComparison.Ordinal)))
+                {
+                    count++;
+                }
+            }
+            catch (IOException)
+            {
+                // boundary: the descriptor closed between the listing and the read
+            }
+        }
+
+        return count;
     }
 
     private static async Task<WebApplication> Started()

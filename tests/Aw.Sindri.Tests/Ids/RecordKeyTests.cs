@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Aw.Kernel;
 using Aw.Kernel.Json;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Tests.Ids;
@@ -39,5 +40,24 @@ public sealed class RecordKeyTests
     {
         Assert.True(RecordKey.TryParse("linear:issue/3f2a-91bc", provider: null, out _));
         Assert.False(RecordKey.TryParse("Linear:issue/3f2a", provider: null, out _));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_workflow_run_id_with_at_and_colon_is_a_valid_run_record()
+    {
+        Assert.True(RecordKey.TryParse("sindri:run/nightly@1:1", provider: null, out var key));
+        Assert.Equal("sindri:run/nightly@1:1", key.Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_longest_valid_workflow_run_id_is_a_valid_run_record()
+    {
+        // why: a run id is up to 83 characters (a 63-character slug, '@', 9 digits, ':', 9 digits); a shorter id part dropped the run's link (issue 2433)
+        var run = WorkflowRunId.From(new string('a', 63) + "@999999999:999999999");
+
+        var key = RecordKey.From("sindri:run/" + run.Value);
+
+        Assert.Equal(83, run.Value.Length);
+        Assert.Equal("sindri:run/" + run.Value, key.Value);
     }
 }

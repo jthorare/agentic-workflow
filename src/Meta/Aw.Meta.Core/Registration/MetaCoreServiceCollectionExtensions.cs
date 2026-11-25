@@ -1,5 +1,6 @@
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Poll;
+using Aw.Meta.Core.Ports;
 using Aw.Meta.Core.Routing;
 using Aw.Meta.Core.Usage;
 using Aw.Meta.Core.Worktrees;
@@ -14,10 +15,15 @@ public static class MetaCoreServiceCollectionExtensions
     /// <param name="services">The service collection.</param>
     /// <returns>The same collection.</returns>
     public static IServiceCollection AddMetaCore(this IServiceCollection services) => services
-        .AddScoped<InboxSync>()
+        .AddScoped<MetaTranscriptResolver>()
+        .AddScoped(sp => new InboxSync(sp.GetRequiredService<ITranscriptReader>(), sp.GetRequiredService<IMessageStore>(), sp.GetRequiredService<IOwnerStore>(), sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<MetaTranscriptResolver>(), sp.GetRequiredService<ObligationEventWriter>()))
+        .AddScoped<MetaEventSink>()
+        .AddScoped<ObligationEventWriter>()
         .AddScoped<InboxCounts>()
         .AddScoped<LaneRefresher>()
         .AddScoped<ObligationReader>()
+        .AddScoped<DelegationLedger>()
+        .AddScoped<LaneDelivery>()
         .AddScoped<MetaSession>()
         .AddScoped<MetaSweep>()
         .AddScoped<StopGuard>()
@@ -25,6 +31,7 @@ public static class MetaCoreServiceCollectionExtensions
         .AddScoped<LaneStopGuard>()
         .AddScoped<LaneHealthReader>()
         .AddScoped<LaneContextReader>()
+        .AddScoped<MissingLanes>()
         .AddScoped<PaneSubmitter>()
         .AddScoped<UsageReader>()
         .AddScoped<UsageWatcher>()
@@ -36,6 +43,7 @@ public static class MetaCoreServiceCollectionExtensions
         .AddScoped<GateWorkspace>()
         .AddScoped<GateStepRunner>()
         .AddScoped<TrainSelection>()
+        .AddScoped<LaneAddress>()
         .AddScoped<MergeReadiness>()
         .AddScoped<MergeQueueReader>()
         .AddScoped<HeavyReservation>()

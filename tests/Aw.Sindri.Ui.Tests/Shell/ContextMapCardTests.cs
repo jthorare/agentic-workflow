@@ -37,7 +37,7 @@ public sealed class ContextMapCardTests
 
         Assert.True(card.IsVisible);
         Assert.Equal(("Published", StateGlyph.Ok, "Map v1 is current."), (card.State, card.Glyph, Assert.Single(card.Lines)));
-        Assert.Equal("CONTEXT MAP: Published. Map v1 is current.", card.Name);
+        Assert.Equal("Context map: Published. Map v1 is current.", card.Name);
     }
 
     [Theory]
@@ -74,9 +74,9 @@ public sealed class ContextMapCardTests
         server.MapPublishAnswer = Served("held", "held", "Map v14 is held; none of your repos are waiting.");
         await card.Refresh(_api, Token);
 
-        Assert.Equal((false, string.Empty, 0, "CONTEXT MAP"), hidden);
+        Assert.Equal((false, string.Empty, 0, "Context map"), hidden);
         Assert.True(card.IsVisible);
-        Assert.Equal("CONTEXT MAP: Held for the code index. Map v14 is held; none of your repos are waiting.", card.Name);
+        Assert.Equal("Context map: Held for the code index. Map v14 is held; none of your repos are waiting.", card.Name);
     }
 
     [Fact]

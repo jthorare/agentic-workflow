@@ -62,6 +62,22 @@ public sealed class ItemProjectionTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_run_link_keeps_the_tracker_link_and_alias_and_moves_the_row()
+    {
+        // why: a run is shown in the 'item-links' view; it must not replace the item's tracker link or alias (issue 2433)
+        var row = ItemsProjection.Fold(CreatedPayload("t", link: null, body: null), Created("t", 1), _plain);
+        var tracker = ItemsProjection.Fold(row, new ItemLinked(_h.Ids.New<CommandId>(), _item, _record, _alias),
+            Recorded.Of(_h.Events, EventTypes.ItemLinked, new ItemLinked(_h.Ids.New<CommandId>(), _item, _record, _alias), 2, _item));
+        var run = new ItemLinked(_h.Ids.New<CommandId>(), _item, RecordKey.From("sindri:run/nightly@1:1"), Alias: null);
+        var recorded = Recorded.Of(_h.Events, EventTypes.ItemLinked, run, 3, _item);
+
+        var next = ItemsProjection.Fold(tracker, run, recorded);
+
+        Assert.Equal((_record, _alias), (next.Link, next.Alias));
+        Assert.Equal((recorded.Envelope.OccurredAt, 3L), (next.UpdatedAt, next.Sequence));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void Title_is_scrubbed_and_escaped()
     {
         var created = CreatedPayload("Fix \u001b[31mSECRET\u001b[0m\nnow", link: null, body: "line1\nSECRET​");

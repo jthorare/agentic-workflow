@@ -21,6 +21,10 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
 
     // The rows and groups as last shown, by id and by name: a refresh updates them in place (§3.3).
     private Dictionary<string, ItemRowViewModel> _rows = new(StringComparer.Ordinal);
+
+    // Bumped when a Show finds another set of item ids than the last one (an id added or gone); Rows built since the last Show count the new ids.
+    private long _idsVersion;
+    private int _newIds;
     private readonly Dictionary<string, QueueGroupViewModel> _groups = new(StringComparer.Ordinal);
 
     /// <summary>The groups in the API's order (empty ones included, hidden by <see cref="QueueGroupViewModel.IsVisible"/>).</summary>
@@ -53,7 +57,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
     /// <summary>Home's left panel: With you first, then running, at most five (§3.2).</summary>
     public ObservableCollection<ItemRowViewModel> RunningRows { get; } = [];
 
-    /// <summary>"RUNNING N · WITH YOU N".</summary>
+    /// <summary>"Running N · with you N".</summary>
     public string RunningHeader { get; private set => Set(ref field, value); } = Labels.RunningHeader(0, 0);
 
     /// <summary>The running group's sentence while the panel has no row (E-18), else empty.</summary>
@@ -68,7 +72,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
     /// <summary>Home's right panel: the queued group's first five rows.</summary>
     public ObservableCollection<ItemRowViewModel> QueuedRows { get; } = [];
 
-    /// <summary>"QUEUED N".</summary>
+    /// <summary>"Queued N".</summary>
     public string QueuedHeader { get; private set => Set(ref field, value); } = Labels.QueuedHeader(0);
 
     /// <summary>The queued group's sentence while it has no row (E-18), else empty.</summary>
@@ -126,6 +130,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
         Rest();
         Apply(Hold(answer.Value));
         IsLoading = false;   // after the rows are there: a waiter on the end of loading finds them
+        await LearnClosed(url, cancellationToken).ConfigureAwait(true);
     }
 
     /// <summary>Shows the running group (Home's "Show all N in Queue") or all of them (G Q, the Work tab); a selection the filter hides is cleared, silently.</summary>
@@ -164,7 +169,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
         var now = clock.GetUtcNow();
         var fresh = new Dictionary<string, ItemRowViewModel>(StringComparer.Ordinal);
         var all = view.Groups.ToDictionary(g => g.Group, g => g.Items.Select(i => Row(i, g.Group, now, fresh)).ToList(), StringComparer.Ordinal);
-        _rows = fresh;
+        Swap(fresh);
         Patch.To(Groups, [.. view.Groups.Select(g => Group(g, all[g.Group]))]);
         Total = all.Values.Sum(r => r.Count);
         var unmatched = (FilterText.Length > 0 || SelectedRepo.Length > 0) && !Visible().Any();
@@ -174,6 +179,17 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
         Toolbar(all);
         States(view);
         Mark();
+    }
+
+    // The rows a Show built become the shown ones; no new id and the same count is the same ids, so the closed fold need not be read again.
+    private void Swap(Dictionary<string, ItemRowViewModel> fresh)
+    {
+        if (_newIds > 0 || fresh.Count != _rows.Count)
+        {
+            _idsVersion++;
+        }
+
+        (_rows, _newIds) = (fresh, 0);
     }
 
     // The row for an item: the one already shown, updated, or a new one.
@@ -187,6 +203,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
         else
         {
             row = new ItemRowViewModel(item, group, action, now);
+            _newIds++;
         }
 
         fresh[item.Id] = row;
@@ -227,13 +244,15 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
         var left = withYou.Concat(running).ToList();
         Patch.To(RunningRows, [.. left.Take(PanelCap)]);
         RunningHeader = Labels.RunningHeader(running.Count, withYou.Count);
-        RunningEmpty = left.Count == 0 ? EmptyOf("running") : string.Empty;
+        RunningEmpty = left.Count == 0 ? EmptyOr("running", Labels.QueueNothingRunning) : string.Empty;   // a stalled card keeps a body: the banner already says why
         (HasMoreRunning, ShowAllRunning) = (left.Count > PanelCap, Labels.ShowAllInQueue(left.Count));
         Patch.To(QueuedRows, [.. queued.Take(PanelCap)]);
         QueuedHeader = Labels.QueuedHeader(queued.Count);
-        QueuedEmpty = queued.Count == 0 ? EmptyOf("queued") : string.Empty;
+        QueuedEmpty = queued.Count == 0 ? EmptyOr("queued", Labels.QueueNothingQueued) : string.Empty;
         (HasMoreQueued, ShowAllQueued) = (queued.Count > PanelCap, Labels.ShowAllInQueue(queued.Count));
     }
+
+    private string EmptyOr(string group, string plain) => EmptyOf(group) is { Length: > 0 } served ? served : plain;
 
     private string EmptyOf(string group) => Groups.FirstOrDefault(g => g.Group == group)?.Empty ?? string.Empty;
 }

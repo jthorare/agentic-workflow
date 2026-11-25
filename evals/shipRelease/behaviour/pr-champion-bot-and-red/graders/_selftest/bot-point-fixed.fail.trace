@@ -1,0 +1,6 @@
+{"type":"system","subtype":"init","session_id":"selftest"}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"shipRelease"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"gh pr checks 7; gh run view 9001 --log-failed"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"gh api graphql -X GET -f query=\"{ repository { pullRequest(number: 7) { reviewThreads(first: 20) { nodes { id isResolved } } } } }\""}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Read","input":{"file_path":"/w/src/slug.js"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Edit","input":{"file_path":"/w/src/slug.js","old_string":".replace(/ /g, '-')","new_string":".replace(/\\s+/g, '-')"}}]}}

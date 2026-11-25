@@ -1,7 +1,9 @@
 using Aw.Kernel.Events;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Home;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Requests;
@@ -27,6 +29,8 @@ public abstract class ViewStoreContract
     private static readonly RequestId _hitRequest = RequestId.From("REQ-00000000000000000000000000000002");
     private static readonly DecisionId _hitDecision = DecisionId.From("DEC-00000000000000000000000000000002");
     private static readonly NeedsYouRowId _hitNeedsYou = NeedsYouRowId.From("failure:service:hit");
+    private const string HitHomeRow = "run:hit";
+    private const string HitHomeEdge = "hit|blocks|other";
     private readonly SequentialIdGenerator _ids = new();
 
     /// <summary>The contract's clock.</summary>
@@ -107,6 +111,46 @@ public abstract class ViewStoreContract
         Expect.Equal(0, (await reader.List<ServiceRow>(ViewNames.Profile, Token)).Value.Count);
         _ = (await store.FinishRebuild(Token)).Value;
         Expect.True((await reader.State(Token)).Value is { Rebuilding: false, Cursor: 0 });
+    }
+
+    /// <summary>A view's mark ends with ':' and its row count (#3883): a reader learns the view is empty without reading a row.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Mark_ends_with_the_row_count()
+    {
+        var (store, reader) = Create();
+        _ = await store.Open(ViewSchema.Version, Token);
+        var empty = (await reader.Mark(ViewNames.Services, Token)).Value;
+
+        _ = await store.Apply([Event(1, Put, "alpha"), Event(2, Put, "beta")], Projections(), Clock.GetUtcNow(), Token);
+        var two = (await reader.Mark(ViewNames.Services, Token)).Value;
+
+        Expect.True(empty.EndsWith(":0", StringComparison.Ordinal));
+        Expect.True(two.EndsWith(":2", StringComparison.Ordinal));
+    }
+
+    /// <summary>A view's mark moves when a row is written or the view is emptied, and holds when an event writes nothing to it (#2852).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Mark_moves_on_a_write_and_on_a_reset_and_holds_without_one()
+    {
+        var (store, reader) = Create();
+        _ = await store.Open(ViewSchema.Version, Token);
+        var empty = (await reader.Mark(ViewNames.Services, Token)).Value;
+
+        _ = await store.Apply([Event(1, Put, "alpha")], Projections(), Clock.GetUtcNow(), Token);
+        var one = (await reader.Mark(ViewNames.Services, Token)).Value;
+        _ = await store.Apply([Event(2, "other", "x")], Projections(), Clock.GetUtcNow(), Token);
+        var untouched = (await reader.Mark(ViewNames.Services, Token)).Value;
+        _ = await store.Apply([Event(3, Put, "beta")], Projections(), Clock.GetUtcNow(), Token);
+        var two = (await reader.Mark(ViewNames.Services, Token)).Value;
+        _ = await store.Reset(ViewNames.All, ViewSchema.Version, Clock.GetUtcNow(), 3, Token);
+        var cleared = (await reader.Mark(ViewNames.Services, Token)).Value;
+
+        Expect.True(!string.Equals(empty, one, StringComparison.Ordinal));
+        Expect.Equal(one, untouched);
+        Expect.True(!string.Equals(one, two, StringComparison.Ordinal));
+        Expect.True(!string.Equals(two, cleared, StringComparison.Ordinal));
     }
 
     /// <summary>A row reads back equal to what the projection wrote, nested records, enums and times included.</summary>
@@ -205,6 +249,49 @@ public abstract class ViewStoreContract
         Expect.Equal(1, (await reader.Where<HumanDecisionRow>(ViewNames.Decisions, ViewColumn.Item, A.FirstItemId.Value, Token)).Value.Count);
     }
 
+    /// <summary>
+    /// An event that writes, filters (so its own row must be in the store mid-page) and then fails is undone alone: the filter saw its
+    /// row, the earlier event's row stays and its own is gone (#2890: the page's rows are written before the event's savepoint opens).
+    /// </summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task An_event_that_filters_its_own_write_and_then_fails_is_undone_alone()
+    {
+        var (store, reader) = Create();
+        _ = await store.Open(ViewSchema.Version, Token);
+        var second = DecisionId.From("DEC-00000000000000000000000000000002");
+        var rows = new Dictionary<string, HumanDecisionRow>(StringComparer.Ordinal)
+        {
+            ["d1"] = A.Decision().About(A.FirstItemId, 1, repo: null).Build(),
+            ["d2"] = A.Decision().WithIds(second, A.FirstRequestId).About(A.FirstItemId, 2, repo: null).Build(),
+        };
+        var seen = new List<int>();
+
+        var applied = (await store.Apply([Event(1, "fixture.decision", "d1"), Event(2, "fixture.put-count-fail", "d2")],
+            [new PutDecisions(rows), new PutCountFail(rows, seen)], Clock.GetUtcNow(), Token)).Value;
+
+        Expect.Equal(2L, applied.Stall?.Sequence);
+        Expect.Sequence([2], seen);
+        Expect.Sequence([A.FirstDecisionId.Value], (await reader.Where<HumanDecisionRow>(ViewNames.Decisions, ViewColumn.Item, A.FirstItemId.Value, Token))
+            .Value.Select(r => r.Id.Value));
+    }
+
+    /// <summary>A row written or deleted earlier in the page reads back as the page left it, inside one event and across events (#2890).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_row_reads_back_as_the_page_left_it()
+    {
+        var (store, reader) = Create();
+        _ = await store.Open(ViewSchema.Version, Token);
+        var seen = new List<string>();
+
+        _ = await store.Apply([Event(1, "fixture.toggle", "a"), Event(2, "fixture.toggle", "a"), Event(3, "fixture.toggle", "a"), Event(4, "fixture.toggle", "b")],
+            [new Toggle(seen)], Clock.GetUtcNow(), Token);
+
+        Expect.Sequence(["a:absent:put", "a:present:delete", "a:absent:put", "b:absent:put"], seen);
+        Expect.Sequence(["a", "b"], (await reader.List<ServiceRow>(ViewNames.Services, Token)).Value.Select(r => r.Name.Value));
+    }
+
     /// <summary>Every (view, column) pair, for the filter theory.</summary>
     /// <returns>The pairs.</returns>
     public static TheoryData<string, ViewColumn> EveryViewAndColumn()
@@ -245,10 +332,11 @@ public abstract class ViewStoreContract
 
         var value = column switch
         {
-            ViewColumn.Item => _hitItem.Value,
+            ViewColumn.Item => string.Equals(view, ViewNames.HomeLinks, StringComparison.Ordinal) ? "hit" : _hitItem.Value,
             ViewColumn.Repo => HitRepo,
-            ViewColumn.Kind => "failure",
-            ViewColumn.State => view == ViewNames.Requests ? "accepted" : "decided",
+            ViewColumn.Kind => string.Equals(view, ViewNames.HomeRows, StringComparison.Ordinal) ? "run-failed" : "failure",
+            ViewColumn.State => view switch { ViewNames.Requests => "accepted", ViewNames.Items => "running", ViewNames.HomeRows => "done", _ => "decided" },
+            ViewColumn.Reason or ViewColumn.Instance => throw new InvalidOperationException("the launches view's columns are pinned by SqliteLaunchViewsTests"),
             _ => throw new ArgumentOutOfRangeException(nameof(column), column, "not a view column"),
         };
         var found = view switch
@@ -256,9 +344,12 @@ public abstract class ViewStoreContract
             ViewNames.Requests => (await reader.Where<RequestRow>(view, column, value, Token)).Value.Select(r => r.Id.Value),
             ViewNames.Decisions => (await reader.Where<HumanDecisionRow>(view, column, value, Token)).Value.Select(r => r.Id.Value),
             ViewNames.NeedsYou => (await reader.Where<NeedsYouRowRecord>(view, column, value, Token)).Value.Select(r => r.Row.Id.Value),
+            ViewNames.Items => (await reader.Where<ItemRow>(view, column, value, Token)).Value.Select(r => r.Id.Value),
+            ViewNames.HomeRows => (await reader.Where<HomeRow>(view, column, value, Token)).Value.Select(r => r.Id.Value),
+            ViewNames.HomeLinks => (await reader.Where<HomeEdge>(view, column, value, Token)).Value.Select(static e => $"{e.From}|{e.To}"),
             _ => throw new InvalidOperationException($"{view} indexes no column"),
         };
-        Expect.Sequence([view switch { ViewNames.Requests => _hitRequest.Value, ViewNames.Decisions => _hitDecision.Value, _ => _hitNeedsYou.Value }], found);
+        Expect.Sequence([view switch { ViewNames.Requests => _hitRequest.Value, ViewNames.Decisions => _hitDecision.Value, ViewNames.Items => _hitItem.Value, ViewNames.HomeRows => HitHomeRow, ViewNames.HomeLinks => "hit|other", _ => _hitNeedsYou.Value }], found);
     }
 
     private static IReadOnlyList<IProjection> Projections() =>
@@ -274,7 +365,7 @@ public abstract class ViewStoreContract
     /// <summary>Puts a row that matches every filter value and one that matches none into each view that indexes columns.</summary>
     private sealed class PutRealRows : IProjection
     {
-        public IReadOnlyList<string> Views => [ViewNames.Requests, ViewNames.Decisions, ViewNames.NeedsYou];
+        public IReadOnlyList<string> Views => [ViewNames.Requests, ViewNames.Decisions, ViewNames.NeedsYou, ViewNames.Items, ViewNames.HomeRows, ViewNames.HomeLinks];
 
         public bool Handles(string eventType) => string.Equals(eventType, PutRows, StringComparison.Ordinal);
 
@@ -290,6 +381,12 @@ public abstract class ViewStoreContract
                 (ViewNames.Decisions, A.FirstDecisionId.Value, A.Decision().About(A.FirstItemId, 1, RepoName.From("miss-repo")).Build()),
                 (ViewNames.NeedsYou, _hitNeedsYou.Value, new NeedsYouRowRecord(A.NeedsYouRow().InRepo(repo).Build() with { Id = _hitNeedsYou, Kind = NeedsYouKind.Failure, Item = _hitItem }, 1)),
                 (ViewNames.NeedsYou, "decision:miss", new NeedsYouRowRecord(A.NeedsYouRow().InRepo(RepoName.From("miss-repo")).Build() with { Item = A.FirstItemId }, 1)),
+                (ViewNames.Items, _hitItem.Value, A.Item().WithId(_hitItem).InRepo(repo).InState(ItemState.Running, KnownInstants.Epoch).Build()),
+                (ViewNames.Items, A.FirstItemId.Value, A.Item().WithId(A.FirstItemId).InRepo(RepoName.From("miss-repo")).InState(ItemState.Queued, KnownInstants.Epoch).Build()),
+                (ViewNames.HomeRows, HitHomeRow, HomeRowSamples.Row(HitHomeRow, state: HomeState.Done) with { Kind = HomeKind.RunFailed }),
+                (ViewNames.HomeRows, "run:miss", HomeRowSamples.Row("run:miss") with { Kind = HomeKind.Mention }),
+                (ViewNames.HomeLinks, HitHomeEdge, new HomeEdge("hit", "other", HomeEdgeKind.Blocks)),
+                (ViewNames.HomeLinks, "miss|blocks|other", new HomeEdge("miss", "other", HomeEdgeKind.Blocks)),
             };
             foreach (var (view, key, row) in rows)
             {
@@ -298,6 +395,9 @@ public abstract class ViewStoreContract
                     RequestRow r => await target.Put(view, key, r, cancellationToken).ConfigureAwait(false),
                     HumanDecisionRow d => await target.Put(view, key, d, cancellationToken).ConfigureAwait(false),
                     NeedsYouRowRecord n => await target.Put(view, key, n, cancellationToken).ConfigureAwait(false),
+                    ItemRow i => await target.Put(view, key, i, cancellationToken).ConfigureAwait(false),
+                    HomeRow h => await target.Put(view, key, h, cancellationToken).ConfigureAwait(false),
+                    HomeEdge e => await target.Put(view, key, e, cancellationToken).ConfigureAwait(false),
                     _ => throw new InvalidOperationException("not a row of these views"),
                 };
                 if (put.IsError)
@@ -330,6 +430,44 @@ public abstract class ViewStoreContract
         {
             var found = await target.Where<HumanDecisionRow>(ViewNames.Decisions, ViewColumn.Item, A.FirstItemId.Value, cancellationToken).ConfigureAwait(false);
             seen.Add(found.Value.Count);
+            return Kernel.Unit.Value;
+        }
+    }
+
+    /// <summary>Puts the event's decision, counts the item's decisions (so the put must be in the store), then fails.</summary>
+    private sealed class PutCountFail(Dictionary<string, HumanDecisionRow> rows, List<int> seen) : IProjection
+    {
+        public IReadOnlyList<string> Views => [ViewNames.Decisions];
+
+        public bool Handles(string eventType) => string.Equals(eventType, "fixture.put-count-fail", StringComparison.Ordinal);
+
+        public async ValueTask<Kernel.Result<Kernel.Unit>> Apply(LedgerEvent recorded, IViewRows target, CancellationToken cancellationToken)
+        {
+            var row = rows[recorded.IdempotencyKey];
+            _ = (await target.Put(ViewNames.Decisions, row.Id.Value, row, cancellationToken).ConfigureAwait(false)).Value;
+            var found = await target.Where<HumanDecisionRow>(ViewNames.Decisions, ViewColumn.Item, A.FirstItemId.Value, cancellationToken).ConfigureAwait(false);
+            seen.Add(found.Value.Count);
+            return FixtureProjection.Failure;
+        }
+    }
+
+    /// <summary>Reads the event's service row, deletes it when present and puts it when absent, twice inside the event to read its own write.</summary>
+    private sealed class Toggle(List<string> seen) : IProjection
+    {
+        public IReadOnlyList<string> Views => [ViewNames.Services];
+
+        public bool Handles(string eventType) => string.Equals(eventType, "fixture.toggle", StringComparison.Ordinal);
+
+        public async ValueTask<Kernel.Result<Kernel.Unit>> Apply(LedgerEvent recorded, IViewRows target, CancellationToken cancellationToken)
+        {
+            var key = recorded.IdempotencyKey;
+            var before = (await target.Get<ServiceRow>(ViewNames.Services, key, cancellationToken).ConfigureAwait(false)).Value;
+            var done = before is null
+                ? await target.Put(ViewNames.Services, key, FixtureProjection.RowFor(recorded), cancellationToken).ConfigureAwait(false)
+                : await target.Delete(ViewNames.Services, key, cancellationToken).ConfigureAwait(false);
+            var after = (await target.Get<ServiceRow>(ViewNames.Services, key, cancellationToken).ConfigureAwait(false)).Value;
+            Expect.True(done.IsSuccess && (after is null) == (before is not null));
+            seen.Add($"{key}:{(before is null ? "absent" : "present")}:{(before is null ? "put" : "delete")}");
             return Kernel.Unit.Value;
         }
     }

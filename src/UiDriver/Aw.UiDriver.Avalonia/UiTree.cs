@@ -135,6 +135,8 @@ internal sealed class UiTree
     // What the element itself shows. A button's label that is a child TextBlock is that child's text, so each text is reported once.
     private static string? TextOf(Visual visual) => visual switch
     {
+        // A control that draws its own text has no TextBlock to read: the class aw-drawn-text says its automation name is the text it draws (a flat row), so textContains finds it.
+        Control drawn when drawn.Classes.Contains("aw-drawn-text") => NullIfEmpty(AutomationProperties.GetName(drawn)),
         TextBlock block => NullIfEmpty(block.Text),
         TextBox box => NullIfEmpty(box.Text),
         ContentControl { Content: string content } => NullIfEmpty(content),

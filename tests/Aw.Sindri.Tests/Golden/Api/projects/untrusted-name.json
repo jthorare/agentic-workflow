@@ -46,10 +46,20 @@
       "notes": null,
       "synced": true,
       "version": 0,
+      "truth": {
+        "openPrs": [],
+        "openItems": 0,
+        "doneItems": 0,
+        "totalItems": 0,
+        "runningAgents": 0,
+        "health": null,
+        "blockedOnYou": false
+      },
       "trust": "untrusted"
     }
   ],
   "finished": [],
   "hidden": [],
+  "emptyCode": null,
   "trust": "untrusted"
 }

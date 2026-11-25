@@ -122,7 +122,7 @@ internal sealed partial class FromElsewhereLine : UserControl
             }
 
             var line = _line;
-            ElsewhereWords.Children.Add(Link(part.Text, part.Name, "Elsewhere" + part.Part, () => line.Open(part.Part)));
+            ElsewhereWords.Children.Add(Link(part.Text, part.Name, "Elsewhere" + part.Part, () => line.Open(part.Part), part.IsAction));
             if (part.CanRetry)
             {
                 ElsewhereWords.Children.Add(Link(part.RetryText, part.RetryName, "Elsewhere" + part.Part + "Retry", () => _ = line.Retry(part.Part)));
@@ -133,9 +133,10 @@ internal sealed partial class FromElsewhereLine : UserControl
         Mark();
     }
 
-    private Button Link(string text, string name, string id, Action press)
+    private Button Link(string text, string name, string id, Action press, bool action = false)
     {
         var button = new Button { Name = id, Content = Words(text, tag: null), Classes = { "copy", "elsewhere-part" } };
+        button.Classes.Set("action-link", action);
         AutomationProperties.SetName(button, name);
         button.Click += (_, _) => press();
         _stops.Add((button, press));

@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Platform;
+using Aw.Sindri.Ui.Theme;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Settings;
 using Aw.Sindri.Ui.ViewModels.Shell;
@@ -56,13 +57,14 @@ public sealed partial class SindriApp : Application, IDisposable
         // One writer of the preferences for the whole app: the shell and Settings share it, so their writes queue.
         var preferences = new Preferences(platform.Preferences);
         var clipboard = new AvaloniaClipboard(static () => (Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
-        var launcher = new AvaloniaLauncher(static () => (Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
+        var launcher = EditorLauncher.OfProcess(new AvaloniaLauncher(static () => (Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow));
 #pragma warning disable CA2000 // the shell view model keeps the client for the app's process
         var api = new SindriApiClient(Loopback(), platform.Token, clock, platform.Log);
+        var stopper = new HttpSessionStopper(Loopback(), platform.Token);   // the shell view model keeps the stopper's client too
 #pragma warning restore CA2000
         var folders = new AvaloniaFolderPicker(static () => (Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
         var files = new AvaloniaFilePicker(static () => (Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
-        return new(new ShellViewModel(platform.Records, api, clock, preferences, clipboard, platform.Motion, new WindowPorts(launcher, files, folders)), preferences, platform, clock);
+        return new(new ShellViewModel(platform.Records, api, clock, preferences, clipboard, platform.Motion, new WindowPorts(launcher, files, folders, new WebSocketTerminalConnector(platform.Token), stopper) { Starter = platform.Starter, Log = platform.Log }), preferences, platform, clock);
     }
 
     /// <summary>Stops reading the single instance's messages (the app's exit does; a test that starts the app calls it).</summary>
@@ -95,7 +97,12 @@ public sealed partial class SindriApp : Application, IDisposable
 
 #pragma warning restore CA2000
     /// <inheritdoc />
-    public override void Initialize() => AvaloniaXamlLoader.Load(this);
+    public override void Initialize()
+    {
+        // Before the theme loads: the slide-in rows key-frame RenderTransform, which Avalonia 12 has no animator for (#2535).
+        TransformKeyFrames.Register();
+        AvaloniaXamlLoader.Load(this);
+    }
 
     /// <inheritdoc />
     public override void OnFrameworkInitializationCompleted()
@@ -158,6 +165,14 @@ public sealed partial class SindriApp : Application, IDisposable
             Library = shell.LibraryRoots,
             LinearConnection = shell.LinearConnection,
             TodoNoteCard = shell.TodoNoteCard,
+        };
+        shell.SettingFilterRequested += (_, e) => settings.Filter = e.Value;   // a palette Settings entry (#3362)
+        settings.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(SettingsViewModel.HomeAsRows), StringComparison.Ordinal))
+            {
+                _ = shell.ShowHomeAsRows(settings.HomeAsRows);   // Settings' switch changes Home at once (home spec §7.1, U1)
+            }
         };
         try
         {

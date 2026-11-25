@@ -1667,13 +1667,13 @@ Create `ui/src/components/graph/edge-styles.ts` with the 10 edge kind → color/
 
 Create `ui/src/hooks/use-graph-layout.ts`:
 
-Takes raw `nodes[]` and `edges[]` from API → runs Dagre layout → returns positioned React Flow nodes and edges. Handles cycle breaking (remove `related_to`/`references` back-edges before layout, re-add after). Memoized with `useMemo`.
+Takes raw `nodes[]` and `edges[]` from API → runs Dagre layout → returns positioned React Flow nodes and edges. Breaks cycles (remove `related_to`/`references` back-edges before layout, re-add after). Memoized with `useMemo`.
 
 - [ ] **Step 4: Create graph-canvas.tsx**
 
 Create `ui/src/components/graph/graph-canvas.tsx`:
 
-React Flow wrapper that accepts positioned nodes/edges, renders with custom node types and edge styles, includes minimap and controls. Handles node click → selection callback, zoom/pan. Manages React Flow state (nodes, edges, onNodesChange, onEdgesChange).
+React Flow wrapper that accepts positioned nodes/edges, renders with custom node types and edge styles, includes minimap and controls. Routes node clicks to the selection callback; supports zoom/pan. Holds React Flow state (nodes, edges, onNodesChange, onEdgesChange).
 
 - [ ] **Step 5: Verify it renders**
 
@@ -1749,7 +1749,7 @@ git commit -m "feat: add 6 custom React Flow node type components"
 
 - [ ] **Step 1: Create graph-toolbar.tsx**
 
-Depth slider (1-5), direction toggle (outgoing/incoming/both), edge kind filter checkboxes, sender filter dropdown. All values managed via props (controlled component).
+Depth slider (1-5), direction toggle (outgoing/incoming/both), edge kind filter checkboxes, sender filter dropdown. All values come in via props (controlled component).
 
 - [ ] **Step 2: Create graph-minimap.tsx**
 
@@ -1827,7 +1827,7 @@ export async function expandNode(id: string): Promise<ExpandResult>
 
 - [ ] **Step 2: Create use-traversal-logs hook**
 
-Fetches traversal logs for a repo, manages loading/error state.
+Fetches traversal logs for a repo, tracks loading/error state.
 
 - [ ] **Step 3: Create memory-search-panel.tsx**
 
@@ -1910,7 +1910,7 @@ git commit -m "feat: add conversation graph page with tab navigation"
 
 - [ ] **Step 1: Create use-path-replay hook**
 
-State machine for replay: `idle` → `playing` → `paused` → `idle`. Manages current step index, timer interval, speed (0.5x-3x). Exposes: `play()`, `pause()`, `stepForward()`, `stepBack()`, `setSpeed()`, `loadTraversal(log)`, `currentStep`, `highlightedNodes`, `highlightedEdges`.
+State machine for replay: `idle` → `playing` → `paused` → `idle`. Tracks current step index, timer interval, speed (0.5x-3x). Exposes: `play()`, `pause()`, `stepForward()`, `stepBack()`, `setSpeed()`, `loadTraversal(log)`, `currentStep`, `highlightedNodes`, `highlightedEdges`.
 
 Visited nodes: green glow + step number. Current node: pulsing ring. Pending: dimmed.
 

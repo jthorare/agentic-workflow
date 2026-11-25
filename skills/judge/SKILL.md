@@ -55,8 +55,8 @@ No one labels data by hand. Labels come from what happened next and from a stron
 - A decision looks wrong: `judge undo <id>`, then consider `judge config set <question>
   threshold <higher>` if it keeps happening for that question.
 - The status line shows `judge ⚠ n failures` or `judge ✗ down`: run `judge health` for detail,
-  then check whether it's a CLI provider (`claude-cli`, `codex-cli`, or `cursor-cli` — the host
-  agent CLI's small model via subscription, no API key needed) or the Jev provider (needs `TYPESAFE_API_KEY`, unavailable — not a failure — until it's configured).
+  then check whether it's a CLI provider (`claude-cli`, `codex-cli`, or `cursor-cli`; the host
+  agent CLI's small model via subscription, no API key needed) or the Jev provider (needs `TYPESAFE_API_KEY`, unavailable (not a failure) until it's configured).
   Any one of the `claude`, `codex`, or `cursor-agent` CLIs on `PATH` is enough. Order: config
   `providers.agentClis` if set, else claude → codex → cursor with the current host (`AW_PROVIDER`)
   first. `cursor-cli` is slow (~8–13s), so on Cursor-only machines text questions often time out

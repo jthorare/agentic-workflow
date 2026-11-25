@@ -22,8 +22,8 @@ internal static partial class CommandTable
         _ => null,
     };
 
-    /// <summary>'sindri agents|skill|skills|setup|code-index|index|library …': the verbs that only call the control plane (the reads never start it; 'index sync' and 'library sync' may).</summary>
-    private static async Task<int> ReadVerbs(string[] args, (ControlPlaneClient Client, Output Output) api, (IServiceProvider Services, StartCommand Start) host, (CancellationToken Interrupt, CancellationToken Again) signals)
+    /// <summary>'sindri agents|skill|skills|setup|code-index|index|library …': the verbs that only call the control plane (the reads never start it; 'index sync', 'library sync' and 'setup --apply' may).</summary>
+    private static async Task<int> ReadVerbs(string[] args, (ControlPlaneClient Client, Output Output) api, (IServiceProvider Services, StartCommand Start) host, AgentSession session, (CancellationToken Interrupt, CancellationToken Again) signals)
     {
         var (client, output) = api;
         var ct = signals.Interrupt;
@@ -31,10 +31,13 @@ internal static partial class CommandTable
         {
             ["agents", .. var rest] => await new AgentsVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["skills", .. var rest] => await new SkillsVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
-            ["setup", .. var rest] => await new SetupVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
+            ["setup", .. var rest] when Array.Exists(rest, static a => string.Equals(a, "--apply", StringComparison.Ordinal)) =>
+                await new SetupApplyVerb(client, output, host.Start.EnsureRunning, host.Services.GetRequiredService<TimeProvider>()).Run(rest, ct).ConfigureAwait(false),   // may start serve (first-run spec decision 10)
+            ["setup", .. var rest] => await new SetupVerbs(client, output, host.Services.GetRequiredService<Kernel.Services.IService<Features.GetSetup.GetSetupOfflineRequest, Features.GetSetup.GetSetupResponse>>()).Run(rest, ct).ConfigureAwait(false),
             ["code-index", .. var rest] => await new CodeIndexVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["index", .. var rest] => await Index(client, output, host).Run(rest, ct, signals.Again).ConfigureAwait(false),
             ["library", .. var rest] => await new LibraryVerbs(Index(client, output, host), client, output).Run(rest, ct, signals.Again).ConfigureAwait(false),
+            ["transcripts", .. var rest] => await TranscriptsCommand.Run(rest, host.Services, output, fence: TranscriptsCommand.Fenced(session), ct).ConfigureAwait(false),   // in process: reads the transcript files, never starts or contacts serve; fenced unless a person is on a terminal
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
     }

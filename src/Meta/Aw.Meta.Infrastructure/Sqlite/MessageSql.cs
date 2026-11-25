@@ -13,7 +13,7 @@ internal static class MessageSql
         "VALUES ($id, $from_socket, $from_name, $body, $at, $kind, $pr, $lane)";
 
     internal static readonly SqlStatement All = new(
-        "SELECT id, from_socket, from_name, body, at, kind, pr, lane, resolution, resolution_reason, resolution_until " +
+        "SELECT id, from_socket, from_name, body, at, kind, pr, lane, resolution, resolution_reason, resolution_until, shown_at " +
         "FROM messages ORDER BY at ASC, seq ASC",
         Subject: "messages");
 
@@ -22,6 +22,8 @@ internal static class MessageSql
         Subject: "outbound");
 
     internal static readonly SqlStatement SelectRole = new("SELECT session_id, name FROM role WHERE singleton = 1", Subject: "role");
+
+    internal static readonly SqlStatement AllTranscripts = new("SELECT transcript FROM offsets ORDER BY transcript ASC", Subject: "offsets");
 
     internal static SqlStatement Offset(string transcript) =>
         new("SELECT byte_offset FROM offsets WHERE transcript = $transcript", c => c.Bind("$transcript", transcript), "offset " + transcript);
@@ -42,6 +44,11 @@ internal static class MessageSql
     internal static SqlStatement Resolve(MessageId id, MessageResolution resolution) => new(
         "UPDATE messages SET resolution = $resolution, resolution_reason = $reason, resolution_until = $until WHERE id = $id",
         c => c.Bind("$resolution", resolution.Kind.ToString()).Bind("$reason", resolution.Reason).BindTime("$until", resolution.Until).Bind("$id", id.Value),
+        "message " + id.Value);
+
+    internal static SqlStatement MarkShown(MessageId id, DateTimeOffset at) => new(
+        "UPDATE messages SET shown_at = $at WHERE id = $id",
+        c => c.Bind("$at", at).Bind("$id", id.Value),
         "message " + id.Value);
 
     internal static SqlStatement InsertOutbound(Outbound sent) => new(
@@ -67,6 +74,7 @@ internal static class MessageSql
         return new InboxMessage(MessageId.From(r.GetString(0)), r.GetString(1), r.GetString(2), r.GetString(3), SqliteRead.GetTimestamp(r, 4), classification)
         {
             Resolution = resolution,
+            ShownAt = r.ReadTime(11),
         };
     }
 

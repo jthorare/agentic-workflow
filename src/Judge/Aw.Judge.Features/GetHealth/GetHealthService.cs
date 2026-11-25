@@ -16,8 +16,14 @@ internal sealed class GetHealthService(IDecisionLog decisions, TimeProvider cloc
         }
 
         var lastAttempts = await decisions.LastAttemptOutcomes(JudgeHealth.DownStreak, cancellationToken).ConfigureAwait(false);
-        return lastAttempts.IsError
-            ? lastAttempts.Error
-            : new GetHealthResponse(JudgeHealth.Assess(failures.Value, lastAttempts.Value), failures.Value);
+        if (lastAttempts.IsError)
+        {
+            return lastAttempts.Error;
+        }
+
+        var newest = await decisions.LatestFailuresSince(clock.GetUtcNow() - JudgeHealth.FailureWindow, 1, cancellationToken).ConfigureAwait(false);
+        return newest.IsError
+            ? newest.Error
+            : new GetHealthResponse(JudgeHealth.Assess(failures.Value, lastAttempts.Value), failures.Value, newest.Value.Count == 0 ? null : newest.Value[0]);
     }
 }

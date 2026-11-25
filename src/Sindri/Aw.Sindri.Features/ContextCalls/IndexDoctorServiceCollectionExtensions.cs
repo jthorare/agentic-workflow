@@ -1,4 +1,5 @@
 using Aw.Context.Core.Facade;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Secrets;
@@ -16,6 +17,6 @@ internal static class IndexDoctorServiceCollectionExtensions
         .AddSingleton<IRecordEmbedderProbe, NoRecordEmbedderProbe>()
         .AddScoped<IDoctorChecks>(static sp => new IndexDoctorChecks(
             sp.GetRequiredService<IApprovedProfile>(), sp.GetRequiredService<ContextScopes>(), sp.GetRequiredService<IContextEngine>(),
-            sp.GetRequiredService<ISecretPointers>(), sp.GetRequiredService<IRecordEmbedderProbe>(), TimeSpan.FromSeconds(3)))
+            sp.GetRequiredService<ISecretPointers>(), sp.GetRequiredService<IConnectionCredentials>(), sp.GetRequiredService<IRecordEmbedderProbe>(), TimeSpan.FromSeconds(3)))
         .AddScoped<IDoctorChecks>(static sp => new LibraryDoctorChecks(sp.GetRequiredService<IApprovedProfile>(), sp.GetRequiredService<ContextScopes>(), sp.GetRequiredService<IContextEngine>()));   // the 'library' row
 }

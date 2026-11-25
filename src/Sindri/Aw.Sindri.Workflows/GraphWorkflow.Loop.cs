@@ -27,20 +27,22 @@ internal sealed partial class GraphWorkflow
         _ = _pending.RemoveAll(n => n.Id == shape.Collect.Id);
         _current = shape.Collect;
         await Record(Row(shape.Collect, NodeRunStatus.Running), _write).ConfigureAwait(true);
-        var failure = await RunBatches(forEach, count, batch).ConfigureAwait(true);
+        var (failure, skipped) = await RunBatches(forEach, count, batch).ConfigureAwait(true);
         _current = null;
 
         Decide(shape);
-        failure ??= await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.CollectAsync(new GraphCollect(_run, shape.Collect.Id)), _write).ConfigureAwait(true);
+        failure ??= await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.CollectAsync(new GraphCollect(_run, shape.Collect.Id, skipped)), _write).ConfigureAwait(true);
         if (failure is null)
         {
             return null;
         }
 
-        await Record(new NodeRun(_run, shape.Collect.Id, 0, NodeRunStatus.Failed, Input: null, Output: null, Truncated: false, failure, Usage: null), _detached).ConfigureAwait(true);
+        // why: an item's failure already names its node and item ("node 'bad' failed on item 1: ..."); the collect's row holds the bare error and the run keeps the named text, so the prefix is never nested (#3304)
+        var (named, bare) = NodeFailureText.Split(failure);
+        await Record(new NodeRun(_run, shape.Collect.Id, 0, NodeRunStatus.Failed, Input: null, Output: null, Truncated: false, bare, Usage: null), _detached).ConfigureAwait(true);
         return string.Equals(shape.Collect.OnFailure, "continue", StringComparison.Ordinal)
             ? null
-            : await End(WorkflowRunStatus.Failed, $"node '{shape.Collect.Id.Value}' failed: {failure}").ConfigureAwait(true);
+            : await End(WorkflowRunStatus.Failed, named ?? $"node '{shape.Collect.Id.Value}' failed: {bare}").ConfigureAwait(true);
     }
 
     private static (int Count, int Batch) Sizes(GraphBlockOutcome opened)
@@ -60,26 +62,30 @@ internal sealed partial class GraphWorkflow
         }
     }
 
-    private async Task<string?> RunBatches(GraphNode forEach, int count, int batch)
+    // why: the batches' 'skip-item' counts add up to the collect's 'skipped'; a failed batch ends the loop, so its count no longer matters
+    private async Task<(string? Failure, int Skipped)> RunBatches(GraphNode forEach, int count, int batch)
     {
+        var skipped = 0;
         for (var first = 1; first <= count; first += batch)
         {
-            var input = new GraphIterationInput(_run, forEach.Id, first, Math.Min(batch, count - first + 1));
+            var input = new GraphIterationInput(_run, forEach.Id, first, Math.Min(batch, count - first + 1), _agentLaunchAttempts);
             var options = new ChildWorkflowOptions { Id = $"{_run.Value}/{forEach.Id.Value}/{first.ToString(System.Globalization.CultureInfo.InvariantCulture)}" };
             try
             {
                 var result = await Workflow.ExecuteChildWorkflowAsync((GraphIterationWorkflow w) => w.RunAsync(input), options).ConfigureAwait(true);
                 if (result.Failure is { } failure)
                 {
-                    return failure;
+                    return (failure, skipped);
                 }
+
+                skipped += result.Skipped;
             }
             catch (ChildWorkflowFailureException e) when (!TemporalException.IsCanceledException(e))
             {
-                return e.InnerException?.Message ?? e.Message;
+                return (e.InnerException?.Message ?? e.Message, skipped);
             }
         }
 
-        return null;
+        return (null, skipped);
     }
 }

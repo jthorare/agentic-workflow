@@ -12,4 +12,10 @@ internal sealed record Polled(WatchSnapshot Snapshot, int Inbox, IReadOnlyList<s
 {
     /// <summary>How many messages are still owed a reply (what "aw-meta inbox" lists).</summary>
     internal int Open { get; init; }
+
+    /// <summary>The lines for the pull requests merge-run handed to GitHub's merge queue that merged or left it in this poll.</summary>
+    internal IReadOnlyList<string> Queue { get; init; } = [];
+
+    /// <summary>The status lines not read yet, each with its sending lane (#2651).</summary>
+    internal IReadOnlyList<(string Id, string Lane)> Status { get; init; } = [];
 }

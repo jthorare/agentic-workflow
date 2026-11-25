@@ -128,7 +128,7 @@ internal sealed class SqliteMemoryStore(LedgerDatabase database) : IMemoryStore
             var duplicate = fact.Embedding.IsEmpty ? null : MemoryDedupe.FindDuplicate(fact.Embedding, fact.Tags, [.. rows.Value.Where(f => !f.IsExpired(fact.RefreshedAt))]);
             var statement = duplicate is null
                 ? new SqlStatement(MemorySql.InsertFact, c => BindFact(c, fact), $"fact {fact.Key}")
-                : new SqlStatement(MemorySql.Refresh, c => c.Bind("$name", fact.Store.Value).Bind("$key", duplicate.Key).Bind("$refreshedAt", fact.RefreshedAt).Bind("$expiresAt", Iso(fact.ExpiresAt)), $"fact {duplicate.Key}");
+                : new SqlStatement(MemorySql.Refresh, c => c.Bind("$name", fact.Store.Value).Bind("$key", duplicate.Key).Bind("$refreshedAt", fact.RefreshedAt).Bind("$expiresAt", Iso(fact.ExpiresAt)).Bind("$refreshedBy", fact.WrittenBy), $"fact {duplicate.Key}");
             var written = await RecipeSessions.Execute(session, statement, token).ConfigureAwait(false);
             return written.IsError ? written.Error : new FactWritten(duplicate?.Key ?? fact.Key, Refreshed: duplicate is not null);
         }, cancellationToken);
@@ -151,7 +151,7 @@ internal sealed class SqliteMemoryStore(LedgerDatabase database) : IMemoryStore
         => RecipeSessions.Write(_database, async ValueTask<Result<bool>> (session, token) =>
         {
             var statement = new SqlStatement(MemorySql.Refresh, c => c
-                .Bind("$name", memory.Value).Bind("$key", key).Bind("$refreshedAt", refreshedAt).Bind("$expiresAt", Iso(expiresAt)), $"fact {key}");
+                .Bind("$name", memory.Value).Bind("$key", key).Bind("$refreshedAt", refreshedAt).Bind("$expiresAt", Iso(expiresAt)).Bind("$refreshedBy", (string?)null), $"fact {key}");
             var changed = await RecipeSessions.Execute(session, statement, token).ConfigureAwait(false);
             return changed.IsError ? changed.Error : changed.Value > 0;
         }, cancellationToken);
@@ -203,5 +203,6 @@ internal sealed class SqliteMemoryStore(LedgerDatabase database) : IMemoryStore
         .Bind("$refreshedAt", fact.RefreshedAt)
         .Bind("$model", fact.Embedding.IsEmpty ? null : fact.Model)
         .Bind("$dimension", fact.Embedding.IsEmpty ? null : fact.Embedding.Length)
-        .Bind("$writtenBy", fact.WrittenBy);
+        .Bind("$writtenBy", fact.WrittenBy)
+        .Bind("$refreshedBy", (string?)null);
 }

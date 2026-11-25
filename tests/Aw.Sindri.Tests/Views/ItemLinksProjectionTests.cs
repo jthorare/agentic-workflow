@@ -44,6 +44,36 @@ public sealed class ItemLinksProjectionTests
         Assert.Equal((2L, _h.Clock.GetUtcNow()), (row.Sequence, row.UpdatedAt));
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_linked_run_shows_as_a_run_link()
+    {
+        var run = RecordKey.From("sindri:run/nightly@1:1");
+        await Link(run, alias: null, sequence: 1);
+
+        var row = Assert.Single((await _views.List<ItemLinkRow>(ViewNames.ItemLinks, Token)).Value);
+
+        Assert.Equal(ItemLinkKind.Run, row.Kind);
+        Assert.Equal(run.Value, row.Ref);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Every_link_kind_has_a_row_with_its_own_word_in_the_key()
+    {
+        var kinds = Enum.GetValues<ItemLinkKind>();
+        for (var i = 0; i < kinds.Length; i++)
+        {
+            await Link(RecordKey.From("sindri:" + KindWord(kinds[i]) + "/x" + i.ToString(System.Globalization.CultureInfo.InvariantCulture)), alias: null, sequence: i + 1);
+        }
+
+        var rows = (await _views.List<ItemLinkRow>(ViewNames.ItemLinks, Token)).Value.OrderBy(static r => r.Sequence).ToList();
+
+        Assert.Equal(kinds, rows.Select(static r => r.Kind));
+    }
+
+    private static string KindWord(ItemLinkKind kind) =>
+        typeof(ItemLinkKind).GetField(kind.ToString())!.GetCustomAttributes(typeof(System.Text.Json.Serialization.JsonStringEnumMemberNameAttribute), inherit: false)
+            .Cast<System.Text.Json.Serialization.JsonStringEnumMemberNameAttribute>().Single().Name;
+
     private async Task Link(RecordKey record, ItemAlias? alias, long sequence)
     {
         _ = (await _views.Open(ViewSchema.Version, Token)).Value;

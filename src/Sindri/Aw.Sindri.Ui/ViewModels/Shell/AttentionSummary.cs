@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
@@ -15,6 +16,15 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 /// <param name="SummaryLine">Home's summary line; empty before the list is known.</param>
 internal sealed record AttentionSummary(string Title, int Badge, TrayView Tray, string SummaryLine)
 {
+    /// <summary>Home's Needs you header, beside its label: only the need-you count ("3 need you"), blank at zero or before the list is known.</summary>
+    public string NeedsYouLine { get; init; } = "";
+
+    /// <summary>Home's one display number: the need-you count as digits, blank when <see cref="NeedsYouLine"/> is.</summary>
+    public string NeedsYouNumber { get; init; } = "";
+
+    /// <summary>The words beside <see cref="NeedsYouNumber"/> ("need you"), blank when it is.</summary>
+    public string NeedsYouWord { get; init; } = "";
+
     /// <summary>Works out the summary.</summary>
     /// <param name="feed">The needs-you list, or null before it is known.</param>
     /// <param name="state">The shell's state.</param>
@@ -29,12 +39,25 @@ internal sealed record AttentionSummary(string Title, int Badge, TrayView Tray, 
 
         // Rows are kept while the views are stale; with no running Sindri, or none yet answering, there are none to count.
         var badge = IsCounted(state) ? rows.Count : 0;
+        var count = listed ?? rows.Count;
+        var number = HeaderNumber(feed, count);
         return new AttentionSummary(
             badge > 0 ? Labels.TitleNeedsYou(badge) : Labels.Sindri,
             badge,
             TrayFor(feed, state, now, sessions),
-            feed is null ? "" : Labels.Summary(listed ?? rows.Count, counts.Running, counts.WithYou, counts.Queued));
+            feed is null ? "" : Labels.Summary(count, counts.Running, counts.WithYou, counts.Queued))
+        {
+            NeedsYouLine = HeaderCount(feed, count),
+            NeedsYouNumber = number,
+            NeedsYouWord = number.Length > 0 ? Labels.NeedYouWord : "",
+        };
     }
+
+    // The same rule as HeaderCount, as the bare digits for Home's display number.
+    private static string HeaderNumber(NeedsYouFeed? feed, int count) => feed is null || count == 0 ? "" : count.ToString(CultureInfo.InvariantCulture);
+
+    // Home's header names only the need-you count, and nothing at zero: running and queued live in their own cards.
+    private static string HeaderCount(NeedsYouFeed? feed, int count) => feed is null || count == 0 ? "" : Labels.NeedYouCount(count);
 
     /// <summary>Adds the Linear strip's count to the tray's tooltip as a line, the way the session counts do; the badge and the title stay.</summary>
     /// <param name="count">How many changes the strip holds; 0 adds nothing.</param>

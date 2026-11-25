@@ -13,4 +13,8 @@ public sealed record ProjectsPage(
     IReadOnlyList<ProjectFreshnessRow> Freshness,
     IReadOnlyList<ProjectCard> Projects,
     IReadOnlyList<ProjectCard> Finished,
-    IReadOnlyList<ProjectCard> Hidden);
+    IReadOnlyList<ProjectCard> Hidden)
+{
+    /// <summary>Why the page speaks of Linear (no Linear, or no key), or null: the machine-readable reason beside <see cref="Empty"/>.</summary>
+    public ProjectsEmptyCode? EmptyCode { get; init; }
+}

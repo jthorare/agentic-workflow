@@ -30,7 +30,7 @@ public sealed class WorktreeRootsTests
     [Fact, Trait("Lane", "unit")]
     public void The_default_roots_expand_the_home_directory_and_always_include_the_gate_directory()
     {
-        var roots = new WorktreeConfig().EffectiveRoots("/home/u/repos/app", "/state/meta/gates", "/home/u");
+        var roots = new WorktreeConfig().EffectiveRoots("/home/u/repos/app", "/state/meta/gates", "/home/u", repoRoot: null);
 
         Assert.Equal(["/home/u/repos/aw-wt", "/home/u/repos/app/.claude/worktrees", "/state/meta/gates"], roots);
     }
@@ -38,15 +38,31 @@ public sealed class WorktreeRootsTests
     [Fact, Trait("Lane", "unit")]
     public void Configured_roots_replace_the_defaults_but_not_the_gate_directory()
     {
-        var roots = new WorktreeConfig(Roots: ["~/trees", "/abs/trees/"]).EffectiveRoots("/r", "/state/meta/gates", "/home/u");
+        var roots = new WorktreeConfig(Roots: ["~/trees", "/abs/trees/"]).EffectiveRoots("/r", "/state/meta/gates", "/home/u", repoRoot: null);
 
         Assert.Equal(["/home/u/trees", "/abs/trees", "/state/meta/gates"], roots);
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void The_default_roots_include_the_repos_own_worktree_root_when_given()
+    {
+        var roots = new WorktreeConfig().EffectiveRoots("/home/u/repos/app", "/state/meta/gates", "/home/u", repoRoot: "/data/trees/app");
+
+        Assert.Equal(["/home/u/repos/aw-wt", "/home/u/repos/app/.claude/worktrees", "/data/trees/app", "/state/meta/gates"], roots);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Configured_roots_ignore_the_repos_own_worktree_root()
+    {
+        var roots = new WorktreeConfig(Roots: ["/abs/trees"]).EffectiveRoots("/r", "/g", "/home/u", repoRoot: "/data/trees/app");
+
+        Assert.Equal(["/abs/trees", "/g"], roots);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void Without_a_home_directory_a_tilde_root_is_left_out_rather_than_guessed()
     {
-        var roots = new WorktreeConfig().EffectiveRoots("/r", "/g", string.Empty);
+        var roots = new WorktreeConfig().EffectiveRoots("/r", "/g", string.Empty, repoRoot: null);
 
         Assert.Equal(["/r/.claude/worktrees", "/g"], roots);
     }

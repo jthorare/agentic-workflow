@@ -8,7 +8,9 @@ public sealed class TeamTests
 {
     private readonly InMemoryMetaConfig _config = new();
 
-    private TeamInitService Init() => new(_config);
+    private readonly InMemoryWorktreeFiles _files = new();
+
+    private TeamInitService Init() => new(_config, _files, new MetaPaths("/state/meta", "/state/meta/gates", Heavy: null, "gh", "/home/u"));
 
     private TeamShowService Show() => new(_config);
 
@@ -26,6 +28,35 @@ public sealed class TeamTests
         Assert.Equal(("t1", "/work/repo", "meta"), (loaded.Value.Team, loaded.Value.Repo, loaded.Value.MetaLane));
         Assert.Equal(["repo"], loaded.Value.Gate.Always);
         Assert.Equal(["**"], loaded.Value.Gate.Scopes["repo"].Paths);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task TeamInit_writes_the_default_worktree_root_and_the_claude_directory()
+    {
+        _ = await Init().Handle(Request(), CancellationToken.None);
+
+        Assert.Equal(["/home/u/repos/aw-wt/repo", "/work/repo/.claude/worktrees"], (await _config.Load(CancellationToken.None)).Value.Worktrees.Roots);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task TeamInit_writes_the_configured_worktree_root()
+    {
+        _files.ConfigureRoot("/work/repo", "/data/trees/repo");
+
+        _ = await Init().Handle(Request(), CancellationToken.None);
+
+        Assert.Equal(["/data/trees/repo", "/work/repo/.claude/worktrees"], (await _config.Load(CancellationToken.None)).Value.Worktrees.Roots);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task TeamInit_is_refused_and_writes_nothing_when_the_root_is_inside_the_repo()
+    {
+        _files.ConfigureRoot("/work/repo", "trees");
+
+        var refused = await Init().Handle(Request(), CancellationToken.None);
+
+        Assert.Equal(MetaErrors.WorktreeRootInRepo.Code, refused.Error.Code);
+        Assert.Equal(MetaErrors.NoTeamConfig.Code, (await _config.Load(CancellationToken.None)).Error.Code);
     }
 
     [Fact, Trait("Lane", "unit")]

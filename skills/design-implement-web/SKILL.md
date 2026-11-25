@@ -37,7 +37,7 @@ Selection rules (artifact ownership table: `$SHARED_DIR/design-artifact-paths.md
 - **One mockup:** use it automatically (prefer HTML when both exist for the same screen).
 - **Multiple mockups:** list both types with their source annotated and **ask the user** which to implement.
 
-When an HTML source exists, it is the primary reference for layout and structure; a PNG baseline for the same screen is supplementary. **Record which file was actually selected and whether it is HTML or PNG** — the Step 5 report and `implement-report.json` must name the real source, never assume PNG.
+When an HTML source exists, it is the primary reference for layout and structure; a PNG baseline for the same screen is supplementary. **Record which file was selected and whether it is HTML or PNG** — the Step 5 report and `implement-report.json` must name the real source, never assume PNG.
 
 ## Step 2: Generate Token Files
 

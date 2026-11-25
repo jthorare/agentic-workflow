@@ -39,6 +39,9 @@ internal sealed partial class ProjectSheetViewModel
     private void Draw(ProjectOne one)
     {
         var card = one.Project;
+        // A pick not sent yet survives a refresh unless the saved state moved since the last draw.
+        var keepPick = _one?.Project is { } drawn && string.Equals(drawn.Id, card.Id, StringComparison.Ordinal)
+            && string.Equals(drawn.State, card.State, StringComparison.Ordinal);
         _one = one;
         Heading = card.Name;
         OriginChip = Labels.ProjectOriginChip(card.Origin);
@@ -55,7 +58,10 @@ internal sealed partial class ProjectSheetViewModel
         Notes = string.IsNullOrWhiteSpace(card.Notes) ? null : card.Notes;
         Links = [.. card.Links.Select(Link)];
         Repos = [.. card.Repos.Select(Repo)];
-        SelectedState = StateChoices.FirstOrDefault(s => string.Equals(s.Value, card.State, StringComparison.Ordinal));
+        if (!keepPick || SelectedState is null)
+        {
+            SelectedState = StateChoices.FirstOrDefault(s => string.Equals(s.Value, card.State, StringComparison.Ordinal));
+        }
         DrawActions(card, one.Hidden);
         (ProblemText, Note) = (string.Empty, string.Empty);
         Phase = FramePhase.Shown;
@@ -119,6 +125,13 @@ internal sealed partial class ProjectSheetViewModel
 
     private void Failed(Error error)
     {
+        if (IsShown && error.Kind == ErrorKind.NotFound)
+        {
+            // Removed elsewhere while the sheet was open: close it, never print the id or the code (#3719).
+            Done?.Invoke(this, new ProjectDoneEventArgs(ProjectDone.Removed, Id, Labels.ProjectRemovedElsewhere, wentToFinished: false));
+            return;
+        }
+
         if (IsShown)
         {
             Note = Labels.ProjectSheetStale(error);

@@ -33,8 +33,9 @@ public static class AnchorMatch
     /// <param name="name">A node key, alias or label.</param>
     /// <param name="repos">The repos in scope; a demoted file's code node is never suggested. Null suggests every node.</param>
     /// <param name="pins">The pins the caller sees; a whole-alias match resolves to the pin's concept. Null reads none.</param>
+    /// <param name="label">The answer's scrubber for a choice label, the one a question's suggestions go through (#3045); null leaves the label as stored.</param>
     /// <returns>The node; SND-CONTEXT-037 when a label names several (the message lists them); SND-CONTEXT-003 with suggestions when nothing matches.</returns>
-    public static Result<GraphNode> Resolve(GraphSnapshot graph, string name, IReadOnlyList<ContextRepo>? repos = null, IAliasPins? pins = null)
+    public static Result<GraphNode> Resolve(GraphSnapshot graph, string name, IReadOnlyList<ContextRepo>? repos = null, IAliasPins? pins = null, Func<string, string>? label = null)
     {
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentNullException.ThrowIfNull(name);
@@ -55,7 +56,8 @@ public static class AnchorMatch
         {
             return ContextErrors.AmbiguousAnchor
                 .With($"'{Shown(trimmed)}' is the name of {byLabel.Count} nodes: {string.Join(", ", byLabel.Select(n => n.Key.Value))} (fix: ask by key)")
-                .WithExtension("candidates", [.. byLabel.Select(n => n.Key.Value).Where(Listable)], SettingsJsonContext.Default.ListString);
+                .WithExtension("candidates", [.. byLabel.Select(n => n.Key.Value).Where(Listable)], SettingsJsonContext.Default.ListString)
+                .WithExtension("choices", [.. Choices(byLabel, label)], SettingsJsonContext.Default.ListAnchorChoice);
         }
 
         if (ByAlias(graph, trimmed, pins) is { } aliased)
@@ -68,12 +70,18 @@ public static class AnchorMatch
             return near;
         }
 
-        var suggested = Suggest(graph, Words(trimmed), except: [], repos ?? []);
+        return Unknown(graph, trimmed, Suggest(graph, Words(trimmed), except: [], repos ?? []), label);
+    }
+
+    // SND-CONTEXT-003: the detail names the keys to try; the extensions list them bare and as choices with label and kind (#2809).
+    private static Error Unknown(GraphSnapshot graph, string trimmed, IReadOnlyList<NodeKey> suggested, Func<string, string>? label)
+    {
         var hint = suggested.Count == 0 ? "sindri context map status" : "try " + string.Join(", ", suggested.Select(k => k.Value));
         var unknown = ContextErrors.UnknownAnchor.With($"no node is named '{Shown(trimmed)}' (fix: {hint})");
         return suggested.Count == 0
             ? unknown
-            : unknown.WithExtension("suggestedAnchors", [.. suggested.Select(k => k.Value).Where(Listable)], SettingsJsonContext.Default.ListString);
+            : unknown.WithExtension("suggestedAnchors", [.. suggested.Select(k => k.Value).Where(Listable)], SettingsJsonContext.Default.ListString)
+                .WithExtension("choices", [.. Choices(suggested.Select(graph.Resolve).OfType<GraphNode>(), label)], SettingsJsonContext.Default.ListAnchorChoice);
     }
 
     /// <summary>The nodes a question names by their whole label, and others it comes close to.</summary>
@@ -186,4 +194,32 @@ public static class AnchorMatch
     private static string Shown(string text) => text.Length <= 80 && !text.Any(char.IsControl) ? text : "(a long or unusual name)";
 
     private static bool Listable(string key) => key.Length <= MaxListedKey;
+
+    /// <summary>
+    /// The nodes as a person picks them (#2809): the key a pick reads, the label shown (one line, scrubbed, then cut like a key with "…") and the key's scheme as the kind.
+    /// A question's suggestions and an SND-CONTEXT-003 or -037 refusal both build their choices here, with the same scrubber (#3045).
+    /// </summary>
+    /// <param name="nodes">The nodes, in the order of the bare key list beside them.</param>
+    /// <param name="label">The answer's scrubber for a label; null leaves the label as stored.</param>
+    /// <returns>One choice per listable node.</returns>
+    public static IReadOnlyList<AnchorChoice> Choices(IEnumerable<GraphNode> nodes, Func<string, string>? label = null)
+    {
+        ArgumentNullException.ThrowIfNull(nodes);
+        return [.. nodes.Where(n => Listable(n.Key.Value)).Select(n => new AnchorChoice(n.Key.Value, ChoiceLabel(n, label), n.Key.Value[..n.Key.Value.IndexOf(':', StringComparison.Ordinal)]))];
+    }
+
+    // Scrubbed before the cut, so a cut never splits a secret the scrubber would have caught; a cut label ends in "…" and stays within the cap (#3045).
+    private static string ChoiceLabel(GraphNode node, Func<string, string>? label)
+    {
+        var line = string.Join(' ', node.Label.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        var shown = line.Length == 0 || line.Any(char.IsControl) ? node.Key.Value : line;
+        var scrubbed = label is null ? shown : label(shown);
+        return scrubbed.Length <= MaxListedKey ? scrubbed : Cut(scrubbed);
+    }
+
+    private static string Cut(string text)
+    {
+        var keep = MaxListedKey - 1;
+        return string.Concat(text.AsSpan(0, char.IsHighSurrogate(text[keep - 1]) ? keep - 1 : keep), "…");
+    }
 }

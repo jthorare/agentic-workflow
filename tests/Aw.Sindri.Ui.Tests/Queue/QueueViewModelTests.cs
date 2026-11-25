@@ -126,8 +126,8 @@ public sealed class QueueViewModelTests
 
         await queue.Refresh(_api, Token);
 
-        Assert.Equal(("RUNNING 0 · WITH YOU 0", "Nothing running.", 0), (queue.RunningHeader, queue.RunningEmpty, queue.RunningRows.Count));
-        Assert.Equal(("QUEUED 4", string.Empty, 4), (queue.QueuedHeader, queue.QueuedEmpty, queue.QueuedRows.Count));
+        Assert.Equal(("Running 0 · with you 0", "Nothing running.", 0), (queue.RunningHeader, queue.RunningEmpty, queue.RunningRows.Count));
+        Assert.Equal(("Queued 4", string.Empty, 4), (queue.QueuedHeader, queue.QueuedEmpty, queue.QueuedRows.Count));
         Assert.False(queue.HasMoreRunning);
     }
 
@@ -140,7 +140,7 @@ public sealed class QueueViewModelTests
 
         await queue.Refresh(_api, Token);
 
-        Assert.Equal("RUNNING 6 · WITH YOU 1", queue.RunningHeader);
+        Assert.Equal("Running 6 · with you 1", queue.RunningHeader);
         Assert.Equal(["Taken over by hand", "Running item 1", "Running item 2", "Running item 3", "Running item 4"], queue.RunningRows.Select(r => r.Title), StringComparer.Ordinal);
         Assert.Equal((true, "Show all 7 in Queue"), (queue.HasMoreRunning, queue.ShowAllRunning));
         Assert.Equal(string.Empty, queue.RunningEmpty);
@@ -320,7 +320,7 @@ public sealed class QueueViewModelTests
 
         await queue.Refresh(_api, Token);
 
-        Assert.Equal([(5, 4, "RUNNING 0 · WITH YOU 0")], seen);
+        Assert.Equal([(5, 4, "Running 0 · with you 0")], seen);
     }
 
     // §4.1: skeleton rows on the first load only; a failed read keeps the last rows, marked stale.

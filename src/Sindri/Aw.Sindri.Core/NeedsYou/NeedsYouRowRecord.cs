@@ -6,4 +6,9 @@ namespace Aw.Sindri.Core.NeedsYou;
 /// <param name="Row">The row.</param>
 /// <param name="Sequence">The ledger sequence that last changed it.</param>
 /// <param name="Nested">On a root instance's 'park' row: the parked descendants below it (null when none). Not part of the wire row.</param>
-public sealed record NeedsYouRowRecord(NeedsYouRow Row, long Sequence, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<NestedPark>? Nested = null);
+public sealed record NeedsYouRowRecord(NeedsYouRow Row, long Sequence, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<NestedPark>? Nested = null)
+{
+    /// <summary>On a loop item's question row: the id of the batch's child workflow that waits for the answer. Not part of the wire row.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? BatchWorkflow { get; init; }
+}

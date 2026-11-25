@@ -1,0 +1,285 @@
+using System.Collections.Concurrent;
+using Aw.Kernel;
+using Aw.Sindri.Core;
+using Aw.Sindri.Core.Toolkits;
+
+namespace Aw.Sindri.Infrastructure.Toolkits;
+
+/// <summary>
+/// Keeps toolkit processes running (see <see cref="IToolkitRuntime"/>). One watcher task per toolkit waits for its process to end; the first crash restarts it after 1 s, the second after 2 s, and the
+/// third crash inside ten minutes marks the toolkit 'failed' in the store with no restart (there is no 4 s wait). A later start launches it again. A stop and a shutdown end the watcher first, so neither counts as a crash.
+/// </summary>
+/// <param name="launcher">Starts processes.</param>
+/// <param name="store">Takes the 'failed' state.</param>
+/// <param name="clock">The clock the backoff and the crash window use.</param>
+internal sealed partial class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolkitStore store, TimeProvider clock) : IToolkitRuntime, IAsyncDisposable, IDisposable
+{
+    /// <summary>The crashes that make a toolkit 'failed' when they fall inside <see cref="Window"/>.</summary>
+    internal const int MaxCrashes = 3;
+
+    /// <summary>The window the crashes are counted in.</summary>
+    internal static readonly TimeSpan Window = TimeSpan.FromMinutes(10);
+
+    private readonly ConcurrentDictionary<string, Running> _running = new(StringComparer.Ordinal);
+    private readonly SemaphoreSlim _gate = new(1, 1);
+    private int _disposed;
+    private int _waiting;
+    private int _giveUps;
+
+    public async ValueTask<Result<Unit>> Start(Toolkit toolkit, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(toolkit);
+        if (!await Enter(cancellationToken).ConfigureAwait(false))
+        {
+            return Stopped(toolkit.Name);
+        }
+
+        try
+        {
+            if (_running.TryGetValue(toolkit.Name, out var existing))
+            {
+                if (!existing.Watcher.IsCompleted && !existing.GivingUp)
+                {
+                    return Unit.Value;   // already up (or restarting): a second start changes nothing
+                }
+
+                _ = _running.TryRemove(toolkit.Name, out _);   // its watcher gave up: this start replaces it
+                if (existing.Watcher.IsCompleted)
+                {
+                    await End(existing).ConfigureAwait(false);   // not for one still giving up: its watcher waits for this gate, so awaiting it would deadlock
+                }
+            }
+
+            var launched = await launcher.Launch(toolkit, cancellationToken).ConfigureAwait(false);
+            if (launched.IsError)
+            {
+                return launched.Error;
+            }
+
+            var running = new Running(launched.Value, toolkit);
+            running.Watcher = Task.Run(() => Watch(toolkit, running), CancellationToken.None);
+            _running[toolkit.Name] = running;
+            return Unit.Value;
+        }
+        finally
+        {
+            _ = _gate.Release();
+        }
+    }
+
+    public async ValueTask<Result<Unit>> Stop(string name, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        Running? running;
+        if (!await Enter(cancellationToken).ConfigureAwait(false))
+        {
+            return Unit.Value;   // shut down: nothing runs
+        }
+
+        try
+        {
+            if (!_running.TryRemove(name, out running))
+            {
+                return Unit.Value;   // not running is already stopped
+            }
+        }
+        finally
+        {
+            _ = _gate.Release();
+        }
+
+        await End(running).ConfigureAwait(false);
+        return Unit.Value;
+    }
+
+    public ValueTask<Result<Unit>> Pause(string name, CancellationToken cancellationToken) => ValueTask.FromResult(SetPaused(name, paused: true));
+
+    public ValueTask<Result<Unit>> Resume(string name, CancellationToken cancellationToken) => ValueTask.FromResult(SetPaused(name, paused: false));
+
+    /// <summary>Flips the pause flag of a toolkit that has a live process. The flag lives on the entry the watcher keeps, so a restart after a crash stays paused, and a stop ends the entry with it.</summary>
+    private Result<Unit> SetPaused(string name, bool paused)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        if (!_running.TryGetValue(name, out var running) || running.Process is null)
+        {
+            return SindriErrors.ToolkitNotBuilt.With($"Toolkit '{name}' isn't running (fix: toolkit_start)");
+        }
+
+        running.Paused = paused;
+        return Unit.Value;
+    }
+
+    /// <summary>How many calls are queued on the gate right now (a test signal: tests wait on it instead of a delay).</summary>
+    internal int GateWaiters => Volatile.Read(ref _waiting);
+
+    /// <summary>How many give-ups have finished (a test signal).</summary>
+    internal int GiveUpsDone => Volatile.Read(ref _giveUps);
+
+    /// <summary>Whether the toolkit's current entry has decided to give up (a test signal).</summary>
+    /// <param name="name">The toolkit name.</param>
+    /// <returns>True when the watcher set its give-up flag.</returns>
+    internal bool IsGivingUp(string name) => _running.TryGetValue(name, out var running) && running.GivingUp;
+
+    private static Error Stopped(string name) => SindriErrors.ToolkitNotBuilt.With($"Toolkit '{name}' can't start: Sindri is shutting down");
+
+    /// <summary>Takes the gate; false when the supervisor is already shut down.</summary>
+    private async ValueTask<bool> Enter(CancellationToken cancellationToken)
+    {
+        if (Volatile.Read(ref _disposed) != 0)
+        {
+            return false;
+        }
+
+        _ = Interlocked.Increment(ref _waiting);
+        try
+        {
+            await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;   // shut down while this call waited
+        }
+        finally
+        {
+            _ = Interlocked.Decrement(ref _waiting);
+        }
+    }
+
+    /// <summary>The toolkits that have a live process right now, as 'running' or, when paused, 'paused'; one waiting out a restart backoff or given up on has none.</summary>
+    /// <returns>The toolkits in name order.</returns>
+    internal IReadOnlyList<Toolkit> RunningNow() =>
+        [.. _running.Values.Where(static r => r.Process is not null).Select(static r => r.Toolkit with { State = r.Paused ? ToolkitState.Paused : ToolkitState.Running }).OrderBy(static t => t.Name, StringComparer.Ordinal)];
+
+    /// <summary>Calls one tool of a running toolkit.</summary>
+    /// <param name="name">The toolkit name.</param>
+    /// <param name="tool">The tool name.</param>
+    /// <param name="argumentsJson">The arguments as a JSON object.</param>
+    /// <param name="timeout">How long to wait for the answer.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The tool's answer, SND-TK-001 when the toolkit isn't running, or what the process answers (SND-TK-004, -006, -007, -011).</returns>
+    internal ValueTask<Result<string>> Call(string name, string tool, string argumentsJson, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        if (!_running.TryGetValue(name, out var running))
+        {
+            return ValueTask.FromResult<Result<string>>(SindriErrors.ToolkitNotBuilt.With($"Toolkit '{name}' isn't running (fix: toolkit_start)"));
+        }
+
+        return running.Process is { } process
+            ? process.Call(tool, argumentsJson, timeout, cancellationToken)
+            : ValueTask.FromResult<Result<string>>(SindriErrors.ToolkitProcessDied.With($"Toolkit '{name}' is restarting after a crash (fix: try again in a few seconds)"));
+    }
+
+    /// <remarks>A container disposed synchronously: starts the same shutdown <see cref="DisposeAsync"/> runs and leaves it to finish (blocking on it is banned).</remarks>
+    public void Dispose() => _ = DisposeAsync().AsTask();
+
+    public async ValueTask DisposeAsync()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+        {
+            return;   // already shut down: a second dispose changes nothing
+        }
+
+        Running[] all;
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            all = [.. _running.Values];
+            _running.Clear();
+        }
+        finally
+        {
+            _ = _gate.Release();
+        }
+
+        foreach (var running in all)
+        {
+            await End(running).ConfigureAwait(false);
+        }
+
+        _gate.Dispose();
+    }
+
+    private static async ValueTask End(Running running)
+    {
+        await running.Stopping.CancelAsync().ConfigureAwait(false);
+        await running.Watcher.ConfigureAwait(false);
+        if (running.Process is { } process)
+        {
+            await process.DisposeAsync().ConfigureAwait(false);
+        }
+
+        running.Stopping.Dispose();
+    }
+
+    private async Task Watch(Toolkit toolkit, Running running)
+    {
+        var token = running.Stopping.Token;
+        Queue<DateTimeOffset> crashes = [];
+        try
+        {
+            while (!token.IsCancellationRequested)
+            {
+                if (running.Process is { } process)
+                {
+                    await process.Exited.WaitAsync(token).ConfigureAwait(false);
+                    running.Process = null;
+                    await process.DisposeAsync().ConfigureAwait(false);
+                }
+
+                var now = clock.GetUtcNow();
+                crashes.Enqueue(now);
+                while (crashes.Peek() < now - Window)
+                {
+                    _ = crashes.Dequeue();
+                }
+
+                if (crashes.Count >= MaxCrashes)
+                {
+                    running.GivingUp = true;   // a start that gets the gate before this watcher does treats the entry as gone
+                    await GiveUp(toolkit.Name, running).ConfigureAwait(false);
+                    return;
+                }
+
+                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, crashes.Count - 1)), clock, token).ConfigureAwait(false);
+                var again = await launcher.Launch(toolkit, token).ConfigureAwait(false);
+                running.Process = again.IsError ? null : again.Value;   // a launch that fails counts as the next crash
+            }
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+            // stopped: not a crash
+        }
+    }
+
+    /// <summary>Drops this watcher's entry and disposes its token source, so a later start launches a new process, then marks the toolkit 'failed' on the row as it is now (a rebuild since the start keeps its hash and manifest).</summary>
+    private async Task GiveUp(string name, Running running)
+    {
+        if (!await Enter(CancellationToken.None).ConfigureAwait(false))
+        {
+            return;   // shut down: the dispose ends everything
+        }
+
+        try
+        {
+            _ = _running.TryRemove(new KeyValuePair<string, Running>(name, running));
+            running.Stopping.Dispose();   // nothing will End() this entry
+            if (_running.ContainsKey(name))
+            {
+                return;   // a newer start owns the row now
+            }
+
+            // Still under the gate: a start can't land between the check and the save, so the row never says 'failed' while a process runs.
+            var fresh = await store.Find(name, CancellationToken.None).ConfigureAwait(false);
+            if (fresh.IsSuccess && fresh.Value is { } current)
+            {
+                _ = await store.Save(current with { State = ToolkitState.Failed }, CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            _ = _gate.Release();
+            _ = Interlocked.Increment(ref _giveUps);
+        }
+    }
+}

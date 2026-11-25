@@ -108,7 +108,7 @@ design packet's `index.json` `parents` carries the scope packet's hash. The walk
 | 5 | **Proof pack** (`proof`) | `workflow.prove` (§7.3) | `packet.json`, `index.json`, `proof.json` (per item: `passing`, evidence refs `{kind, path, sha256, commit, at}`; `sha256` values carry the `sha256:` prefix), `red.json`, `app-run/`, `evidence/`, `before-after.json`, `holdout.json` (ids, verdicts, commit, `spent`; no text), `not-proven.md`, `acceptance.json` | All | Machine-frozen by `step.prove.evidence` on `complete` | Every item passing on one commit, the real-app run, fail-before/pass-after for fixes, the hidden scenarios' verdicts (§7.3) |
 | 6 | **Review result** (`review`) | `workflow.review-loop` (DT §4.1, DTC4) | `packet.json`, `index.json`, `review.json` (rounds, each finding with its class and its resolution, the last run's verdict, the head sha) | All | Machine-frozen by `step.review.record` on `clean` (DTC4) | Zero blocking and zero issue on the reviewed head; every suggestion answered in writing |
 | 7 | **PR hand-off** (`handoff`) | `workflow.ship` (§7.5) | `packet.json`, `pr.json` (base, head branch, head sha, stack parent, title, labels), `body.md` (the evidence pack as the PR body), `green.json`, `index.json` over packets 1–6 | All | Machine-frozen by `step.ship.freeze` when the local GREEN gate passes and the three shas agree, just before the PR opens (no owner stop) | The GREEN gate's run on the head, and the body the PR opens with |
-| 8 | **Merge record** (appended, not a packet) | `workflow.pr-babysitter` and `workflow.docs-sync` (PB, §7.6) | `babysit.jsonl` in the phase's run area: each push, CI run, comment handled, the docs PR and its result, the final snapshot | — | Appended; never edits packets 1–7 | CI green on the head, the docs PR complete, every comment handled: the ready-to-merge stop's preconditions (BD3, BD5) |
+| 8 | **Merge record** (appended, not a packet) | `workflow.pr-babysitter` and `workflow.docs-sync` (PB, §7.6) | `babysit.jsonl` in the phase's run area: each push, CI run, comment settled, the docs PR and its result, the final snapshot | — | Appended; never edits packets 1–7 | CI green on the head, the docs PR complete, every comment settled: the ready-to-merge stop's preconditions (BD3, BD5) |
 
 ### 3.3 Contract rules
 
@@ -665,7 +665,7 @@ set's hash and the plan packet's). Packets hold ids, evidence kinds, counts and 
   **observed** line: what the app did, at most 200 characters, never what the scenario expected or its steps.
   `holdout-log` refuses a report whose observed line shares a run of 8 or more words with the scenario's text (a
   deterministic overlap check) and parks the Step.
-- A failed scenario becomes a finding for the builder in terms of its visible item ("AC-4: an expired link opened
+- A failed scenario becomes a finding for the builder worded as its visible item ("AC-4: an expired link opened
   from an export answered 200"), which is an ordinary bug report. That scenario is then `spent`: it still runs as a
   regression check, but no longer counts as hidden (`PRV-HOLD-002`).
 - **Canary:** each set has one scenario whose token phrase must never appear outside the store. `holdout-log` scans
@@ -1035,7 +1035,7 @@ All reversible unless marked.
 | Q5 | The phase cap "at most M": what are M's numbers? | Profile `workflow.plan.sizes`: XS ≤ 3 files and 2 items, S ≤ 8 and 4, M ≤ 20 and 8; tuned after LN-P from the merge records |
 | Q6 | Are style and lens packs approved with the profile, or separately? | With the profile, by hash pin (§5.1); a pack edit re-approves the profile, as a seed edit re-approves a recipe |
 | Q7 | Should a lens pack's own prompts have to pass prompt evals before use? | Warn until the pack ships eval cases; then the frame graders block a lens that breaks the output contract. Content quality stays the pack owner's |
-| Q8 | Review before a PR exists: does the review loop need a draft PR? | No: it reviews the local change (DTC4). Bots and human reviewers see the PR after it opens, and the babysitter handles their comments |
+| Q8 | Review before a PR exists: does the review loop need a draft PR? | No: it reviews the local change (DTC4). Bots and human reviewers see the PR after it opens, and the babysitter answers their comments |
 | Q9 | Should a PR open as draft until CI is green? | No by default (`workflow.ship.draft: false`): the PR is proven when it opens. A repo whose CI needs a draft flips it |
 | Q10 | How deep may a stack go? | 4 (`workflow.line.maxStack`, `PLN-STACK-001`); deeper chains wait for merges instead of stacking |
 | Q11 | A scope change found during the build (an escape the owner wants in)? | The phase's owner desk records it (`line.escape`); the owner either grants it inside the phase (an amendment) or adds it as a new item for a later line. Re-scoping a running line is out of v1 |

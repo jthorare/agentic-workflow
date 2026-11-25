@@ -9,7 +9,17 @@ internal static partial class Labels
     /// <summary>What a view says when Sindri refuses or can't answer its read.</summary>
     /// <param name="error">The failure as served (a refusal's code and detail, or the client's own).</param>
     /// <returns>The detail and the code.</returns>
-    internal static string InstanceRefused(Error error) => $"{error.Message} · {error.Code}";
+    internal static string InstanceRefused(Error error) => $"{Capitalised(error.Message)} · {error.Code}";
+
+    /// <summary>A sentence with its first letter upper-case, so a reason reads right after a lead like "Couldn't create the workflow." Only a plain first word (letters only, up to the first space) changes.</summary>
+    /// <param name="text">The sentence.</param>
+    /// <returns>"no run 'x'" becomes "No run 'x'"; unchanged when the first word holds anything but letters: "review.login is ...", "workflow:triage ...", "gh_token ...", "gh-2550 ...", "'docs' ...", "v2 ...", "2 runs ...".</returns>
+    internal static string Capitalised(string text)
+    {
+        var space = text.IndexOf(' ', StringComparison.Ordinal);
+        var word = space < 0 ? text : text[..space];
+        return word.Length > 0 && word.All(char.IsLetter) && char.IsLower(word[0]) ? char.ToUpperInvariant(text[0]) + text[1..] : text;
+    }
 
     /// <summary>The link to a subject outside the app.</summary>
     /// <param name="host">The link's host.</param>
@@ -22,10 +32,13 @@ internal static partial class Labels
     /// <summary>A group collapsed to its count, in words.</summary>
     internal const string GroupCollapsed = "collapsed";
 
-    /// <summary>What Open found when it could not open a file.</summary>
-    /// <param name="path">The file.</param>
+    /// <summary>What Open says when the file is not on this machine (#3714).</summary>
+    internal const string FileNotOnMachine = "This file isn't on this machine.";
+
+    /// <summary>What Open says when the file is there but the system has no app to open it (#3714).</summary>
+    /// <param name="extension">The file's extension with its dot, or empty for none.</param>
     /// <returns>The words.</returns>
-    internal static string FileNotOpened(string path) => $"{path} can't be opened from here. Open it from the repository.";
+    internal static string NoAppOpens(string extension) => $"No app on this machine opens {(extension.Length > 0 ? extension + " files" : "this file")}.";
 
     /// <summary>A refused approval as the app shows it: the code, the words, and the row's served command to run instead; never a silent failure.</summary>
     /// <param name="code">The error code; empty for none.</param>

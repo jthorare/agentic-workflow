@@ -105,14 +105,16 @@
 (allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/spool/probe"))
 ; context-guard writes digests; a Step can't read other sessions' excerpts
 (allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/spool/digests"))
+; retry-record writes, and retry-gate reads, the session's failed calls; a Step starts with none
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/spool/retry-guard"))
+; dup-script-gate (lib/dup-script.sh) records its matches and exceptions per session
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/spool/duplicate-script"))
 ; other launches' session homes are absent
 (deny file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app-sessions"))
 ; the session home's launches link resolves here; session-id-report and the turn-ended marker write to it
 (allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/launches"))
 ; the watchdog's process-group files: session wrap writes the memory-kill record here and removes its own group id file (no cgroups on macOS)
 (allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/launch/pgroups"))
-; the session home's approved link resolves here: the CLI finds its repo in the approved profile snapshot
-(allow file-read* (subpath "/home/owner/.agentic-workflow/sindri-app/approved"))
 ; this launch's session home: the Step's policy file and MCP config; the agent can't rewrite its own policy
 (allow file-read* (subpath "/home/owner/.agentic-workflow/sindri-app-sessions/LCH-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
 ; the real endpoint file the session home's control.json links to

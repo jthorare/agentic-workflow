@@ -27,7 +27,7 @@ public sealed class WorkflowQuestionEventGoldenTests
 
         Assert.True(entry.Public);
         Assert.Equal(typeof(WorkflowQuestionPublic), entry.PublicPayload);
-        Assert.Equal("workflow.question:<run id>:<node id>", entry.KeyShape);
+        Assert.Equal("workflow.question:<run id>:<node id>[:<item index>]", entry.KeyShape);
     }
 
     [Fact, Trait("Lane", "unit")]

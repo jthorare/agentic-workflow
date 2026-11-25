@@ -16,6 +16,9 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// </summary>
 internal static class ProjectScenarios
 {
+    // Linear teams listed, no token pointer: the profile LinearTokenMissing reads (issue #1739).
+    private const string NoKeyProfile = ItemScenarios.ProfileYaml + "context:\n  sources:\n    linear: { teams: [ENG] }\n";
+
     private const string LinearProfile = ItemScenarios.ProfileYaml + "context:\n  sources:\n    linear: { token: \"env:LINEAR_KEY\", teams: [ENG] }\n";
     private const string Led = "linear:project/00000000-0000-4000-8000-000000000001";
     private const string Hidden = "linear:project/00000000-0000-4000-8000-000000000002";
@@ -33,7 +36,7 @@ internal static class ProjectScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("projects", "empty-no-linear"), ("projects", "empty-leads-nothing"), ("projects", "syncing"), ("projects", "counting"), ("projects", "mixed"), ("projects", "with-prs"),
+        ("projects", "empty-no-linear"), ("projects", "empty-key-missing"), ("projects", "empty-leads-nothing"), ("projects", "syncing"), ("projects", "counting"), ("projects", "mixed"), ("projects", "with-prs"),
         ("projects", "linear-failing"), ("projects", "context-down"), ("projects", "untrusted-name"),
         ("projects-id", "attached"), ("projects-id", "led"),
         ("projects-linear", "some"), ("projects-linear", "empty"), ("projects-linear", "context-down"), ("projects-linear", "untrusted-name"),
@@ -46,7 +49,7 @@ internal static class ProjectScenarios
 
     /// <summary>Starts the scenario's host: the item profile (plus Linear's team unless the scenario has none) over the scenario's facts.</summary>
     public static Task<GoldenHost> Start(string slug, string scenario, CancellationToken ct) =>
-        GoldenHost.Start(temporary: true, ct, scenario == "empty-no-linear" ? ItemScenarios.ProfileYaml : LinearProfile,
+        GoldenHost.Start(temporary: true, ct, scenario == "empty-no-linear" ? ItemScenarios.ProfileYaml : scenario == "empty-key-missing" ? NoKeyProfile : LinearProfile,
             extra: services => services.Replace(ServiceDescriptor.Singleton<IProjectFacts>(slug == LinearSlug ? LinearFacts(scenario) : Facts(scenario))));
 
     /// <summary>Runs the scenario against <paramref name="host"/> and returns the body to compare.</summary>
@@ -118,6 +121,7 @@ internal static class ProjectScenarios
         return scenario switch
         {
             "empty-no-linear" => facts,
+            "empty-key-missing" => facts.With(Snapshot(_owner)).WithFreshness(Ok("linear-projects"), Ok("linear"), Ok("github")),
             "empty-leads-nothing" => facts.With(Snapshot(_owner)).WithFreshness(Ok("linear-projects"), Ok("linear"), Ok("github")),
             "syncing" => facts.With(Snapshot(_owner, firstRead: false)).WithFreshness(new ProjectSourceFreshness("linear-projects", Usable: false, LastSync: null, LastCode: null)),
             "with-prs" => facts.With(Snapshot(_owner,

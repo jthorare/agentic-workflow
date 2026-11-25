@@ -136,7 +136,7 @@ Verify:      <run-id> — <verdict> (max diff <pct>% vs pre-refine <pct>%)
 - Always dispatch via **Invoke skill** using registered skill names only (`impeccable`, `emil-design-eng`, taste-pack names) — dimension names like "colorize"/"typeset" are intent phrases inside `args`, never skill names
 - Design context must be inlined into every dispatch's args (Step 2) — Skill invocations do not inherit file context
 - Bounded sequence: one audit, at most 3 refinement dispatches, one verify pass per run
-- Do not invoke a style pack when an `/impeccable` intent covers the issue holistically; never dispatch the utility packs (`output-skill`, `image-to-code-skill`) as style shifts
+- Do not invoke a style pack when an `/impeccable` intent covers the whole issue; never dispatch the utility packs (`output-skill`, `image-to-code-skill`) as style shifts
 - If `design-tokens.json` is updated, note that `/design-implement` should be re-run to regenerate platform token files
 - Do not modify `.impeccable.md` during refinement — only `design-tokens.json` may be updated
 - Always append the run to `refine-log.md`, and never skip the Step 5 verify gate

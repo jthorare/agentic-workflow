@@ -25,13 +25,13 @@ internal sealed class ResourceRowViewModel : ObservableObject
     public string NameText => View.Name;
 
     /// <summary>The size, human-readable ("1.2 MB").</summary>
-    public string SizeText => ByteSize.Format(View.Size);
+    public string SizeText => View.Size is { } size ? ByteSize.Format(size) : Labels.ResourceUnmeasured;
 
     /// <summary>The fill 0..1 (size over limit) when the resource has a limit; null otherwise.</summary>
-    public double? Fill => View.LimitBytes is > 0 ? Math.Clamp((double)View.Size / View.LimitBytes.Value, 0, 1) : null;
+    public double? Fill => View is { LimitBytes: > 0, Size: { } size } ? Math.Clamp((double)size / View.LimitBytes.Value, 0, 1) : null;
 
     /// <summary>The size line: "1.2 MB of 5 MB" with a limit, the size alone without.</summary>
-    public string SizeLine => View.LimitBytes is > 0 ? Labels.ResourceSizeOf(SizeText, ByteSize.Format(View.LimitBytes.Value)) : SizeText;
+    public string SizeLine => View is { LimitBytes: > 0, Size: not null } ? Labels.ResourceSizeOf(SizeText, ByteSize.Format(View.LimitBytes.Value)) : SizeText;
 
     /// <summary>True while the row asks "Purge?" and waits for the answer.</summary>
     public bool IsConfirming

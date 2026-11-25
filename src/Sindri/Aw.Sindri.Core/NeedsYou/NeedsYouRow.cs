@@ -55,4 +55,7 @@ public sealed record NeedsYouRow(
     /// <summary>On a 'park:' row for a sandbox refusal, the refusal in the owner's words (sandbox spec §8); null (omitted) otherwise.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public StatusSandbox? Sandbox { get; init; }
+
+    /// <summary>The decision a 'decision' row asks, joined at read time from the pending decisions (issue #2789); null on every other row and in the stored view.</summary>
+    public NeedsYouDecision? Decision { get; init; }
 }

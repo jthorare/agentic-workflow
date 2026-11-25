@@ -1,4 +1,6 @@
 using System.Globalization;
+using Aw.Meta.Core.Delegations;
+using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Messages;
 
 namespace Aw.Meta.Core.Obligations;
@@ -6,18 +8,18 @@ namespace Aw.Meta.Core.Obligations;
 /// <summary>Derives the open obligations from the recorded facts. Nothing is stored: sending a message closes the obligation it answers. A new lane map version and a merge owe the lanes nothing: they read both from the board (aw-meta board-line).</summary>
 public static class ObligationEvaluator
 {
-    private const int BodyPreview = 80;
-
     /// <summary>Evaluates the open set.</summary>
     /// <param name="facts">The recorded facts.</param>
-    /// <returns>The open obligations: replies in arrival order, then owner relay and watch.</returns>
+    /// <returns>The open obligations: replies in arrival order, then owner relay, owed delegations, watch and the meta lane's own recycle.</returns>
     public static IReadOnlyList<Obligation> Evaluate(ObligationFacts facts)
     {
         ArgumentNullException.ThrowIfNull(facts);
         var open = new List<Obligation>();
         open.AddRange(Replies(facts));
         open.AddRange(Relays(facts));
+        open.AddRange(Delegations(facts));
         open.AddRange(Rearm(facts));
+        open.AddRange(Recycle(facts));
         return open;
     }
 
@@ -37,7 +39,7 @@ public static class ObligationEvaluator
     private static Obligation Reply(InboxMessage message)
     {
         var who = message.FromName.Length > 0 ? message.FromName : message.From;
-        var body = message.Body.Length > BodyPreview ? message.Body[..BodyPreview] + "..." : message.Body;
+        var body = MessagePreview.Of(message.Body);
         var id = message.Id.Value;
         var send = LaneSendCommand(id) is { } lane ? $"aw-meta lane-send --lane {lane} --text \"<reply>\"" : $"SendMessage to {who}";
         return new Obligation(
@@ -67,9 +69,41 @@ public static class ObligationEvaluator
                 string.Create(CultureInfo.InvariantCulture, $"owner answer q{a.Question} not relayed to {a.AskedBy}"),
                 string.Create(CultureInfo.InvariantCulture, $"SendMessage \"OWNER ANSWER q{a.Question}: {a.Text}\" to {a.AskedBy}")));
 
-    /// <summary>The rearm hint per provider (#2370): a Claude meta keeps a plain watch running under Monitor, because --until-mail exits on its first
+    // A delegation stays owed until a send to the lane's session names its issue (lane-send records one for a non-Claude lane).
+    private static IEnumerable<Obligation> Delegations(ObligationFacts facts) =>
+        facts.Delegations
+            .Where(d => !DelegationStates.IsSent(d, facts.Outbound, facts.Lanes))
+            .Select(static d => new Obligation(
+                ObligationKind.Delegate,
+                d.Marker,
+                $"delegation {d.Marker} not sent to {d.Session}: {d.Title}",
+                DelegateSend(d)));
+
+    private static string DelegateSend(Delegation delegation) =>
+        delegation.Claude
+            ? $"SendMessage to {delegation.Session} with this text:\n{delegation.Message}"
+            : $"aw-meta lane-send --lane {delegation.Lane} --text {ShellQuote(delegation.Message)}";
+
+    // One shell word in single quotes, a ' inside written as '\'' : $, backticks and " in a title stay literal when the line is pasted.
+    internal static string ShellQuote(string text) => "'" + text.Replace("'", "'\\''", StringComparison.Ordinal) + "'";
+
+    /// <summary>The rearm hint per provider (#2370): a Claude meta runs --until-event in the background (no window, no model turn until a real line), because --until-mail exits on its first
     /// poll whenever mail waits; a Codex or Cursor meta runs --until-mail in the foreground and rearms after each exit.</summary>
-    internal const string WatchCommand = "Claude: aw-meta watch --for 29m (with Monitor, persistent); Codex/Cursor: aw-meta watch --until-mail --for 29m in the foreground, rearm after each exit";
+    internal const string WatchCommand = "Claude: aw-meta watch --until-event (run_in_background, ends on the first real line); Codex/Cursor: aw-meta watch --until-mail --for 29m in the foreground, rearm after each exit";
+
+    // Level-triggered: the META RECYCLE watch line fires once per crossing, this stays open on every stop until the waiter is recorded.
+    // The key carries no token count: the stop loop guard fingerprints Kind:Key, and a growing figure would never repeat.
+    private static IEnumerable<Obligation> Recycle(ObligationFacts facts)
+    {
+        if (facts.MetaContext is { Verdict: ContextVerdict.Recycle } context && !facts.MetaWaiter)
+        {
+            yield return new Obligation(
+                ObligationKind.RecycleSelf,
+                "context",
+                string.Create(CultureInfo.InvariantCulture, $"your context is {context.Compact()}, at or over the {context.Threshold / 1000}k recycle mark"),
+                $"write a digest, then aw-meta lane-recycle {facts.MetaLane} --digest <abs path> --detach");
+        }
+    }
 
     private static IEnumerable<Obligation> Rearm(ObligationFacts facts)
     {

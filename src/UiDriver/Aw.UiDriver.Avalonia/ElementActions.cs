@@ -15,7 +15,7 @@ namespace Aw.UiDriver.Avalonia;
 /// reader uses: invoke, toggle, select, expand), so they run the same commands a person's click does; typing sets a text box; keys are raised as
 /// key events on the element. Nothing reads a property by name.
 /// </summary>
-internal static class ElementActions
+internal static partial class ElementActions
 {
     private static readonly string[] _clickActions = ["invoke", "toggle", "select", "expand"];
     private static readonly string[] _providerActions = ["INVOKE", "TOGGLE", "SELECT", "EXPAND", "COLLAPSE"];

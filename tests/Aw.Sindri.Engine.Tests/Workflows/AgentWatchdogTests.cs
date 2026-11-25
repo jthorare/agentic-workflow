@@ -1,19 +1,25 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Infrastructure.Workflows;
 
 namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>How a 'run_agent' node fails when its session is ended for it (PR 7): the sweeps end the session, the watch reports how, and the node's error says which reason.</summary>
 [Lane(TestLane.Integration)]
-public sealed class AgentWatchdogTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
+public sealed class AgentWatchdogTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private async Task<string?> ErrorOf(AgentSessionState ended)
+    private static async Task<string?> ErrorOf(AgentSessionState ended, AgentNodeRecovered? recovered = null)
     {
         var runtime = new FakeAgentNodeRuntime();
-        await using var rig = GraphRig.Start(server.Environment, runtime);
+        if (recovered is not null)
+        {
+            runtime.Recovered = recovered;
+        }
+
+        await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig);
         await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
@@ -31,6 +37,17 @@ public sealed class AgentWatchdogTests(SindriTimeSkippingServer server) : IClass
         var error = await ErrorOf(new AgentSessionState(AgentSessionEnd.Idle));
 
         Assert.Contains("idle", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task An_idle_session_whose_commands_the_sandbox_refused_names_the_refusals_in_the_error()
+    {
+        const string refused = "the sandbox refused 4 actions (Bash: gh run x3, Bash: gh auth)";
+
+        var error = await ErrorOf(new AgentSessionState(AgentSessionEnd.Idle), new AgentNodeRecovered(Outputs: null, Reason: null, Denials: refused));
+
+        Assert.Contains("idle: the agent sat idle at its prompt with no report", error, StringComparison.Ordinal);
+        Assert.Contains(refused, error, StringComparison.Ordinal);
     }
 
     [Fact]

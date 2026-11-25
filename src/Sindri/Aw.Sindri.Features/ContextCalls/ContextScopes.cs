@@ -3,6 +3,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Setup;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
@@ -15,11 +16,21 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// </summary>
 /// <param name="approvals">The profile.</param>
 /// <param name="callers">The current caller.</param>
-internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAccessor callers)
+/// <param name="checkouts">Which profile repos are git checkouts (#3371). Required: a dropped registration fails at resolve, not by quietly mapping plain folders (#3408).</param>
+internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAccessor callers, IRepoCheckouts checkouts)
 {
+    /// <summary>The first-pass no-commit limit under the approved profile (<see cref="IndexSourceLook.Limit"/>, #4035); 15 minutes when it can't be read.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The limit.</returns>
+    internal async ValueTask<TimeSpan> NoCommitLimit(CancellationToken cancellationToken)
+    {
+        var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
+        return IndexSourceLook.Limit(approved.IsSuccess ? approved.Value?.Profile : null);
+    }
+
     /// <summary>The scope of the call running now.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>The scope, or SND-PROFILE-001 when the profile file is missing or unreadable.</returns>
+    /// <returns>The scope, or SND-PROFILE-001 when the profile file is missing, or SND-PROFILE-004 when it can't be read.</returns>
     internal async ValueTask<Result<ContextScope>> Current(CancellationToken cancellationToken)
     {
         var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
@@ -28,8 +39,27 @@ internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAc
             return approved.IsError ? approved.Error : SindriErrors.ProfileMissing.With("no profile yet, so no repo is mapped (fix: sindri repo add <path>)");
         }
 
-        return For(loaded.Profile, Caller(callers.Current));
+        var scope = For(loaded.Profile, Caller(callers.Current));
+        return WithoutPlainFolders(scope, checkouts);
     }
+
+    // #3371: a profile repo whose path is a plain folder fails every git read (SND-CONTEXT-048). 'sindri repo add' refuses one, so only a hand-written
+    // profile names one: every read leaves it out and names it, so one plain folder never fails the map of the others. A missing folder stays in, so
+    // an unmounted or deleted repo keeps failing loudly and no map publishes without it.
+    private static ContextScope WithoutPlainFolders(ContextScope scope, IRepoCheckouts checkouts)
+    {
+        var plain = scope.Repos.Where(r => checkouts.Of(r.Path) == RepoCheckout.PlainFolder).ToList();
+        return plain.Count == 0 ? scope : scope with { Repos = [.. scope.Repos.Except(plain)], LeftOut = [.. plain.Select(static r => r.Name)] };
+    }
+
+    /// <summary>
+    /// Whether a scope read found no profile yet (SND-PROFILE-001): a background service's tick is then quiet, never a failed run. A profile with no
+    /// 'context:' section is a profile: the engine reads the missing section as the default settings, and so does every caller of this (#3126).
+    /// </summary>
+    /// <param name="scope">The read.</param>
+    /// <returns>True for no profile.</returns>
+    internal static bool NoProfile(Result<ContextScope> scope) =>
+        scope.IsError && scope.Error.Code == SindriErrors.ProfileMissing.Code;
 
     /// <summary>The scope a profile and a caller make; SyncConfigured is whether the profile names the context-sync service.</summary>
     /// <param name="profile">The profile.</param>

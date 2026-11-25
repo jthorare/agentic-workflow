@@ -31,6 +31,6 @@ internal sealed class TodoNoteSource(INoteLocator locator, ITodoNoteFiles files)
 
         return read.Text is null || read.Hash is null
             ? Results.Success<TodoNoteSnapshot?>(value: null)
-            : Results.Success<TodoNoteSnapshot?>(new TodoNoteSnapshot(read.Hash, NoteParser.Parse(read.Text)));
+            : Results.Success<TodoNoteSnapshot?>(new TodoNoteSnapshot(read.Hash, NoteParser.Parse(read.Text), read.Bytes));
     }
 }

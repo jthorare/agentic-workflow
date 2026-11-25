@@ -10,5 +10,7 @@ internal static class ConnectionRoutes
 
     internal static string Test(string name) => $"{One(name)}/test";
 
+    internal static string Rename(string name) => $"{One(name)}/rename";
+
     internal static string SignIn(string name) => $"{One(name)}/signin";
 }

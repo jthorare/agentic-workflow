@@ -115,7 +115,7 @@ The existing `getUnreadMessages` marks messages as read atomically on retrieval.
      log warning
 ```
 
-This ensures messages are only consumed when the worker can handle them.
+This ensures messages are only consumed when the worker can process them.
 
 ## Worker Orchestrator
 
@@ -446,7 +446,7 @@ wait
 
 Key change: the worker and notify processes depend on the bridge being up (worker hits REST API, notify subscribes to SSE). The script waits for `/health` to respond before starting them.
 
-Existing `cleanup()` trap (`kill 0`) handles shutdown of all processes. The worker's own SIGTERM handler ensures spawned Codex processes are cleaned up.
+Existing `cleanup()` trap (`kill 0`) performs the shutdown of all processes. The worker's own SIGTERM handler ensures spawned Codex processes are cleaned up.
 
 Worker logs its identity on startup:
 ```

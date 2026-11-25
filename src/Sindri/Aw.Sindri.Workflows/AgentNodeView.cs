@@ -5,4 +5,5 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="ItemIndex">The item's position, 0 for a node that runs once.</param>
 /// <param name="Launch">The launch ('LCH-…').</param>
 /// <param name="TakenOver">True while a person holds the node.</param>
-internal sealed record AgentNodeView(string Node, int ItemIndex, string Launch, bool TakenOver);
+/// <param name="Child">The id of the batch workflow that holds the wait (a node inside a 'for_each' body), or null when this workflow holds it.</param>
+internal sealed record AgentNodeView(string Node, int ItemIndex, string Launch, bool TakenOver, string? Child = null);

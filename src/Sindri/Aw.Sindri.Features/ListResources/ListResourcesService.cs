@@ -26,7 +26,7 @@ internal sealed class ListResourcesService(IResourceFiles files) : IService<List
         var listed = files.List(owner);
         Result<ListResourcesResponse> answer = listed.IsError
             ? listed.Error
-            : new ListResourcesResponse([.. listed.Value.Select(static e => new ResourceView(e.Owner.ToString(), e.Kind.ToString().ToLowerInvariant(), e.Name, e.SizeBytes, e.Path))]);
+            : new ListResourcesResponse([.. listed.Value.Select(static e => new ResourceView(e.Owner.ToString(), e.Kind.ToString().ToLowerInvariant(), e.Name, e.Unmeasured ? null : e.SizeBytes, e.Path))]);
         return ValueTask.FromResult(answer);
     }
 }

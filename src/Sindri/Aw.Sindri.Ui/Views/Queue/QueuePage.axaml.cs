@@ -12,20 +12,54 @@ namespace Aw.Sindri.Ui.Views.Queue;
 /// <summary>The Queue page; a row's title click opens its sheet, and Create item opens the form.</summary>
 internal sealed partial class QueuePage : UserControl
 {
+    private ViewModels.Queue.QueueViewModel? _queue;
+
     public QueuePage()
     {
         InitializeComponent();
         AddHandler(ItemRow.OpenEvent, OnOpen);
         AddHandler(ItemRow.SelectEvent, OnSelect);
+        DataContextChanged += (_, _) => Follow();
+        this.FindControl<Border>("QueuePanel")!.SizeChanged += (_, _) => Replan();   // why: the panel is in the page's own XAML
     }
 
     /// <inheritdoc />
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == PageLayout.TierProperty && this.FindControl<Grid>("QueueHeader") is { } header)
+        if (change.Property == PageLayout.PlanProperty && this.FindControl<Grid>("QueueHeader") is { } header)
         {
-            PageLayout.Apply(header, change.GetNewValue<PageTier>());   // the same columns as the rows, so they line up
+            PageLayout.Apply(header, PageLayout.GetPlan(this));   // the same columns as the rows, so they line up
+        }
+    }
+
+    // The columns follow the room the table has and what the rows hold, not the window's width (#2551).
+    private void Follow()
+    {
+        _queue?.PropertyChanged -= OnQueueChanged;
+        _queue = (DataContext as ShellViewModel)?.Queue;
+        _queue?.PropertyChanged += OnQueueChanged;
+
+        Replan();
+    }
+
+    private void OnQueueChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(ViewModels.Queue.QueueViewModel.ShowsRepoColumn), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(ViewModels.Queue.QueueViewModel.ShowsActionColumn), StringComparison.Ordinal))
+        {
+            Replan();
+        }
+    }
+
+    // The room the columns have: the panel less its 1 px border a side and the rows' 16 px padding a side.
+    private const double PanelBorder = 2;
+    private const double RowPadding = 32;
+
+    private void Replan()
+    {
+        if (_queue is not null && this.FindControl<Border>("QueuePanel") is { Bounds.Width: > 0 } panel)
+        {
+            PageLayout.SetPlan(this, new PageLayout.ColumnPlan(panel.Bounds.Width - PanelBorder - RowPadding, _queue.ShowsRepoColumn, _queue.ShowsActionColumn));
         }
     }
 

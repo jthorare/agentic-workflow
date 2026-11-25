@@ -18,6 +18,9 @@ public static partial class EventTypes
     /// <summary>A graph node finished or was skipped (issue 2258, PR 6).</summary>
     public const string WorkflowNodeFinished = "workflow.node.finished";
 
+    /// <summary>The session a 'run_agent' node launched changed state, waiting-on text or last tool (#3151, Agents page E1).</summary>
+    public const string WorkflowNodeAgentChanged = "workflow.node.agent.changed";
+
     /// <summary>A graph node failed (issue 2258, PR 6).</summary>
     public const string WorkflowNodeFailed = "workflow.node.failed";
 
@@ -29,4 +32,10 @@ public static partial class EventTypes
 
     /// <summary>An 'ask_owner' node's question was answered, by the owner or by a session (issue 2258, PR 9).</summary>
     public const string WorkflowAnswered = "workflow.answered";
+
+    /// <summary>A person or an agent session took a 'run_agent' node over (#2497).</summary>
+    public const string WorkflowNodeTakenOver = "workflow.node.taken-over";
+
+    /// <summary>A person or an agent session handed a taken-over 'run_agent' node back (#2497).</summary>
+    public const string WorkflowNodeHandedBack = "workflow.node.handed-back";
 }

@@ -23,10 +23,20 @@ internal sealed partial class ShellWindow
     // focused again as a keyboard focus (Directional).
     private bool _navKey;
 
+    private bool _keyboardSeen;   // a key was pressed since the last pointer press: only then does focus the window moves draw a ring
+
+    // Focus the window places itself (the page region on open, a tab left selected by a command) draws a ring only once the keyboard has been used.
+    private NavigationMethod RestMethod() => _keyboardSeen ? NavigationMethod.Tab : NavigationMethod.Pointer;
+
     private void WatchNavigationKeys()
     {
+        AddHandler(KeyDownEvent, (_, _) => _keyboardSeen = true, RoutingStrategies.Tunnel);
         AddHandler(KeyDownEvent, OnNavigationKeyDown, RoutingStrategies.Tunnel);
-        AddHandler(PointerPressedEvent, (_, _) => _navArrowing = _navKey = false, RoutingStrategies.Tunnel);
+        AddHandler(PointerPressedEvent, (_, _) =>
+        {
+            _navArrowing = _navKey = false;
+            _keyboardSeen = false;
+        }, RoutingStrategies.Tunnel);
         TopBar.Get<ListBox>("Navigation").AddHandler(GotFocusEvent, OnNavigationGotFocus, RoutingStrategies.Bubble);
     }
 
@@ -169,12 +179,12 @@ internal sealed partial class ShellWindow
 
         _sheetOpener = null;
 
-        _ = FocusTarget(page).Focus(Method());
+        _ = FocusTarget(page).Focus(RestMethod());
     }
 
-    // Arriving on Settings lands on its title, not on a control of the setup checklist or the bare region.
+    // Arriving on Settings lands in its filter box (#3362), not on a control of the setup checklist or the bare region.
     private InputElement FocusTarget(Border page) =>
-        Shell is { IsSettings: true } && this.Get<Control>("SettingsSlot").GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => string.Equals(t.Name, "TitleText", StringComparison.Ordinal) && t.IsEffectivelyVisible) is { } title ? title : page;
+        Shell is { IsSettings: true } && this.Get<Control>("SettingsSlot").GetVisualDescendants().OfType<Control>().FirstOrDefault(t => string.Equals(t.Name, "SettingsFilterBox", StringComparison.Ordinal) && t.IsEffectivelyVisible) is InputElement filter ? filter : page;
 
     // After a state change, a closed sheet or a change in its covering: if the focused control is gone (hidden, disabled,
     // or nothing has focus after something had it), focus its region's neighbour.
@@ -217,10 +227,10 @@ internal sealed partial class ShellWindow
         FocusManager?.GetFocusedElement() is not Visual focused || ReferenceEquals(focused, PagePanel) || SheetPanel.IsVisualAncestorOf(focused) || ReferenceEquals(focused, SheetPanel);
 
     // The sheet's opener (the row it was opened from, by id, or the edge tab), else the row the selection moved to when the opener cleared, else the page region for the sheet; the health pill for the top bar; the page
-    // region, or the sheet's heading while the sheet covers the page.
+    // region, or while the sheet covers the page its focus target: the heading, or a session sheet's body (SheetFocusTarget).
     private Control? Neighbour(Control last)
     {
-        var page = Usable(this.Get<Control>("Page")) ?? (Covering ? Usable(this.Get<Border>("SheetTitle")) : null);
+        var page = Usable(this.Get<Control>("Page")) ?? (Covering ? Usable(SheetFocusTarget()) : null);
         if (SheetPanel == last || SheetPanel.IsVisualAncestorOf(last))
         {
             return SheetOpenerFrame() ?? page;
@@ -253,20 +263,24 @@ internal sealed partial class ShellWindow
 
         if (Shell is { IsSheetShown: true } && (Covering || !HasRealFocus))
         {
-            _ = this.Get<Border>("SheetTitle").Focus(Method());
+            _ = SheetFocusTarget().Focus(Method());
         }
     }
+
+    // Where focus rests in the sheet itself: its heading, but a session sheet's body (#3710, #3783: the session heading draws a focus underline).
+    private Border SheetFocusTarget() => this.Get<Border>(Shell is { IsSessionSheet: true } ? "Sheet" : "SheetTitle");
 
     // A tab was selected without the keyboard's arrows: focus rests on the selected tab (a pointer press already put it there; a screen reader's or the driver's activation did not).
     private void FocusSelectedTab()
     {
         var nav = TopBar.Get<ListBox>("Navigation");
-        if (FocusManager?.GetFocusedElement() is Visual focused && nav.IsVisualAncestorOf(focused))
+        var selected = nav.ContainerFromIndex(nav.SelectedIndex);
+        if (FocusManager?.GetFocusedElement() is Visual focused && nav.IsVisualAncestorOf(focused) && (ReferenceEquals(focused, selected) || selected is null))
         {
-            return;
+            return;   // already on the selected tab; focus left on another tab would show a second tab as active
         }
 
-        _ = Usable(nav.ContainerFromIndex(nav.SelectedIndex))?.Focus(Method());
+        _ = Usable(selected)?.Focus(RestMethod());
     }
 
     // The page region takes focus (named, so the page is spoken); the Context page then sends it on to its anchor box. One path for a page change and the window opening.

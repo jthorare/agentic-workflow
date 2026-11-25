@@ -82,6 +82,9 @@ internal sealed partial class SetupViewModel : ObservableObject
     /// <summary>The steps done, for Home's meter.</summary>
     public double MeterDone { get; private set => Set(ref field, value); }
 
+    /// <summary>Home's meter opacity: 0 while no step is done (an empty track is near-invisible noise), 1 from the first; the meter keeps its slot either way.</summary>
+    public double MeterOpacity { get; private set => Set(ref field, value); }
+
     /// <summary>All the steps, the meter's full length.</summary>
     public double MeterMax { get; private set => Set(ref field, value); }
 
@@ -93,6 +96,9 @@ internal sealed partial class SetupViewModel : ObservableObject
 
     /// <summary>True when Home shows its one line: there are steps, and one is still open. Home then hides the setup row of the step the line names, and no other.</summary>
     public bool IsHomeLineShown { get; private set => Set(ref field, value); }
+
+    /// <summary>True once the first answer has been folded into Home's line (<see cref="HomeStepId"/> and <see cref="IsHomeLineShown"/> are final); never reset. <see cref="IsReading"/> clears before that fold, so it can't tell a listener the line is settled.</summary>
+    public bool HasAnswered { get; private set => Set(ref field, value); }
 
     /// <summary>True until the first answer.</summary>
     public bool IsReading { get; private set => Set(ref field, value); } = true;
@@ -117,6 +123,12 @@ internal sealed partial class SetupViewModel : ObservableObject
 
     /// <summary>True once the list has steps.</summary>
     public bool HasSteps { get; private set => Set(ref field, value); }
+
+    /// <summary>The one line for the whole page when several failed steps carry the same fix (an unreadable profile, #3610); empty otherwise.</summary>
+    public string ProblemText { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>True when the page shows <see cref="ProblemText"/>.</summary>
+    public bool HasProblem { get; private set => Set(ref field, value); }
 
     /// <summary>Asks the shell for Settings at the checklist (Home's line).</summary>
     internal void RequestChecklist() => ChecklistRequested?.Invoke(this, EventArgs.Empty);
@@ -244,7 +256,24 @@ internal sealed partial class SetupViewModel : ObservableObject
         HasSub = HasSteps && !IsFinished;
         Segments = [.. Steps.Select(s => new SetupSegment(s.SegmentKind))];
         (MeterDone, MeterMax) = (Steps.Count(s => s.IsFinished), Steps.Count);
+        MeterOpacity = MeterDone > 0 ? 1 : 0;
+        FoldProblem();
         FoldHomeLine();
+    }
+
+    // The page's one line: a fix served on more than one failed step (an unreadable profile fails four steps with the same fix) shows once, and those steps leave it off.
+    private void FoldProblem()
+    {
+        var line = Steps.Where(s => s.IsFailed && !string.IsNullOrEmpty(s.Step.Detail))
+            .GroupBy(s => s.Step.Detail ?? string.Empty, StringComparer.Ordinal)
+            .FirstOrDefault(g => g.Skip(1).Any())?.Key ?? string.Empty;
+        foreach (var step in Steps)
+        {
+            step.Share(line);
+        }
+
+        ProblemText = line;
+        HasProblem = line.Length > 0;
     }
 
     // Home's line: shown while a step is open, naming the first step still to do, with Continue.
@@ -254,8 +283,9 @@ internal sealed partial class SetupViewModel : ObservableObject
         HomeStepId = next?.Id ?? string.Empty;   // before the flag: whoever hears the flag reads the step it names
         IsHomeLineShown = !IsReading && !IsNotServed && !IsUnreadable && HasSteps && !IsFinished;
         HomeStepText = next?.Title ?? string.Empty;
-        ContinueText = next is null ? string.Empty : Labels.SetupContinue;
+        ContinueText = HomeStepText;   // the button names the step it opens
         OnChanged(nameof(HomeLineName));
         OnChanged(nameof(ContinueName));
+        HasAnswered = true;   // last: a listener of this flag reads the final step and flag
     }
 }

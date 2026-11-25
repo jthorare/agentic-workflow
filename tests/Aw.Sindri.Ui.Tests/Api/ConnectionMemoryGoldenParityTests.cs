@@ -22,6 +22,7 @@ public sealed class ConnectionMemoryGoldenParityTests
         ("connections", typeof(ConnectionList), [("added-key", typeof(ConnectionAdded)), ("added-oauth", typeof(ConnectionAdded))]),
         ("connections-id", typeof(ConnectionOne), [("removed", typeof(ConnectionRemoved))]),
         ("connections-id-test", typeof(ConnectionTested), []),
+        ("connections-id-rename", typeof(ConnectionRenamed), []),
         ("connections-id-signin", typeof(ConnectionAdded), []),
         ("memories", typeof(MemoryList), [("created", typeof(MemoryCreated))]),
         ("memories-id-search", typeof(MemorySearchView), []),

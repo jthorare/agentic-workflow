@@ -46,10 +46,7 @@ public sealed class SandboxStatusInsideTests
             var wrapped = sandbox.Wrap(Unlaunched(plan.Value), [sindri, "status", "--json"]);
             Assert.True(wrapped.IsSuccess, wrapped.IsError ? wrapped.Error.ToString() : null);
 
-            var output = Path.Combine(box.Root, "status.out");
-            var code = Path.Combine(box.Root, "status.code");
-            var line = string.Join(' ', wrapped.Value.Select(Quote)) + $" > {Quote(output)} 2>&1; echo $? > {Quote(code)}";
-            Assert.NotNull(tmux.Run("new-session", "-d", "-s", "status-inside", "-c", box.Root, "sh", "-c", line));
+            var (output, code) = StartInside(tmux, box.Root, wrapped.Value);
             await WaitForFile(code, ct);
 
             await AssertAnswered(output, code, ct);
@@ -63,13 +60,26 @@ public sealed class SandboxStatusInsideTests
         Assert.Empty(ProcessesUnder(box.Root));   // serve's temporal dev server too: it is setsid-detached, so only serve's own shutdown stops it
     }
 
+    // Issue 2832: the bwrap line is ~16k characters and tmux refuses a command that long ("command too long"), so the line goes in a
+    // script file and tmux runs `sh <file>`. A failed start still says why (tmux's exit code and stderr).
+    private static (string Output, string Code) StartInside(PrivateTmux tmux, string root, IReadOnlyList<string> wrapped)
+    {
+        var output = Path.Combine(root, "status.out");
+        var code = Path.Combine(root, "status.code");
+        var script = Path.Combine(root, "status-inside.sh");
+        File.WriteAllText(script, string.Join(' ', wrapped.Select(Quote)) + $" > {Quote(output)} 2>&1; echo $? > {Quote(code)}\n");
+        var started = tmux.Exec("new-session", "-d", "-s", "status-inside", "-c", root, "sh", script);
+        Assert.True(started.Ok, started.Describe());
+        return (output, code);
+    }
+
     // Exit 1 is attention (the scratch profile isn't approved); "running":true means serve answered through the forwarder, not SND-API-001 "not running".
     private static async Task AssertAnswered(string output, string code, CancellationToken ct)
     {
         var printed = await File.ReadAllTextAsync(output, ct);
         var exit = (await File.ReadAllTextAsync(code, ct)).Trim();
         Assert.True(string.Equals(exit, "0", StringComparison.Ordinal) || string.Equals(exit, "1", StringComparison.Ordinal), "sindri status inside the sandbox: " + printed);
-        Assert.Contains("\"running\":true", printed, StringComparison.Ordinal);
+        Assert.True(printed.Contains("\"running\":true", StringComparison.Ordinal), "sindri status inside the sandbox didn't reach serve: " + printed);   // the whole text: a bwrap error names a path that Contains cuts off
         Assert.Contains("apiVersion", printed, StringComparison.Ordinal);   // `sindri status --json` carries it (aot-smoke expected.txt)
     }
 

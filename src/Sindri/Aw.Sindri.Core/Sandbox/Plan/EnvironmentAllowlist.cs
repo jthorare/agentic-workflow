@@ -67,6 +67,7 @@ public static class EnvironmentAllowlist
         ["AW_SINDRI_ITEM"] = "the item",
         ["AW_SINDRI_LAUNCH"] = "the launch",
         ["AW_SINDRI_HOME"] = "the launch's session home, never the real home (rev 7)",
+        ["AW_SINDRI_PROFILE"] = "the real live profile file, whose folder is bound read-only: the CLI's in-process profile reads (the session home has none)",
         ["GH_CONFIG_DIR"] = "the session home's empty gh-config/, so gh finds no login (rev 7)",
         ["AW_RESULT"] = "a skill block's session writes its result file (skill flows spec §3.3)",
         ["AW_RESULT_SKILL"] = "the skill whose result goes to AW_RESULT_FILE",

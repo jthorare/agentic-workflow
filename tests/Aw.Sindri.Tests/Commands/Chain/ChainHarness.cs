@@ -12,27 +12,33 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Views;
+using Aw.Sindri.Features;
 using Aw.Sindri.Features.Commands;
+using Aw.Sindri.Features.RestartProcess;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Host.Catalog;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.RestartProcess;
 using Aw.Sindri.Tests.Server;
+using Aw.Sindri.Tests.SetupSources;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Tests.Commands.Chain;
 
 /// <summary>
-/// The real command chains (AddCommand, and AddStopCommand for the stop) over in-memory ports: StopProcess, ApproveProfile and the fixture command, with
-/// the shell's catalog rows plus the fixture's desk row (reading views, or granted to services, when asked).
+/// The real command chains (AddCommand, AddStopCommand for the stop and AddRestartCommand for the restart) over in-memory ports: StopProcess, RestartProcess
+/// (nothing open, its stop the real StopProcess), ApproveProfile and the fixture command, with the shell's catalog rows, the restart's row and the fixture's
+/// desk row (reading views, or granted to services, when asked).
 /// </summary>
 internal sealed class ChainHarness : IAsyncDisposable
 {
     private readonly ServiceProvider _provider;
 
     public ChainHarness(Func<ILedgerStore, ILedgerStore>? ledger = null, IEndpointFile? endpoints = null, bool fixtureReadsViews = false,
-        IReadOnlyList<string>? grants = null, ProverLabel? prover = null)
+        IReadOnlyList<string>? grants = null, ProverLabel? prover = null, Func<IServiceProvider, IServeStop>? serveStop = null)
     {
         FixtureGrants = grants ?? [];
         Ledger = ledger?.Invoke(H.Store) ?? H.Store;
@@ -59,16 +65,21 @@ internal sealed class ChainHarness : IAsyncDisposable
             .AddSingleton<IChallenges>(H.Challenges)
             .AddSingleton<IContextEngine>(FakeContextEngine.Instance)
             .AddSingleton<IAgentCatalog>(new FixedAgentCatalog())
-            .AddSingleton<ICommandCatalog>(new InMemoryCommandCatalog([.. ShellRows.All, fixture]))
+            .AddSingleton<ICommandCatalog>(new InMemoryCommandCatalog([.. ShellRows.All, Restart, fixture]))
             .AddSingleton(Latch)
             .AddSingleton<IProjectorStatus>(Progress)
             .AddSingleton<ILogger<AuditTrail>>(Log)
             .AddScoped<IValidator<FixtureCommand>, FixtureValidator>().AddCommand<FixtureCommand, CommandAccepted, FixtureService>()
             .AddScoped<IValidator<StopProcessRequest>, AcceptAllValidator<StopProcessRequest>>().AddStopCommand<StopProcessRequest, StopProcessResponse, StopProcessService>()
+            .AddSingleton<IOpenRuns>(new FixedOpenRuns()).AddSingleton<IBuildStamps>(new FixedBuildStamps()).AddScoped(serveStop ?? (static sp => ActivatorUtilities.CreateInstance<ServeStopPort>(sp)))
+            .AddScoped<IValidator<RestartProcessRequest>, AcceptAllValidator<RestartProcessRequest>>().AddRestartCommand<RestartProcessRequest, RestartProcessResponse, RestartProcessService>()
             .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
     }
 
     public SliceHarness H { get; } = new();
+
+    /// <summary>The restart's catalog row, as the host's setup rows hold it.</summary>
+    private static CommandRow Restart => SetupRows.All.Single(static r => string.Equals(r.Action.Value, "RestartProcess", StringComparison.Ordinal));
 
     /// <summary>The services the fixture's desk row grants (none unless a test asks).</summary>
     public IReadOnlyList<string> FixtureGrants { get; }

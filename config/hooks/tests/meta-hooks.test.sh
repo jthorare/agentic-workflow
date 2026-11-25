@@ -25,12 +25,26 @@ cat > "$STUB" <<'EOF'
 if [ "$1" = board-line ]; then
   echo "board-line|${AW_META_HOOK:-}" >> "$BOARDCALLS"
   [ -n "${STUB_BOARD:-}" ] && echo "$STUB_BOARD"
+  [ -n "${STUB_BOARD_FILE:-}" ] && cat "$STUB_BOARD_FILE"
   exit "${STUB_BOARD_RC:-0}"
 fi
 echo "$*" >> "$CALLS"
 echo "$1|${AW_META_HOOK:-}" >> "$HOOKLOG"   # the command and the hook event the caller named (none: a hand-typed run)
 if [ "$1" = outbox-record ] || [ "$1" = lane-reply ]; then cat > "$STDIN_SEEN"; fi
+# inbox as the real one behaves (#2498): STUB_INBOX_EMPTY=1 = nothing open, STUB_INBOX_BODY = one open message. Plain `inbox` always
+# prints (the empty line "nothing in the inbox", or the body); `inbox --once` prints a body only the first time (STUB_ONCE_FILE) and
+# nothing when the inbox is empty.
+if [ "$1" = inbox ] && { [ -n "${STUB_INBOX_EMPTY:-}" ] || [ -n "${STUB_INBOX_BODY:-}" ]; }; then
+  if [ "$2" = --once ]; then
+    if [ -n "${STUB_INBOX_BODY:-}" ] && ! grep -qxF "$STUB_INBOX_BODY" "$STUB_ONCE_FILE" 2> /dev/null; then
+      echo "$STUB_INBOX_BODY" | tee -a "$STUB_ONCE_FILE"
+    fi
+  elif [ -n "${STUB_INBOX_BODY:-}" ]; then echo "$STUB_INBOX_BODY"; else echo "nothing in the inbox"; fi
+  exit 0
+fi
 [ -n "${STUB_OUT:-}" ] && echo "$STUB_OUT"
+# STUB_OUT_FILE: output too big for an env var (one env string past 128 KiB fails exec, #4308)
+[ -n "${STUB_OUT_FILE:-}" ] && cat "$STUB_OUT_FILE"
 # lane-reply answers STUB_REPLY_RC when set (a lane that records its reply and is still blocked), else STUB_RC like every command
 if [ "$1" = lane-reply ]; then exit "${STUB_REPLY_RC:-${STUB_RC:-0}}"; fi
 exit "${STUB_RC:-0}"
@@ -93,6 +107,12 @@ OUT="$(printf '%s' "$SEND" | STUB_RC=2 bash "$HOOKS/meta-outbox.sh")"; RC=$?
 check "outbox: aw-meta failure never blocks" "$RC:$OUT" "0:"
 grep -q '"hook":"meta-outbox","cause":"meta-exit-2"' "$AW_STATE_DIR/logs/failopen.log"
 check "outbox: failure logged" "$?" "0"
+OUT="$(printf '%s' "$SEND" | STUB_RC=2 STUB_OUT="aw-meta: warning: x" bash "$HOOKS/meta-outbox.sh")"; RC=$?
+check "outbox: a failed run's warning line never reaches the sender" "$RC:$OUT" "0:"
+OUT="$(printf '%s' "$SEND" | STUB_OUT="aw-meta: warning: x" bash "$HOOKS/meta-outbox.sh")"; RC=$?
+check "outbox: a warning line goes back to the sender" "$RC:$(printf '%s' "$OUT" | jq -r .hookSpecificOutput.additionalContext)" "0:aw-meta: warning: x"
+OUT="$(printf '%s' "$SEND" | STUB_OUT="recorded the send; no obligation closed" bash "$HOOKS/meta-outbox.sh")"; RC=$?
+check "outbox: a plain recorded line prints nothing" "$RC:$OUT" "0:"
 
 # meta-board-line.sh (Claude lanes: UserPromptSubmit and PostToolUse print the board line as additionalContext)
 BL='Board: main moved to abc1234 (#12); lane map v5'
@@ -166,6 +186,23 @@ OUT="$(STUB_OUT="inbox text" STUB_BOARD="$BL" STUB_BOARD_RC=2 lane "$UPS")"; RC=
 check "a failing board-line leaves the inbox alone" "$RC:$OUT" "0:inbox text"
 : > "$BOARDCALLS"; STUB_BOARD="$BL" lane '{"hook_event_name":"Stop","session_id":"s-2","last_assistant_message":"done"}' > /dev/null
 check "Stop never asks for the board line" "$(cat "$BOARDCALLS")" ""
+
+# --- #4308: aw-meta output over 128 KiB still reaches the agent. As one jq argv string it failed exec and the hook printed nothing.
+head -c 204800 /dev/zero | tr '\0' x > "$WORK/big.txt"
+{ printf 'aw-meta: warning: '; cat "$WORK/big.txt"; } > "$WORK/big-warning.txt"
+OUT="$(STUB_OUT_FILE="$WORK/big.txt" stop "$P")"; RC=$?
+check "200 KB stop-check warning: exit 0, the whole warning as a systemMessage" "$RC:$(jq -r '.systemMessage | length' <<< "$OUT" 2>/dev/null)" "0:204800"
+OUT="$(printf '%s' "$SEND" | STUB_OUT_FILE="$WORK/big-warning.txt" bash "$HOOKS/meta-outbox.sh")"
+check "200 KB outbox-record warning: the whole line as additionalContext" "$(jq -r '.hookSpecificOutput.additionalContext | length' <<< "$OUT" 2>/dev/null)" "204818"
+OUT="$(STUB_BOARD_FILE="$WORK/big.txt" board '{"hook_event_name":"UserPromptSubmit","session_id":"s-1"}')"
+check "200 KB board line: the whole line as additionalContext" "$(jq -r '.hookSpecificOutput.additionalContext | length' <<< "$OUT" 2>/dev/null)" "204800"
+OUT="$(STUB_OUT_FILE="$WORK/big.txt" lane '{"hook_event_name":"PostToolUse","session_id":"s-2","tool_name":"Shell"}')"
+check "200 KB lane inbox on PostToolUse: the whole inbox as additionalContext" "$(jq -r '.hookSpecificOutput.additionalContext | length' <<< "$OUT" 2>/dev/null)" "204800"
+OUT="$(STUB_OUT_FILE="$WORK/big.txt" lane '{"hook_event_name":"Stop","session_id":"s-2","stop_hook_active":false,"last_assistant_message":"done"}')"; RC=$?
+check "200 KB lane-stop-check warning: exit 0, the whole warning as a systemMessage" "$RC:$(jq -r '.systemMessage | length' <<< "$OUT" 2>/dev/null)" "0:204800"
+printf '{"metaLane":"api"}\n' > "$WORK/team-big.json"
+OUT="$(STUB_OUT_FILE="$WORK/big.txt" AW_META_CONFIG="$WORK/team-big.json" lane '{"hook_event_name":"PostToolUse","session_id":"s-2","tool_name":"Shell"}')"
+check "200 KB meta-lane inbox on PostToolUse: the whole inbox as additionalContext" "$(jq -r '.hookSpecificOutput.additionalContext | length' <<< "$OUT" 2>/dev/null)" "204800"
 
 STOP='{"hook_event_name":"Stop","session_id":"s-2","stop_hook_active":false,"last_assistant_message":"Rebased.\nREPLY TO META: rebased and pushed\nsecond line"}'
 : > "$CALLS"; : > "$STDIN_SEEN"
@@ -355,6 +392,9 @@ printf '%s' '{"session_id":"0199aaaa-bbbb-4ccc-8ddd-eeeeffff0002"}' | AW_META_TE
 check "a new session in the lane replaces the id" "$(cat "$LS/api")" "0199aaaa-bbbb-4ccc-8ddd-eeeeffff0002"
 printf '%s' '{"session_id":"id-ui"}' | AW_META_TEAM=t1 AW_META_LANE=ui bash "$HOOKS/session-id-report.sh"
 check "two lanes keep their own ids" "$(cat "$LS/api"):$(cat "$LS/ui")" "0199aaaa-bbbb-4ccc-8ddd-eeeeffff0002:id-ui"
+touch -t 200101010000 "$LS/ui"; touch -t 200101010001 "$WORK/mtime-ref"
+printf '%s' '{"session_id":"id-ui"}' | AW_META_TEAM=t1 AW_META_LANE=ui bash "$HOOKS/session-id-report.sh"
+check "the same session id again leaves the lane file's mtime unchanged (#2691)" "$([ "$LS/ui" -nt "$WORK/mtime-ref" ] && echo rewritten || echo kept)" "kept"
 printf '%s' '{"session_id":"id-team"}' | AW_META_TEAM=t1 AW_META_LANE=api AW_META_DIR="$WORK/teamdir" bash "$HOOKS/session-id-report.sh"
 check "AW_META_DIR: the id is recorded under the team's directory, the flat one is untouched" "$(cat "$WORK/teamdir/lane-sessions/api"):$(cat "$LS/api")" "id-team:0199aaaa-bbbb-4ccc-8ddd-eeeeffff0002"
 printf '%s' '{"session_id":"abc-1"}' | AW_SINDRI_LAUNCH=launch-7 AW_SINDRI_HOME="$WORK/sindri" bash "$HOOKS/session-id-report.sh"
@@ -397,7 +437,7 @@ check "role-set failing: the cause is logged" "$?" "0"
 
 : > "$CALLS"
 OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_OUT="a message" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/ups.json")"
-check "meta lane: UserPromptSubmit prints the meta inbox (aw-meta inbox) and runs no lane command" "$OUT:$(cat "$CALLS")" "a message:inbox"
+check "meta lane: UserPromptSubmit prints the meta inbox (aw-meta inbox --once) and runs no lane command" "$OUT:$(cat "$CALLS")" "a message:inbox --once"
 printf '%s' '{"hook_event_name":"Stop","session_id":"s-9","stop_hook_active":false,"last_assistant_message":"REPLY TO META: ok"}' > "$WORK/stop-meta.json"
 : > "$CALLS"
 AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_RC=1 STUB_OUT="owes" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/stop-meta.json" 2> "$WORK/err"; RC=$?
@@ -477,6 +517,25 @@ clear_lane
 OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/ups.json")"
 check "C5 meta lane with an empty inbox prints nothing" "$OUT" ""
 
+# #2498: an empty meta inbox injects no text (the real `aw-meta inbox` prints "nothing in the inbox"), and an open body is shown once
+export STUB_ONCE_FILE="$WORK/inbox-once"
+clear_lane; unlink "$STUB_ONCE_FILE" 2> /dev/null
+OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_INBOX_EMPTY=1 bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/ups.json")"
+check "C5 meta lane, nothing open in the inbox: UserPromptSubmit prints nothing" "$OUT" ""
+clear_lane
+OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_INBOX_EMPTY=1 bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/start-meta.json")"
+check "C5 meta lane, nothing open in the inbox: SessionStart prints nothing" "$OUT" ""
+clear_lane; unlink "$STUB_ONCE_FILE" 2> /dev/null
+OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_INBOX_BODY="m1 api reply open do the thing" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/ups.json")"
+check "C5 meta lane, open message: the first run prints its body" "$OUT" "m1 api reply open do the thing"
+clear_lane
+OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_INBOX_BODY="m1 api reply open do the thing" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/ups.json")"
+check "C5 meta lane, same open message: the second run prints nothing" "$OUT" ""
+clear_lane
+OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_INBOX_BODY="m1 api reply open do the thing" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/start-meta.json")"
+check "C5 meta lane, same open message: SessionStart prints nothing too" "$OUT" ""
+unset STUB_ONCE_FILE
+
 # C6: AfterAgentResponse records the reply, never runs lane-stop-check; Stop does not record it again
 clear_lane
 lane "$AAR"; RC=$?
@@ -533,7 +592,7 @@ check "marked reply, lane still owes (mail arrived mid-turn): no unmarked line, 
 # A nested agent's not-own-agent trace does not replace the lane's own trace from this session
 nested() { printf '%s' "$2" > "$WORK/in"; AW_META_LANE_PID=999999 AW_META_TEAM=t1 AW_META_LANE=api bash "$HOOKS/$1" 2> /dev/null < "$WORK/in"; }
 clear_lane; STUB_RC=1 STUB_OUT="owes the meta a reply" lane "$UNM"
-printf 'id-1\n' > "$LS/api"; touch -d '2 seconds ago' "$LS/api"
+printf 'id-1\n' > "$LS/api"; touch -t "$(date -v-2S +%Y%m%d%H%M.%S 2> /dev/null || date -d '2 seconds ago' +%Y%m%d%H%M.%S)" "$LS/api"   # BSD date -v, GNU date -d (macOS touch lacks a relative date)
 nested meta-lane-gate.sh "$UPS"
 check "a nested agent's gate run keeps the lane's reply-unmarked trace (newer than the session id)" "$(trace)" "meta-lane-gate Stop reply-unmarked"
 nested session-id-report.sh '{"hook_event_name":"SessionStart","session_id":"s-6"}'

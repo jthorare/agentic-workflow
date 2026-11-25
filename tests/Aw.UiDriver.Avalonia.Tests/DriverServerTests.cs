@@ -124,14 +124,14 @@ public sealed class DriverServerTests : IAsyncLifetime
 
     [Fact, Trait("Lane", "integration")]
     public void The_verbs_are_the_ones_the_command_line_sends() =>
-        Assert.Equal(["tree", "search", "props", "click", "type", "key", "scroll", "wait-for", "screenshot", "window", "action"], Verbs.Names);
+        Assert.Equal(["tree", "search", "props", "click", "type", "key", "scroll", "hover", "wait-for", "screenshot", "window", "action"], Verbs.Names);
 
     [Fact(Timeout = 30_000), Trait("Lane", "integration")]
     public async Task A_verb_that_throws_answers_500_and_the_next_call_is_still_served()
     {
         var screen = await TestScreen.OpenAsync();
         var calls = 0;
-        var files = DriverFiles.Create(Directory.CreateTempSubdirectory("aw-uidriver-throw-").FullName);
+        var files = DriverFiles.Create(_directory.CreateSubdirectory("throw").FullName);
         var server = DriverServer.Start(
             new DriverHost(() => Interlocked.Increment(ref calls) == 1 ? throw new InvalidOperationException("boom") : screen.Window, TimeProvider.System),
             files.Secret);

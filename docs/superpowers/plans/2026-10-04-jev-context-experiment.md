@@ -6,7 +6,7 @@
 
 **Architecture:** This builds on Plan A's eval machinery (`eval_items`, automatic `labels`, `judge eval --variant`). **No human labeling:** turns are labeled from what happened next (did the turn's added lines survive the session, and was Joi's next prompt a correction) and by Plan A's Opus adjudicator. It adds:
 - a `diff` field to `resolution-check` input
-- named input variants per question, so one labeled set can be re-scored with more or less context
+- named input variants per question, so one labeled set can be re-scored with a different amount of context
 - a new `turn-progress` question
 - an importer that rebuilds per-turn diffs from transcript `Edit`/`Write`/`MultiEdit` tool calls
 - *only if the experiment wins:* a non-blocking Stop hook that snapshots the working tree with a throwaway git index and records a shadow `turn-progress` decision
@@ -20,7 +20,7 @@
 ### Why
 
 - Today `/bugFixOrchestrator` sends resolution-check only `git diff --stat` (`skills/bugFixOrchestrator/src/commands.ts`), never the diff itself. Jev cleared the 0.8 bar 3 of 32 times; claude-cli decided the rest at about 10s each.
-- Joi's hypothesis (2026-10-04): Jev is better used on *more* context per turn (the code diff plus the problem statement) to tell whether the work is actually going well, rather than on thin summaries.
+- Joi's hypothesis (2026-10-04): Jev is better used on *more* context per turn (the code diff plus the problem statement) to tell whether the work is going well, rather than on thin summaries.
 - Experiment first, wiring second (Navigator TASK-80's rule: "eval first, wiring second").
 
 ## Global Constraints

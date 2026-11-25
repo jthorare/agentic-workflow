@@ -10,25 +10,42 @@ A connection is a name, like `linear:work`, that workflows, agents and toolkits 
 
 | Kind | What it signs in to | How you add it |
 |---|---|---|
-| `oauth` | A provider's OAuth sign-in (GitHub, Linear, Google, Spotify) | `--preset` and `--client-id`: Sindri opens your browser |
-| `rest` | A REST API reached with a key | `--kind rest --key-env NAME` |
+| `rest` | A REST API reached with a key: an API key or a personal access token (GitHub, Linear, Slack, or any API) | `--preset github --key-env NAME`, or `--kind rest --key-env NAME` for a service with no preset |
+| `oauth` | A provider's OAuth sign-in (Google, Spotify; GitHub and Linear when you ask for it) | `--preset` and `--client-id`: Sindri opens your browser |
 | `cli` | A command-line tool that reads a credential | `--kind cli --key-env NAME` |
 | `mcp` | An MCP server | later release; the kind exists, the verb refuses it for now |
 
 ## Commands
 
 ```
-sindri connection add <service:label> --preset <p> --client-id <id> [--client-secret-env NAME] [--scope <s>]...
+sindri connection add <service:label> --preset github|linear|slack --key-env NAME
+sindri connection add <service:label> --preset <p> [--kind oauth] --client-id <id> [--client-secret-env NAME] [--scope <s>]...
 sindri connection add <service:label> --kind rest --key-env NAME
 sindri connection list
 sindri connection show <service:label>
 sindri connection test <service:label>
+sindri connection rename <service:label> <label>
 sindri connection remove <service:label>
 ```
 
 Every verb takes `--json` and `--no-start`. Agent sessions may run all of them: the MCP tools `connection_list`, `connection_get`, `connection_add`, `connection_test` and `connection_remove` call the same services as the CLI and the HTTP routes under `/sindri/connections`.
 
 `show` and `list` never print a token, a token prefix or where the secret is stored. They say whether one is stored.
+
+## A key first (GitHub, Linear, Slack)
+
+Sindri runs on your machine, on `127.0.0.1`. An OAuth app needs a callback address it can send you back to, and a loopback address is a poor fit for that: GitHub wants the client secret on your box, and Slack refuses a plain-http callback. So for a service that offers a key, the key is the default way to connect (#4357):
+
+| Preset | Without `--kind` | The key | Where you make it |
+|---|---|---|---|
+| `github` | a key (`rest`) | a fine-grained personal access token: Pull requests read and write, Contents read and write, Checks read, Issues read, Metadata read | GitHub, Settings, Developer settings, Personal access tokens, Fine-grained tokens |
+| `linear` | a key (`rest`) | a personal API key | Linear, Settings, API, Personal API keys |
+| `slack` | a key (`rest`) | a user token (`xoxp-`) | your Slack app's OAuth & Permissions page |
+| `google`, `spotify` | the browser sign-in (`oauth`) | no key option for your own data | |
+
+Each preset file lists its ways to connect under `auth`, the default first (`"auth": ["key", "oauth"]`). With no `--kind`, `--preset github`, `--preset linear` and `--preset slack` store a key. Pass `--kind oauth` to sign in through your own OAuth app instead (GitHub and Linear only).
+
+**Sindri checks the key before it stores it.** It makes one call to the service with it: GitHub `GET https://api.github.com/user`, Slack `GET https://slack.com/api/auth.test` (it reads `"ok": true`), Linear a `POST` of `{ viewer { id } }` to `https://api.linear.app/graphql`. A key the service refuses is `SND-CONN-018`, and a service Sindri can't reach is `SND-CONN-019`. In both cases nothing is stored and no row is written. A key for a hand-made `--kind rest` connection (no preset) is stored without a check.
 
 ## Signing in (oauth)
 
@@ -41,6 +58,8 @@ What happens when you run `sindri connection add linear:work --preset linear --c
 3. You approve at the provider. The provider redirects to `http://127.0.0.1:<port>/callback`.
 4. Sindri checks the callback's `state`, trades the code for tokens (PKCE, S256) and stores them in the keychain. Only then is the connection row written.
 5. The listener closes. It also closes after 5 minutes, on a denied consent, and on a state mismatch.
+
+**Renaming.** `sindri connection rename <service:label> <label>` (POST `/sindri/connections/{name}/rename` with the body `{"label":"<label>"}`; the app's rename action) changes the label only: `slack:old` becomes `slack:new`, the service part stays. The keychain entry is keyed by the name, so Sindri stores the tokens again under the new name, inserts the new row, then removes the old row and its entry; a step that fails first undoes what it did, so the old connection keeps working. The preset, settings, status and creator carry over, and a connection that needs a sign-in keeps its Needs-you row under the new name. Refusals: an unknown name is `SND-CONN-001`, a new name that another connection uses is `SND-CONN-010` (naming it), a bad label is `SND-CONN-008` and the same label is `SND-CLI-003`. A connection that an active workflow's `connection_event` trigger watches is `SND-CONN-015`, naming those workflows: the trigger holds the name as text, so after a rename it would watch nothing and never fire. Pause those workflows first (`sindri wf pause <slug>`), rename, point each trigger at the new name, then activate them again. Renaming to or from `slack:messages` is `SND-CONN-017`: that name belongs to `sindri messages connect`. Anything else that names the connection by its old text (a profile key, a node that is not a trigger) is not rewritten; point it at the new name.
 
 **Signing in again.** `sindri connection signin <name>` (POST `/sindri/connections/{name}/signin`, MCP `connection_signin`) runs the same loopback sign-in for a stored oauth or mcp connection, from the row's own preset, client id, scopes (or server address) and the client secret kept beside its tokens. The row stays (name, creator, creation time); its tokens are replaced when the callback lands, and the Needs-you row clears. A failed try leaves the row and its old secret as they were, and `connection show` reports the failure until the next try: a row that is not connected answers the failure's code instead of the row, and a connected row (it still works on its old tokens) answers the row with the failure beside it as `lastSignInFailure` (`code`, `at`), null otherwise. `connection signin` and the app's "Sign in again" stop waiting on either. `connection signin` waits for its own sign-in (the row's `signedInAt` setting changes), so a background refresh of the same connection does not end the wait early.
 
@@ -60,7 +79,7 @@ A sign-in that fails leaves **no row and no secret** (for a new connection): den
 | `linear` | Linear, Settings, API, OAuth applications | `http://127.0.0.1` | Not needed | Public client with PKCE |
 | `google` | Google Cloud, Credentials, OAuth client ID of type Desktop app | (a desktop client allows the loopback address by itself) | **Needed** | Google wants the desktop client's secret at the token endpoint: pass `--client-secret-env NAME` |
 | `spotify` | Spotify Developer Dashboard | `http://127.0.0.1` (the IP literal, not `localhost`) | Not needed | Public client with PKCE |
-| `slack` | | | | Slack accepts only https redirect URLs, so the browser sign-in cannot come back to your machine. `connection add --preset slack` is refused with this explanation. Make a REST connection with a user token instead: `sindri connection add slack:work --kind rest --key-env SLACK_TOKEN` |
+| `slack` | | | | Slack accepts only https redirect URLs, so the browser sign-in cannot come back to your machine. `connection add --preset slack --kind oauth` is refused with this explanation. Connect with a user token: `sindri connection add slack:work --preset slack --key-env SLACK_TOKEN` |
 
 If a provider's page rejects the redirect, the preset's note (shown in the error of a failed add) says what to change.
 
@@ -99,11 +118,11 @@ The row in `ledger.db` (table `connection`) has the name, kind, preset, non-secr
 
 ## Errors
 
-`SND-CONN-001` to `SND-CONN-011` are listed in [errors.md](errors.md): not found, needs sign-in, sign-in timeout, state mismatch, refresh failed, secret store unavailable, preset needs a client id, invalid name, consent denied, already exists, key-based (no browser sign-in).
+`SND-CONN-001` to `SND-CONN-011`, `SND-CONN-018` and `SND-CONN-019` are listed in [errors.md](errors.md): not found, needs sign-in, sign-in timeout, state mismatch, refresh failed, secret store unavailable, preset needs a client id, invalid name, consent denied, already exists, key-based (no browser sign-in), the service refused the key, and the service could not be reached to check the key.
 
 ## In the app
 
-The app's Connections tab (`G O`) lists the same connections with their status, and offers Test, Sign in again, Remove and Add, the same actions as the commands above. A key you paste there is sent once and is never stored by the app. See `docs/csharp/sindri-ui.md` "PR 18a".
+The app's Connections tab (`G O`) lists the same connections with their status, and offers Test, Sign in again, Remove and Add, the same actions as the commands above. The GitHub, Linear and Slack tiles ask for a token first, with three steps that say where to make it; GitHub and Linear also offer "Use an OAuth app instead", which shows the client id fields. The Google and Spotify tiles sign in through the browser. A key you paste there is sent once and is never stored by the app. See `docs/csharp/sindri-ui.md` "PR 18a".
 
 ## Events that start workflows
 

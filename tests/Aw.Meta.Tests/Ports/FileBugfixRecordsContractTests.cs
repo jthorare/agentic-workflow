@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Aw.Kernel.Testing;
 using Aw.Meta.Core.Ports;
@@ -21,12 +22,18 @@ public sealed class FileBugfixRecordsContractTests : BugfixRecordsContract, IDis
         _directories.Add(root);
         foreach (var run in candidates.GroupBy(static c => c.Run, StringComparer.Ordinal))
         {
+            var directory = Path.Combine(root, "owner-repo", run.Key);
+            _ = Directory.CreateDirectory(directory);
             var state = new Dictionary<string, object?>(StringComparer.Ordinal)
             {
                 ["schemaVersion"] = 1,
                 ["finished"] = run.First().Finished,
                 ["resolvedBy"] = run.First().ResolvedBy,
-                ["candidates"] = run.Select(static c => new Dictionary<string, object>(StringComparer.Ordinal)
+                ["ticket"] = run.First().Issue is { } issue
+                    ? new Dictionary<string, string>(StringComparer.Ordinal) { ["source"] = "github", ["id"] = "#" + issue.ToString(CultureInfo.InvariantCulture) }
+                    : new Dictionary<string, string>(StringComparer.Ordinal) { ["source"] = "text", ["id"] = "pasted" },
+                ["baseline"] = run.FirstOrDefault(static c => c.Baseline) is { } red ? Baseline(directory, red) : null,
+                ["candidates"] = run.Where(static c => !c.Baseline).Select(static c => new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     ["id"] = c.Candidate,
                     ["worktree"] = c.Worktree,
@@ -36,12 +43,19 @@ public sealed class FileBugfixRecordsContractTests : BugfixRecordsContract, IDis
                     ["resolves"] = c.Resolves,
                 }).ToList(),
             };
-            var directory = Path.Combine(root, "owner-repo", run.Key);
-            _ = Directory.CreateDirectory(directory);
             File.WriteAllText(Path.Combine(directory, "state.json"), JsonSerializer.Serialize(state));
         }
 
         return root;
+    }
+
+    // bugfix-state's baseline: the reproduce run's evidence file (its checkout is the red tree) and the commit.
+    private static Dictionary<string, string> Baseline(string directory, BugfixCandidate red)
+    {
+        var evidence = Path.Combine(directory, "runs", "test-1.json");
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(evidence)!);
+        File.WriteAllText(evidence, JsonSerializer.Serialize(new Dictionary<string, string>(StringComparer.Ordinal) { ["kind"] = "test", ["outcome"] = "failed", ["commit"] = red.Commit, ["checkout"] = red.Worktree }));
+        return new Dictionary<string, string>(StringComparer.Ordinal) { ["evidence"] = evidence, ["commit"] = red.Commit };
     }
 
     [Fact]
@@ -56,6 +70,37 @@ public sealed class FileBugfixRecordsContractTests : BugfixRecordsContract, IDis
 
         Assert.True(result.IsSuccess);
         _ = Assert.Single(result.Value);
+    }
+
+    [Fact]
+    public async Task A_state_file_rewritten_between_calls_is_read_again()
+    {
+        var root = Write([new BugfixCandidate("gh-9", "c1", "/wt/gh-9-a1", "b", "s", Evaluated: true, Resolves: false, Finished: false, ResolvedBy: null)]);
+        var records = new FileBugfixRecords(root);
+        _ = await records.Naming("/wt/gh-9-a1", TestContext.Current.CancellationToken);
+        var state = Path.Combine(root, "owner-repo", "gh-9", "state.json");
+        await File.WriteAllTextAsync(state, (await File.ReadAllTextAsync(state, TestContext.Current.CancellationToken)).Replace("\"finished\":false", "\"finished\": true", StringComparison.Ordinal), TestContext.Current.CancellationToken);
+
+        var result = await records.Naming("/wt/gh-9-a1", TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(Assert.Single(result.Value).Finished);
+    }
+
+    [Fact]
+    public async Task A_broken_baseline_evidence_file_names_no_red_tree_and_the_candidates_still_read()
+    {
+        var root = Write([new BugfixCandidate("gh-9", "c1", "/wt/gh-9-a1", "b", "s", Evaluated: true, Resolves: false, Finished: true, ResolvedBy: "c2") { Issue = 9 },
+            new BugfixCandidate("gh-9", "red", "/wt/gh-9", string.Empty, "r", Evaluated: true, Resolves: false, Finished: true, ResolvedBy: "c2") { Issue = 9, Baseline = true }]);
+        await File.WriteAllTextAsync(Path.Combine(root, "owner-repo", "gh-9", "runs", "test-1.json"), "{ not json", TestContext.Current.CancellationToken);
+        var records = new FileBugfixRecords(root);
+
+        var red = await records.Naming("/wt/gh-9", TestContext.Current.CancellationToken);
+        var candidate = await records.Naming("/wt/gh-9-a1", TestContext.Current.CancellationToken);
+
+        Assert.True(red.IsSuccess && candidate.IsSuccess);
+        Assert.Empty(red.Value);
+        _ = Assert.Single(candidate.Value);
     }
 
     [Fact]

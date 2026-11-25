@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Aw.Kernel;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Ports;
@@ -5,8 +6,32 @@ using Aw.Meta.Core.Ports;
 namespace Aw.Meta.Infrastructure.Files;
 
 /// <summary>IWorktreeFiles over the file system: the directory's own time and its entries' times, two levels deep.</summary>
-internal sealed class DirectoryWorktreeFiles : IWorktreeFiles
+internal sealed class DirectoryWorktreeFiles(Func<string, string?> environment) : IWorktreeFiles
 {
+    private static readonly Result<string?> _notConfigured = Results.Success<string?>(value: null);
+
+    public async ValueTask<Result<string?>> ConfiguredRoot(string repo, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(repo);
+        if (environment("AW_WORKTREE_ROOT") is { Length: > 0 } fromEnvironment)
+        {
+            return Results.Success<string?>(fromEnvironment);
+        }
+
+        // A missing file, bad JSON or no usable "root" all mean "not configured": the caller falls back to the default.
+        try
+        {
+            var text = await File.ReadAllTextAsync(Path.Combine(repo, ".agentic-workflow", "worktrees.json"), cancellationToken).ConfigureAwait(false);
+            using var document = JsonDocument.Parse(text, options: default);
+            var root = document.RootElement.ValueKind == JsonValueKind.Object && document.RootElement.TryGetProperty("root", out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+            return string.IsNullOrEmpty(root) ? _notConfigured : Results.Success<string?>(root);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+        {
+            return _notConfigured;
+        }
+    }
+
     public ValueTask<Result<DateTimeOffset>> NewestChange(string directory, IReadOnlyCollection<string> skipNames, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(directory);

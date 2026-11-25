@@ -23,6 +23,9 @@ internal sealed record ViewTable(string Name, IReadOnlyDictionary<ViewColumn, st
     /// <summary>Keys between <c lang="sql">$after</c> and <c lang="sql">$before</c> (both exclusive), in order, at most <c lang="sql">$max</c>.</summary>
     public string SelectBetween => $"SELECT row_json FROM {Name} WHERE key > $after AND key < $before ORDER BY key LIMIT $max";
 
+    /// <summary>The view's mark: the highest sequence that wrote a row and the row count, as the text "seq:count" (an upsert always writes the event's sequence, so a write moves the first part and a removal the second).</summary>
+    public string SelectMark => $"SELECT COALESCE(MAX(seq), 0) || ':' || COUNT(*) FROM {Name}";
+
     public string Upsert =>
         $"INSERT INTO {Name} (key, row_json, seq) VALUES ($key, $row, $seq) ON CONFLICT (key) DO UPDATE SET row_json = excluded.row_json, seq = excluded.seq";
 

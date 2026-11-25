@@ -28,6 +28,35 @@ public static class SandboxUnits
         return long.Parse(size.AsSpan(0, size.Length - 3), NumberStyles.None, CultureInfo.InvariantCulture) * multiplier;
     }
 
+    /// <summary>Parses a size such as '256MiB' or '12GiB', or answers false for text that isn't one (a profile written before the rules checked it).</summary>
+    /// <param name="size">The size text.</param>
+    /// <param name="bytes">Bytes, or 0 when false.</param>
+    /// <returns>Whether the text is a size.</returns>
+    public static bool TryParseSize(string? size, out long bytes)
+    {
+        bytes = 0;
+        if (size is not { Length: > 3 })
+        {
+            return false;
+        }
+
+        var multiplier = size[^3..] switch
+        {
+            "KiB" => Kib,
+            "MiB" => Mib,
+            "GiB" => Gib,
+            "TiB" => Tib,
+            _ => 0L,
+        };
+        if (multiplier == 0 || !long.TryParse(size.AsSpan(0, size.Length - 3), NumberStyles.None, CultureInfo.InvariantCulture, out var count) || count > long.MaxValue / multiplier)
+        {
+            return false;
+        }
+
+        bytes = count * multiplier;
+        return true;
+    }
+
     /// <summary>Formats bytes the way the summary shows them: whole GiB or MiB when exact, else GiB with one decimal.</summary>
     /// <param name="bytes">The size.</param>
     /// <returns>For example '12GiB'.</returns>

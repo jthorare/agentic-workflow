@@ -59,6 +59,9 @@ public static class SetupStepChanges
         SetupStepId.Mcp => "mcp",
         SetupStepId.Map => "map",
         SetupStepId.Sources => "sources",
+        SetupStepId.Serve => "serve",
+        SetupStepId.Agent => "agent",
+        SetupStepId.FirstWorkflow => "first-workflow",
         _ => throw new ArgumentOutOfRangeException(nameof(id)),
     };
 

@@ -3,6 +3,7 @@ using Aw.Context.Core.Facade;
 using Aw.Context.Core.Projects;
 using Aw.Context.Core.Sync;
 using Aw.Kernel;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Secrets;
@@ -11,17 +12,18 @@ namespace Aw.Sindri.Features.ContextCalls;
 
 /// <summary>
 /// Doctor's rows for the Sindri-owned record index (owned index spec, Part of #1394), so one 'sindri doctor' says what is missing before the index runs:
-/// 'context:index-store' (the record store answers), 'context:index-github', 'context:index-linear' and 'context:index-slack' (the source's token pointer
-/// resolves; never its value), 'context:index-linear-projects' (the stored projects and whose Linear key it is), 'context:index-ollama' (the records embedder's server answers with its model) and 'context:index-sync' (each source's last sync,
+/// 'context:index-store' (the record store answers), 'context:index-github', 'context:index-linear' and 'context:index-slack' (the source reads with a connected
+/// connection of its preset on the Connections page, else its token pointer resolves, the feeds' order since #2508; never a value), 'context:index-linear-projects' (the stored projects and whose Linear key it is), 'context:index-ollama' (the records embedder's server answers with its model) and 'context:index-sync' (each source's last sync,
 /// as 'sindri index status' shows it). With no profile, or a source the profile doesn't name, a row is 'ok ... not configured'. No call reaches GitHub, Linear or Slack.
 /// </summary>
 /// <param name="approvals">The profile.</param>
 /// <param name="scopes">The engine's scope for the store and sync reads.</param>
 /// <param name="engine">The context engine (settings check and feed progress).</param>
 /// <param name="secrets">Resolves a token pointer, as the Host does for the engine.</param>
+/// <param name="credentials">The feeds' token order (#2508): a connected connection of the preset first.</param>
 /// <param name="embedder">The records embedder's server.</param>
 /// <param name="limit">How long the embedder look may take (3 s in the app).</param>
-internal sealed class IndexDoctorChecks(IApprovedProfile approvals, ContextScopes scopes, IContextEngine engine, ISecretPointers secrets, IRecordEmbedderProbe embedder, TimeSpan limit) : IDoctorChecks
+internal sealed class IndexDoctorChecks(IApprovedProfile approvals, ContextScopes scopes, IContextEngine engine, ISecretPointers secrets, IConnectionCredentials credentials, IRecordEmbedderProbe embedder, TimeSpan limit) : IDoctorChecks
 {
     internal const string StoreName = "context:index-store";
     internal const string GitHubName = "context:index-github";
@@ -98,9 +100,17 @@ internal sealed class IndexDoctorChecks(IApprovedProfile approvals, ContextScope
             return new DoctorCheck(name, CheckState.Ok, $"not configured (the profile names no context.sources.{source})", Fix: null);
         }
 
+        // why: the feeds read a connected connection before the pointer (#2508), so a row that judged the pointer alone said "can't sync" for a source that syncs
+        if (credentials.TokenFor(source, profilePointer: null) is not null)
+        {
+            var unused = pointer is null ? string.Empty : $"; {key} is not used while it is connected";
+            return new DoctorCheck(name, CheckState.Ok, $"reads with the connected {source} connection on the Connections page{unused} (not probed: the source is read by sindri index sync)", Fix: null);
+        }
+
         if (SourceTokens.Look(pointer, secrets) is not { } resolved)
         {
-            return new DoctorCheck(name, CheckState.Warn, $"{key} is not set, so {source} can't sync", $"set {key} to a secret pointer (sindri index connect {source})");
+            return new DoctorCheck(name, CheckState.Warn, $"{key} is not set and no {source} connection is connected, so {source} can't sync",
+                $"connect {source} on the Connections page, or set {key} to a secret pointer (sindri index connect {source})");
         }
 
         return resolved.IsError

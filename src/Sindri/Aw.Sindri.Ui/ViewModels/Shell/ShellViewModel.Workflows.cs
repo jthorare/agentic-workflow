@@ -21,6 +21,14 @@ internal sealed partial class ShellViewModel
     private void InitWorkflows()
     {
         Workflows = new WorkflowsPageViewModel(_api, _clock);
+        Health.Banner.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(ViewsBanner.IsStalled), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(ViewsBanner.Rebuild), StringComparison.Ordinal))
+            {
+                Workflows.SetViewsStalled(Health.Banner.IsStalled, Health.Banner.Rebuild);   // the list level says "can't load" with the same Rebuild action as the banner
+            }
+        };
+        Workflows.SetViewsStalled(Health.Banner.IsStalled, Health.Banner.Rebuild);
         var seen = 0L;
         Health.Follow((url, token) =>
         {

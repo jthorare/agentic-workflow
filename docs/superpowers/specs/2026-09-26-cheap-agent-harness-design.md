@@ -96,7 +96,7 @@ Stack follows the repo: Node ≥ 20, TypeScript strict, Zod, Vitest with 100% co
   - `code`, `diff`, `brief`, `transcript`, `message-meta` -> Jev first, falling back to Haiku (`claude-cli`). TypeSafe has passed vendor review for company code (2026-09-28), so Jev is no longer restricted to `message-meta`.
   - `image` -> Haiku only. Jev is text-only, so this exclusion is a capability limit, not a policy gate.
 - **Untrusted input (F6).** Messages and diffs are data, not instructions. Outputs are enums only. Deterministic pre-rules decide every safety-relevant outcome, and the model can never override them.
-- **Fast paths (F7).** Obvious cases skip the model entirely: JSON acks, very short messages, `Explore`/`claude-code-guide` dispatches. p95 latency is tracked per question. The status line warns above 1.5 s.
+- **Fast paths (F7).** Obvious cases skip the model entirely: JSON acks, short messages, `Explore`/`claude-code-guide` dispatches. p95 latency is tracked per question. The status line warns above 1.5 s.
 - **Below threshold:** escalate, never guess. `PreToolUse` hooks can only allow or deny; there is no "ask". So escalation means one of:
   - **deny + reason + `judge approve <id>`**, when blocking is safe;
   - **pass through + notice**, when blocking would cost more than the mistake.
@@ -229,7 +229,7 @@ Joi chose to repair Prism rather than remove it (2026-09-26). Measured over 14 d
 Findings:
 
 1. **False startup warning.** `config/hooks/prism-context.sh` probes `http://localhost:7180/health`, which returns 404. The dashboard itself is up (`/` returns 200). Every session starts with a spurious "unreachable" warning. Fix: probe `/`, or whatever endpoint the dashboard documents.
-2. **No Auto-Load Projects.** `~/.prism-mcp/prism-config.db` has no auto-load project set, so bootstrap loads nothing. Saves then fail, and the managed `CLAUDE.md` block forbids the only other way to load context (`session_load_context`). Fix: configure Auto-Load Projects in the dashboard, with developer name and context depth. **Project names must equal each repo's `REPO_SLUG` as the skills derive it (N4):** `<work-repo>` and `joi-fairshare-agentic-workflow`, not `agentic-workflow`. `setup.sh` ends with a check that lists the dashboard's projects next to each managed repo's slug and flags any mismatch.
+2. **No Auto-Load Projects.** `~/.prism-mcp/prism-config.db` has no auto-load project set, so bootstrap loads nothing. Saves then fail, and the generated `CLAUDE.md` block forbids the only other way to load context (`session_load_context`). Fix: configure Auto-Load Projects in the dashboard, with developer name and context depth. **Project names must equal each repo's `REPO_SLUG` as the skills derive it (N4):** `<work-repo>` and `joi-fairshare-agentic-workflow`, not `agentic-workflow`. `setup.sh` ends with a check that lists the dashboard's projects next to each tracked repo's slug and flags any mismatch.
 3. **Wrong repo path.** `repo_path:<work-repo>` points at `~/.agentic-workflow/<work-repo>/reviews`, not `~/repos/<work-repo>`. Fix in the dashboard.
 4. **Three versions at once.**
    - The CLI is npm `prism-coder` 20.14.0 (`/opt/homebrew/bin/prism`).
@@ -242,7 +242,7 @@ Findings:
    - (b) switch the policy off via `prism connect` options so the block stops loading.
 
    Decide after the (a) test.
-6. **The skill preambles contradict `CLAUDE.md`.** 43 `agentic-workflow` skills call `session_load_context` (forbidden by the managed block) and `session_save_ledger`. Fix: the preambles drop the `session_load_context` step. They reuse the `conversation_id` **and the project** from bootstrap's `<prism_session conversation_id="…" projects="…">` line, rather than re-deriving the slug (N4). If a save fails, the skill says so once and continues.
+6. **The skill preambles contradict `CLAUDE.md`.** 43 `agentic-workflow` skills call `session_load_context` (forbidden by the generated block) and `session_save_ledger`. Fix: the preambles drop the `session_load_context` step. They reuse the `conversation_id` **and the project** from bootstrap's `<prism_session conversation_id="…" projects="…">` line, rather than re-deriving the slug (N4). If a save fails, the skill says so once and continues.
 7. **Visibility.** It follows the same rule as `judge`: a `prism` status line segment, the SessionStart check (fixed per finding 1), and a Prism section in the scorer report (bootstrap loaded a project? saves succeeded?).
 
 Done means:
@@ -251,7 +251,7 @@ Done means:
 - A skill's closing `session_save_ledger` succeeds in both.
 - The scorer shows 0 Prism save failures for a week.
 
-**Installer order (N7).** Run `prism connect` first, then `setup.sh`. `prism connect` owns `~/.claude.json`, its `CLAUDE.md` managed blocks and its `prism-route` hook. `setup.sh` touches only `aw:*` hook ids.
+**Installer order (N7).** Run `prism connect` first, then `setup.sh`. `prism connect` owns `~/.claude.json`, its `CLAUDE.md` generated blocks and its `prism-route` hook. `setup.sh` touches only `aw:*` hook ids.
 
 ## Rollout order
 

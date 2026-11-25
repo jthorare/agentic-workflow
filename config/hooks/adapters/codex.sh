@@ -7,7 +7,7 @@
 #
 # Codex's hook protocol is Claude Code's with a few differences this adapter
 # absorbs (see README.md in this directory for sources):
-#   - exit 2 reads the reason from STDERR (our safety hooks print it on stdout)
+#   - exit 2 reads the reason from STDERR (our safety hooks print it there; older ones used stdout, so the adapter joins both)
 #   - Stop / SubagentStop reject plain-text stdout (JSON or nothing)
 #   - shell may arrive as exec_command/shell with tool_input.cmd or an argv array
 #   - spawn_agent (matched as Agent) carries message/agent_type/task_name, not
@@ -60,6 +60,18 @@ else
       else . end
     | if (.hook_event_name == "Stop" or .hook_event_name == "SubagentStop") then
         .transcript_path = null
+      else . end
+    # Codex has no PostToolUseFailure: a shell PostToolUse whose result says "Exit code: N" (the shell tool) or
+    # "Process exited with code N" (unified exec) with N not 0, or carries a nonzero exit_code, is a failure. The event
+    # stays PostToolUse for every other hook; the retry guard reads aw_tool_failed and error (issue 4248).
+    | if .hook_event_name == "PostToolUse" and .tool_name == "Bash" then
+        (.tool_response // null) as $r
+        | ($r | if type == "string" then . elif type == "object" then (.output // .aggregated_output // .stderr // tojson) | tostring
+                elif . == null then "" else tojson end) as $text
+        | ([($text | [capture("(Exit code:|Process exited with code) *(?<n>-?[0-9]+)")] | .[0].n),
+            ($r | if type == "object" then (.exit_code // .exitCode // null) else null end)]
+           | map(select(. != null) | tostring) | first // "0") as $code
+        | if $code != "0" then .aw_tool_failed = true | .error = ($text | .[0:8192]) else . end
       else . end
   ' 2>/dev/null)" || { aw_adapter_failopen codex payload-unparsable; exit 0; }
   [ -n "$PAYLOAD" ] || { aw_adapter_failopen codex payload-unparsable; exit 0; }

@@ -157,7 +157,11 @@ internal static class PlanMounts
         m.Add(new PlanMount(home, PlanMountKind.Tmpfs, Size: MaskBytes, Reason: "Sindri's real home is empty here: only the entries below exist"));
         m.Add(new PlanMount(SessionHomePaths.Sessions(home), PlanMountKind.Tmpfs, Size: MaskBytes, Reason: "other launches' session homes are absent"));
         m.Add(new PlanMount(home + "/launches", PlanMountKind.ReadWrite, Reason: "the session home's launches link resolves here; session-id-report and the turn-ended marker write to it"));
-        m.Add(new PlanMount(home + "/approved", PlanMountKind.ReadOnly, Reason: "the session home's approved link resolves here: the CLI finds its repo in the approved profile snapshot"));
+        if (c.ProfileFolder is { } profile)
+        {
+            m.Add(new PlanMount(profile, PlanMountKind.ReadOnly, Reason: "the live profile's folder, read-only and bound as a folder so a save's rename is seen: the CLI's in-process profile reads"));
+        }
+
         m.Add(new PlanMount(session, PlanMountKind.ReadOnly, Reason: "this launch's session home: the Step's policy file and MCP config; the agent can't rewrite its own policy"));
         m.Add(new PlanMount(session + "/control.json", PlanMountKind.ReadOnly, Reason: "written by the launcher: the endpoint record with the forwarder's URL"));
         m.Add(new PlanMount(session + "/gh-config", PlanMountKind.ReadWrite, Reason: "the GitHub CLI's empty config directory, so gh finds no login"));

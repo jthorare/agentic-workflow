@@ -38,7 +38,7 @@ Mapping to Sindri (read-only canvases first; Sindri's graphs are layout-determin
 2. **Interaction depth to promise**: select, focus (keyboard reading order, tab ring: existing rule "nodes focusable in reading order"), open detail in the right sheet, hover highlight of upstream/downstream, collapse bands. **Do not promise** drag-to-wire, user-authored graphs, or freeform node dragging without a separate editor spec: recipes are YAML validated by the engine (R8-3), and the UI holds no logic.
 3. **Minimap**: own control, fixed 160x100 in a corner, node dots + viewport rect.
 4. **Edge style**: bezier with horizontal tangents for layered left-to-right (System, recipe states), straight vertical for the Context bands between lenses; health = stroke colour from Success/Attention/Error tokens **plus** a glyph/word on the edge label (never colour alone, §11.3). Dashed + animated = in-flight.
-5. **Right inspector**: reuse the existing detail sheet (520 px, 420-760), already draggable and focus-managed.
+5. **Right inspector**: reuse the existing detail sheet (520 px, 420-760), already draggable and focus-controlled.
 6. **Left palette**: only for a future authoring surface; today a filter/lens-toggle rail (Context lenses) is the real use.
 7. **Run history bottom dock**: `GridSplitter` + virtualized list (ItemsRepeater), mirrors the existing frame tabs/timeline.
 

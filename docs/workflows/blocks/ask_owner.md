@@ -24,8 +24,8 @@ Branches: `answered` and `timeout`.
 
 Anyone may answer, and the answer is attributed to the one who gave it:
 
-- `sindri answer <run>/<node> --text "ship it"` or `--choice yes` (`POST /sindri/workflow-runs/{run}/nodes/{node}/answer`);
-- the MCP tool `workflow_answer` with `run`, `node` and one of `text` or `choice`.
+- `sindri answer <run>/<node> --text "ship it"` or `--choice yes` (`POST /sindri/workflow-runs/{run}/nodes/{node}/answer`); for a node in a `for_each` loop add `--item <n>` (the body's optional `item`);
+- the MCP tool `workflow_answer` with `run`, `node`, one of `text` or `choice`, and `item` for a node in a loop.
 
 An agent session may answer the question of the run it was launched by; the timeline shows the answer as `session:launch:<launch id>`. The workflow takes an answer only while the node waits: an answer for a node that is not waiting is `SND-GRAPH-130`, one for a run that ended `SND-GRAPH-107`, and one that is not a choice, or has both a text and a choice, `SND-CLI-003`. The first answer wins. Until the app has an answer box, the CLI and the MCP tool are the way.
 
@@ -42,4 +42,4 @@ An agent session may answer the question of the run it was launched by; the time
 
 Here `go` runs on any answer (add a `condition` on `ask.answer` to tell yes from no) and `stop` runs when nobody answers in 2 hours.
 
-An `ask_owner` node can't sit inside a `for_each` loop (`GRAPH-LOOP-004`): put the per-item part in its own workflow and call it with `run_workflow`.
+An `ask_owner` node inside a `for_each` loop asks once per item, one item at a time, and each question is its own Needs-you row that names its item. Answer it with `--item <n>` (items count from 1).

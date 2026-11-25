@@ -1,4 +1,5 @@
 using Aw.Meta.Core;
+using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Health;
 using Aw.Meta.Core.Ids;
 using Aw.Meta.Core.Lanes;
@@ -15,8 +16,8 @@ public sealed class HealthTests
     private readonly MetaWorld _world = new();
 
     private HealthService Service() => new(
-        new HostProbe(_world.Processes, _world.Resources),
-        new LaneCheck(_world.Config, _world.Sessions, _world.Messages, _world.Lanes, _world.LaneHealth, _world.Context),
+        new HostProbe(_world.Processes, _world.Resources, new OomPolicyCheck(_world.Runner, _world.Paths), new ScriptStaleCheck(_world.Runner, _world.Paths)),
+        new LaneCheck(_world.Config, new MissingLanes(_world.Sessions, _world.Messages, _world.Lanes), _world.LaneHealth, _world.Context),
         new OrphanKiller(_world.Processes, _world.Log, _world.Clock),
         _world.Values,
         _world.Config,

@@ -5,7 +5,7 @@ using Aw.Sindri.Core.Graph.Ids;
 namespace Aw.Sindri.Core.Graph.Ops;
 
 /// <summary>The working copy of a graph while a batch of ops applies: each op changes it or returns why it can't.</summary>
-internal sealed class GraphEditSession(GraphSpec spec)
+internal sealed class GraphEditSession(GraphSpec spec, Func<string, bool> isTriggerType)
 {
     private const string DefaultOutput = "out";
 
@@ -14,8 +14,9 @@ internal sealed class GraphEditSession(GraphSpec spec)
     private string _name = spec.Name;
     private string? _description = spec.Description;
     private string? _concurrency = spec.Concurrency;
+    private NodeId? _result = spec.Result;
 
-    public GraphSpec ToSpec() => spec with { Name = _name, Description = _description, Concurrency = _concurrency, Nodes = [.. _nodes], Edges = [.. _edges] };
+    public GraphSpec ToSpec() => spec with { Name = _name, Description = _description, Concurrency = _concurrency, Result = _result, Nodes = [.. _nodes], Edges = [.. _edges] };
 
     // why: returns the reason an op can't apply, or null once it is applied; the caller adds the op's number.
     public string? Apply(GraphOp op) => op switch
@@ -27,8 +28,31 @@ internal sealed class GraphEditSession(GraphSpec spec)
         DisconnectOp disconnect => Disconnect(disconnect),
         RenameOp rename => Rename(rename),
         SetMetaOp meta => Meta(meta),
+        ReplaceNodeOp replace => Replace(replace),
         _ => "that is not a known op",
     };
+
+    // why: returns the start of the SND-GRAPH-112 sentence when a replace_node names a node that is not the trigger, or null (a missing node is the op's own problem)
+    public string? NotTheTrigger(GraphOp op) =>
+        op is ReplaceNodeOp replace && IndexOf(replace.Node.Value) is var at and >= 0 && !isTriggerType(_nodes[at].Type) ? $"'{replace.Node.Value}' is not the trigger." : null;
+
+    private string? Replace(ReplaceNodeOp replace)
+    {
+        var index = IndexOf(replace.Node.Value);
+        if (index < 0)
+        {
+            return $"there is no node '{replace.Node.Value}'";
+        }
+
+        if (!isTriggerType(replace.Type))
+        {
+            return $"'{replace.Type}' is not a trigger, so it can't take the trigger's place";
+        }
+
+        var old = _nodes[index];
+        _nodes[index] = old with { Type = replace.Type, Title = replace.Title ?? old.Title, Config = CloneConfig(replace.Config) };
+        return null;
+    }
 
     private static JsonObject CloneConfig(JsonObject? config)
     {
@@ -200,6 +224,7 @@ internal sealed class GraphEditSession(GraphSpec spec)
         }
 
         _nodes[index] = _nodes[index] with { Id = rename.To };
+        _result = _result?.Value == old ? rename.To : _result;
         for (var i = 0; i < _edges.Count; i++)
         {
             var edge = _edges[i];
@@ -243,6 +268,23 @@ internal sealed class GraphEditSession(GraphSpec spec)
         if (meta.Concurrency is { } concurrency)
         {
             _concurrency = concurrency.Length == 0 ? null : concurrency;
+        }
+
+        if (meta.Result is { } result)
+        {
+            NodeId? named = null;
+            if (result.Length > 0)
+            {
+                if (!NodeId.TryFrom(result, out var id))
+                {
+                    return $"'{result}' is not a node id";
+                }
+
+                named = id;
+            }
+
+            // why: a name that matches no node is the validator's GRAPH-RESULT-001, which the batch reports like any finding
+            _result = named;
         }
 
         return null;

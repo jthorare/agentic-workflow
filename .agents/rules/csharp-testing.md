@@ -51,7 +51,7 @@ Lanes are xUnit traits named `Lane`. Every test carries exactly one. A budget co
 | Lane | What | Budget (whole lane, per package) |
 |---|---|---|
 | `unit` | `Core` logic and services with in-memory fakes. No I/O | < 10 s |
-| `integration` | Repositories on a real temp SQLite file; endpoints on the real host on loopback (`LoopbackBinding` + `Pipeline.Configure`, as the scaffolded tests do) or through `WebApplicationFactory`; the architecture tests (`Aw.Architecture.Tests`: they load every assembly, and four take 22 to 27 s each, over the unit per-test cap; owner, 2026-10-16) | < 60 s; `SindriUi` < 105 s (headless Avalonia rendering; `PACKAGE_BUDGETS` in `scripts/ci/lane-budgets.mjs`); `Sindri` < 165 s (real Temporal servers); `Aw.Sindri.Engine.Tests` < 110 s, `Aw.Sindri.Ui.Frames.Tests` < 90 s and `Aw.Sindri.Ui.Controls.Tests` < 60 s, each a row of its own, kept out of its package's sum (suites split out so each package fits its budget; `PROJECT_BUDGETS` in `scripts/ci/lane-budgets.mjs`). Each exception is the slowest of the last 10 green main CI runs + 25% (owner, 2026-11-02, #1546) |
+| `integration` | Repositories on a real temp SQLite file; endpoints on the real host on loopback (`LoopbackBinding` + `Pipeline.Configure`, as the scaffolded tests do) or through `WebApplicationFactory`; the architecture tests (`Aw.Architecture.Tests`: they load every assembly, and four take 22 to 27 s each, over the unit per-test cap; owner, 2026-10-16) | < 60 s; `SindriUi` < 130 s (headless Avalonia rendering; `PACKAGE_BUDGETS` in `scripts/ci/lane-budgets.mjs`); `Sindri` < 195 s (real Temporal servers); `Aw.Sindri.Engine.Tests` < 110 s, `Aw.Sindri.Ui.Frames.Tests` and `Aw.Sindri.Ui.Frames.Panels.Tests` < 90 s each and `Aw.Sindri.Ui.Controls.Tests` < 60 s, each a row of its own, kept out of its package's sum (suites split out so each package fits its budget; `PROJECT_BUDGETS` in `scripts/ci/lane-budgets.mjs`). The four project rows are the slowest of the last 10 green main CI runs + 25% (owner, 2026-11-02, #1546). `Sindri` and `SindriUi` are the slowest of 22 main CI runs, rounded up to 5 s, with no headroom (#2841, 2026-11-12) |
 | `heavy` | Real containers, browsers, index builds, multi-megabyte real-clock scale cases | none; by hand only (a lane or the owner on their own box, never CI; owner 2026-10-29), under a slot of the heavy-job lock (at most two heavy jobs at a time) |
 
 ```csharp
@@ -83,6 +83,12 @@ The test framework is decided (R7, R1a spike): xUnit v3 on Microsoft.Testing.Pla
 - Deterministic ids (a fake `IIdGenerator`) and `FakeTimeProvider`; never the wall clock, `Guid.NewGuid` or `Thread.Sleep` in a test (`BannedSymbols.Tests.txt` checks it; `Aw.Kernel.Testing.RealTime` is the named exception for real time, GUID names and sleeps). `CA2000`, `CA2213`, `CA2100` and `CA1508` are off under `tests/` (`tests/.editorconfig`).
 - No shared mutable fixtures; each test builds its own state.
 - Golden files for CLI output and JSON contracts, recorded from the **C# build** (the golden-file assertions live in `Aw.Kernel.Testing`). Compare after the declared normalization (ids, times), never by loose matching. Update a golden file only in a reviewed change that says why the contract changed.
+- A golden file lands only as `AW_GOLDEN_UPDATE=1` wrote it, on a build of the same commit or a later one. Then a second run without the flag must pass. A hand-written golden in a red commit is fine as a placeholder; replace it with the generated file before ready, and review the generated diff, not the hand copy. A hand copy hid a real binding bug for a day in #2451: three goldens held the service's own error text, while the real answer was the generic `ApiProblems` refusal. Commands, one class or one namespace:
+  ```bash
+  AW_GOLDEN_UPDATE=1 dotnet test --project tests/Aw.Sindri.Tests --filter-namespace Aw.Sindri.Tests.ApiGoldens   # or --filter-class <Class>
+  dotnet test --project tests/Aw.Sindri.Tests --filter-namespace Aw.Sindri.Tests.ApiGoldens                       # rerun without the flag: must pass
+  ```
+  Update mode reports tests as failed; that's expected. Say in the PR body: `goldens generated at <sha>`.
 
 ## Architecture tests
 
@@ -104,6 +110,7 @@ ArchUnitNET (not NetArchTest), in the `integration` lane (owner, 2026-10-16), in
 | `ARCH-ASYNC-001` | Every `Task`/`ValueTask` method on a Core interface (a port) takes a `CancellationToken`; `DisposeAsync` is exempt |
 | `ARCH-UI-001` | The UI package: no UI type uses a Sindri type; a view model uses no `Avalonia.*` type; a platform head holds no view or view model |
 | `ARCH-ENGINE-001` | The Temporal boundary: only `Aw.Sindri.Workflows` (the worker and the engine read adapter) references the `Temporalio` package, and only types in `Aw.Sindri.Infrastructure.Workflows` use a `Temporalio` type; the app, the CLI, the UI and the MCP server hold no Temporal client (API spec P13) |
+| `ARCH-WF-001` | A type with Temporal's `[Workflow]` attribute (its partial parts and nested types included) calls no scheduler-escaping API: `CancelAsync`, `Task.Run`/`Delay`/`WhenAny`, `ConfigureAwait(false)` (the constant only), the wall clock, `Guid.NewGuid`, `Random` and the rest listed in `Rules/WorkflowSchedulerRules.cs`; found by the attribute, never by folder |
 
 The layer rules apply to shaped packages (assemblies named `Aw.<Pkg>.Core`, `.Features`, `.Infrastructure`, `.Host`
 or `.App`, and not tier 0 in `deps.yaml`, which `RegistryTests` checks against `Rules/TierZero.cs`); tier-0 packages (`Aw.Kernel`, `Aw.Kernel.Data`) get the cycle, naming, service-provider and typed-id rules.

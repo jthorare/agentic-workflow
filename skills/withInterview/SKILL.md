@@ -39,7 +39,7 @@ All interview artifacts go to `$PLAN_DIR/interview.md`. Persist each round's que
 
 ### Round 1: Initial Analysis & High-Level Questions
 
-Read the task above carefully. Identify: ambiguities or underspecified requirements; decisions with more than one reasonable answer; missing context that would change the approach; unclear scope boundaries; and **scope/time-box constraints** — flags like `--slim` or phrases like "30 min", "quick pass" — captured verbatim (they go into the artifact and are forwarded to the target skill).
+Read the task above carefully. Identify: ambiguities or underspecified requirements; decisions with more than one reasonable answer; missing context that would change the approach; unclear scope boundaries; and **scope/time-box constraints** — flags like `--slim` or phrases like "30 min", "quick pass", captured verbatim (they go into the artifact and are forwarded to the target skill).
 
 Present your **highest-priority questions first** — the ones whose answers will shape everything else. Emit them as a numbered table with a Theme column, and write the same table to `$PLAN_DIR/interview.md`:
 
@@ -59,7 +59,7 @@ After the user answers Round 1, ask specifically about subagent usage. Present t
 > - **Plan** — for designing an implementation strategy before coding
 > - **general-purpose** — for delegating independent subtasks in parallel
 > - **Reviewers** — post-implementation review via `/review`, which selects reviewer agents based on the changed files
-> - **None** — I'll handle everything directly
+> - **None** — I'll do everything directly
 >
 > You can pick multiple. I'll also suggest a specific combination if you'd like a recommendation.
 
@@ -69,7 +69,7 @@ If the user selects **multiple subagents**, follow up on each: its focus/scope, 
 
 ### Round 3+: Drill-Down Details
 
-Continue asking follow-up rounds as needed. Each round: reference previous answers ("You mentioned X — does that mean...?"), go deeper on underspecified areas, surface edge cases and error handling, clarify testing expectations and acceptance criteria.
+Continue asking follow-up rounds as needed. Each round: reference previous answers ("You mentioned X — does that mean...?"), go deeper on underspecified areas, surface edge cases and error paths, clarify testing expectations and acceptance criteria.
 
 **Run at least 3 rounds** unless the user explicitly says to skip ahead. Keep going past 3 until you can honestly emit the line `Remaining ambiguities: none` — followed by a bullet list of what each round resolved. That literal line is required in the final round; you may not summarize-and-confirm without it. Each round should be a focused set of 2-5 questions (numbered, with Theme column, appended to `$PLAN_DIR/interview.md`), not a wall of text.
 

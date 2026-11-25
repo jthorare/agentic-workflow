@@ -32,12 +32,49 @@ public sealed class NeedsYouViewModelTests
 
     private static string[] Ids(NeedsYouViewModel list) => [.. list.Rows.Select(r => r.Id)];
 
+    // #3734: a pointer already over the panel when the first read lands (the page drew empty first) must not hold the whole first list back as "new".
+    [Fact]
+    public async Task A_first_read_shows_every_row_even_when_the_pointer_was_over_the_empty_panel_before_it()
+    {
+        var list = new NeedsYouViewModel(new Preferences(_store), _os, _clock);
+        await list.Restore(Token);
+        list.PointerOver = true;
+
+        list.Update(Feed(NeedsYouRows.Profile(), NeedsYouRows.Park(), NeedsYouRows.Failure()));
+
+        Assert.Equal((3, 0, string.Empty), (list.Rows.Count, list.HeldCount, list.EmptyLine));
+    }
+
     [Fact]
     public async Task Rows_keep_the_apis_order()
     {
         var list = await List(NeedsYouRows.Profile(), NeedsYouRows.Park(), NeedsYouRows.Failure());
 
         Assert.Equal(["profile:drift", "park:ITM-01JC8", "failure:service:index"], Ids(list));
+    }
+
+    // #2780: the page's one primary button is the first listed row that HAS a primary action, wherever it sits.
+    private static string[] Leads(NeedsYouViewModel list) => [.. list.Rows.Where(r => r.IsLeadAction).Select(r => r.Id)];
+
+    [Fact]
+    public async Task The_lead_action_is_the_first_listed_row_with_a_primary_action_and_moves_with_the_list()
+    {
+        var noAction = new NeedsYouEntry("plain", NeedsYouUrgency.Colour);
+        var list = await List(noAction, NeedsYouRows.Park(), NeedsYouRows.Profile());
+
+        Assert.Equal(["park:ITM-01JC8"], Leads(list));
+
+        list.Update(Feed(noAction, NeedsYouRows.Profile()));
+        Assert.Equal(["profile:drift"], Leads(list));
+
+        list.MarkAllSeen();
+        Assert.Equal(["profile:drift"], Leads(list));
+
+        list.Update(Feed(NeedsYouRows.Park(), NeedsYouRows.Profile()));
+        Assert.Equal(["park:ITM-01JC8"], Leads(list));
+
+        list.Update(Feed(noAction));
+        Assert.Empty(Leads(list));
     }
 
     [Fact]

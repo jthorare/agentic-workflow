@@ -117,7 +117,7 @@ The sandbox puts `dotnet`, `npm` and `npx` shims first on `PATH`. Each calls `he
 
 | Shim | Subcommand | Route |
 |---|---|---|
-| `dotnet` | `build`, `publish`, `format`, `pack`, `restore`, `run`; `test` without `--no-build` | `heavy --expensive` |
+| `dotnet` | `build`, `msbuild`, `publish`, `format`, `pack`, `restore`, `run`; `test` without `--no-build` | `heavy --expensive` |
 | `dotnet` | `test --no-build`, `new`, `sln`, every other | `heavy --light` |
 | `dotnet` | `--version`, `--info`, `--list-sdks`, `--list-runtimes` | direct |
 | `npm` | `ci`, `install`, `test` | `heavy --expensive` |
@@ -135,7 +135,7 @@ Rows marked "probe" are confirmed by the spike (SB-S1 item 9) before SB-2 merges
 | Command | In a Step | If it fails |
 |---|---|---|
 | `git status`, `diff`, `log`, `show`, `add`, `commit` in the worktree | works; unsigned, identity from the sandbox's git settings | |
-| `git checkout -b <other>`, `tag`, `stash`, `update-ref` on another ref | fails (`cannot lock ref`): only `refs/heads/sindri/<instance>/<run>/` is writable | commit on the run branch |
+| `git checkout -b <other>`, `tag`, `stash`, `update-ref` on another ref | fails (`cannot lock ref`): only `refs/heads/sindri/<instance>/<run>/` (a graph node: `refs/heads/wf/<workflow>/<short run>/`) is writable | commit on the run branch |
 | `git branch -D`, any ref delete or rename | fails (`packed-refs.lock` is read-only) | Sindri removes the run's refs from outside |
 | `git fetch`, `pull`, `push`, `gc`, `worktree add`, `config` | fails | Sindri sends the push and PR as effects |
 | `dotnet build -warnaserror`, `dotnet test` (unit lane) | works (probe), through the shim and `heavy` | a new package needs the `packages` group |
@@ -173,7 +173,7 @@ as the default, and Linux and macOS replace it;
 | Mount stack | Bottom to top, a later entry wins: root read-only, `/dev`, `/proc`, scratch as `/tmp`, an empty sized home, the home allowlist (defaults plus profile plus repo; `.dotnet`, `.cargo`, `.rustup`, `.local/bin` and the cache paths), the agent home from the prepared login, the permanent denies, the hook inventory, the per-launch files, the writable set, then `sandbox.fs.denyExtra` and the line's extra denies last |
 | Agent home | The login's files are rewritten by rename, so they are bound by directory; a file bind of `.credentials.json`, `.claude.json` or `auth.json`, or a writable agent-home root, is `-016 login`. The owner's original `.credentials.json` and `auth.json` are masked inside the read-only bind |
 | Git directory | Read-only, with `objects/`, `worktrees/<name>/`, `refs/heads/<ns>/` and `logs/refs/heads/<ns>/` writable for a WriteScope session. The branch is `<ns>/work` |
-| Session home (rev 7) | The real `$AW_SINDRI_HOME` and `<real home>-sessions/` are denied, then masked with a small tmpfs so the mountpoints exist (also for a custom home outside `$HOME`). Bound after the masks, shallow to deep, each at its real path: the real `launches/` (rw), the real `approved/` (ro), the launch's session home `<real home>-sessions/<launch>/` (ro), its launcher-written `control.json` (ro) and `gh-config/` (rw). The plan names the paths; the launcher (SB-5a) makes the folder and writes the file. `SessionHomePaths` is the one place that builds the path. Test `Session_home_links_resolve_in_plan` (and one for a custom home) |
+| Session home (rev 7) | The real `$AW_SINDRI_HOME` and `<real home>-sessions/` are denied, then masked with a small tmpfs so the mountpoints exist (also for a custom home outside `$HOME`). Bound after the masks, shallow to deep, each at its real path: the real `launches/` (rw), the launch's session home `<real home>-sessions/<launch>/` (ro), its launcher-written `control.json` (ro) and `gh-config/` (rw). The plan names the paths; the launcher (SB-5a) makes the folder and writes the file. `SessionHomePaths` is the one place that builds the path. There is no `approved/` bind: serve removes that old folder at start (#2258), and a bind with a missing source fails bwrap before the Step runs (#2832). Test `Session_home_links_resolve_in_plan` (and one for a custom home) |
 | C# binaries (rev 7) | The host facts carry the stamp directory `bin/cs/current` resolved to (`SandboxHostFacts.CsBinDir`; Core touches no file system). The plan binds it read-only at its own path and again at `$AW_STATE_DIR/bin/cs/current`, because the wrappers in `~/.local/bin` exec into `current`, a link the sandbox does not have. `DOTNET_ROOT` is bound read-only when it is not `~/.dotnet`. The `.nvm` bind, `NVM_DIR` and the toolkit checkout bind described the TS `judge` and are gone. Test `Wrapper_resolves_current_to_stamp` |
 | Hook inventory | `HookInventory` lists the state paths the installed hooks use and each hook with its "answers permissions" and "rewrites" columns and its treatment (below); `Hook_inventory_matches_config_hooks` reads `config/hooks` so it cannot drift |
 | Environment | `EnvironmentAllowlist` lists every name with a reason; the host environment is never copied wholesale; `AW_HEAVY_LOCK_HELD` is never set; `AW_SINDRI_HOME` is always the launch's session home and `GH_CONFIG_DIR` its `gh-config/` (rev 7); a secret-shaped name in the login's environment is `-016 env` |
@@ -188,7 +188,7 @@ as the default, and Linux and macOS replace it;
 
 **Fix round 1 (#355 run 1).** The builder refuses, with `-015 worktree-outside-repo` (the closest closed reason; the detail says which), a ReadOnly or Plan Step that names a writable path, and
 any path that is not absolute and normalized (no `..`, no `.`, no `//`, no trailing slash, not empty): the repo, the worktree (strictly inside the repo), the git directory, the run directory and
-run area (inside the Sindri home), the home, the state directory, the Sindri home and the socket directory; the run namespace must be `sindri/<instance>/<run>`. A credential source may set
+run area (inside the Sindri home), the home, the state directory, the Sindri home and the socket directory; the run namespace must be `sindri/<instance>/<run>` or, for a graph node, `wf/<workflow>/<short run>`. A credential source may set
 only `CLAUDE_CONFIG_DIR`, `CODEX_HOME` and the model key (`-016 env` otherwise), and a Codex home under `/tmp` is `-016 login`. A read-write bind inside the owner's `~/.claude` or `~/.codex` must be
 in `AgentHomeWriteSet` (Claude: projects, sessions, session-env, shell-snapshots, file-history, todos, history.jsonl, backups, cache, state; Codex: sessions, log, memories, shell_snapshots, cache, tmp).
 The credential masks follow what is bound: the owner's `.credentials.json` and `auth.json` are masked whenever the owner's real home covers them (a `homeAllow` entry included), and not when a
@@ -216,6 +216,7 @@ SB-5a's rendered settings put it into effect.
 | `detect-secrets` | PreToolUse Bash | no | no | keep | denies only (exit 2): a guard that tightens |
 | `done-gate` | Stop | no | no | keep | blocks a stop (exit 2) until the brief's proof is shown; answers no permission |
 | `done-gate-annotate` | PostToolUse Agent | no | no | keep | annotates the result; never blocks or answers |
+| `dup-script-gate` | PreToolUse Bash\|Write | no | no | keep | points at a catalog helper as context (advisory) or denies a duplicate script (exit 2, block mode): a guard that tightens; answers no permission |
 | `external-write-guard` | PreToolUse * | allow | no | **drop** | answers 'allow' to every tool call it doesn't match, so with it every tool would pass 'dontAsk'; its external writes stay refused by the deny rule 'gh:*' and by 'dontAsk' for tools outside the Step's list |
 | `git-context` | SessionStart | no | no | keep | prints git context; answers nothing |
 | `judge-health` | SessionStart | no | no | keep | warns when the judge is degraded; answers nothing |
@@ -228,6 +229,8 @@ SB-5a's rendered settings put it into effect.
 | `probe-log` | every event, while the probe is on | no | no | keep | logs the hook input; prints nothing |
 | `prompt-sort` | UserPromptSubmit | no | no | keep | may print a scaffold note; answers nothing |
 | `record-teammate-name` | PreToolUse Agent | allow | no | **drop** | always answers 'allow' to Agent, so every dispatch would pass 'dontAsk'; without it subagent-start-map uses its dispatch-order fallback |
+| `retry-gate` | PreToolUse * | no | no | keep | denies a call that already failed while its cause stands (exit 2) or adds advice: a guard that tightens; answers no permission |
+| `retry-record` | PostToolUse *, PostToolUseFailure * | no | no | keep | records and clears the session's failed calls; prints nothing, answers nothing |
 | `rtk-rewrite` | PreToolUse Bash | allow | yes | **keep, deny the rewritten forms; strict in Steps** | rewrites commands to their 'rtk' form for token savings (the owner keeps it); every denied command is also denied in its 'rtk' form, so 'git push' can't pass as 'rtk git push'; its 'allow' grants nothing inside a Step, which runs only what its own list names (owner, 2026-10-18; enforced in SB-5a) |
 | `scope-gate` | PreToolUse Agent | allow | no | **drop** | answers 'allow' to an Agent dispatch with a good brief, so dispatches would pass 'dontAsk' |
 | `send-gate` | PreToolUse SendMessage | allow | yes | **drop** | answers 'allow' to SendMessage (and rewrites the message), so messages would pass 'dontAsk' |

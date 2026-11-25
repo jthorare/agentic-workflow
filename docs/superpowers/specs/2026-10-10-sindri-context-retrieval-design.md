@@ -231,7 +231,7 @@ public sealed record ChangePage(IReadOnlyList<SourceRef> Changed, IReadOnlyList<
 
 - **Read-only by construction.** Adapters only read. Credentials are the least privilege that serves the contract:
   Onyx's is an admin key on its own service account, held to read requests by an allowlist (§8.8); `context sources
-  status` reports the scope each token actually has where the source exposes it.
+  status` reports the scope each token has where the source exposes it.
 - **Errors** (`Result<T>`): `Unavailable` (the query goes on without the source and reports `degraded`), `NotFound`,
   `Fatal`. No `RateLimited` for Local sources (D6); a Shared source's declared limits are README X61's later work.
 - **Freshness:** every hit carries `AsOf`. `Search`, `Fetch` and `Versions` are live; `Changes` drives a scheduled sync.
@@ -677,13 +677,13 @@ All of them call `IContextEngine`; they differ only in transport.
 own agent file ("before planning a change, call `context_query` for the feature or ticket; cite its `[Cn]`"), added
 by hand, once S-1M's owner check shows the work repo returns useful results (if repo docs are thin there, hold the
 snippet until S-6 brings the Linear documents); `context sources status` prints the registration and snippet status, and the number of MCP queries in the
-last 7 days (counts from `query_log`, client `mcp`), so it's visible whether sessions actually use it.
+last 7 days (counts from `query_log`, client `mcp`), so it's visible whether sessions use it.
 
 **S-D addition (diff shape).** `GET /sindri/context/query?diff=<base>..<head>&repo=<name>`, CLI `context query --diff A..B [--repo R]`, MCP `context_query {diff}` (a session's repo is its `X-Sindri-Repo`, so MCP has no `repo`). Refs only: two shas, never a branch, `HEAD`, `~`, `^` or `...`. The result gains an optional `diff` member (omitted for every other shape).
 
 ### 8.6 Exit codes and errors
 
-CLI exit codes (S1's and the API's): **0** results returned, possibly degraded or empty; **1** attention: the process
+CLI exit codes (S1's and the API's): **0** results returned, which can be degraded or empty; **1** attention: the process
 isn't running (`SND-API-001`), an unknown anchor, or a refused input (e.g. a worktree path), with the fix; **2** tool
 error (the profile is invalid, the store can't open, every source is down); **75** the heavy-job lock stayed busy (`map build`, `eval`). Long jobs print progress lines to stderr
 (`waiting for heavy-job lock (slot 1/2 held by …)`, `extracting 412/1830 files`, `labeling 40/120`).
@@ -799,7 +799,7 @@ record and gets this section's F1P text when it is built; it has no F1 section t
   `ValueTask<Result<MapPublishState>> Held(ContextScope, ct)` returning `MapPublishState(MapHold? Hold, int? LatestDraft, int? Current, IReadOnlyList<MapHead> CurrentHeads)`, `ValueTask<Result<MapHold>> Hold(MapHold, ContextScope, ct)`, `ValueTask<Result<Unit>> Release(int version, ContextScope, ct)` (all three service-only), and the read for everyone else, `ValueTask<Result<MapPublishView>> PublishStatus(ContextScope, ct)`, scoped to the caller's repos (no other repo's name, commit or count), which is what `context map status`, the Health card and a session read.
   `Release` is `DELETE … WHERE version = ?`; `Hold` refuses a version that is not the latest draft and reads `since` from the chain row in one transaction (`MapHold.NextSince`, in Context). **Every promote deletes the hold and the chain row** in its transaction, including one that renumbers the draft: `ReplaceDraft` (accepted proposals or a deny cut renumber the draft to N+1) and `OpenDraft` copy the source's `map_version_head` rows to the new number; an import keeps whatever it names (none for a null commit, which keeps today's rule: the repo's head, and `MappedHeads` reads it as none so one refresh runs). Retention removes a version's heads and hold with it, and a retained version keeps its heads for as-of reads. `SaveDraft` (a build) drops the old draft and with it the hold; the chain row stays.
   `Promote`, `CleanDraft` and `AppendOverrides` gain `int? expectedVersion = null` (null is today's behavior and the human path passes null; non-null is refused with **`SND-CONTEXT-190`** when the latest draft is another number, bound to the draft read at the start of the call; `SND-CONTEXT-046` keeps its meaning: no draft, or undecided items). The cleanup passes check the draft number on every pass read and `AppendOverrides` checks it in its own transaction, because the overrides layer is shared across versions: a person's `map build` during a pass must not receive the model's rejects for the old draft. A named migration creates the three tables, with a test that an old `context.db` opens and gets them.
-- **Only the automatic path waits.** `map promote` (protected, typed challenge) promotes the latest draft whether or not it is held, and `map review` and
+- **Only the automatic path waits.** `map promote` (protected, typed challenge) promotes the latest draft regardless of whether it is held, and `map review` and
   `map build` work on a held draft as on any (a build replaces it and the next tick drops the stale hold). A scoping proposal joins a held draft like any draft
   (§8.7), which is why the publish job runs the cleanup pass again before promoting.
 - **Profile.** `context.publish.waitForIndexMinutes` (int 0 to 240, default 15; 0 turns the wait off). Out of range is `SND-CONTEXT-001` with the key path;
@@ -1109,7 +1109,7 @@ scrub (A-F7, S-M2); scrubbed doc chunks and a refresh service (A-F8); override d
 single source of truth (A-F10); fusion inputs defined (A-F11); batched stale checks (A-F12); lock and secrets placed
 (A-F14); decision-extraction budget (A-F15); pattern example uses `[0-9]` and an id without `/` (A-F16); MCP stateless
 mode and error mapping (A-F17); FTS5 test (A-F18); one fence format (A-F19); snippet purge (A-F20); batched builds
-(A-F21); identifiers in scrub patterns (S-M1, via D14 and Phase 2); attribute and permalink handling (S-M3); argument
+(A-F21); identifiers in scrub patterns (S-M1, via D14 and Phase 2); attribute and permalink scrubbing (S-M3); argument
 validation (S-M4); human-only review (S-M5); least-privilege keys (S-M6); no text in logs, client in the query log
 (S-M7); SQLite file modes and corpus retention (S-M8); `context.sessions.enabled` (S-M9); server-side caps (S-M10); pinned
 Onyx and a reviewed MCP package (S-M11); HMAC query hashes (S-L1); MCP tool arguments and non-duplicated results
@@ -1557,7 +1557,7 @@ on the fixture app.
   and the issue↔PR links. This phase also owns linking a Sindri item to its Linear record: `item.linked` (service
   `context-sync`) gives an `ITM-…` item its `linear:issue/<uuid>` record and its key alias, which API routes resolve.
 - **Files:** `linear` adapter (D18: hand-written GraphQL operations as embedded `.graphql` files, response records in
-  the JSON context, team filter, `linear.url`), dedup with Onyx's records by UUID key, document version handling, the
+  the JSON context, team filter, `linear.url`), dedup with Onyx's records by UUID key, document version tracking, the
   as-of check of document history (§12), links and decisions from documents through S-5B's linker, the recorded
   Linear fake.
 - **Size:** S–M (stage **S-6**, wave 3: starts on S-1A and S-5A; what goes through S-5B, the links and decisions

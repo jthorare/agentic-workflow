@@ -67,7 +67,6 @@ public sealed class SourcesSettingsTests
     [Theory, Trait("Lane", "unit")]
     [InlineData("""{"sources":{"linear":{"teams":["SPL"],"apiKey":"x"}}}""", "SND-CONTEXT-001", "context.sources.linear.apiKey:")]
     [InlineData("""{"sources":{"linear":{"teams":["SPL"],"url":"https://evil.example/graphql","token":"env:K"}}}""", "SND-CONTEXT-070", "context.sources.linear.url:")]
-    [InlineData("""{"sources":{"linear":{"teams":["SPL"],"url":"https://api.linear.app/graphql"}}}""", "SND-CONTEXT-002", "context.sources.linear.token:")]
     [InlineData("""{"sources":{"linear":{"teams":["SPL"],"token":"env:K","writeToken":"a-key-written-into-the-profile"}}}""", "SND-CONTEXT-002", "context.sources.linear.writeToken:")]
     [InlineData("""{"sources":{"linear":{"teams":["SPL"],"writeToken":"keychain:linear/write"}}}""", "SND-CONTEXT-002", "context.sources.linear.token:")]
     [InlineData("""{"sources":[]}""", "SND-CONTEXT-001", "context.sources:")]

@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Core.Graph.Guards;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Core.Graph.Blocks;
 
@@ -16,7 +17,7 @@ public sealed class RunWorkflowBlock(IGraphCallPort calls) : IGraphBlock
 
     private const int MaxWaitSeconds = 3500;   // why: a node's activity is cut at one hour
 
-    // why: 'outputs' is the called run's WorkflowRun.Outputs: an object keyed by node id with each succeeded node's outputs (an array per item for a node that ran per item), null when over 64 KB
+    // why: 'outputs' is the called run's WorkflowRun.Outputs: its result (#3807): an object keyed by node id holding the spec's 'result' node or its last nodes (an array per item for a for_each body node, its own output for a collect); a result over 64 KB is a RunResultMarker, refused with SND-GRAPH-108
     private static readonly BlockOutputs _outputs = new(new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["runId"] = "string",
@@ -38,10 +39,10 @@ public sealed class RunWorkflowBlock(IGraphCallPort calls) : IGraphBlock
 
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([
-        new("workflow", BlockFieldType.Text),
-        new("payload", BlockFieldType.Map, Required: false),
-        new("wait", BlockFieldType.Boolean, Required: false),
-        new("waitSeconds", BlockFieldType.Number, Required: false),
+        new("workflow", BlockFieldType.Text, Caption: "Workflow to run"),
+        new("payload", BlockFieldType.Map, Required: false, Caption: "Data to send"),
+        new("wait", BlockFieldType.Boolean, Required: false, Caption: "Wait for it to finish"),
+        new("waitSeconds", BlockFieldType.Number, Required: false, Caption: "Wait (seconds)"),
     ]);
 
     /// <inheritdoc />
@@ -93,6 +94,11 @@ public sealed class RunWorkflowBlock(IGraphCallPort calls) : IGraphBlock
         if (end.IsError)
         {
             return end.Error;
+        }
+
+        if (string.Equals(end.Value.Status, "succeeded", StringComparison.Ordinal) && RunResultMarker.Refusal(called.Run, end.Value.Outputs) is { } cut)
+        {
+            return SindriErrors.GraphOutputTruncated.With(cut);   // why: a result over 64 KB is a marker, never read as if it were the value (#3807)
         }
 
         return string.Equals(end.Value.Status, "succeeded", StringComparison.Ordinal)

@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
@@ -6,11 +7,13 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox.Denials;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.AllowDenial;
 using Aw.Sindri.Host.Catalog;
+using Aw.Sindri.Infrastructure.Sandbox;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Sandbox.Denials;
 
@@ -46,6 +49,49 @@ public sealed class AllowDenialTests
         var files = new StubFiles(new DenialFile(_launch, _noon, _entries, []));
         var owners = new StubOwners(_repo is { } repo ? new Dictionary<LaunchId, LaunchOwner> { [_launch] = new(A.FirstItemId, repo) } : []);
         return new AllowDenialService(files, owners, _writer, _profiles, _slice.Callers, _slice.Held, new SandboxAllowedRecorder(_slice.Store, _slice.Events));
+    }
+
+    [Fact]
+    public async Task A_call_for_a_launch_resolves_that_launchs_repo_through_the_ledger()
+    {
+        var grant = await _slice.HoldLease();
+        var item = A.FirstItemId;
+        await AppendLedger(grant, EventTypes.ItemCreated, new ItemCreated(_slice.Ids.New<CommandId>(), item, "work", RepoName.From("api"), Link: null, Body: null, Owner: null), $"item.created:{item.Value}", item.Value);
+        await AppendLedger(grant, EventTypes.LaunchStarted, StartedLaunch(_launch, item), $"launch.outcome:{_launch.Value}", item.Value);
+        using var entered = AsHuman();
+
+        var result = await LedgerService().Handle(new AllowDenialRequest(_launch, DenialKind.Network, "github.com"), Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        Assert.Equal("api", result.Value.Repo);   // the repo came from item.created through launch.started, not from a stub
+        Assert.Equal([("api", DenialKind.Network, "github.com")], _writer.Calls);
+    }
+
+    [Fact]
+    public async Task A_launch_the_ledger_never_recorded_is_refused_and_nothing_is_written()
+    {
+        _ = await _slice.HoldLease();
+        using var entered = AsHuman();
+
+        var result = await LedgerService().Handle(new AllowDenialRequest(_launch, DenialKind.Network, "github.com"), Token);
+
+        Assert.True(result.IsError);
+        Assert.Equal(SindriErrors.SandboxAllowRefused.Code, result.Error.Code);
+        Assert.Empty(_writer.Calls);
+    }
+
+    // The real launch-owner reader over the slice's ledger store, instead of a stub.
+    private AllowDenialService LedgerService() => new(
+        new StubFiles(new DenialFile(_launch, _noon, _entries, [])), new LedgerLaunchOwners(_slice.Store, _slice.Events), _writer, _profiles, _slice.Callers, _slice.Held, new SandboxAllowedRecorder(_slice.Store, _slice.Events));
+
+    private static LaunchStarted StartedLaunch(LaunchId launch, ItemId item) =>
+        new(launch, item, LaunchMode.Open, AgentId.From("claude-code"), SessionId: null, "sindri", new LaunchViewer("warp", "Warp", ViewerOutcomeKind.Opened, Code: null, Detail: null),
+            ["tmux"], CatalogSource.Builtin, "sha256:abc");
+
+    private async ValueTask AppendLedger<T>(LeaseGrant grant, string type, T payload, string key, string item)
+    {
+        var appended = await _slice.Store.Append(_slice.Events.Entry(type, payload, key, item), grant, Token);
+        Assert.True(appended.IsSuccess);
     }
 
     [Fact]

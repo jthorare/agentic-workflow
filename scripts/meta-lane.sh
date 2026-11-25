@@ -11,7 +11,7 @@
 # transcripts glob replace the Claude-only commands. An agent that reports its own session id (sessionId: reported) is
 # started fresh, and a background watcher records the id it reports (the lane-sessions/<lane> file its hook writes, else
 # the single new session file the catalog's newestFile glob finds that no other lane has claimed; more than one is
-# refused and leaves lane-sessions/<lane>.ambiguous). A non-Claude lane also gets lane-sessions/<lane>.agent (the catalog
+# refused and leaves lane-sessions/<lane>.ambiguous). An unchanged id is not rewritten, so the file's mtime stays the session's start (#2691). A non-Claude lane also gets lane-sessions/<lane>.agent (the catalog
 # facts aw-meta needs), a kickoff note about ending a turn with REPLY TO META:, and AW_STATE_DIR and AW_META_CONFIG exported
 # for its hooks (config/hooks/session-id-report.sh, meta-lane-gate.sh). Every lane also gets AW_SINDRI_CHILD=1, AW_META_TEAM and
 # AW_META_LANE in its environment, exported here: tmux's global environment stays untouched and the launcher's tmux
@@ -22,6 +22,8 @@
 #   AW_META_CLAUDE_ARGS  extra claude-code arguments, inserted after {bin} (default none: setup.sh sets
 #                        permissions.defaultMode to bypassPermissions, so every lane runs in the same mode and messages
 #                        are never held)
+#   team.json "plugins"  {off:[<plugin>@<marketplace>...], keep:{<lane>:[ids]}}: a claude-code lane starts with --settings {"enabledPlugins":{id:false}}
+#                        for the off ids minus its keep ids (#2675); absent, empty or all kept: no flag; a malformed value refuses the start
 #   AW_META_ID_WAIT      seconds a reported session id may take to appear (default 30; tests)
 #   AW_META_ID_GRACE     seconds a lane whose id timed out keeps the start lock for its late session file (default 10; tests)
 #   AW_META_NO_SHELL     1: exit when the agent exits instead of dropping to a shell (tests)
@@ -195,7 +197,8 @@ args=()
 while IFS= read -r -d '' a; do args+=("$a"); done < "$argv_file"
 unlink "$argv_file"
 [ "${#args[@]}" -gt 0 ] || fail 1 "meta-lane: agent '$agent' has an empty argv"
-if [ "$write_id" = 1 ]; then printf '%s\n' "$id" > "$ids/$lane.tmp" && mv "$ids/$lane.tmp" "$ids/$lane"; fi
+# Write only when the id changes: the file's mtime is the session's start, which lane-recycle checks digests against (#2691).
+if [ "$write_id" = 1 ] && [ "$(tr -d '[:space:]' 2> /dev/null < "$ids/$lane")" != "$id" ]; then printf '%s\n' "$id" > "$ids/$lane.tmp" && mv "$ids/$lane.tmp" "$ids/$lane"; fi
 if [ "$id_mode" = reported ] && [ "$mode" = resume ]; then : > "$ids/$lane.settled"; fi
 if [ "$lane" = "$meta_lane" ] && [ -x "$meta_bin" ] && [ -n "$id" ]; then
   AW_META_TEAM="$team" AW_LOG_LEVEL=none "$meta_bin" role-set --session "$id" --name "$team-$lane" > /dev/null 2>&1 \
@@ -207,6 +210,20 @@ fi
 if [ "$agent" = claude-code ]; then
   [ "$mode" = resume ] && [[ "$tpl" != *'{name}'* ]] && args+=(-n "$name")
   args=("${args[0]}" ${claude_args[@]+"${claude_args[@]}"} "${args[@]:1}")
+  # team.json plugins.off minus plugins.keep.<lane>: one --settings argument right after the binary (fresh and resume).
+  if [ -f "$config" ] && [ "$(jq -r 'has("plugins") and (.plugins != null)' "$config" 2> /dev/null)" = true ]; then
+    plugins_err="$(jq -r --arg l "$lane" '
+      .plugins as $p
+      | if ($p | type) != "object" then "plugins is not an object"
+        elif ($p.off // [] | type) != "array" or ([$p.off // [] | .[] | type != "string"] | any) then "off is not an array of strings"
+        elif ($p.keep // {} | type) != "object" or ([$p.keep // {} | .[] | (type != "array") or ([.[] | type != "string"] | any)] | any) then "keep is not an object of string arrays"
+        elif ([($p.off // [])[], (($p.keep // {})[] | .[])] | map(. == "" or startswith("-")) | any) then "an id is empty or starts with -"
+        else empty end' "$config" 2> /dev/null)"
+    [ -z "$plugins_err" ] || fail 1 "meta-lane: team.json plugins: $plugins_err; the agent was not started"
+    plugins_json="$(jq -c --arg l "$lane" '((.plugins.keep // {})[$l] // []) as $k | [(.plugins.off // [])[] | select(. as $i | $k | index($i) | not)] | unique
+      | if length == 0 then empty else {enabledPlugins: (map({(.): false}) | add)} end' "$config" 2> /dev/null)"
+    [ -z "$plugins_json" ] || args=("${args[0]}" --settings "$plugins_json" "${args[@]:1}")
+  fi
 fi
 # A model routed to this lane (team.json routing.lanes.<lane>.model) goes in as the CLI's own flag, right after the binary. A
 # catalog entry with another model form (cursor-flag is reserved) gets none.

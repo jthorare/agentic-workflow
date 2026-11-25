@@ -7,15 +7,14 @@ using Aw.Sindri.Ui.Navigation;
 namespace Aw.Sindri.Ui.ViewModels.Projects;
 
 /// <summary>
-/// The Projects page (projects page spec §3): the owner's projects in state groups, two folds, and the served sentence for an empty or unavailable list.
-/// It reads while it is the page shown, on every event, and keeps its cards by id across reads. The server owns the order and the sentence.
+/// The Projects page (projects page spec §3, issue 3717): the owner's projects as rows in a view (keys 1 to 4), sorted and grouped (by health unless the owner
+/// picks another), two folds, and the served sentence for an empty or unavailable list. It reads while it is the page shown, on every event, and keeps its
+/// projects by id across reads. The server owns the order of Last activity, the health and its reason, and the sentence.
 /// </summary>
-internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
+internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposable
 {
-    private static readonly string[] _stateOrder = ["inProgress", "planned", "paused", "backlog"];
-
     private readonly Dictionary<string, ProjectCardViewModel> _cards = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, ProjectGroupViewModel> _groups = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ProjectGroupViewModel> _groups = new(StringComparer.Ordinal);   // by grouping and key, so a group keeps its rows' controls across reads
     private readonly ISindriApi _api;
     private readonly TimeProvider _clock;
     private int _reads;
@@ -36,6 +35,9 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
 
     /// <summary>The button that adds a project.</summary>
     public string AddText => Labels.ProjectsAddButton;
+
+    /// <summary>The button that opens Connections to connect Linear.</summary>
+    public string ConnectText => Labels.LinearConnect;
 #pragma warning restore CA1822, MA0041
 
     /// <summary>True until the first answer.</summary>
@@ -50,19 +52,30 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
     /// <summary>The served empty sentence, as served; null when none.</summary>
     public string? Sentence { get; private set => Set(ref field, value); }
 
+    /// <summary>True when the sentence is about a missing Linear key or Linear not connected: the empty card or the banner offers Connect Linear.</summary>
+    public bool ShowsConnect { get; private set => Set(ref field, value); }
+
     /// <summary>True when there are no cards and a sentence: the dashed block.</summary>
     public bool IsEmptyBlock { get; private set => Set(ref field, value); }
 
     /// <summary>True when there are cards and a sentence: the banner.</summary>
     public bool IsBanner { get; private set => Set(ref field, value); }
 
-    /// <summary>True when the dashed block offers Add project (not while Linear is syncing).</summary>
-    public bool ShowsAddInEmpty { get; private set => Set(ref field, value); }
+    /// <summary>True when the quiet "Linear not connected" line shows instead of a red box (#3719).</summary>
+    public bool ShowsLinearNote { get; private set => Set(ref field, value); }
+
+    /// <summary>True when the served list says Linear is not set up.</summary>
+    public bool IsLinearMissing { get; private set; }
+
+    /// <summary>The quiet line's words.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string LinearNote => Labels.LinearNotConnected;
+#pragma warning restore CA1822, MA0041
 
     /// <summary>True when Context is failing: cards show their name and origin chip only.</summary>
     public bool NamesOnly { get; private set => Set(ref field, value); }
 
-    /// <summary>The state groups that have cards, in order.</summary>
+    /// <summary>The groups of the view shown that have rows, in order.</summary>
     public ObservableCollection<ProjectGroupViewModel> Groups { get; } = [];
 
     /// <summary>Done and canceled projects.</summary>
@@ -71,8 +84,22 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
     /// <summary>Projects the owner hid.</summary>
     public ProjectFoldViewModel Hidden { get; } = new(Labels.ProjectsHiddenTitle, string.Empty);
 
-    /// <summary>How many cards sit across: 1, 2 or 3.</summary>
-    public int Columns { get; private set => Set(ref field, value); } = 1;
+    /// <summary>True when the page is wide enough for the Agents column.</summary>
+    public bool ShowsAgents { get; private set => Set(ref field, value); } = true;
+
+    /// <summary>True when the page is wide enough for the Items and Target columns and the health reason; narrower, a row keeps its name, PRs, Blocked on and Active.</summary>
+    public bool ShowsWide { get; private set => Set(ref field, value); } = true;
+
+    /// <summary>True when the page is wide enough for the words Sort and Group in the bar's two menu buttons; narrower, the buttons show only their values.</summary>
+    public bool ShowsBarLabels
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(SearchPlaceholder));
+        }
+    } = true;
 
     /// <summary>The last read's failure line; empty when the last read worked.</summary>
     public string Error { get; private set => Set(ref field, value); } = string.Empty;
@@ -93,44 +120,10 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
     /// <param name="link">The card's link.</param>
     internal void RequestOpen(DeepLink link) => OpenRequested?.Invoke(this, new ProjectOpenRequestedEventArgs(link));
 
-    /// <summary>Re-reads the list after a write took a card off the page (or back), then asks the view to move focus: to the next card, else the previous, else Add project; an unhidden project's fold.</summary>
-    /// <param name="done">What the write did.</param>
-    /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>A task that completes when the list is shown and focus is asked for.</returns>
-    internal async Task Settled(ProjectDoneEventArgs done, CancellationToken cancellationToken)
-    {
-        var order = InReadingOrder().Select(c => c.Id).ToList();
-        var at = order.IndexOf(done.Id);
-        var candidates = at < 0 ? [] : order.Skip(at + 1).Take(1).Concat(order.Take(at).Reverse().Take(1)).ToList();   // the next card, else the previous
-        if (_url is { } url)
-        {
-            await Read(url, cancellationToken).ConfigureAwait(true);
-        }
-
-        FocusRequested?.Invoke(this, done.Kind switch
-        {
-            ProjectDone.Unhidden => Fold(done.WentToFinished),
-            ProjectDone.Added => Card([done.Id], gone: string.Empty),   // the new card, else Add project when a fold hides it
-            ProjectDone.Removed or ProjectDone.Hidden => Card(candidates, done.Id),
-            _ => throw new ArgumentOutOfRangeException(nameof(done), done.Kind, message: null),
-        });
-    }
-
-    // The cards as the page lays them out: the state groups, then the folds that are open.
-    private IEnumerable<ProjectCardViewModel> InReadingOrder() =>
-        Groups.SelectMany(g => g.Cards).Concat(Finished.IsOpen ? Finished.Cards : []).Concat(Hidden.IsOpen ? Hidden.Cards : []);
-
-    // The first neighbour still on the page, else Add project.
-    private ProjectFocusEventArgs Card(List<string> candidates, string gone) =>
-        candidates.FirstOrDefault(id => !string.Equals(id, gone, StringComparison.Ordinal) && InReadingOrder().Any(c => string.Equals(c.Id, id, StringComparison.Ordinal))) is { } id
-            ? new ProjectFocusEventArgs(ProjectFocus.Card, id)
-            : new ProjectFocusEventArgs(ProjectFocus.Add, cardId: null);
-
-    // An unhidden project's fold button, while it still has cards, else Add project.
-    private ProjectFocusEventArgs Fold(bool finished) =>
-        (finished ? Finished : Hidden).IsVisible
-            ? new ProjectFocusEventArgs(finished ? ProjectFocus.FinishedFold : ProjectFocus.HiddenFold, cardId: null)
-            : new ProjectFocusEventArgs(ProjectFocus.Add, cardId: null);
+    /// <summary>The page's row of a project, by id, for the sheet's notes; null when the page holds none.</summary>
+    /// <param name="id">The project's id.</param>
+    /// <returns>The row, or null.</returns>
+    internal ProjectCardViewModel? CardOf(string id) => _cards.GetValueOrDefault(id);
 
     /// <summary>The catch-up read started by the last show.</summary>
     internal Task CatchUp { get; private set; } = Task.CompletedTask;
@@ -138,16 +131,13 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
     /// <summary>True while the page is the one shown.</summary>
     internal bool IsActive { get; private set; }
 
-    /// <summary>The page's width changed: 2 columns from 560 px, 3 from 1,040.</summary>
+    /// <summary>The page's width changed: from 868 px every column, from 808 every one but Agents, narrower the name, PRs, Blocked on and Active.</summary>
     /// <param name="width">The width in px.</param>
     internal void SetPageWidth(double width)
     {
-        Columns = width >= Labels.ProjectsThreeColumnsFrom ? 3 : width >= Labels.ProjectsTwoColumnsFrom ? 2 : 1;
-        Finished.Columns = Hidden.Columns = Columns;   // the grids below read their own owner's count
-        foreach (var group in _groups.Values)
-        {
-            group.Columns = Columns;
-        }
+        ShowsAgents = width >= Labels.ProjectsAgentsFrom;
+        ShowsWide = width >= Labels.ProjectsWideFrom;
+        ShowsBarLabels = width >= Labels.ProjectsBarLabelsFrom;
     }
 
     /// <summary>Re-reads the list (on connect and on every event); while the page isn't shown it only remembers where the API is.</summary>
@@ -230,14 +220,20 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
     private void Show(ProjectList list)
     {
         (IsLoading, Error) = (false, string.Empty);
-        var failing = list.Freshness.Any(f => string.Equals(f.State, "failing", StringComparison.Ordinal));
-        FreshnessFailing = failing;
-        Freshness = string.Join(" · ", list.Freshness.Select(f => Labels.ProjectFreshnessPart(f.Source, f.Text)).Concat(list.Viewer is { } viewer ? [Labels.ProjectViewer(viewer)] : []));
+        // Sindri's own failing row is said once, on the line above the rows (ProjectsPageViewModel.Rows.cs FactsMissingText), so the freshness line leaves it out.
+        var sources = list with { Freshness = [.. list.Freshness.Where(f => !string.Equals(f.Source, "sindri", StringComparison.Ordinal))] };
+        FreshnessFailing = sources.Freshness.Any(f => string.Equals(f.State, "failing", StringComparison.Ordinal));
+        Freshness = ProjectsLinear.Freshness(sources);
         NamesOnly = list.Freshness.Any(f => string.Equals(f.Source, "context", StringComparison.Ordinal) && string.Equals(f.State, "failing", StringComparison.Ordinal));
-        Sentence = list.Empty;
+        (Sentence, ShowsConnect) = (ProjectsLinear.Sentence(list, _clock.GetUtcNow()), ProjectsLinear.OffersConnect(list));
         IsEmptyBlock = list.Projects.Count == 0 && list.Empty is not null;
-        IsBanner = list.Projects.Count > 0 && list.Empty is not null;
-        ShowsAddInEmpty = IsEmptyBlock && !list.Freshness.Any(f => string.Equals(f.State, "syncing", StringComparison.Ordinal));
+        // Linear not set up is not a failure: a quiet line with Connect, never the red box (#3719).
+        IsLinearMissing = string.Equals(list.EmptyCode, "linear-missing", StringComparison.Ordinal);
+        ShowsLinearNote = list.Projects.Count > 0 && IsLinearMissing;
+        IsBanner = list.Projects.Count > 0 && list.Empty is not null && !ShowsLinearNote;
+        FactsMissing = ProjectRows.FactsMissing(list);
+        DefaultView(list);
+        _list = list;
 
         var present = new HashSet<string>(list.Projects.Concat(list.Finished).Concat(list.Hidden).Select(c => c.Id), StringComparer.Ordinal);
         foreach (var gone in _cards.Keys.Where(k => !present.Contains(k)).ToList())
@@ -245,32 +241,13 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
             _ = _cards.Remove(gone);
         }
 
-        ShowGroups(list.Projects);
-        Finished.Show([.. list.Finished.Select(Card)]);
-        Hidden.Show([.. list.Hidden.Select(Card)]);
-    }
-
-    // One group per state that has cards: the four known states in order, then any other state in the order the server first serves it.
-    private void ShowGroups(IReadOnlyList<ProjectCardView> projects)
-    {
-        var byState = projects.GroupBy(p => p.State ?? string.Empty, StringComparer.Ordinal).ToList();
-        var ordered = _stateOrder.SelectMany(s => byState.Where(g => string.Equals(g.Key, s, StringComparison.Ordinal)))
-            .Concat(byState.Where(g => !_stateOrder.Contains(g.Key, StringComparer.Ordinal)))
-            .ToList();
-        var groups = new List<ProjectGroupViewModel>();
-        foreach (var served in ordered)
+        // Every served project has its card whatever the view draws, so CardOf finds a project the current view leaves out (a sheet opened on it by link).
+        foreach (var served in list.Projects.Concat(list.Finished).Concat(list.Hidden))
         {
-            var heading = Labels.ProjectStateWord(served.Key);
-            if (!_groups.TryGetValue(heading, out var group))
-            {
-                group = _groups[heading] = new ProjectGroupViewModel(heading) { Columns = Columns };
-            }
-
-            group.Show([.. served.Select(Card)]);
-            groups.Add(group);
+            _ = Card(served);
         }
 
-        Patch.To(Groups, groups);
+        Arrange();
     }
 
     private ProjectCardViewModel Card(ProjectCardView served)
@@ -285,6 +262,8 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
         }
 
         kept.NamesOnly = NamesOnly;
+        kept.FactsMissing = FactsMissing;
+        kept.InNeedsMe = View == ProjectView.NeedsMe;
         return kept;
     }
 }

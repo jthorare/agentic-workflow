@@ -52,6 +52,45 @@ public sealed class CodeIndexEmbedServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task An_embeddings_layer_left_unavailable_by_a_server_failure_starts_an_embed_again_gh_3069()
+    {
+        _ = _rig.Index.WithIndex(CodeIndexJobsRig.Demo, CodeIndexJobsRig.New).WithEmbeddings(CodeIndexJobsRig.Demo, LayerState.Unavailable, code: "SND-CODEIDX-006");
+        _rig.EmbedJob("demo", JobState.Succeeded, _minute, EmbedCodeIndexResult.Pending, embedded: 8_576);
+
+        var result = await Run();
+
+        Assert.False(result.Value.Idle);
+        Assert.Equal([new EmbedCodeIndexRequest("demo")], _start.Requests);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_server_failure_layer_whose_last_retry_made_no_progress_waits_ten_minutes_gh_3069()
+    {
+        _ = _rig.Index.WithIndex(CodeIndexJobsRig.Demo, CodeIndexJobsRig.New).WithEmbeddings(CodeIndexJobsRig.Demo, LayerState.Unavailable, code: "SND-CODEIDX-006");
+        _rig.EmbedJob("demo", JobState.Succeeded, TimeSpan.FromMinutes(30), EmbedCodeIndexResult.Pending, embedded: 8_576);
+        _rig.EmbedJob("demo", JobState.Succeeded, _minute, EmbedCodeIndexResult.Pending, embedded: 8_576);
+
+        var held = await Run();
+        _rig.Harness.Clock.Advance(TimeSpan.FromMinutes(10));
+        var later = await Run();
+
+        Assert.True(held.Value.Idle);
+        Assert.False(later.Value.Idle);
+        _ = Assert.Single(_start.Requests);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_embeddings_layer_unavailable_for_a_pin_mismatch_starts_no_embed_gh_3069()
+    {
+        _ = _rig.Index.WithIndex(CodeIndexJobsRig.Demo, CodeIndexJobsRig.New).WithEmbeddings(CodeIndexJobsRig.Demo, LayerState.Unavailable, code: "SND-CODEIDX-009");
+
+        var result = await Run();
+
+        Assert.True(result.Value.Idle);
+        Assert.Empty(_start.Requests);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task An_ok_embeddings_layer_is_quiet_with_no_start()
     {
         _ = _rig.Index.WithIndex(CodeIndexJobsRig.Demo, CodeIndexJobsRig.New).WithEmbeddings(CodeIndexJobsRig.Demo, LayerState.Ok);

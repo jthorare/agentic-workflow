@@ -5,7 +5,7 @@ namespace Aw.Sindri.Host.Mcp;
 
 /// <summary>
 /// The workflow write tools (#2258, PR 8b), plus workflow_docs and workflow_blocks: workflow_create, workflow_apply_ops, workflow_replace, workflow_validate, workflow_activate, workflow_pause, workflow_delete, workflow_run and workflow_cancel.
-/// Each is one call to the service its HTTP route calls, as the session that made the call. The read tools are <see cref="WorkflowReadTools"/>. workflow_run refuses a loop (<see cref="WorkflowLoopGuard"/>).
+/// Each is one call to the service its HTTP route calls, as the session that made the call. The read tools are <see cref="WorkflowReadTools"/>. workflow_run shares the loop guard (SND-GRAPH-109) with the HTTP route and the CLI: it lives in RunWorkflowService.
 /// </summary>
 internal static partial class WorkflowTools
 {
@@ -32,6 +32,9 @@ internal static partial class WorkflowTools
 
     /// <summary>workflow_run's name.</summary>
     internal const string Run = "workflow_run";
+
+    /// <summary>workflow_rerun's name.</summary>
+    internal const string Rerun = "workflow_rerun";
 
     /// <summary>workflow_cancel's name.</summary>
     internal const string Cancel = "workflow_cancel";
@@ -63,7 +66,7 @@ internal static partial class WorkflowTools
     private static Tool ApplyOpsTool { get; } = new()
     {
         Name = ApplyOps,
-        Description = "Edit a workflow with small ops against the revision you read: add_node, set_config (a path set), remove_node, connect, disconnect, rename, set_meta. All ops apply or none do; the result is the next revision. "
+        Description = "Edit a workflow with small ops against the revision you read: add_node, set_config (a path set), remove_node, connect, disconnect, rename, set_meta (name, description, concurrency, result). All ops apply or none do; the result is the next revision. "
             + "A stale baseRevision is a conflict that names the current revision.",
         InputSchema = ContextTools.Schema(new JsonObject
         {
@@ -131,12 +134,25 @@ internal static partial class WorkflowTools
     private static Tool RunTool { get; } = new()
     {
         Name = Run,
-        Description = "Start a run of a workflow's active revision by hand. It answers started, queued or skipped by the workflow's concurrency. A session that a run of this workflow launched can't start the workflow again.",
+        Description = "Start a run of a workflow's active revision by hand. It answers started, queued or skipped by the workflow's concurrency. A session that a run of this workflow launched can't start the workflow again (SND-GRAPH-109); that guard does nothing until graph runs launch agent sessions.",
         InputSchema = ContextTools.Schema(new JsonObject
         {
             ["slug"] = ContextTools.Property("string", SlugText),
             ["payload"] = ContextTools.Property("object", "What the manual trigger hands on, a JSON object"),
         }, required: ["slug"]),
+        Annotations = Write(),
+    };
+
+    private static Tool RerunTool { get; } = new()
+    {
+        Name = Rerun,
+        Description = "Re-run an ended run from one step: a new run of that run's revision. The steps before 'from' keep their stored output, 'from' and the steps after it run again. Refused while the run is in flight (SND-GRAPH-125), when an earlier step did not succeed (SND-GRAPH-126), or for a step inside a for_each body (re-run from the for_each step). Answers started, queued or skipped like workflow_run.",
+        InputSchema = ContextTools.Schema(new JsonObject
+        {
+            ["run"] = ContextTools.Property("string", "The ended run to start from, '<slug>@<revision>:<occurrence>'"),
+            ["from"] = ContextTools.Property("string", "The node id of the step to run first again"),
+            ["input"] = ContextTools.Property("object", "A JSON object that replaces the step's stored input (the engine does not read it yet)"),
+        }, required: ["run", "from"]),
         Annotations = Write(),
     };
 
@@ -168,6 +184,6 @@ internal static partial class WorkflowTools
         Annotations = new ToolAnnotations { ReadOnlyHint = true, OpenWorldHint = false },
     };
 
-    /// <summary>The eleven tools.</summary>
-    internal static IReadOnlyList<Tool> All { get; } = [CreateTool, ApplyOpsTool, ReplaceTool, ValidateTool, ActivateTool, PauseTool, DeleteTool, RunTool, CancelTool, DocsTool, BlocksTool];
+    /// <summary>The twelve tools.</summary>
+    internal static IReadOnlyList<Tool> All { get; } = [CreateTool, ApplyOpsTool, ReplaceTool, ValidateTool, ActivateTool, PauseTool, DeleteTool, RunTool, RerunTool, CancelTool, DocsTool, BlocksTool];
 }

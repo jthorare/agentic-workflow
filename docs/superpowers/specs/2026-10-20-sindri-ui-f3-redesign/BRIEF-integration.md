@@ -33,7 +33,7 @@ Write a small node script in your own scratch dir (NOT in the screens dir, NOT i
 Playwright from `~/repos/agentic-workflow/skills/ui-evidence/node_modules/playwright` (import it by absolute
 path; launch chromium headless; close the browser at the end, always, in a finally) and:
 - collects every `<a href>` and every element with `data-href`/onclick navigation, resolves relative links, and fails
-  on any target file that doesn't exist or any `#state`/`?run=` value the target page doesn't handle (check that the
+  on any target file that doesn't exist or any `#state`/`?run=` value the target page doesn't support (check that the
   target renders something different from its default when the param is set, or that its script reads that param);
 - clicks through the tour stops 1..N and screenshots each at 1440x900 to `screens/tour/NN-<name>.png`;
 - reports console errors per page.

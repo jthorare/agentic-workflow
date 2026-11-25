@@ -30,7 +30,7 @@ internal sealed class GetReviewPageService(IApprovedProfile approvals, IReviewPa
             return SindriErrors.InvalidInput.With(string.Create(CultureInfo.InvariantCulture, $"not a GitHub pull request name: {request.Owner}/{request.Repo}#{request.Number}"));
         }
 
-        var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
+        var approved = await approvals.ForRead(cancellationToken).ConfigureAwait(false);
         if (approved.IsError)
         {
             return approved.Error;

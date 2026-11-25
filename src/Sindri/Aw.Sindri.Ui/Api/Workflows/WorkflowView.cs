@@ -16,6 +16,8 @@ namespace Aw.Sindri.Ui.Api.Workflows;
 /// <param name="SpecHash">The shown revision's hash.</param>
 /// <param name="Spec">The shown revision's graph, the stored document, kept raw: the page counts its nodes and draws nothing yet.</param>
 /// <param name="Positions">Where each node is drawn.</param>
+/// <param name="Summaries">The line of each node, in plain words; null from a Sindri that sends none.</param>
+/// <param name="NextRunAt">When the active schedule next runs; null when it is off, archived, run by hand or by an event, or from a Sindri that sends none.</param>
 internal sealed record WorkflowView(
     string Id,
     string Slug,
@@ -29,4 +31,6 @@ internal sealed record WorkflowView(
     DateTimeOffset ChangedAt,
     string SpecHash,
     JsonElement Spec,
-    IReadOnlyList<NodePositionView> Positions);
+    IReadOnlyList<NodePositionView> Positions,
+    IReadOnlyList<NodeSummaryView>? Summaries = null,
+    DateTimeOffset? NextRunAt = null);

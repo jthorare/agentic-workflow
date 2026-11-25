@@ -11,6 +11,7 @@ using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Infrastructure.Workflows;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Workflow;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Temporalio.Client;
@@ -23,25 +24,32 @@ namespace Aw.Sindri.Tests.Workflows;
 /// A worker for <see cref="GraphWorkflow"/> on the time-skipping server, over in-memory stores: the real starter and the Temporal launcher start runs,
 /// the real activities run them, and the test blocks ('echo', 'fail', 'hold', plus the shipped 'manual' and 'condition') are the nodes.
 /// </summary>
-internal sealed class GraphRig : IAsyncDisposable
+internal sealed partial class GraphRig : IAsyncDisposable
 {
     private static int _count;
+    private static readonly TimeSpan _cancelHangLimit = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan _patience = TimeSpan.FromSeconds(30);
     private readonly string _taskQueue;
     private readonly CancellationTokenSource _stop = new();
     private readonly TemporalWorker _worker;
     private readonly Task _loop;
+    private readonly RigLog _log;
     private readonly GraphRunStarter _starter;
     private readonly InMemorySindriStore _ledger;
+    private readonly SindriTimeSkippingServer _server;
 
-    private GraphRig(WorkflowEnvironment environment, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits)
+    private GraphRig(SindriTimeSkippingServer server, RigLog log, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits, int agentLaunchAttempts = 0, IReadOnlyList<IGraphBlock>? moreBlocks = null)
     {
-        // why: the test server is shared by the class, and a run id or task queue can be used once on it
+        _server = server;
+        _log = log;
+        var environment = server.Environment;
+        // why: a run id or task queue can be used once on a server, and the counter keeps the slugs of one process apart
         var number = Interlocked.Increment(ref _count).ToString(System.Globalization.CultureInfo.InvariantCulture);
         Slug = $"walk-test-{number}";
         _taskQueue = $"graph-test-{number}";
         var clock = new FakeTimeProvider(KnownInstants.Epoch);
         Runs = new InMemoryWorkflowRunStore(clock);
+        RunFaults = new FaultingRunStore(Runs);
         Workflows = new InMemoryWorkflowStore(clock);
         Blocks = new GraphTestBlocks();
         Client = environment.Client;
@@ -52,17 +60,16 @@ internal sealed class GraphRig : IAsyncDisposable
         held.Hold(_ledger.Acquire(probe.Self(), Token).AsTask().GetAwaiter().GetResult().Value);
         var ids = new SequentialIdGenerator();
         var mirror = new GraphMirror(_ledger, held, new EventFactory(EventScope.ControlPlane, clock, ids, SliceHarness.Json, new AsyncLocalCallerContextAccessor(ids)));
-        var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success(Client)), _taskQueue);
-        var starter = new GraphRunStarter(Runs, launcher, mirror, clock, NullLogger<GraphRunStarter>.Instance);
-        _starter = starter;
+        var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success(Client)), _taskQueue, agentLaunchAttempts);
+        var starter = _starter = new GraphRunStarter(RunFaults, launcher, mirror, clock, NullLogger<GraphRunStarter>.Instance);
         // why: the real wait polls on a clock; the fake one never moves while a node waits, so the caller gets the system clock
         var caller = new GraphWorkflowCaller(Workflows, Runs, starter, new InMemoryProfiles(), TimeProvider.System);
         Seen = new GraphTestBlocks.MemorySeen();
-        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new ForEachBlock(forEachLimits is { } limits ? new FixedForEachLimits(limits) : new DefaultForEachLimits()), new CollectBlock(), new OnlyNewBlock(Seen), new RunWorkflowBlock(caller), new WorkflowCallTrigger(), new WaitBlock(clock), new AskOwnerBlock(Questions, clock), .. Blocks.All()]);
-        var options = new TemporalWorkerOptions(_taskQueue)
+        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new ForEachBlock(forEachLimits is { } limits ? new FixedForEachLimits(limits) : new DefaultForEachLimits()), new CollectBlock(), new OnlyNewBlock(GraphFence.Seen(Seen)), new RunWorkflowBlock(caller), new WorkflowCallTrigger(), new WaitBlock(clock), new AskOwnerBlock(GraphFence.Question(Questions), clock), new NotifyBlock(GraphFence.Notify(Ports)), new CreateItemBlock(GraphFence.CreateItem(Ports)), .. Blocks.All(), .. moreBlocks ?? []]);
+        var options = new TemporalWorkerOptions(_taskQueue) { LoggerFactory = _log }
             .AddWorkflow<GraphWorkflow>()
             .AddWorkflow<GraphIterationWorkflow>()
-            .AddAllActivities(new GraphRunActivities(Runs, Workflows, starter, mirror))
+            .AddAllActivities(new GraphRunActivities(RunFaults, Workflows, starter, mirror, new GraphRunItemRepair(ItemRepair, NullLogger<GraphRunItemRepair>.Instance)))
             .AddAllActivities(new GraphBlockActivities(registry, Runs, Workflows));
         if (agents is not null)
         {
@@ -75,6 +82,12 @@ internal sealed class GraphRig : IAsyncDisposable
     }
 
     public InMemoryWorkflowRunStore Runs { get; }
+
+    /// <summary>The store the starter and the activities write through: it is <see cref="Runs"/> until a test sets <see cref="FaultingRunStore.FailWhen"/> (issue 2999). Tests read through <see cref="Runs"/>.</summary>
+    internal FaultingRunStore RunFaults { get; }
+
+    /// <summary>The run-item repair the activities call when a run ends; it records the runs it was asked about (issue 2588).</summary>
+    public SpyRunItemRepair ItemRepair { get; } = new();
 
     public InMemoryWorkflowStore Workflows { get; }
 
@@ -89,18 +102,57 @@ internal sealed class GraphRig : IAsyncDisposable
 
     public ITemporalClient Client { get; }
 
+    /// <summary>The rig's own time-skipping server: a task a stopped rig leaves in flight dies with it and can't freeze time for another rig (issue 2574).</summary>
+    public WorkflowEnvironment Environment => _server.Environment;
+
     /// <summary>The takeover, handback and report of the run's agent node, over the real Temporal adapter.</summary>
     internal TemporalAgentNodeControl Control { get; }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public static GraphRig Start(WorkflowEnvironment environment, IAgentNodeRuntime? agents = null) => new(environment, agents, forEachLimits: null);
+    /// <summary>Starts a time-skipping server of its own and a rig on it.</summary>
+    /// <param name="agents">The agent runtime of 'run_agent' nodes, when the test has one.</param>
+    /// <returns>The started rig.</returns>
+    public static Task<GraphRig> StartAsync(IAgentNodeRuntime? agents = null) => StartAsync(agents, forEachLimits: null);
+
+    /// <summary>Starts a time-skipping server of its own and a rig on it whose 'run_agent' launch is tried <paramref name="agentLaunchAttempts"/> times before the node fails.</summary>
+    /// <param name="agents">The agent runtime of 'run_agent' nodes.</param>
+    /// <param name="agentLaunchAttempts">The cap on launch attempts.</param>
+    /// <returns>The started rig.</returns>
+    public static Task<GraphRig> StartAsync(IAgentNodeRuntime agents, int agentLaunchAttempts) => StartAsync(agents, forEachLimits: null, agentLaunchAttempts);
 
     /// <summary>A rig whose for_each blocks read <paramref name="forEachLimits"/> as the profile's limits.</summary>
-    /// <param name="environment">The shared Temporal test server.</param>
     /// <param name="forEachLimits">The profile's item cap and batch size.</param>
     /// <returns>The started rig.</returns>
-    public static GraphRig Start(WorkflowEnvironment environment, ForEachLimits forEachLimits) => new(environment, agents: null, forEachLimits);
+    public static Task<GraphRig> StartAsync(ForEachLimits forEachLimits) => StartAsync(agents: null, forEachLimits);
+
+    /// <summary>A rig that also runs <paramref name="moreBlocks"/>, such as a real 'prompt' over a scripted model and a real 'code' run in process.</summary>
+    /// <param name="moreBlocks">The blocks to add; their type names must not repeat the rig's own.</param>
+    /// <returns>The started rig.</returns>
+    public static Task<GraphRig> StartAsync(IReadOnlyList<IGraphBlock> moreBlocks) => StartAsync(agents: null, forEachLimits: null, moreBlocks: moreBlocks);
+
+    /// <summary>A rig with both an agent runtime for 'run_agent' nodes and <paramref name="moreBlocks"/>.</summary>
+    /// <param name="agents">The agent runtime.</param>
+    /// <param name="moreBlocks">The blocks to add.</param>
+    /// <returns>The started rig.</returns>
+    public static Task<GraphRig> StartAsync(IAgentNodeRuntime agents, IReadOnlyList<IGraphBlock> moreBlocks) => StartAsync(agents, forEachLimits: null, moreBlocks: moreBlocks);
+
+    private static async Task<GraphRig> StartAsync(IAgentNodeRuntime? agents, ForEachLimits? forEachLimits, int agentLaunchAttempts = 0, IReadOnlyList<IGraphBlock>? moreBlocks = null)
+    {
+        // why: the SDK core's own warnings (e.g. 'Error while completing workflow activation ... ACTIVITY_UNKNOWN') go to the runtime of the server's client, so the rig's log is that runtime's logger (issue 2877)
+        var log = new RigLog();
+        var server = new SindriTimeSkippingServer { CoreLogger = log.CreateLogger("temporal-core") };
+        await server.InitializeAsync();
+        try
+        {
+            return new GraphRig(server, log, agents, forEachLimits, agentLaunchAttempts, moreBlocks);
+        }
+        catch
+        {
+            await server.DisposeAsync();
+            throw;
+        }
+    }
 
     private sealed class FixedForEachLimits(ForEachLimits limits) : IForEachLimitSource
     {
@@ -152,6 +204,112 @@ internal sealed class GraphRig : IAsyncDisposable
     public async Task<GraphStart> Trigger((WorkflowId Id, WorkflowSlug Slug) workflow, int occurrence, GraphConcurrency mode, string trigger = """{"kind":"manual"}""") =>
         (await _starter.Start(new GraphStartRequest(workflow.Id, workflow.Slug, Revision: 1, occurrence, trigger, mode), Token)).Value;
 
+    /// <summary>
+    /// Cancels the run through its Temporal handle, then polls the run row until it has a final status, under the hang limit (5 min)
+    /// and not the check patience, so box load cannot fail the wait and only a real hang does; returns the final run row (issue 2678).
+    /// </summary>
+    /// <param name="id">The run.</param>
+    /// <param name="whenParked">
+    /// True (the default) sends the cancel only once the run is parked: its history ends at a completed workflow task or a started timer (check patience, else it throws).
+    /// False sends it at once, for a test that cancels a held or retried activity on purpose.
+    /// why: a cancel that lands while a short activity returns makes the time-skipping server refuse the workflow's answer (ACTIVITY_UNKNOWN) and never retry it, so the run hangs (issue 2877); a held activity never parks, so those tests opt out
+    /// </param>
+    /// <returns>The final run row.</returns>
+    public async Task<WorkflowRun> Cancel(WorkflowRunId id, bool whenParked = true)
+    {
+        if (whenParked)
+        {
+            await Parked(id);
+        }
+
+        await Client.GetWorkflowHandle(id.Value).CancelAsync();
+        try
+        {
+            return await Final(id, _cancelHangLimit);
+        }
+        catch (OperationCanceledException e) when (!Token.IsCancellationRequested)
+        {
+            throw new InvalidOperationException($"Run {id.Value} never reached a final status within {_cancelHangLimit} after the cancel (hang limit). {await HistoryOf(id)}", e);
+        }
+    }
+
+    // why: see Cancel's whenParked; the run is parked when nothing runs after its last completed workflow task: the history ends there or at a timer the workflow started
+    private async Task Parked(WorkflowRunId id)
+    {
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        limit.CancelAfter(_patience);
+        var last = new List<string>();
+        try
+        {
+            while (true)
+            {
+                var history = await Client.GetWorkflowHandle(id.Value).FetchHistoryAsync(new WorkflowHistoryEventFetchOptions { Rpc = new RpcOptions { CancellationToken = limit.Token } });
+                if (history.Events.LastOrDefault()?.EventType is Temporalio.Api.Enums.V1.EventType.WorkflowTaskCompleted or Temporalio.Api.Enums.V1.EventType.TimerStarted)
+                {
+                    return;
+                }
+
+                last = [.. history.Events.TakeLast(5).Select(static e => e.EventType.ToString())];
+                await Task.Delay(TimeSpan.FromMilliseconds(25), limit.Token);
+            }
+        }
+        catch (OperationCanceledException e) when (limit.IsCancellationRequested && !Token.IsCancellationRequested)
+        {
+            throw new InvalidOperationException($"Run {id.Value} never parked within {_patience} (history ends at: {string.Join(", ", last)}); pass whenParked: false to cancel a held activity on purpose.", e);
+        }
+    }
+
+    // why: a hang after a cancel says nothing on its own (issue 2877); the event types, the last activity failures and the run row show where the run stopped
+    private async Task<string> HistoryOf(WorkflowRunId id)
+    {
+        using var limit = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        try
+        {
+            var history = await Client.GetWorkflowHandle(id.Value).FetchHistoryAsync(new WorkflowHistoryEventFetchOptions { Rpc = new RpcOptions { CancellationToken = limit.Token } });
+            var events = history.Events.Select(static e => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{e.EventId}:{e.EventType}")).ToList();
+            var failures = history.Events
+                .Where(static e => e.ActivityTaskFailedEventAttributes != null)
+                .Select(static e => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{e.EventId}: {e.ActivityTaskFailedEventAttributes.Failure?.Message}"))
+                .TakeLast(5);
+            var row = await Runs.Get(id, limit.Token);
+            var nodes = await NodeStatuses(id);
+            var worker = _loop.IsFaulted ? $"faulted: {_loop.Exception?.GetBaseException().Message}" : _loop.Status.ToString();
+            return $"Worker: {worker}. Worker log (last 15): {string.Join(" || ", _log.Last(15))}. Run row: {(row.IsSuccess ? row.Value.Status.ToString() : row.Error.Code)}. Nodes: {string.Join(", ", nodes.Select(static n => $"{n.Key}={n.Value}"))}. " +
+                $"History ({events.Count}): {string.Join(' ', events.TakeLast(40))}. Activity failures: {string.Join(" | ", failures)}";
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            return $"(history unavailable: {e.GetType().Name}: {e.Message})";
+        }
+    }
+
+    /// <summary>
+    /// Waits until the run's Temporal history shows the cancel request, under the hang limit (5 min) and not the check patience,
+    /// so a loaded box cannot fail the wait and only a lost cancel does (issue 2678).
+    /// </summary>
+    public async Task CancelRequested(WorkflowRunId id)
+    {
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        limit.CancelAfter(_cancelHangLimit);
+        try
+        {
+            while (true)
+            {
+                var history = await Client.GetWorkflowHandle(id.Value).FetchHistoryAsync();
+                if (history.Events.Any(static e => e.WorkflowExecutionCancelRequestedEventAttributes != null))
+                {
+                    return;
+                }
+
+                await Task.Delay(TimeSpan.FromMilliseconds(50), limit.Token);
+            }
+        }
+        catch (OperationCanceledException e) when (limit.IsCancellationRequested && !Token.IsCancellationRequested)
+        {
+            throw new InvalidOperationException($"The history of run {id.Value} never showed WorkflowExecutionCancelRequested within {_cancelHangLimit} (hang limit).", e);
+        }
+    }
+
     /// <summary>Waits until the run has a final status.</summary>
     public async Task<WorkflowRun> Final(WorkflowRunId id, TimeSpan? patience = null)
     {
@@ -202,6 +360,10 @@ internal sealed class GraphRig : IAsyncDisposable
     public async Task<IReadOnlyDictionary<int, NodeRun>> ItemRuns(WorkflowRunId id, string node) =>
         (await Runs.NodeRuns(id, Token)).Value.Where(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal)).ToDictionary(static n => n.ItemIndex);
 
+    /// <summary>The payloads of every ledger event of one type, oldest first (#3151).</summary>
+    public async Task<IReadOnlyList<JsonObject>> Payloads(string type) =>
+        [.. (await _ledger.ReadAfter(0, 1000, Token)).Value.Where(e => string.Equals(e.Envelope.Type, type, StringComparison.Ordinal)).Select(static e => JsonNode.Parse(e.Envelope.Payload)!.AsObject())];
+
     /// <summary>The ledger rows the run wrote, as '&lt;type&gt; &lt;idempotency key&gt;', oldest first.</summary>
     public async Task<IReadOnlyList<string>> Rows()
     {
@@ -225,5 +387,49 @@ internal sealed class GraphRig : IAsyncDisposable
 
         _worker.Dispose();
         _stop.Dispose();
+        // why: a task the worker held when it stopped keeps time skipping locked on its server (issue 2574); the server is the rig's own, so it dies with the rig
+        await _server.DisposeAsync();
+    }
+
+    // why: a hung cancel left the worker's state unknown (issue 2877); the last lines the worker logged go in the hang message
+    private sealed class RigLog : ILoggerFactory
+    {
+        private readonly System.Collections.Concurrent.ConcurrentQueue<string> _lines = new();
+
+        public IEnumerable<string> Last(int count) => _lines.ToArray().TakeLast(count);
+
+        public ILogger CreateLogger(string categoryName) => new Writer(this, categoryName);
+
+        public void AddProvider(ILoggerProvider provider)
+        {
+        }
+
+        public void Dispose()
+        {
+        }
+
+        private void Add(string line)
+        {
+            _lines.Enqueue(line);
+            while (_lines.Count > 200 && _lines.TryDequeue(out _))
+            {
+            }
+        }
+
+        private sealed class Writer(RigLog log, string category) : ILogger
+        {
+            public IDisposable? BeginScope<TState>(TState state)
+                where TState : notnull => null;
+
+            public bool IsEnabled(LogLevel logLevel) => logLevel >= LogLevel.Information;
+
+            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+            {
+                if (IsEnabled(logLevel))
+                {
+                    log.Add($"{logLevel} {category}: {formatter(state, exception)} {exception?.GetBaseException().Message}");
+                }
+            }
+        }
     }
 }

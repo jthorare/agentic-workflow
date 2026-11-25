@@ -62,7 +62,7 @@ public sealed class ThemeResourcesTests
             TextScale.Apply(Application.Current!.Resources, 1.2); // why: the headless session starts the app
             Assert.Equal(1.2, Resource("Type.Scale"));
             Assert.Equal(13 * 1.2, (double)Resource("Type.Body.Size")!, 6); // why: set just above
-            Assert.Equal(24 * 1.2, (double)Resource("Type.PageTitle.LineHeight")!, 6); // why: set just above
+            Assert.Equal(32 * 1.2, (double)Resource("Type.PageTitle.LineHeight")!, 6); // why: set just above
 
             Assert.Equal(16 * 1.2, (double)Resource("Size.Icon")!, 6); // why: set just above; R1, icons scale with the text
 

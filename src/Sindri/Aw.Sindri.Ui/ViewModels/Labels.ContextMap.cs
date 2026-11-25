@@ -37,12 +37,17 @@ internal static partial class Labels
     /// <summary>The code band's counts.</summary>
     /// <param name="files">How many files.</param>
     /// <param name="tests">How many of them are tests.</param>
-    /// <param name="namesAvailable">Whether the code index served function names.</param>
-    /// <returns>"2 files · 0 tests · function names not available yet".</returns>
-    internal static string ContextMapMetaCode(int files, int tests, bool namesAvailable) => Dots(
+    /// <param name="names">The function names' state as served: "ok", "stale", or any other (not indexed), the same reading as the coverage sentence (#4122).</param>
+    /// <returns>"2 files · 0 tests · function names not indexed yet", "2 files · 0 tests · function names partly indexed" or "2 files · 0 tests".</returns>
+    internal static string ContextMapMetaCode(int files, int tests, string names) => Dots(
         Count(files, "file", "files"),
         Count(tests, "test", "tests"),
-        namesAvailable ? null : "function names not available yet");
+        names switch
+        {
+            "ok" => null,
+            "stale" => "function names partly indexed",
+            _ => "function names not indexed yet",
+        });
 
     /// <summary>The mark on a node the read starts at.</summary>
     internal const string ContextMapStartsHere = "Starts here";
@@ -128,9 +133,6 @@ internal static partial class Labels
     /// <summary>The mark on the page head of a draft map.</summary>
     internal const string ContextMapDraftTag = "Draft map";
 
-    /// <summary>The label of the starting points box.</summary>
-    internal const string ContextMapStartsAt = "Starts at";
-
     /// <summary>The map view's name in the view switch.</summary>
     internal const string ContextMapViewMap = "Map";
 
@@ -152,35 +154,62 @@ internal static partial class Labels
     /// <summary>The coverage area for the code.</summary>
     internal const string ContextMapAreaCode = "Code";
 
-    /// <summary>The coverage area for function names.</summary>
-    internal const string ContextMapAreaNames = "Function names";
+    /// <summary>The Files view's note on the function names when the code index is not built.</summary>
+    internal const string ContextMapNamesDetail = "Function names aren't indexed yet: the code index isn't built.";
 
-    /// <summary>An area that was searched in full.</summary>
-    internal const string ContextMapSearched = "searched";
+    /// <summary>The function names reason (the Files view note and the coverage sentence) while the code index is being built.</summary>
+    internal const string ContextMapNamesBuilding = "Function names aren't indexed yet: the code index is still building.";
 
-    /// <summary>An area that was searched in part.</summary>
-    internal const string ContextMapLimited = "limited";
+    /// <summary>The function names reason (the Files view note and the coverage sentence) when the code index is damaged.</summary>
+    internal const string ContextMapNamesDamaged = "Function names aren't indexed: the code index is damaged and will be rebuilt.";
 
-    /// <summary>An area that could not be searched.</summary>
-    internal const string ContextMapNotAvailable = "not available";
+    /// <summary>The function names reason (the Files view note and the coverage sentence) when no code index is set up for the repo.</summary>
+    internal const string ContextMapNamesNotConfigured = "Function names aren't indexed: no code index is set up for this repo.";
 
-    /// <summary>The detail under the function names area when the code index is not built.</summary>
-    internal const string ContextMapNamesDetail = "Function names are not available yet: the code index isn't built.";
+    /// <summary>The function names reason (the Files view note and the coverage sentence) when the files belong to more than one repo.</summary>
+    internal const string ContextMapNamesSeveralRepos = "Function names aren't indexed: these files are in more than one repo.";
 
-    /// <summary>The coverage sentence's lead.</summary>
-    /// <param name="searched">How many areas were searched in full.</param>
-    /// <param name="of">How many areas there are.</param>
-    /// <returns>"3 of 4 areas searched.".</returns>
-    internal static string ContextMapCoverageLead(int searched, int of) => string.Create(CultureInfo.InvariantCulture, $"{searched} of {of} areas searched.");
+    /// <summary>The function names reason (the Files view note and the coverage sentence) for a reason the page does not know.</summary>
+    internal const string ContextMapNamesUnknown = "Function names aren't indexed right now.";
 
-    /// <summary>The coverage sentence's rest, naming the areas searched in part.</summary>
-    /// <param name="limited">The names of those areas (at least one).</param>
-    /// <returns>"Code is limited." or "Product and Code are limited.".</returns>
-    internal static string ContextMapCoverageRest(IReadOnlyList<string> limited) => limited.Count switch
+    /// <summary>The coverage sentence when no area was searched.</summary>
+    internal const string ContextMapSearchedNothing = "Nothing searched.";
+
+    /// <summary>The coverage sentence's reason when the function names are not indexed.</summary>
+    internal const string ContextMapNamesNotIndexed = "Function names aren't indexed yet.";
+
+    /// <summary>The coverage sentence's words when the code index is at another commit, so only some function names are indexed.</summary>
+    internal const string ContextMapNamesStale = "Function names are only partly indexed.";
+
+    /// <summary>The coverage sentence's last part after a function names note: where the code index's state and its fix are shown (#4122).</summary>
+    internal const string ContextMapNamesNextStep = "See " + CodeIndexCard + " on the " + System + " page.";
+
+    /// <summary>The coverage sentence's first part.</summary>
+    /// <param name="full">The areas searched in full.</param>
+    /// <param name="partly">The areas searched in part (with <paramref name="full"/>, at least one area).</param>
+    /// <returns>"Searched Code.", "Searched part of Why." or "Searched all of Product and part of Why and Code.".</returns>
+    internal static string ContextMapSearchedSentence(IReadOnlyList<string> full, IReadOnlyList<string> partly) => (full.Count, partly.Count) switch
     {
-        0 => string.Empty,
-        1 => limited[0] + " is limited.",
-        _ => string.Join(", ", limited.Take(limited.Count - 1)) + " and " + limited[^1] + " are limited.",
+        (_, 0) => "Searched " + AreaList(full) + ".",
+        (0, _) => "Searched part of " + AreaList(partly) + ".",
+        _ => "Searched all of " + AreaList(full) + (full.Count > 1 ? "," : string.Empty) + " and part of " + AreaList(partly) + ".",
+    };
+
+    /// <summary>The coverage sentence's reason for areas with no records.</summary>
+    /// <param name="areas">The areas with no records (at least one).</param>
+    /// <returns>"No Why or Product records." or "No Why, Product or Code records.".</returns>
+    internal static string ContextMapNoRecords(IReadOnlyList<string> areas) => "No " + OrList(areas) + " records.";
+
+    private static string OrList(IReadOnlyList<string> areas) => areas.Count switch
+    {
+        1 => areas[0],
+        _ => string.Join(", ", areas.Take(areas.Count - 1)) + " or " + areas[^1],
+    };
+
+    private static string AreaList(IReadOnlyList<string> areas) => areas.Count switch
+    {
+        1 => areas[0],
+        _ => string.Join(", ", areas.Take(areas.Count - 1)) + " and " + areas[^1],
     };
 
     /// <summary>The zoom in button.</summary>

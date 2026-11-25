@@ -45,6 +45,9 @@ public sealed class CliArgumentsTests
     {
         Assert.Equal(("type", "name", "Ada", true), TypeOf(Build("type", "--automation-id", "name", "--value", "Ada", "--replace").Value));
         Assert.Contains("\"chord\":\"Ctrl+K\"", Text(Build("key", "--chord", "Ctrl+K").Value), StringComparison.Ordinal);
+        Assert.Equal(("hover", """{"selector":{"nodeId":null,"automationId":"save","name":null,"type":null,"text":null,"textContains":null,"index":null},"off":false}"""),
+            (Build("hover", "--automation-id", "save").Value.Verb, Text(Build("hover", "--automation-id", "save").Value)));
+        Assert.Contains("\"off\":true", Text(Build("hover", "--automation-id", "save", "--off").Value), StringComparison.Ordinal);
         Assert.Contains("\"dy\":-120", Text(Build("scroll", "--dy", "-120").Value), StringComparison.Ordinal);
         Assert.Contains("\"state\":\"gone\"", Text(Build("wait-for", "--name", "spinner", "--state", "gone", "--wait-ms", "500").Value), StringComparison.Ordinal);
         Assert.Contains("\"width\":1440", Text(Build("window", "--width", "1440", "--height", "900").Value), StringComparison.Ordinal);

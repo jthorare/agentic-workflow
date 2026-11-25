@@ -18,7 +18,7 @@
     <ItemsControl x:Name="AddSeveralRows" ItemsSource="{Binding Rows}">
       <ItemsControl.ItemTemplate>
         <DataTemplate x:DataType="vm:AddSeveralPagesRowViewModel">
-          <Border Classes="card" Margin="0,0,0,6">
+          <Border Classes="card" Margin="0,0,0,8">
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
               <CheckBox x:Name="AddSeveralTick" IsChecked="{Binding Ticked, Mode=TwoWay}" IsEnabled="{Binding CanTick}" AutomationProperties.Name="{Binding TickName}" />
               <StackPanel Grid.Column="1" Spacing="2">
@@ -55,7 +55,7 @@
                 </ComboBox></StackPanel>
                 <ToggleButton x:Name="AddSeveralOpen" Content="{Binding OpenText}" IsChecked="{Binding IsOpen, Mode=TwoWay}" IsVisible="{Binding HasFields}" HorizontalAlignment="Left"
                               AutomationProperties.Name="{Binding OpenName}" />
-                <StackPanel x:Name="AddSeveralFields" Spacing="6" IsVisible="{Binding IsOpen}">
+                <StackPanel x:Name="AddSeveralFields" Spacing="8" IsVisible="{Binding IsOpen}">
                   <TextBlock Classes="caption subtle" Text="{Binding NameLabel}" AutomationProperties.AccessibilityView="Raw" />
                   <TextBox x:Name="AddSeveralName" Text="{Binding Name, Mode=TwoWay}" AutomationProperties.Name="{Binding NameLabel}" />
                   <ItemsControl ItemsSource="{Binding Actions}">

@@ -22,6 +22,14 @@ public sealed class EngineRowTests
         });
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void The_answer_row_shows_the_item_a_loop_questions_answer_needs()
+    {
+        var row = new CommandCatalog().Rows.Single(r => r.Action.Value == "AnswerQuestion");
+
+        Assert.Equal("sindri answer <question> [--text <text>] [--choice <choice>] [--item <index>]", row.Cli.Text);
+    }
+
     private static readonly (string Action, ActionClass Class, string Ui)[] _expected =
     [
         ("IssueChallenge", ActionClass.Issue, "ready"),

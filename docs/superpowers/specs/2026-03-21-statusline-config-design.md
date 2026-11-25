@@ -18,7 +18,7 @@ Opus    │ feat/my-branch  │ ████████░░ │ $2.40 │ 45m
 Line 1: Header row rendered in dim/grey (`\033[2m`), reset with `\033[0m` at end.
 Line 2: Values with color-coded context bar and rate limit.
 
-The `│` separator is a visual delimiter, not a strict column boundary. Each field uses fixed-width `printf` formatting for reasonable alignment, but very long branch names will be truncated (max 20 chars) rather than breaking the layout.
+The `│` separator is a visual delimiter, not a strict column boundary. Each field uses fixed-width `printf` formatting for reasonable alignment, but long branch names will be truncated (max 20 chars) rather than breaking the layout.
 
 ## Fields
 

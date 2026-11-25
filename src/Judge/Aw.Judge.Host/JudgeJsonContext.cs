@@ -38,6 +38,7 @@ namespace Aw.Judge.Host;
 /// <summary>The package's one source-generated JSON context (spec §4b.3): through AwJson.CreateOptions, and an http host's resolver after ASP.NET's ProblemDetails context.</summary>
 [JsonSerializable(typeof(Error))]
 [JsonSerializable(typeof(HealthOutput))]
+[JsonSerializable(typeof(HealthFailureOutput))]
 [JsonSerializable(typeof(BriefOutput))]
 [JsonSerializable(typeof(DecisionOutput))]
 [JsonSerializable(typeof(JudgeConfig))]

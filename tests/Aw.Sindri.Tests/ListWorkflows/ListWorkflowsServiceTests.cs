@@ -18,7 +18,7 @@ public sealed class ListWorkflowsServiceTests
     public ListWorkflowsServiceTests()
     {
         _workflows = new InMemoryWorkflowStore(_clock);
-        _service = new ListWorkflowsService(_workflows);
+        _service = new ListWorkflowsService(_workflows, new InMemoryWorkflowRunStore(_clock), _clock);
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -62,6 +62,31 @@ public sealed class ListWorkflowsServiceTests
         var result = await _service.Handle(new ListWorkflowsRequest(), Token);
 
         Assert.Equal(["kept"], result.Value.Workflows.Select(static w => w.Slug.Value), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task By_default_an_archived_workflow_is_left_out_and_no_row_carries_an_archived_mark()
+    {
+        var gone = await Create(1, "gone", "Gone");
+        _ = await Create(2, "kept", "Kept");
+        _ = (await _workflows.Archive(gone, Token)).Value;
+
+        var result = await _service.Handle(new ListWorkflowsRequest(), Token);
+
+        Assert.Equal(["kept"], result.Value.Workflows.Select(static w => w.Slug.Value), StringComparer.Ordinal);
+        Assert.All(result.Value.Workflows, static w => Assert.Null(w.Archived));
+    }
+
+    [Fact]
+    public async Task Asked_with_includeArchived_the_archived_workflow_is_listed_and_marked_and_the_live_one_is_not()
+    {
+        var gone = await Create(1, "gone", "Gone");
+        _ = await Create(2, "kept", "Kept");
+        _ = (await _workflows.Archive(gone, Token)).Value;
+
+        var result = await _service.Handle(new ListWorkflowsRequest { IncludeArchived = true }, Token);
+
+        Assert.Equal(["gone:True", "kept:"], [.. result.Value.Workflows.Select(static w => w.Slug.Value + ":" + w.Archived)], StringComparer.Ordinal);
     }
 
     private static GraphSpec Spec(string name) =>

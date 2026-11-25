@@ -11,7 +11,7 @@ aw-meta: 3 open obligation(s); close them before stopping.
 2. [Reply] reply to smoke-ui (d-queued): can you rebase me
    next: SendMessage to smoke-ui; or aw-meta inbox-dismiss d-queued --reason "<why>"; or aw-meta inbox-defer d-queued --reason "<why>" --until +30m
 3. [RearmWatch] no active coordinator consumer: watch last beat never, 2 waiting
-   next: Claude: aw-meta watch --for 29m (with Monitor, persistent); Codex/Cursor: aw-meta watch --until-mail --for 29m in the foreground, rearm after each exit
+   next: Claude: aw-meta watch --until-event (run_in_background, ends on the first real line); Codex/Cursor: aw-meta watch --until-mail --for 29m in the foreground, rearm after each exit
 exit 1
 ## outbox-record smoke-api
 recorded the send; closed: reply to smoke-api (m-idle): ready #1 079c2541

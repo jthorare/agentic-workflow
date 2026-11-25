@@ -44,6 +44,9 @@ internal static partial class Labels
     /// <summary>The Agents card's row for sources that failed.</summary>
     internal const string AgentsProblems = "Problems";
 
+    /// <summary>The Agents card's link to the Agents page, under its problems (#4012).</summary>
+    internal const string AgentsOpen = "Open Agents";
+
     /// <summary>The Views card with nothing to say yet.</summary>
     internal const string ViewsUnknown = "Not read yet";
 
@@ -171,4 +174,12 @@ internal static partial class Labels
         "workflow-events" => "Passes ledger events to the running workflows.",
         _ => string.Empty,
     };
+
+    /// <summary>The health strip's Views cell, shown only while the views are stalled.</summary>
+    internal const string CellViews = "Views";
+
+    /// <summary>The Views cell's value while stalled.</summary>
+    /// <param name="at">The time the views last caught up ("14:02"), or null when unknown.</param>
+    /// <returns>"stalled at 14:02", or "stalled".</returns>
+    internal static string ViewsStalledAt(string? at) => at is null ? "stalled" : "stalled at " + at;
 }

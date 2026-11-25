@@ -1,9 +1,11 @@
+using System.Globalization;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Gate;
+using Aw.Meta.Core.Github;
 using Aw.Meta.Core.Health;
 using Aw.Meta.Core.Ports;
 
@@ -19,7 +21,8 @@ namespace Aw.Meta.Features.GateRun;
 /// <param name="gates">Stores the run.</param>
 /// <param name="reservation">Computes the heavy-slot reservation from the merge-queue depth before the run.</param>
 /// <param name="clock">Dates the run.</param>
-internal sealed class GateRunService(IMetaConfig config, GateWorkspace workspace, GateStepRunner steps, IGateStore gates, HeavyReservation reservation, TimeProvider clock)
+/// <param name="repo">The git and gh calls a CI gate reads GitHub with.</param>
+internal sealed class GateRunService(IMetaConfig config, GateWorkspace workspace, GateStepRunner steps, IGateStore gates, HeavyReservation reservation, TimeProvider clock, RepoCommands repo)
     : IService<GateRunRequest, GateRunResponse>
 {
     public async ValueTask<Result<GateRunResponse>> Handle(GateRunRequest request, CancellationToken cancellationToken)
@@ -29,6 +32,13 @@ internal sealed class GateRunService(IMetaConfig config, GateWorkspace workspace
         if (team.IsError)
         {
             return team.Error;
+        }
+
+        if (team.Value.Gate.IsCi)
+        {
+            return request.Scopes.Count > 0
+                ? MetaErrors.Invalid.With($"gate.mode is ci: scopes don't apply; run aw-meta gate-run {request.Pr.ToString(CultureInfo.InvariantCulture)}")
+                : await RunCi(team.Value, request.Pr, cancellationToken).ConfigureAwait(false);
         }
 
         if (request.Scopes.FirstOrDefault(scope => !team.Value.Gate.Scopes.ContainsKey(scope)) is { } unknown)
@@ -47,6 +57,28 @@ internal sealed class GateRunService(IMetaConfig config, GateWorkspace workspace
 
         var ran = plan.Value.Prepared.Merged ? await RunSteps(plan.Value, team.Value.Gate, team.Value.Heavy.Cap, cancellationToken).ConfigureAwait(false) : Results.Success<IReadOnlyList<GateStep>>([]);
         return ran.IsError ? ran.Error : await Record(plan.Value, ran.Value, reserved.IsSuccess ? reserved.Value : null, cancellationToken).ConfigureAwait(false);
+    }
+
+    // gate.mode ci: no gate tree, no git fetch and no main (the record's Main is empty: GitHub judged the checks, not a merge onto main), no step, no heavy slot. The record is GitHub's answer for this head: every required check green, the review approved, the merge state clean.
+    private async ValueTask<Result<GateRunResponse>> RunCi(TeamConfig team, int pr, CancellationToken cancellationToken)
+    {
+        var github = repo.Cancelling(cancellationToken);
+        var view = await github.CiView(team.Repo, pr).ConfigureAwait(false);
+        var required = view.IsError ? Results.Failure<IReadOnlyList<RequiredCheck>>(view.Error) : await github.RequiredChecks(team.Repo, pr).ConfigureAwait(false);
+        if (required.IsError)
+        {
+            return required.Error;
+        }
+
+        if (required.Value.Count == 0)
+        {
+            return MetaErrors.NoRequiredChecks.With($"no required checks on {(view.Value.Base.Length == 0 ? "the base branch" : view.Value.Base)}; a repo with no branch protection must not merge on a CI gate, so nothing was recorded");
+        }
+
+        var read = CiGate.Steps(view.Value, required.Value);
+        var record = new GateRecord(pr, view.Value.Head, string.Empty, [GateConfig.CiScope], read, CiGate.Overall(read), clock.GetUtcNow()) { Stack = [] };
+        var saved = await gates.Save(record, cancellationToken).ConfigureAwait(false);
+        return saved.IsError ? saved.Error : new GateRunResponse(saved.Value);
     }
 
     private async ValueTask<Result<GatePlan>> Plan(TeamConfig team, GateRunRequest request, CancellationToken cancellationToken)

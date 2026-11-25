@@ -133,6 +133,60 @@ public sealed class AnchorMatchTests
         Assert.DoesNotContain(node.Error.Extensions ?? Kernel.ErrorExtensions.Empty, m => m.Key == "suggestedAnchors");
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void SND_CONTEXT_003_carries_each_suggestion_with_its_label_and_kind_beside_the_bare_keys()
+    {
+        var graph = new GraphBuilder().Node("action:tab-manager.restore-layout", "Tab layout and restore").Node("concept:tabs.tab-groups", "Tab groups").Build();
+
+        var node = AnchorMatch.Resolve(graph, "how are tabs restored");
+
+        Assert.Equal(ContextErrors.UnknownAnchor.Code, node.Error.Code);
+        Assert.Equal(Members(node.Error, "suggestedAnchors"), [.. Choices(node.Error, "choices").Select(c => c.Key)]);
+        Assert.Contains(("action:tab-manager.restore-layout", "Tab layout and restore", "action"), Choices(node.Error, "choices"));
+        Assert.Contains(("concept:tabs.tab-groups", "Tab groups", "concept"), Choices(node.Error, "choices"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void SND_CONTEXT_037_carries_each_candidate_with_its_label_and_kind_beside_the_bare_keys()
+    {
+        var graph = new GraphBuilder().Node("feature:a", "Same").Node("concept:b", "same").Build();
+
+        var node = AnchorMatch.Resolve(graph, "Same");
+
+        Assert.Equal(ContextErrors.AmbiguousAnchor.Code, node.Error.Code);
+        Assert.Equal([("concept:b", "same", "concept"), ("feature:a", "Same", "feature")], Choices(node.Error, "choices"));
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(200)]
+    [InlineData(199)]
+    public void A_choice_label_up_to_the_cap_is_shown_whole(int length)
+    {
+        var label = new string('a', length);
+
+        var choice = Assert.Single(AnchorMatch.Choices(new GraphBuilder().Node("feature:a", label).Build().Nodes));
+
+        Assert.Equal(label, choice.Label);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(201)]
+    [InlineData(500)]
+    public void A_choice_label_past_the_cap_is_cut_to_the_cap_and_ends_in_an_ellipsis(int length)
+    {
+        var label = new string('a', length);
+
+        var choice = Assert.Single(AnchorMatch.Choices(new GraphBuilder().Node("feature:a", label).Build().Nodes));
+
+        Assert.Equal(new string('a', 199) + "…", choice.Label);   // why: a title cut with no mark looked whole (#3045)
+    }
+
+    private static List<(string Key, string Label, string Kind)> Choices(Kernel.Error error, string name)
+    {
+        var member = Assert.Single(error.Extensions ?? Kernel.ErrorExtensions.Empty, m => m.Key == name);
+        return [.. member.Value.EnumerateArray().Select(e => (e.GetProperty("key").GetString()!, e.GetProperty("label").GetString()!, e.GetProperty("kind").GetString()!))];
+    }
+
     private static List<string> Members(Kernel.Error error, string name)
     {
         var member = Assert.Single(error.Extensions ?? Kernel.ErrorExtensions.Empty, m => m.Key == name);

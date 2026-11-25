@@ -1,3 +1,4 @@
+using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
@@ -77,6 +78,65 @@ public sealed class PurgeResourcesTests : IDisposable
         Assert.Equal(0, none.Value.Removed);
     }
 
+    [Fact]
+    public async Task A_purge_refuses_while_the_owner_has_a_waiting_run()
+    {
+        await CreateWorkflow();
+        Provision("workflow:triage");
+        _ = (await _workflows.Archive(_id, Token)).Value;
+        var run = new WorkflowRun(WorkflowRunId.Of(_slug, 1, 1), _id, 1, "{\"kind\":\"manual\"}", WorkflowRunStatus.Waiting, Outputs: null, Error: null, ItemId: null, _clock.GetUtcNow(), EndedAt: null);
+        _ = (await _runs.Insert(run, Token)).Value;
+
+        var refused = await _service.Handle(new PurgeResourcesRequest("workflow:triage"), Token);
+
+        Assert.Equal("SND-RES-003", refused.Error.Code);
+        Assert.Contains(run.Id.Value, refused.Error.Message, StringComparison.Ordinal);
+        Assert.True(File.Exists(Path.Combine(Root, "workflow", "triage", "state.db")));
+    }
+
+    [Fact]
+    public async Task A_run_that_starts_between_the_check_and_the_delete_keeps_its_folder()
+    {
+        await CreateWorkflow();
+        Provision("workflow:triage");
+        _ = (await _workflows.Archive(_id, Token)).Value;
+        var marker = Path.Combine(Root, "workflow", "triage", "scratch", "run-output.txt");
+        var racing = new StartsARunFirst(new ResourceFiles(Root), () =>
+        {
+            var run = new WorkflowRun(WorkflowRunId.Of(_slug, 1, 1), _id, 1, "{\"kind\":\"manual\"}", WorkflowRunStatus.Running, Outputs: null, Error: null, ItemId: null, _clock.GetUtcNow(), EndedAt: null);
+            _ = _runs.Insert(run, Token).AsTask().Result.Value;
+            File.WriteAllText(marker, "the run's first output");
+        });
+        var service = new PurgeResourcesService(racing, _workflows, _runs);
+
+        var answer = await service.Handle(new PurgeResourcesRequest("workflow:triage"), Token);
+
+        Assert.Equal("SND-RES-003", answer.Error.Code);
+        Assert.True(File.Exists(marker));
+    }
+
+    [Fact]
+    public async Task A_folder_that_cannot_be_deleted_is_an_error_naming_it_not_an_exception()
+    {
+        Assert.SkipWhen(Environment.IsPrivilegedProcess, "a privileged process can delete a read-only folder");
+        await CreateWorkflow();
+        Provision("workflow:triage");
+        _ = (await _workflows.Archive(_id, Token)).Value;
+        var disk = Path.Combine(Root, "workflow", "triage", "scratch");
+        File.SetUnixFileMode(disk, UnixFileMode.UserRead | UnixFileMode.UserExecute);
+        try
+        {
+            var answer = await _service.Handle(new PurgeResourcesRequest("workflow:triage"), Token);
+
+            Assert.Equal("SND-RES-008", answer.Error.Code);
+            Assert.Contains(Path.Combine("workflow", "triage"), answer.Error.Message, StringComparison.Ordinal);
+        }
+        finally
+        {
+            File.SetUnixFileMode(disk, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        }
+    }
+
     private PurgeResourcesService Build() => new(new ResourceFiles(Root), _workflows, _runs);
 
     private async Task CreateWorkflow() =>
@@ -88,5 +148,34 @@ public sealed class PurgeResourcesTests : IDisposable
         var plan = ResourcePlanner.Plan(parsed, new ResourceSpec([new DatabaseResource("state")], [new DiskResource("scratch", "1MiB")], Sandbox: null, []), Root).Value;
         Assert.True(new ResourceStore(Root).Provision(parsed, plan).IsSuccess);
         File.WriteAllText(Path.Combine(Root, parsed.Folder, "scratch", "note.txt"), "kept");
+    }
+
+    /// <summary>A resources fake that runs <paramref name="beforePurge"/> (a run starting) once, just before it first touches the owner's folder.</summary>
+    private sealed class StartsARunFirst(IResourceFiles inner, Action beforePurge) : IResourceFiles
+    {
+        private bool _started;
+
+        public Result<IReadOnlyList<ResourceEntry>> List(ResourceOwner? owner) => inner.List(owner);
+
+        public Result<int> Purge(ResourceOwner owner)
+        {
+            Start();
+            return inner.Purge(owner);
+        }
+
+        public Result<IStagedPurge> Stage(ResourceOwner owner)
+        {
+            Start();
+            return inner.Stage(owner);
+        }
+
+        private void Start()
+        {
+            if (!_started)
+            {
+                _started = true;
+                beforePurge();
+            }
+        }
     }
 }

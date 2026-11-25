@@ -3,6 +3,8 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Features.AgentNodeControl;
 using Aw.Sindri.Features.AnswerQuestion;
 using Aw.Sindri.Features.CancelWorkflowRun;
+using Aw.Sindri.Features.MarkWorkflowRunSeen;
+using Aw.Sindri.Features.RerunWorkflowRun;
 using Aw.Sindri.Features.RunWorkflow;
 
 namespace Aw.Sindri.Host.Catalog;
@@ -12,15 +14,21 @@ internal static class WorkflowRunRows
 {
     internal static IReadOnlyList<CommandRow> All { get; } =
     [
-        new(ActionId.From("RunWorkflow"), typeof(RunWorkflowRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
+        new(ActionId.From("RunWorkflow"), typeof(RunWorkflowRequest), Variant: null, ActionClass.Desk, ServiceGrants: ["setup"],   // first-run spec decision 19: the setup service runs hello-sindri once
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/workflows/{slug}/runs", ShellRows.Form("sindri wf run <slug> [--payload <json>]"), "ready", SessionOk: true),
         new(ActionId.From("CancelWorkflowRun"), typeof(CancelWorkflowRunRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/workflow-runs/{run}/cancel", ShellRows.Form("sindri wf cancel <run>"), "ready", SessionOk: true),
+        new(ActionId.From("RerunWorkflowRun"), typeof(RerunWorkflowRunRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
+            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
+            "POST", "/sindri/workflow-runs/{run}/rerun", ShellRows.Form("sindri wf rerun <run> --from <node> [--input <json>]"), "ready", SessionOk: true),
+        new(ActionId.From("MarkWorkflowRunSeen"), typeof(MarkWorkflowRunSeenRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
+            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
+            "POST", "/sindri/workflow-runs/{run}/seen", ShellRows.Form("sindri wf seen <run>"), "ready"),
         new(ActionId.From("AnswerQuestion"), typeof(AnswerQuestionRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
-            "POST", "/sindri/workflow-runs/{run}/nodes/{node}/answer", ShellRows.Form("sindri answer <question> [--text <text>] [--choice <choice>]"), "ready", SessionOk: true),
+            "POST", "/sindri/workflow-runs/{run}/nodes/{node}/answer", ShellRows.Form("sindri answer <question> [--text <text>] [--choice <choice>] [--item <index>]"), "ready", SessionOk: true),
         new(ActionId.From("TakeOverAgentNode"), typeof(TakeOverAgentNodeRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/workflow-runs/{run}/nodes/{node}/takeover", ShellRows.Form("sindri wf takeover <run> <node> [--item <index>]"), "ready"),

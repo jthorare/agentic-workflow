@@ -89,5 +89,28 @@ public sealed class StopCheckCommandTests : IDisposable
         Assert.Contains("\"kind\":\"Reply\"", result.Out.Replace(" ", string.Empty, StringComparison.Ordinal), StringComparison.Ordinal);
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_status_tagged_line_opens_no_obligation_and_a_tagged_ready_still_does()
+    {
+        _ = await _cli.Run("team-init", "--team", "t1", "--repo", "/r", "--lanes", "api,ideas");
+        _ = await _cli.Run("role-set", "--session", "s-meta", "--name", "t1-meta");
+        await File.WriteAllTextAsync(Transcript, MetaWorld.PeerLine("m1", "t1-ideas", "STATUS: review clean on #123"), TestContext.Current.CancellationToken);
+
+        var quiet = await Stop();
+        await File.AppendAllTextAsync(Transcript, MetaWorld.PeerLine("m2", "t1-ideas", "STATUS: ready #123 079c2541"), TestContext.Current.CancellationToken);
+        var ready = await Stop();
+        var status = await _cli.Run("inbox", "--status");
+        var again = await _cli.Run("inbox", "--status");
+
+        Assert.Equal((0, string.Empty), (quiet.Exit, quiet.Out));
+        Assert.Equal(1, ready.Exit);
+        Assert.Contains("reply to t1-ideas (m2)", ready.Out, StringComparison.Ordinal);
+        Assert.DoesNotContain("(m1)", ready.Out, StringComparison.Ordinal);
+        Assert.Equal(0, status.Exit);
+        Assert.Contains("m1  t1-ideas", status.Out, StringComparison.Ordinal);
+        Assert.DoesNotContain("m2", status.Out, StringComparison.Ordinal);
+        Assert.DoesNotContain("m1", again.Out, StringComparison.Ordinal);
+    }
+
     public void Dispose() => _cli.Dispose();
 }

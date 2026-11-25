@@ -3,12 +3,13 @@ using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Features.ListConnections;
 using Aw.Sindri.Features.RemoveConnection;
+using Aw.Sindri.Features.RenameConnection;
 using Aw.Sindri.Features.TestConnection;
 
 namespace Aw.Sindri.Host.Endpoints;
 
 /// <summary>
-/// The connection routes (connections PR 10a): GET /sindri/connections and /{name}, POST /sindri/connections (add), /{name}/test and /{name}/signin, DELETE /{name}.
+/// The connection routes (connections PR 10a): GET /sindri/connections and /{name}, POST /sindri/connections (add), /{name}/test, /{name}/signin and /{name}/rename (the body is {"label"}), DELETE /{name}.
 /// Each binds, calls one service and maps the result. No route refuses an agent session (owner decision D2), and no answer holds a token.
 /// </summary>
 internal static class ConnectionEndpoints
@@ -30,6 +31,8 @@ internal static class ConnectionEndpoints
             => (await service.Handle(new TestConnectionRequest(name), ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapPost("/connections/{name}/signin", static async (string name, IService<SignInConnectionRequest, AddConnectionResponse> service, CancellationToken ct)
             => (await service.Handle(new SignInConnectionRequest(name), ct).ConfigureAwait(false)).ToHttpResult());
+        _ = group.MapPost("/connections/{name}/rename", static async (string name, RenameConnectionBody body, IService<RenameConnectionRequest, RenameConnectionResponse> service, CancellationToken ct)
+            => (await service.Handle(body.ToRequest(name), ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapDelete("/connections/{name}", static async (string name, IService<RemoveConnectionRequest, RemoveConnectionResponse> service, CancellationToken ct)
             => (await service.Handle(new RemoveConnectionRequest(name), ct).ConfigureAwait(false)).ToHttpResult());
         return group;

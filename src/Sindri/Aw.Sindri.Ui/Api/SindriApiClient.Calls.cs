@@ -18,8 +18,9 @@ internal sealed partial class SindriApiClient
     /// </summary>
     internal const string ViewsBehind = "SND-API-011";
 
-    // The sequence of the last command the API accepted, sent as X-Sindri-After on the view queries (status, services;
-    // API §2.4, UI §9.1) until one of them has used it; 0 when there is none to send.
+    // The newest ledger sequence the views must reach before a view query answers: the last command the API accepted, or
+    // a later streamed event (#3734). Sent as X-Sindri-After on the view queries (status, services; API §2.4, UI §9.1)
+    // until one of them has used it; 0 when there is none to send.
     private long _after;
     private readonly Lock _leaseGate = new();
     private (int Pid, long Epoch)? _lease;
@@ -44,7 +45,7 @@ internal sealed partial class SindriApiClient
             }
 
             return code is < HttpStatusCode.OK or >= HttpStatusCode.MultipleChoices
-                ? SindriUiErrors.BadStatus.With(string.Create(CultureInfo.InvariantCulture, $"{path} answered {(int)code}"))
+                ? SindriUiErrors.BadStatus.With(SindriErrorReading.BadStatusMessage(path, code))
                 : Read<T>(path, body);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -72,6 +73,19 @@ internal sealed partial class SindriApiClient
 
             _lease = seen;
         }
+    }
+
+    // #3734: an event may come from a write that isn't the app's own (a CLI `todo add`), and the views can lag the ledger.
+    // The first view read after it waits for its sequence like the read after the app's own command; never lowers a
+    // sequence already pending.
+    private void RaisePending(long sequence)
+    {
+        long seen;
+        do
+        {
+            seen = Volatile.Read(ref _after);
+        }
+        while (sequence > seen && Interlocked.CompareExchange(ref _after, sequence, seen) != seen);
     }
 
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _unreadable = new(StringComparer.Ordinal);
@@ -135,7 +149,13 @@ internal sealed partial class SindriApiClient
             answer = await Send(method, url, after, content, cancellationToken).ConfigureAwait(false);
         }
 
-        if (after > 0)
+        if (after > 0 && ViewsBehindAnswer(answer.Code, answer.Body))
+        {
+            // The views are rebuilding or stalled: any sequence pending now, raised by an event during the wait, would only
+            // be behind too. The next read goes without one and shows that (#3734 review).
+            Volatile.Write(ref _after, 0);
+        }
+        else if (after > 0)
         {
             _ = Interlocked.CompareExchange(ref _after, 0, after);   // a newer command's sequence stays
         }
@@ -162,6 +182,10 @@ internal sealed partial class SindriApiClient
     // second refusal is the answer. The check keys off the code, never the detail sentence.
     private static bool StaleToken(HttpStatusCode code, byte[] body) =>
         string.Equals(Refusal(code, body)?.Code, TokenRefused, StringComparison.Ordinal);
+
+    // SND-API-011: the views have not reached the sequence the query carried.
+    private static bool ViewsBehindAnswer(HttpStatusCode code, byte[] body) =>
+        string.Equals(Refusal(code, body)?.Code, ViewsBehind, StringComparison.Ordinal);
 
     // A refusal Sindri explains is Sindri's code and its detail as they are (API §3.6), so the window shows Sindri's own
     // sentence and fix. Built like the CLI's reading of a problem (ControlPlaneClient): the code is Sindri's catalogue's,

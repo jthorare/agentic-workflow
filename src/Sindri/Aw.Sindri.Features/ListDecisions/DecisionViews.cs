@@ -2,7 +2,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Decisions;
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Core.Requests;
+using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Features.ListDecisions;
@@ -18,28 +18,17 @@ internal static class DecisionViews
     public static Result<DecisionView> From(HumanDecisionRow row)
     {
         ArgumentNullException.ThrowIfNull(row);
-        var form = CliForm.Parse("sindri decide <decisionId> <choice>").Bind(parsed => parsed.Fill("decisionId", row.Id));
-        if (form.IsError)
+        var decision = NeedsYouDecisions.From(row);
+        if (decision.IsError)
         {
-            return form.Error;
+            return decision.Error;
         }
 
-        var options = new List<OptionView>();
-        foreach (var option in DecisionKinds.Options(row.Kind))
-        {
-            var cli = form.Value.Fill("choice", option.Id);
-            if (cli.IsError)
-            {
-                return cli.Error;
-            }
-
-            options.Add(new OptionView(option.Id, option.Label, option.RejectLike, cli.Value.Text));
-        }
-
+        var options = decision.Value.Options.Select(static o => new OptionView(o.Id, o.Label, o.RejectLike, o.Cli)).ToList();
         var recommended = DecisionKinds.Recommended(row.Kind);
         var pending = row.State == DecisionState.Pending;
         var voided = row.State == DecisionState.Voided;
-        var question = $"Accept this {RequestKindWords.Of(row.RequestKind)} request?\n{row.Text}";
+        var question = decision.Value.Question;
         return new DecisionView(row.Id, row.Kind, ActionClass.Decision, DecisionLabels.For(row.Kind, row.RequestKind), row.Item, row.ItemVersion, row.Repo,
             question, options, recommended, row.State, row.FiledBy, row.FiledAt, row.DecidedBy, row.DecidedAt, row.Choice, row.Note,
             RecordedOnly: !voided, Notice: voided ? EmptyText.Voided() : EmptyText.RecordedOnly(),

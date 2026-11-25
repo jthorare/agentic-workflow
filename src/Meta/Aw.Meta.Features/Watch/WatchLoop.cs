@@ -1,7 +1,6 @@
 using System.Globalization;
 using Aw.Kernel;
 using Aw.Meta.Core.Config;
-using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Watch;
 
 namespace Aw.Meta.Features.Watch;
@@ -14,7 +13,7 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="remember">Keeps the reported states whenever they change.</param>
 /// <param name="context">The lanes an earlier watch reported CONTEXT HIGH for (a re-armed watch does not announce them again), and how to keep them.</param>
 /// <param name="usage">Looks at the lanes and the meta for usage limits and returns the lines to print (USAGE LIMITED / USAGE OK).</param>
-internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string, ValueTask> emit, WatchResources reported, Func<WatchResources, ValueTask> remember, ContextReported context, Func<ValueTask<IReadOnlyList<string>>> usage)
+internal sealed partial class WatchLoop(TeamConfig team, WatchPoller poller, Func<string, ValueTask> emit, WatchResources reported, Func<WatchResources, ValueTask> remember, ContextReported context, Func<ValueTask<IReadOnlyList<string>>> usage)
 {
     /// <summary>Called with main's new sha and the pull requests that went MERGED in the same poll, when a poll reports "MAIN moved".</summary>
     internal Func<string, IReadOnlyList<int>, ValueTask<Result<Unit>>> MainMoved { get; init; } = static (_, _) => ValueTask.FromResult<Result<Unit>>(Unit.Value);
@@ -22,10 +21,50 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     /// <summary>Records main as the board's first move when the board holds none yet (the watch's start).</summary>
     internal Func<string, ValueTask<Result<Unit>>> SeedMain { get; init; } = static _ => ValueTask.FromResult<Result<Unit>>(Unit.Value);
 
+    /// <summary>
+    /// Keeps the pull requests and main's sha after each good poll, so the next run diffs its first poll against them.
+    /// Returns the pid of the newer watch when another watch wrote the snapshot meanwhile, and null when it kept it.
+    /// </summary>
+    internal Func<WatchState, ValueTask<string?>> KeepSnapshot { get; init; } = static _ => ValueTask.FromResult<string?>(null);
+
+    /// <summary>Returns the pid of a newer watch that claimed the team's watch, or null while this watch still owns it.</summary>
+    internal Func<ValueTask<string?>> NewerOwner { get; init; } = static () => ValueTask.FromResult<string?>(null);
+
+    /// <summary>The pid of the newer watch that ended this one, or null while this watch is still the newest. A superseded watch writes nothing more.</summary>
+    internal string? Superseded { get; private set; }
+
+    /// <summary>
+    /// Keeps whether polls are failing, whenever that changes (a failing streak spans runs).
+    /// Returns the pid of the newer watch when another watch wrote the flag meanwhile, and null when it kept it.
+    /// </summary>
+    internal Func<bool, ValueTask<string?>> KeepFailing { get; init; } = static _ => ValueTask.FromResult<string?>(null);
+
+    /// <summary>Receives context.high and context.ok; null writes none.</summary>
+    internal Core.Coordination.MetaEventSink? EventSink { get; init; }
+
+    /// <summary>Dates the events.</summary>
+    internal TimeProvider Clock { get; init; } = TimeProvider.System;
+
+    /// <summary>The lanes' live sessions for LANE DOWN / LANE UP (#2856); null leaves them out.</summary>
+    internal LaneSessions? Sessions { get; init; }
+
+    /// <summary>Batches the status lines (#2651).</summary>
+    internal required StatusBatch Status { get; init; }
+
+    /// <summary>Report every pull request, not only the team's.</summary>
+    internal bool AllPrs { get; init; }
+
+    /// <summary>The state the first poll diffs against: the last poll of an earlier run, or the state before any poll.</summary>
+    internal WatchState Baseline { init => _state = value; }
+
+    /// <summary>Whether the earlier run ended on a failing poll: the streak's next errors are not events.</summary>
+    internal bool Failing { init => _failing = value; }
+
     private WatchState _state = WatchState.Continuing(reported);
     private WatchResources _kept = reported;
     private int? _inbox;
     private bool _failing;
+    private bool _started;
     private IReadOnlySet<string> _high = context.High;
 
     /// <summary>How many inbox messages were still owed a reply at the last poll.</summary>
@@ -34,76 +73,133 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     /// <summary>How many lines were emitted.</summary>
     internal int Lines { get; private set; }
 
+    /// <summary>Waits between the retries of a poll that failed on a transient network error.</summary>
+    internal Func<TimeSpan, CancellationToken, ValueTask> Backoff { get; init; } = static (_, _) => ValueTask.CompletedTask;
+
+    // A transient network error (#3735) is retried after a short backoff, up to TransientGhError.Retries times; any other error, or the last one, is the poll's result.
+    private async ValueTask<Result<Polled>> Poll(CancellationToken cancellationToken)
+    {
+        var polled = await poller.Poll(team, AllPrs, cancellationToken).ConfigureAwait(false);
+        for (var retry = 1; retry <= TransientGhError.Retries && polled.IsError && TransientGhError.IsTransient(polled.Error.Message); retry++)
+        {
+            await Backoff(TransientGhError.Backoff(retry), cancellationToken).ConfigureAwait(false);
+            polled = await poller.Poll(team, AllPrs, cancellationToken).ConfigureAwait(false);
+        }
+
+        return polled;
+    }
+
     /// <summary>Takes a snapshot and emits what changed. A failed poll is reported once per streak.</summary>
     internal async ValueTask Tick(CancellationToken cancellationToken)
     {
-        var polled = await poller.Poll(team, cancellationToken).ConfigureAwait(false);
-        if (polled.IsError)
+        var polled = await Poll(cancellationToken).ConfigureAwait(false);
+        if (await Supersede(await NewerOwner().ConfigureAwait(false)).ConfigureAwait(false))
         {
-            if (!_failing)
-            {
-                await Say($"WATCH ERROR: {polled.Error.Code}: {polled.Error.Message.ReplaceLineEndings(" ")}").ConfigureAwait(false);
-            }
-
-            _failing = true;
             return;
         }
 
-        _failing = false;
-        var step = WatchDiff.Step(_state, polled.Value.Snapshot);
-        if (!_state.Initialized)
+        if (polled.IsError)
         {
-            await Say(Started(polled.Value.Snapshot)).ConfigureAwait(false);
-            await SeedBoard(polled.Value.Snapshot).ConfigureAwait(false);
+            await Failed(polled.Error).ConfigureAwait(false);
+            return;
         }
 
-        await SayStep(step, polled.Value.Snapshot).ConfigureAwait(false);
-        foreach (var line in polled.Value.Worktrees)
+        if (await Recovered().ConfigureAwait(false))
         {
-            await Say(line).ConfigureAwait(false);
+            return;
         }
 
-        if (_inbox is { } before && polled.Value.Inbox > before)
-        {
-            await Say(string.Create(CultureInfo.InvariantCulture, $"INBOX {polled.Value.Inbox - before} new message(s)")).ConfigureAwait(false);
-        }
-
-        await ReportLanes(polled.Value.Context).ConfigureAwait(false);
+        var step = await SayPoll(polled.Value).ConfigureAwait(false);
 
         (_inbox, Open) = (polled.Value.Inbox, polled.Value.Open);
         _state = step.State;
-        await Remember().ConfigureAwait(false);
-    }
-
-    // The lanes' standing: context sizes, then usage limits. Neither can fail the poll.
-    private async ValueTask ReportLanes(IReadOnlyList<LaneContext>? contexts)
-    {
-        await ReportContext(contexts).ConfigureAwait(false);
-        foreach (var line in await usage().ConfigureAwait(false))
-        {
-            await Say(line).ConfigureAwait(false);
-        }
-    }
-
-    // CONTEXT HIGH (META RECYCLE for the meta lane) once per crossing, CONTEXT OK after a recycle; the lanes reported high are kept for a re-armed watch.
-    private async ValueTask ReportContext(IReadOnlyList<LaneContext>? contexts)
-    {
-        if (contexts is null)
+        if (await Supersede(await KeepSnapshot(_state).ConfigureAwait(false)).ConfigureAwait(false))
         {
             return;
         }
 
-        var (lines, high) = ContextWatch.Step(_high, contexts, team.MetaLane);
-        foreach (var line in lines)
+        await Remember().ConfigureAwait(false);
+    }
+
+    // The lines one good poll yields: the start line (once), the step, the worktrees, new inbox messages, then the lanes' standing.
+    private async ValueTask<WatchStep> SayPoll(Polled poll)
+    {
+        var step = WatchDiff.Step(_state, poll.Snapshot);
+        if (!_started)
+        {
+            _started = true;
+            await Say(Started(poll.Snapshot)).ConfigureAwait(false);
+            await SeedBoard(poll.Snapshot).ConfigureAwait(false);
+        }
+
+        await SayStep(step, poll.Snapshot).ConfigureAwait(false);
+        foreach (var line in poll.Queue)
         {
             await Say(line).ConfigureAwait(false);
         }
 
-        if (!high.SetEquals(_high))
+        foreach (var line in poll.Worktrees)
         {
-            _high = high;
-            await context.Keep(high).ConfigureAwait(false);
+            await Say(line).ConfigureAwait(false);
         }
+
+        await SayInbox(poll).ConfigureAwait(false);
+
+        await ReportLanes(poll.Context).ConfigureAwait(false);
+
+        return step;
+    }
+
+    // New mail is an INBOX line; status lines ride on it or print batched (StatusBatch).
+    private async ValueTask SayInbox(Polled poll)
+    {
+        var mail = _inbox is { } before && poll.Inbox > before ? string.Create(CultureInfo.InvariantCulture, $"INBOX {poll.Inbox - before} new message(s)") : null;
+        if (await Status.Line(poll.Status, mail).ConfigureAwait(false) is { } line)
+        {
+            await Say(line).ConfigureAwait(false);
+        }
+    }
+
+    // A newer watch owns the team's watch keys: say so once and stop writing them.
+    private async ValueTask<bool> Supersede(string? newer)
+    {
+        if (newer is null)
+        {
+            return false;
+        }
+
+        Superseded = newer;
+        await Say($"WATCH superseded by pid {newer}: a newer watch runs, do not restart").ConfigureAwait(false);
+        return true;
+    }
+
+    // The first failed poll of a streak (which can span runs) says WATCH ERROR; the rest say nothing.
+    private async ValueTask Failed(Error error)
+    {
+        if (_failing)
+        {
+            return;
+        }
+
+        _failing = true;
+        if (await Supersede(await KeepFailing(true).ConfigureAwait(false)).ConfigureAwait(false))
+        {
+            return;
+        }
+
+        await Say($"WATCH ERROR: {error.Code}: {error.Message.ReplaceLineEndings(" ")}").ConfigureAwait(false);
+    }
+
+    // A good poll ends the failing streak. True when keeping that showed a newer watch (this one is then superseded).
+    private async ValueTask<bool> Recovered()
+    {
+        if (!_failing)
+        {
+            return false;
+        }
+
+        _failing = false;
+        return await Supersede(await KeepFailing(false).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     // Keeps the disk and memory states reported so far, whenever they change.
@@ -160,10 +256,18 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
         }
     }
 
+    /// <summary>How many lines were emitted that report something (every line but the start line).</summary>
+    internal int Events { get; private set; }
+
     /// <summary>Emits one line.</summary>
     internal async ValueTask Say(string line)
     {
         Lines++;
+        if (!line.StartsWith("WATCH started", StringComparison.Ordinal))
+        {
+            Events++;
+        }
+
         await emit(line).ConfigureAwait(false);
     }
 

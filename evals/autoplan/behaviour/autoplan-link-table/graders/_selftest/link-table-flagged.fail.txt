@@ -1,0 +1,1 @@
+ARCH-1 MED: order_note_link adds a join and a new column in notes; consider indexing it.

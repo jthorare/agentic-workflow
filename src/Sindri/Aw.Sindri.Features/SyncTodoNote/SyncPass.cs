@@ -143,7 +143,7 @@ internal sealed partial class SyncPass(SyncDeps d, NotePlace place, PassMode mod
             LeaveAlone = leave,
             PickedRemoved = picked.Removed.Where(id => !leave.Contains(id)).ToHashSet(),
             OpenConflicts = rows.Where(static r => r.Conflict is not null).ToDictionary(static r => r.Id, static r => RowMapping.ToSide(r.Conflict!.Obsidian)),   // why: filtered on the line before
-            OpenHold = hold is null ? null : new NoteHold(hold.Changes),
+            OpenHold = hold is null ? null : new NoteHold(hold.Changes, hold.OpenInBase),
             MaxAdoptions = oneWay ? 0 : mode == PassMode.Import ? room : Math.Min(AdoptPerPass, room),
         };
     }

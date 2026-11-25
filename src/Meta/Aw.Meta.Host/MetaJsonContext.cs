@@ -5,6 +5,9 @@ using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Features.BoardLine;
 using Aw.Meta.Features.CheckMerge;
+using Aw.Meta.Features.Delegate;
+using Aw.Meta.Features.Delegated;
+using Aw.Meta.Features.DelegateDrop;
 using Aw.Meta.Features.GateRerun;
 using Aw.Meta.Features.GateRun;
 using Aw.Meta.Features.Health;
@@ -26,6 +29,8 @@ using Aw.Meta.Features.OwnerAnswer;
 using Aw.Meta.Features.OwnerAsk;
 using Aw.Meta.Features.QueueDrop;
 using Aw.Meta.Features.QueueGate;
+using Aw.Meta.Features.ReadEvents;
+using Aw.Meta.Features.ReportDefect;
 using Aw.Meta.Features.Roles;
 using Aw.Meta.Features.Routing;
 using Aw.Meta.Features.Status;
@@ -57,6 +62,11 @@ namespace Aw.Meta.Host;
 [JsonSerializable(typeof(AnswerOwnerResponse))]
 [JsonSerializable(typeof(AskOwnerResponse))]
 [JsonSerializable(typeof(AppendLogResponse))]
+[JsonSerializable(typeof(ReadEventsResponse))]
+[JsonSerializable(typeof(ReportDefectResponse))]
+[JsonSerializable(typeof(DelegateResponse))]
+[JsonSerializable(typeof(DelegatedResponse))]
+[JsonSerializable(typeof(DelegateDropResponse))]
 [JsonSerializable(typeof(QueueDropResponse))]
 [JsonSerializable(typeof(StatusResponse))]
 [JsonSerializable(typeof(StopCheckResponse))]

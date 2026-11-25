@@ -1,11 +1,9 @@
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
-using Aw.Sindri.Infrastructure.Processes;
 
 namespace Aw.Sindri.Infrastructure.Launch;
 
@@ -17,7 +15,7 @@ namespace Aw.Sindri.Infrastructure.Launch;
 /// short (tmux caps one command near 16 KB); the server's global environment is never written ('set-environment -g' is
 /// never run), so one launch's secret can't leak into the next.
 /// </summary>
-internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessionHost
+internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessionHost, ISessionPanes
 {
     private static readonly TimeSpan _callBudget = TimeSpan.FromSeconds(5);
     private static readonly (int Major, int Minor) _minimum = (3, 2);
@@ -71,7 +69,7 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
         TmuxRun created;
         try
         {
-            created = await Run(Create(session, TmuxLaunchScript.PathOf(launchDir)), deadline).ConfigureAwait(false);
+            created = await Run(Create(session, TmuxLaunchScript.PathOf(launchDir)), deadline, scrub: session.CleanEnvironment).ConfigureAwait(false);
             started = created.ExitCode == 0;
         }
         finally
@@ -91,27 +89,6 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
         return created.Error.Contains("duplicate session", StringComparison.Ordinal)
             ? KernelErrors.Conflict.With($"A session named {session.Name} already exists")
             : SindriErrors.LaunchTimedOut.With($"tmux could not start the session: {Short(created.Error)}");
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<Result<Unit>> Stop(HostRef host, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(host);
-        try
-        {
-            var killed = await Run(["kill-session", "-t", Target(host)], cancellationToken, _callBudget).ConfigureAwait(false);
-            return killed.ExitCode == 0 || IsGone(killed.Error)
-                ? Unit.Value
-                : KernelErrors.Unavailable.With($"tmux could not end {host.Name}: {Short(killed.Error)}");
-        }
-        catch (Win32Exception)
-        {
-            return Unit.Value;   // no tmux, so no session to end
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            return KernelErrors.Unavailable.With($"tmux did not answer while ending {host.Name}");
-        }
     }
 
     /// <inheritdoc/>
@@ -227,74 +204,19 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
 
     private static string Target(HostRef host) => "=" + host.Name;   // '=' : this exact name, never a prefix
 
-    private static bool IsGone(string error) =>
-        error.Contains("can't find session", StringComparison.Ordinal)
-        || error.Contains("no server running", StringComparison.Ordinal)
-        || (error.Contains("error connecting to", StringComparison.Ordinal)
-            && (error.Contains("(No such file or directory)", StringComparison.Ordinal) || error.Contains("(Connection refused)", StringComparison.Ordinal)));   // a permission error is not "gone"
-
     private static string Short(string text) => text.Trim() is { Length: > 200 } t ? t[..200] : text.Trim();
 
+    // why: remain-on-exit goes in the same tmux call, after ';', so the server sets it before it reaps the child: an agent that dies at once keeps its pane and its error text (#3466).
+    // The plain name, not '=name': a window option takes a window target, and '=name' is not one (tmux 3.4: "no such window").
     private static List<string> Create(HostSession session, string script) =>
-        ["new-session", "-d", "-s", session.Name, "-c", session.WorkDir, "sh", script];
+        ["new-session", "-d", "-s", session.Name, .. session.Size is { } size ? (string[])["-x", Text(size.Cols), "-y", Text(size.Rows)] : [], "-c", session.WorkDir, "sh", script,
+            .. session.RemainOnExit ? (string[])[";", "set-option", "-t", session.Name, "remain-on-exit", "on"] : []];
 
-    private Task<TmuxRun> Run(IReadOnlyList<string> args, CancellationToken cancellationToken, TimeSpan? budget = null) =>
-        Exec(args, socket: true, budget, cancellationToken);
+    private static string Text(int number) => number.ToString(CultureInfo.InvariantCulture);
 
-    private async Task<TmuxRun> Exec(IReadOnlyList<string> args, bool socket, TimeSpan? budget, CancellationToken cancellationToken)
-    {
-        var start = ChildEnvironment.Start(options.Executable, socket ? ["-L", options.Socket, .. args] : args);
-        start.RedirectStandardOutput = true;
-        start.RedirectStandardError = true;
-        _ = start.Environment.Remove("TMUX");   // a pane's own server is never ours
-        if (options.TmuxTmpDir is { } tmpDir)
-        {
-            start.Environment["TMUX_TMPDIR"] = tmpDir;
-            _ = Directory.CreateDirectory(tmpDir);
-        }
+    private Task<TmuxRun> Run(IReadOnlyList<string> args, CancellationToken cancellationToken, TimeSpan? budget = null, bool scrub = false) =>
+        Exec(args, socket: true, budget, cancellationToken, scrub);
 
-        using var process = Process.Start(start) ?? throw new Win32Exception("tmux did not start");
-        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        if (budget is { } limit)
-        {
-            deadline.CancelAfter(limit);
-        }
-
-        try
-        {
-            var output = process.StandardOutput.ReadToEndAsync(deadline.Token);
-            var error = process.StandardError.ReadToEndAsync(deadline.Token);
-            await process.WaitForExitAsync(deadline.Token).ConfigureAwait(false);
-            return new TmuxRun(process.ExitCode, (await output.ConfigureAwait(false)).Trim(), (await error.ConfigureAwait(false)).Trim());
-        }
-        catch (OperationCanceledException)
-        {
-            await Reap(process).ConfigureAwait(false);   // never leave a tmux client running; the server it may have started is the caller's to clean up
-            throw;
-        }
-    }
-
-    private static async Task Reap(Process process)
-    {
-        try
-        {
-            process.Kill();
-        }
-        catch (InvalidOperationException)
-        {
-            return;   // it ended between the cancel and the kill
-        }
-
-        using var wait = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-        try
-        {
-            await process.WaitForExitAsync(wait.Token).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            // killed and still not reaped after 2 s: the OS will; the caller must not hang on it
-        }
-    }
 
     private readonly record struct TmuxRun(int ExitCode, string Output, string Error);
 }

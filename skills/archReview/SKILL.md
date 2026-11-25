@@ -46,11 +46,11 @@ Search files to discover these -- do not assume paths.
 
 ## Step 3: Architecture Analysis
 
-**Spawn a subagent** — one read-only explore agent (Claude Code: `subagent_type: "Explore"`; Codex/Cursor: an explorer/read-only agent type if available, else default), search breadth "very thorough" — with this prompt:
+**Spawn a subagent**: one read-only explore agent (Claude Code: `subagent_type: "Explore"`; Codex/Cursor: an explorer/read-only agent type if available, else default), search breadth `"very thorough"` — with this prompt:
 
-> "Map the system at `<target>`. Read source files, configuration, and package manifests. Report, with file:line evidence for each: (1) component boundaries — a **named list** of distinct modules/services and where the boundaries are drawn; (2) dependency graph, including circular dependencies; (3) data flow paths — how data enters, transforms, exits; (4) external integrations; (5) state management — where state lives, how it syncs, source of truth; (6) error propagation across boundaries — handled or swallowed."
+> "Map the system at `<target>`. Read source files, configuration, and package manifests. Report, with file:line evidence for each: (1) component boundaries: a **named list** of distinct modules/services and where the boundaries are drawn; (2) dependency graph, including circular dependencies; (3) data flow paths: how data enters, transforms, exits; (4) external integrations; (5) state management: where state lives, how it syncs, source of truth; (6) error propagation across boundaries — caught or swallowed; (7) for every new table in the plan, whether a column (usually a foreign key) on an existing table could hold the same data. A new table with no stated reason is a finding."
 
-**Output contract:** the agent must return the named boundary list (it drives the Step 5 matrix rows) plus the six areas above. **Fallback:** if subagent spawning is unavailable or returns nothing usable, do the same exploration directly (search and read files yourself), producing the same named boundary list.
+**Output contract:** the agent must return the named boundary list (it drives the Step 5 matrix rows) plus the seven areas above. **Fallback:** if subagent spawning is unavailable or returns nothing usable, do the same exploration directly (search and read files yourself), producing the same named boundary list.
 
 ## Step 4: Generate Mandatory Diagrams
 
@@ -70,7 +70,7 @@ The single most critical user flow end-to-end: all participants, request/respons
 
 ## Step 5: Edge Case Matrix
 
-Build a **boundary × failure-mode matrix** — one row per component boundary from Step 3's named list, one column per failure mode. Every cell is either a finding id (defined below the table) or `OK — <evidence>` (file:line, config value, or plan-line proving the case is handled). **No blank cells** — an unexamined cell is itself a finding. One covered boundary must never masquerade as full coverage.
+Build a **boundary × failure-mode matrix** — one row per component boundary from Step 3's named list, one column per failure mode. Every cell is either a finding id (defined below the table) or `OK — <evidence>` (file:line, config value, or plan-line proving the case is covered). **No blank cells** — an unexamined cell is itself a finding. One covered boundary must never masquerade as full coverage.
 
 | Boundary | Dependency unavailable | Invalid/malicious input | Load 10x | State leakage |
 |---|---|---|---|---|
@@ -96,7 +96,7 @@ Otherwise write one line in the review: "Formal check: skipped (no state machine
 
 ## Step 5.5: Review Self-Check
 
-Verify your own evidence: for every `OK — <evidence>` cell in the matrix, confirm the cited code actually exists by searching and reading it (grep the named timeout, validator, handler, or config key). Downgrade any cell whose evidence does not hold to a finding.
+Verify your own evidence: for every `OK — <evidence>` cell in the matrix, confirm the cited code exists by searching and reading it (grep the named timeout, validator, handler, or config key). Downgrade any cell whose evidence does not hold to a finding.
 
 **Optional adversarial delegation:** per `_shared/dark-factory.md` (archReview review-gap objective template) — gate-checked there; skip silently when not enabled. Incorporate delegated findings into the matrix and Top Risks before writing the verdict.
 

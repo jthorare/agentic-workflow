@@ -85,6 +85,7 @@ expect "dry run prints the new steps" 0 \
   "would run: uv tool install graphifyy==$PIN --exclude-newer $DATE" \
   "would run: scripts/binaries-lock.sh fetch temporal\$" \
   "would run: scripts/binaries-lock.sh fetch temporal-test-server" \
+  "would run: scripts/binaries-lock.sh fetch vale" \
   "bwrap: MISSING" "socat: MISSING" "secret-tool: MISSING" "systemd-run: MISSING" \
   "would run: sudo apt-get install -y bubblewrap socat libsecret-tools clang zlib1g-dev lsof tmux curl git"
 [ -z "$(ls -A "$HOME_DIR")" ] && ok "dry run wrote nothing into HOME" || fail "dry run wrote: $(ls -A "$HOME_DIR")"
@@ -163,8 +164,10 @@ ci_env() {
 
 STATE="$TMPROOT/state"
 V="$(awk '$1=="temporal"{print $2; exit}' "$REPO/binaries.lock")"; TV="$(awk '$1=="temporal-test-server"{print $2; exit}' "$REPO/binaries.lock")"
-mkdir -p "$STATE/cache/bin/temporal-$V" "$STATE/cache/bin/temporal-test-server-$TV"
+VV="$(awk '$1=="vale"{print $2; exit}' "$REPO/binaries.lock")"
+mkdir -p "$STATE/cache/bin/temporal-$V" "$STATE/cache/bin/temporal-test-server-$TV" "$STATE/cache/bin/vale-$VV"
 printf '#!/bin/sh\necho "temporal version %s"\n' "$V" >"$STATE/cache/bin/temporal-$V/temporal"
+printf '#!/bin/sh\necho "vale version %s"\n' "$VV" >"$STATE/cache/bin/vale-$VV/vale"
 : >"$STATE/cache/bin/temporal-test-server-$TV/temporal-test-server"
 chmod +x "$STATE"/cache/bin/*/*
 ci_env "$STATE"
@@ -212,7 +215,7 @@ fake terminal-notifier
 # 7. Temporal: a cached fetch is found in the cache layout sindri serve reads, and `temporal --version` is run.
 fake bwrap
 run AW_DEPS_OS=Linux AW_STATE_DIR="$STATE"
-expect "temporal is found at cache/bin/temporal-<pin>/ and runs" 0 "temporal: .*/cache/bin/temporal-$V/temporal \\(temporal version $V\\)" "temporal-test-server: .*temporal-test-server-$TV"
+expect "temporal is found at cache/bin/temporal-<pin>/ and runs" 0 "temporal: .*/cache/bin/temporal-$V/temporal \\(temporal version $V\\)" "temporal-test-server: .*temporal-test-server-$TV" "vale: .*/cache/bin/vale-$VV/vale \\(vale version $VV\\)"
 
 # 8. A temporal that won't run is reported and fails the run.
 printf '#!/bin/sh\necho broken >&2; exit 3\n' >"$STATE/cache/bin/temporal-$V/temporal"
@@ -236,8 +239,9 @@ mkdir -p "$TMPROOT/ci-state/cache/code-index/graphify-$CI_VER-$CI_SHA12/bin"
 printf '#!/bin/sh\necho graphify %s\n' "$CI_VER" >"$TMPROOT/ci-state/cache/code-index/graphify-$CI_VER-$CI_SHA12/bin/graphify"
 chmod +x "$TMPROOT/ci-state/cache/code-index/graphify-$CI_VER-$CI_SHA12/bin/graphify"
 
-mkdir -p "$TMPROOT/ci-state/cache/bin/temporal-$V" "$TMPROOT/ci-state/cache/bin/temporal-test-server-$TV"
+mkdir -p "$TMPROOT/ci-state/cache/bin/temporal-$V" "$TMPROOT/ci-state/cache/bin/temporal-test-server-$TV" "$TMPROOT/ci-state/cache/bin/vale-$VV"
 printf '#!/bin/sh\necho "temporal version %s"\n' "$V" >"$TMPROOT/ci-state/cache/bin/temporal-$V/temporal"
+printf '#!/bin/sh\necho "vale version %s"\n' "$VV" >"$TMPROOT/ci-state/cache/bin/vale-$VV/vale"
 : >"$TMPROOT/ci-state/cache/bin/temporal-test-server-$TV/temporal-test-server"
 chmod +x "$TMPROOT"/ci-state/cache/bin/*/*
 run AW_DEPS_OS=Linux AW_DRY_RUN=1 AW_STATE_DIR="$TMPROOT/ci-state"
@@ -275,9 +279,10 @@ expect "no ollama skips the model with a warning" 0 "WARN: ollama not installed;
 
 # 9d. The real graphify install path, with fakes: a half-built environment is removed, `uv venv` and `uv pip install --require-hashes
 # --exclude-newer` run with the lock's arguments, and the version is checked again. <mode>: ok | installfail | wrongver.
-fresh_state() {   # <dir>: a state dir with the temporal cache only
-  mkdir -p "$1/cache/bin/temporal-$V" "$1/cache/bin/temporal-test-server-$TV"
+fresh_state() {   # <dir>: a state dir with the temporal and vale cache only
+  mkdir -p "$1/cache/bin/temporal-$V" "$1/cache/bin/temporal-test-server-$TV" "$1/cache/bin/vale-$VV"
   cp "$TMPROOT/ci-state/cache/bin/temporal-$V/temporal" "$1/cache/bin/temporal-$V/temporal"
+  cp "$TMPROOT/ci-state/cache/bin/vale-$VV/vale" "$1/cache/bin/vale-$VV/vale"
   : >"$1/cache/bin/temporal-test-server-$TV/temporal-test-server"; chmod +x "$1"/cache/bin/*/*
 }
 uv_fake() {

@@ -1,3 +1,4 @@
+using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
@@ -25,7 +26,20 @@ internal static class ReadLedgerEndpoint
 
             var request = new ReadLedgerRequest(after ?? 0, itemRef, type, max ?? 100);
             var page = await service.Handle(request, ct).ConfigureAwait(false);
-            return page.IsError || !TodoEndpoints.Fenced(callers, fence) || !page.Value.Events.Any(static e => e.Type.StartsWith("todo.", StringComparison.Ordinal)) ? page.ToHttpResult() : fencing.Ledger(page.Value);   // a todo event's text is fenced for a session and for a piped CLI (todo spec §4.4)
+            if (page.IsError)
+            {
+                return page.ToHttpResult();
+            }
+
+            // why: 'home.*' events carry row titles, facts and brief lines, so an agent session never reads them from the ledger (home spec §8); the owner reads all
+            var shown = callers.Current?.Class == CallerClass.Session ? page.Value with { Events = [.. page.Value.Events.Where(static e => !e.Type.StartsWith("home.", StringComparison.Ordinal))] } : page.Value;
+            if (!TodoEndpoints.Fenced(callers, fence) || !shown.Events.Any(static e => e.Type.StartsWith("todo.", StringComparison.Ordinal)))
+            {
+                Result<LedgerPage> plain = shown;
+                return plain.ToHttpResult();
+            }
+
+            return fencing.Ledger(shown);   // a todo event's text is fenced for a session and for a piped CLI (todo spec §4.4)
         });
         return group;
     }

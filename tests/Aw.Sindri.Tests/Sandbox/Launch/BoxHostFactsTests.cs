@@ -19,6 +19,18 @@ public sealed class BoxHostFactsTests : IDisposable
     }
 
     [Fact]
+    public void The_profile_path_is_named_only_when_its_folder_exists()
+    {
+        var file = Path.Combine(_dir, "profile", "profile.yaml");
+        Assert.Null(BoxHostFacts.ProfilePath(static _ => null, _dir));   // no profile/ folder: no bind, no AW_SINDRI_PROFILE (bwrap fails on a missing bind source)
+
+        _ = Directory.CreateDirectory(Path.Combine(_dir, "profile"));
+        Assert.Equal(file, BoxHostFacts.ProfilePath(static _ => null, _dir));
+        Assert.Equal(file, BoxHostFacts.ProfilePath(n => n == "AW_SINDRI_PROFILE" ? file : null, "/nowhere"));
+        Assert.Null(BoxHostFacts.ProfilePath(static n => n == "AW_SINDRI_PROFILE" ? "/nowhere/live.yaml" : null, _dir));
+    }
+
+    [Fact]
     public void Bin_cs_current_resolves_to_its_stamp_and_none_installed_is_empty()
     {
         Assert.Equal(string.Empty, BoxHostFacts.CsBinDir(_dir));

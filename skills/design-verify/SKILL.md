@@ -65,9 +65,9 @@ If no run dir or report exists, report that the sub-skill produced no comparison
 
 Gate the suggestions on `overall.verdict` — suggest `/shipRelease` **only on PASS**:
 
-- **PASS** — `/shipRelease` — diff is clean, ship the release
-- **WARN** — `/design-refine` — address the minor discrepancies, then `/design-verify` again
-- **FAIL** — `/design-refine` or `/design-implement-*` — significant deviation; do **not** ship until re-verified
+- **PASS** — `/shipRelease`: diff is clean, ship the release
+- **WARN** — `/design-refine`: address the minor discrepancies, then `/design-verify` again
+- **FAIL** — `/design-refine` or `/design-implement-*`: significant deviation; do **not** ship until re-verified
 
 ## Result block
 

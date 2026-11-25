@@ -63,9 +63,9 @@ public sealed class CatalogFramesTests : IDisposable
         _windows.Add(window);
         window.Show();
         _ = shell.Run(_stop.Token);
-        for (var i = 0; i < 200 && !(shell.State == ShellState.Normal && ready(shell)); i++)
+        for (var i = 0; i < 2000 && !(shell.State == ShellState.Normal && ready(shell)); i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Dispatcher.UIThread.RunJobs();
         }
 
@@ -101,7 +101,7 @@ public sealed class CatalogFramesTests : IDisposable
 
         var banner = Named<Control>(window, "ViewsBanner");
         Assert.True(banner.IsEffectivelyVisible);
-        Assert.Equal("Views are stalled at 42: run `sindri views rebuild`", Named<TextBlock>(banner, "ViewsBannerText").Text);
+        Assert.Equal("Views are stalled at 42.", Named<TextBlock>(banner, "ViewsBannerText").Text);   // the button does what the command would: no command text beside it, and the sentence still ends
         Assert.True(Visible(banner, "StalledGlyph"));
         var run = Named<Button>(banner, "RunButton");
         Assert.Equal((true, "Rebuild views"), (run.IsEffectivelyEnabled, AutomationProperties.GetName(run)));
@@ -141,9 +141,9 @@ public sealed class CatalogFramesTests : IDisposable
         Frame(window, "control-sending");
 
         _server.RebuildGate.SetResult();
-        for (var i = 0; i < 200 && !Visible(banner, "AcceptedLine"); i++)
+        for (var i = 0; i < 2000 && !Visible(banner, "AcceptedLine"); i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Settle(window);
         }
 
@@ -190,9 +190,9 @@ public sealed class CatalogFramesTests : IDisposable
         Assert.Same(run, Focused(window));
 
         _server.RebuildGate.SetResult();
-        for (var i = 0; i < 200 && !Visible(banner, "ErrorLine"); i++)
+        for (var i = 0; i < 2000 && !Visible(banner, "ErrorLine"); i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Settle(window);
         }
 
@@ -213,9 +213,9 @@ public sealed class CatalogFramesTests : IDisposable
         run.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         _server.ServiceView = RouteAnswer.SpecShaped("services", "fixture");
         _server.Push(A.Event(1, "views.rebuilt"));
-        for (var i = 0; i < 200 && shell.Health.Banner.IsShown; i++)
+        for (var i = 0; i < 2000 && shell.Health.Banner.IsShown; i++)
         {
-            await Task.Delay(10, Token);
+            await Task.Delay(1, Token);
             Settle(window);
         }
 

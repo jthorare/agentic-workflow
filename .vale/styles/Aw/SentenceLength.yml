@@ -1,0 +1,8 @@
+# Structure rule: one idea per sentence; an instruction is 20 words max, a description 25 max (config/voice/reply.md).
+# A warning, not an error: the rule holds in 80% of sentences, the rest carry tone.
+extends: occurrence
+message: "This sentence is over 25 words. Split it: one idea per sentence."
+level: warning
+scope: sentence
+max: 25
+token: '\b[\w''’-]+\b'

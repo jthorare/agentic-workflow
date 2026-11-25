@@ -5,12 +5,12 @@
              x:Class="Aw.Sindri.Ui.Views.Setup.SetupAgentList"
              x:DataType="sv:SetupStepViewModel">
   <!-- The agents step's list (setup spec §2.4): one line per coding agent with what Sindri reached, then the two fixed lines about trusting the folder and about scope. -->
-  <StackPanel Spacing="8" IsVisible="{Binding HasAgents}">
+  <StackPanel Spacing="8" IsVisible="{Binding HasAgents}" AutomationProperties.AutomationId="SetupAgentList">
     <ItemsControl ItemsSource="{Binding Agents}">
       <ItemsControl.ItemTemplate>
         <DataTemplate x:DataType="sv:SetupAgentViewModel">
           <Border Classes="agent-line" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-            <Grid ColumnDefinitions="*,Auto" MinHeight="32" AutomationProperties.AccessibilityView="Raw">
+            <Grid ColumnDefinitions="*,Auto" MinHeight="{StaticResource Row.Height.Default}" AutomationProperties.AccessibilityView="Raw">
               <TextBlock Classes="body" Text="{Binding Agent}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
               <controls:StateChipView Grid.Column="1" Chip="{Binding Chip}" VerticalAlignment="Center" />
             </Grid>

@@ -17,7 +17,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { Journal, ScaffoldError, UsageError, trapSignals, list, kebab, parseArgs, withHeavyLock } from "./lib/common.mjs";
+import { Journal, ScaffoldError, UsageError, trapSignals, list, kebab, parseArgs, withHeavyLock, isMain } from "./lib/common.mjs";
 import * as T from "./lib/toolkit-templates.mjs";
 import { build, expectOnlyRed, formatClean, mustPass } from "./lib/checks.mjs";
 
@@ -174,6 +174,6 @@ export async function main(argv, { log = (line) => console.error(line), out = (l
   }
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   process.exitCode = await main(process.argv.slice(2));
 }

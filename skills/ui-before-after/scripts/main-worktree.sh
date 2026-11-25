@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Makes <repo>/.claude/worktrees/proof-main a locked worktree and prints its path. Takes run <n>'s
+# Makes <root>/proof-main (the repo's worktree root, see below) a locked worktree and prints its path. Takes run <n>'s
 # lease on it first. It moves to the latest origin/main only when no other run holds a live lease,
 # so a run in progress keeps its build. The lock keeps worktree cleanup from removing it.
 #
@@ -11,7 +11,8 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 
 repo="$1"
 n="$2"
-path="$repo/.claude/worktrees/proof-main"
+# One worktree root per repo (AW_WORKTREE_ROOT, <repo>/.agentic-workflow/worktrees.json, else ~/repos/aw-wt/<repo>), from the shared helper.
+path="$(cd "$repo" && bash "$HERE/../../_shared/worktree-path.sh" proof-main)" || exit 1
 
 git -C "$repo" fetch -q origin main
 # Forget a proof-main whose folder was deleted, so it can be added again.

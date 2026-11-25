@@ -140,7 +140,7 @@ public sealed class ResourcesPageViewModelTests
         gate.SetResult();
         await read;
         Assert.Equal((false, true, true, false), (page.IsReading, page.IsFailed, page.ShowRetry, page.IsEmpty));
-        Assert.Equal("Couldn't read the resources just now. no answer · SND-UI-002", page.FailedText);
+        Assert.Equal("Couldn't read the resources just now. No answer · SND-UI-002", page.FailedText);
 
         _server.ListResourcesError = null;
         _server.SeedResources(new ResourceView("workflow:triage", "database", "triage.db", 1024, "/state/triage.db"));

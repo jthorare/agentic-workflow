@@ -22,6 +22,11 @@ internal sealed class ViewsBanner : ObservableObject
     /// <summary>The view's sentence for its state, as served.</summary>
     public string Text { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The sentence the banner draws: <see cref="Text"/>, ending at a full stop where its ": run `sindri views rebuild`" was while the Rebuild views button is beside it (the button does that).</summary>
+    public string ShownText => HasRebuild && Text.EndsWith(RebuildCommand, StringComparison.Ordinal) ? Text[..^RebuildCommand.Length] + "." : Text;
+
+    private const string RebuildCommand = ": run `sindri views rebuild`";
+
     /// <summary>The polite live region's text while the banner shows (its sentence; "Rebuilding views" for progress), else its resting text (never empty).</summary>
     public string Announcement { get; private set => Set(ref field, value); } = Labels.Sindri;
 
@@ -49,6 +54,7 @@ internal sealed class ViewsBanner : ObservableObject
         Text = IsShown ? view?.Empty ?? string.Empty : string.Empty;
         Rebuild = IsStalled ? rebuild : null;
         HasRebuild = Rebuild is not null;
+        OnChanged(nameof(ShownText));
         Announce(was);
     }
 

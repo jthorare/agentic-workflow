@@ -121,7 +121,7 @@ Write `Theme.swift` to the project root (or the main app target directory if ide
 
 - Import and use `Theme.Colors`, `Theme.Typography`, `Theme.Spacing`
 - Use semantic SwiftUI view hierarchy (VStack, HStack, LazyVGrid as appropriate)
-- Follow iOS HIG: NavigationStack, proper safe area handling, `.font()` modifiers
+- Follow iOS HIG: NavigationStack, proper safe area insets, `.font()` modifiers
 - Support light and dark color schemes via `@Environment(\.colorScheme)` where needed
 - Use `.foregroundColor(Theme.Colors.textPrimary)` not hardcoded color values
 

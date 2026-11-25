@@ -21,7 +21,7 @@ Skills don't prompt agents to retrieve prior conversation context from the agent
 
 ### Note on MCP tool permissions
 
-`mcp__agentic-bridge__search_memory` and `mcp__agentic-bridge__get_context` are registered globally at user scope (`claude mcp add --scope user`). Like Serena tools — which are used freely in the preamble without being listed in any skill's `allowed-tools` — globally-registered MCP tools are available in all skill contexts without enumeration in frontmatter. No per-skill `allowed-tools` changes are needed for the Memory Recall block.
+`mcp__agentic-bridge__search_memory` and `mcp__agentic-bridge__get_context` are registered globally at user scope (`claude mcp add --scope user`). Like Serena tools (which are used freely in the preamble without being listed in any skill's `allowed-tools`), globally-registered MCP tools are available in all skill contexts without enumeration in frontmatter. No per-skill `allowed-tools` changes are needed for the Memory Recall block.
 
 ---
 
@@ -155,7 +155,7 @@ Based on response:
 
 ### `/review` — after collecting reviewer outputs, before writing the state file
 
-Cap at one investigation. `Skill` is added to `/review`'s `allowed-tools` because the orchestrator itself handles the confirmation step and dispatches rootCause — reviewers flag the need via `investigation_needed` in their JSON output; the orchestrator decides.
+Cap at one investigation. `Skill` is added to `/review`'s `allowed-tools` because the orchestrator itself runs the confirmation step and dispatches rootCause — reviewers flag the need via `investigation_needed` in their JSON output; the orchestrator decides.
 
 ```markdown
 ### Sub-skill Dispatch

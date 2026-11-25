@@ -31,6 +31,7 @@ internal sealed partial class ControlPlaneFollower
         }
 
         health.Show(url, status.Value);
+        StartAtHead(status.Value);
         _again = status.Value.Views is { Stalled: false } views && (views.Rebuilding || views.Cursor < views.LedgerHead);
         if (health.Catalog.Controls.Count == 0 && await api.Commands(url, cancellationToken).ConfigureAwait(true) is { IsSuccess: true } catalog)
         {
@@ -53,6 +54,16 @@ internal sealed partial class ControlPlaneFollower
 
         await health.RefreshViews(url, cancellationToken).ConfigureAwait(true);   // the queue and the open item (U2)
         return Refreshed.Shown;
+    }
+
+    // #2778: with nothing received yet (a fresh connect, a new epoch or another process), the stream opens at the ledger
+    // head, not at 0; the head event itself is still delivered.
+    private void StartAtHead(StatusView status)
+    {
+        if (_cursor == 0 && status.Views is { LedgerHead: > 0 } views)
+        {
+            _cursor = views.LedgerHead - 1;
+        }
     }
 
     private enum Refreshed

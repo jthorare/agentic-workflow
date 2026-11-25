@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Infrastructure.Workflow;
 using Aw.Sindri.Infrastructure.Workflows;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Workflow;
@@ -21,8 +22,10 @@ public sealed class AgentLaunchEndedTests
 
     private static LaunchRequest Request() => A.LaunchRequest().WithLaunch(_launch).InWorktree("/work/web/.claude/worktrees/wf-test").Build();
 
-    private static AgentLaunchEnded Guard(LaunchState? state, FakeAgentSessions sessions) =>
-        new(new Views(state), sessions, new FakeSindriHome("/home/sindri"));
+    private readonly SliceHarness _slice = new();
+
+    private AgentLaunchEnded Guard(LaunchState? state, FakeAgentSessions sessions) =>
+        new(new Views(state), sessions, new FakeSindriHome("/home/sindri"), _slice.Store);
 
     [Fact]
     public async Task A_started_launch_whose_session_ended_answers_with_its_worktree_and_starts_nothing()
@@ -53,6 +56,42 @@ public sealed class AgentLaunchEndedTests
 
         Assert.Null(await Guard(state, sessions).Find(Request(), Token));
     }
+
+    /// <summary>
+    /// #2482: the retry comes before the projector has written 'launch.started' into the launches view (the view has no row yet). The ledger already holds the start and the session's end,
+    /// so the guard answers from it and the launcher is never asked for a second session.
+    /// </summary>
+    [Fact]
+    public async Task A_retry_in_the_projector_lag_after_the_session_ended_answers_from_the_ledger()
+    {
+        var grant = await _slice.HoldLease();
+        await Append(grant, EventTypes.LaunchStarted, Started(), "launch.outcome:" + _launch.Value);
+        await Append(grant, EventTypes.SessionEnded, new SessionEnded(_launch, SessionEndReason.Exit, ExitCode: 0), $"{EventTypes.SessionEnded}:{_launch.Value}");
+        var guard = new AgentLaunchEnded(new Views(state: null), new LedgerAgentSessions(new Views(state: null), _slice.Store, _slice.Events), new FakeSindriHome("/home/sindri"), _slice.Store);
+
+        var answer = await guard.Find(Request(), Token);
+
+        Assert.NotNull(answer);   // today null: the launcher is asked again and starts a second agent
+        Assert.Equal("/work/web/.claude/worktrees/wf-test", answer.Worktree);
+        Assert.Null(answer.Failure);
+    }
+
+    /// <summary>The same lag with the session still running: the guard leaves it to the launcher, whose running check finds the session.</summary>
+    [Fact]
+    public async Task A_retry_in_the_projector_lag_while_the_session_runs_is_left_to_the_launcher()
+    {
+        var grant = await _slice.HoldLease();
+        await Append(grant, EventTypes.LaunchStarted, Started(), "launch.outcome:" + _launch.Value);
+        var guard = new AgentLaunchEnded(new Views(state: null), new LedgerAgentSessions(new Views(state: null), _slice.Store, _slice.Events), new FakeSindriHome("/home/sindri"), _slice.Store);
+
+        Assert.Null(await guard.Find(Request(), Token));
+    }
+
+    private static LaunchStarted Started() =>
+        new(_launch, A.FirstItemId, LaunchMode.Open, AgentId.From("claude-code"), SessionId: null, "sindri", new LaunchViewer("warp", "Warp", ViewerOutcomeKind.Unconfirmed, Code: null, Detail: null), ["tmux"], CatalogSource.Builtin, "sha256:abc");
+
+    private async Task Append<T>(Core.Lease.LeaseGrant grant, string type, T payload, string key) =>
+        Assert.True((await _slice.Store.Append(_slice.Events.Entry(type, payload, key, A.FirstItemId.Value), grant, Token)).IsSuccess);
 
     private static AgentSessionEnd? AgentSessionEndOf(FakeAgentSessions sessions) =>
         sessions.Watch(_launch, Token).AsTask().Result.Value.EndedAs;

@@ -6,7 +6,8 @@
 //
 // Reads the sealed records of src/Sindri/Aw.Sindri.Core/Profile/*.cs that refuse unknown keys
 // ([JsonUnmappedMemberHandling(Disallow)]: SindriProfile and the records it nests), camel-cases their constructor
-// parameters (the profile's key names) and fails for each one docs/csharp/sindri-profile.md doesn't show as `key`.
+// parameters (the profile's key names) and fails for each one docs/csharp/sindri-profile.md doesn't show as `key` or as
+// a part of a dotted `parent.key`.
 // Not a C# test on purpose: a new profile key in another lane's PR fails this doc check with its fix line, never the
 // C# unit lane.
 // Exit codes: 0 ok, 1 a key is missing, 2 a tool error. Node builtins only.
@@ -57,7 +58,9 @@ try {
   const doc = fs.readFileSync(DOC, "utf8");
   const keys = fs.readdirSync(DIR).filter((f) => f.endsWith(".cs")).flatMap((f) => recordKeys(fs.readFileSync(path.join(DIR, f), "utf8")));
   if (!keys.some((k) => k.record === "SindriProfile")) throw new Error("found no SindriProfile record");
-  const missing = keys.filter((k) => !doc.includes(`\`${k.key}\``));
+  // A key counts as `key` alone or as any part of a dotted row: `oauth.linear` names `oauth` and `linear` (nested keys in one table).
+  const documented = new Set([...doc.matchAll(/`([A-Za-z0-9_.]+)`/g)].flatMap((m) => [m[1], ...m[1].split(".")]));
+  const missing = keys.filter((k) => !documented.has(k.key));
   for (const k of missing) console.error(`FAIL ${k.record}.${k.key} is not in docs/csharp/sindri-profile.md: add ${k.key} to docs/csharp/sindri-profile.md (a row with the key in backticks)`);
   if (missing.length) process.exit(1);
   console.log(`check-profile-doc: ok (${keys.length} keys)`);

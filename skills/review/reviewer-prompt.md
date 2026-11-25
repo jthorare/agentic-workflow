@@ -31,7 +31,7 @@ For any changed file relevant to your focus area, read it in full for context. A
 Review the changes through the lens of your specialty: **{focus}**
 
 Look for:
-- Bugs, correctness issues, and missing error handling or edge cases
+- Bugs, correctness issues, and missing error paths or edge cases
 - Violations of best practices specific to your domain
 - Security or performance problems (if relevant to your focus)
 - Patterns that will cause maintenance pain

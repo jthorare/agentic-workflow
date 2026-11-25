@@ -23,6 +23,18 @@ public static class TmuxAttachLine
     /// <returns>The text to copy.</returns>
     public static string Line(string socket, string session) => string.Join(' ', Argv(socket, session).Select(Quote));
 
+    /// <summary>The line for a server named by -L instead of a socket path: tmux -L &lt;name&gt; attach -t '=&lt;session&gt;', each part shell-quoted when it needs it.</summary>
+    /// <param name="server">The server's name (tmux -L).</param>
+    /// <param name="session">The session name.</param>
+    /// <returns>The text to copy.</returns>
+    public static string NamedLine(string server, string session)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(server);
+        ArgumentException.ThrowIfNullOrEmpty(session);
+        string[] argv = ["tmux", "-L", server, "attach", "-t", "=" + session];
+        return string.Join(' ', argv.Select(Quote));
+    }
+
     private static string Quote(string part) =>
         part.Length > 0 && part.All(static c => char.IsAsciiLetterOrDigit(c) || c is '/' or '.' or '_' or '-' or ':' or '%' or '@') ? part : "'" + part.Replace("'", "'\\''", StringComparison.Ordinal) + "'";
 }

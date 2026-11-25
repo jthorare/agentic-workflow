@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# The routed-lane stub of scripts/tests/meta-launch.test.sh: it records its argv and pid, then sleeps.
+# A `--help` call is the lane script's capability probe for --no-daemon, not the launch: it records nothing (#2637).
+# Seconds come from AGENT_MODEL_SLEEP (default 600).
+[ "${1:-}" = --help ] && exit 0
+printf '%s|' "$@" > "$CALLS.model"
+echo "$$" > "$CALLS.modelpid"
+exec sleep "${AGENT_MODEL_SLEEP:-600}"

@@ -134,20 +134,19 @@ internal sealed partial class ItemSheet : UserControl
         var appended = await sheet.LoadMore(CancellationToken.None).ConfigureAwait(true);
         if (appended && sheet.Timeline.Count > before)
         {
-            Dispatcher.UIThread.Post(() => FocusRow(before), DispatcherPriority.Loaded);
+            Dispatcher.UIThread.Post(() => FocusTimelineRow(before), DispatcherPriority.Loaded);
         }
         else if (appended && !sheet.HasMore)
         {
-            Dispatcher.UIThread.Post(() => FocusRow(sheet.Timeline.Count - 1), DispatcherPriority.Loaded);
+            Dispatcher.UIThread.Post(() => FocusTimelineRow(sheet.Timeline.Count - 1), DispatcherPriority.Loaded);
         }
     }
 
-    private void FocusRow(int index)
+    private void FocusTimelineRow(int index)
     {
-        var rows = this.FindControl<ItemsControl>("TimelineList")?.GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("timeline-row")).ToList();
-        if (rows is { } && index >= 0 && index < rows.Count)
+        if (this.FindControl<ItemsControl>("TimelineList") is { } list)
         {
-            _ = rows[index].Focus(NavigationMethod.Tab);
+            RowKeys.FocusRow(list, index);
         }
     }
 }

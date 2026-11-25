@@ -13,12 +13,13 @@ internal sealed partial class ContextPageViewModel
     // Null when a newer Submit took over, or when the control plane is down (its problem is drawn here).
     private async Task<(List<string> Anchors, bool FromQuestion, List<string> Suggested)?> Resolve(Uri api, List<string> words, int generation, CancellationToken cancellationToken)
     {
+        _askedFiles = [];
         if (AnchorShaped(words))
         {
             return (words, false, []);
         }
 
-        var asked = await Ports.Api.QueryAnchors(api, AnchorText.Trim(), cancellationToken).ConfigureAwait(true);
+        var asked = await Ports.Api.QueryAnchors(api, Asked.Trim(), cancellationToken).ConfigureAwait(true);
         if (generation != _generation)
         {
             return null;
@@ -27,7 +28,7 @@ internal sealed partial class ContextPageViewModel
         if (!asked.IsSuccess && string.Equals(asked.Error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal))
         {
             Show(view: null, choices: []);
-            Problem = asked.Error.Message;
+            SetProblem(asked.Error.Message);
             Refresh();
             return null;
         }
@@ -35,12 +36,14 @@ internal sealed partial class ContextPageViewModel
         // why a miss is one anchor: the whole text may be a node's label, and a question is never a list of anchors
         if (!asked.IsSuccess)
         {
-            return ([AnchorText.Trim()], false, []);
+            return ([Asked.Trim()], false, []);
         }
 
+        KeepTitles(asked.Value.Suggestions);
+        _askedFiles = FilesOf(asked.Value);
         return asked.Value.Anchors.Count > 0
             ? ([.. asked.Value.Anchors.Distinct(StringComparer.Ordinal)], true, [])
-            : ([AnchorText.Trim()], false, [.. asked.Value.SuggestedAnchors.Distinct(StringComparer.Ordinal)]);
+            : ([Asked.Trim()], false, [.. asked.Value.SuggestedAnchors.Distinct(StringComparer.Ordinal)]);
     }
 
     // Anchors are keys like surface:pane/Drop; every word of one has a colon. Anything else is a person's question.

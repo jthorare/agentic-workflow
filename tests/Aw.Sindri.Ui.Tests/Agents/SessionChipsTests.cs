@@ -9,9 +9,9 @@ public sealed class SessionChipsTests
 {
     [Theory]
     [InlineData("running", "●", "Working")]
-    [InlineData("asking", "◐", "Asking you")]
-    [InlineData("idle", "○", "Idle")]
-    [InlineData("unknown", "○", "Unknown")]
+    [InlineData("asking", "●", "Waiting on you")]
+    [InlineData("idle", "●", "Idle")]
+    [InlineData("unknown", "●", "Unknown")]
     public void Each_state_maps_to_its_glyph_and_word(string state, string glyph, string word)
     {
         var chip = SessionChips.For(state);
@@ -24,7 +24,7 @@ public sealed class SessionChipsTests
     {
         var chip = SessionChips.For("dozing");
 
-        Assert.Equal(("○", "dozing"), (chip.Glyph, chip.Word));
+        Assert.Equal(("●", "dozing"), (chip.Glyph, chip.Word));
         Assert.Equal("dozing", SessionChips.Word("dozing"));
     }
 }

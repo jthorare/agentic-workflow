@@ -12,12 +12,33 @@ internal partial interface ISindriApi
     /// <returns>The list, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowList>> Workflows(Uri api, CancellationToken cancellationToken);
 
+    /// <summary>GET /sindri/workflows?includeArchived=true: every workflow, archived ones too. An archived slug stays reserved, so the create form checks a new short id against these; the page's own list stays live workflows only.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The list with the archived rows, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowList>> WorkflowsIncludingArchived(Uri api, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/workflows: makes a workflow, off, from a starter template. A human action, sent once, never retried.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="slug">The new workflow's slug.</param>
+    /// <param name="template">The starter template's name.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The new workflow, SND-GRAPH-009 for a slug that is taken, SND-CLI-003 for a bad slug or template, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowCreated>> CreateWorkflow(Uri api, string slug, string template, CancellationToken cancellationToken);
+
     /// <summary>GET /sindri/workflows/{slug}: one workflow with its shown revision.</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="slug">The workflow.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The workflow, SND-GRAPH-008 for an unknown one, SND-CLI-003 for a bad slug, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowView>> Workflow(Uri api, string slug, CancellationToken cancellationToken);
+
+    /// <summary>GET /sindri/workflows/{slug}?revision=latest: one workflow with its newest revision shown, saved but maybe not live (#3303).</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="slug">The workflow.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The workflow, SND-GRAPH-008 for an unknown one, SND-CLI-003 for a bad slug, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowView>> WorkflowNewest(Uri api, string slug, CancellationToken cancellationToken);
 
     /// <summary>GET /sindri/workflows/{slug}/runs: the newest runs, newest first.</summary>
     /// <param name="api">The base URL.</param>
@@ -46,6 +67,13 @@ internal partial interface ISindriApi
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The run, SND-GRAPH-107 for one that already ended, SND-GRAPH-101 for an unknown one, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowRunCancelled>> CancelWorkflowRun(Uri api, string runId, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/workflow-runs/{run}/seen: the owner opened a failed live run, so its Home row clears. Sent once per open of the run page.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="runId">The run.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Whether the run was marked (false for a run that did not fail, a test run or one already seen), a refusal as served, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowRunSeen>> MarkWorkflowRunSeen(Uri api, string runId, CancellationToken cancellationToken);
 
     /// <summary>POST /sindri/workflow-runs/{run}/nodes/{node}/takeover: the human takes a waiting agent node's agent over. Sent once, never retried.</summary>
     /// <param name="api">The base URL.</param>

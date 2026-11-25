@@ -1,6 +1,8 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels.Projects;
 using static Aw.Sindri.Ui.Tests.Projects.ProjectsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Projects;
@@ -53,7 +55,7 @@ public sealed class ProjectsPageTests
     }
 
     [Fact]
-    public async Task The_cards_stay_in_the_order_the_server_serves()
+    public async Task Rows_with_the_same_last_activity_go_by_name()
     {
         var list = Golden("mixed");
         var second = list["projects"]![0]!.DeepClone();
@@ -114,6 +116,25 @@ public sealed class ProjectsPageTests
     }
 
     [Fact]
+    public async Task An_unset_github_login_keeps_the_hint_on_the_freshness_line_without_tinting_it()
+    {
+        var list = Golden("mixed");
+        list["freshness"] = new JsonArray(new JsonObject
+        {
+            ["source"] = "github-login",
+            ["state"] = "ok",
+            ["text"] = "not known: connect GitHub or set review.login to see what is blocked on you",
+            ["at"] = null,   // served as null: the row has no sync time
+        });
+        _f.Serve(list);
+
+        var page = await _f.Shown(Token);
+
+        Assert.False(page.FreshnessFailing);
+        Assert.Contains("not known: connect GitHub or set review.login to see what is blocked on you", page.Freshness, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_failing_source_tints_the_freshness_line()
     {
         _f.Serve("linear-failing");
@@ -122,6 +143,23 @@ public sealed class ProjectsPageTests
 
         Assert.True(page.FreshnessFailing);
         Assert.Contains("Linear issues needs attention (SND-INDEX-401)", page.Freshness, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_failing_sindri_row_says_what_could_not_be_read_without_the_raw_error()
+    {
+        var list = Golden("mixed");
+        list["freshness"]!.AsArray().Add(new JsonObject { ["source"] = "sindri", ["state"] = "failing", ["text"] = "SND-REVIEWS-012: reviews.db is locked", ["at"] = null });
+        _f.Serve(list);
+
+        var page = await _f.Shown(Token);
+
+        Assert.False(page.FreshnessFailing);   // the freshness line leaves Sindri's row out: the line above the rows says it, once (frames round 13, truth-failed)
+        Assert.Contains("GitHub synced 14 min ago · Linear says you're Jo Smith", page.Freshness, StringComparison.Ordinal);
+        Assert.DoesNotContain("couldn't be read", page.Freshness, StringComparison.Ordinal);
+        Assert.Equal((true, "PRs, checks and agents couldn't be read just now"), (page.ShowsFactsMissing, page.FactsMissingText));   // grouped by state already: no tail
+        Assert.DoesNotContain("SND-", page.Freshness, StringComparison.Ordinal);
+        Assert.DoesNotContain("sindri", page.Freshness, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -155,7 +193,7 @@ public sealed class ProjectsPageTests
 
         var page = await _f.Shown(Token);
 
-        Assert.Equal(("Linear is still syncing. Projects you lead show up when it's done.", true, false, false, false), (page.Sentence, page.IsEmptyBlock, page.IsBanner, page.ShowsAddInEmpty, page.NamesOnly));
+        Assert.Equal(("Linear is still syncing. Projects you lead show up when it's done.", true, false, false), (page.Sentence, page.IsEmptyBlock, page.IsBanner, page.NamesOnly));
         Assert.Empty(page.Groups);
     }
 
@@ -166,7 +204,7 @@ public sealed class ProjectsPageTests
 
         var page = await _f.Shown(Token);
 
-        Assert.Equal((true, true, false), (page.IsEmptyBlock, page.ShowsAddInEmpty, page.IsBanner));
+        Assert.Equal((true, false), (page.IsEmptyBlock, page.IsBanner));
         Assert.StartsWith("You don't lead any Linear projects", page.Sentence, StringComparison.Ordinal);
     }
 
@@ -177,7 +215,103 @@ public sealed class ProjectsPageTests
 
         var page = await _f.Shown(Token);
 
-        Assert.Equal((true, true), (page.IsEmptyBlock, page.ShowsAddInEmpty));
+        Assert.True(page.IsEmptyBlock);
+    }
+
+    private const string ServedMissingKey = "Linear needs a token. Run sindri index connect linear in your terminal to connect it.";
+
+    private async Task<ProjectsPageViewModel> ShownWithMissingKey(Action<JsonNode>? edit = null)
+    {
+        var list = Golden("mixed");
+        list["empty"] = ServedMissingKey;
+        list["emptyCode"] = "linear-key-missing";
+        edit?.Invoke(list);
+        _f.Serve(list);
+        return await _f.Shown(Token);
+    }
+
+    [Fact]
+    public async Task A_missing_key_banner_says_what_is_wrong_in_plain_words_with_the_last_read_and_offers_Connect_Linear()
+    {
+        var page = await ShownWithMissingKey();
+
+        Assert.Equal(("Sindri has no Linear key, so projects aren't refreshing. Last read 14m ago.", true, false, true), (page.Sentence, page.IsBanner, page.IsEmptyBlock, page.ShowsConnect));
+        Assert.Equal("Connect Linear", page.ConnectText);
+    }
+
+    [Fact]
+    public async Task The_last_read_counts_only_Linears_rows_never_a_newer_GitHub_row()
+    {
+        var page = await ShownWithMissingKey(list =>
+        {
+            foreach (var row in list["freshness"]!.AsArray().Where(r => string.Equals((string?)r!["source"], "github", StringComparison.Ordinal)))
+            {
+                row!["at"] = "2025-12-31T23:59:00.0000000Z";   // a minute ago: newer than every Linear row
+            }
+        });
+
+        Assert.Equal("Sindri has no Linear key, so projects aren't refreshing. Last read 14m ago.", page.Sentence);
+    }
+
+    [Fact]
+    public async Task A_missing_key_banner_with_no_last_read_leaves_the_last_read_out()
+    {
+        var page = await ShownWithMissingKey(list => list["freshness"] = new JsonArray());
+
+        Assert.Equal("Sindri has no Linear key, so projects aren't refreshing.", page.Sentence);
+    }
+
+    [Fact]
+    public async Task Without_a_key_the_identity_reads_as_last_seen_not_as_a_live_answer()
+    {
+        var page = await ShownWithMissingKey();
+
+        Assert.EndsWith(" · last seen as Jo Smith", page.Freshness, StringComparison.Ordinal);
+        Assert.DoesNotContain("Linear says", page.Freshness, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_banner_that_is_not_about_the_key_offers_no_Connect_Linear()
+    {
+        _f.Serve("context-down");
+
+        var page = await _f.Shown(Token);
+
+        Assert.False(page.ShowsConnect);
+    }
+
+    [Fact]
+    public async Task Linear_not_connected_offers_Connect_Linear_in_the_empty_block()
+    {
+        _f.Serve("empty-no-linear");
+
+        var page = await _f.Shown(Token);
+
+        Assert.True(page.ShowsConnect);
+    }
+
+    [Theory]
+    [InlineData("syncing")]
+    [InlineData("empty-leads-nothing")]
+    public async Task Connect_Linear_is_not_offered_while_Linear_is_syncing_or_connected(string scenario)
+    {
+        _f.Serve(scenario);
+
+        var page = await _f.Shown(Token);
+
+        Assert.False(page.ShowsConnect);
+    }
+
+    [Fact]
+    public void Connect_Linear_asks_the_shell_once()
+    {
+        var page = _f.Page();
+        var asked = 0;
+        page.ConnectRequested += (_, _) => asked++;
+
+        page.RequestConnect();
+
+        Assert.Equal(1, asked);
     }
 
     [Fact]
@@ -189,19 +323,19 @@ public sealed class ProjectsPageTests
     }
 
     [Theory]
-    [InlineData(0, 1)]
-    [InlineData(559, 1)]
-    [InlineData(560, 2)]
-    [InlineData(1039, 2)]
-    [InlineData(1040, 3)]
-    [InlineData(2000, 3)]
-    public void The_columns_follow_the_page_width(double width, int columns)
+    [InlineData(0, false, false)]
+    [InlineData(807, false, false)]
+    [InlineData(808, false, true)]
+    [InlineData(867, false, true)]
+    [InlineData(868, true, true)]
+    [InlineData(2000, true, true)]
+    public void The_columns_drop_as_the_page_narrows(double width, bool agents, bool wide)
     {
         var page = _f.Page();
 
         page.SetPageWidth(width);
 
-        Assert.Equal(columns, page.Columns);
+        Assert.Equal((agents, wide), (page.ShowsAgents, page.ShowsWide));
     }
 
     [Fact]

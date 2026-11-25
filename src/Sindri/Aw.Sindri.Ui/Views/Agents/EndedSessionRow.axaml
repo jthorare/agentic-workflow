@@ -4,9 +4,14 @@
              x:Class="Aw.Sindri.Ui.Views.Agents.EndedSessionRow"
              x:DataType="ag:EndedSessionViewModel">
   <!-- One session that ended recently: what it was, when, and the command that resumes it, with Copy. -->
-  <Border x:Name="EndedRowFrame" Classes="item-row session-row" Classes.selected="{Binding IsSelected}" Focusable="True"
+  <Border x:Name="EndedRowFrame" Classes="item-row session-row clickable" Classes.selected="{Binding IsSelected}" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-    <Grid ColumnDefinitions="150,2*,1.2*,2*,Auto,Auto" MinHeight="{StaticResource Size.Row}" VerticalAlignment="Center">
+    <!-- The first column is the live table's status column (the shared size group AgStatus under the page's scope), so both title columns start at the same x (#2693). -->
+    <Grid MinHeight="{StaticResource Row.Height.Default}" VerticalAlignment="Center">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" MinWidth="136" SharedSizeGroup="AgStatus" />
+        <ColumnDefinition Width="2*" /><ColumnDefinition Width="1.2*" /><ColumnDefinition Width="2*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
       <TextBlock x:Name="EndedStatus" Classes="body-strong" Text="{Binding StatusText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
       <TextBlock Grid.Column="1" Classes="body-strong" Text="{Binding TitleText}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
       <TextBlock x:Name="EndedRepo" Grid.Column="2" Classes="caption subtle" Text="{Binding RepoText}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />

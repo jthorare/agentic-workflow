@@ -25,6 +25,14 @@
 #                                  real routes): one overdue, two due today, three upcoming (tomorrow twice, a weekday, a MM-dd), three with no
 #                                  date, links on four (one with a PR and a Linear issue), and the last one marked done. Each add carries a fixed
 #                                  --client-id (ui-fixture-todo-NN), so a repeat adds nothing and marks nothing done twice
+#   sindri-ui-fixture.sh home [clear]  (run after 'up'; needs jq and sqlite3 or python3)
+#                                  the Home page's data (home spec §15, S0): one home.row.raised event per row of tests/fixtures/home/rows.json
+#                                  (the spec's §4.2 example: meta, review 3120, ready 3099, ideas, ready 3101 and Sam's DM), with the edges of
+#                                  each row's blocksList, written to <home>/ledger.db like 'stall' writes its row; the projector fills home_rows
+#                                  and home_links from them, so 'sindri views rebuild' replays the same rows. Each event has a fixed id and
+#                                  idempotency key (sindri-ui-fixture:home:raised:<row id>), so a repeat adds nothing. 'clear' deletes those
+#                                  events again (then 'sindri views rebuild' empties Home). The row payloads are the home.row.raised
+#                                  payload of the Home spec §3: { row, edges: [{ from, to, edge }] }
 #   sindri-ui-fixture.sh decide <DEC-id> <choice>
 #                                  decide at the CLI (sindri decide, as the owner): with the app open on the same
 #                                  decision, the app's own Decide is then refused (SND-ITEM-409)
@@ -32,6 +40,20 @@
 #                                  the Resources page's data (#2258 PR18b, #2494): files under <home>/resources, which is all
 #                                  GET /sindri/resources reads: workflow:morning-check gets a 1.2 MB database (state.db) and a
 #                                  300 KB disk (scratch/), toolkit:notes a 40 KB disk (cache/). Rewritten to the same sizes on a repeat
+#   sindri-ui-fixture.sh connections empty|typical|error|down  (run after 'up')
+#                                  the Connections page's data (#2537): rows of the 'connection' table of <home>/ledger.db, which is all
+#                                  GET /sindri/connections reads (the tile shows the label of the name as the account and last_refreshed_at
+#                                  as "last used"). empty removes every row (the five tiles all offer Connect). typical writes github:sam-rivera,
+#                                  linear:acme and google:sam-acme, connected, last used 30 minutes, 2 hours and 3 days ago, plus one custom
+#                                  connection, billing-api:prod (rest, no preset, a probe URL on an .invalid host). error is typical with
+#                                  linear:acme as needs-sign-in and the reason the refresh writes when the provider refuses the grant
+#                                  ("the provider refused the refresh (invalid_grant)"). Rows are keyed by name and written with INSERT OR
+#                                  REPLACE, so a repeat or a switch between states leaves one row each; the rows carry created_by
+#                                  'ui-fixture' and down removes only those. No secret is stored anywhere: the rows point at
+#                                  keychain:sindri-connection/<name> entries that do not exist, so the tiles read right but Test and a refresh
+#                                  fail with SND-CONN-006 (no stored sign-in). It writes no Needs-you event for the error row: the tile reads
+#                                  only the row. Run 'up' first (the table is made by the control plane's migrations). Needs sqlite3 or python3.
+#
 #   sindri-ui-fixture.sh fail      add a service the build cannot run to the live profile (a failure row)
 #   sindri-ui-fixture.sh unfail    remove it again (the row clears)
 #                                  (items --large also files 12 requests, in FIXTURE_REPO when set, else with no repo)
@@ -84,6 +106,20 @@
 #                                  drop the hold and resume the service first; every other state removes the index file again;
 #                                  pause and resume only toggle the service
 #
+#   sindri-ui-fixture.sh linear-catchup [empty|typical|error|read-error]
+#                                  the Work > Linear "Since you last looked" strip (Linear hub spec 3, #2536; run after 'context up'; needs
+#                                  the migrations through 0036). Seeds 25 SPL issues (audience linear:SPL, ids fxc-N, 3+ projects, priorities
+#                                  1 to 4, titles up to 85 characters, 12 over 60) into <home>/context/context.db: linear_issue, linear_issue_change
+#                                  (assignments to the viewer and state moves with names, via 'feed') and linear_comment (5 comments that
+#                                  @-mention the viewer), 37 strip rows in all, spread over the last 71 hours, 10 issues with 2 or 3 of them.
+#                                  typical (default) clears the marker; empty sets the marker to now (nothing new); error records a failed
+#                                  Linear sync on the feed's source_cursor row (source 'linear', repo 'records': last_error SND-CONTEXT-071,
+#                                  failures 3, last_sync 4 minutes ago, last_error_text 'Linear refused the key (401)'), rows kept: the
+#                                  Reconnect card; read-error renames linear_issue_change so the strip's stored read fails (it says it could
+#                                  not read, with Retry). The other states put the cursor and the table back. The marker lives in
+#                                  <home>/ui/preferences.json (linearSince): restart the app after a run, it keeps preferences in memory.
+#                                  Idempotent: a repeat replaces the fxc rows and puts a renamed table back; 'projects' leaves them alone
+#
 #   sindri-ui-fixture.sh projects  (run after 'context up')
 #                                  the Projects page's data (projects page spec 4.1, 5, 12 Ph5, 13.1): seeds six Linear projects into
 #                                  <home>/context/context.db (source_record, record_link; source 'linear-projects', audience linear:SPL, a
@@ -105,12 +141,14 @@
 #   sindri-ui-fixture.sh reviews up|down  (run after 'context up')
 #                                  a review page that opens on a fixture PR, for sending a fix from its fix sheet end to end
 #                                  (POST /sindri/reviews/acme/api/<N>/fix; PR review page spec 8.2). up adds what projects adds to the live
-#                                  profile (the SPL team, github repos acme/api and acme/web), review.login fx-viewer and workflow.forge
+#                                  profile (the SPL team, github repos acme/api and acme/web, and a github token pointer env:FIXTURE_GITHUB_TOKEN that nothing sets: without a token or a GitHub connection Reviews shows Connect GitHub and no rows, #2619), review.login fx-viewer and workflow.forge
 #                                  (adapter file, hosts github.com), It builds a file-backed forge world inside the home,
 #                                  <home>/ui-fixture-forge/state/forge/file (never the owner's $AW_STATE_DIR), with ONE open PR on
 #                                  github.com/acme/api (branch feat/retry-budget, authored by fx-viewer so the fix posts a sindri.fix thread):
 #                                  the changed file src/Sync.cs (3 added lines at 41-43), three check runs (lint failing) and one open thread
-#                                  on src/Sync.cs; the world is rebuilt every run, so the PR is always #1. It stores that PR as the Context
+#                                  on src/Sync.cs; the world is rebuilt every run, so the PR is always #1. Then 3 PRs by other authors that
+#                                  request fx-viewer's review (#2-#4: dana-okafor and kai-reviewer green, lee-park's test failing; REVIEWS_OTHERS),
+#                                  so the Reviews list has a queue. It stores that PR as the Context
 #                                  record github:pr/acme/api/<N> (audience linear:SPL, with a github cursor row), replacing the last run's,
 #                                  and restarts the control plane with AW_STATE_DIR and AW_FORGE_LOGIN pointing at the forge state (the
 #                                  real state's cache/bin, where serve finds Temporal, is linked into it), which every later restart keeps
@@ -123,8 +161,8 @@
 #                                  control plane when it is running. Needs jq and sqlite3 or python3.
 #
 #   sindri-ui-fixture.sh sessions up|ask <pid>|end <pid>|back <pid>|disable|enable|down
-#                                  the Agents page's data (U11a; run after 'up', and run 'sessions up' right after every 'up': a
-#                                  control plane started without it reads the real box). up copies tests/fixtures/sessions/
+#                                  the Agents page's data (U11a; run after 'up'. Without it the control plane reads an empty
+#                                  tree, <home>/ui-fixture-no-sessions/, so the Agents page shows no session). up copies tests/fixtures/sessions/
 #                                  (the /proc-shaped tree and the Claude records) to <home>/ui-fixture-sessions/ with cp -a,
 #                                  makes its fleet/ (0700, with the .aw-fleet marker), writes a bare launcher.json there and
 #                                  restarts the control plane (stop, then --headless) with AW_SESSIONS_PROC_ROOT,
@@ -135,7 +173,7 @@
 #                                  from its stat; end moves proc/<pid>/ to <copy>/ended/ and back moves it back (the row
 #                                  leaves to Recently ended after two passes); disable and enable set sessions.enabled in
 #                                  the copy's launcher.json and restart (SND-SESSION-002); down stops the control plane and
-#                                  removes the copy. Every restart re-exports the four variables while the copy exists, and
+#                                  removes the copy. Every start exports the four variables (the copy while it exists, else the empty tree), and
 #                                  down never restarts. Needs jq.
 #
 #   sindri-ui-fixture.sh model-calls fell-back|no-answer|paused|none
@@ -238,6 +276,8 @@ services:
 api: { port: 0 }
 YAML
   approve || return
+  # The collector reads the box's real /proc, ~/.claude/sessions, fleet and launcher.json unless all four overrides point into the home.
+  sessions_export || return
   "$PROVE" human --headless
 }
 
@@ -402,6 +442,46 @@ resources() {
   seed_file "$root/workflow/morning-check/state.db" 1258291
   seed_file "$root/workflow/morning-check/scratch/notes.txt" 307200
   seed_file "$root/toolkit/notes/cache/index.bin" 40960
+}
+
+# A UTC timestamp N seconds ago in the store's text form (GNU date -d, else BSD date -r).
+ts_ago() {
+  local at=$(( $(date -u +%s) - $1 ))
+  date -u -d "@$at" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -r "$at" +%Y-%m-%dT%H:%M:%SZ
+}
+
+# One connection row: name kind preset|- config-json status reason|- refreshed-seconds-ago|-. The pointer names a keychain
+# entry nobody wrote: the fixture never stores a secret.
+conn_row() {
+  local name="$1" kind="$2" preset="$3" config="$4" status="$5" reason="$6" ago="$7"
+  local now pointer refreshed
+  now="$(ts_ago 0)"
+  pointer="keychain:sindri-connection/${name/:/.}"
+  [ "$preset" = - ] && preset="NULL" || preset="'$preset'"
+  [ "$reason" = - ] && reason="NULL" || reason="'$reason'"
+  [ "$ago" = - ] && refreshed="NULL" || refreshed="'$(ts_ago "$ago")'"
+  printf "INSERT OR REPLACE INTO connection (name, kind, preset, config_json, secret_pointer, status, status_reason, created_by, created_at, updated_at, last_refreshed_at) VALUES ('%s', '%s', %s, '%s', '%s', '%s', %s, 'ui-fixture', '%s', '%s', %s);" \
+    "$name" "$kind" "$preset" "$config" "$pointer" "$status" "$reason" "$now" "$now" "$refreshed"
+}
+
+connections() {
+  need_sql
+  local state="$1" sql
+  [ -f "$AW_SINDRI_HOME/ledger.db" ] || die "no ledger at $AW_SINDRI_HOME/ledger.db: run 'up' first"
+  [ "$(sql_on "$AW_SINDRI_HOME/ledger.db" "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'connection';")" = 1 ] \
+    || die "connections: the ledger has no connection table yet (the control plane makes it: run 'up' first)"
+  case "$state" in
+    empty) sql="DELETE FROM connection;" ;;
+    down) sql="DELETE FROM connection WHERE created_by = 'ui-fixture';" ;;
+    typical | error)
+      local linear=connected linear_reason=-
+      if [ "$state" = error ]; then linear=needs-sign-in; linear_reason="the provider refused the refresh (invalid_grant)"; fi
+      sql="$(conn_row github:sam-rivera oauth github '{"clientId":"fixture-client-id"}' connected - 1800)
+$(conn_row linear:acme oauth linear '{"clientId":"fixture-client-id"}' "$linear" "$linear_reason" 7200)
+$(conn_row google:sam-acme oauth google '{"clientId":"fixture-client-id"}' connected - 259200)
+$(conn_row billing-api:prod rest - '{"probeUrl":"https://billing.example.invalid/health"}' connected - -)" ;;
+  esac
+  sql_on "$AW_SINDRI_HOME/ledger.db" "$sql SELECT COUNT(*) || ' connection row(s)' FROM connection;"
 }
 
 close() {
@@ -799,6 +879,149 @@ UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;
   fi
 }
 
+# --- linear-catchup: the Work > Linear "Since you last looked" strip (Linear hub spec §3; #2536) ---
+# The strip reads linear_issue_change (assignments to the viewer and state moves on the viewer's issues, via 'feed') and linear_comment (an
+# '@' mention by someone else) after the marker held in <home>/ui/preferences.json (linearSince); no marker reads from the start of the store.
+LC_TEAM_ID="fxc-team"
+LC_SQL_BAK="linear_issue_change_fxc_off"
+lc_prefs() { printf '%s\n' "$AW_SINDRI_HOME/ui/preferences.json"; }
+
+# The strip's marker for an instant ($1: seconds since the epoch): 'lin_' and the UTC ticks as 16 hex digits (LinearSinceMarkers.Format).
+lc_marker() { printf 'lin_%016x' $(($1 * 10000000 + 621355968000000000)); }
+
+# Sets or clears linearSince in the preferences file ($1: a marker, or '' to clear). The app rewrites the file from memory when it saves: restart it after this.
+lc_set_marker() {
+  local f dir
+  f="$(lc_prefs)"
+  dir="$(dirname "$f")"
+  need jq
+  if [ -n "$1" ]; then
+    mkdir -p "$dir" || die "linear-catchup: can't make $dir"
+    if [ -f "$f" ]; then jq --arg m "$1" '.linearSince = $m' "$f" > "$f.new" || die "linear-catchup: $f is not JSON"; else jq -n --arg m "$1" '{version: 1, linearSince: $m}' > "$f.new"; fi
+    chmod 600 "$f.new"; mv "$f.new" "$f"
+  elif [ -f "$f" ]; then
+    jq 'del(.linearSince)' "$f" > "$f.new" || die "linear-catchup: $f is not JSON"
+    chmod 600 "$f.new"; mv "$f.new" "$f"
+  fi
+}
+
+# One issue, its events and its mention, appended to $lc_sql. $1 number, $2 project, $3 priority, $4 assignee ('viewer' or 'other'), $5 title, $6... events:
+# A@H (assigned to the viewer H hours ago), S:Old>New@H (a state move), M@H (someone else's comment that @-mentions the viewer).
+lc_issue() {
+  local n="$1" project="$2" prio="$3" who="$4" title="$5" key id assignee ev state_name state_type updated=0 old new h
+  shift 5
+  key="linear:issue/fxc-$n"
+  id="$PROJECTS_TEAM-$((200 + n))"
+  assignee="fx-other"; [ "$who" = viewer ] && assignee="$PROJECTS_VIEWER"
+  for ev in "$@"; do h="${ev##*@}"; if [ "$updated" -eq 0 ] || [ "$h" -lt "$updated" ]; then updated="$h"; fi; done
+  state_name="Todo"; state_type="unstarted"
+  for ev in "$@"; do
+    case "$ev" in S:*) new="${ev#S:*>}"; new="${new%@*}"; state_name="$new" ;; esac   # the last state move listed is the issue's current state
+  done
+  case "$state_name" in "In Progress" | "In Review") state_type="started" ;; Done) state_type="completed" ;; Backlog) state_type="backlog" ;; esac
+  lc_sql+="INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at)
+    VALUES ('$key', 'linear', 'issue', NULL, '$PROJECTS_AUDIENCE', '$title', 'https://linear.app/fixture/issue/$id', 'Dana Okafor', '$([ "$state_type" = completed ] && echo done || echo open)', '$state_name', $(projects_ts '-20 days'), $(projects_ts "-$updated hours"), NULL, 'fixture', 'fixture-lc-$n', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
+INSERT INTO linear_issue (key, team_id, identifier, state_id, state_type, assignee_id, priority, estimate, cycle_id, project_id, parent_id, labels, due_date, sort_order, updated_at, description, state_name)
+    VALUES ('$key', '$LC_TEAM_ID', '$id', 'st-$(printf '%s' "$state_name" | tr 'A-Z ' 'a-z-')', '$state_type', '$assignee', $prio, NULL, NULL, 'fxc-$project', NULL, '[]', NULL, $n, $(projects_ts "-$updated hours"), NULL, '$state_name');
+"
+  for ev in "$@"; do
+    h="${ev##*@}"
+    case "$ev" in
+      A@*) lc_sql+="INSERT INTO linear_issue_change (issue_key, field, \"old\", \"new\", at, via, old_name, new_name) VALUES ('$key', 'assignee', NULL, '$PROJECTS_VIEWER', $(projects_ts "-$h hours"), 'feed', NULL, NULL);
+" ;;
+      S:*) old="${ev#S:}"; old="${old%%>*}"; new="${ev#*>}"; new="${new%@*}"
+        lc_sql+="INSERT INTO linear_issue_change (issue_key, field, \"old\", \"new\", at, via, old_name, new_name) VALUES ('$key', 'state', 'st-$(printf '%s' "$old" | tr 'A-Z ' 'a-z-')', 'st-$(printf '%s' "$new" | tr 'A-Z ' 'a-z-')', $(projects_ts "-$h hours"), 'feed', '$old', '$new');
+" ;;
+      M@*) lc_sql+="INSERT INTO linear_comment (id, issue_key, author_id, created_at, body, sindri) VALUES ('fxc-c-$n', '$key', 'fx-dana', $(projects_ts "-$h hours"), '@$PROJECTS_VIEWER_NAME can you look at this one before Thursday?', 0);
+" ;;
+    esac
+  done
+}
+
+# Linear reads as connected only when the profile names a token pointer (LinearSettings: no pointer, no feed, so the page shows
+# "Linear isn't connected"). The pointer names an env var nothing sets and the url is a dead loopback port, so a tick (none runs in
+# this fixture: its only service is the heartbeat) could never reach Linear. Written once, on the profile's Linear line.
+lc_connect() {
+  local profile
+  profile="$(profile_path)"
+  grep -q 'linear: { teams: \[.*token:' "$profile" && return 0
+  sed "s|linear: { teams: \[$PROJECTS_TEAM\] }|linear: { teams: [$PROJECTS_TEAM], token: \"env:FIXTURE_LINEAR_KEY\", url: \"http://127.0.0.1:9/graphql\" }|" "$profile" > "$profile.new" \
+    && mv "$profile.new" "$profile" || die "linear-catchup: can't add the Linear token pointer to $profile"
+  grep -q 'token: "env:FIXTURE_LINEAR_KEY"' "$profile" || die "linear-catchup: the profile's Linear line isn't 'linear: { teams: [$PROJECTS_TEAM] }'; add a token pointer to it by hand"
+}
+
+linear_catchup() {
+  local mode="${1:-typical}" db now
+  case "$mode" in empty | typical | error | read-error) ;; *) die "linear-catchup: '$mode' is not a state (empty, typical, error, read-error)" ;; esac
+  need_sql
+  need jq
+  db="$(context_db)"
+  [ -f "$db" ] || die "no context store at $db: run 'context up' first"
+  sql_on "$db" "SELECT 1 FROM linear_issue_change LIMIT 1" >/dev/null 2>&1 \
+    || sql_on "$db" "SELECT 1 FROM $LC_SQL_BAK LIMIT 1" >/dev/null 2>&1 \
+    || die "the context store at $db has no linear_issue_change table (migrations 0032 and 0036): rebuild sindri and run 'context up' first"
+  sql_on "$db" "SELECT state_name FROM linear_issue LIMIT 1" >/dev/null 2>&1 || die "the context store at $db has no linear_issue.state_name (migration 0036): rebuild sindri and run 'context up' first"
+  projects_profile || return
+  lc_connect
+
+  # An 'error' run left the changes table renamed: put it back before anything else.
+  sql_on "$db" "SELECT 1 FROM $LC_SQL_BAK LIMIT 1" >/dev/null 2>&1 && { sql_on "$db" "ALTER TABLE $LC_SQL_BAK RENAME TO linear_issue_change" >/dev/null || die "linear-catchup: can't restore linear_issue_change"; }
+
+  local lc_sql="DELETE FROM linear_comment WHERE issue_key LIKE 'linear:issue/fxc-%';
+DELETE FROM linear_issue_change WHERE issue_key LIKE 'linear:issue/fxc-%';
+DELETE FROM linear_issue WHERE key LIKE 'linear:issue/fxc-%';
+DELETE FROM source_record WHERE key LIKE 'linear:issue/fxc-%';
+"
+  # 25 issues, 37 events (32 changes and 5 mentions), the oldest 71 hours ago. Issues 1, 8, 11, 17, 24 and others carry two or three events.
+  lc_issue 1  checkout   1 viewer 'Retry failed card captures when the payment provider times out' 'A@70' 'S:Todo>In Progress@50' 'S:In Progress>In Review@6'
+  lc_issue 2  checkout   2 viewer 'Checkout form shows a stale total after a coupon is removed twice' 'A@60' 'S:Todo>In Progress@30'
+  lc_issue 3  billing    3 viewer 'Export invoices as CSV' 'A@5'
+  lc_issue 4  search     2 viewer 'Search results ignore diacritics in product names and brand names' 'A@48' 'S:Backlog>Todo@47'
+  lc_issue 5  mobile     1 viewer 'Offline queue drops edits when the app is killed during sync' 'S:In Progress>In Review@20' 'S:In Review>Done@3'
+  lc_issue 6  platform   2 viewer 'Rate limit headers missing on the v3 list endpoints and the export routes' 'A@40'
+  lc_issue 7  onboarding 4 viewer 'Onboarding checklist' 'S:Todo>In Progress@12'
+  lc_issue 8  platform   1 viewer 'Migrate legacy webhooks to the signed delivery format before the old endpoint is removed' 'A@71' 'M@10' 'S:Todo>In Progress@9'
+  lc_issue 9  mobile     3 viewer 'Dark mode contrast on the settings page' 'A@2'
+  lc_issue 10 search     2 viewer 'Search relevance: boost recently opened documents for returning users' 'S:In Progress>In Review@28'
+  lc_issue 11 billing    1 viewer 'Billing portal redirects to a blank page for annual plans after a downgrade' 'A@36' 'S:Todo>In Progress@35'
+  lc_issue 12 platform   3 viewer 'Add pagination to the audit log API' 'A@55'
+  lc_issue 13 checkout   4 viewer 'Tooltip clipped on the narrow sidebar' 'A@1'
+  lc_issue 14 billing    3 other  'Decide on the retention window for exported reports' 'M@25'
+  lc_issue 15 mobile     4 viewer 'Push notification opt-in copy needs a rewrite for clarity and brevity' 'S:Backlog>Todo@44'
+  lc_issue 16 checkout   2 viewer 'Flaky checkout e2e test on the payment step when the sandbox is slow' 'A@18' 'S:Todo>In Progress@17'
+  lc_issue 17 mobile     1 viewer 'Sync conflicts resolve to the older edit on slow connections' 'S:Todo>In Progress@52' 'S:In Progress>In Review@15'
+  lc_issue 18 platform   3 viewer 'SDK: surface retry-after in the error type' 'A@33'
+  lc_issue 19 onboarding 4 viewer 'Welcome email links to the old docs' 'S:In Review>Done@22'
+  lc_issue 20 billing    1 viewer 'Invoice totals round differently in the PDF and the portal for euro accounts' 'A@14' 'S:Todo>In Progress@13'
+  lc_issue 21 search     3 other  'Ask: can we drop support for the v1 search API this quarter?' 'M@4'
+  lc_issue 22 search     2 viewer 'Search suggestions flicker while typing quickly on slower laptops' 'A@8'
+  lc_issue 23 platform   4 other  'Update the API reference for the new pagination parameters' 'M@30'
+  lc_issue 24 checkout   1 viewer 'Handle expired sessions on the checkout confirmation page without losing the cart' 'A@64' 'S:Todo>In Progress@63'
+  lc_issue 25 mobile     3 other  'Mobile: cache the last 50 shifts for offline viewing' 'M@7'
+  lc_sql+="INSERT OR REPLACE INTO source_identity (source, user_ref, name, read_at) VALUES ('linear', 'linear:user/$PROJECTS_VIEWER', '$PROJECTS_VIEWER_NAME', $(projects_ts '+0 seconds'));
+INSERT OR REPLACE INTO linear_team (id, key, name, synced_at) VALUES ('$LC_TEAM_ID', '$PROJECTS_TEAM', 'Spline', $(projects_ts '-3 minutes'));
+INSERT OR REPLACE INTO linear_member (team_id, id, name, display_name, active) VALUES ('$LC_TEAM_ID', '$PROJECTS_VIEWER', '$PROJECTS_VIEWER_NAME', 'sam', 1), ('$LC_TEAM_ID', 'fx-dana', 'Dana Okafor', 'dana', 1);
+INSERT OR REPLACE INTO source_cursor (source, repo, cursor, last_sync, last_error, phase, failures, next_try, last_error_text) VALUES ('linear', 'records', NULL, $(projects_ts '-3 minutes'), NULL, 'incremental', 0, NULL, NULL);
+UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;
+"
+  sql_on "$db" "$lc_sql" >/dev/null || die "linear-catchup: can't write the Linear issues to $db"
+
+  now="$(date -u +%s)"
+  case "$mode" in
+    typical) lc_set_marker "" ;;
+    # the marker is now: newer than every change, so the strip says nothing is new
+    empty) lc_set_marker "$(lc_marker "$now")" ;;
+    # the feed's last tick failed: Linear refused the key (SND-CONTEXT-071, a 401), three ticks in a row; the earlier rows stay, which is what the Reconnect card sits beside
+    error) lc_set_marker ""
+      sql_on "$db" "UPDATE source_cursor SET last_error = 'SND-CONTEXT-071', failures = 3, last_sync = $(projects_ts '-4 minutes'), next_try = $(projects_ts '+10 minutes'), last_error_text = 'Linear refused the key (401)' WHERE source = 'linear' AND repo = 'records'" >/dev/null || die "linear-catchup: can't record the failed sync" ;;
+    # the stored read fails (a missing table), which the strip shows as "could not read", with Retry
+    read-error) lc_set_marker ""; sql_on "$db" "ALTER TABLE linear_issue_change RENAME TO $LC_SQL_BAK" >/dev/null || die "linear-catchup: can't break the changes read" ;;
+  esac
+  printf 'linear-catchup %s: %s changes and mentions on %s issues in %s. Restart the app (it keeps its preferences in memory).\n' "$mode" \
+    "$(sql_on "$db" "SELECT (SELECT COUNT(*) FROM $([ "$mode" = read-error ] && echo "$LC_SQL_BAK" || echo linear_issue_change) WHERE issue_key LIKE 'linear:issue/fxc-%') + (SELECT COUNT(*) FROM linear_comment WHERE issue_key LIKE 'linear:issue/fxc-%')")" \
+    "$(sql_on "$db" "SELECT COUNT(*) FROM linear_issue WHERE key LIKE 'linear:issue/fxc-%'")" "$db"
+}
+
 # --- reviews: a review page on a fixture PR (PR review page spec 8.2) ---
 REVIEWS_SLUG="acme/api"
 REVIEWS_HEAD_SHA="1f2e3d4c5b6a79880011223344556677889900aa"
@@ -818,7 +1041,7 @@ reviews_need_tmp_home() {
 }
 
 # review.login and workflow.forge (the file adapter on github.com) in the live profile, once each; approved afterwards when it isn't.
-# What 'reviews up' added (one word per line: review, forge, cursor), so 'reviews down' removes only that and never a block that was there before.
+# What 'reviews up' added (one word per line: review, forge, ghtoken, cursor), so 'reviews down' removes only that and never a block that was there before.
 reviews_marker() { printf '%s\n' "$AW_SINDRI_HOME/ui-fixture-reviews-added"; }
 reviews_mark() { grep -qx "$1" "$(reviews_marker)" 2>/dev/null || printf '%s\n' "$1" >> "$(reviews_marker)"; }
 reviews_marked() { grep -qx "$1" "$(reviews_marker)" 2>/dev/null; }
@@ -842,6 +1065,14 @@ reviews_profile() {
     fi && mv "$profile.new" "$profile" || die "reviews: can't add workflow.forge to $profile"
     reviews_mark forge
   fi
+  # Reviews shows "Connect GitHub" and no rows while there is no GitHub connection and no profile token (ReviewConnectRules.For, #2619), and this
+  # fixture has no connection (it uses the file forge). A token pointer is the one input that lets the list read the seeded PR. It names an env var nothing
+  # sets and no tick runs here (the only service is the heartbeat), so the github cursor's last_error stays NULL: no AW-CONNECTORS-006/-007 sign-in code.
+  if grep -q 'github: { repos: \[' "$profile" && ! grep -q 'github: {[^}]*token:' "$profile"; then
+    sed 's|\(github: { repos: \[[^]]*\]\) }|\1, token: "env:FIXTURE_GITHUB_TOKEN" }|' "$profile" > "$profile.new" && mv "$profile.new" "$profile" || die "reviews: can't add the github token pointer to $profile"
+    grep -q 'token: "env:FIXTURE_GITHUB_TOKEN"' "$profile" || die "reviews: the profile's github line isn't 'github: { repos: [...] }'; add token: \"env:FIXTURE_GITHUB_TOKEN\" to it by hand"
+    reviews_mark ghtoken
+  fi
   approve >&2 || return
 }
 
@@ -863,8 +1094,38 @@ reviews_ensure_bin() {
   REVIEWS_CMD=(dotnet "$dll")
 }
 
-# aw-forge-fake on the fixture's own world (never the real $AW_STATE_DIR), acting as the viewer.
-reviews_forge() { AW_STATE_DIR="$(reviews_state)" AW_FORGE_ADAPTER=file AW_FORGE_HOSTS=github.com AW_FORGE_LOGIN="$PROJECTS_VIEWER" "${REVIEWS_CMD[@]}" "$@" </dev/null; }
+# aw-forge-fake on the fixture's own world (never the real $AW_STATE_DIR), acting as the viewer (or as REVIEWS_AS when set).
+reviews_forge() { AW_STATE_DIR="$(reviews_state)" AW_FORGE_ADAPTER=file AW_FORGE_HOSTS=github.com AW_FORGE_LOGIN="${REVIEWS_AS:-$PROJECTS_VIEWER}" "${REVIEWS_CMD[@]}" "$@" </dev/null; }
+
+# The 3 PRs by other authors that ask the viewer for a review, so the Reviews list has a queue to sort (one red, two green; #2980):
+# author|branch|head sha|title|opened hours ago|file|added lines|checks
+REVIEWS_OTHERS=(
+  "dana-okafor|feat/rate-limit-headers|2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d|Add rate limit headers to v3 list endpoints|5|src/RateLimit.cs|6|--state passing --passed 3 --runs build:success:github-actions,test:success:github-actions,lint:success:github-actions"
+  "kai-reviewer|fix/diacritics-search|3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e|Fold diacritics in product search|26|src/Search/Normalize.cs|12|--state passing --passed 3 --runs build:success:github-actions,test:success:github-actions,lint:success:github-actions"
+  "lee-park|chore/webhook-signing|4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f|Sign legacy webhook deliveries|50|src/Webhooks/Signer.cs|4|--state failing --failing test --passed 2 --runs build:success:github-actions,test:failure:github-actions,lint:success:github-actions"
+)
+
+# One of REVIEWS_OTHERS: opened as its author, a file with N lines added after line 20, its checks, and its Context record (the viewer requested).
+reviews_other() {
+  local db=$1 who br sha title age path n checks out number link files head="" base="" patch i
+  IFS='|' read -r who br sha title age path n checks <<<"$2"
+  out="$(REVIEWS_AS="$who" reviews_forge open --repo "github.com/$REVIEWS_SLUG" --head "$br" --base main --head-sha "$sha" --title "$title" --body "A fixture PR by $who.")" || die "reviews: aw-forge-fake open failed for $br"
+  number="$(jq -r '.number // empty' <<<"$out")"
+  [[ "$number" =~ ^[0-9]+$ ]] || die "reviews: aw-forge-fake open gave no pull number for $br: $out"
+  link="https://github.com/$REVIEWS_SLUG/pull/$number"
+  for ((i = 1; i <= 20; i++)); do head+="    Line($i);"$'\n'; done
+  base="$head"; patch="@@ -20,0 +21,$n @@"
+  for ((i = 1; i <= n; i++)); do head+="    Added$i();"$'\n'; patch+=$'\n'"+    Added$i();"; done
+  files="$(reviews_dir)/files-$number.json"
+  jq -n --arg p "$path" --arg t "$head" --arg b "$base" --arg patch "$patch" --argjson n "$n" \
+    '[{file: {path: $p, previousPath: null, status: "Modified", additions: $n, deletions: 0, patch: $patch}, text: $t, baseText: $b}]' > "$files" || die "reviews: can't write $files"
+  REVIEWS_AS="$who" reviews_forge seed files "$link" --from "$files" >/dev/null || die "reviews: seed files failed for $br"
+  # shellcheck disable=SC2086 # the checks field is the seed's own flags, split on purpose
+  REVIEWS_AS="$who" reviews_forge seed checks "$link" $checks >/dev/null || die "reviews: seed checks failed for $br"
+  sql_on "$db" "INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, pull_facts)
+  VALUES ('github:pr/$REVIEWS_SLUG/$number', 'github', 'pr', NULL, '$PROJECTS_AUDIENCE', '$title', '$link', '$who', 'open', 'open', $(projects_ts "-$age hours"), $(projects_ts '-1 hours'), NULL, 'fixture', 'fixture-review-$number', 'fixture', 0, NULL, $(projects_ts '+0 seconds'),
+    '{\"requestedReviewers\":[\"$PROJECTS_VIEWER\"],\"headSha\":\"$sha\",\"reviews\":[]}');" >/dev/null || die "reviews: can't write the record of $link to $db"
+}
 
 # The changed file's seed (docs/csharp/forge.md "seed files"): 3 lines added after line 40, so line 42 is on the new side.
 reviews_files_json() {
@@ -922,6 +1183,9 @@ INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, au
     '{\"requestedReviewers\":[\"reviewer-kai\"],\"headSha\":\"$REVIEWS_HEAD_SHA\",\"reviews\":[]}');
 INSERT OR REPLACE INTO source_cursor (source, repo, cursor, last_sync, last_error, phase) VALUES ('github', 'records', NULL, $(projects_ts '-3 minutes'), NULL, 'incremental');
 UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;" >/dev/null || die "reviews: can't write the PR record to $db"
+  local other
+  for other in "${REVIEWS_OTHERS[@]}"; do reviews_other "$db" "$other" || return; done
+  sql_on "$db" "UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;" >/dev/null || die "reviews: can't move the store epoch in $db"
 
   sessions_restart >&2 || return
   printf '/sindri/reviews/%s/%s\n%s\n%s:%s\n' "$REVIEWS_SLUG" "$number" "$REVIEWS_HEAD_SHA" "$REVIEWS_FILE" "$REVIEWS_LINE"
@@ -944,6 +1208,9 @@ reviews_down() {
   if [ -f "$profile" ] && [ -n "$drop" ]; then
     grep -Ev "$drop" "$profile" \
       | awk '{l[NR]=$0} END {for (i=1;i<=NR;i++) if (!(l[i]=="workflow:" && (i==NR || l[i+1] !~ /^  /))) print l[i]}' > "$profile.new" && mv "$profile.new" "$profile" || die "reviews: can't edit $profile"
+  fi
+  if [ -f "$profile" ] && reviews_marked ghtoken; then
+    sed 's|, token: "env:FIXTURE_GITHUB_TOKEN" }| }|' "$profile" > "$profile.new" && mv "$profile.new" "$profile" || die "reviews: can't remove the github token pointer from $profile"
   fi
   rm -f -- "$(reviews_marker)"
   # The dir is gone, so the restart no longer points AW_STATE_DIR at it.
@@ -991,12 +1258,25 @@ context_sources() {
 }
 
 SESSIONS_DIRNAME="ui-fixture-sessions"
+NO_SESSIONS_DIRNAME="ui-fixture-no-sessions"
 sessions_dir() { printf '%s\n' "$AW_SINDRI_HOME/$SESSIONS_DIRNAME"; }
 
-# The collector's overrides, pointed at the copy. AW_LAUNCHER_CONFIG keeps the owner's launcher.json (under $AW_STATE_DIR) out too.
+# The collector's four overrides, pointed at the copy when 'sessions up' made one, else at an empty tree in the home
+# (no process, no Claude record, an empty fleet, a bare launcher.json), so no control-plane start reads the real box.
+# AW_LAUNCHER_CONFIG keeps the owner's launcher.json (under $AW_STATE_DIR) out too.
 sessions_export() {
   local d
   d="$(sessions_dir)"
+  if [ ! -d "$d/proc" ]; then
+    d="$AW_SINDRI_HOME/$NO_SESSIONS_DIRNAME"
+    mkdir -p "$d/proc/2" "$d/claude-sessions" && { [ -d "$d/fleet" ] || mkdir -m 700 "$d/fleet"; } && : > "$d/fleet/.aw-fleet" \
+      || die "can't make the empty sessions tree at $d"
+    # One plain shell of this uid and no agent: a table with no process of ours reads as SND-SESSION-002 proc-unreadable.
+    printf 'Name:\tbash\nPid:\t2\nPPid:\t1\nUid:\t%s\t%s\t%s\t%s\n' "$(id -u)" "$(id -u)" "$(id -u)" "$(id -u)" > "$d/proc/2/status" \
+      && printf '2 (bash) S 1 2 2 0 -1 4194304 0 0 0 0 0 0 0 0 20 0 1 0 100%s\n' "$(printf ' 0%.0s' {1..32})" > "$d/proc/2/stat" \
+      && printf 'bash\0' > "$d/proc/2/cmdline" && : > "$d/proc/2/environ" || die "can't write the shell under $d/proc/2"
+    [ -f "$d/launcher.json" ] || printf '{"schema":1}\n' > "$d/launcher.json" || die "can't write $d/launcher.json"
+  fi
   export AW_SESSIONS_PROC_ROOT="$d/proc" AW_SESSIONS_CLAUDE_DIR="$d/claude-sessions" AW_FLEET_DIR="$d/fleet" AW_LAUNCHER_CONFIG="$d/launcher.json"
   # 'sandbox blocked|clear' keeps AW_SANDBOX_BWRAP across restarts.
   if [ -s "$(sandbox_dir)/bwrap" ]; then export AW_SANDBOX_BWRAP="$(cat "$(sandbox_dir)/bwrap")"; else unset AW_SANDBOX_BWRAP; fi
@@ -1091,7 +1371,7 @@ sessions_toggle() {
   sessions_restart
 }
 
-# Stops the control plane and removes the copy. It does not restart: a later 'up' without 'sessions up' would read the real box.
+# Stops the control plane and removes the copy. It does not restart: a later start reads the empty tree, never the real box.
 sessions_down() {
   "$PROVE" human stop >/dev/null 2>&1 || true
   sessions_remove "$(sessions_dir)"
@@ -1235,6 +1515,34 @@ sandbox() { # $1 state, $2 item, $3 instance
   printf '%s\n' "$instance"
 }
 
+# $1 key suffix, $2 type, $3 payload JSON: one fixed-id ledger row of the Home fixture, INSERT OR IGNORE on its key (see publish_event).
+home_event() {
+  local key="sindri-ui-fixture:home:$1" id corr payload="${3//\'/\'\'}"
+  id="$(printf '%s' "$key" | cksum | awk '{printf "5d0f1e02-%04x-4d1e-9a55-3c2f6d8e1b06", $1 % 65536}')"
+  corr="${id%?}7"
+  ledger "INSERT OR IGNORE INTO events (id, type, schema_version, occurred_at, actor, tenant, ring, correlation_id, epoch, idempotency_key, payload_json)
+          VALUES ('$id', '$2', 1, strftime('%Y-%m-%dT%H:%M:%S', 'now') || '.0000000Z', 'sindri-ui-fixture', 'local', 0, '$corr',
+                  COALESCE((SELECT MAX(epoch) FROM events), 0), '$key', '$payload');" >/dev/null
+}
+
+home() {
+  need jq
+  need_sql
+  if [ "${1:-}" = clear ]; then
+    ledger "DELETE FROM events WHERE idempotency_key LIKE 'sindri-ui-fixture:home:%'; SELECT changes() || ' row(s) removed';"
+    return
+  fi
+
+  local rows="$ROOT/tests/fixtures/home/rows.json" payload id n=0
+  [ -f "$rows" ] || die "home: no fixture rows at $rows"
+  while IFS= read -r payload; do
+    id="$(jq -r '.row.id' <<< "$payload")"
+    home_event "raised:$id" home.row.raised "$payload" || return
+    n=$((n + 1))
+  done < <(jq -c '.rows[] | . as $r | {row: $r, edges: [$r.blocksList[] | {from: $r.id, to: .id, edge: .via}]}' "$rows")
+  printf '%s home.row.raised event(s) in the ledger\n' "$n"
+}
+
 verb="${1:-}"
 case "$verb" in
   -h | --help) usage; exit 0 ;;
@@ -1244,8 +1552,11 @@ case "$verb" in
   items) [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && [ "$2" = "--large" ]; } || die "usage: items [--large]" ;;
   close) [ "$#" -eq 2 ] || { [ "$#" -eq 3 ] && [ "$3" = "--cancelled" ]; } || die "usage: close <item> [--cancelled]" ;;
   projects) [ "$#" -eq 1 ] || die "'projects' takes no arguments" ;;
+  linear-catchup) { [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && case "$2" in empty | typical | error | read-error) true ;; *) false ;; esac; }; } || die "usage: linear-catchup [empty|typical|error|read-error]" ;;
   todos) [ "$#" -eq 1 ] || die "'todos' takes no arguments" ;;
+  home) [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && [ "$2" = clear ]; } || die "usage: home [clear]" ;;
   resources) [ "$#" -eq 1 ] || die "'resources' takes no arguments" ;;
+  connections) { [ "$#" -eq 2 ] && case "$2" in empty | typical | error | down) true ;; *) false ;; esac; } || die "usage: connections empty|typical|error|down" ;;
   reviews) { [ "$#" -eq 2 ] && { [ "$2" = up ] || [ "$2" = down ]; }; } || die "usage: reviews up|down" ;;
   request) [ "$#" -ge 2 ] || die "usage: request [--item ID] [--repo R] <text>" ;;
   context)

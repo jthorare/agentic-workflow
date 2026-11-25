@@ -11,7 +11,7 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// The workflow editor's logic (#2258 PR 17 part 2b), no view yet: it reads a workflow and the block list, builds the form of the selected node from its block's config fields, and
 /// sends each edit as ops with the revision it read as the base. Each edit is sent once and never retried; a workflow that changed elsewhere is not overwritten but asks for a reload.
 /// </summary>
-internal sealed class OpsEditor(ISindriApi api) : ObservableObject
+internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
 {
     private const string StaleBase = "SND-GRAPH-007";
 
@@ -33,6 +33,9 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
 
     /// <summary>The form of the selected node.</summary>
     public ObservableCollection<ConfigFieldViewModel> Fields { get; } = [];
+
+    /// <summary>The selected step as the sheet names it ("Every weekday at 7:00 \u00b7 trigger"), never its id; empty when none is selected.</summary>
+    public string NodeHeading { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True while an edit is on the way; a second edit does nothing.</summary>
     public bool IsSending { get; private set => Set(ref field, value); }
@@ -67,12 +70,12 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         {
             // another workflow: nothing of the old one stays to be saved to this one, even when this read fails
             Fields.Clear();
-            (Nodes, BaseRevision, _selected) = ([], 0, null);
+            (Nodes, _edges, BaseRevision, _selected, NodeHeading, NodeIdLine) = ([], [], 0, null, string.Empty, string.Empty);
         }
 
         (_url, Slug) = (url, slug);
         var read = ++_reads;
-        var workflowRead = api.Workflow(url, slug, cancellationToken);
+        var workflowRead = api.WorkflowNewest(url, slug, cancellationToken);   // the newest revision: after a save on a live workflow that is the saved one, not the live one (#3303)
         var blocksRead = api.WorkflowBlocks(url, cancellationToken);
         await Task.WhenAll(workflowRead, blocksRead).ConfigureAwait(true);
         var (workflow, blocks) = (await workflowRead.ConfigureAwait(true), await blocksRead.ConfigureAwait(true));
@@ -84,11 +87,11 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         if (workflow.IsError || blocks.IsError)
         {
             var error = workflow.IsError ? workflow.Error : blocks.Error;
-            FailureText = afterSave ? Labels.WfEditSavedReloadFailed(error) : Labels.WfEditLoadFailed(error);
+            (FailureText, _refused) = (afterSave ? Labels.WfEditSavedReloadFailed(error) : Labels.WfEditLoadFailed(error), false);
             return;
         }
 
-        (BaseRevision, Nodes, Groups) = (workflow.Value.LatestRevision, ReadNodes(workflow.Value.Spec), blocks.Value.Groups);
+        (BaseRevision, Nodes, _edges, Groups) = (workflow.Value.LatestRevision, ReadNodes(workflow.Value.Spec), ReadEdges(workflow.Value.Spec), blocks.Value.Groups);
         (NeedsReload, ReloadPromptText, FailureText) = (false, string.Empty, string.Empty);
         Select(_selected ?? string.Empty);   // the form stays on its node, with what the new revision holds
     }
@@ -102,14 +105,32 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     /// <param name="nodeId">The node.</param>
     internal void Select(string nodeId)
     {
+        if (_pending is not null)
+        {
+            return;   // a new step is being filled in: a read must not replace its form
+        }
+
         _selected = nodeId.Length == 0 ? null : nodeId;
         Fields.Clear();
         var node = Nodes.FirstOrDefault(n => string.Equals(n.Id, nodeId, StringComparison.Ordinal));
         var block = node is null ? null : Groups.SelectMany(g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, node.Type, StringComparison.Ordinal));
+        NodeHeading = HeadingOf(node, block);
+        NodeIdLine = node is null ? string.Empty : Labels.WfEditorStepId(node.Id);
         foreach (var field in block?.Config ?? [])
         {
-            Fields.Add(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field)));   // why: a block was found, so node is not null
+            AddWatched(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field)));   // why: a block was found, so node is not null
         }
+    }
+
+    private static string HeadingOf(EditorNode? node, WorkflowBlock? block)
+    {
+        if (node is null)
+        {
+            return string.Empty;
+        }
+
+        var title = node.Title is { Length: > 0 } own ? own : block?.Title ?? node.Type;
+        return Labels.WfEditorStep(title, block is null ? node.Type : block.IsTrigger ? Labels.WfEditorTriggerKind : block.Title);
     }
 
     /// <summary>Sends a set_config for one field of the selected node.</summary>
@@ -128,7 +149,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         field.ErrorText = problem;
         if (problem.Length == 0)
         {
-            await Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "set_config", ["node"] = node, ["path"] = name, ["value"] = value }), cancellationToken).ConfigureAwait(true);
+            _ = await Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "set_config", ["node"] = node, ["path"] = name, ["value"] = value }), cancellationToken).ConfigureAwait(true);
         }
     }
 
@@ -219,14 +240,14 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "remove_node", ["node"] = id }), cancellationToken);
 
     // One call, on the revision read, never retried. A saved edit reads the workflow again; a stale base asks for a reload and holds further edits.
-    private async Task Send(JsonArray ops, CancellationToken cancellationToken)
+    private async Task<bool> Send(JsonArray ops, CancellationToken cancellationToken)
     {
         if (IsSending || NeedsReload || _url is not { } url || Slug.Length == 0)
         {
-            return;
+            return false;
         }
 
-        FailureText = string.Empty;
+        (FailureText, _refused) = (string.Empty, false);
         IsSending = true;
         try
         {
@@ -234,10 +255,11 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
             if (applied.IsError)
             {
                 Refused(applied.Error);
-                return;
+                return false;
             }
 
             await Load(url, Slug, afterSave: true, cancellationToken).ConfigureAwait(true);
+            return true;
         }
         finally
         {
@@ -254,7 +276,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         }
 
         var unsure = string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
-        FailureText = unsure ? Labels.WfEditUnsure(error) : Labels.WfEditRefused(error);
+        (FailureText, _refused) = (unsure ? Labels.WfEditUnsure(error) : Labels.WfEditRefused(error), true);
     }
 
     private static List<EditorNode> ReadNodes(JsonElement spec)

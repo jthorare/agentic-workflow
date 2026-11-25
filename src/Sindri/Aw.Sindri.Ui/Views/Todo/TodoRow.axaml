@@ -38,15 +38,15 @@
       </Grid>
     </Border>
     <Grid x:Name="TodoReading" ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center" IsVisible="{Binding IsReading}">
-      <CheckBox x:Name="TodoDone" MinWidth="0" MinHeight="0" Padding="0" Margin="0,0,12,0" VerticalAlignment="Center" Focusable="False" IsHitTestVisible="False"
+      <!-- Fluent's CheckBox template holds its 20 px box in a 32 px tall grid, so the row's 1 px top border made the row 33 (#2546).
+           The -6 margins give back the 12 px around the box: the box stays centred and the row stays Row.Height.Default. -->
+      <CheckBox x:Name="TodoDone" MinWidth="0" MinHeight="0" Padding="0" Margin="0,-6,12,-6" VerticalAlignment="Center" Focusable="False" IsHitTestVisible="False"
                 IsChecked="{Binding IsDone, Mode=OneWay}" AutomationProperties.Name="{Binding DoneBoxName}" AutomationProperties.AccessibilityView="Raw" />
-      <TextBlock x:Name="TodoText" Grid.Column="1" Classes="body todo-text" Text="{Binding Text}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                 ToolTip.Tip="{Binding Text}" AutomationProperties.AccessibilityView="Raw" />
-      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" Margin="12,0" VerticalAlignment="Center">
-        <!-- A key's write was refused: the row came back and says why, in words (the error colour), until the next change. -->
-        <TextBlock x:Name="TodoNotice" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding Notice}"
-                   IsVisible="{Binding Notice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.LiveSetting="Polite" />
-        <ItemsControl x:Name="TodoChips" ItemsSource="{Binding Chips}" AutomationProperties.AccessibilityView="Raw">
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+        <TextBlock x:Name="TodoText" Classes="body todo-text" Text="{Binding Text}" MaxWidth="480" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                   ToolTip.Tip="{Binding Text}" AutomationProperties.AccessibilityView="Raw" />
+        <!-- The links sit right after the title, muted and unboxed (#2548): they are context, not controls. -->
+        <ItemsControl x:Name="TodoChips" ItemsSource="{Binding Chips}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
               <StackPanel Orientation="Horizontal" Spacing="8" />
@@ -54,15 +54,17 @@
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="x:String">
-              <Border Classes="phrase-chip">
-                <TextBlock x:Name="TodoChip" Classes="caption mono" Text="{Binding}" AutomationProperties.AccessibilityView="Raw" />
-              </Border>
+              <TextBlock x:Name="TodoChip" Classes="caption subtle mono" Text="{Binding}" AutomationProperties.AccessibilityView="Raw" />
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <Border x:Name="TodoMoreChipsFrame" Classes="phrase-chip" IsVisible="{Binding MoreChips, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-          <TextBlock x:Name="TodoMoreChips" Classes="caption" Text="{Binding MoreChips}" AutomationProperties.AccessibilityView="Raw" />
-        </Border>
+        <TextBlock x:Name="TodoMoreChips" Classes="caption subtle" Text="{Binding MoreChips}" VerticalAlignment="Center"
+                   IsVisible="{Binding MoreChips, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.AccessibilityView="Raw" />
+      </StackPanel>
+      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" Margin="12,0" VerticalAlignment="Center">
+        <!-- A key's write was refused: the row came back and says why, in words (the error colour), until the next change. -->
+        <TextBlock x:Name="TodoNotice" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding Notice}"
+                   IsVisible="{Binding Notice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.LiveSetting="Polite" />
         <Border x:Name="TodoTagFrame" Classes="phrase-chip" IsVisible="{Binding Tag, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
           <TextBlock x:Name="TodoTag" Classes="caption" Text="{Binding Tag}" AutomationProperties.AccessibilityView="Raw" />
         </Border>

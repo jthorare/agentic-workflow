@@ -166,6 +166,13 @@ public sealed class InMemoryRepos : IGit, IFiles
     /// <inheritdoc/>
     public string NetBase(string directory, string baseline, string candidate) => NetBaseOverride ?? baseline;
 
+    /// <summary>The red branch's own change <see cref="BranchChange"/> returns; null means an empty diff.</summary>
+    public CommitDiff? BranchChangeOverride { get; set; }
+
+    /// <inheritdoc/>
+    public Result<CommitDiff> BranchChange(string directory, string baseline) =>
+        Results.Success(BranchChangeOverride ?? new CommitDiff("", ""));
+
     /// <inheritdoc/>
     public Result<IReadOnlyList<string>> ChangedFiles(string directory, string from, string to)
     {

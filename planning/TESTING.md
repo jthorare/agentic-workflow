@@ -16,7 +16,7 @@ node scripts/ci/lane-budgets.mjs                                                
 bash scripts/ci/bash-tests.sh                                                                        # every tracked bash suite
 ```
 
-The full list is under Commands in `AGENTS.md`.
+The full list, with what each suite covers, is in `docs/testing/bash-suites.md`.
 
 ## Skill evals
 
@@ -33,4 +33,4 @@ Coverage is earned through real tests; nothing is hidden with an ignore annotati
 ## Writing New Tests
 
 1. C#: write the failing test first, in `tests/Aw.<Pkg>.Tests/<Slice>/` (`/new-slice` generates it red).
-2. Bash: add `scripts/tests/<name>.test.sh` (or under `config/**/tests/`), point `HOME` and `AW_STATE_DIR` at a `mktemp -d` directory, and add the suite to `scripts/ci/bash-tests.sh` and the `AGENTS.md` list.
+2. Bash: add `scripts/tests/<name>.test.sh` (or under `config/**/tests/`), point `HOME` and `AW_STATE_DIR` at a `mktemp -d` directory, and add the suite to `scripts/ci/bash-tests.sh` and the list in `docs/testing/bash-suites.md`.

@@ -1,7 +1,7 @@
 # Gotchas
 
 - **Tokens, not hex.** A token the project lacks falls back to a neutral default for the standard ink names (board, chalk, primary, secondary, tertiary, warning, danger) and `render.ts` prints which; ask the user for the real token or run `/design-language`. Any other ink name must resolve. `render.ts` fails with "token not found" or "not a #rrggbb color" when an ink path is wrong or points at a non-color; fix the path in `inks`. A token with no `#rrggbb` value (a color space object without `hex`) is rejected: use its sRGB hex token.
-- **Fonts are system fonts.** On a machine without the listed faces the fallback is `cursive`, which can look very different; read a still before trusting a render, and set `font` in the storyboard for a house hand.
+- **Fonts are system fonts.** On a machine without the listed faces the fallback is `cursive`, which can look different; read a still before trusting a render, and set `font` in the storyboard for a house hand.
 - **`text` y is the baseline and anchor is `middle` by default**: a wide label can run past its box. Read the sheet; shorten it or widen the box.
 - **Old content in view.** The camera shows 1920/zoom world units, so an earlier scene within that window shows at the edge. Put scenes farther apart or raise the zoom.
 - **Fonts must be loaded before layout.** `render.ts` waits for `document.fonts.ready`; if text boxes look clipped, the font was not ready.

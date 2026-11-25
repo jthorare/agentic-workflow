@@ -78,8 +78,8 @@ through one owner. With each lane, remove the test-only production seams it
 unlocks: injection parameters, getters, reset exports, and indirection layers.
 Register moved suites in CI routing and test inventories. Update shrink-only
 line-cap baselines. Put durable test-ownership rules where the repo keeps them
-— a scoped `AGENTS.md` or a glob-scoped file in `.agents/rules/` — drawn from
-mistakes this campaign actually found.
+(a scoped `AGENTS.md` or a glob-scoped file in `.agents/rules/`) drawn from
+mistakes this campaign found.
 
 Done when every lane plan is applied and each lane's keepers pass.
 

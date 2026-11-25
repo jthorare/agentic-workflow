@@ -21,6 +21,7 @@
     "updatedAt": "2026-01-01T00:00:00.0000000Z",
     "body": "<untrusted source=\"sindri:item\" author=\"human:cli\">Users land on /home &lt;b&gt;after&lt;/b&gt; a deep link.</untrusted>",
     "link": null,
+    "runs": [],
     "launch": {
       "modes": [
         "open"
@@ -50,6 +51,10 @@
       "lists": {
         "actions": {
           "total": 2,
+          "more": false
+        },
+        "runs": {
+          "total": 0,
           "more": false
         }
       }

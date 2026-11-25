@@ -1,0 +1,7 @@
+# Structure rule: one topic per paragraph, 6 sentences max (config/voice/reply.md). A warning: an 80% rule.
+extends: occurrence
+message: "This paragraph has more than 6 sentences. One topic per paragraph: split it."
+level: warning
+scope: paragraph
+max: 6
+token: '[.!?](?:\s|$)'

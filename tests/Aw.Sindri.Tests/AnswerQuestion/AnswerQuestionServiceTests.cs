@@ -8,6 +8,7 @@ using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Features.AnswerQuestion;
 using Aw.Sindri.Infrastructure.Text;
 using Aw.Sindri.Testing.Workflow;
+using Aw.Sindri.Tests.Views;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.AnswerQuestion;
@@ -24,12 +25,13 @@ public sealed class AnswerQuestionServiceTests
     private readonly InMemoryWorkflowRunStore _runs;
     private readonly FakeGraphRunAnswerer _answerer = new();
     private readonly SliceHarness _h = new();
+    private readonly ViewsHarness _v = new();
     private readonly AnswerQuestionService _service;
 
     public AnswerQuestionServiceTests()
     {
         _runs = new InMemoryWorkflowRunStore(_clock);
-        _service = new AnswerQuestionService(_runs, _answerer, _h.Store, _h.Held, _h.Events, new RedactingScrubber(Redactor.Default));
+        _service = new AnswerQuestionService(_runs, _v.Views, _answerer, _h.Store, _h.Held, _h.Events, new RedactingScrubber(Redactor.Default));
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -50,6 +52,62 @@ public sealed class AnswerQuestionServiceTests
         Assert.Equal($"workflow.answered:{run.Id.Value}:ask", recorded.IdempotencyKey);
         var payload = JsonNode.Parse(recorded.Envelope.Payload)!;
         Assert.Equal(("ship it", "owner"), (payload["answer"]!.GetValue<string>(), payload["by"]!.GetValue<string>()));
+    }
+
+    [Fact]
+    public async Task A_loop_items_answer_goes_to_the_workflow_its_question_recorded()
+    {
+        _ = await _h.HoldLease();
+        var run = await Insert(7, WorkflowRunStatus.Running);
+        await _v.Apply([Recorded.Of(_v.Slice.Events, EventTypes.WorkflowQuestion, new WorkflowQuestionPayload(run.Id, _ask, "Ship b?", [], Default: null, TimeoutAt: null, "service:workflow") { Item = 2, BatchWorkflow = $"{run.Id.Value}/each/1" }, 1)]);
+
+        var result = await _service.Handle(new AnswerQuestionRequest(run.Id, _ask, "yes", Choice: null, "owner", Item: 2), Token);
+
+        Assert.True(result.IsSuccess);
+        var given = Assert.Single(_answerer.Answers);
+        Assert.Equal((2, $"{run.Id.Value}/each/1"), (given.Item, given.BatchWorkflow));
+        Assert.Equal($"workflow.answered:{run.Id.Value}:ask:2", Assert.Single(_h.Store.Events).IdempotencyKey);
+        Assert.Equal(2, JsonNode.Parse(Assert.Single(_h.Store.Events).Envelope.Payload)!["item"]!.GetValue<int>());
+    }
+
+    [Fact]
+    public async Task A_loop_items_answer_finds_its_batch_workflow_in_the_ledger_when_the_needs_you_row_is_not_there_yet()
+    {
+        var grant = await _h.HoldLease();
+        var run = await Insert(9, WorkflowRunStatus.Running);
+        _ = await _h.Store.Append(_h.Events.Entry(EventTypes.WorkflowQuestion, new WorkflowQuestionPayload(run.Id, _ask, "Ship b?", [], Default: null, TimeoutAt: null, "service:workflow") { Item = 2, BatchWorkflow = $"{run.Id.Value}/each/1" }, $"workflow.question:{run.Id.Value}:ask:2"), grant, Token);
+
+        var result = await _service.Handle(new AnswerQuestionRequest(run.Id, _ask, "yes", Choice: null, "owner", Item: 2), Token);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal($"{run.Id.Value}/each/1", Assert.Single(_answerer.Answers).BatchWorkflow);
+    }
+
+    [Fact]
+    public async Task A_loop_items_question_answered_already_is_refused_even_when_the_ledger_still_has_the_question()
+    {
+        var grant = await _h.HoldLease();
+        var run = await Insert(10, WorkflowRunStatus.Running);
+        _ = await _h.Store.Append(_h.Events.Entry(EventTypes.WorkflowQuestion, new WorkflowQuestionPayload(run.Id, _ask, "Ship b?", [], Default: null, TimeoutAt: null, "service:workflow") { Item = 2, BatchWorkflow = $"{run.Id.Value}/each/1" }, $"workflow.question:{run.Id.Value}:ask:2"), grant, Token);
+        _ = await _h.Store.Append(_h.Events.Entry(EventTypes.WorkflowAnswered, new WorkflowAnsweredPayload(run.Id, _ask, "yes", "owner") { Item = 2 }, $"workflow.answered:{run.Id.Value}:ask:2"), grant, Token);
+
+        var result = await _service.Handle(new AnswerQuestionRequest(run.Id, _ask, "no", Choice: null, "owner", Item: 2), Token);
+
+        Assert.Equal(SindriErrors.GraphNotWaiting.Code, result.Error.Code);
+        Assert.Empty(_answerer.Answers);
+    }
+
+    [Fact]
+    public async Task An_answer_for_an_item_nobody_asked_for_is_refused_and_records_nothing()
+    {
+        _ = await _h.HoldLease();
+        var run = await Insert(8, WorkflowRunStatus.Running);
+
+        var result = await _service.Handle(new AnswerQuestionRequest(run.Id, _ask, "yes", Choice: null, "owner", Item: 3), Token);
+
+        Assert.Equal(SindriErrors.GraphNotWaiting.Code, result.Error.Code);
+        Assert.Empty(_answerer.Answers);
+        Assert.Empty(_h.Store.Events);
     }
 
     [Fact]

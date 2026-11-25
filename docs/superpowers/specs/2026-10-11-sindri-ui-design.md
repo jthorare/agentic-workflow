@@ -106,7 +106,7 @@ Three layouts were mocked with the same fixture data (`shotgun/contact-sheet.htm
 | Variant | Shape | For | Against |
 |---|---|---|---|
 | 1. Triage inbox | Sidebar with counts · list · detail pane · status bar | Linear's own model; the detail sits beside the list | Running and queued are one click away |
-| **2. Single-glance home** (picked) | Top bar · one home page with Needs you, Running and Queued, and Health stacked · detail in a side sheet | Answers the four questions on one screen, the five-second test taken literally; actions inline on each row | A long needs-you list pushes the rest down (handled by the cap in §3.2); detail covers part of the page |
+| **2. Single-glance home** (picked) | Top bar · one home page with Needs you, Running and Queued, and Health stacked · detail in a side sheet | Answers the four questions on one screen, the five-second test taken literally; actions inline on each row | A long needs-you list pushes the rest down (limited by the cap in §3.2); detail covers part of the page |
 | 3. Lanes | Icon rail · a pinned needs-you strip · queue groups as board columns | Shows flow through the groups | Horizontal scrolling for needs-you; cards hide the engine's `next` sentence |
 
 ### 3.2 The window
@@ -889,6 +889,9 @@ later `ThemeVariant` dictionary with the same keys.
 | primary-focus | `#5e69d1` | — (not used) | DESIGN.md's focus tint; the app's focus ring uses `PrimaryHover` instead (§11.1) |
 | — (derived, §11.1) | `#4c57be` | `PrimaryPressed` | Primary button pressed (white 6.2:1) |
 | on-primary | `#ffffff` | `OnPrimary` | Primary button text |
+| — (derived, #3234) | `#c93c3c` | `ErrorFill` | Danger primary button fill (white 5.0:1; `Error` is 3.5:1 under white) |
+| — (derived, #3234) | `#b83232` | `ErrorFillHover` | Danger primary button hover (white 5.9:1) |
+| — (derived, #3234) | `#a82c2c` | `ErrorFillPressed` | Danger primary button pressed (white 6.9:1) |
 | semantic-success | `#27a644` | `Success` | `ok` glyphs |
 | semantic-overlay | `#000000` | `Overlay` (60 % opacity) | Dialog scrim |
 | — (new, §11.3) | `#f2994a` | `Attention` | Needs-you only |

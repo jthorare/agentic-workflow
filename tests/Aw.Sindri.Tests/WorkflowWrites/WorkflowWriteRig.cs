@@ -1,3 +1,5 @@
+using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Expressions;
@@ -7,6 +9,7 @@ using Aw.Sindri.Core.Graph.Validation;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Graph.Blocks;
+using Aw.Sindri.Tests.Toolkits;
 using static Aw.Sindri.Tests.Graph.GraphFixtures;
 
 namespace Aw.Sindri.Tests.WorkflowWrites;
@@ -19,11 +22,11 @@ internal sealed class WorkflowWriteRig : IDisposable
 
     private readonly IDisposable _caller;
 
-    public WorkflowWriteRig(bool realBlocks = false)
+    public WorkflowWriteRig(bool realBlocks = false, bool flowAndCodeBlocks = false)
     {
         Harness = new SliceHarness();
         Workflows = new InMemoryWorkflowStore(Harness.Clock);
-        Checker = new FixedChecker(realBlocks ? RealValidator() : Validator());
+        Checker = new FixedChecker(realBlocks ? RealValidator(flowAndCodeBlocks) : Validator());
         Log = new WorkflowChangeLog(Harness.Store, Harness.Held, Harness.Events, Harness.Callers);
         _caller = Harness.Callers.EnterService("workflow-write-test");
     }
@@ -53,13 +56,27 @@ internal sealed class WorkflowWriteRig : IDisposable
 
     public void Dispose() => _caller.Dispose();
 
-    private static GraphValidator RealValidator() => Validator(
-        blocks: GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}")).Types,
+    // flowAndCodeBlocks adds create_item and code, which the starter hello-sindri uses and the standard set leaves out (the host registers them with their ports).
+    // call_tool is always in: the host registers it, and a starter made with a CI source has a call_tool step (#3534)
+    private static GraphValidator RealValidator(bool flowAndCodeBlocks) => Validator(
+        blocks: GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), more: flowAndCodeBlocks ? [CallTool(), new CreateItemBlock(new FlowFakes.RecordingItemPort()), new CodeBlock(runner: null!)] : [CallTool()]).Types,
         cron: (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem,
         condition: text => ConditionExpression.TryParse(text, out var expression, out var error) ? new ConditionParse(Error: null, expression!.References) : new ConditionParse(error, []));
+
+    private static CallToolBlock CallTool() => new(new FakeRunningToolkits([]), new NoConnections());
 
     private sealed class FixedChecker(GraphValidator validator) : IWorkflowChecker
     {
         public ValueTask<GraphValidator> Validator(CancellationToken cancellationToken) => ValueTask.FromResult(validator);
+    }
+
+    // why: validation never calls a connection; every call is refused
+    private sealed class NoConnections : IConnectionToolPort
+    {
+        public ValueTask<Result<IReadOnlyList<ConnectionTool>>> ListTools(string connection, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(Results.Failure<IReadOnlyList<ConnectionTool>>(SindriErrors.ConnectionNotFound.With($"no connection '{connection}'")));
+
+        public ValueTask<Result<string>> Call(string connection, string tool, string argumentsJson, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(Results.Failure<string>(SindriErrors.ConnectionNotFound.With($"no connection '{connection}'")));
     }
 }

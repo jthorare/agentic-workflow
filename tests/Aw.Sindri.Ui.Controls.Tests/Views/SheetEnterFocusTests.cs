@@ -83,6 +83,17 @@ public sealed class SheetEnterFocusTests : IDisposable
         return (window, shell);
     }
 
+    // The border's colour eases over wall-clock time (a transition), so a read right after the focus can land mid-way (#7e8bf7 for #828fff, #2658).
+    // Wait, up to 2 s, until it is the token; on timeout the caller's assertion fails with the colour last seen.
+    private static async Task BorderReaches(Window window, Border frame, Color expected)
+    {
+        for (var i = 0; i < 125 && (frame.BorderBrush as ISolidColorBrush)?.Color != expected; i++)
+        {
+            await Task.Delay(16, Token);
+            Settle(window);
+        }
+    }
+
     private static async Task Until(Window window, Func<bool> condition)
     {
         for (var i = 0; i < 300 && !condition(); i++)
@@ -228,10 +239,11 @@ public sealed class SheetEnterFocusTests : IDisposable
 
         _ = frame.Focus(NavigationMethod.Tab);
         Settle(window);
+        var expected = (ISolidColorBrush)frame.FindResource("Brush.PrimaryHover")!;
+        await BorderReaches(window, frame, expected.Color);
 
         var adorners = AdornerLayer.GetAdornerLayer(frame)!.Children.Count(c => AdornerLayer.GetAdornedElement(c) == frame && c.IsEffectivelyVisible);
         var ring = frame.BorderBrush as ISolidColorBrush;
-        var expected = (ISolidColorBrush)frame.FindResource("Brush.PrimaryHover")!;
         Assert.Equal((0, 2.0, expected.Color), (adorners, frame.BorderThickness.Top, ring?.Color));
         Assert.Null(frame.FocusAdorner);
     });

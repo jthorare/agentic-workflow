@@ -1,3 +1,4 @@
+using Aw.Meta.Core.Delegations;
 using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Messages;
 
@@ -29,6 +30,15 @@ public sealed record ObligationFacts
 
     /// <summary>The watch's poll interval.</summary>
     public TimeSpan WatchInterval { get; init; } = TimeSpan.FromSeconds(120);
+
+    /// <summary>The meta lane's measured context; null when it could not be measured.</summary>
+    public LaneContext? MetaContext { get; init; }
+
+    /// <summary>True when a detached recycle waiter is recorded for the meta lane.</summary>
+    public bool MetaWaiter { get; init; }
+
+    /// <summary>The delegations `aw-meta delegate` recorded.</summary>
+    public IReadOnlyList<Delegation> Delegations { get; init; } = [];
 
     /// <summary>The current time.</summary>
     public required DateTimeOffset Now { get; init; }

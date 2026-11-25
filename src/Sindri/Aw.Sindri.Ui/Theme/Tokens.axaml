@@ -8,29 +8,31 @@
 
   <!-- §14.1 Colour: Color.<Key> and a Brush.<Key> over it. -->
   <!-- canvas: the window background -->
-  <Color x:Key="Color.Canvas">#010102</Color>
+  <Color x:Key="Color.Canvas">#08090a</Color>
   <SolidColorBrush x:Key="Brush.Canvas" Color="{StaticResource Color.Canvas}" />
   <!-- surface-1: panels, the detail sheet, inputs -->
-  <Color x:Key="Color.Surface1">#0f1011</Color>
+  <Color x:Key="Color.Surface1">#141517</Color>
   <SolidColorBrush x:Key="Brush.Surface1" Color="{StaticResource Color.Surface1}" />
   <!-- surface-2: hovered and selected rows, code blocks, status badges -->
-  <Color x:Key="Color.Surface2">#141516</Color>
+  <Color x:Key="Color.Surface2">#1c1d20</Color>
   <SolidColorBrush x:Key="Brush.Surface2" Color="{StaticResource Color.Surface2}" />
   <!-- surface-3: menus, the palette, tooltips -->
-  <Color x:Key="Color.Surface3">#18191a</Color>
+  <Color x:Key="Color.Surface3">#222326</Color>
   <SolidColorBrush x:Key="Brush.Surface3" Color="{StaticResource Color.Surface3}" />
   <!-- surface-4: dialogs -->
-  <Color x:Key="Color.Surface4">#191a1b</Color>
+  <Color x:Key="Color.Surface4">#26272a</Color>
   <SolidColorBrush x:Key="Brush.Surface4" Color="{StaticResource Color.Surface4}" />
   <!-- hairline: dividers and panel borders (decoration only, 1.3:1) -->
-  <Color x:Key="Color.Hairline">#23252a</Color>
+  <Color x:Key="Color.Hairline">#0fffffff</Color>
   <SolidColorBrush x:Key="Brush.Hairline" Color="{StaticResource Color.Hairline}" />
   <!-- hairline-strong: input borders, the copy block -->
   <Color x:Key="Color.HairlineStrong">#34343a</Color>
   <SolidColorBrush x:Key="Brush.HairlineStrong" Color="{StaticResource Color.HairlineStrong}" />
-  <!-- hairline-tertiary: nested surfaces -->
+  <!-- hairline-tertiary: nested surfaces. Decorative only (1.9:1 on the canvas): never a control outline, use Color.Outline -->
   <Color x:Key="Color.HairlineTertiary">#3e3e44</Color>
   <SolidColorBrush x:Key="Brush.HairlineTertiary" Color="{StaticResource Color.HairlineTertiary}" />
+  <!-- outline: control boundaries (pressed, focus, selected) at 3:1 on the pressed fill #2c2d30 (WCAG 1.4.11, #3190, #3517); drawn through Brush.Clickable.PressedBorder, so no brush of its own (#3505). Graph connectors are Color.Wire -->
+  <Color x:Key="Color.Outline">#767b82</Color>
   <!-- ink: primary text -->
   <Color x:Key="Color.Ink">#f7f8f8</Color>
   <SolidColorBrush x:Key="Brush.Ink" Color="{StaticResource Color.Ink}" />
@@ -41,7 +43,7 @@
   <Color x:Key="Color.InkSubtle">#8a8f98</Color>
   <SolidColorBrush x:Key="Brush.InkSubtle" Color="{StaticResource Color.InkSubtle}" />
   <!-- ink-tertiary: disabled text only, never information (3.6:1) -->
-  <Color x:Key="Color.InkTertiary">#62666d</Color>
+  <Color x:Key="Color.InkTertiary">#74787f</Color>
   <SolidColorBrush x:Key="Brush.InkTertiary" Color="{StaticResource Color.InkTertiary}" />
   <!-- primary: the primary button, the brand mark, the selected nav indicator. Never text (4.44:1) -->
   <Color x:Key="Color.Primary">#5e6ad2</Color>
@@ -55,11 +57,34 @@
   <!-- derived (§11.1): the primary button's pressed fill (white 6.2:1) -->
   <Color x:Key="Color.PrimaryPressed">#4c57be</Color>
   <SolidColorBrush x:Key="Brush.PrimaryPressed" Color="{StaticResource Color.PrimaryPressed}" />
+  <!-- Clickable surfaces (#2535, Theme/ClickableStyles.axaml): the lift under the pointer and the press. The surface ladder steps 4-5 per channel,
+       which nobody sees as a hover, so these sit above it: hover #1c1d20 (+13 over Surface1; Raycast's filled control measures #1b1c1e,
+       design/measured-linear-raycast-2026-11-10.md) with the strong hairline, pressed #2c2d30 with the Outline border. A row that rests on
+       Surface2 (selected, calm) lifts to Brush.Clickable.Lift under the pointer, so it still moves by a visible step. -->
+  <SolidColorBrush x:Key="Brush.Clickable.Hover" Color="#1c1d20" />
+  <!-- A clickable surface's rest fill: the hover colour at zero alpha (TokenTests pins the match). A Border with no background is not hit-tested,
+       and the colour ease blends each channel straight, so a rest of Transparent (#00FFFFFF) would pass through grey on the way to the hover;
+       this one only gains alpha. -->
+  <SolidColorBrush x:Key="Brush.Clickable.Rest" Color="#001c1d20" />
+  <!-- Hover only: not the control's boundary or state, so no 3:1 (WCAG 1.4.11). Pressed, focus and selected use Outline. -->
+  <SolidColorBrush x:Key="Brush.Clickable.HoverBorder" Color="{StaticResource Color.HairlineStrong}" />
+  <!-- Hover fill of a row that rests on Surface2 (.subtle, .selected): InkSubtle is 4.84:1 on it and Outline 3.69:1; a press then steps 1.14:1 to Pressed. No new colour: it is Surface3. -->
+  <SolidColorBrush x:Key="Brush.Clickable.Lift" Color="{StaticResource Color.Surface3}" />
+  <!-- Pressed only. InkSubtle on it is 4.24:1, under 4.5, and that is accepted: a press is momentary, and the 1.2:1 step over hover cannot also hold 4.5 (ideas + qa, #3611). Never use it as a hover fill; that is Brush.Clickable.Lift. -->
+  <SolidColorBrush x:Key="Brush.Clickable.Pressed" Color="#2c2d30" />
+  <SolidColorBrush x:Key="Brush.Clickable.PressedBorder" Color="{StaticResource Color.Outline}" />
   <!-- on-primary: primary button text -->
   <Color x:Key="Color.OnPrimary">#ffffff</Color>
   <SolidColorBrush x:Key="Brush.OnPrimary" Color="{StaticResource Color.OnPrimary}" />
+  <!-- error-fill: the danger primary button (the sheet's Remove). Error itself is 3.5:1 under white, so the fill is darker: white on it is 5.0:1, hover 5.9:1, pressed 6.9:1 -->
+  <Color x:Key="Color.ErrorFill">#c93c3c</Color>
+  <SolidColorBrush x:Key="Brush.ErrorFill" Color="{StaticResource Color.ErrorFill}" />
+  <Color x:Key="Color.ErrorFillHover">#b83232</Color>
+  <SolidColorBrush x:Key="Brush.ErrorFillHover" Color="{StaticResource Color.ErrorFillHover}" />
+  <Color x:Key="Color.ErrorFillPressed">#a82c2c</Color>
+  <SolidColorBrush x:Key="Brush.ErrorFillPressed" Color="{StaticResource Color.ErrorFillPressed}" />
   <!-- semantic-success: ok glyphs, always with the word -->
-  <Color x:Key="Color.Success">#27a644</Color>
+  <Color x:Key="Color.Success">#2eb75b</Color>
   <SolidColorBrush x:Key="Brush.Success" Color="{StaticResource Color.Success}" />
   <!-- semantic-overlay: the dialog scrim (Brush.Overlay is 60 %) -->
   <Color x:Key="Color.Overlay">#000000</Color>
@@ -71,23 +96,80 @@
   <Color x:Key="Color.Error">#eb5757</Color>
   <SolidColorBrush x:Key="Brush.Error" Color="{StaticResource Color.Error}" />
   <!-- derived: Attention at 14 % over Canvas, the needs-you chip background -->
-  <Color x:Key="Color.AttentionSoft">#23160c</Color>
+  <Color x:Key="Color.AttentionSoft">#291d13</Color>
   <SolidColorBrush x:Key="Brush.AttentionSoft" Color="{StaticResource Color.AttentionSoft}" />
+  <!-- derived: AttentionSoft lifted one and two steps (about +9 and +15 per channel, hue kept). An attention row lifts within its own
+       colour under the pointer and a press; the grey clickable hover would drop the urgency (#2611). -->
+  <Color x:Key="Color.AttentionSoft.Hover">#32261c</Color>
+  <SolidColorBrush x:Key="Brush.AttentionSoft.Hover" Color="{StaticResource Color.AttentionSoft.Hover}" />
+  <Color x:Key="Color.AttentionSoft.Pressed">#382c22</Color>
+  <SolidColorBrush x:Key="Brush.AttentionSoft.Pressed" Color="{StaticResource Color.AttentionSoft.Pressed}" />
   <!-- derived: Attention at 35 % over Surface2, opaque: the hold button's fill -->
-  <Color x:Key="Color.AttentionFill">#624328</Color>
+  <Color x:Key="Color.AttentionFill">#67482f</Color>
   <SolidColorBrush x:Key="Brush.AttentionFill" Color="{StaticResource Color.AttentionFill}" />
   <!-- derived: Error at 14 % over Canvas, the fail chip background -->
-  <Color x:Key="Color.ErrorSoft">#220d0e</Color>
+  <Color x:Key="Color.ErrorSoft">#281415</Color>
   <SolidColorBrush x:Key="Brush.ErrorSoft" Color="{StaticResource Color.ErrorSoft}" />
   <!-- derived: Success at 14 % over Canvas, the ok chip background -->
-  <Color x:Key="Color.SuccessSoft">#06180b</Color>
+  <Color x:Key="Color.SuccessSoft">#0d2115</Color>
   <SolidColorBrush x:Key="Brush.SuccessSoft" Color="{StaticResource Color.SuccessSoft}" />
   <!-- derived (S1b): the selected nav background, the running pill -->
-  <Color x:Key="Color.PrimarySoft">#1d2036</Color>
+  <Color x:Key="Color.PrimarySoft">#202442</Color>
   <SolidColorBrush x:Key="Brush.PrimarySoft" Color="{StaticResource Color.PrimarySoft}" />
-  <!-- context map (F3 spec 1 §2): wire is an edge, a port and a suggested node's dashed border (decoration, 2.4:1 like the
-       hairlines; a suggestion is carried by its dash and its words, never by this colour) -->
-  <Color x:Key="Color.Wire">#4a4a52</Color>
+  <!-- status chip (#2545), one set per Sindri state: Fg is the state colour, Bg that colour at 14 %, Border at 30 %. Running is the
+       blue Area1 over a Primary tint; Waiting is an amber outline with no fill, so it never reads as Running or as Attention (filled amber).
+       Neutral and Draft stay in the ink greys. One dictionary, as the other tokens: the chip reads the same in both theme variants. -->
+  <SolidColorBrush x:Key="Brush.Status.Ok.Fg" Color="{StaticResource Color.Success}" />
+  <SolidColorBrush x:Key="Brush.Status.Ok.Bg" Color="{StaticResource Color.Success}" Opacity="0.14" />
+  <SolidColorBrush x:Key="Brush.Status.Ok.Border" Color="{StaticResource Color.Success}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Running.Fg" Color="{StaticResource Color.Area1}" />
+  <SolidColorBrush x:Key="Brush.Status.Running.Bg" Color="{StaticResource Color.Primary}" Opacity="0.14" />
+  <SolidColorBrush x:Key="Brush.Status.Running.Border" Color="{StaticResource Color.Primary}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Waiting.Fg" Color="{StaticResource Color.Attention}" />
+  <SolidColorBrush x:Key="Brush.Status.Waiting.Bg" Color="Transparent" />
+  <SolidColorBrush x:Key="Brush.Status.Waiting.Border" Color="{StaticResource Color.Attention}" Opacity="0.6" />
+  <SolidColorBrush x:Key="Brush.Status.Attention.Fg" Color="{StaticResource Color.Attention}" />
+  <SolidColorBrush x:Key="Brush.Status.Attention.Bg" Color="{StaticResource Color.Attention}" Opacity="0.14" />
+  <SolidColorBrush x:Key="Brush.Status.Attention.Border" Color="{StaticResource Color.Attention}" Opacity="0.3" />
+  <!-- #eb5757 on its 0.14 tint over Surface1 is 4.485:1, under 4.5; the chip word is the lighter #ee6060 (4.82:1). Fill and border keep Color.Error. -->
+  <Color x:Key="Color.ErrorChipText">#ee6060</Color>
+  <SolidColorBrush x:Key="Brush.ErrorChipText" Color="{StaticResource Color.ErrorChipText}" />
+  <SolidColorBrush x:Key="Brush.Status.Error.Fg" Color="{StaticResource Color.ErrorChipText}" />
+  <SolidColorBrush x:Key="Brush.Status.Error.Bg" Color="{StaticResource Color.Error}" Opacity="0.14" />
+  <SolidColorBrush x:Key="Brush.Status.Error.Border" Color="{StaticResource Color.Error}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Neutral.Fg" Color="{StaticResource Color.InkMuted}" />
+  <SolidColorBrush x:Key="Brush.Status.Neutral.Bg" Color="{StaticResource Color.LaneFill}" />
+  <SolidColorBrush x:Key="Brush.Status.Neutral.Border" Color="{StaticResource Color.Hairline}" />
+  <SolidColorBrush x:Key="Brush.Status.Draft.Fg" Color="{StaticResource Color.InkSubtle}" />
+  <SolidColorBrush x:Key="Brush.Status.Draft.Bg" Color="Transparent" />
+  <SolidColorBrush x:Key="Brush.Status.Draft.Border" Color="{StaticResource Color.HairlineStrong}" />
+  <!-- toggle chip, ON (#3234): the state colour at 25 % (rest), 30 % (pointer) and 35 % (pressed) over the panel, under Ink (a chip that is on reads as the coloured one). Dark only, like the set above. -->
+  <SolidColorBrush x:Key="Brush.Status.Ok.On" Color="{StaticResource Color.Success}" Opacity="0.25" />
+  <SolidColorBrush x:Key="Brush.Status.Ok.OnHover" Color="{StaticResource Color.Success}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Ok.OnPressed" Color="{StaticResource Color.Success}" Opacity="0.35" />
+  <SolidColorBrush x:Key="Brush.Status.Running.On" Color="{StaticResource Color.Area1}" Opacity="0.25" />
+  <SolidColorBrush x:Key="Brush.Status.Running.OnHover" Color="{StaticResource Color.Area1}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Running.OnPressed" Color="{StaticResource Color.Area1}" Opacity="0.35" />
+  <SolidColorBrush x:Key="Brush.Status.Waiting.On" Color="{StaticResource Color.Attention}" Opacity="0.25" />
+  <SolidColorBrush x:Key="Brush.Status.Waiting.OnHover" Color="{StaticResource Color.Attention}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Waiting.OnPressed" Color="{StaticResource Color.Attention}" Opacity="0.35" />
+  <SolidColorBrush x:Key="Brush.Status.Attention.On" Color="{StaticResource Color.Attention}" Opacity="0.25" />
+  <SolidColorBrush x:Key="Brush.Status.Attention.OnHover" Color="{StaticResource Color.Attention}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Attention.OnPressed" Color="{StaticResource Color.Attention}" Opacity="0.35" />
+  <SolidColorBrush x:Key="Brush.Status.Error.On" Color="{StaticResource Color.Error}" Opacity="0.25" />
+  <SolidColorBrush x:Key="Brush.Status.Error.OnHover" Color="{StaticResource Color.Error}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Error.OnPressed" Color="{StaticResource Color.Error}" Opacity="0.35" />
+  <SolidColorBrush x:Key="Brush.Status.Neutral.On" Color="{StaticResource Color.InkMuted}" Opacity="0.25" />
+  <SolidColorBrush x:Key="Brush.Status.Neutral.OnHover" Color="{StaticResource Color.InkMuted}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Neutral.OnPressed" Color="{StaticResource Color.InkMuted}" Opacity="0.35" />
+  <SolidColorBrush x:Key="Brush.Status.Draft.On" Color="{StaticResource Color.InkSubtle}" Opacity="0.25" />
+  <SolidColorBrush x:Key="Brush.Status.Draft.OnHover" Color="{StaticResource Color.InkSubtle}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Draft.OnPressed" Color="{StaticResource Color.InkSubtle}" Opacity="0.35" />
+  <!-- graph and context map: wire is a connector, an edge, a port and a suggested node's dashed border. It is the only mark
+       of which step feeds which, so it meets the 3:1 non-text minimum on Canvas, Surface1 and Surface2 (WCAG 1.4.11, #3138);
+       a suggestion is still carried by its dash and its words, never by this colour -->
+  <!-- Wire is for graph connectors; control boundaries are Color.Outline, a separate role on a separate fill (#3505) -->
+  <Color x:Key="Color.Wire">#686870</Color>
   <SolidColorBrush x:Key="Brush.Wire" Color="{StaticResource Color.Wire}" />
   <!-- context map: a hovered or selected edge and its neighbours (same value as ink-subtle, kept as its own role) -->
   <Color x:Key="Color.WireHi">#8a8f98</Color>
@@ -100,10 +182,10 @@
   <SolidColorBrush x:Key="Brush.RingAnchor" Color="{StaticResource Color.RingAnchor}" />
 
   <!-- workflow run status (F3 workflows spec §2): "you took over" is the one status with no colour of its own; violet glyph
-       and word on its soft pair (Violet at about 8 % over Canvas), never colour alone -->
+       and word on its soft pair (Violet at about 13 % over Canvas), never colour alone -->
   <Color x:Key="Color.Violet">#a78bfa</Color>
   <SolidColorBrush x:Key="Brush.Violet" Color="{StaticResource Color.Violet}" />
-  <Color x:Key="Color.VioletSoft">#170f2a</Color>
+  <Color x:Key="Color.VioletSoft">#1d1a29</Color>
   <SolidColorBrush x:Key="Brush.VioletSoft" Color="{StaticResource Color.VioletSoft}" />
 
   <!-- context whole map (whole-map spec §3.2): the bounded palette the areas are told apart by, each also by a pattern, never colour alone -->
@@ -120,27 +202,42 @@
   <Color x:Key="Color.Area6">#ff9e8f</Color>
   <SolidColorBrush x:Key="Brush.Area6" Color="{StaticResource Color.Area6}" />
 
-  <!-- §14.2 Type ramp at text scale 1.0: size and line height (px) per step. TextScale.Apply writes scaled copies over
+  <!-- §14.2 Type ramp at text scale 1.0: size and line height (px) and weight per step; values in docs/csharp/sindri-ui-design.md. TextScale.Apply writes scaled copies over
        these (0.9–1.3) and records the scale in Type.Scale; the Typography.axaml styles read them as DynamicResource. -->
   <x:Double x:Key="Type.Scale">1</x:Double>
-  <x:Double x:Key="Type.PageTitle.Size">20</x:Double>
-  <x:Double x:Key="Type.PageTitle.LineHeight">24</x:Double>
-  <x:Double x:Key="Type.DetailTitle.Size">18</x:Double>
-  <x:Double x:Key="Type.DetailTitle.LineHeight">22.5</x:Double>
+  <x:Double x:Key="Type.Display.Size">40</x:Double>
+  <x:Double x:Key="Type.Display.LineHeight">44</x:Double>
+  <FontWeight x:Key="Type.Display.Weight">SemiBold</FontWeight>
+  <x:Double x:Key="Type.PageTitle.Size">24</x:Double>
+  <x:Double x:Key="Type.PageTitle.LineHeight">32</x:Double>
+  <FontWeight x:Key="Type.PageTitle.Weight">SemiBold</FontWeight>
+  <x:Double x:Key="Type.SectionTitle.Size">15</x:Double>
+  <x:Double x:Key="Type.SectionTitle.LineHeight">22</x:Double>
+  <FontWeight x:Key="Type.SectionTitle.Weight">SemiBold</FontWeight>
+  <x:Double x:Key="Type.DetailTitle.Size">20</x:Double>
+  <x:Double x:Key="Type.DetailTitle.LineHeight">28</x:Double>
+  <FontWeight x:Key="Type.DetailTitle.Weight">SemiBold</FontWeight>
   <x:Double x:Key="Type.Body.Size">13</x:Double>
-  <x:Double x:Key="Type.Body.LineHeight">19.5</x:Double>
+  <x:Double x:Key="Type.Body.LineHeight">20</x:Double>
+  <FontWeight x:Key="Type.Body.Weight">Normal</FontWeight>
   <x:Double x:Key="Type.BodyStrong.Size">13</x:Double>
-  <x:Double x:Key="Type.BodyStrong.LineHeight">19.5</x:Double>
+  <x:Double x:Key="Type.BodyStrong.LineHeight">20</x:Double>
+  <FontWeight x:Key="Type.BodyStrong.Weight">Medium</FontWeight>
   <x:Double x:Key="Type.Caption.Size">12</x:Double>
-  <x:Double x:Key="Type.Caption.LineHeight">16.8</x:Double>
+  <x:Double x:Key="Type.Caption.LineHeight">18</x:Double>
+  <FontWeight x:Key="Type.Caption.Weight">Normal</FontWeight>
   <x:Double x:Key="Type.Eyebrow.Size">11</x:Double>
-  <x:Double x:Key="Type.Eyebrow.LineHeight">14.3</x:Double>
+  <x:Double x:Key="Type.Eyebrow.LineHeight">16</x:Double>
+  <FontWeight x:Key="Type.Eyebrow.Weight">Normal</FontWeight>
   <x:Double x:Key="Type.Button.Size">13</x:Double>
   <x:Double x:Key="Type.Button.LineHeight">15.6</x:Double>
+  <FontWeight x:Key="Type.Button.Weight">Medium</FontWeight>
   <x:Double x:Key="Type.Mono.Size">12</x:Double>
   <x:Double x:Key="Type.Mono.LineHeight">18</x:Double>
+  <FontWeight x:Key="Type.Mono.Weight">Normal</FontWeight>
   <x:Double x:Key="Type.Kbd.Size">11</x:Double>
-  <x:Double x:Key="Type.Kbd.LineHeight">14.3</x:Double>
+  <x:Double x:Key="Type.Kbd.LineHeight">16</x:Double>
+  <FontWeight x:Key="Type.Kbd.Weight">Medium</FontWeight>
   <!-- Inter for Linear Display and Text (Avalonia.Fonts.Inter); JetBrains Mono (OFL, embedded under Theme/Fonts) for
        Linear Mono, falling back to the system's mono faces. -->
   <FontFamily x:Key="Font.Text">fonts:Inter#Inter</FontFamily>
@@ -169,9 +266,37 @@
   <CornerRadius x:Key="Radius.LG">12</CornerRadius>
   <CornerRadius x:Key="Radius.Pill">9999</CornerRadius>
 
+  <!-- List row heights (px): Compact is Linear's changelog and nav rows, Default its docs nav row, Comfortable a roomier row. -->
+  <x:Double x:Key="Row.Height.Compact">28</x:Double>
+  <x:Double x:Key="Row.Height.Default">32</x:Double>
+  <x:Double x:Key="Row.Height.Data">36</x:Double>
+  <x:Double x:Key="Row.Height.Comfortable">40</x:Double>
+  <!-- RowList / Row / PeekPane (#2978, grammar v2). The cursor ring is PrimaryHover (the grammar's primary-hi) 1 px inset; the selected row is PrimarySoft with a 2 px Primary bar; age, id and counts are InkSubtle. -->
+  <x:Double x:Key="Row.GroupHeader">28</x:Double>
+  <x:Double x:Key="Row.Col.Glyph">16</x:Double>
+  <x:Double x:Key="Row.Col.Fact">104</x:Double>
+  <x:Double x:Key="Row.Col.FactWide">136</x:Double>
+  <x:Double x:Key="Row.Col.Age">44</x:Double>
+  <x:Double x:Key="Row.Col.Wait">112</x:Double>
+  <x:Double x:Key="Row.Col.TitleMin">200</x:Double>
+  <x:Double x:Key="Row.Gap">12</x:Double>
+  <x:Double x:Key="Row.Inset">24</x:Double>
+  <Thickness x:Key="Row.Inset.Thickness">24,0</Thickness>
+  <x:Double x:Key="Peek.Width">440</x:Double>
+  <x:Double x:Key="Peek.Header">48</x:Double>
+  <x:Double x:Key="Peek.FieldRow">28</x:Double>
+  <!-- Inspora pass: a chart sits on a Surface2 inset inside its card; only a floating layer (menu, palette, dialog) casts a shadow. -->
+  <SolidColorBrush x:Key="Brush.Chart.Inset" Color="{StaticResource Color.Surface2}" />
+  <!-- The tick bar (a backlog as one tick per record, or per ceil(total / Max) records): lit ticks Success, the rest Surface3. -->
+  <x:Double x:Key="Size.Tick.W">5</x:Double>
+  <x:Double x:Key="Size.Tick.H">20</x:Double>
+  <x:Double x:Key="Size.Tick.Gap">4</x:Double>
+  <x:Int32 x:Key="Size.Tick.Max">40</x:Int32>
+  <SolidColorBrush x:Key="Brush.Chart.Tick" Color="{StaticResource Color.Success}" />
+  <SolidColorBrush x:Key="Brush.Chart.TickDim" Color="{StaticResource Color.Surface3}" />
+  <BoxShadows x:Key="Shadow.Float">0 8 24 0 #66000000</BoxShadows>
   <!-- §14.3 Sizes (px). Row and control minimums are scaled with the text by the views that use them. -->
-  <x:Double x:Key="Size.Row">36</x:Double>
-  <x:Double x:Key="Size.RowComfortable">40</x:Double>
+  <x:Double x:Key="Size.PanelHeader">36</x:Double>
   <x:Double x:Key="Size.TopBar">48</x:Double>
   <x:Double x:Key="Size.Sheet">520</x:Double>
   <x:Double x:Key="Size.SheetMin">420</x:Double>
@@ -194,6 +319,8 @@
   <sys:TimeSpan x:Key="Motion.Instant">0:0:0</sys:TimeSpan>
   <sys:TimeSpan x:Key="Motion.Fast">0:0:0.120</sys:TimeSpan>
   <sys:TimeSpan x:Key="Motion.Base">0:0:0.180</sys:TimeSpan>
+  <!-- The ease of a hover or press on a clickable surface (#2535). Measured 150 ms on Linear (linear.app/docs) and Raycast (raycast.com/store): design/measured-linear-raycast-2026-11-10.md. -->
+  <sys:TimeSpan x:Key="Motion.Hover">0:0:0.150</sys:TimeSpan>
   <sys:TimeSpan x:Key="Motion.Pulse">0:0:1.600</sys:TimeSpan>
   <!-- One turn of the in-flight spinner (§4.1 "sending", R2); 0 under reduced motion, where the spinner stands still. -->
   <sys:TimeSpan x:Key="Motion.Spin">0:0:0.900</sys:TimeSpan>

@@ -13,6 +13,7 @@ namespace Aw.Sindri.Core.Items;
 /// <param name="PrimaryAction">The row's primary action, a member of Actions, or null.</param>
 /// <param name="Actions">The action ids it offers.</param>
 /// <param name="Owner">Reserved for multi-user (README X61); always null for now.</param>
+/// <param name="Parked">True when the item is parked (#2788).</param>
 public sealed record ItemSummary(
     ItemId Id,
     string Title,
@@ -22,4 +23,5 @@ public sealed record ItemSummary(
     DateTimeOffset Since,
     ActionId? PrimaryAction,
     IReadOnlyList<ActionId> Actions,
-    string? Owner);
+    string? Owner,
+    bool Parked = false);

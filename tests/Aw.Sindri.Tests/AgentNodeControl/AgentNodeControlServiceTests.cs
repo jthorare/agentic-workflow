@@ -1,7 +1,9 @@
+using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Features.AgentNodeControl;
@@ -26,6 +28,7 @@ public sealed class AgentNodeControlServiceTests
     private readonly FakeTimeProvider _clock = new();
     private readonly InMemoryWorkflowRunStore _runs;
     private readonly FakeAgentNodeControl _control = new();
+    private readonly SliceHarness _h = new();
 
     public AgentNodeControlServiceTests()
     {
@@ -193,12 +196,84 @@ public sealed class AgentNodeControlServiceTests
         Assert.Empty(_control.Calls);
     }
 
+    [Fact]
+    public async Task A_changed_takeover_appends_one_event_with_the_run_node_item_and_who()
+    {
+        await Insert(WorkflowRunStatus.Running);
+        _control.Wait(_agent);
+        var human = A.Caller().Human().Build();
+
+        _ = await TakeOver(human);
+
+        var recorded = Assert.Single(_h.Store.Events);
+        Assert.Equal(EventTypes.WorkflowNodeTakenOver, recorded.Envelope.Type);
+        Assert.Equal(A.FirstItemId.Value, recorded.Item);
+        var payload = JsonNode.Parse(recorded.Envelope.Payload)!;
+        Assert.Equal((_run.Value, "agent", 0, human.Actor), (payload["runId"]!.GetValue<string>(), payload["nodeId"]!.GetValue<string>(), payload["itemIndex"]!.GetValue<int>(), payload["by"]!.GetValue<string>()));
+    }
+
+    [Fact]
+    public async Task A_takeover_of_a_node_already_held_appends_no_event()
+    {
+        await Insert(WorkflowRunStatus.Waiting);
+        _control.Wait(_agent, takenOver: true);
+
+        _ = await TakeOver(A.Caller().Human().Build());
+
+        Assert.Empty(_h.Store.Events);
+    }
+
+    [Fact]
+    public async Task A_handback_appends_one_event_with_the_run_node_item_and_who()
+    {
+        await Insert(WorkflowRunStatus.Running);
+        _control.Wait(_agent, itemIndex: 0, takenOver: true);
+        var session = A.Caller().Launched().Build();
+
+        _ = await HandBack(session);
+
+        var recorded = Assert.Single(_h.Store.Events);
+        Assert.Equal(EventTypes.WorkflowNodeHandedBack, recorded.Envelope.Type);
+        Assert.Equal(A.FirstItemId.Value, recorded.Item);
+        var payload = JsonNode.Parse(recorded.Envelope.Payload)!;
+        Assert.Equal((_run.Value, "agent", 0, session.Actor), (payload["runId"]!.GetValue<string>(), payload["nodeId"]!.GetValue<string>(), payload["itemIndex"]!.GetValue<int>(), payload["by"]!.GetValue<string>()));
+    }
+
+    [Fact]
+    public async Task A_refused_takeover_and_a_refused_handback_append_no_event()
+    {
+        await Insert(WorkflowRunStatus.Running);
+        _control.Wait(_agent);
+        var human = A.Caller().Human().Build();
+
+        _ = await HandBack(human);
+        _control.Fail = SindriErrors.EngineUnavailable.With("temporal is down");
+        _ = await TakeOver(human);
+
+        Assert.Empty(_h.Store.Events);
+    }
+
+    [Fact]
+    public async Task A_takeover_does_not_reach_the_workflow_when_the_control_plane_holds_no_lease()
+    {
+        _ = await _runs.Insert(new WorkflowRun(_run, _workflow, 1, "{\"kind\":\"manual\"}", WorkflowRunStatus.Running, Outputs: null, Error: null, A.FirstItemId, _clock.GetUtcNow(), EndedAt: null), Token);
+        _control.Wait(_agent);
+
+        var result = await TakeOver(A.Caller().Human().Build());
+
+        Assert.Equal(SindriErrors.NotRunning.Code, result.Error.Code);
+        Assert.Empty(_control.Calls);
+    }
+
     private ValueTask<Result<AgentNodeControlled>> TakeOver(CallerContext? caller, NodeId? node = null, int itemIndex = 0) =>
-        new TakeOverAgentNodeService(_runs, _control, new FixedCallerContextAccessor(caller)).Handle(new TakeOverAgentNodeRequest(_run, node ?? _agent, itemIndex), Token);
+        new TakeOverAgentNodeService(_runs, _control, new FixedCallerContextAccessor(caller), _h.Store, _h.Held, _h.Events).Handle(new TakeOverAgentNodeRequest(_run, node ?? _agent, itemIndex), Token);
 
     private ValueTask<Result<AgentNodeControlled>> HandBack(CallerContext? caller, NodeId? node = null, int itemIndex = 0) =>
-        new HandBackAgentNodeService(_runs, _control, new FixedCallerContextAccessor(caller)).Handle(new HandBackAgentNodeRequest(_run, node ?? _agent, itemIndex), Token);
+        new HandBackAgentNodeService(_runs, _control, new FixedCallerContextAccessor(caller), _h.Store, _h.Held, _h.Events).Handle(new HandBackAgentNodeRequest(_run, node ?? _agent, itemIndex), Token);
 
-    private async Task Insert(WorkflowRunStatus status) =>
-        _ = (await _runs.Insert(new WorkflowRun(_run, _workflow, 1, "{\"kind\":\"manual\"}", status, Outputs: null, Error: null, ItemId: null, _clock.GetUtcNow(), EndedAt: null), Token)).Value;
+    private async Task Insert(WorkflowRunStatus status)
+    {
+        _ = await _h.HoldLease();
+        _ = (await _runs.Insert(new WorkflowRun(_run, _workflow, 1, "{\"kind\":\"manual\"}", status, Outputs: null, Error: null, A.FirstItemId, _clock.GetUtcNow(), EndedAt: null), Token)).Value;
+    }
 }

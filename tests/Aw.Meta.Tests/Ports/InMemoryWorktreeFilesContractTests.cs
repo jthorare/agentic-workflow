@@ -13,6 +13,17 @@ public sealed class InMemoryWorktreeFilesContractTests : WorktreeFilesContract
 
     protected override IWorktreeFiles Create() => _fake;
 
+    protected override string ArrangeRoot(string? fileRoot, string? environmentRoot)
+    {
+        var repo = "/fake/repo-" + (++_directories).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        if ((environmentRoot ?? fileRoot) is { } configured)
+        {
+            _fake.ConfigureRoot(repo, configured);
+        }
+
+        return repo;
+    }
+
     protected override string Arrange(IReadOnlyDictionary<string, DateTimeOffset> entries)
     {
         var directory = "/fake/tree-" + (++_directories).ToString(System.Globalization.CultureInfo.InvariantCulture);

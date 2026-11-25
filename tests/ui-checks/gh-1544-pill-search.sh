@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # tests/ui-checks/gh-1544-pill-search.sh — regression check for #1544 (a long health message in the top-bar pill squeezes the ⌘K search box).
-# At 1280x800, in the real sindri-ui on the guarded fixture, after `fixture drift` (the pill reads "Degraded ... the profile changed since approval"):
-#   1. the search placeholder (the TextBlock named "Search or run a command") is at least 160 px wide, not squeezed to "Search or run a c…";
+# At 1280x800, in the real sindri-ui on the guarded fixture, after `fixture fail` (the pill reads "Degraded ... service broken failed"). Profile edits apply
+# on save now, so `fixture drift` no longer degrades the pill; the long-problem layout is covered by ShellWindowTests' DegradedLongProblems rows:
+#   1. the search field (the Border named "Search or run a command") is at least 160 px wide (the field's minimum; SearchMin 184 is its column, margins included) and its placeholder TextBlock shows the whole
+#      short copy "Search…" (#2710), not a trimmed one;
 #   2. the pill still names the problem in full (its accessible name) and a visible TextBlock named PillProblems shows the (maybe trimmed) text.
 # All parts run, every FAIL is printed, and the exit is 1 when any failed.
 # It drives the REAL sindri-ui (UI driver, docs/csharp/ui-driver.md) against a guarded fixture home (scripts/sindri-ui-fixture.sh
@@ -70,11 +72,11 @@ APP_WRAPPER_PID=$!
 timeout 120 "$DRIVER" window --width 1280 --height 800 >/dev/null 2>&1 || setup_fail "could not size the window"
 sleep 2
 
-# 3. A profile drift puts a long problem text in the pill.
-bash "$FIXTURE" drift >"$OUT/fixture-drift.log" 2>&1 || setup_fail "sindri-ui-fixture drift (see $OUT/fixture-drift.log)"
+# 3. A service the build has no code for puts a problem text in the pill.
+bash "$FIXTURE" fail >"$OUT/fixture-fail.log" 2>&1 || setup_fail "sindri-ui-fixture fail (see $OUT/fixture-fail.log)"
 
-# The pill: a visible Button whose accessible name starts with "Degraded" and names the drift (polled up to 60 s).
-pill_filter='[.. | objects | select(.type == "Button" and .visible and ((.name // "") | startswith("Degraded")) and ((.name // "") | contains("the profile changed since approval")))][0] // empty'
+# The pill: a visible Button whose accessible name starts with "Degraded" and names the service 'broken' (polled up to 60 s).
+pill_filter='[.. | objects | select(.type == "Button" and .visible and ((.name // "") | startswith("Degraded")) and ((.name // "") | contains("broken")))][0] // empty'
 pill=""
 for _ in $(seq 1 120); do
   "$DRIVER" tree --depth 64 >"$OUT/tree-poll.json" 2>/dev/null
@@ -82,17 +84,31 @@ for _ in $(seq 1 120); do
   [ -n "$pill" ] && break
   sleep 0.5
 done
-[ -n "$pill" ] || setup_fail "the top-bar pill never named 'the profile changed since approval' within 60 s"
+[ -n "$pill" ] || setup_fail "the top-bar pill never named the service 'broken' within 60 s"
 sleep 2
 "$DRIVER" screenshot --out "$OUT/pill.png" >/dev/null 2>&1
 "$DRIVER" tree --depth 64 >"$OUT/tree.json" 2>/dev/null || setup_fail "the driver gave no tree"
 
-# ---- Part 1: the search placeholder is not squeezed -----------------------------------------------------------------------------
-# The placeholder TextBlock sits inside the Border of the same name; it needs about 150 px at text scale 1.
-width="$(jq -r '[.. | objects | select(.type == "TextBlock" and .visible and (.name // "") == "Search or run a command")][0].width // empty' "$OUT/tree.json")"
-[ -n "$width" ] || setup_fail "no visible TextBlock named 'Search or run a command' (see $OUT/tree.json)"
+# ---- Part 1: the search field keeps its width and the placeholder is whole ---------------------------------------------------------
+# The placeholder TextBlock sits inside the Border of the same name. a) the field is at least 160 px wide while the pill names a problem: the Border is the field, whose minimum
+#    is 160 px; SearchMin (184 px) is its column, which adds the field's two 12 px margins;
+# b) the TextBlock is the short copy "Search…" (#2710) and it is not trimmed. The tree's `text` is the TextBlock's Text, which stays
+#    whole even when the ellipsis trims it on screen, so b) also needs its laid-out width: the check runs at
+#    text scale 1.0, where "Search…" needs about 49 px, so the 64 px laid-out floor still catches a squeezed field (the #1544 bug);
+#    64 is a floor, not the text's width.
+width="$(jq -r '[.. | objects | select(.type == "Border" and .visible and (.name // "") == "Search or run a command")][0].width // empty' "$OUT/tree.json")"
+[ -n "$width" ] || setup_fail "no visible Border named 'Search or run a command' (see $OUT/tree.json)"
+shown="$(jq -r '[.. | objects | select(.type == "TextBlock" and .visible and (.name // "") == "Search or run a command")][0].text // empty' "$OUT/tree.json")"
+text_width="$(jq -r '[.. | objects | select(.type == "TextBlock" and .visible and (.name // "") == "Search or run a command")][0].width // empty' "$OUT/tree.json")"
+[ -n "$shown" ] || setup_fail "no visible TextBlock named 'Search or run a command' (see $OUT/tree.json)"
 if ! awk -v w="$width" 'BEGIN { exit !(w >= 160) }'; then
-  fail "the search placeholder is squeezed to $width px (needs 160) while the pill names a problem (screenshot in $OUT)"
+  fail "the search field is squeezed to $width px (the floor is 160) while the pill names a problem (screenshot in $OUT)"
+fi
+if [ "$shown" != "Search…" ]; then
+  fail "the search placeholder shows '$shown', not the whole 'Search…' (screenshot in $OUT)"
+fi
+if ! awk -v w="${text_width:-0}" 'BEGIN { exit !(w >= 64) }'; then
+  fail "the search placeholder is laid out at ${text_width:-0} px (the floor is 64; 'Search…' needs about 49) (screenshot in $OUT)"
 fi
 
 # ---- Part 2: the pill still names the problem ------------------------------------------------------------------------------------
@@ -102,7 +118,7 @@ if ! jq -e '[.. | objects | select(.type == "TextBlock" and .visible and (.name 
 fi
 
 if [ "$FAILED" = 0 ]; then
-  echo "PASS: the search placeholder is $width px wide and the pill still shows its problem text (screenshot in $OUT)"
+  echo "PASS: the search field is $width px wide, its placeholder shows '$shown' at $text_width px and the pill still shows its problem text (screenshot in $OUT)"
   exit 0
 fi
 exit 1

@@ -2,6 +2,12 @@
 # Tests for main-worktree.sh against a throwaway repo with its own "origin".
 set -u
 
+# Temp-dir cleanup (#3262): every mktemp this suite makes is recorded and removed when it exits.
+__aw_tmp_reg="$(command mktemp)"
+mktemp() { local p; p="$(command mktemp "$@")" || return; printf '%s\n' "$p" >>"$__aw_tmp_reg"; printf '%s\n' "$p"; }
+__aw_tmp_clean() { local rc=$? p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null || true; rm -rf "$p" || true; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; exit "$rc"; }
+trap __aw_tmp_clean EXIT
+
 SCRIPT="$(cd "$(dirname "$0")" && pwd)/main-worktree.sh"
 LEASE="$(dirname "$SCRIPT")/lease.sh"
 FAILURES=0
@@ -13,7 +19,7 @@ fail() {
 
 run_script() {
   STATE="$(dirname "$1")/state"
-  UI_BEFORE_AFTER_STATE_DIR="$STATE" bash "$SCRIPT" "$1" "${2:-a}"
+  AW_WORKTREE_ROOT="$(dirname "$1")/wt" UI_BEFORE_AFTER_STATE_DIR="$STATE" bash "$SCRIPT" "$1" "${2:-a}"
 }
 
 take_lease() {
@@ -44,7 +50,7 @@ push_commit() {
 test_creates_a_locked_worktree_at_origin_main() {
   local repo path out
   repo=$(make_repo)
-  path="$repo/.claude/worktrees/proof-main"
+  path="$(dirname "$repo")/wt/proof-main"
   out=$(run_script "$repo" 2>/dev/null) || fail "create: exited non-zero: $out"
   [ "$(git -C "$path" rev-parse HEAD)" = "$(git -C "$repo" rev-parse origin/main)" ] || fail "create: not at origin/main"
   git -C "$repo" worktree list --porcelain | grep -A4 "worktree $(cd "$path" && pwd -P)" | grep -q "^locked" || fail "create: worktree is not locked"
@@ -54,7 +60,7 @@ test_creates_a_locked_worktree_at_origin_main() {
 test_refreshes_an_existing_worktree_to_the_new_origin_main() {
   local repo path
   repo=$(make_repo)
-  path="$repo/.claude/worktrees/proof-main"
+  path="$(dirname "$repo")/wt/proof-main"
   run_script "$repo" >/dev/null 2>&1
   push_commit "$repo"
   run_script "$repo" >/dev/null 2>&1 || fail "refresh: exited non-zero"
@@ -64,7 +70,7 @@ test_refreshes_an_existing_worktree_to_the_new_origin_main() {
 test_recreates_a_worktree_whose_folder_was_deleted() {
   local repo path
   repo=$(make_repo)
-  path="$repo/.claude/worktrees/proof-main"
+  path="$(dirname "$repo")/wt/proof-main"
   run_script "$repo" >/dev/null 2>&1
   git -C "$repo" worktree unlock "$path"
   rm -rf "$path"
@@ -75,7 +81,7 @@ test_recreates_a_worktree_whose_folder_was_deleted() {
 test_keeps_the_build_while_another_run_holds_a_lease() {
   local repo path out
   repo=$(make_repo)
-  path="$repo/.claude/worktrees/proof-main"
+  path="$(dirname "$repo")/wt/proof-main"
   run_script "$repo" a >/dev/null 2>&1
   take_lease b
   push_commit "$repo"
@@ -87,7 +93,7 @@ test_keeps_the_build_while_another_run_holds_a_lease() {
 test_refreshes_when_the_only_other_lease_expired() {
   local repo path out
   repo=$(make_repo)
-  path="$repo/.claude/worktrees/proof-main"
+  path="$(dirname "$repo")/wt/proof-main"
   run_script "$repo" a >/dev/null 2>&1
   take_lease b
   echo 1 >"$STATE/proof-main.leases/b"

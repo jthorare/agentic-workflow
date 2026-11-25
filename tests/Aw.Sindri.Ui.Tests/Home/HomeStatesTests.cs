@@ -33,6 +33,16 @@ public sealed class HomeStatesTests
     }
 
     [Fact]
+    public void Needs_you_empty_line_drops_the_counts_the_api_tacked_on()
+    {
+        var list = NeedsYou();
+
+        list.Update(new NeedsYouFeed([], "Nothing needs you. 0 running, 0 queued."));
+
+        Assert.Equal("Nothing needs you.", list.EmptyLine);
+    }
+
+    [Fact]
     public void Needs_you_keeps_the_sentence_the_api_served()
     {
         var list = NeedsYou();

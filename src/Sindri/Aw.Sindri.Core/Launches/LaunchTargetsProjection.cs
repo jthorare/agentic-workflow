@@ -11,10 +11,10 @@ public static class LaunchTargetsProjection
     /// <param name="probed">The newest probe, or null before the first.</param>
     /// <param name="probedAt">When it was recorded.</param>
     /// <param name="agents">The approved profile's 'agents:' block, or null.</param>
-    /// <param name="spend">Today's spend per agent id; an id without an entry has no usage reader.</param>
+    /// <param name="spend">Today's spend per agent id (an id without an entry has no usage reader), and the ids still counting.</param>
     /// <param name="asOf">How fresh the views are.</param>
     /// <returns>The view.</returns>
-    public static LaunchTargets Project(LaunchProbed? probed, DateTimeOffset? probedAt, AgentSettings? agents, IReadOnlyDictionary<string, AgentSpend> spend, AsOf asOf)
+    public static LaunchTargets Project(LaunchProbed? probed, DateTimeOffset? probedAt, AgentSettings? agents, TodaysSpend spend, AsOf asOf)
     {
         ArgumentNullException.ThrowIfNull(spend);
         ArgumentNullException.ThrowIfNull(asOf);
@@ -26,8 +26,8 @@ public static class LaunchTargetsProjection
         var rows = new List<LaunchTargetRow>(probed.Targets.Count);
         foreach (var target in probed.Targets)
         {
-            var found = spend.TryGetValue(target.Id.Value, out var used);
-            rows.Add(new LaunchTargetRow(target, Budgets.For(agents, target.Id, found ? used : null)));
+            var found = spend.Used.TryGetValue(target.Id.Value, out var used);
+            rows.Add(new LaunchTargetRow(target, spend.Counting.Contains(target.Id.Value) ? Budgets.Counting(agents, target.Id) : Budgets.For(agents, target.Id, found ? used : null)));
         }
 
         return new LaunchTargets(Probed: true, probedAt, probed.Terminal, probed.Host, rows, probed.Repos, Budgets.Total(agents, [.. rows.Select(static r => r.Budget)]), asOf);

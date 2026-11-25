@@ -40,7 +40,7 @@ Reads a plan directory's engineering-facing docs (auto-discovers latest if no ar
    - **Setup / install friction** — required pre-reqs, install steps, environment assumptions. **Must include a time-to-first-success estimate in minutes**, with the assumptions behind it.
    - **Error messages & observability** — log structure, error codes, debuggability, traceability, instrumentation
    - **Documentation completeness for this feature** — does the plan specify what docs will be written/updated? Are required reference docs already in place?
-   - **Backwards compatibility / migration** — are existing users handled? Versioning? Deprecation path? Schema migration plan?
+   - **Backwards compatibility / migration** — are existing users kept working? Versioning? Deprecation path? Schema migration plan?
    - **Ramp-up cost for a new contributor** — **must include a named tribal-knowledge list**: each unwritten fact a new dev would need to be told, listed by name (or the literal `None.`)
 4. For each finding write: dimension, severity, evidence (cite plan doc + line numbers), concrete fix recommendation. When the finding is that something is *missing* from the plan, use the evidence-of-absence format: `Evidence: absent — searched <terms/sections>`.
 5. Derive the verdict per `_shared/severity.md`: any CRITICAL ⇒ BLOCKED; any HIGH ⇒ NEEDS_WORK; otherwise PASS.

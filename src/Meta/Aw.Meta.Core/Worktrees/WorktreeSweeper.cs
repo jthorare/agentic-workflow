@@ -20,6 +20,11 @@ public sealed class WorktreeSweeper(WorktreeInspector inspector, RepoCommands re
 {
     private const int ListedPaths = 3;
 
+    /// <summary>The same sweeps over other gh and git calls (a poll's, bound by its limit and the stop signal): the fetch, the branch and pull request reads, the removal and the prune.</summary>
+    /// <param name="github">The calls to use.</param>
+    /// <returns>A sweeper over them.</returns>
+    public WorktreeSweeper Using(RepoCommands github) => new(inspector.Using(github), github, log, values, clock);
+
     /// <summary>Sweeps a scope.</summary>
     /// <param name="team">The team config.</param>
     /// <param name="scope">Which worktrees to consider.</param>
@@ -68,6 +73,12 @@ public sealed class WorktreeSweeper(WorktreeInspector inspector, RepoCommands re
         {
             // The marker moves only after the removals, which judged again against the previous one; the next sweep keeps whatever changed after this one began.
             _ = await values.Set(KvKeys.WorktreesSweepStart, started.ToString("O", CultureInfo.InvariantCulture), cancellationToken).ConfigureAwait(false);
+        }
+
+        else if (mode == SweepMode.Remove && scope.Path is { } swept)
+        {
+            // A --path sweep records a marker for its own tree only, so the next run of it has something to compare with (#3350); the global marker and other trees are untouched.
+            _ = await values.Set(KvKeys.WorktreesPathSweepStart(WorktreeRoots.Normalize(swept)), started.ToString("O", CultureInfo.InvariantCulture), cancellationToken).ConfigureAwait(false);
         }
 
         var line = outcome.Removed.Count + outcome.Kept.Count == 0 ? string.Empty : Summary(trigger, scope, outcome);

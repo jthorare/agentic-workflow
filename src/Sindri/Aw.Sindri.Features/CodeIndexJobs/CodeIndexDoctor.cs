@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.CodeIndex.Core;
 using Aw.CodeIndex.Core.Facade;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Ports;
@@ -14,22 +15,24 @@ using IndexRepoStatus = Aw.CodeIndex.Core.Facade.RepoStatus;
 namespace Aw.Sindri.Features.CodeIndexJobs;
 
 /// <summary>
-/// The code index's doctor rows (code index spec §8): 'code-index:&lt;repo&gt;' per repo (ok, warn when stale, first build queued, waiting or retrying, fail when damaged) and 'code-index:graphify',
+/// The code index's doctor rows (code index spec §8): 'code-index:&lt;repo&gt;' per repo (ok, warn when stale, first build queued, no default-branch commit to build from, waiting or retrying, or code-index-main-move paused, fail when damaged) and 'code-index:graphify',
 /// 'code-index:ollama' and 'code-index:lock', read from the layer statuses the last builds stored, so doctor runs no tool. A layer that is unavailable is a warning, never a failure.
 /// </summary>
 /// <param name="index">The code index: its status, from the files only.</param>
 /// <param name="heads">The repos' live heads.</param>
 /// <param name="jobs">The 'jobs' view.</param>
-/// <param name="embedder">Probed for reachability and the model digest: a live check, never a build.</param>
-/// <param name="pins">Reads the lock file and compares it with the build's pins.</param>
+/// <param name="probes">The live checks: the embedding server and model, and the lock file.</param>
 /// <param name="clock">Dates the retry words.</param>
 /// <param name="liveProfile">The live profile file: its repos the profile doesn't name are checked too (owner q102, CIX-L59).</param>
-internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobViews jobs, IEmbedder embedder, ICodeIndexPins pins, TimeProvider clock, IProfileSource liveProfile) : ICodeIndexChecks
+/// <param name="pauses">The paused services: no build is coming while code-index-main-move is paused (#3399).</param>
+internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobViews jobs, CodeIndexProbes probes, TimeProvider clock, IProfileSource liveProfile, IServicePauses pauses) : ICodeIndexChecks
 {
     private const string GraphCheck = "code-index:graphify";
     private const string OllamaCheck = "code-index:ollama";
     private const string LockCheck = "code-index:lock";
     private const string Setup = "./setup.sh";
+    private const string PausedWords = "code-index-main-move is paused";
+    private const string Resume = "sindri services resume code-index-main-move";
 
     /// <summary>The checks, in the order doctor prints them.</summary>
     /// <param name="approved">The profile, or null.</param>
@@ -58,8 +61,9 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
         var live = await heads.Heads(scope.Value.Repos, cancellationToken).ConfigureAwait(false);
         var builds = await jobs.List(state: null, IndexJobs.BuildKind, cancellationToken).ConfigureAwait(false);
         var embeddings = scope.Value.Repos.Select(static r => r.Settings.Embeddings).FirstOrDefault();
-        var model = embeddings is { Enabled: true } ? new ModelProbe(Enabled: true, await embedder.Probe(embeddings, cancellationToken).ConfigureAwait(false)) : new ModelProbe(Enabled: false, Unit.Value);
-        return Rows(status.Value.Repos, live.IsError ? [] : live.Value, builds.IsError ? [] : builds.Value, clock.GetUtcNow(), new Probes(model, pins.Check()));
+        var found = await probes.Check(embeddings, cancellationToken).ConfigureAwait(false);
+        var active = await MainMovePause.Active(pauses, cancellationToken).ConfigureAwait(false);
+        return Rows(new IndexReads(status.Value.Repos, live.IsError ? [] : live.Value, builds.IsError ? [] : builds.Value, active), clock.GetUtcNow(), found);
     }
 
     /// <summary>What the live checks found: the embedding server and model, and the lock file.</summary>
@@ -72,15 +76,22 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
     /// <param name="Result">The probe's answer.</param>
     internal sealed record ModelProbe(bool Enabled, Result<Unit> Result);
 
+    /// <summary>What the doctor read from the stored index, the heads, the jobs and the services.</summary>
+    /// <param name="Repos">Each repo's index status.</param>
+    /// <param name="Live">The repos' live heads (empty when unreadable).</param>
+    /// <param name="Builds">The build jobs of every repo.</param>
+    /// <param name="BuildServiceActive">Whether code-index-main-move runs; false means no build is coming (#3399).</param>
+    internal sealed record IndexReads(IReadOnlyList<IndexRepoStatus> Repos, IReadOnlyList<IndexRepoHead> Live, IReadOnlyList<JobRow> Builds, bool BuildServiceActive = true);
+
     /// <summary>The rows for what was read; pure, so the words are tested without a box.</summary>
-    /// <param name="repos">Each repo's index status.</param>
-    /// <param name="live">The repos' live heads (empty when unreadable).</param>
-    /// <param name="builds">The build jobs of every repo.</param>
+    /// <param name="reads">What was read.</param>
     /// <param name="now">The time.</param>
     /// <param name="probes">The live checks, or null when none was made (the ollama and lock rows then read the stored layers only).</param>
     /// <returns>The rows.</returns>
-    internal static DoctorCheck[] Rows(IReadOnlyList<IndexRepoStatus> repos, IReadOnlyList<IndexRepoHead> live, IReadOnlyList<JobRow> builds, DateTimeOffset now, Probes? probes = null)
+    internal static DoctorCheck[] Rows(IndexReads reads, DateTimeOffset now, Probes? probes = null)
     {
+        ArgumentNullException.ThrowIfNull(reads);
+        var (repos, live, builds, buildServiceActive) = reads;
         ArgumentNullException.ThrowIfNull(repos);
         ArgumentNullException.ThrowIfNull(live);
         ArgumentNullException.ThrowIfNull(builds);
@@ -92,28 +103,41 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
         var layers = repos.SelectMany(static r => r.Layers).ToList();
         return
         [
-            .. repos.Select(r => Repo(r, live.FirstOrDefault(h => h.Repo == r.Repo), [.. builds.Where(j => IndexJobs.IsOf(j, r.Repo.Value))], now)),
+            .. repos.Select(r => Repo(r, live.FirstOrDefault(h => h.Repo == r.Repo), [.. builds.Where(j => IndexJobs.IsOf(j, r.Repo.Value))], now, buildServiceActive)),
             Layer(GraphCheck, "graph", layers, LayerName.Graph),
             probes is null ? Layer(OllamaCheck, "embeddings", layers, LayerName.Embeddings) : Ollama(probes.Model),
             probes is null ? new DoctorCheck(LockCheck, CheckState.Ok, "lock not checked", Fix: null) : Lock(probes.Lock),
         ];
     }
 
-    private static DoctorCheck Repo(IndexRepoStatus repo, IndexRepoHead? live, List<JobRow> mine, DateTimeOffset now)
+    private static DoctorCheck Repo(IndexRepoStatus repo, IndexRepoHead? live, List<JobRow> mine, DateTimeOffset now, bool buildServiceActive)
     {
         var name = "code-index:" + repo.Repo.Value;
         var running = mine.Exists(static j => j.State == JobState.Running);
         var finished = mine.Where(static j => j.State != JobState.Running && j.EndedAt is not null).OrderByDescending(static j => j.EndedAt).ToList();
-        var buildWords = running ? "building" : IndexBuildWords.Waiting(finished, now) ?? "build queued";
+
+        // why: queued and "the next tick builds it" promise a build that code-index-main-move starts; paused, it starts none (#3399)
+        var paused = !running && !buildServiceActive;
+        var buildWords = running ? "building" : paused ? PausedWords : IndexBuildWords.Waiting(finished, now) ?? "build queued";
         return repo.State switch
         {
             IndexState.Damaged => new DoctorCheck(name, CheckState.Fail, "index damaged, rebuilding (SND-CODEIDX-010)", "none needed: the next tick deletes and rebuilds it; sindri jobs shows the build"),
+            IndexState.Missing when !running && DefaultTips.NoneToBuildFrom(live) => new DoctorCheck(name, CheckState.Warn, UnbuildableWords, UnbuildableFix),
+            IndexState.Missing when paused => new DoctorCheck(name, CheckState.Warn, $"no index: {PausedWords}, so no build starts", Resume),
             IndexState.Missing => new DoctorCheck(name, CheckState.Warn, running ? "building the first index" : IndexBuildWords.Waiting(finished, now) ?? "first build queued", Fix: null),
-            IndexState.Ok or _ => Readable(name, repo, live, buildWords, now),
+            IndexState.Ok or _ => Readable(name, repo, live, new StaleWords(buildWords, paused ? Resume : "none needed: the next tick builds it"), now),
         };
     }
 
-    private static DoctorCheck Readable(string name, IndexRepoStatus repo, IndexRepoHead? live, string buildWords, DateTimeOffset now)
+    // A repo with no index that no build can start for: off its default branch with no default-branch commit to build from (#3181).
+    private const string UnbuildableWords = "no index: the checkout is off its default branch and has no main or origin/main to build from";
+
+    private const string UnbuildableFix = "check out the repo's default branch, or fetch origin so origin/main exists";
+
+    // What a stale row says about the next build and how to get one (#3399: paused, the fix is the resume).
+    private readonly record struct StaleWords(string Build, string Fix);
+
+    private static DoctorCheck Readable(string name, IndexRepoStatus repo, IndexRepoHead? live, StaleWords stale, DateTimeOffset now)
     {
         var commit = repo.Commit?.Value ?? string.Empty;
         var short7 = commit.Length >= 7 ? commit[..7] : commit;
@@ -122,10 +146,24 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
             return new DoctorCheck(name, CheckState.Warn, $"checkout is not on main; the index at {short7} is served", "switch the repo's checkout to its default branch");
         }
 
-        return live?.Head is { } head && head != repo.Commit
-            ? new DoctorCheck(name, CheckState.Warn, $"stale: index at {short7}, head at {head.Value[..7]}; {buildWords}", "none needed: the next tick builds it")
-            : new DoctorCheck(name, CheckState.Ok, $"{short7}, {Age(repo.BuiltAt, now)}, {string.Join(" · ", repo.Layers.Select(static l => $"{Word(l.Layer)} {Word(l.State)}"))}", Fix: null);
+        if (live?.Head is { } head && head != repo.Commit)
+        {
+            return new DoctorCheck(name, CheckState.Warn, $"stale: index at {short7}, head at {head.Value[..7]}; {stale.Build}", stale.Fix);
+        }
+
+        return Down(name, short7, repo.Layers) ?? new DoctorCheck(name, CheckState.Ok, $"{short7}, {Age(repo.BuiltAt, now)}, {string.Join(" · ", repo.Layers.Select(static l => $"{Word(l.Layer)} {Word(l.State)}"))}", Fix: null);
     }
+
+    // A layer down for a named cause is a warning on the repo's own row (gh-3069): the live probe rows can be ok while this index still lacks the layer.
+    private static DoctorCheck? Down(string name, string short7, IReadOnlyList<LayerStatus> layers) =>
+        layers.FirstOrDefault(static l => l.State == LayerState.Unavailable && l.Code is not null) is { } down
+            ? new DoctorCheck(name, CheckState.Warn, $"{short7}: {Word(down.Layer)} unavailable ({down.Code}): {down.Detail}", Fix(down.Code))
+            : layers.FirstOrDefault(IsRefused) is { } refused
+                ? new DoctorCheck(name, CheckState.Warn, $"{short7}: {Word(refused.Layer)} {Word(refused.State)} ({refused.Code}): {refused.Detail}", Fix(refused.Code))
+                : null;
+
+    // An embeddings layer that settled with refused chunks: ok, with code 017 and the count in its detail (#3128).
+    private static bool IsRefused(LayerStatus layer) => layer.State != LayerState.Unavailable && string.Equals(layer.Code, CodeIndexErrors.EmbeddingInputRejected.Code, StringComparison.Ordinal);
 
     private static DoctorCheck Layer(string name, string word, List<LayerStatus> layers, LayerName which)
     {
@@ -133,6 +171,11 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
         if (mine.Find(static l => l.State == LayerState.Unavailable) is { } down)
         {
             return new DoctorCheck(name, CheckState.Warn, $"{word} unavailable ({down.Code}): {down.Detail}", Fix(down.Code));
+        }
+
+        if (mine.Find(IsRefused) is { } refused)
+        {
+            return new DoctorCheck(name, CheckState.Warn, $"{word} {Word(refused.State)} ({refused.Code}): {refused.Detail}", Fix(refused.Code));
         }
 
         return new DoctorCheck(name, CheckState.Ok, mine.Count == 0 ? "no index built yet" : $"{word} {Word(mine[0].State)}", Fix: null);
@@ -156,8 +199,13 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
     private static string? Fix(string? code) => code switch
     {
         "SND-CODEIDX-007" => "install bubblewrap (" + Setup + "), or set index.graph.enabled: false",
-        "SND-CODEIDX-006" => "start Ollama (the pin is in context/code-index.lock)",
-        _ => Setup + " installs the pin",
+        "SND-CODEIDX-017" => "a chunk is too long for the embedding model; it is refused and not asked for again, the rest embed (editing the file embeds it again)",
+        "SND-CODEIDX-006" => "start Ollama (the pin is in context/code-index.lock); the embed retries on its own once it answers",
+        "SND-CODEIDX-009" => Setup + " re-installs the pin",
+        "SND-CODEIDX-008" => "graphify is missing or its run failed: scripts/install-deps.sh installs it at the pin; when it is installed, the detail says why the graph failed",
+
+        // why: a code with no text of its own gets no guessed fix (#3097); the JSON report carries the code and its detail
+        _ => "see sindri doctor --json",
     };
 
     private static string Age(DateTimeOffset? builtAt, DateTimeOffset now)

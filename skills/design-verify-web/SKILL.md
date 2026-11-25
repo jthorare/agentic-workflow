@@ -88,7 +88,7 @@ Run these calls **inline** (no Agent delegation). For each screen, for each view
 1. `mcp: playwright/browser_navigate` — url: `<base-url><route>`
 2. `mcp: playwright/browser_resize` — width/height for the viewport
 3. `mcp: playwright/browser_wait_for` — wait for the page's main content to settle
-4. `mcp: playwright/browser_snapshot` — confirm the expected screen actually rendered (headings/landmarks match the screen). If the wrong page rendered (redirect, 404, auth wall), mark this screen FAIL with the evidence — do not diff the wrong page.
+4. `mcp: playwright/browser_snapshot` — confirm the expected screen rendered (headings/landmarks match the screen). If the wrong page rendered (redirect, 404, auth wall), mark this screen FAIL with the evidence — do not diff the wrong page.
 5. `mcp: playwright/browser_console_messages` — record errors as report context
 6. `mcp: playwright/browser_take_screenshot` — save to `$AW_DIR/design/verify/$RUN_ID/<screen>-<viewport>.png`
 7. `mcp: design-comparison/compare_design` — reference: `$AW_DIR/design/mockup-web-<screen>-<viewport>.png`, implementation: the capture from call 6. Record the response's **numeric diff-percentage field** as `diff_pct` and save the returned diff image to `$AW_DIR/design/verify/$RUN_ID/<screen>-<viewport>-diff.png`.
@@ -150,9 +150,9 @@ LOCK_NAME=browser source "$SHARED_DIR/skill-lock.sh"; release_lock
 
 Gate on `overall.verdict` — a FAIL run **blocks** the `/shipRelease` suggestion:
 
-- **PASS** — `/shipRelease` — diff is clean, ship the release
-- **WARN** — `/design-refine` — address minor discrepancies, then `/design-verify-web` again
-- **FAIL** — `/design-refine` or `/design-implement-web` — significant deviation; re-verify before any ship step
+- **PASS** — `/shipRelease`: diff is clean, ship the release
+- **WARN** — `/design-refine`: address minor discrepancies, then `/design-verify-web` again
+- **FAIL** — `/design-refine` or `/design-implement-web`: significant deviation; re-verify before any ship step
 
 ## Result block
 

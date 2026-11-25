@@ -81,6 +81,49 @@ public sealed class DetachedWaiterLauncherTests
         }
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task Without_a_setsid_binary_perl_starts_the_command_in_its_own_session()
+    {
+        Assert.SkipUnless(OperatingSystem.IsLinux() && File.Exists("/usr/bin/perl"), "Linux with /usr/bin/perl only (reads /proc)");
+
+        // why: stock macOS has no setsid binary but always has /usr/bin/perl; the meta's --detach must still start the waiter there (#2645).
+        var launcher = new DetachedWaiterLauncher(() => null, () => "/usr/bin/perl", () => "/usr/bin/aw-meta");
+        var result = await launcher.Start(["sleep", "30"], TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Code + ": " + result.Error.Message : string.Empty);
+        var pid = result.Value;
+        try
+        {
+            var id = pid.ToString(CultureInfo.InvariantCulture);
+            // Exec chain on one pid (perl -> sh -> sleep); the read can land before sleep.
+            var command = await CommandLineOnceItRuns(id, "sleep");
+            Assert.True(string.Equals("sleep", Path.GetFileName(command[0]), StringComparison.Ordinal), $"pid {id} never became sleep within 5 s; last cmdline: {string.Join(' ', command)}");
+            Assert.Equal(id, SessionOf("/proc/" + id + "/stat"));
+        }
+        finally
+        {
+            using var child = Process.GetProcessById(pid);
+            child.Kill();
+            await child.WaitForExitAsync(TestContext.Current.CancellationToken);
+        }
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Without_setsid_or_perl_the_start_is_AW_META_010_naming_both_and_nothing_is_started()
+    {
+        using var dir = new TempDirectory();
+        var marker = Path.Combine(dir.Path, "started");
+        var launcher = new DetachedWaiterLauncher(() => null, () => null, () => "/usr/bin/aw-meta");
+
+        var result = await launcher.Start(["sh", "-c", "touch " + marker], TestContext.Current.CancellationToken);
+
+        Assert.Equal(MetaErrors.HostUnreadable.Code, result.Error.Code);
+        Assert.Contains("setsid not found", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("perl", result.Error.Message, StringComparison.Ordinal);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
+        Assert.False(File.Exists(marker));
+    }
+
     // Reads /proc/<pid>/cmdline up to 5 s (100 x 50 ms) until argv[0] is <name>; returns the last one read either way, so the caller fails with it.
     private static async Task<string[]> CommandLineOnceItRuns(string id, string name)
     {

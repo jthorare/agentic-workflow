@@ -41,7 +41,7 @@ classify_changes() {
       global.json|docs/devcontainer.md) bash=true ;;
     esac
     case "$file" in
-      config/*|scripts/*|providers/*|setup.sh|skills/*|.agents/*|AGENTS.md|CLAUDE.md|.claude/*|.cursor/*|.devcontainer/*|.env.example)
+      config/*|scripts/*|providers/*|setup.sh|skills/*|.agents/*|AGENTS.md|CLAUDE.md|.claude/*|.cursor/*|.devcontainer/*|.env.example|.vale.ini|.vale/*)
         bash=true ;;
       src/*|tests/*|schemas/packets/*|*.cs|*.csproj|*.props|*.targets|*.slnx|global.json|nuget.config|.editorconfig|BannedSymbols*.txt|packages.lock.json|.config/dotnet-tools.json)
         dotnet=true ;;

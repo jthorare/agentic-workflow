@@ -1,0 +1,148 @@
+{
+  "steps": [
+    {
+      "id": "serve",
+      "title": "Sindri is current",
+      "state": "done",
+      "why": "Sindri is running the installed build.",
+      "detail": null,
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [],
+      "cli": null
+    },
+    {
+      "id": "sources",
+      "title": "Connect your accounts",
+      "state": "done",
+      "why": "Every source your profile names is connected.",
+      "detail": "GitHub, Slack.",
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [
+        {
+          "repo": "github",
+          "state": "done",
+          "detail": "connected"
+        },
+        {
+          "repo": "slack",
+          "state": "done",
+          "detail": "connected"
+        }
+      ],
+      "cli": null
+    },
+    {
+      "id": "repo",
+      "title": "Add your repo",
+      "state": "done",
+      "why": "A repo is in your profile.",
+      "detail": "demo",
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [
+        {
+          "repo": "demo",
+          "state": "done",
+          "detail": null
+        }
+      ],
+      "cli": null
+    },
+    {
+      "id": "profile",
+      "title": "Save the profile",
+      "state": "done",
+      "why": "Your profile is saved and live.",
+      "detail": null,
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [],
+      "cli": null
+    },
+    {
+      "id": "agent",
+      "title": "Agent for workflows",
+      "state": "done",
+      "why": "Workflows run on an agent.",
+      "detail": "Workflows run on claude-code.",
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [],
+      "cli": null
+    },
+    {
+      "id": "mcp",
+      "title": "Connect your agents",
+      "state": "done",
+      "why": "Sindri is registered in your repos.",
+      "detail": "Claude Code in demo.",
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [
+        {
+          "repo": "demo",
+          "state": "done",
+          "detail": "Claude Code",
+          "providers": [
+            {
+              "provider": "claude",
+              "state": "connected",
+              "detail": null
+            }
+          ]
+        }
+      ],
+      "cli": null
+    },
+    {
+      "id": "map",
+      "title": "Build the map",
+      "state": "running",
+      "why": "Sindri is mapping demo.",
+      "detail": "40 of 100 done.",
+      "error": null,
+      "action": null,
+      "progress": {
+        "done": 40,
+        "total": 100,
+        "unit": "files"
+      },
+      "items": [
+        {
+          "repo": "demo",
+          "state": "running",
+          "detail": null
+        }
+      ],
+      "cli": null,
+      "stage": "map"
+    },
+    {
+      "id": "first-workflow",
+      "title": "Run hello-sindri",
+      "state": "done",
+      "why": "hello-sindri ran once.",
+      "detail": null,
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [],
+      "cli": null
+    }
+  ],
+  "asOf": {
+    "cursor": 0,
+    "ledgerHead": 0,
+    "projectedAt": null,
+    "rebuilding": false,
+    "stalled": false
+  }
+}

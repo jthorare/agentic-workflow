@@ -1,0 +1,212 @@
+repo: effect
+commit: 5662efac6c96a80f89625355b2468abfb9c8caaa
+source: https://github.com/Effect-TS/effect.git
+# Paths are relative to the repo root of a clone at `commit`. `touch` = a correct change edits it
+# (source, or a test that has to change/gain a case). `read` = needed to understand the change, not edited.
+questions:
+  - id: effect-01
+    question: "Add a `statementTimeout` option (a Duration) to the Postgres client. Every new connection, pooled (PgClient.layer / make) or single (makeClient), must apply it as the session's statement_timeout from the startup packet."
+    plain: "Let me set a maximum run time for database queries on the Postgres connection, so any query that runs too long gets cut off by the server, whichever way the app connects (single connection or pool)."
+    touch:
+      - path: packages/sql/pg/src/PgClient.ts
+        why: "defines the public PgClientConfig (l.98) and PgPoolConfig extends it (l.211); make/makeClient hand `options` straight to PgPool.make / PgConnection.make, so the new field is declared here"
+      - path: packages/sql/pg/src/PgConnection.ts
+        why: "declares its OWN second config type `Config` (l.90) that PgConnection.make(options: Config) (l.315) takes; PgClientConfig is a parallel copy matched by field name, not an import, so the field must be added here too"
+      - path: packages/sql/pg/src/internal/config.ts
+        why: "resolveConfig builds ResolvedConfig.startupParameters (application_name, options, ...) from the options; this is where statement_timeout is validated and added to the startup parameters"
+      - path: packages/sql/pg/test/PgConnection.in-process.test.ts
+        why: "fake-server test that decodes the startup packet (startupParameters helper l.142) and asserts application_name / options; the new parameter is asserted here"
+      - path: packages/sql/pg/test/PgConnection.test.ts
+        why: "unit table of invalid configs (l.23-26) that fail before connecting; new option's bad values (negative, infinite) get cases here"
+    read:
+      - path: packages/sql/pg/src/PgPool.ts
+        why: "PgPool.Config extends PgConnection.Config (l.61) and the pool's acquire calls PgConnection.make(options) (l.216), so the option reaches every pooled connection with no edit"
+      - path: packages/sql/pg/src/PgProtocol.ts
+        why: "encodeStartupMessage(parameters: StartupParameters) (l.1194) serializes any string key (index signature l.1149), so no change is needed to send a new parameter"
+      - path: packages/sql/pg/src/PgMigrator.ts
+        why: "dumpConnection (l.151) re-resolves the same PgClientConfig via resolveConfig and forwards only application_name/options to pg_dump; decide there that statement_timeout is NOT forwarded (a dump should not be capped)"
+      - path: packages/sql/pg/test/StartupParameters.integration.test.ts
+        why: "existing real-server test that sets statement_timeout through startupParameters (l.12); model for an integration test of the new option"
+      - path: packages/sql/pg/README.md
+        why: "documents applicationName/startupParameters/startupOptions (l.42-59); the new option is documented next to them"
+    decoys:
+      - path: packages/sql/pg/src/PgAuth.ts
+        why: "name/auth-related config in the same package, but nothing about session settings or the startup packet"
+      - path: packages/sql/mysql2/src/MysqlClient.ts
+        why: "has connectTimeout and a client config with a similar shape, but is a different driver; Postgres change does not touch it"
+      - path: packages/sql/pglite/src/PgliteClient.ts
+        why: "in-process Postgres (no socket, no startup packet); matches 'Postgres client' words but has no connection startup to configure"
+      - path: packages/effect/src/sql/SqlError.ts
+        why: "defines StatementTimeoutError (l.310) which matches the words, but the error classification for 57014 already exists in pg/src/internal/sqlError.ts:70 and is unchanged"
+    links_followed:
+      - "rg -n 'applicationName|startupParameters' packages/sql/pg/src   # config.ts:87 builds startupParameters"
+      - "rg -n 'resolveConfig' packages/sql/pg/src   # PgConnection.ts:315, PgMigrator.ts:152"
+      - "rg -n 'encodeStartupMessage' packages/sql/pg/src   # PgConnection.ts:2264 sends config.startupParameters"
+      - "rg -n 'PgConnection.make' packages/sql/pg/src   # PgClient.ts:248-262 and PgPool.ts:216"
+
+  - id: effect-02
+    question: "The 'Sent HTTP response' log line the server logs for every request should also carry the request's x-request-id header (when present) as a log annotation, on every server (Node, Bun, Deno, and the web-handler from HttpRouter.toWebHandler)."
+    plain: "When the server logs that it sent a response, include the request ID the caller sent us in that log line, whichever server runtime we run on."
+    touch:
+      - path: packages/effect/src/http/HttpMiddleware.ts
+        why: "`logger` (l.217) is the only place that writes the 'Sent HTTP response' line and its http.method / http.url / http.status annotations (two annotateLogs branches, success and failure)"
+      - path: packages/effect/test/http/HttpMiddleware.test.ts
+        why: "unit tests of HttpMiddleware.logger (l.155-250) read CurrentLogAnnotations (l.150); the new annotation is asserted here"
+    read:
+      - path: packages/effect/src/http/HttpRouter.ts
+        why: "HttpRouter.serve (l.1378) and toWebHandler (l.1506) compose HttpMiddleware.logger into the user's middleware unless disableLogger; shows logger is applied centrally, not per platform"
+      - path: packages/effect/src/http/HttpEffect.ts
+        why: "toHandled (l.123) wraps `tracer(middleware(responded))`; the logger runs as the user-supplied `middleware` inside this chain, which is why platform files need no edit"
+      - path: packages/effect/src/http/HttpServer.ts
+        why: "HttpServer tag (l.41) and serve(handler, middleware) (l.101) pass middleware down to the platform implementation"
+      - path: packages/platform/node/src/NodeHttpServer.ts
+        why: "makeHandler (l.347, l.421) calls HttpEffect.toHandled(httpEffect, handleResponse, options.middleware): the Node end of the chain"
+      - path: packages/platform/bun/src/BunHttpServer.ts
+        why: "`serve: (httpApp, middleware)` calls HttpEffect.toHandled (l.226): the Bun end of the chain"
+      - path: packages/platform/deno/src/DenoHttpServer.ts
+        why: "same toHandled call (l.141): the Deno end of the chain"
+      - path: packages/effect/src/http/HttpServerRequest.ts
+        why: "HttpServerRequest tag and the `headers` shape read by logger (lower-cased keys), used to read x-request-id"
+      - path: packages/effect/src/http/internal/requestState.ts
+        why: "CurrentRequestState.loggerDisabled (l.12) is read by logger (HttpMiddleware.ts:226) and decides whether the line is emitted at all"
+      - path: packages/platform/node/test/NodeHttpServer.test.ts
+        why: "end-to-end logger assertions through a real server (l.1749, l.1807) read annotations['http.status']; confirms additive annotation does not break them"
+      - path: packages/platform/bun/test/BunHttpServer.test.ts
+        why: "same logger assertions on Bun (l.668, l.702, l.731)"
+    decoys:
+      - path: packages/effect/src/http/HttpTraceContext.ts
+        why: "reads/writes traceparent and b3 headers for tracing, matches 'request header / id' words, but does not touch the log line"
+      - path: packages/effect/src/http/HttpClient.ts
+        why: "client-side, has TracerHeaderFilter and header attributes on spans; the question is about the server's log line"
+      - path: packages/effect/src/http-api/HttpApiMiddleware.ts
+        why: "'middleware' by name, but it is HttpApi security/auth middleware tags, not HttpMiddleware.logger"
+      - path: packages/effect/src/observability/OtlpExporter.ts
+        why: "turns spans/logs into OTLP and mentions http headers; exports logs, does not create the 'Sent HTTP response' line"
+    links_followed:
+      - "rg -n 'Sent HTTP response' packages --glob '!node_modules'   # only HttpMiddleware.ts:217 area writes it"
+      - "rg -n 'HttpMiddleware.logger' packages --glob '!node_modules'   # HttpRouter.ts:1378, :1506"
+      - "rg -n 'toHandled' packages/*/src   # node/bun/deno servers -> HttpEffect.toHandled"
+      - "rg -n 'http.status' packages --glob '*.test.ts'   # tests on every platform"
+
+  - id: effect-03
+    question: "SQL Server ignores `SqlClient.BeginTransaction`: `sql.withTransaction(...).pipe(Effect.provideService(SqlClient.BeginTransaction, 'SET TRANSACTION ISOLATION LEVEL READ COMMITTED'))` still starts a default-isolation transaction on MSSQL (MySQL and Postgres honor it). Make MSSQL honor it."
+    plain: "SQL Server transactions ignore the custom start-of-transaction statement you can set (for example to pick the isolation level); make them honour it like Postgres and MySQL do."
+    touch:
+      - path: packages/sql/mssql/src/MssqlClient.ts
+        why: "makeWithTransaction call passes `begin: (conn) => conn.begin` (l.652), dropping the `statement` argument; MssqlConnection.begin (l.271) is a plain Effect and the impl (l.537) calls tedious conn.beginTransaction without it"
+      - path: packages/sql/mssql/test/Client.test.ts
+        why: "mocks the tedious connection (beginTransaction at l.127) and drives client.withTransaction (l.398); a case for the statement is added here"
+    read:
+      - path: packages/effect/src/sql/SqlClient.ts
+        why: "BeginTransaction is a Context.Reference (l.929); makeWithTransaction reads it with fiber.getRef(BeginTransaction) (l.738) and passes it to the driver's `begin(conn, statement)` (l.657); defaults at l.352-360 show why pg works with no driver code"
+      - path: packages/sql/mysql2/src/MysqlClient.ts
+        why: "reference implementation: `begin(conn, statement)` helper (l.65) runs a SET TRANSACTION statement just before BEGIN, passed as `begin` in Client.makeWithTransaction (l.463)"
+      - path: packages/sql/mysql2/test/MysqlClient.integration.test.ts
+        why: "model test (l.47) of a SET TRANSACTION BeginTransaction taking effect, to mirror for MSSQL"
+      - path: packages/effect/test/sql/SqlClient.test.ts
+        why: "contract test 'passes the BeginTransaction statement to begin' (l.704) defines what a driver's begin must receive"
+      - path: packages/effect/src/cluster/SqlMessageStorage.ts
+        why: "the in-repo consumer: cleanupIsolation provides BeginTransaction only for mysql via sql.onDialectOrElse (l.521-525); shows who sets the Reference and that mssql silently gets nothing"
+      - path: packages/sql/mssql/test/Client.integration.test.ts
+        why: "real SQL Server container tests for this client; place for an integration case if one is added"
+      - path: packages/sql/pglite/test/Transaction.test.ts
+        why: "'withTransaction with BeginTransaction sets the isolation level' (l.38): the Postgres-family behaviour the MSSQL case should match"
+    decoys:
+      - path: packages/sql/libsql/src/LibsqlClient.ts
+        why: "has a `beginTransaction` property (l.180, 268) matching the name, but it is the libsql client API, unrelated to BeginTransaction the Reference"
+      - path: packages/sql/clickhouse/src/ClickhouseClient.ts
+        why: "sets `beginTransaction: 'BEGIN TRANSACTION'` (l.391) as a static string; different dialect and not in scope"
+      - path: packages/sql/mssql/src/MssqlMigrator.ts
+        why: "mssql-named and uses transactions via the generic Migrator, but only builds a layer; nothing to change"
+      - path: packages/sql/sqlite-node/src/SqliteClient.ts
+        why: "its own transaction acquirers (makeSqliteAcquirers); a different begin path from the one in question"
+    links_followed:
+      - "rg -n 'BeginTransaction' packages --glob '*.ts' --glob '!node_modules'   # SqlClient.ts:929 tag; SqlMessageStorage.ts:524 provider; MysqlClient.ts:241 doc; tests"
+      - "rg -n 'begin' packages/sql/*/src/*Client.ts   # which drivers pass a `begin` hook: mysql2, mssql, libsql, sqlite-do"
+      - "sed -n 725,745p packages/effect/src/sql/SqlClient.ts   # fiber.getRef(BeginTransaction) -> options.begin"
+
+  - id: effect-04
+    question: "The Anthropic language-model span should record the extended-thinking setting and budget (`thinking: {type:'enabled', budget_tokens}` from the request) and the raw `stop_reason`, as the gen_ai.anthropic.request.* / gen_ai.anthropic.response.* span attributes, for both generateText and streamText."
+    plain: "The tracing data we record for Claude calls should show whether extended thinking was on, its token budget, and why the model stopped, for both normal and streaming responses."
+    touch:
+      - path: packages/ai/anthropic/src/AnthropicLanguageModel.ts
+        why: "annotateRequest (l.2860), annotateResponse (l.2880) and annotateStreamResponse (l.2897) call addGenAIAnnotations without the `anthropic: {request, response}` part; invoked from LanguageModel.make's generateText/streamText (l.803-819) with options.span"
+      - path: packages/ai/anthropic/test/AnthropicLanguageModel.test.ts
+        why: "existing span test 'reports total input tokens and cache usage on the span' (l.164) builds a Tracer.make and reads attributes; the new attributes are asserted the same way"
+    read:
+      - path: packages/ai/anthropic/src/AnthropicTelemetry.ts
+        why: "already declares RequestAttributes.extendedThinking/thinkingBudgetTokens and ResponseAttributes.stopReason and the addGenAIAnnotations({anthropic}) helper (l.115); edited only if a NEW attribute is added"
+      - path: packages/effect/src/ai/Telemetry.ts
+        why: "addSpanAttributes (l.352) and addGenAIAnnotations (l.494) do the span.attribute writes and the camel->snake naming; CurrentSpanTransformer tag (l.562)"
+      - path: packages/effect/src/ai/LanguageModel.ts
+        why: "creates the span (Effect.useSpan 'LanguageModel.generateText', ~l.944) and passes it as ProviderOptions.span to the provider; applySpanTransformer (l.2698) reads the CurrentSpanTransformer tag"
+      - path: packages/ai/anthropic/src/Generated.ts
+        why: "BetaCreateMessageParams (l.16395) has the `thinking` field (BetaThinkingConfigParam l.14620) and BetaMessage.stop_reason used as the source values"
+      - path: packages/ai/anthropic/src/AnthropicClient.ts
+        why: "AnthropicClient service whose createMessage/createMessageStream the language model calls (yield* AnthropicClient, LanguageModel l.735); confirms the payload reaches annotateRequest unchanged"
+    decoys:
+      - path: packages/ai/openai/src/OpenAiTelemetry.ts
+        why: "same pattern for OpenAI (gen_ai.openai.*); matches the words 'Telemetry/span attributes' but is the other provider"
+      - path: packages/ai/amazon-bedrock/src/AmazonBedrockLanguageModel.ts
+        why: "can serve Claude models and also calls addGenAIAnnotations, but its own annotate functions; the Anthropic-package span is not produced here"
+      - path: packages/ai/anthropic/src/AnthropicTool.ts
+        why: "Anthropic-named, large, tool definitions only; no span or request annotation"
+      - path: packages/ai/anthropic/src/AnthropicWorkloadIdentity.ts
+        why: "Anthropic auth/HttpClient wiring (l.209), no telemetry"
+    links_followed:
+      - "rg -n 'addGenAIAnnotations' packages/ai/*/src   # anthropic, openai, openai-compat, openrouter, bedrock"
+      - "rg -n 'stopReason|thinkingBudgetTokens|extendedThinking' packages/ai/anthropic   # defined in AnthropicTelemetry.ts only, never set by the language model"
+      - "rg -n 'options.span|annotateRequest' packages/ai/anthropic/src/AnthropicLanguageModel.ts"
+      - "rg -n 'CurrentSpanTransformer|span,' packages/effect/src/ai/LanguageModel.ts"
+
+  - id: effect-05
+    question: "Add a new SqlError reason `ReadOnlyViolation` (a write attempted on a read-only transaction/connection), not retryable, and have every SQL driver map its native 'read only' error to it."
+    plain: "Add a distinct database error for 'tried to write in a read-only transaction' and make each database driver report it, instead of lumping it into unknown errors."
+    touch:
+      - path: packages/effect/src/sql/SqlError.ts
+        why: "defines each reason class (LockTimeoutError l.280), the SqlErrorReason type union (l.370), the Schema.Union (l.390) and classifySqliteError (l.557, SQLITE_READONLY code 8) used by all SQLite drivers"
+      - path: packages/sql/pg/src/internal/sqlError.ts
+        why: "classifySqlState (l.37) maps Postgres SQLSTATEs to reasons; add 25006 read_only_sql_transaction"
+      - path: packages/sql/pglite/src/PgliteClient.ts
+        why: "its own classifyError (l.499) for Postgres codes, imports the reason classes (l.32); add the same 25006 mapping"
+      - path: packages/sql/mysql2/src/MysqlClient.ts
+        why: "classifyError (l.111) switches on errno; add 1792 (ER_CANT_EXECUTE_IN_READ_ONLY_TRANSACTION) and 1290"
+      - path: packages/sql/mssql/src/MssqlClient.ts
+        why: "classifyError (l.108) switches on SQL Server error numbers; add the read-only database codes (e.g. 3906)"
+      - path: packages/effect/test/sql/SqlError.test.ts
+        why: "table of reasons with tag + isRetryable + constructor (l.38 StatementTimeoutError row); the new reason gets a row"
+      - path: packages/sql/pg/test/SqlErrorClassification.test.ts
+        why: "asserts pg SQLSTATE -> reason mapping"
+      - path: packages/sql/mysql2/test/SqlErrorClassification.test.ts
+        why: "asserts mysql errno -> reason mapping"
+      - path: packages/sql/mssql/test/SqlErrorClassification.test.ts
+        why: "asserts mssql error number -> reason mapping"
+      - path: packages/sql/pglite/test/SqlErrorClassification.test.ts
+        why: "asserts pglite code -> reason mapping"
+    read:
+      - path: packages/sql/sqlite-node/src/SqliteClient.ts
+        why: "classifyError (l.417) delegates to classifySqliteError, so SQLite gets the new reason from SqlError.ts with no edit; also matches error.reason._tag === 'LockTimeoutError' (l.194) as a retry condition, the pattern for tag-string coupling"
+      - path: packages/sql/sqlite-bun/src/SqliteClient.ts
+        why: "same delegation (l.39) and the same _tag string check (l.190); same for sqlite-wasm, sqlite-do, sqlite-react-native, libsql"
+      - path: packages/sql/clickhouse/src/ClickhouseClient.ts
+        why: "classifyError (l.62) is code-set based; ClickHouse READONLY (164) could map too, decide in or out of scope"
+      - path: packages/sql/d1/src/D1Client.ts
+        why: "classifyError (l.35) returns UnknownError for everything: no mapping to add, confirms D1 is out of scope"
+      - path: packages/effect/src/sql/Migrator.ts
+        why: "branches on error.reason._tag === 'ConstraintError' || 'UniqueViolation' (l.380): consumer of reason tags, shows that adding a variant must not alter these branches"
+      - path: packages/sql/clickhouse/test/SqlErrorClassification.test.ts
+        why: "only edited if ClickHouse is brought into scope"
+    decoys:
+      - path: packages/sql/pg/src/PgConnection.ts
+        why: "where pg errors originate (ErrorResponse handling) but it hands code+message to classifySqlState; mapping lives in internal/sqlError.ts"
+      - path: packages/effect/src/ai/AiError.ts
+        why: "another structured 'reason' error type (AiError.reason), matches 'error variant' words, unrelated to SQL"
+      - path: packages/effect/src/http/HttpClientError.ts
+        why: "same 'reason' pattern for HTTP; not SQL"
+      - path: packages/sql/mssql/src/MssqlMigrator.ts
+        why: "mssql-named, contains no error classification"
+    links_followed:
+      - "rg -n 'LockTimeoutError' packages --glob '*.ts' --glob '!node_modules'   # every place a reason is defined, mapped or matched"
+      - "rg -ln 'classifyError' packages/sql   # per-driver classifiers (12 files)"
+      - "rg -n 'classifySqliteError' packages/sql/*/src   # sqlite family reuse the shared classifier"
+      - "rg -n 'reason._tag' packages/effect/src packages/sql/*/src   # string-tag consumers"

@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.ViewModels.Workflows;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Workflows;
@@ -17,9 +18,26 @@ public sealed class RunDetailViewModelTests
     {
         var run = await _f.OpenedRun(Token);
 
-        Assert.Equal(("Run morning-check@1:1", "✓ Succeeded", "Started by manual", "Revision 1"), (run.TitleText, run.ChipText, run.TriggerText, run.RevisionText));
+        Assert.Equal(("Run morning-check@1:1", "✓ Succeeded", "Started by hand", "Revision 1"), (run.TitleText, run.ChipGlyph + " " + run.ChipWord, run.TriggerText, run.RevisionText));
         Assert.Contains("\"summary\": \"no drift\"", run.OutputsText, StringComparison.Ordinal);
         Assert.Equal((true, false), (run.HasOutputs, run.HasError));
+    }
+
+    [Theory]
+    [InlineData("manual", "Started by hand")]
+    [InlineData("schedule", "Started on a schedule")]
+    [InlineData("workflow_call", "Started by another workflow")]
+    [InlineData("connection_event", "Started by an event from a connection")]
+    [InlineData("carrier_pigeon", "Started by a carrier_pigeon trigger")]
+    public async Task A_run_says_how_it_started_in_words_per_trigger_kind(string kind, string expected)
+    {
+        var served = Golden("workflow-runs-run", "finished");
+        served["trigger"] = new JsonObject { ["kind"] = kind };
+        _f.ServeRun(served);
+
+        var run = await _f.OpenedRun(Token);
+
+        Assert.Equal(expected, run.TriggerText);
     }
 
     [Fact]
@@ -27,12 +45,12 @@ public sealed class RunDetailViewModelTests
     {
         var run = await _f.OpenedRun(Token);
 
-        Assert.Equal(["agent", "start"], run.Groups.Select(g => g.Node), StringComparer.Ordinal);
-        var agent = Assert.Single(run.Groups[0].Runs);
-        Assert.Equal(("agent", "✓ Succeeded", true, true), (agent.TitleText, agent.ChipText, agent.HasInput, agent.HasOutput));
+        Assert.Equal(Served(Golden("workflow-runs-run", "finished")), run.Groups.Select(g => g.Node), StringComparer.Ordinal);   // the server's order (graph order, #3307)
+        var agent = Assert.Single(Group(run, "agent").Runs);
+        Assert.Equal(("✓ Succeeded", true, true), (agent.ChipGlyph + " " + agent.ChipWord, agent.HasInput, agent.HasOutput));
         Assert.Contains("\"prompt\": \"Look for drift\"", agent.InputText, StringComparison.Ordinal);
         Assert.Contains("\"text\": \"no drift\"", agent.OutputText, StringComparison.Ordinal);
-        Assert.False(run.Groups[0].IsForEach);
+        Assert.False(Group(run, "agent").IsForEach);
     }
 
     [Fact]
@@ -40,7 +58,7 @@ public sealed class RunDetailViewModelTests
     {
         var run = await _f.OpenedRun(Token);
 
-        var start = Assert.Single(run.Groups[1].Runs);
+        var start = Assert.Single(Group(run, "start").Runs);
         Assert.Equal((false, string.Empty), (start.HasInput, start.InputText));
     }
 
@@ -51,8 +69,8 @@ public sealed class RunDetailViewModelTests
 
         var run = await _f.OpenedRun(Token);
 
-        var agent = Assert.Single(run.Groups[0].Runs);
-        Assert.Equal(("● Running", "● Running", false, false), (run.ChipText, agent.ChipText, agent.HasOutput, run.HasOutputs));
+        var agent = Assert.Single(Group(run, "agent").Runs);
+        Assert.Equal(("● Running", "● Running", false, false), (run.ChipGlyph + " " + run.ChipWord, agent.ChipGlyph + " " + agent.ChipWord, agent.HasOutput, run.HasOutputs));
         Assert.Equal("Started 4m ago", run.WhenText);
     }
 
@@ -60,36 +78,39 @@ public sealed class RunDetailViewModelTests
     public async Task A_node_with_truncated_output_says_so()
     {
         var served = Golden("workflow-runs-run", "finished");
-        served["nodes"]![0]!["truncated"] = true;
+        Node(served, "agent")["truncated"] = true;
         _f.ServeRun(served);
 
         var run = await _f.OpenedRun(Token);
 
-        var (cut, whole) = (run.Groups[0].Runs[0], run.Groups[1].Runs[0]);
+        var (cut, whole) = (Group(run, "agent").Runs[0], Group(run, "start").Runs[0]);
         Assert.Equal((true, "Cut to fit Sindri's size limit."), (cut.IsTruncated, cut.TruncatedText));
         Assert.False(whole.IsTruncated);
     }
 
+    // #4082: the server counts a for_each item from 1 (index 0 is a node's own row), so a body step read "Item 2 of 3" to "Item 4 of 3".
     [Fact]
     public async Task A_for_each_node_shows_its_items_grouped_under_the_node()
     {
-        var served = Golden("workflow-runs-run", "finished");
-        var nodes = served["nodes"]!.AsArray();
-        foreach (var index in new[] { 1, 2 })
-        {
-            var next = JsonNode.Parse(nodes[0]!.ToJsonString())!;
-            next["itemIndex"] = index;
-            nodes.Add(next);
-        }
+        var run = await OpenedWithItems(own: false, items: 3);
 
-        _f.ServeRun(served);
-
-        var run = await _f.OpenedRun(Token);
-
-        var group = run.Groups[0];
+        var group = Group(run, "agent");
         Assert.Equal((2, "agent · 3 items", true), (run.Groups.Count, group.HeaderText, group.IsForEach));
         Assert.Equal(["Item 1 of 3", "Item 2 of 3", "Item 3 of 3"], group.Runs.Select(r => r.TitleText), StringComparer.Ordinal);
-        Assert.Equal("start", run.Groups[1].Node);
+        _ = Assert.Single(Group(run, "start").Runs);
+    }
+
+    // #4082: a collect step has its own row (index 0, its result) beside one row per item; it read "gather · 4 items" and "Item 1 of 4" on its own result.
+    // #4341: that row then had only a status pill; it reads "Result" so it doesn't look like a missing label.
+    [Fact]
+    public async Task A_collect_node_titles_its_own_result_row_and_counts_its_items_from_one()
+    {
+        var run = await OpenedWithItems(own: true, items: 3);
+
+        var group = Group(run, "agent");
+        Assert.Equal(("agent · 3 items", true), (group.HeaderText, group.IsForEach));
+        Assert.Equal(["Result", "Item 1 of 3", "Item 2 of 3", "Item 3 of 3"], group.Runs.Select(r => r.TitleText), StringComparer.Ordinal);
+        Assert.Equal((true, "Result, succeeded"), (group.Runs[0].HasTitle, group.Runs[0].Name));
     }
 
     [Fact]
@@ -98,15 +119,15 @@ public sealed class RunDetailViewModelTests
         var served = Golden("workflow-runs-run", "finished");
         served["status"] = "failed";
         served["error"] = "node 'agent' failed";
-        served["nodes"]![0]!["status"] = "failed";
-        served["nodes"]![0]!["error"] = "boom";
+        Node(served, "agent")["status"] = "failed";
+        Node(served, "agent")["error"] = "boom";
         _f.ServeRun(served);
 
         var run = await _f.OpenedRun(Token);
 
-        var agent = run.Groups[0].Runs[0];
-        Assert.Equal(("✕ Failed", "boom", true), (agent.ChipText, agent.ErrorText, agent.HasError));
-        Assert.Equal(("✕ Failed", "node 'agent' failed", true), (run.ChipText, run.ErrorText, run.HasError));
+        var agent = Group(run, "agent").Runs[0];
+        Assert.Equal(("✕ Failed", "boom", true), (agent.ChipGlyph + " " + agent.ChipWord, agent.ErrorText, agent.HasError));
+        Assert.Equal(("✕ Failed", "node 'agent' failed", true), (run.ChipGlyph + " " + run.ChipWord, run.ErrorText, run.HasError));
         Assert.Equal("agent, failed, boom", agent.Name);
     }
 
@@ -119,12 +140,13 @@ public sealed class RunDetailViewModelTests
     public async Task Every_status_has_a_glyph_and_a_word_and_one_this_build_does_not_know_renders_by_its_served_word(string status, string expected)
     {
         var served = Golden("workflow-runs-run", "finished");
-        served["nodes"]![0]!["status"] = status;
+        Node(served, "agent")["status"] = status;
         _f.ServeRun(served);
 
         var run = await _f.OpenedRun(Token);
 
-        Assert.Equal(expected, run.Groups[0].Runs[0].ChipText);
+        var agent = Group(run, "agent").Runs[0];
+        Assert.Equal(expected, agent.ChipGlyph + " " + agent.ChipWord);
     }
 
     [Fact]
@@ -137,7 +159,7 @@ public sealed class RunDetailViewModelTests
 
         Assert.True(page.Run.IsFailed);
         Assert.StartsWith("Couldn't read the run just now.", page.Run.FailedText, StringComparison.Ordinal);
-        Assert.Contains("no run 'morning-check@1:9'", page.Run.FailedText, StringComparison.Ordinal);
+        Assert.Contains("No run 'morning-check@1:9'", page.Run.FailedText, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -155,6 +177,99 @@ public sealed class RunDetailViewModelTests
         Assert.Equal((false, string.Empty, true), (page.Run.IsFailed, page.Run.FailedText, page.Run.IsReading));
         gate.SetResult();
         await opening;
-        Assert.Equal((false, "✓ Succeeded"), (page.Run.IsFailed, page.Run.ChipText));
+        Assert.Equal((false, "✓ Succeeded"), (page.Run.IsFailed, page.Run.ChipGlyph + " " + page.Run.ChipWord));
     }
+
+    // #3307: a plain node's block read "check", then "check ✕ Failed" under it. The heading names the node; its one row shows only the status.
+    [Fact]
+    public async Task A_node_that_runs_once_is_named_once_by_its_heading()
+    {
+        var run = await _f.OpenedRun(Token);
+
+        var group = Group(run, "agent");
+        var row = Assert.Single(group.Runs);
+        Assert.Equal(("agent", string.Empty, false), (group.HeaderText, row.TitleText, row.HasTitle));
+        Assert.Equal("agent, succeeded", row.Name);   // the screen reader still hears which node
+    }
+
+    [Fact]
+    public async Task Each_item_of_a_for_each_node_keeps_its_own_title()
+    {
+        var run = await OpenedWithItems(own: false, items: 2);
+
+        Assert.All(Group(run, "agent").Runs, static r => Assert.True(r.HasTitle));
+    }
+
+    // #3307: a code step's Input showed its body as one escaped JSON string ("var mb = input!.GetValue<int>(); … $\"repo is {mb} MB…\"").
+    [Fact]
+    public async Task A_code_steps_body_shows_as_code_and_the_rest_of_its_input_as_json()
+    {
+        var served = Golden("workflow-runs-run", "finished");
+        Node(served, "agent")["input"] = new JsonObject
+        {
+            ["input"] = 120,
+            ["code"] = "var mb = input!.GetValue<int>();\nreturn $\"repo is {mb} MB\";",
+            ["timeout"] = "60s",
+        };
+        _f.ServeRun(served);
+
+        var run = await _f.OpenedRun(Token);
+
+        var row = Group(run, "agent").Runs[0];
+        Assert.Equal((true, "Code"), (row.HasCode, row.CodeHeading));
+        Assert.Equal("var mb = input!.GetValue<int>();\nreturn $\"repo is {mb} MB\";", row.CodeText);
+        Assert.DoesNotContain("\"code\"", row.InputText, StringComparison.Ordinal);
+        Assert.Equal("{\n  \"input\": 120,\n  \"timeout\": \"60s\"\n}", row.InputText);
+    }
+
+    [Fact]
+    public async Task A_code_step_with_only_its_body_shows_no_input_beside_the_code()
+    {
+        var served = Golden("workflow-runs-run", "finished");
+        Node(served, "agent")["input"] = new JsonObject { ["code"] = "return 1;" };
+        _f.ServeRun(served);
+
+        var run = await _f.OpenedRun(Token);
+
+        var row = Group(run, "agent").Runs[0];
+        Assert.Equal((true, "return 1;", false, string.Empty), (row.HasCode, row.CodeText, row.HasInput, row.InputText));
+    }
+
+    [Fact]
+    public async Task A_step_with_no_code_in_its_input_shows_no_code()
+    {
+        var run = await _f.OpenedRun(Token);
+
+        var row = Group(run, "agent").Runs[0];
+        Assert.Equal((false, string.Empty), (row.HasCode, row.CodeText));
+    }
+
+    // The golden run with "agent" as a loop step: one row per item (itemIndex counted from 1, as the server writes them), and its own row at 0 when it is a collect.
+    private async Task<RunDetailViewModel> OpenedWithItems(bool own, int items)
+    {
+        var served = Golden("workflow-runs-run", "finished");
+        var nodes = served["nodes"]!.AsArray();
+        var row = Node(served, "agent");
+        var text = row.ToJsonString();   // read once: after the first Add there are two "agent" rows and Single would throw
+        if (!own)
+        {
+            _ = nodes.Remove(row);
+        }
+
+        for (var index = 1; index <= items; index++)
+        {
+            var next = JsonNode.Parse(text)!;
+            next["itemIndex"] = index;
+            nodes.Add(next);
+        }
+
+        _f.ServeRun(served);
+        return await _f.OpenedRun(Token);
+    }
+
+    private static NodeGroupViewModel Group(RunDetailViewModel run, string node) => run.Groups.Single(g => g.Node == node);
+
+    private static JsonNode Node(JsonNode served, string node) => served["nodes"]!.AsArray().Single(n => n!["node"]!.GetValue<string>() == node)!;
+
+    private static string[] Served(JsonNode served) => [.. served["nodes"]!.AsArray().Select(static n => n!["node"]!.GetValue<string>()).Distinct(StringComparer.Ordinal)];
 }

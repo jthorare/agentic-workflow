@@ -215,7 +215,7 @@ probe, and the probe suite becomes a `doctor` check):
 | `continue:false` with `stopReason` ends the turn, and Claude sees the reason | Checkpoints end the turn cleanly instead of looping on denials |
 | A Stop block (`decision:"block"`) is capped at 8 consecutive continuations; `stop_hook_active` marks a re-entry | Stop is a **pattern** gate only. It blocks when the Step's required artifacts are missing (at most twice per chain). Known waits (`awaiting-direction`, `awaiting-human`) are always allowed to stop. Completion is verified **sindri-side after Stop**, never inside the hook. |
 | `UserPromptSubmit` can add `additionalContext` and can block | Inbox delivery and turn classification |
-| Managed-settings hooks merge with all other levels and can't be removed below managed | Sindri hooks ship in the **session image's root-owned managed settings**. The session runs as an unprivileged container user and can't change them. The host's own Claude sessions get no sindri hooks. |
+| `Managed-settings` hooks merge with all other levels and can't be removed below `managed` | Sindri hooks ship in the **session image's root-owned `managed settings`**. The session runs as an unprivileged container user and can't change them. The host's own Claude sessions get no sindri hooks. |
 | `-p` and SDK sessions skip the trust dialog; interactive sessions need the folder trusted | The image pre-accepts trust for `/workspace/src` in the container user's config at build time |
 
 **Identifying a sindri session:** the container *is* the session. Sindri hooks exist only in the
@@ -282,7 +282,7 @@ produce → deterministic checks → verifier → pass ── yes ─► ledger 
 | Triage | tool-less job | Schema-valid; every in-scope item has `{size, ambiguity, missingInfo[], sources[]}`; size in the profile vocabulary (L2) | Judge re-sizes **100% of auto-start candidates** and a sample of the rest (M14) |
 | Context pack | tool-less job (fetching is done by sindri code through Source adapters) | Every claim cites a source ref; required sections present (§8.3); scrubber passes; size within limit | Judge pack-probe: a fresh job answers N probe questions from the pack alone |
 | Scoping | job with read-only code tools | Every surface maps to a workstream; dependency graph acyclic; independence checked against predicted file sets | Adversarial "missing surface" job until no new surface or the round cap |
-| Worker | tmux session (`/bugFixOrchestrator` in v1) | **The sindri re-runs the recorded reproduce check itself** in a fresh **verifier container** from the exported bundle (§8.5): it must fail on the base and pass on the head. Flaky handling: 3 runs, majority wins, and disagreement parks the item (M2). Path guard (§8.5) and shape checks (§6.2) pass. | Judge resolution-check against the original item text |
+| Worker | tmux session (`/bugFixOrchestrator` in v1) | **The sindri re-runs the recorded reproduce check itself** in a fresh **verifier container** from the exported bundle (§8.5): it must fail on the base and pass on the head. Flaky checks: 3 runs, majority wins, and disagreement parks the item (M2). Path guard (§8.5) and shape checks (§6.2) pass. | Judge resolution-check against the original item text |
 | Ship | sindri code | Reviewer threads resolved and CI green, read from the Reviewer adapter and CI, never from agent output | — |
 | Eval proposal | job | Typed rule schema; forbidden fields untouched (§7.4) | Holdout backtest (directional), then a shadow A/B win before approval (§13 step 6) |
 
@@ -517,7 +517,7 @@ done:    stack fully reviewed; the human merges
 The harness improves its own parts with little to no human input. That includes every skill it adopts,
 native or ported (§16). Human approval is reserved for **protected surfaces** and for **merging code**.
 
-**Managed artifacts.** Everything that shapes agent behavior is registered in an artifact registry in the
+**Registered artifacts.** Everything that shapes agent behavior is registered in an artifact registry in the
 ledger. Each entry has an id, a version, a source (`native`, `vendored:<pack>@<rev>` or
 `overlay:<profile>`), an owner Step, and an **eval suite**. Registered artifacts:
 - skills (including ported pstack, continual-learning, advisor and cursor-team-kit skills)
@@ -632,7 +632,7 @@ The harness's own backlog goes through the harness as ordinary work items in the
 
 They are scoped, built in assist mode, verified, and opened as PRs. The human merges.
 
-### 7.7 The toolkit repo as a managed artifact
+### 7.7 The toolkit repo as a registered artifact
 The **entire toolkit repo** (this repo) is registered in the artifact registry, at module granularity. That
 covers:
 - skills and the shared skill text
@@ -793,7 +793,7 @@ the container.
 
 **Identity:**
 - The container is the sindri session. Sindri hooks ship only in the session image's
-  **root-owned managed settings** (`/etc/claude-code/managed-settings.json`), and Claude runs as an
+  **root-owned `managed settings`** (`/etc/claude-code/managed-settings.json`), and Claude runs as an
   unprivileged user that can't modify them.
 - The host's own Claude sessions get no sindri hooks at all, so there's nothing to no-op.
 - Writes the sindri makes to trackers and GitHub use bot identities when the profile provides them, or
@@ -1125,7 +1125,7 @@ The `UserPromptSubmit` hook classifies every human turn in a sindri session:
   | Stale | "updated Ns ago". After 3 failed polls: "sindri not responding: run `sindri doctor`" |
   | Pane preview | Stale previews are greyed out with their age; `crashed`/`oom` show the last capture and the reason |
 - **Action races:** an action that hits `SND-ITEM-409` (already resolved elsewhere) shows "Already
-  handled" and refreshes.
+  resolved" and refreshes.
 - **Token rotation:** the token is exchanged for an HttpOnly, SameSite=Strict cookie on first load and
   removed from the URL. A 401 after rotation shows "run `sindri dashboard --url`".
 - **Headers:** a CSP of `default-src 'self'` (no inline scripts), and Origin plus Host checks on every
@@ -1164,7 +1164,7 @@ The `UserPromptSubmit` hook classifies every human turn in a sindri session:
   - `sindri profile init` scaffolds a profile in `mode: shadow`.
   - `sindri profile validate [--json]` runs by hand and in the profile repo's pre-commit. Errors give
     file, key path, expected type and a fix hint.
-  - `sindri profile migrate --dry-run` handles schema upgrades. Deprecated keys warn for one minor
+  - `sindri profile migrate --dry-run` covers schema upgrades. Deprecated keys warn for one minor
     version before they halt.
 - **Growth:** the schema is strict (unknown keys are errors). New optional keys join `schemaVersion: 1`; renames and removals bump it and add a migration (Plan 2 amendment).
 - **Precedence:** repo file > profile file > core default. `sindri profile explain <key>` shows the
@@ -1331,7 +1331,7 @@ environment:
 |---|---|
 | `sindri logs ITEM [--follow] [--hooks] [--proxy]` | Container stdout and stderr, hook decision log, proxy log for the session |
 | `sindri shell ITEM` | Opens a root-less debug shell in the container as the session user. Recorded as a takeover (§9.3), and blocked while the Stop gate is in `verifying`. |
-| `sindri inspect ITEM` | Container state, limits, OOM events, mounts, image key, environment handle, last bundle hash |
+| `sindri inspect ITEM` | Container state, limits, OOM events, mounts, image key, environment reference, last bundle hash |
 | `sindri retain ITEM` / `release ITEM` | Keep a stopped container for debugging, or let it be reaped |
 
 - **States** (in `status`, the dashboard and `why`), in addition to §10.3's: `starting`, `crashed`
@@ -1525,7 +1525,7 @@ toolkit needs no tracker account to build itself. The adapter ships in Plan 2.
   - `continue:false` ends the turn
   - the Stop pattern gate blocks at most twice, then allows and records
   - host Claude sessions have no sindri hooks
-  - the container user can't modify the managed settings
+  - the container user can't modify the `managed settings`
   - edit detection fires on `sed -i`, `tee` and script writes, not only on Edit/Write
   - the git pre-commit hook catches `commit -a`, `-C` and aliases; `--no-verify` is caught by the verifier
 - **Live hook probe** (heavy, also in `doctor`): the §5.3 semantics table against the installed Claude
@@ -1611,7 +1611,7 @@ toolkit needs no tracker account to build itself. The adapter ships in Plan 2.
 - Shared recipes can be copied between profile repos. A shared team profile layer is out of scope for v1.
 
 ## 16. Prior art and reuse
-The harness reuses existing work wherever it can. Every adopted piece becomes a **managed artifact** in the
+The harness reuses existing work wherever it can. Every adopted piece becomes a **registered artifact** in the
 self-evolution loop (§7.4, §7.7), pinned by commit and content hash and evaluated like native code. The full
 port map is in `plans/sindri/reuse-map.md` (reuse spike, 2026-10-08).
 

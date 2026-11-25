@@ -21,7 +21,7 @@ export CODEX_HOOKS_FILE="$WORK/codex/hooks.json"
 export CURSOR_HOOKS_FILE="$WORK/cursor/hooks.json"
 export AW_HOOKS_DIR="$WORK/aw-hooks"
 mkdir -p "$WORK/claude"
-EVENTS="SessionStart UserPromptSubmit PermissionRequest Notification PostToolUse Stop SessionEnd"
+EVENTS="SessionStart UserPromptSubmit PermissionRequest Notification PreToolUse PostToolUse Stop SessionEnd"
 fleet_entries() { jq -r '[.hooks // {} | to_entries[] | .value[] | .hooks[] | .command | select(endswith("# aw:fleet"))] | length' "$1"; }
 
 # A settings file with other people's hooks on the same events: the install must leave them alone.
@@ -41,12 +41,13 @@ check "install: a copy of the repo's hook" "$(cmp -s "$CLAUDE_HOOKS_DIR/fleet-st
 for e in $EVENTS; do
   check "install: $e has the aw:fleet entry" "$(jq -r --arg e "$e" '[.hooks[$e][].hooks[].command | select(endswith("# aw:fleet"))] | length' "$CLAUDE_SETTINGS_FILE")" "1"
 done
+check "install: PreToolUse matcher is .* (every tool)" "$(jq -r '[.hooks.PreToolUse[] | select(.hooks[0].command | endswith("# aw:fleet")) | .matcher] | join(",")' "$CLAUDE_SETTINGS_FILE")" ".*"
 check "install: PostToolUse matcher is .* (every tool)" "$(jq -r '[.hooks.PostToolUse[] | select(.hooks[0].command | endswith("# aw:fleet")) | .matcher] | join(",")' "$CLAUDE_SETTINGS_FILE")" ".*"
 check "install: the command runs the installed script" "$(jq -r '.hooks.SessionStart[] | select(.hooks[0].command | endswith("# aw:fleet")) | .hooks[0].command' "$CLAUDE_SETTINGS_FILE")" "$CLAUDE_HOOKS_DIR/fleet-state.sh # aw:fleet"
 check "install: other hooks and keys survive" "$(jq -r '[.model, .hooks.Stop[0].hooks[0].command, .hooks.PostToolUse[0].hooks[0].command, .hooks.Notification[0].hooks[0].command] | join("|")' "$CLAUDE_SETTINGS_FILE")" "x|~/.claude/hooks/done-gate.sh # aw:done-gate|/usr/local/bin/theirs.sh|notify-send hi"
 
 bash "$INSTALL" --provider claude >/dev/null 2>&1
-check "install twice: still exactly one entry per event" "$(fleet_entries "$CLAUDE_SETTINGS_FILE")" "7"
+check "install twice: still exactly one entry per event" "$(fleet_entries "$CLAUDE_SETTINGS_FILE")" "8"
 
 OUT="$(bash "$INSTALL" --uninstall --provider claude 2>&1)"; RC=$?
 check "uninstall: exit 0" "$RC" "0"
@@ -64,7 +65,7 @@ check "uninstall: the fleet state directory is left alone" "$([ -f "$AW_STATE_DI
 # No settings file yet: the install makes one with only the fleet entries.
 rm -rf "$WORK/claude"
 bash "$INSTALL" --provider claude >/dev/null 2>&1
-check "install with no settings file: creates it, 7 entries" "$(fleet_entries "$CLAUDE_SETTINGS_FILE")" "7"
+check "install with no settings file: creates it, 8 entries" "$(fleet_entries "$CLAUDE_SETTINGS_FILE")" "8"
 bash "$INSTALL" --uninstall --provider claude >/dev/null 2>&1
 
 # Uninstall with no settings file at all: exit 0, and none is made.

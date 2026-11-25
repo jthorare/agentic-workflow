@@ -12,7 +12,7 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
 /// The goldens of the connection routes the Connections page reads and writes (agent-first PR 18a): the list, the add (a key and an oauth sign-in that returns its consent address),
-/// a refused add, one connection, an unknown one, the removal and the test. The store, the keychain, the presets, the probe and the sign-in are fakes seeded per scenario,
+/// a refused add, one connection, an unknown one, the removal, the rename and the test. The store, the keychain, the presets, the probe and the sign-in are fakes seeded per scenario,
 /// so nothing reaches a keychain, a provider or a browser. Every request is the owner's.
 /// </summary>
 internal static class ConnectionScenarios
@@ -26,7 +26,7 @@ internal static class ConnectionScenarios
     [
         ("connections", "list"), ("connections", "added-key"), ("connections", "added-oauth"), ("connections", "refused"),
         ("connections-id", "one"), ("connections-id", "not-found"), ("connections-id", "removed"), ("connections-id", "signin-failed"),
-        ("connections-id-test", "ok"), ("connections-id-test", "failed"),
+        ("connections-id-test", "ok"), ("connections-id-test", "failed"), ("connections-id-rename", "renamed"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -73,6 +73,7 @@ internal static class ConnectionScenarios
             ("connections-id", "one" or "signin-failed") => Get($"/sindri/connections/{Uri.EscapeDataString(Linear)}", owner),
             ("connections-id", "not-found") => Get($"/sindri/connections/{Uri.EscapeDataString("acme:nobody")}", owner),
             ("connections-id", "removed") => Delete($"/sindri/connections/{Uri.EscapeDataString(Linear)}", owner),
+            ("connections-id-rename", "renamed") => Post($"/sindri/connections/{Uri.EscapeDataString(Linear)}/rename", """{"label":"home"}""", owner),
             ("connections-id-test", _) => Post($"/sindri/connections/{Uri.EscapeDataString(Acme)}/test", json: null, owner),
             _ => throw new ArgumentOutOfRangeException(nameof(scenario), scenario, "no such connection scenario"),
         };
@@ -86,6 +87,7 @@ internal static class ConnectionScenarios
     {
         ("connections", "list") => [Linear0(), Acme0(ConnectionStatus.Error)],
         ("connections-id", "one" or "removed" or "signin-failed") => [Linear0()],
+        ("connections-id-rename", "renamed") => [ConnectionSamples.Oauth(status: ConnectionStatus.NeedsSignIn)],   // a row that needs a sign-in: the rename moves its Needs-you row, so it appends events
         ("connections-id-test", _) => [Acme0(ConnectionStatus.NeedsSignIn)],
         _ => [],
     };

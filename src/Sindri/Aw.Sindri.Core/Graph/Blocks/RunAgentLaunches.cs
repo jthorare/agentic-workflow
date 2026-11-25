@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 
 namespace Aw.Sindri.Core.Graph.Blocks;
@@ -69,6 +70,18 @@ public static class RunAgentLaunches
             Task = new AgentTask(brief, config.Outputs, groups),
             StepTimeout = config.Wall ?? config.Timeout,
         };
+    }
+
+    /// <summary>The same request with the workflow's provisioned resources (PR 14, #2532): their folders become read-write mounts of the session's sandbox and their declared limits tighten its limits.</summary>
+    /// <param name="request">A request <see cref="RequestFor"/> made.</param>
+    /// <param name="resources">What the workflow's resources gave; null for none.</param>
+    /// <returns>The request; <paramref name="request"/> itself when there is nothing to add.</returns>
+    public static LaunchRequest WithResources(LaunchRequest request, ProvisionedResources? resources)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return request.Task is not { } task || (resources is not { Mounts.Count: > 0 } && resources?.Limits is null)
+            ? request
+            : request with { Task = task with { ResourceMounts = resources.Mounts.Count > 0 ? resources.Mounts : null, ResourceLimits = resources.Limits } };
     }
 
     /// <summary>The same request with checkouts the session may read and never write (the node's 'readOnlyRepos').</summary>

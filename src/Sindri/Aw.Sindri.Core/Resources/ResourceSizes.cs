@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
@@ -32,6 +33,30 @@ public static partial class ResourceSizes
         }
 
         bytes = number * unit;
+        return true;
+    }
+
+    /// <summary>Spells a size with the long unit: '4g' becomes '4GiB', '512MiB' stays '512MiB'.</summary>
+    /// <param name="text">The size as written.</param>
+    /// <param name="canonical">The size with a KiB, MiB, GiB or TiB unit when it parses.</param>
+    /// <returns>True when <paramref name="text"/> is a size <see cref="TryParse"/> accepts.</returns>
+    public static bool TryNormalize(string? text, [NotNullWhen(true)] out string? canonical)
+    {
+        canonical = null;
+        if (text is null || !TryParse(text, out _) || Shape.Match(text) is not { Success: true } match)
+        {
+            return false;
+        }
+
+        var unit = match.Groups["unit"].Value switch
+        {
+            "k" => "KiB",
+            "m" => "MiB",
+            "g" => "GiB",
+            "t" => "TiB",
+            var full => full,
+        };
+        canonical = match.Groups["number"].Value + unit;
         return true;
     }
 

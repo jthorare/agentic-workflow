@@ -13,6 +13,7 @@ namespace Aw.Sindri.Core.Memory;
 /// <param name="RefreshedAt">When it was last written again (equal to CreatedAt until a near duplicate refreshes it).</param>
 /// <param name="Embedding">The text's vector, or empty when no model was available at write time.</param>
 /// <param name="Model">The model (name and digest) that made the vector, or null when there is none.</param>
+/// <param name="RefreshedBy">The actor of the call that last refreshed the fact (a refreshing AddOrRefresh records its caller; the first writer stays in WrittenBy), or null for a fact never refreshed.</param>
 /// <param name="WrittenBy">The actor of the call that wrote the fact (its caller, never the request), or null for a fact written before this field existed.</param>
 public sealed record MemoryFact(
     string Key,
@@ -25,7 +26,8 @@ public sealed record MemoryFact(
     DateTimeOffset RefreshedAt,
     ReadOnlyMemory<float> Embedding,
     string? Model = null,
-    string? WrittenBy = null)
+    string? WrittenBy = null,
+    string? RefreshedBy = null)
 {
     /// <summary>Gets the dimension of the stored vector; 0 when the fact has none yet.</summary>
     public int Dimension => Embedding.Length;

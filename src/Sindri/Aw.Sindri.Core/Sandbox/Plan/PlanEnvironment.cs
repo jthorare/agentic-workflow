@@ -98,6 +98,10 @@ internal static class PlanEnvironment
         yield return Var("AW_SINDRI_LAUNCH", r.Launch.Value);
         yield return Var("AW_SINDRI_HOME", c.SessionHome);   // rev 7: never the real home
         yield return Var("GH_CONFIG_DIR", c.SessionHome + "/gh-config");
+        if (c.ProfileFolder is not null)
+        {
+            yield return Var("AW_SINDRI_PROFILE", r.Host.ProfilePath);
+        }
 
         if (r.SlotHeld)
         {

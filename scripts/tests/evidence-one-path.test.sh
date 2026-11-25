@@ -24,7 +24,7 @@ check_verbs() {
   local file="$1" verb
   while read -r verb; do
     [ -n "$verb" ] || continue
-    echo "$verbs" | grep -qx -- "$verb" || bad "$file names 'ui-evidence $verb', which is not a verb of the binary"
+    grep -qx -- "$verb" <<<"$verbs" || bad "$file names 'ui-evidence $verb', which is not a verb of the binary"
   done < <(grep -o 'ui-evidence [a-z][a-z-]*' "$file" | awk '{print $2}' | sort -u | grep -vx -e skill -e binary -e is -e and -e runs -e verb || true)
 }
 check_verbs "$SKILL"

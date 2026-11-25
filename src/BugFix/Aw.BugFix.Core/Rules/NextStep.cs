@@ -20,7 +20,7 @@ public static class NextStep
         // A resolving candidate wins over an escalation of another one in the same attempt.
         if (state.CurrentCandidates.FirstOrDefault(static c => c.Resolves) is { } resolving && state.Phase == Phase.Evaluate)
         {
-            return $"advance report --candidate {resolving.Id.Value}";
+            return $"advance report --candidate {resolving.Id.Value} --sweep <sweep.md>";
         }
 
         return state.Phase switch
@@ -41,7 +41,7 @@ public static class NextStep
         var current = state.CurrentCandidates.ToList();
         if (current.Find(static c => c.Resolves) is { } resolving)
         {
-            return $"advance report --candidate {resolving.Id.Value}";
+            return $"advance report --candidate {resolving.Id.Value} --sweep <sweep.md>";
         }
 
         if (current.Find(static c => c.Run is null) is { } unrun)

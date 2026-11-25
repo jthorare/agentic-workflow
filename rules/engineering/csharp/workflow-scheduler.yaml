@@ -1,0 +1,21 @@
+schemaVersion: 1
+id: engineering.csharp.workflow-scheduler
+kind: engineering
+section: "4b.3"
+text: "A type with Temporal's [Workflow] attribute (its partial parts and nested types included) calls only the Workflow.* forms: no CancellationTokenSource.CancelAsync, CancelAfter or timed constructor, no Task.Run, Delay, WhenAny, WhenAll, Yield, Factory.StartNew or WaitAsync(TimeSpan), no ConfigureAwait(false), no wall clock, Guid.NewGuid, Random, Thread.Sleep, Stopwatch, TimeProvider.System, Environment.TickCount, Parallel.* or System.Threading.Timer."
+why: "Those calls run on the thread pool or read a non-deterministic value, outside the workflow's scheduler: a CancelAsync in GraphWorkflow meant a workflow cancel never reached its watch activity (issue 2432)."
+select:
+  languages: [csharp]
+  paths: ["src/Sindri/**"]
+checks:
+  - type: archunit
+    id: "ARCH-WF-001"
+    status: active
+    ref: "tests/Aw.Architecture.Tests"
+relatedIds: ["MA0042"]
+gap: partial
+gapNote: "ConfigureAwait(false) is caught only when the constant false is pushed right before the call; ConfigureAwait(someBool) with a variable is left to review. A banned call reached through a helper outside the workflow type is not followed."
+source:
+  type: import
+  ref: ".agents/rules/csharp.md"
+status: active

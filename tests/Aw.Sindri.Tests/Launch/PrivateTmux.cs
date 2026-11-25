@@ -18,20 +18,40 @@ internal sealed class PrivateTmux : IDisposable
 
     public TmuxHostOptions Options => new("tmux", Socket, TmuxTmpDir);
 
-    public static string? Tmux(string tmpDir, string socket, params string[] args)
+    public static string? Tmux(string tmpDir, string socket, params string[] args) => Exec(tmpDir, socket, args).Output;
+
+    /// <summary>Runs tmux and keeps why it failed: the exit code, stderr, and whether the 10 s wait ran out (issue 2832).</summary>
+    public static TmuxResult Exec(string tmpDir, string socket, params string[] args)
     {
         using var process = Process.Start(Info(tmpDir, socket, args));
         if (process is null)
         {
-            return null;
+            return new TmuxResult(Output: null, ExitCode: null, "tmux did not start", TimedOut: false);
         }
 
-        var output = process.StandardOutput.ReadToEnd();
-        _ = process.StandardError.ReadToEnd();
-        return process.WaitForExit(10_000) && process.ExitCode == 0 ? output : null;
+        // why: both pipes read at once, so a full stderr cannot block tmux while stdout is read to the end
+        var ct = TestContext.Current.CancellationToken;
+        var output = process.StandardOutput.ReadToEndAsync(ct);
+        var error = process.StandardError.ReadToEndAsync(ct);
+        if (!process.WaitForExit(10_000))
+        {
+            return new TmuxResult(Output: null, ExitCode: null, "tmux still running after 10 s", TimedOut: true);
+        }
+
+        // why: a detached server that kept the pipes would block the reads forever; say so instead of hanging
+        if (!Task.WaitAll([output, error], 2_000, ct))
+        {
+            return new TmuxResult(Output: null, process.ExitCode, "tmux exited but its stdout or stderr stayed open (a detached server holds the pipe)", TimedOut: false);
+        }
+
+        var stdout = output.GetAwaiter().GetResult();
+        var stderr = error.GetAwaiter().GetResult();
+        return new TmuxResult(process.ExitCode == 0 ? stdout : null, process.ExitCode, stderr.Trim(), TimedOut: false);
     }
 
     public string? Run(params string[] args) => Tmux(TmuxTmpDir, Socket, args);
+
+    public TmuxResult Exec(params string[] args) => Exec(TmuxTmpDir, Socket, args);
 
     public bool HasSession(string name) => Run("has-session", "-t", "=" + name) is not null;
 

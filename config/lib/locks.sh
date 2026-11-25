@@ -113,7 +113,7 @@ release_lock() {
 }
 
 acquire_any_lock() {
-  local base="$1" slots="$2" timeout_s="$3" waited=0 printed=0 k dir heavy="" reserve=0 given reserve_blocked
+  local base="$1" slots="$2" timeout_s="$3" waited=0 printed=0 k dir heavy="" reserve=0 given reserve_blocked cap_now reserve_now
   case "$slots" in ''|*[!0-9]*) slots=1 ;; esac
   [ "$slots" -ge 1 ] || slots=1
   given="$slots"
@@ -134,6 +134,14 @@ acquire_any_lock() {
       fi
       if [ "$k" -eq 1 ]; then dir="$base"; else dir="$base.$k"; fi
       if _lock_take "$dir" || { _lock_reclaim_dead "$dir" && _lock_take "$dir"; }; then
+        # Take-then-check (#2718): the cap and reserve were read before the take, so read them again now the slot is ours.
+        # Over the cap, or inside the reserve for a non-meta taker: give the slot back and go on.
+        if [ -n "$heavy" ]; then
+          cap_now="$(heavy_cap "$given")"; reserve_now="$(heavy_reserve "$cap_now")"
+          if [ "$k" -gt "$cap_now" ] || { [ "${AW_HEAVY_PRIORITY:-}" != meta ] && [ "$k" -le "$reserve_now" ]; }; then
+            release_lock "$dir"; k=$((k + 1)); continue
+          fi
+        fi
         printf '%s\n' "$dir"
         return 0
       fi

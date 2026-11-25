@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
@@ -42,7 +44,7 @@ public sealed class SessionSheetViewModelTests
         var sheet = await Opened(ClaudeRef);
 
         Assert.Equal((FramePhase.Shown, ClaudeRef, ClaudeRef, 1), (sheet.Phase, sheet.Ref, _server.LastSessionRef, _server.SessionCalls));
-        Assert.Equal(("Claude Code private title", "● Working"), (sheet.Heading, sheet.StateLine));
+        Assert.Equal(("Claude Code private title", "Working"), (sheet.Heading, sheet.StateLine));
     }
 
     [Fact]
@@ -61,7 +63,7 @@ public sealed class SessionSheetViewModelTests
     {
         var sheet = await Opened(CodexRef);
 
-        Assert.Equal(("Codex web/bbbbbbbb", "◐ Asking you · approval · Bash"), (sheet.Heading, sheet.StateLine));
+        Assert.Equal(("Codex web/bbbbbbbb", "Waiting on you · approval · Bash"), (sheet.Heading, sheet.StateLine));
         Assert.Equal(["Shown in", "Terminal"], sheet.HostFields.Select(f => f.Label), StringComparer.Ordinal);
         Assert.Equal(("Warp", "warp", "/work/web"), (Value(sheet.HostFields, "Shown in"), Value(sheet.HostFields, "Terminal"), Value(sheet.Fields, "Working directory")));
         Assert.DoesNotContain(sheet.Fields, f => new[] { "Worktree", "Lane" }.Contains(f.Label, StringComparer.Ordinal));
@@ -73,9 +75,9 @@ public sealed class SessionSheetViewModelTests
     {
         var sheet = await Opened(ClaudeRef);
 
-        Assert.Equal(["○ Idle", "◐ Asking you", "● Working"], sheet.History.Select(h => h.Chip.Text), StringComparer.Ordinal);
+        Assert.Equal(["● Idle", "● Waiting on you", "● Working"], sheet.History.Select(h => h.Chip.Text), StringComparer.Ordinal);
         Assert.Equal([false, false, true], sheet.History.Select(h => h.IsNow));
-        Assert.Equal("◐ Asking you · approval · " + Labels.SheetTime(new DateTimeOffset(2026, 10, 16, 11, 59, 0, TimeSpan.Zero)) + " · hook", sheet.History[1].Name);
+        Assert.Equal("● Waiting on you · approval · " + Labels.SheetTime(new DateTimeOffset(2026, 10, 16, 11, 59, 0, TimeSpan.Zero)) + " · hook", sheet.History[1].Name);
         Assert.EndsWith("· now · record", sheet.History[2].Detail, StringComparison.Ordinal);
         Assert.True(sheet.HasHistory);
     }
@@ -118,7 +120,7 @@ public sealed class SessionSheetViewModelTests
     public async Task Another_failure_keeps_the_last_fields_with_a_note_or_says_why_when_none()
     {
         var unread = new SessionSheetViewModel(_server);
-        _server.SessionAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, "{ not json");
+        _server.SessionAnswer = new RouteAnswer(HttpStatusCode.OK, "{ not json");
         await unread.Open(_api, ClaudeRef, Token);
         Assert.Equal((FramePhase.Unreadable, false), (unread.Phase, unread.ProblemText.Length == 0));
 
@@ -215,5 +217,81 @@ public sealed class SessionSheetViewModelTests
         var sheet = await Opened(ClaudeRef);
 
         Assert.StartsWith("Started ", sheet.StartedText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_tmux_session_offers_Copy_attach_command_with_its_socket_and_session_3710()
+    {
+        var sheet = await Opened(ClaudeRef);
+
+        var before = sheet.AttachCopy?.Label;
+
+        await sheet.CopyAttach(Token);
+
+        Assert.Equal(("Copy attach command", "tmux -S /tmp/tmux-1000/default attach -t '=main'"), (before, _clipboard.Text));
+    }
+
+    [Fact]
+    public async Task The_attach_command_single_quotes_a_shell_special_session_and_socket_and_matches_the_session_exactly_3870()
+    {
+        _server.SessionOneBody = (provider, id) =>
+        {
+            var body = JsonNode.Parse(SessionAnswers.One(provider, id).Body)!; // why: the golden is a JSON document
+            body["session"]!["host"]!["session"] = "it's \"x\";$y"; // why: the claude-tmux golden has a tmux host
+            body["session"]!["host"]!["socket"] = "/tmp/my sock/default";
+            return new RouteAnswer(HttpStatusCode.OK, body.ToJsonString());
+        };
+        var sheet = await Opened(ClaudeRef);
+
+        await sheet.CopyAttach(Token);
+
+        Assert.Equal("""tmux -S '/tmp/my sock/default' attach -t '=it'\''s "x";$y'""", _clipboard.Text);
+    }
+
+    [Fact]
+    public async Task The_attach_command_shows_the_text_it_copies_3871()
+    {
+        var tmux = await Opened(ClaudeRef);
+        var other = await Opened(CodexRef);
+
+        await tmux.CopyAttach(Token);
+
+        Assert.Equal((_clipboard.Text, string.Empty), (tmux.AttachText, other.AttachText));
+        Assert.StartsWith("tmux -S ", tmux.AttachText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task The_state_is_a_toned_dot_and_a_word_3872()
+    {
+        var working = await Opened(ClaudeRef);
+        var waiting = await Opened(CodexRef);
+
+        Assert.Equal(("●", true, false), (working.StateGlyph, working.IsStateWorking, working.IsStateWaiting));
+        Assert.Equal(("●", false, true), (waiting.StateGlyph, waiting.IsStateWorking, waiting.IsStateWaiting));
+        Assert.StartsWith("Working", working.StateLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task The_state_text_has_no_dot_because_the_toned_dot_draws_it_3872()
+    {
+        var working = await Opened(ClaudeRef);
+        _server.SessionOneBody = (provider, id) =>
+        {
+            var body = JsonNode.Parse(SessionAnswers.One(provider, id).Body)!; // why: the golden is a JSON document
+            body["session"]!["state"] = "idle";
+            return new RouteAnswer(HttpStatusCode.OK, body.ToJsonString());
+        };
+        var idle = await Opened(ClaudeRef);
+
+        Assert.Equal(("Working", "Idle"), (working.StateLine, idle.StateLine));
+        Assert.DoesNotContain("●", working.StateLine + idle.StateLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_session_that_is_not_in_tmux_has_no_attach_command_3710()
+    {
+        var sheet = await Opened(CodexRef);
+
+        Assert.Null(sheet.AttachCopy);
     }
 }

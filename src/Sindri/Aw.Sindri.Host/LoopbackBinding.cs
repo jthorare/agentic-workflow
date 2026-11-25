@@ -20,6 +20,9 @@ internal static class LoopbackBinding
 {
     internal const string PortVariable = "AW_SINDRI_PORT";
 
+    /// <summary>The builder argument that keeps ASP.NET from watching the content root for appsettings changes.</summary>
+    internal const string NoConfigReload = "--hostBuilder:reloadConfigOnChange=false";
+
     internal static WebApplication Build(string[] args, Func<string, string?> environment, TimeProvider clock, Action<IServiceCollection>? configure = null)
     {
         if (args.Length > 0)
@@ -28,8 +31,17 @@ internal static class LoopbackBinding
         }
 
         // The environment is pinned too: an inherited ASPNETCORE_ENVIRONMENT/DOTNET_ENVIRONMENT=Development would make
-        // the request binding throw instead of answering 400, turning bad input into a 500.
-        var builder = WebApplication.CreateSlimBuilder(new WebApplicationOptions { Args = [], EnvironmentName = Environments.Production });
+        // the request binding throw instead of answering 400, turning bad input into a 500. The content root is the build
+        // folder, never the working directory: the builder's appsettings reload watcher walks and watches every folder
+        // under its root, so serve started in ~ never got to control.json (#2930). The host reads no file from it.
+        // The one argument turns that watcher off: each one is an inotify instance, a user gets 128, and a test run
+        // starts hundreds of hosts (#3459). Sources.Clear() below drops the argument again with every other source.
+        var builder = WebApplication.CreateSlimBuilder(new WebApplicationOptions
+        {
+            Args = [NoConfigReload],
+            EnvironmentName = Environments.Production,
+            ContentRootPath = AppContext.BaseDirectory,
+        });
         builder.Configuration.Sources.Clear();   // drops the ASPNETCORE_/DOTNET_ environment and command-line sources
         _ = builder.Configuration.AddInMemoryCollection();   // the host still writes its own settings somewhere
         _ = builder.WebHost.PreferHostingUrls(preferHostingUrls: false);

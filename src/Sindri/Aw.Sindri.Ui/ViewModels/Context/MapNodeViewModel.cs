@@ -33,6 +33,9 @@ internal sealed class MapNodeViewModel : ObservableObject
     /// <summary>The node's key.</summary>
     public string Key => Layout.Key;
 
+    /// <summary>The node's automation id ("MapNodeView.…"), one per node.</summary>
+    public string AutomationId => "MapNodeView." + Key;
+
     /// <summary>Whether the inspector shows this node (the view draws the focus ring; the inspector opening is the other cue).</summary>
     public bool IsSelected
     {

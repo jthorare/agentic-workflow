@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Runs;
 using Temporalio.Exceptions;
 using Temporalio.Workflows;
 
@@ -15,13 +16,8 @@ internal sealed partial class GraphWorkflow
     private static readonly ActivityOptions _detached = GraphActivityOptions.Detached;
     private static readonly ActivityOptions _block = GraphActivityOptions.Block;
 
-    // why: a launch hands back after its slice when the session cap is full, and the workflow asks again. A cancel never goes to the launch (it does not heartbeat, so it could not hear one):
-    // the workflow lets the launch return, then stops, so the close that follows sees the session the launch made (TryCancel let the close run first and left an orphan). Sending the cancel
-    // anyway raced the launch's completion, and the server refused the whole workflow task ("ACTIVITY_UNKNOWN for scheduledEventId"). The one-shot reads and the close are retried without end like the writes
-    private static readonly ActivityOptions _agentLaunch = new() { StartToCloseTimeout = TimeSpan.FromMinutes(10), RetryPolicy = GraphActivityOptions.Unbounded, CancellationToken = CancellationToken.None };
-    private static readonly ActivityOptions _agentRead = new() { StartToCloseTimeout = TimeSpan.FromMinutes(5), RetryPolicy = GraphActivityOptions.Unbounded };
-
     private WorkflowRunId _run;
+    private int _agentLaunchAttempts = GraphAgentLoop.DefaultAgentLaunchAttempts;
 
     /// <summary>Walks the run's spec.</summary>
     /// <param name="input">The run.</param>
@@ -31,11 +27,19 @@ internal sealed partial class GraphWorkflow
     {
         ArgumentNullException.ThrowIfNull(input);
         _ = Workflow.Patched("graph-walk-1");
+        _local = Workflow.Patched("graph-local-activities-1");
         _run = input.Run;
+        _agentLaunchAttempts = input.AgentLaunchAttempts > 0 ? input.AgentLaunchAttempts : GraphAgentLoop.DefaultAgentLaunchAttempts;
+        _agents = new GraphAgentLoop(_run, _agentLaunchAttempts);
         try
         {
-            var spec = await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.LoadAsync(_run), _write).ConfigureAwait(true);
-            await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.BeginAsync(_run), _write).ConfigureAwait(true);
+            var spec = await Call((GraphRunActivities a) => a.LoadAsync(_run), detached: false).ConfigureAwait(true);
+            await Call((GraphRunActivities a) => a.BeginAsync(_run), detached: false).ConfigureAwait(true);
+            // why: a run replays the activities its history holds; the patch keeps a run started before re-run from a step existed replaying without this call
+            var restored = Workflow.Patched("graph-rerun-1")
+                ? await Call((GraphRunActivities a) => a.RestoredAsync(_run), detached: false).ConfigureAwait(true)
+                : [];
+            Restore(spec, restored);
             return await Walk(spec).ConfigureAwait(true);
         }
         catch (Exception e) when (TemporalException.IsCanceledException(e))
@@ -43,5 +47,26 @@ internal sealed partial class GraphWorkflow
             await Cancelled().ConfigureAwait(true);
             throw;
         }
+        catch (Exception e) when (GraphFaults.Ends(e))
+        {
+            // why: a write that ran out of retries or an exception in workflow code would otherwise leave the run 'running' for ever (a workflow-task failure is retried without end) and block its workflow's next run (issue 2999)
+            return await Failed(e).ConfigureAwait(true);
+        }
+    }
+
+    private async Task<GraphWorkflowResult> Failed(Exception e)
+    {
+        _current = null;
+        try
+        {
+            await Call((GraphRunActivities a) => a.FinishAsync(new GraphFinish(_run, WorkflowRunStatus.Failed, GraphFaults.Reason(e))), detached: true).ConfigureAwait(true);
+        }
+        catch (Exception finish) when (GraphFaults.Ends(finish))
+        {
+            // why: the end itself could not be written; failing the workflow closes it in Temporal, so the recovery sweep ends the row
+            throw new ApplicationFailureException($"The run could not be ended: {GraphFaults.Reason(finish)}", finish);
+        }
+
+        return new GraphWorkflowResult(WorkflowRunStatus.Failed);
     }
 }

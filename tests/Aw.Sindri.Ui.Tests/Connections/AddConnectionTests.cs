@@ -1,9 +1,6 @@
 using System.Reflection;
 using Aw.Kernel;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Api;
-using Aw.Sindri.Ui.ViewModels;
-using Aw.Sindri.Ui.ViewModels.Connections;
 
 namespace Aw.Sindri.Ui.Tests.Connections;
 
@@ -18,111 +15,15 @@ public sealed class AddConnectionTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task Adding_an_oauth_connection_opens_the_consent_URL_and_polls_until_connected()
-    {
-        var page = await _f.Shown();
-        var form = page.Add;
-        form.Open();
-        form.SelectedPreset = form.Presets.Single(p => p.Id == "linear");
-        form.Name = "linear:work";
-        form.ClientId = "client-123";
-
-        await _f.Drive(form.Send(Token), "linear:work");
-
-        Assert.Equal([_f.Server.ConsentUrl], _f.Launcher.Opened, StringComparer.Ordinal);
-        Assert.Equal(("linear:work", "linear", "client-123", false), (_f.Server.LastAddConnection!.Name, _f.Server.LastAddConnection.Preset, _f.Server.LastAddConnection.Client, _f.Server.LastAddConnection.Wait));
-        Assert.Equal(Labels.ConnectionAdded("linear:work"), form.StatusText);
-        Assert.Equal(["✓ Connected"], page.Rows.Select(r => r.ChipText), StringComparer.Ordinal);
-        Assert.Contains("get linear:work", _f.Server.ConnectionCallLog, StringComparer.Ordinal);
-    }
-
-    [Fact]
-    public async Task A_new_oauth_add_keeps_waiting_while_no_row_exists_and_shows_the_row_once_the_callback_lands()
-    {
-        var page = await _f.Shown();
-        var form = OAuthForm(page);
-
-        var run = form.Send(Token);
-        await _f.Drive(Task.Delay(30, Token));   // a minute of polls: the server has no row for linear:work yet
-
-        Assert.False(run.IsCompleted);
-        Assert.Equal((string.Empty, true, true), (form.ErrorText, form.HasStatus, form.IsWorking));
-        Assert.Empty(page.Rows);
-
-        _f.Server.CompleteSignIn("linear:work");
-        await _f.Drive(run);
-
-        Assert.Equal((Labels.ConnectionAdded("linear:work"), string.Empty), (form.StatusText, form.ErrorText));
-        Assert.Equal(["linear:work"], page.Rows.Select(r => r.Name), StringComparer.Ordinal);
-    }
-
-    [Fact]
-    public async Task One_dropped_read_during_the_wait_does_not_end_it()
-    {
-        var page = await _f.Shown();
-        var form = OAuthForm(page);
-        _f.Server.NextConnectionGetError = SindriUiErrors.Unreachable.With("nothing answered");
-
-        await _f.Drive(form.Send(Token), "linear:work");
-
-        Assert.Equal((Labels.ConnectionAdded("linear:work"), string.Empty), (form.StatusText, form.ErrorText));
-    }
-
-    [Fact]
-    public async Task Any_other_read_error_ends_the_wait_with_that_error()
-    {
-        var page = await _f.Shown();
-        var form = OAuthForm(page);
-        _f.Server.NextConnectionGetError = new Error("SND-CONN-003", ErrorKind.Unavailable, "The provider refused the sign-in.");
-
-        await _f.Drive(form.Send(Token));
-
-        Assert.Contains("SND-CONN-003", form.ErrorText, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task Closing_the_form_stops_the_wait_and_a_reopened_form_shows_nothing_from_it()
-    {
-        var page = await _f.Shown();
-        var form = OAuthForm(page);
-
-        var run = form.Send(Token);
-        await _f.Drive(Task.Delay(10, Token));
-        form.Close();
-        await _f.Drive(run);   // ends without a callback
-        form.Open();
-
-        Assert.Equal((string.Empty, string.Empty, false), (form.StatusText, form.ErrorText, form.IsWorking));
-    }
-
-    [Fact]
-    public async Task A_refused_oauth_add_clears_the_client_secret_too()
-    {
-        var page = await _f.Shown();
-        var form = OAuthForm(page);
-        form.ClientSecret.Text = Key;
-        _f.Server.ConnectionWriteError = new Error("SND-CONN-010", ErrorKind.Conflict, "A connection named linear:work already exists.");
-
-        await form.Send(Token);
-
-        Assert.Equal(Key, Assert.Single(_f.Server.AddedConnections).ClientSecret);
-        Assert.False(form.ClientSecret.HasValue);
-        Assert.Empty(StringsHolding(Key, form, page));
-    }
-
-    [Fact]
     public async Task The_form_shows_the_fields_the_chosen_kind_needs()
     {
         var form = (await _f.Shown()).Add;
 
-        form.SelectedPreset = form.Presets.Single(p => p.Id == "github");
-        Assert.Equal((true, true, false, false), (form.ShowClient, form.ShowClientSecret, form.ShowKey, form.ShowUrl));
-
         form.SelectedPreset = form.Presets.Single(p => p.Id == "rest");
-        Assert.Equal((false, false, true, false), (form.ShowClient, form.ShowClientSecret, form.ShowKey, form.ShowUrl));
+        Assert.Equal((true, false), (form.ShowKey, form.ShowUrl));
 
         form.SelectedPreset = form.Presets.Single(p => p.Id == "mcp");
-        Assert.Equal((false, false, false, true), (form.ShowClient, form.ShowClientSecret, form.ShowKey, form.ShowUrl));
+        Assert.Equal((false, true), (form.ShowKey, form.ShowUrl));
     }
 
     [Fact]
@@ -142,7 +43,7 @@ public sealed class AddConnectionTests
         Assert.Equal(string.Empty, form.Key.Text);
         Assert.False(form.Key.HasValue);
         Assert.Empty(StringsHolding(Key, form, page));
-        Assert.Equal(["✓ Connected"], page.Rows.Select(r => r.ChipText), StringComparer.Ordinal);   // a key connection is connected at once
+        Assert.Equal(["Connected"], page.Rows.Select(r => r.ChipText), StringComparer.Ordinal);   // a key connection is connected at once
     }
 
     [Fact]
@@ -177,16 +78,6 @@ public sealed class AddConnectionTests
 
         await form.Send(Token);
         _ = Assert.Single(_f.Server.AddedConnections);
-    }
-
-    private static AddConnectionViewModel OAuthForm(ConnectionsPageViewModel page)
-    {
-        var form = page.Add;
-        form.Open();
-        form.SelectedPreset = form.Presets.Single(p => p.Id == "linear");
-        form.Name = "linear:work";
-        form.ClientId = "client-123";
-        return form;
     }
 
     // Every public string property, on the view models and on the view models they hold, that contains the text.

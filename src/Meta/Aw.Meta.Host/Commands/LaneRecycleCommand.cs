@@ -38,6 +38,7 @@ internal static class LaneRecycleCommand
             Environment.NewLine,
             [
                 (response.DryRun ? "dry run: would recycle lane " : response.WaiterPid is not null ? "started a detached recycle waiter for lane " : "recycled lane ") + response.Lane + " (session " + response.OldSession + (response.NewSession is { } fresh ? " -> " + fresh : string.Empty) + ")" + (response.WaiterPid is { } pid ? ", waiter pid " + pid.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty),
+                .. response.DigestTimes is { } times ? (string[])["  " + times] : [],
                 .. response.Steps.Select(static (s, i) => "  " + (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) + ". " + s),
                 .. response.Warning is { } warning ? (string[])["warning: " + warning] : [],
             ]);

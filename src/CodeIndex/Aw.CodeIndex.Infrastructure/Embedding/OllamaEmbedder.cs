@@ -22,6 +22,9 @@ internal sealed class OllamaEmbedder : IEmbedder, IDisposable
     /// <summary>The model and digest in context/code-index.lock.</summary>
     internal static readonly ModelPin DefaultPin = new("nomic-embed-text:latest", "sha256:0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f");
 
+    /// <summary>One text is cut at this many characters before it is sent: dense code runs 2 to 3 characters per token, and the model's context is 2,048 tokens (#3128).</summary>
+    internal const int InputMaxCharacters = 2_500;
+
     private static readonly TimeSpan _probeTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan _embedTimeout = TimeSpan.FromMinutes(10);
 
@@ -75,7 +78,43 @@ internal sealed class OllamaEmbedder : IEmbedder, IDisposable
             return Results.Success<IReadOnlyList<ReadOnlyMemory<float>>>([]);
         }
 
-        var request = new EmbedRequest(ModelFor(settings), texts);
+        var cut = texts.Select(static t => Cut(t)).ToList();
+        var whole = await EmbedBatch(settings, cut, cancellationToken).ConfigureAwait(false);
+        if (!whole.IsError || !IsRejection(whole.Error))
+        {
+            return whole;
+        }
+
+        // The server refused something in the batch: ask for each text alone; a text it still refuses gets an empty vector, which the embeddings layer stores as a refused marker.
+        return await EmbedEach(settings, cut, cancellationToken).ConfigureAwait(false);
+    }
+
+    // Cuts at InputMaxCharacters, one character earlier when that would leave half a surrogate pair.
+    private static string Cut(string text)
+        => text.Length <= InputMaxCharacters ? text : text[..(char.IsHighSurrogate(text[InputMaxCharacters - 1]) ? InputMaxCharacters - 1 : InputMaxCharacters)];
+
+    private async ValueTask<Result<IReadOnlyList<ReadOnlyMemory<float>>>> EmbedEach(EmbeddingsSettings settings, List<string> texts, CancellationToken cancellationToken)
+    {
+        var vectors = new List<ReadOnlyMemory<float>>(texts.Count);
+        foreach (var text in texts)
+        {
+            var one = await EmbedBatch(settings, [text], cancellationToken).ConfigureAwait(false);
+            if (one.IsError && !IsRejection(one.Error))
+            {
+                return one.Error;
+            }
+
+            vectors.Add(one.IsError ? ReadOnlyMemory<float>.Empty : one.Value[0]);
+        }
+
+        return Results.Success<IReadOnlyList<ReadOnlyMemory<float>>>(vectors);
+    }
+
+    private static bool IsRejection(Error error) => string.Equals(error.Code, CodeIndexErrors.EmbeddingInputRejected.Code, StringComparison.Ordinal);
+
+    private async ValueTask<Result<IReadOnlyList<ReadOnlyMemory<float>>>> EmbedBatch(EmbeddingsSettings settings, List<string> texts, CancellationToken cancellationToken)
+    {
+        var request = new EmbedRequest(ModelFor(settings), texts, Truncate: true);
         var answer = await Send<EmbedResponse>(HttpMethod.Post, Endpoint(settings, EmbedPath), request, _embedTimeout, cancellationToken).ConfigureAwait(false);
         return answer.IsError ? answer.Error : Vectors(answer.Value, texts.Count);
     }
@@ -132,7 +171,10 @@ internal sealed class OllamaEmbedder : IEmbedder, IDisposable
             using var response = await _http.SendAsync(request, limit.Token).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                return Failed("the embedding server answered " + ((int)response.StatusCode).ToString(CultureInfo.InvariantCulture));
+                var status = (int)response.StatusCode;
+                return body is not null && status is 400 or 413 or 422
+                    ? CodeIndexErrors.EmbeddingInputRejected.With("the embedding server refused the input (" + status.ToString(CultureInfo.InvariantCulture) + ")")
+                    : Failed("the embedding server answered " + status.ToString(CultureInfo.InvariantCulture));
             }
 
             var bytes = await response.Content.ReadAsByteArrayAsync(limit.Token).ConfigureAwait(false);

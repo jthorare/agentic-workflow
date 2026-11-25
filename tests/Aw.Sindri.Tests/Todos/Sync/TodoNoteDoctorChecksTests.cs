@@ -110,4 +110,16 @@ public sealed class TodoNoteDoctorChecksTests
         Assert.Equal(CheckState.Warn, row.State);
         Assert.Contains("note nearly full", row.Detail, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task A_note_whose_file_is_over_800_KB_warns_even_when_the_rendered_document_is_smaller()
+    {
+        _h.NoteSync.Status = Status(TodoNoteState.Syncing);
+        _h.NoteFile.Current = new TodoNoteSnapshot("sha256:x", NoteParser.Parse("# Todo\n- [ ] ok ^td-01jc5a8xq0n4w7ms2t9r3vbk6e\n"), RawBytes: 900 * 1024);
+
+        var row = await Row();
+
+        Assert.Equal(CheckState.Warn, row.State);
+        Assert.Contains("note nearly full", row.Detail, StringComparison.Ordinal);
+    }
 }

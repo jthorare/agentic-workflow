@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Temp-dir cleanup (#3262): every mktemp this suite makes is recorded and removed when it exits.
+__aw_tmp_reg="$(command mktemp)"
+mktemp() { local p; p="$(command mktemp "$@")" || return; printf '%s\n' "$p" >>"$__aw_tmp_reg"; printf '%s\n' "$p"; }
+__aw_tmp_clean() { local rc=$? p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null || true; rm -rf "$p" || true; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; exit "$rc"; }
+trap __aw_tmp_clean EXIT
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK="$DIR/../../hooks/send-gate.sh"
 # The hook logs fail-open events under $AW_STATE_DIR (default ~/.agentic-workflow): this suite gets its own, never an inherited one.
 AW_STATE_DIR="$(mktemp -d)" || exit 2; export AW_STATE_DIR
-trap 'find "$AW_STATE_DIR" -delete 2> /dev/null' EXIT
 
 # Every fake judge reads all of stdin before it answers, like the real one. The hook runs under pipefail, so a stub that
 # exits without reading lets the hook's `printf | judge` die of SIGPIPE (141) when the stub wins the race, which a loaded
@@ -237,4 +242,41 @@ test_a_message_naming_no_image_keeps_the_wake_gate_input_byte_identical() {
 
 test_a_message_naming_no_image_keeps_the_wake_gate_input_byte_identical
 test_a_screenshot_named_in_the_message_is_sent_to_wake_gate_as_an_image
+# #4308: a message over 128 KiB must still be judged, queued and merged. As one jq argv string it failed exec (Linux caps
+# one argument at 128 KiB): the wake-gate input was empty and the send went through unjudged.
+big_message_input() { # <file>: a SendMessage payload whose message is 200 KB, built without putting it on argv
+  jq -nc --rawfile m <(head -c 204800 /dev/zero | tr '\0' x) '{session_id:"s1",agent_type:"builder-a",tool_input:{to:"main",message:$m}}' > "$1"
+}
+
+test_a_200kb_message_still_reaches_wake_gate() {
+  local bin_dir outbox in; bin_dir="$(setup_recording_wake_judge)"; outbox="$(mktemp -d)"; in="$(mktemp)"
+  big_message_input "$in"
+  PATH="$bin_dir:$PATH" AW_OUTBOX_DIR="$outbox" bash "$HOOK" < "$in" > /dev/null
+  [ "$(jq -r '.text | length' "$bin_dir/wake-input.json" 2>/dev/null)" = "204800" ] \
+    || { echo "FAIL: wake-gate must get the whole 200 KB message, got $(head -c 200 "$bin_dir/wake-input.json" 2>/dev/null)"; exit 1; }
+  echo "PASS: test_a_200kb_message_still_reaches_wake_gate"
+}
+
+test_a_200kb_batched_message_is_queued_whole() {
+  local bin_dir out outbox in; bin_dir="$(setup_fake_judge batch)"; outbox="$(mktemp -d)"; in="$(mktemp)"
+  big_message_input "$in"
+  out="$(PATH="$bin_dir:$PATH" AW_OUTBOX_DIR="$outbox" bash "$HOOK" < "$in")"
+  echo "$out" | jq -e '.hookSpecificOutput.permissionDecision == "deny"' > /dev/null || { echo "FAIL: expected deny for batch, got $(printf '%s' "$out" | head -c 200)"; exit 1; }
+  [ "$(jq -r '.text | length' "$outbox/s1.jsonl" 2>/dev/null)" = "204800" ] || { echo "FAIL: the queued item must hold the whole 200 KB message"; exit 1; }
+  echo "PASS: test_a_200kb_batched_message_is_queued_whole"
+}
+
+test_a_200kb_send_with_a_pending_digest_is_still_rewritten() {
+  local bin_dir out outbox in; bin_dir="$(setup_fake_judge send)"; outbox="$(mktemp -d)"; in="$(mktemp)"
+  jq -nc --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{ts:$ts, agentType:"builder-a", to:"main", text:"queued one"}' > "$outbox/s1.jsonl"
+  big_message_input "$in"
+  out="$(PATH="$bin_dir:$PATH" AW_OUTBOX_DIR="$outbox" bash "$HOOK" < "$in")"
+  echo "$out" | jq -e '.hookSpecificOutput.updatedInput | .to == "main" and (.message | length > 204800) and (.message | endswith("queued one"))' > /dev/null \
+    || { echo "FAIL: expected updatedInput with the 200 KB message and the digest, got $(printf '%s' "$out" | head -c 200)"; exit 1; }
+  echo "PASS: test_a_200kb_send_with_a_pending_digest_is_still_rewritten"
+}
+
+test_a_200kb_message_still_reaches_wake_gate
+test_a_200kb_batched_message_is_queued_whole
+test_a_200kb_send_with_a_pending_digest_is_still_rewritten
 echo "All send-gate tests passed."

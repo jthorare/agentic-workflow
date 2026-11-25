@@ -29,7 +29,8 @@ public sealed class LinearHubMigrationTests : IDisposable
             Assert.Equal(1, _world.Count($"SELECT count(*) FROM sqlite_master WHERE type = 'index' AND name = '{index}'"));
         }
 
-        Assert.Equal(16, _world.Count("SELECT count(*) FROM pragma_table_info('linear_issue')"));
+        // The count is after every migration: 0036 adds state_name.
+        Assert.Equal(17, _world.Count("SELECT count(*) FROM pragma_table_info('linear_issue')"));
     }
 
     [Fact, Trait("Lane", "integration")]

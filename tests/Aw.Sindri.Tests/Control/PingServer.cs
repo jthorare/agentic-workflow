@@ -9,7 +9,7 @@ namespace Aw.Sindri.Tests.Control;
 
 /// <summary>
 /// A minimal loopback HTTP server for the probe: it answers every request with <see cref="Ping"/> as JSON, or, when
-/// silent, accepts connections and never answers.
+/// silent, accepts connections and never answers. A delay holds each answer that long first (a cold app on a loaded box).
 /// </summary>
 internal sealed class PingServer : IAsyncDisposable
 {
@@ -18,8 +18,11 @@ internal sealed class PingServer : IAsyncDisposable
     private readonly List<TcpClient> _held = [];
     private readonly Task _loop;
 
-    public PingServer(Ping? answer)
+    private readonly TimeSpan _delay;
+
+    public PingServer(Ping? answer, TimeSpan delay = default)
     {
+        _delay = delay;
         _listener.Start();
         _loop = Serve(answer);
     }
@@ -74,6 +77,7 @@ internal sealed class PingServer : IAsyncDisposable
     {
         var buffer = new byte[4096];
         _ = await stream.ReadAsync(buffer, _stop.Token);   // the request; its content doesn't matter here
+        await Task.Delay(_delay, _stop.Token);
         var body = AwJson.Serialize(answer, SliceHarness.Json);
         var head = Encoding.ASCII.GetBytes(string.Create(CultureInfo.InvariantCulture,
             $"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {body.Length}\r\nConnection: close\r\n\r\n"));

@@ -163,7 +163,7 @@ Aw.Meta.Core.Config.WorktreeConfig.BuildOutputs.get -> System.Collections.Generi
 Aw.Meta.Core.Config.WorktreeConfig.BuildOutputs.init -> void
 Aw.Meta.Core.Config.WorktreeConfig.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? Roots, out System.Collections.Generic.IReadOnlyList<string!>? BuildOutputs, out bool Enabled) -> void
 Aw.Meta.Core.Config.WorktreeConfig.EffectiveBuildOutputs.get -> System.Collections.Generic.IReadOnlyList<string!>!
-Aw.Meta.Core.Config.WorktreeConfig.EffectiveRoots(string! repo, string! gatesDirectory, string! home) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Meta.Core.Config.WorktreeConfig.EffectiveRoots(string! repo, string! gatesDirectory, string! home, string? repoRoot) -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Meta.Core.Config.WorktreeConfig.Enabled.get -> bool
 Aw.Meta.Core.Config.WorktreeConfig.Enabled.init -> void
 Aw.Meta.Core.Config.WorktreeConfig.Equals(Aw.Meta.Core.Config.WorktreeConfig? other) -> bool
@@ -228,20 +228,26 @@ Aw.Meta.Core.Coordination.MergeAssessment.Ready.get -> bool
 Aw.Meta.Core.Coordination.MergeAssessment.Team.get -> Aw.Meta.Core.Config.TeamConfig!
 Aw.Meta.Core.Coordination.MergeAssessment.Team.init -> void
 Aw.Meta.Core.Coordination.MergeQueueReader
-Aw.Meta.Core.Coordination.MergeQueueReader.MergeQueueReader(Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Ports.IKeyValueStore! values) -> void
-Aw.Meta.Core.Coordination.MergeQueueReader.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.QueuedPr!>!>!>
 Aw.Meta.Core.Coordination.MergeReadiness
 Aw.Meta.Core.Coordination.MergeReadiness.Assess(int pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Coordination.MergeAssessment!>!>
-Aw.Meta.Core.Coordination.MergeReadiness.MergeReadiness(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.ILogFiles! logs) -> void
+Aw.Meta.Core.Coordination.MergeReadiness.MergeReadiness(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.ILogFiles! logs, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Coordination.LaneAddress! addresses, Aw.Meta.Core.Coordination.InboxSync? sync = null) -> void
 Aw.Meta.Core.Coordination.MetaSession
 Aw.Meta.Core.Coordination.MetaSession.MetaSession(Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.ISessionDirectory! sessions) -> void
 Aw.Meta.Core.Coordination.MetaSession.Resolve(Aw.Meta.Core.Ids.SessionId session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Config.TeamConfig?>!>
 Aw.Meta.Core.Coordination.MetaSweep
-Aw.Meta.Core.Coordination.MetaSweep.MetaSweep(Aw.Meta.Core.Coordination.InboxSync! sync, Aw.Meta.Core.Coordination.LaneRefresher! refresher, Aw.Meta.Core.Coordination.ObligationReader! reader) -> void
+Aw.Meta.Core.Coordination.MetaSweep.MetaSweep(Aw.Meta.Core.Coordination.InboxSync! sync, Aw.Meta.Core.Coordination.LaneRefresher! refresher, Aw.Meta.Core.Coordination.ObligationReader! reader, Aw.Meta.Core.Coordination.LaneContextReader! context, Aw.Meta.Core.Ports.ILaneFiles! files, Aw.Meta.Core.Ports.IProcessLiveness! liveness) -> void
 Aw.Meta.Core.Coordination.MetaSweep.Run(string! transcript, Aw.Meta.Core.Config.TeamConfig! config, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Obligations.Obligation!>!>!>
+Aw.Meta.Core.Coordination.MetaSweep.RecycleWaiterRunning(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Meta.Core.Coordination.LaneBeats.RecordGaveUp(string! lane, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Coordination.LaneBeats.ClearGaveUp(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Coordination.RecycleGiveUps
+static Aw.Meta.Core.Coordination.RecycleGiveUps.With(string? stored, string! lane, System.DateTimeOffset at) -> string!
+static Aw.Meta.Core.Coordination.RecycleGiveUps.Without(string? stored, string! lane) -> string!
+static Aw.Meta.Core.Coordination.RecycleGiveUps.Line(string? stored, System.Collections.Generic.IReadOnlyCollection<string!>! teamLanes) -> string?
+const Aw.Meta.Core.KvKeys.RecycleGaveUp = "recycle.gave-up" -> string!
 Aw.Meta.Core.Coordination.ObligationReader
 Aw.Meta.Core.Coordination.ObligationReader.ObligationReader(Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.ILaneStore! lanes, Aw.Meta.Core.Ports.IOwnerStore! owner, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Ports.IKeyValueStore! values) -> void
-Aw.Meta.Core.Coordination.ObligationReader.Open(string! metaLane, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Obligations.Obligation!>!>!>
+Aw.Meta.Core.Coordination.ObligationReader.Open(string! metaLane, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken, Aw.Meta.Core.Lanes.LaneContext? metaContext = null, bool metaWaiter = false) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Obligations.Obligation!>!>!>
 Aw.Meta.Core.Coordination.PreparedGate
 Aw.Meta.Core.Coordination.PreparedGate.<Clone>$() -> Aw.Meta.Core.Coordination.PreparedGate!
 Aw.Meta.Core.Coordination.PreparedGate.Changed.get -> System.Collections.Generic.IReadOnlyList<string!>!
@@ -763,7 +769,6 @@ Aw.Meta.Core.Merge.MergeGate
 Aw.Meta.Core.Merge.QueueDrops
 Aw.Meta.Core.Merge.QueuedPr
 Aw.Meta.Core.Merge.QueuedPr.<Clone>$() -> Aw.Meta.Core.Merge.QueuedPr!
-Aw.Meta.Core.Merge.QueuedPr.Deconstruct(out int Pr, out string! From, out string! Gate) -> void
 Aw.Meta.Core.Merge.QueuedPr.Equals(Aw.Meta.Core.Merge.QueuedPr? other) -> bool
 Aw.Meta.Core.Merge.QueuedPr.From.get -> string!
 Aw.Meta.Core.Merge.QueuedPr.From.init -> void
@@ -771,7 +776,6 @@ Aw.Meta.Core.Merge.QueuedPr.Gate.get -> string!
 Aw.Meta.Core.Merge.QueuedPr.Gate.init -> void
 Aw.Meta.Core.Merge.QueuedPr.Pr.get -> int
 Aw.Meta.Core.Merge.QueuedPr.Pr.init -> void
-Aw.Meta.Core.Merge.QueuedPr.QueuedPr(int Pr, string! From, string! Gate) -> void
 Aw.Meta.Core.Messages.Classification
 Aw.Meta.Core.Messages.Classification.<Clone>$() -> Aw.Meta.Core.Messages.Classification!
 Aw.Meta.Core.Messages.Classification.Classification(Aw.Meta.Core.Messages.MessageKind Kind, int? Pr = null, string? Lane = null) -> void
@@ -801,6 +805,9 @@ Aw.Meta.Core.Messages.InboxMessage.FromName.init -> void
 Aw.Meta.Core.Messages.InboxMessage.Id.get -> Aw.Meta.Core.Ids.MessageId
 Aw.Meta.Core.Messages.InboxMessage.Id.init -> void
 Aw.Meta.Core.Messages.InboxMessage.InboxMessage(Aw.Meta.Core.Ids.MessageId Id, string! From, string! FromName, string! Body, System.DateTimeOffset At, Aw.Meta.Core.Messages.Classification! Class) -> void
+Aw.Meta.Core.Messages.InboxMessage.IsFromLane(string! session, string? address, System.StringComparison nameComparison) -> bool
+Aw.Meta.Core.Messages.InboxMessage.ShownAt.get -> System.DateTimeOffset?
+Aw.Meta.Core.Messages.InboxMessage.ShownAt.init -> void
 Aw.Meta.Core.Messages.InboxMessage.Resolution.get -> Aw.Meta.Core.Messages.MessageResolution?
 Aw.Meta.Core.Messages.InboxMessage.Resolution.init -> void
 Aw.Meta.Core.Messages.MessageClassifier
@@ -809,6 +816,7 @@ Aw.Meta.Core.Messages.MessageKind.LaneAnnounce = 4 -> Aw.Meta.Core.Messages.Mess
 Aw.Meta.Core.Messages.MessageKind.OwnerQuestion = 2 -> Aw.Meta.Core.Messages.MessageKind
 Aw.Meta.Core.Messages.MessageKind.Ready = 3 -> Aw.Meta.Core.Messages.MessageKind
 Aw.Meta.Core.Messages.MessageKind.Request = 1 -> Aw.Meta.Core.Messages.MessageKind
+Aw.Meta.Core.Messages.MessagePreview
 Aw.Meta.Core.Messages.MessageResolution
 Aw.Meta.Core.Messages.MessageResolution.<Clone>$() -> Aw.Meta.Core.Messages.MessageResolution!
 Aw.Meta.Core.Messages.MessageResolution.Deconstruct(out Aw.Meta.Core.Messages.MessageResolutionKind Kind, out string! Reason, out System.DateTimeOffset? Until) -> void
@@ -873,7 +881,7 @@ Aw.Meta.Core.Messages.TranscriptRecordParser
 Aw.Meta.Core.MetaErrors
 Aw.Meta.Core.MetaPaths
 Aw.Meta.Core.MetaPaths.<Clone>$() -> Aw.Meta.Core.MetaPaths!
-Aw.Meta.Core.MetaPaths.Deconstruct(out string! StateDirectory, out string! GatesDirectory, out string? Heavy, out string! Gh, out string! Home) -> void
+Aw.Meta.Core.MetaPaths.Deconstruct(out string! StateDirectory, out string! GatesDirectory, out string? Heavy, out string! Gh, out string! Home, out string! UserConfig, out string? Reserve, out string? Toolkit) -> void
 Aw.Meta.Core.MetaPaths.Equals(Aw.Meta.Core.MetaPaths? other) -> bool
 Aw.Meta.Core.MetaPaths.GateDirectory(int pr) -> string!
 Aw.Meta.Core.MetaPaths.GatesDirectory.get -> string!
@@ -884,9 +892,15 @@ Aw.Meta.Core.MetaPaths.Heavy.get -> string?
 Aw.Meta.Core.MetaPaths.Heavy.init -> void
 Aw.Meta.Core.MetaPaths.Home.get -> string!
 Aw.Meta.Core.MetaPaths.Home.init -> void
-Aw.Meta.Core.MetaPaths.MetaPaths(string! StateDirectory, string! GatesDirectory, string? Heavy, string! Gh, string! Home = "") -> void
+Aw.Meta.Core.MetaPaths.MetaPaths(string! StateDirectory, string! GatesDirectory, string? Heavy, string! Gh, string! Home = "", string! UserConfig = "", string? Reserve = null, string? Toolkit = null) -> void
 Aw.Meta.Core.MetaPaths.StateDirectory.get -> string!
+Aw.Meta.Core.MetaPaths.UserConfig.get -> string!
+Aw.Meta.Core.MetaPaths.UserConfig.init -> void
 Aw.Meta.Core.MetaPaths.StateDirectory.init -> void
+Aw.Meta.Core.MetaPaths.Reserve.get -> string?
+Aw.Meta.Core.MetaPaths.Reserve.init -> void
+Aw.Meta.Core.MetaPaths.Toolkit.get -> string?
+Aw.Meta.Core.MetaPaths.Toolkit.init -> void
 Aw.Meta.Core.Obligations.MergeRecord
 Aw.Meta.Core.Obligations.MergeRecord.<Clone>$() -> Aw.Meta.Core.Obligations.MergeRecord!
 Aw.Meta.Core.Obligations.MergeRecord.At.get -> System.DateTimeOffset
@@ -926,6 +940,10 @@ Aw.Meta.Core.Obligations.ObligationFacts.Lanes.get -> Aw.Meta.Core.Lanes.LaneMap
 Aw.Meta.Core.Obligations.ObligationFacts.Lanes.init -> void
 Aw.Meta.Core.Obligations.ObligationFacts.LatestMerge.get -> Aw.Meta.Core.Obligations.MergeRecord?
 Aw.Meta.Core.Obligations.ObligationFacts.LatestMerge.init -> void
+Aw.Meta.Core.Obligations.ObligationFacts.MetaContext.get -> Aw.Meta.Core.Lanes.LaneContext?
+Aw.Meta.Core.Obligations.ObligationFacts.MetaContext.init -> void
+Aw.Meta.Core.Obligations.ObligationFacts.MetaWaiter.get -> bool
+Aw.Meta.Core.Obligations.ObligationFacts.MetaWaiter.init -> void
 Aw.Meta.Core.Obligations.ObligationFacts.Messages.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>!
 Aw.Meta.Core.Obligations.ObligationFacts.Messages.init -> void
 Aw.Meta.Core.Obligations.ObligationFacts.MetaLane.get -> string!
@@ -941,6 +959,7 @@ Aw.Meta.Core.Obligations.ObligationKind
 Aw.Meta.Core.Obligations.ObligationKind.AnnounceMain = 3 -> Aw.Meta.Core.Obligations.ObligationKind
 Aw.Meta.Core.Obligations.ObligationKind.BroadcastLanes = 2 -> Aw.Meta.Core.Obligations.ObligationKind
 Aw.Meta.Core.Obligations.ObligationKind.RearmWatch = 5 -> Aw.Meta.Core.Obligations.ObligationKind
+Aw.Meta.Core.Obligations.ObligationKind.RecycleSelf = 6 -> Aw.Meta.Core.Obligations.ObligationKind
 Aw.Meta.Core.Obligations.ObligationKind.RelayOwner = 4 -> Aw.Meta.Core.Obligations.ObligationKind
 Aw.Meta.Core.Obligations.ObligationKind.Reply = 1 -> Aw.Meta.Core.Obligations.ObligationKind
 Aw.Meta.Core.Obligations.OwnerAnswer
@@ -1017,8 +1036,10 @@ Aw.Meta.Core.Ports.ILogFiles.Tail(string! path, int maxCharacters, System.Thread
 Aw.Meta.Core.Ports.IMessageStore
 Aw.Meta.Core.Ports.IMessageStore.Messages(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>!>!>
 Aw.Meta.Core.Ports.IMessageStore.Offset(string! transcript, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
+Aw.Meta.Core.Ports.IMessageStore.Transcripts(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
 Aw.Meta.Core.Ports.IMessageStore.RecordInbound(string! transcript, long offset, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>! messages, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Ids.MessageId>!>!>
 Aw.Meta.Core.Ports.IMessageStore.RecordOutbound(Aw.Meta.Core.Messages.Outbound! sent, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Ports.IMessageStore.MarkShown(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Ids.MessageId>! ids, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.IMessageStore.Resolve(Aw.Meta.Core.Ids.MessageId id, Aw.Meta.Core.Messages.MessageResolution! resolution, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.IMessageStore.Role(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Messages.MetaRole?>!>
 Aw.Meta.Core.Ports.IMessageStore.Sent(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.Outbound!>!>!>
@@ -1045,7 +1066,11 @@ Aw.Meta.Core.Ports.ITeamCatalog.List(System.Threading.CancellationToken cancella
 Aw.Meta.Core.Ports.ITeamCatalog.Migrate(bool dryRun, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ports.TeamMigration!>!>
 Aw.Meta.Core.Ports.ITranscriptReader
 Aw.Meta.Core.Ports.ITranscriptReader.ReadFrom(string! path, long offset, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Messages.TranscriptChunk!>!>
+Aw.Meta.Core.Config.WorktreeRoot
+static Aw.Meta.Core.Config.WorktreeRoot.Resolve(string? configured, string! repo, string! home) -> Aw.Kernel.Result<string!>!
+static Aw.Meta.Core.Worktrees.RepoWorktreeRoot.ResolveOrNull(Aw.Meta.Core.Ports.IWorktreeFiles! files, string! repo, string! home, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
 Aw.Meta.Core.Ports.IWorktreeFiles
+Aw.Meta.Core.Ports.IWorktreeFiles.ConfiguredRoot(string! repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
 Aw.Meta.Core.Ports.IWorktreeFiles.NewestChange(string! directory, System.Collections.Generic.IReadOnlyCollection<string!>! skipNames, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset>!>
 Aw.Meta.Core.Ports.ProcessLocation
 Aw.Meta.Core.Ports.ProcessLocation.<Clone>$() -> Aw.Meta.Core.Ports.ProcessLocation!
@@ -1272,6 +1297,8 @@ const Aw.Meta.Core.KvKeys.WatchResources = "watch.resources" -> string!
 const Aw.Meta.Core.KvKeys.WorktreesLast = "worktrees.last" -> string!
 const Aw.Meta.Core.KvKeys.WorktreesPending = "worktrees.pending-prs" -> string!
 const Aw.Meta.Core.KvKeys.WorktreesSweepStart = "worktrees.sweep-start" -> string!
+const Aw.Meta.Core.KvKeys.WorktreesSweepStartPrefix = "worktrees.sweep-start." -> string!
+static Aw.Meta.Core.KvKeys.WorktreesPathSweepStart(string! path) -> string!
 const Aw.Meta.Core.Lanes.LaneAgent.ClaudeCode = "claude-code" -> string!
 const Aw.Meta.Core.Obligations.MergeRecord.Unknown = "unknown" -> string!
 override Aw.Meta.Core.Commands.CommandRequest.Equals(object? obj) -> bool
@@ -1677,6 +1704,7 @@ static Aw.Meta.Core.Messages.InboxMessage.Of(Aw.Meta.Core.Messages.PeerMessage! 
 static Aw.Meta.Core.Messages.InboxMessage.operator !=(Aw.Meta.Core.Messages.InboxMessage? left, Aw.Meta.Core.Messages.InboxMessage? right) -> bool
 static Aw.Meta.Core.Messages.InboxMessage.operator ==(Aw.Meta.Core.Messages.InboxMessage? left, Aw.Meta.Core.Messages.InboxMessage? right) -> bool
 static Aw.Meta.Core.Messages.MessageClassifier.Classify(string! body) -> Aw.Meta.Core.Messages.Classification!
+static Aw.Meta.Core.Messages.MessagePreview.Of(string! body) -> string!
 static Aw.Meta.Core.Messages.MessageResolution.operator !=(Aw.Meta.Core.Messages.MessageResolution? left, Aw.Meta.Core.Messages.MessageResolution? right) -> bool
 static Aw.Meta.Core.Messages.MessageResolution.operator ==(Aw.Meta.Core.Messages.MessageResolution? left, Aw.Meta.Core.Messages.MessageResolution? right) -> bool
 static Aw.Meta.Core.Messages.MetaRole.operator !=(Aw.Meta.Core.Messages.MetaRole? left, Aw.Meta.Core.Messages.MetaRole? right) -> bool
@@ -1817,8 +1845,6 @@ Aw.Meta.Core.Commands.CommandRequest.UnsetEnv.get -> System.Collections.Generic.
 Aw.Meta.Core.Commands.CommandRequest.UnsetEnv.init -> void
 Aw.Meta.Core.Coordination.GateWorkspace.RerunLogPath(int pr, int run, string! step, string! test, string! where) -> string!
 static Aw.Meta.Core.Gate.GatePriority.Scrubbed.get -> System.Collections.Generic.IReadOnlyList<string!>!
-Aw.Meta.Core.Config.GateConfig.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Always, out System.Collections.Generic.IReadOnlyList<string!>! DocsOnly, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Meta.Core.Config.ScopeConfig!>! Scopes, out int? ParallelSteps) -> void
-Aw.Meta.Core.Config.GateConfig.GateConfig(System.Collections.Generic.IReadOnlyList<string!>! Always, System.Collections.Generic.IReadOnlyList<string!>! DocsOnly, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Meta.Core.Config.ScopeConfig!>! Scopes, int? ParallelSteps = null) -> void
 Aw.Meta.Core.Config.GateConfig.ParallelSteps.get -> int?
 Aw.Meta.Core.Config.GateConfig.ParallelSteps.init -> void
 Aw.Meta.Core.Config.StepConfig.After.get -> System.Collections.Generic.IReadOnlyList<string!>?
@@ -1930,7 +1956,6 @@ static Aw.Meta.Core.Coordination.TrainCandidates.operator !=(Aw.Meta.Core.Coordi
 static Aw.Meta.Core.Coordination.TrainCandidates.operator ==(Aw.Meta.Core.Coordination.TrainCandidates? left, Aw.Meta.Core.Coordination.TrainCandidates? right) -> bool
 Aw.Meta.Core.Coordination.TrainSelection
 Aw.Meta.Core.Coordination.TrainSelection.Choose(System.Collections.Generic.IReadOnlyList<int>! named, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Coordination.TrainCandidates!>!>
-Aw.Meta.Core.Coordination.TrainSelection.TrainSelection(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Coordination.MergeQueueReader! queue) -> void
 Aw.Meta.Core.Coordination.GateStepRunner.Run(Aw.Meta.Core.Config.StepConfig! step, string! tree, string! log, int heavySlots, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Gate.GateStep!>!>
 const Aw.Meta.Core.Gate.GatePriority.LockTimeout = 75 -> int
 const Aw.Meta.Core.Gate.GatePriority.SessionSlots = "AW_SESSION_HEAVY_SLOTS" -> string!
@@ -1963,7 +1988,7 @@ Aw.Meta.Core.Coordination.LaneContextReader.Read(Aw.Meta.Core.Config.TeamConfig!
 Aw.Meta.Core.Coordination.LaneContextReader.ReadLane(string! team, string! lane, int threshold, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Lanes.LaneContext!>!>
 Aw.Meta.Core.Coordination.PaneSubmitter
 Aw.Meta.Core.Coordination.PaneSubmitter.PaneSubmitter(Aw.Meta.Core.Ports.ILanePane! pane, Aw.Meta.Core.Ports.IDelay! delay) -> void
-Aw.Meta.Core.Coordination.PaneSubmitter.Submit(string! session, string! line, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Coordination.PaneSubmitter.Submit(string! session, string! line, System.Threading.CancellationToken cancellationToken, bool exact = false) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Lanes.ContextVerdict
 Aw.Meta.Core.Lanes.ContextVerdict.Ok = 1 -> Aw.Meta.Core.Lanes.ContextVerdict
 Aw.Meta.Core.Lanes.ContextVerdict.Recycle = 2 -> Aw.Meta.Core.Lanes.ContextVerdict
@@ -2005,6 +2030,7 @@ Aw.Meta.Core.Ports.IClaudeTranscripts.Tail(Aw.Meta.Core.Ids.SessionId session, i
 Aw.Meta.Core.Ports.IDigestFiles
 Aw.Meta.Core.Ports.IDigestFiles.Stat(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ports.DigestInfo?>!>
 Aw.Meta.Core.Ports.ILaneFiles.RecordSession(string! lane, Aw.Meta.Core.Ids.SessionId session, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Ports.ILanePane.ClearInput(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.ILanePane.Capture(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Meta.Core.Ports.ILanePane.PanePid(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int?>!>
 Aw.Meta.Core.Ports.ILanePane.PressEnter(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
@@ -2026,6 +2052,8 @@ Aw.Meta.Core.Watch.ContextWatch
 const Aw.Meta.Core.Coordination.LaneContextReader.TailBytes = 1048576 -> int
 const Aw.Meta.Core.Coordination.PaneSubmitter.Retries = 3 -> int
 const Aw.Meta.Core.KvKeys.WatchContext = "watch.context" -> string!
+const Aw.Meta.Core.KvKeys.WatchLanes = "watch.lanes" -> string!
+const Aw.Meta.Core.KvKeys.WatchStatus = "watch.status" -> string!
 override Aw.Meta.Core.Config.ContextConfig.Equals(object? obj) -> bool
 override Aw.Meta.Core.Config.ContextConfig.GetHashCode() -> int
 override Aw.Meta.Core.Config.ContextConfig.ToString() -> string!
@@ -2058,7 +2086,6 @@ static readonly Aw.Meta.Core.MetaErrors.BoardContended -> Aw.Kernel.ErrorDefinit
 Aw.Meta.Core.Coordination.LaneContextReader.ReadOrNull(Aw.Meta.Core.Config.TeamConfig? team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Lanes.LaneContext!>?>
 Aw.Meta.Core.Config.TeamConfig.Agent.get -> string?
 Aw.Meta.Core.Config.TeamConfig.Agent.init -> void
-Aw.Meta.Core.Config.TeamConfig.TeamConfig(string! team, string! repo, System.Collections.Generic.IReadOnlyList<string!>! lanes, string! metaLane = "meta", string? log = null, string? prompts = null, Aw.Meta.Core.Config.GateConfig? gate = null, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Config.MergeOrderRule!>? mergeOrder = null, System.Collections.Generic.IReadOnlyList<string!>? knownFlakes = null, Aw.Meta.Core.Config.WorktreeConfig? worktrees = null, Aw.Meta.Core.Config.ResourcesConfig? resources = null, Aw.Meta.Core.Config.BuildersConfig? builders = null, Aw.Meta.Core.Config.HeavyConfig? heavy = null, Aw.Meta.Core.Config.ContextConfig? context = null, Aw.Meta.Core.Config.UsageConfig? usage = null, string? agent = null) -> void
 Aw.Meta.Core.Config.TeamConfig.Usage.get -> Aw.Meta.Core.Config.UsageConfig!
 Aw.Meta.Core.Config.TeamConfig.Usage.init -> void
 Aw.Meta.Core.Config.UsageConfig
@@ -2125,7 +2152,6 @@ Aw.Meta.Core.Usage.UsageStop.UsageStop(Aw.Meta.Core.Usage.UsageKind Kind, System
 Aw.Meta.Core.Usage.UsageWatch
 Aw.Meta.Core.Usage.UsageWatcher
 Aw.Meta.Core.Usage.UsageWatcher.Tick(Aw.Meta.Core.Config.TeamConfig! team, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Usage.UsageReading!>! readings, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string!>!>
-Aw.Meta.Core.Usage.UsageWatcher.UsageWatcher(Aw.Meta.Core.Coordination.PaneSubmitter! pane, Aw.Meta.Core.Ports.IRunningLog! log, Aw.Meta.Core.Ports.IKeyValueStore! values, System.TimeProvider! clock) -> void
 const Aw.Meta.Core.Usage.UsageReader.TailBytes = 262144 -> int
 const Aw.Meta.Core.Usage.UsageWatch.Meta = "meta" -> string!
 const Aw.Meta.Core.Usage.UsageWatch.MetaWake = "USAGE OK meta: resume your subagents (SendMessage them) and re-arm the watch" -> string!
@@ -2142,6 +2168,8 @@ static Aw.Meta.Core.Usage.UsageStop.operator !=(Aw.Meta.Core.Usage.UsageStop? le
 static Aw.Meta.Core.Usage.UsageStop.operator ==(Aw.Meta.Core.Usage.UsageStop? left, Aw.Meta.Core.Usage.UsageStop? right) -> bool
 Aw.Meta.Core.Ports.BugfixCandidate
 Aw.Meta.Core.Ports.BugfixCandidate.<Clone>$() -> Aw.Meta.Core.Ports.BugfixCandidate!
+Aw.Meta.Core.Ports.BugfixCandidate.Baseline.get -> bool
+Aw.Meta.Core.Ports.BugfixCandidate.Baseline.init -> void
 Aw.Meta.Core.Ports.BugfixCandidate.Branch.get -> string!
 Aw.Meta.Core.Ports.BugfixCandidate.Branch.init -> void
 Aw.Meta.Core.Ports.BugfixCandidate.BugfixCandidate(string! Run, string! Candidate, string! Worktree, string! Branch, string! Commit, bool Evaluated, bool Resolves, bool Finished, string? ResolvedBy) -> void
@@ -2155,6 +2183,8 @@ Aw.Meta.Core.Ports.BugfixCandidate.Evaluated.get -> bool
 Aw.Meta.Core.Ports.BugfixCandidate.Evaluated.init -> void
 Aw.Meta.Core.Ports.BugfixCandidate.Finished.get -> bool
 Aw.Meta.Core.Ports.BugfixCandidate.Finished.init -> void
+Aw.Meta.Core.Ports.BugfixCandidate.Issue.get -> int?
+Aw.Meta.Core.Ports.BugfixCandidate.Issue.init -> void
 Aw.Meta.Core.Ports.BugfixCandidate.ResolvedBy.get -> string?
 Aw.Meta.Core.Ports.BugfixCandidate.ResolvedBy.init -> void
 Aw.Meta.Core.Ports.BugfixCandidate.Resolves.get -> bool
@@ -2212,7 +2242,7 @@ static Aw.Meta.Core.Coordination.LaneHealthOptions.operator !=(Aw.Meta.Core.Coor
 static Aw.Meta.Core.Coordination.LaneHealthOptions.operator ==(Aw.Meta.Core.Coordination.LaneHealthOptions? left, Aw.Meta.Core.Coordination.LaneHealthOptions? right) -> bool
 Aw.Meta.Core.Coordination.InboxCounts
 Aw.Meta.Core.Coordination.InboxCounts.InboxCounts(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Coordination.ObligationReader! reader, System.TimeProvider! clock) -> void
-Aw.Meta.Core.Coordination.InboxCounts.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<(int Total, int Open)>!>
+Aw.Meta.Core.Coordination.InboxCounts.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<(int Total, int Open, System.Collections.Generic.IReadOnlyList<(string! Id, string! Lane)>! Status)>!>
 const Aw.Meta.Core.Messages.InboxState.Open = "open" -> string!
 static Aw.Meta.Core.Messages.InboxState.IsDeferred(Aw.Meta.Core.Messages.InboxMessage! message, System.DateTimeOffset now) -> bool
 static Aw.Meta.Core.Messages.InboxState.Of(Aw.Meta.Core.Messages.InboxMessage! message, bool owed, System.DateTimeOffset now) -> string!
@@ -2439,8 +2469,529 @@ const Aw.Meta.Core.KvKeys.BoardMain = "board.main" -> string!
 const Aw.Meta.Core.KvKeys.BoardSeenPrefix = "board.seen." -> string!
 Aw.Meta.Core.Messages.NoticeRule
 static Aw.Meta.Core.Messages.NoticeRule.IsNotice(string! body) -> bool
+static Aw.Meta.Core.Messages.NoticeRule.IsStatusTagged(string! body) -> bool
+const Aw.Meta.Core.Messages.NoticeRule.StatusAskText = "aw-meta: warning: this STATUS: message holds a \"?\", but nobody answers a status line. If you need an answer, send it again as ACTION:." -> string!
+static Aw.Meta.Core.Messages.NoticeRule.StatusAskWarning(string! body) -> string?
+static Aw.Meta.Core.Messages.NoticeRule.StripSender(string! text) -> string!
+static Aw.Meta.Core.Messages.NoticeRule.StripTag(string! text) -> string!
+static Aw.Meta.Core.Messages.NoticeRule.UntaggedIsStatus.get -> bool
 const Aw.Meta.Core.Messages.InboxState.Settled = "settled" -> string!
 Aw.Meta.Core.Ports.ILaneFiles.Waiter(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<(int Pid, System.DateTimeOffset StartedAt)?>!>
 Aw.Meta.Core.Ports.ILaneFiles.RecordWaiter(string! lane, (int Pid, System.DateTimeOffset StartedAt)? waiter, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.IWaiterLauncher
 Aw.Meta.Core.Ports.IWaiterLauncher.Start(System.Collections.Generic.IReadOnlyList<string!>! argv, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+const Aw.Meta.Core.KvKeys.WatchSnapshot = "watch.snapshot" -> string!
+const Aw.Meta.Core.KvKeys.WatchFailing = "watch.failing" -> string!
+const Aw.Meta.Core.KvKeys.WatchOwner = "watch.owner" -> string!
+Aw.Meta.Core.Watch.WatchMemory
+static Aw.Meta.Core.Watch.WatchMemory.Format(string! repo, Aw.Meta.Core.Watch.WatchState! state) -> string!
+static Aw.Meta.Core.Watch.WatchMemory.Parse(string? text, string! repo, Aw.Meta.Core.Watch.WatchResources! resources) -> Aw.Meta.Core.Watch.WatchState!
+Aw.Meta.Core.Config.ReviewConfig
+Aw.Meta.Core.Config.ReviewConfig.<Clone>$() -> Aw.Meta.Core.Config.ReviewConfig!
+Aw.Meta.Core.Config.ReviewConfig.Deconstruct(out string! Lane, out string! Mode) -> void
+Aw.Meta.Core.Config.ReviewConfig.Equals(Aw.Meta.Core.Config.ReviewConfig? other) -> bool
+Aw.Meta.Core.Config.ReviewConfig.Lane.get -> string!
+Aw.Meta.Core.Config.ReviewConfig.Lane.init -> void
+Aw.Meta.Core.Config.ReviewConfig.ReviewConfig(string! Lane, string! Mode = "ok") -> void
+Aw.Meta.Core.Config.ReviewConfig.Mode.get -> string!
+Aw.Meta.Core.Config.ReviewConfig.Mode.init -> void
+Aw.Meta.Core.Config.ReviewConfig.IsCounts.get -> bool
+const Aw.Meta.Core.Config.ReviewConfig.OkMode = "ok" -> string!
+const Aw.Meta.Core.Config.ReviewConfig.CountsMode = "counts" -> string!
+Aw.Meta.Core.Merge.ReviewFacts.Hold.get -> string?
+Aw.Meta.Core.Merge.ReviewFacts.Hold.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.CountsMode.get -> bool
+Aw.Meta.Core.Merge.ReviewFacts.CountsMode.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.BuildOnly.get -> bool
+Aw.Meta.Core.Merge.ReviewFacts.BuildOnly.init -> void
+Aw.Meta.Core.Config.TeamConfig.Review.get -> Aw.Meta.Core.Config.ReviewConfig?
+Aw.Meta.Core.Config.TeamConfig.Review.init -> void
+Aw.Meta.Core.Config.TeamConfig.TeamConfig(string! team, string! repo, System.Collections.Generic.IReadOnlyList<string!>! lanes, string! metaLane = "meta", string? log = null, string? prompts = null, Aw.Meta.Core.Config.GateConfig? gate = null, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Config.MergeOrderRule!>? mergeOrder = null, System.Collections.Generic.IReadOnlyList<string!>? knownFlakes = null, Aw.Meta.Core.Config.WorktreeConfig? worktrees = null, Aw.Meta.Core.Config.ResourcesConfig? resources = null, Aw.Meta.Core.Config.BuildersConfig? builders = null, Aw.Meta.Core.Config.HeavyConfig? heavy = null, Aw.Meta.Core.Config.ContextConfig? context = null, Aw.Meta.Core.Config.UsageConfig? usage = null, string? agent = null, Aw.Meta.Core.Config.ReviewConfig? review = null) -> void
+Aw.Meta.Core.Merge.CountLine
+Aw.Meta.Core.Merge.CountLine.<Clone>$() -> Aw.Meta.Core.Merge.CountLine!
+Aw.Meta.Core.Merge.CountLine.CountLine(int Passed, int Skipped, int Failed) -> void
+Aw.Meta.Core.Merge.CountLine.Deconstruct(out int Passed, out int Skipped, out int Failed) -> void
+Aw.Meta.Core.Merge.CountLine.Equals(Aw.Meta.Core.Merge.CountLine? other) -> bool
+Aw.Meta.Core.Merge.CountLine.Failed.get -> int
+Aw.Meta.Core.Merge.CountLine.Failed.init -> void
+Aw.Meta.Core.Merge.CountLine.Passed.get -> int
+Aw.Meta.Core.Merge.CountLine.Passed.init -> void
+Aw.Meta.Core.Merge.CountLine.Skipped.get -> int
+Aw.Meta.Core.Merge.CountLine.Skipped.init -> void
+Aw.Meta.Core.Merge.MergeFacts.Review.get -> Aw.Meta.Core.Merge.ReviewFacts?
+Aw.Meta.Core.Merge.MergeFacts.Review.init -> void
+Aw.Meta.Core.Merge.ReviewFacts
+Aw.Meta.Core.Merge.ReviewFacts.<Clone>$() -> Aw.Meta.Core.Merge.ReviewFacts!
+Aw.Meta.Core.Merge.ReviewFacts.Counts.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.CountLine!>!
+Aw.Meta.Core.Merge.ReviewFacts.Counts.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.Equals(Aw.Meta.Core.Merge.ReviewFacts? other) -> bool
+Aw.Meta.Core.Merge.ReviewFacts.OkSha.get -> string?
+Aw.Meta.Core.Merge.ReviewFacts.OkSha.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.QaNotYet.get -> bool
+Aw.Meta.Core.Merge.ReviewFacts.QaNotYet.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.QaSha.get -> string?
+Aw.Meta.Core.Merge.ReviewFacts.QaSha.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.ReadySha.get -> string?
+Aw.Meta.Core.Merge.ReviewFacts.ReadySha.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.Reviewer.get -> string!
+Aw.Meta.Core.Merge.ReviewFacts.Reviewer.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.ReviewFacts() -> void
+Aw.Meta.Core.Merge.ReviewProof
+override Aw.Meta.Core.Config.ReviewConfig.Equals(object? obj) -> bool
+override Aw.Meta.Core.Config.ReviewConfig.GetHashCode() -> int
+override Aw.Meta.Core.Config.ReviewConfig.ToString() -> string!
+override Aw.Meta.Core.Merge.CountLine.Equals(object? obj) -> bool
+override Aw.Meta.Core.Merge.CountLine.GetHashCode() -> int
+override Aw.Meta.Core.Merge.CountLine.ToString() -> string!
+override Aw.Meta.Core.Merge.ReviewFacts.Equals(object? obj) -> bool
+override Aw.Meta.Core.Merge.ReviewFacts.GetHashCode() -> int
+override Aw.Meta.Core.Merge.ReviewFacts.ToString() -> string!
+static Aw.Meta.Core.Config.ReviewConfig.operator !=(Aw.Meta.Core.Config.ReviewConfig? left, Aw.Meta.Core.Config.ReviewConfig? right) -> bool
+static Aw.Meta.Core.Config.ReviewConfig.operator ==(Aw.Meta.Core.Config.ReviewConfig? left, Aw.Meta.Core.Config.ReviewConfig? right) -> bool
+static Aw.Meta.Core.Merge.CountLine.operator !=(Aw.Meta.Core.Merge.CountLine? left, Aw.Meta.Core.Merge.CountLine? right) -> bool
+static Aw.Meta.Core.Merge.CountLine.operator ==(Aw.Meta.Core.Merge.CountLine? left, Aw.Meta.Core.Merge.CountLine? right) -> bool
+static Aw.Meta.Core.Merge.ReviewFacts.operator !=(Aw.Meta.Core.Merge.ReviewFacts? left, Aw.Meta.Core.Merge.ReviewFacts? right) -> bool
+static Aw.Meta.Core.Merge.ReviewFacts.operator ==(Aw.Meta.Core.Merge.ReviewFacts? left, Aw.Meta.Core.Merge.ReviewFacts? right) -> bool
+static Aw.Meta.Core.Merge.ReviewProof.Collect(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>! messages, string! reviewer, int pr, string? address) -> Aw.Meta.Core.Merge.ReviewFacts!
+static Aw.Meta.Core.Merge.ReviewProof.Counts(string! body) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.CountLine!>!
+static Aw.Meta.Core.Merge.ReviewProof.IsHead(string? sha, string! head) -> bool
+static Aw.Meta.Core.Merge.ReviewProof.ReadySha(string! body) -> string?
+Aw.Meta.Core.Config.GateConfig.GateConfig(System.Collections.Generic.IReadOnlyList<string!>? always = null, System.Collections.Generic.IReadOnlyList<string!>? docsOnly = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Meta.Core.Config.ScopeConfig!>? scopes = null, int? parallelSteps = null, string! mode = "local") -> void
+Aw.Meta.Core.Config.GateConfig.IsCi.get -> bool
+Aw.Meta.Core.Config.GateConfig.Mode.get -> string!
+Aw.Meta.Core.Config.GateConfig.Mode.init -> void
+Aw.Meta.Core.Merge.MergeFacts.CiGate.get -> bool
+Aw.Meta.Core.Merge.MergeFacts.CiGate.init -> void
+Aw.Meta.Core.Merge.MergeFacts.LiveError.get -> string?
+Aw.Meta.Core.Merge.MergeFacts.LiveError.init -> void
+Aw.Meta.Core.Merge.MergeFacts.LiveMergeState.get -> string?
+Aw.Meta.Core.Merge.MergeFacts.LiveMergeState.init -> void
+Aw.Meta.Core.Merge.MergeFacts.LiveReviewDecision.get -> string?
+Aw.Meta.Core.Merge.MergeFacts.LiveReviewDecision.init -> void
+const Aw.Meta.Core.Config.GateConfig.CiMode = "ci" -> string!
+const Aw.Meta.Core.Config.GateConfig.CiScope = "ci" -> string!
+const Aw.Meta.Core.Config.GateConfig.LocalMode = "local" -> string!
+Aw.Meta.Core.Coordination.RepoCommands.CiView(string! repo, int pr) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Github.PrCiState!>!>
+Aw.Meta.Core.Coordination.RepoCommands.RequiredChecks(string! repo, int pr) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>!>!>
+Aw.Meta.Core.Gate.CiGate
+Aw.Meta.Core.Github.PrCiState
+Aw.Meta.Core.Github.PrCiState.<Clone>$() -> Aw.Meta.Core.Github.PrCiState!
+Aw.Meta.Core.Github.PrCiState.Base.get -> string!
+Aw.Meta.Core.Github.PrCiState.Base.init -> void
+Aw.Meta.Core.Github.PrCiState.Deconstruct(out string! Head, out string! Base, out string! ReviewDecision, out string! MergeState) -> void
+Aw.Meta.Core.Github.PrCiState.Equals(Aw.Meta.Core.Github.PrCiState? other) -> bool
+Aw.Meta.Core.Github.PrCiState.Head.get -> string!
+Aw.Meta.Core.Github.PrCiState.Head.init -> void
+Aw.Meta.Core.Github.PrCiState.MergeState.get -> string!
+Aw.Meta.Core.Github.PrCiState.MergeState.init -> void
+Aw.Meta.Core.Github.PrCiState.PrCiState(string! Head, string! Base, string! ReviewDecision, string! MergeState) -> void
+Aw.Meta.Core.Github.PrCiState.ReviewDecision.get -> string!
+Aw.Meta.Core.Github.PrCiState.ReviewDecision.init -> void
+Aw.Meta.Core.Github.RequiredCheck
+Aw.Meta.Core.Github.RequiredCheck.<Clone>$() -> Aw.Meta.Core.Github.RequiredCheck!
+Aw.Meta.Core.Github.RequiredCheck.Bucket.get -> string!
+Aw.Meta.Core.Github.RequiredCheck.Bucket.init -> void
+Aw.Meta.Core.Github.RequiredCheck.Deconstruct(out string! Name, out string! State, out string! Bucket) -> void
+Aw.Meta.Core.Github.RequiredCheck.Equals(Aw.Meta.Core.Github.RequiredCheck? other) -> bool
+Aw.Meta.Core.Github.RequiredCheck.Name.get -> string!
+Aw.Meta.Core.Github.RequiredCheck.Name.init -> void
+Aw.Meta.Core.Github.RequiredCheck.RequiredCheck(string! Name, string! State, string! Bucket) -> void
+Aw.Meta.Core.Github.RequiredCheck.State.get -> string!
+Aw.Meta.Core.Github.RequiredCheck.State.init -> void
+const Aw.Meta.Core.Gate.CiGate.MergeStateStep = "merge-state" -> string!
+const Aw.Meta.Core.Gate.CiGate.ReviewStep = "review" -> string!
+override Aw.Meta.Core.Github.PrCiState.Equals(object? obj) -> bool
+override Aw.Meta.Core.Github.PrCiState.GetHashCode() -> int
+override Aw.Meta.Core.Github.PrCiState.ToString() -> string!
+override Aw.Meta.Core.Github.RequiredCheck.Equals(object? obj) -> bool
+override Aw.Meta.Core.Github.RequiredCheck.GetHashCode() -> int
+override Aw.Meta.Core.Github.RequiredCheck.ToString() -> string!
+static Aw.Meta.Core.Gate.CiGate.IsCiRecord(Aw.Meta.Core.Gate.GateRecord! gate) -> bool
+static Aw.Meta.Core.Gate.CiGate.Overall(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Gate.GateStep!>! steps) -> Aw.Meta.Core.Gate.GateVerdict
+static Aw.Meta.Core.Gate.CiGate.Steps(Aw.Meta.Core.Github.PrCiState! pull, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>! checks) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Gate.GateStep!>!
+static Aw.Meta.Core.Github.GhJson.Checks(string! json) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>?
+static Aw.Meta.Core.Github.GhJson.ChecksFromText(string! text) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>?
+static Aw.Meta.Core.Github.GhJson.CiView(string! json) -> Aw.Meta.Core.Github.PrCiState?
+static Aw.Meta.Core.Github.PrCiState.operator !=(Aw.Meta.Core.Github.PrCiState? left, Aw.Meta.Core.Github.PrCiState? right) -> bool
+static Aw.Meta.Core.Github.PrCiState.operator ==(Aw.Meta.Core.Github.PrCiState? left, Aw.Meta.Core.Github.PrCiState? right) -> bool
+static Aw.Meta.Core.Github.RequiredCheck.operator !=(Aw.Meta.Core.Github.RequiredCheck? left, Aw.Meta.Core.Github.RequiredCheck? right) -> bool
+static Aw.Meta.Core.Github.RequiredCheck.operator ==(Aw.Meta.Core.Github.RequiredCheck? left, Aw.Meta.Core.Github.RequiredCheck? right) -> bool
+static readonly Aw.Meta.Core.MetaErrors.NoRequiredChecks -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Meta.Core.MetaErrors.WorktreeHomeUnknown -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Meta.Core.MetaErrors.WorktreeRootInRepo -> Aw.Kernel.ErrorDefinition!
+Aw.Meta.Core.Config.DefectsConfig
+Aw.Meta.Core.Config.DefectsConfig.<Clone>$() -> Aw.Meta.Core.Config.DefectsConfig!
+Aw.Meta.Core.Config.DefectsConfig.DailyCap.get -> int
+Aw.Meta.Core.Config.DefectsConfig.DailyCap.init -> void
+Aw.Meta.Core.Config.DefectsConfig.Deconstruct(out string! Repo, out int DailyCap) -> void
+Aw.Meta.Core.Config.DefectsConfig.DefectsConfig(string! Repo = "jthorare/agentic-workflow", int DailyCap = 3) -> void
+Aw.Meta.Core.Config.DefectsConfig.Equals(Aw.Meta.Core.Config.DefectsConfig? other) -> bool
+Aw.Meta.Core.Config.DefectsConfig.Repo.get -> string!
+Aw.Meta.Core.Config.DefectsConfig.Repo.init -> void
+Aw.Meta.Core.Config.TeamConfig.Defects.get -> Aw.Meta.Core.Config.DefectsConfig!
+Aw.Meta.Core.Config.TeamConfig.Defects.init -> void
+Aw.Meta.Core.Defects.DefectDay
+Aw.Meta.Core.Defects.DefectText
+Aw.Meta.Core.Github.GhIssues
+Aw.Meta.Core.Github.IssueRef
+Aw.Meta.Core.Github.IssueRef.<Clone>$() -> Aw.Meta.Core.Github.IssueRef!
+Aw.Meta.Core.Github.IssueRef.ClosedAt.get -> System.DateTimeOffset?
+Aw.Meta.Core.Github.IssueRef.ClosedAt.init -> void
+Aw.Meta.Core.Github.IssueRef.Deconstruct(out int Number, out string! Title, out bool IsOpen, out System.DateTimeOffset? ClosedAt, out string! Url) -> void
+Aw.Meta.Core.Github.IssueRef.Equals(Aw.Meta.Core.Github.IssueRef? other) -> bool
+Aw.Meta.Core.Github.IssueRef.IsOpen.get -> bool
+Aw.Meta.Core.Github.IssueRef.IsOpen.init -> void
+Aw.Meta.Core.Github.IssueRef.IssueRef(int Number, string! Title, bool IsOpen, System.DateTimeOffset? ClosedAt, string! Url) -> void
+Aw.Meta.Core.Github.IssueRef.Number.get -> int
+Aw.Meta.Core.Github.IssueRef.Number.init -> void
+Aw.Meta.Core.Github.IssueRef.Title.get -> string!
+Aw.Meta.Core.Github.IssueRef.Title.init -> void
+Aw.Meta.Core.Github.IssueRef.Url.get -> string!
+Aw.Meta.Core.Github.IssueRef.Url.init -> void
+const Aw.Meta.Core.KvKeys.DefectsDay = "defects.day" -> string!
+override Aw.Meta.Core.Config.DefectsConfig.Equals(object? obj) -> bool
+override Aw.Meta.Core.Config.DefectsConfig.GetHashCode() -> int
+override Aw.Meta.Core.Config.DefectsConfig.ToString() -> string!
+override Aw.Meta.Core.Github.IssueRef.Equals(object? obj) -> bool
+override Aw.Meta.Core.Github.IssueRef.GetHashCode() -> int
+override Aw.Meta.Core.Github.IssueRef.ToString() -> string!
+static Aw.Meta.Core.Config.DefectsConfig.operator !=(Aw.Meta.Core.Config.DefectsConfig? left, Aw.Meta.Core.Config.DefectsConfig? right) -> bool
+static Aw.Meta.Core.Config.DefectsConfig.operator ==(Aw.Meta.Core.Config.DefectsConfig? left, Aw.Meta.Core.Config.DefectsConfig? right) -> bool
+static Aw.Meta.Core.Defects.DefectDay.Format(System.DateOnly today, int filed, int skipped) -> string!
+static Aw.Meta.Core.Defects.DefectDay.Parse(string? stored, System.DateOnly today) -> (int Filed, int Skipped)
+static Aw.Meta.Core.Defects.DefectText.Body(string! what, string! errorLine, string? path) -> string!
+static Aw.Meta.Core.Defects.DefectText.ClosedWindow.get -> System.TimeSpan
+static Aw.Meta.Core.Defects.DefectText.Match(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.IssueRef!>! issues, string! title, System.DateTimeOffset now) -> Aw.Meta.Core.Github.IssueRef?
+static Aw.Meta.Core.Defects.DefectText.Title(string! code, string! title) -> string!
+static Aw.Meta.Core.Github.GhIssues.List(string! json) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.IssueRef!>?
+static Aw.Meta.Core.Github.IssueRef.operator !=(Aw.Meta.Core.Github.IssueRef? left, Aw.Meta.Core.Github.IssueRef? right) -> bool
+static Aw.Meta.Core.Github.IssueRef.operator ==(Aw.Meta.Core.Github.IssueRef? left, Aw.Meta.Core.Github.IssueRef? right) -> bool
+Aw.Meta.Core.Coordination.InboxSync.RunMeta(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Meta.Core.Coordination.MetaTranscriptResolver
+Aw.Meta.Core.Coordination.MetaTranscriptResolver.Find(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
+Aw.Meta.Core.Coordination.MetaTranscriptResolver.MetaTranscriptResolver(Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.ISessionDirectory! sessions, Aw.Meta.Core.Ports.ITranscriptLocator! locator) -> void
+Aw.Meta.Core.Ports.ITranscriptLocator
+Aw.Meta.Core.Ports.ITranscriptLocator.Find(Aw.Meta.Core.Ids.SessionId session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
+Aw.Meta.Core.Coordination.MergeQueueReader.MergeQueueReader(Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Ports.IKeyValueStore! values, Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.IMetaConfig! config) -> void
+Aw.Meta.Core.Coordination.MergeQueueReader.Read(System.Threading.CancellationToken cancellationToken, bool withGithub = false) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.QueuedPr!>!>!>
+Aw.Meta.Core.Coordination.RepoCommands.QueueView(string! repo, int pr) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Github.MergeQueueView!>!>
+Aw.Meta.Core.Github.MergeQueueView
+Aw.Meta.Core.Github.MergeQueueView.<Clone>$() -> Aw.Meta.Core.Github.MergeQueueView!
+Aw.Meta.Core.Github.MergeQueueView.Deconstruct(out bool Enabled, out bool InQueue, out int? Position, out string? EntryState, out string? RemovedReason) -> void
+Aw.Meta.Core.Github.MergeQueueView.Enabled.get -> bool
+Aw.Meta.Core.Github.MergeQueueView.Enabled.init -> void
+Aw.Meta.Core.Github.MergeQueueView.EntryState.get -> string?
+Aw.Meta.Core.Github.MergeQueueView.EntryState.init -> void
+Aw.Meta.Core.Github.MergeQueueView.Equals(Aw.Meta.Core.Github.MergeQueueView? other) -> bool
+Aw.Meta.Core.Github.MergeQueueView.InQueue.get -> bool
+Aw.Meta.Core.Github.MergeQueueView.InQueue.init -> void
+Aw.Meta.Core.Github.MergeQueueView.MergeQueueView(bool Enabled, bool InQueue, int? Position, string? EntryState, string? RemovedReason) -> void
+Aw.Meta.Core.Github.MergeQueueView.Position.get -> int?
+Aw.Meta.Core.Github.MergeQueueView.Position.init -> void
+Aw.Meta.Core.Github.MergeQueueView.RemovedReason.get -> string?
+Aw.Meta.Core.Github.MergeQueueView.RemovedReason.init -> void
+Aw.Meta.Core.Merge.MergeQueued
+Aw.Meta.Core.Merge.QueuedMerge
+Aw.Meta.Core.Merge.QueuedMerge.<Clone>$() -> Aw.Meta.Core.Merge.QueuedMerge!
+Aw.Meta.Core.Merge.QueuedMerge.At.get -> System.DateTimeOffset
+Aw.Meta.Core.Merge.QueuedMerge.At.init -> void
+Aw.Meta.Core.Merge.QueuedMerge.Deconstruct(out int Pr, out System.DateTimeOffset At, out string! Head) -> void
+Aw.Meta.Core.Merge.QueuedMerge.Equals(Aw.Meta.Core.Merge.QueuedMerge? other) -> bool
+Aw.Meta.Core.Merge.QueuedMerge.Head.get -> string!
+Aw.Meta.Core.Merge.QueuedMerge.Head.init -> void
+Aw.Meta.Core.Merge.QueuedMerge.Pr.get -> int
+Aw.Meta.Core.Merge.QueuedMerge.Pr.init -> void
+Aw.Meta.Core.Merge.QueuedMerge.QueuedMerge(int Pr, System.DateTimeOffset At, string! Head) -> void
+Aw.Meta.Core.Merge.QueuedPr.Deconstruct(out int Pr, out string! From, out string! Gate, out string? Github) -> void
+Aw.Meta.Core.Merge.QueuedPr.Github.get -> string?
+Aw.Meta.Core.Merge.QueuedPr.Github.init -> void
+Aw.Meta.Core.Merge.QueuedPr.QueuedPr(int Pr, string! From, string! Gate, string? Github = null) -> void
+const Aw.Meta.Core.KvKeys.MergeQueued = "merge.queued" -> string!
+override Aw.Meta.Core.Github.MergeQueueView.Equals(object? obj) -> bool
+override Aw.Meta.Core.Github.MergeQueueView.GetHashCode() -> int
+override Aw.Meta.Core.Github.MergeQueueView.ToString() -> string!
+override Aw.Meta.Core.Merge.QueuedMerge.Equals(object? obj) -> bool
+override Aw.Meta.Core.Merge.QueuedMerge.GetHashCode() -> int
+override Aw.Meta.Core.Merge.QueuedMerge.ToString() -> string!
+static Aw.Meta.Core.Github.GhJson.QueueView(string! json) -> Aw.Meta.Core.Github.MergeQueueView?
+static Aw.Meta.Core.Github.MergeQueueView.operator !=(Aw.Meta.Core.Github.MergeQueueView? left, Aw.Meta.Core.Github.MergeQueueView? right) -> bool
+static Aw.Meta.Core.Github.MergeQueueView.operator ==(Aw.Meta.Core.Github.MergeQueueView? left, Aw.Meta.Core.Github.MergeQueueView? right) -> bool
+static Aw.Meta.Core.Merge.MergeQueued.Parse(string? stored) -> System.Collections.Generic.IReadOnlyDictionary<int, Aw.Meta.Core.Merge.QueuedMerge!>!
+static Aw.Meta.Core.Merge.MergeQueued.With(string? stored, Aw.Meta.Core.Merge.QueuedMerge! entry) -> string!
+static Aw.Meta.Core.Merge.MergeQueued.Without(string? stored, int pr) -> string!
+static Aw.Meta.Core.Merge.QueuedMerge.operator !=(Aw.Meta.Core.Merge.QueuedMerge? left, Aw.Meta.Core.Merge.QueuedMerge? right) -> bool
+static Aw.Meta.Core.Merge.QueuedMerge.operator ==(Aw.Meta.Core.Merge.QueuedMerge? left, Aw.Meta.Core.Merge.QueuedMerge? right) -> bool
+Aw.Meta.Core.Coordination.TrainSelection.TrainSelection(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Coordination.MergeQueueReader! queue, Aw.Meta.Core.Ports.IKeyValueStore! values) -> void
+Aw.Meta.Core.Config.TeamConfig.Watch.get -> Aw.Meta.Core.Config.WatchConfig!
+Aw.Meta.Core.Config.TeamConfig.Watch.init -> void
+Aw.Meta.Core.Config.WatchConfig
+Aw.Meta.Core.Config.WatchConfig.<Clone>$() -> Aw.Meta.Core.Config.WatchConfig!
+Aw.Meta.Core.Config.WatchConfig.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? PrBranchPrefixes) -> void
+Aw.Meta.Core.Config.WatchConfig.Equals(Aw.Meta.Core.Config.WatchConfig? other) -> bool
+Aw.Meta.Core.Config.WatchConfig.PrBranchPrefixes.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Meta.Core.Config.WatchConfig.PrBranchPrefixes.init -> void
+Aw.Meta.Core.Config.WatchConfig.WatchConfig(System.Collections.Generic.IReadOnlyList<string!>? PrBranchPrefixes = null) -> void
+Aw.Meta.Core.Watch.PrView.BaseBranch.get -> string!
+Aw.Meta.Core.Watch.PrView.BaseBranch.init -> void
+Aw.Meta.Core.Watch.PrView.HeadBranch.get -> string!
+Aw.Meta.Core.Watch.PrView.HeadBranch.init -> void
+Aw.Meta.Core.Watch.TeamPrs
+override Aw.Meta.Core.Config.WatchConfig.Equals(object? obj) -> bool
+override Aw.Meta.Core.Config.WatchConfig.GetHashCode() -> int
+override Aw.Meta.Core.Config.WatchConfig.ToString() -> string!
+static Aw.Meta.Core.Config.WatchConfig.operator !=(Aw.Meta.Core.Config.WatchConfig? left, Aw.Meta.Core.Config.WatchConfig? right) -> bool
+static Aw.Meta.Core.Config.WatchConfig.operator ==(Aw.Meta.Core.Config.WatchConfig? left, Aw.Meta.Core.Config.WatchConfig? right) -> bool
+static Aw.Meta.Core.Watch.TeamPrs.Owned(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Watch.PrView!>! prs, System.Collections.Generic.IReadOnlySet<int>! queued, System.Collections.Generic.IReadOnlySet<int>! ready, System.Collections.Generic.IReadOnlyList<string!>? prefixes, System.Collections.Generic.IReadOnlySet<string!>! checkedOutBranches) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Watch.PrView!>!
+Aw.Meta.Core.Worktrees.CheckedOutBranches
+static Aw.Meta.Core.Worktrees.CheckedOutBranches.Under(string! porcelain, System.Collections.Generic.IReadOnlyList<string!>! roots) -> System.Collections.Generic.IReadOnlySet<string!>!
+Aw.Meta.Core.Worktrees.RepoWorktreeRoot
+Aw.Meta.Core.Watch.LaneWatch
+Aw.Meta.Core.Watch.LaneWatch.Down.get -> System.Collections.Generic.IReadOnlySet<string!>!
+Aw.Meta.Core.Watch.LaneWatch.Format() -> string!
+Aw.Meta.Core.Watch.LaneWatch.LaneWatch(System.Collections.Generic.IReadOnlySet<string!>! up, System.Collections.Generic.IReadOnlySet<string!>! down) -> void
+Aw.Meta.Core.Watch.LaneWatch.Up.get -> System.Collections.Generic.IReadOnlySet<string!>!
+static Aw.Meta.Core.Watch.LaneWatch.Parse(string? text) -> Aw.Meta.Core.Watch.LaneWatch?
+static Aw.Meta.Core.Watch.LaneWatch.Step(Aw.Meta.Core.Watch.LaneWatch? kept, System.Collections.Generic.IReadOnlySet<string!>! pending, System.Collections.Generic.IReadOnlyList<string!>! lanes, System.Collections.Generic.IReadOnlyList<string!>! missing) -> (System.Collections.Generic.IReadOnlyList<string!>! Lines, Aw.Meta.Core.Watch.LaneWatch! State, System.Collections.Generic.IReadOnlySet<string!>! Pending)
+Aw.Meta.Core.Coordination.MissingLanes
+Aw.Meta.Core.Coordination.MissingLanes.Find(Aw.Meta.Core.Config.TeamConfig! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+Aw.Meta.Core.Coordination.MissingLanes.MissingLanes(Aw.Meta.Core.Ports.ISessionDirectory! sessions, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.ILaneStore! lanes) -> void
+static Aw.Meta.Core.Coordination.MissingLanes.Wanted(Aw.Meta.Core.Config.TeamConfig! team) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Meta.Core.Events.MetaEvent.operator ==(Aw.Meta.Core.Events.MetaEvent? left, Aw.Meta.Core.Events.MetaEvent? right) -> bool
+override Aw.Meta.Core.Events.MetaEvent.ToString() -> string!
+Aw.Meta.Core.Events.MetaEvent.<Clone>$() -> Aw.Meta.Core.Events.MetaEvent!
+Aw.Meta.Core.Events.MetaEvent.Id.init -> void
+Aw.Meta.Core.Events.MetaEvent.Fields.get -> string!
+Aw.Meta.Core.Events.MetaEvent.MetaEvent(long Id, System.DateTimeOffset At, string! Kind, string? Lane, string! Fields) -> void
+static Aw.Meta.Core.Events.MetaEvent.operator !=(Aw.Meta.Core.Events.MetaEvent? left, Aw.Meta.Core.Events.MetaEvent? right) -> bool
+Aw.Meta.Core.Events.MetaEvent.Kind.init -> void
+Aw.Meta.Core.Events.MetaEvent.Deconstruct(out long Id, out System.DateTimeOffset At, out string! Kind, out string? Lane, out string! Fields) -> void
+override Aw.Meta.Core.Events.MetaEvent.Equals(object? obj) -> bool
+Aw.Meta.Core.Events.MetaEvent.Lane.get -> string?
+override Aw.Meta.Core.Events.MetaEvent.GetHashCode() -> int
+Aw.Meta.Core.Ports.IMetaEventStore.Read(long after, string? kind, string? lane, int max, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Events.MetaEventPage!>!>
+Aw.Meta.Core.Ports.IMetaEventStore.Prune(System.DateTimeOffset olderThan, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Meta.Core.Events.MetaEvent.At.get -> System.DateTimeOffset
+Aw.Meta.Core.Events.MetaEvent
+Aw.Meta.Core.Events.MetaEvent.Kind.get -> string!
+Aw.Meta.Core.Ports.IMetaEventStore
+Aw.Meta.Core.Events.MetaEvent.At.init -> void
+Aw.Meta.Core.Events.MetaEvent.Fields.init -> void
+Aw.Meta.Core.Events.MetaEvent.Equals(Aw.Meta.Core.Events.MetaEvent? other) -> bool
+Aw.Meta.Core.Ports.IMetaEventStore.Append(Aw.Meta.Core.Events.MetaEvent! metaEvent, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
+static readonly Aw.Meta.Core.Events.MetaEvent.Retention -> System.TimeSpan
+Aw.Meta.Core.Events.MetaEvent.Id.get -> long
+static readonly Aw.Meta.Core.MetaErrors.EventInvalid -> Aw.Kernel.ErrorDefinition!
+Aw.Meta.Core.Events.MetaEvent.Lane.init -> void
+Aw.Meta.Core.Events.MetaEventRules
+static Aw.Meta.Core.Events.MetaEventRules.Check(Aw.Meta.Core.Events.MetaEvent! metaEvent) -> Aw.Kernel.Result<Aw.Meta.Core.Events.MetaEvent!>!
+static Aw.Meta.Core.Events.MetaEventRules.IsKind(string? kind) -> bool
+Aw.Meta.Core.Events.MetaEventPage
+Aw.Meta.Core.Events.MetaEventPage.MetaEventPage(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Events.MetaEvent!>! Events, long Oldest, long Latest) -> void
+Aw.Meta.Core.Events.MetaEventPage.Events.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Events.MetaEvent!>!
+Aw.Meta.Core.Events.MetaEventPage.Events.init -> void
+Aw.Meta.Core.Events.MetaEventPage.Oldest.get -> long
+Aw.Meta.Core.Events.MetaEventPage.Oldest.init -> void
+Aw.Meta.Core.Events.MetaEventPage.Latest.get -> long
+Aw.Meta.Core.Events.MetaEventPage.Latest.init -> void
+Aw.Meta.Core.Events.MetaEventPage.Equals(Aw.Meta.Core.Events.MetaEventPage? other) -> bool
+override Aw.Meta.Core.Events.MetaEventPage.Equals(object? obj) -> bool
+override Aw.Meta.Core.Events.MetaEventPage.GetHashCode() -> int
+override Aw.Meta.Core.Events.MetaEventPage.ToString() -> string!
+Aw.Meta.Core.Events.MetaEventPage.<Clone>$() -> Aw.Meta.Core.Events.MetaEventPage!
+Aw.Meta.Core.Events.MetaEventPage.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Events.MetaEvent!>! Events, out long Oldest, out long Latest) -> void
+static Aw.Meta.Core.Events.MetaEventPage.operator ==(Aw.Meta.Core.Events.MetaEventPage? left, Aw.Meta.Core.Events.MetaEventPage? right) -> bool
+static Aw.Meta.Core.Events.MetaEventPage.operator !=(Aw.Meta.Core.Events.MetaEventPage? left, Aw.Meta.Core.Events.MetaEventPage? right) -> bool
+Aw.Meta.Core.Coordination.MetaEventSink
+Aw.Meta.Core.Coordination.MetaEventSink.Emit(Aw.Meta.Core.Events.MetaEvent! metaEvent, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Meta.Core.Coordination.MetaEventSink.MetaEventSink(Aw.Meta.Core.Ports.IMetaEventStore! store) -> void
+Aw.Meta.Core.Events.MetaEvents
+Aw.Meta.Core.Usage.UsageWatcher.UsageWatcher(Aw.Meta.Core.Coordination.PaneSubmitter! pane, Aw.Meta.Core.Ports.IRunningLog! log, Aw.Meta.Core.Ports.IKeyValueStore! values, System.TimeProvider! clock, Aw.Meta.Core.Coordination.MetaEventSink? events = null) -> void
+static Aw.Meta.Core.Events.MetaEvents.ContextHigh(System.DateTimeOffset at, string! lane, long tokens) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.ContextOk(System.DateTimeOffset at, string! lane, long tokens) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.LaneDown(System.DateTimeOffset at, string! lane, string! reason) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.LaneUp(System.DateTimeOffset at, string! lane, string! reason) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.MergeRecorded(System.DateTimeOffset at, int pr, string! sha, string! lane) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.ObligationClosed(System.DateTimeOffset at, string! obligationKey, string! from, string! lane) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.ObligationOpened(System.DateTimeOffset at, string! obligationKey, string! from, string! lane) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.UsageLimited(System.DateTimeOffset at, string! lane, string! provider, System.DateTimeOffset? until) -> Aw.Meta.Core.Events.MetaEvent!
+static Aw.Meta.Core.Events.MetaEvents.UsageOk(System.DateTimeOffset at, string! lane, string! provider, System.DateTimeOffset? until) -> Aw.Meta.Core.Events.MetaEvent!
+Aw.Meta.Core.Coordination.InboxSync.InboxSync(Aw.Meta.Core.Ports.ITranscriptReader! transcripts, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IOwnerStore! owner, System.TimeProvider! clock, Aw.Meta.Core.Coordination.MetaTranscriptResolver? meta, Aw.Meta.Core.Coordination.ObligationEventWriter? obligations = null) -> void
+Aw.Meta.Core.Commands.CommandRequest.PathPrefix.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Meta.Core.Commands.CommandRequest.PathPrefix.init -> void
+Aw.Meta.Core.Gate.GateTools
+static Aw.Meta.Core.Gate.GateTools.PathPrefix(string! tree) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Meta.Core.Coordination.LaneNames
+static Aw.Meta.Core.Coordination.LaneNames.WithoutTeam(string! sender, string! team) -> string!
+Aw.Meta.Core.Coordination.ObligationEventWriter
+Aw.Meta.Core.Coordination.ObligationEventWriter.Closed(string! obligationKey, string! sender, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Meta.Core.Coordination.ObligationEventWriter.IsOwed(string! obligationKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Meta.Core.Coordination.ObligationEventWriter.ObligationEventWriter(Aw.Meta.Core.Coordination.MetaEventSink! events, Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Coordination.ObligationReader! reader, System.TimeProvider! clock) -> void
+Aw.Meta.Core.Coordination.ObligationEventWriter.Opened(System.DateTimeOffset at, string! obligationKey, string! sender, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Meta.Core.Coordination.HeavyReservation.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Coordination.HeavyReservation!
+Aw.Meta.Core.Coordination.MergeQueueReader.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Coordination.MergeQueueReader!
+Aw.Meta.Core.Coordination.RepoCommands.Limited(System.TimeSpan limit) -> Aw.Meta.Core.Coordination.RepoCommands!
+Aw.Meta.Core.Github.MergeQueueView.Stacked.get -> bool
+Aw.Meta.Core.Github.MergeQueueView.Stacked.init -> void
+Aw.Meta.Core.Merge.MergeFacts.BaseHasMergeQueue.get -> bool
+Aw.Meta.Core.Merge.MergeFacts.BaseHasMergeQueue.init -> void
+static readonly Aw.Meta.Core.MetaErrors.StackExtensionMissing -> Aw.Kernel.ErrorDefinition!
+const Aw.Meta.Core.Github.GhExtensions.StackInstall = "gh extension install github/gh-stack" -> string!
+static Aw.Meta.Core.Github.GhExtensions.HasStack(string! list) -> bool
+Aw.Meta.Core.Github.GhExtensions
+Aw.Meta.Core.Merge.MergeFacts.MergeConflicts.get -> bool
+Aw.Meta.Core.Merge.MergeFacts.MergeConflicts.init -> void
+Aw.Meta.Core.Worktrees.WorktreeInspector.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Worktrees.WorktreeInspector!
+Aw.Meta.Core.Worktrees.WorktreeSweeper.Using(Aw.Meta.Core.Coordination.RepoCommands! github) -> Aw.Meta.Core.Worktrees.WorktreeSweeper!
+Aw.Meta.Core.Watch.TransientGhError
+const Aw.Meta.Core.Watch.TransientGhError.Retries = 3 -> int
+static Aw.Meta.Core.Watch.TransientGhError.Backoff(int attempt) -> System.TimeSpan
+static Aw.Meta.Core.Watch.TransientGhError.IsTransient(string! message) -> bool
+Aw.Meta.Core.Config.DelegationConfig
+Aw.Meta.Core.Config.DelegationConfig.<Clone>$() -> Aw.Meta.Core.Config.DelegationConfig!
+Aw.Meta.Core.Config.DelegationConfig.DelegationConfig(System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>? lanes = null) -> void
+Aw.Meta.Core.Config.DelegationConfig.Equals(Aw.Meta.Core.Config.DelegationConfig? other) -> bool
+Aw.Meta.Core.Config.DelegationConfig.Lanes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Meta.Core.Config.DelegationConfig.Lanes.init -> void
+Aw.Meta.Core.Config.TeamConfig.Delegation.get -> Aw.Meta.Core.Config.DelegationConfig!
+Aw.Meta.Core.Config.TeamConfig.Delegation.init -> void
+Aw.Meta.Core.Coordination.DelegationLedger
+Aw.Meta.Core.Coordination.DelegationLedger.Add(Aw.Meta.Core.Delegations.Delegation! delegation, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Coordination.DelegationLedger.All(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Delegations.Delegation!>!>!>
+Aw.Meta.Core.Coordination.DelegationLedger.DelegationLedger(Aw.Meta.Core.Ports.IKeyValueStore! values) -> void
+Aw.Meta.Core.Delegations.Delegation
+Aw.Meta.Core.Delegations.Delegation.At.get -> System.DateTimeOffset
+Aw.Meta.Core.Delegations.Delegation.At.init -> void
+Aw.Meta.Core.Delegations.DelegationBook
+Aw.Meta.Core.Delegations.Delegation.Claude.get -> bool
+Aw.Meta.Core.Delegations.Delegation.Claude.init -> void
+Aw.Meta.Core.Delegations.Delegation.<Clone>$() -> Aw.Meta.Core.Delegations.Delegation!
+Aw.Meta.Core.Delegations.Delegation.Deconstruct(out int Issue, out string! Url, out string! Title, out string! Lane, out string! Session, out System.DateTimeOffset At) -> void
+Aw.Meta.Core.Delegations.Delegation.Delegation(int Issue, string! Url, string! Title, string! Lane, string! Session, System.DateTimeOffset At) -> void
+Aw.Meta.Core.Delegations.Delegation.Delivered.get -> bool
+Aw.Meta.Core.Delegations.Delegation.Delivered.init -> void
+Aw.Meta.Core.Delegations.Delegation.Equals(Aw.Meta.Core.Delegations.Delegation? other) -> bool
+Aw.Meta.Core.Delegations.Delegation.Issue.get -> int
+Aw.Meta.Core.Delegations.Delegation.Issue.init -> void
+Aw.Meta.Core.Delegations.Delegation.Lane.get -> string!
+Aw.Meta.Core.Delegations.Delegation.Lane.init -> void
+Aw.Meta.Core.Delegations.Delegation.Marker.get -> string!
+Aw.Meta.Core.Delegations.Delegation.Message.get -> string!
+Aw.Meta.Core.Delegations.Delegation.Session.get -> string!
+Aw.Meta.Core.Delegations.Delegation.Session.init -> void
+Aw.Meta.Core.Delegations.DelegationState
+Aw.Meta.Core.Delegations.DelegationState.Answered = 3 -> Aw.Meta.Core.Delegations.DelegationState
+Aw.Meta.Core.Delegations.DelegationState.Owed = 1 -> Aw.Meta.Core.Delegations.DelegationState
+Aw.Meta.Core.Delegations.DelegationState.Sent = 2 -> Aw.Meta.Core.Delegations.DelegationState
+Aw.Meta.Core.Delegations.DelegationText
+Aw.Meta.Core.Delegations.Delegation.Title.get -> string!
+Aw.Meta.Core.Delegations.Delegation.Title.init -> void
+Aw.Meta.Core.Delegations.Delegation.Url.get -> string!
+Aw.Meta.Core.Delegations.Delegation.Url.init -> void
+Aw.Meta.Core.Obligations.DelegationStates
+Aw.Meta.Core.Obligations.ObligationFacts.Delegations.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Delegations.Delegation!>!
+Aw.Meta.Core.Obligations.ObligationFacts.Delegations.init -> void
+Aw.Meta.Core.Obligations.ObligationKind.Delegate = 7 -> Aw.Meta.Core.Obligations.ObligationKind
+const Aw.Meta.Core.Delegations.DelegationText.Yours = "Yours: take it in your lane and reply with the PR number." -> string!
+const Aw.Meta.Core.KvKeys.Delegations = "delegations" -> string!
+override Aw.Meta.Core.Config.DelegationConfig.Equals(object? obj) -> bool
+override Aw.Meta.Core.Config.DelegationConfig.GetHashCode() -> int
+override Aw.Meta.Core.Config.DelegationConfig.ToString() -> string!
+override Aw.Meta.Core.Delegations.Delegation.Equals(object? obj) -> bool
+override Aw.Meta.Core.Delegations.Delegation.GetHashCode() -> int
+override Aw.Meta.Core.Delegations.Delegation.ToString() -> string!
+static Aw.Meta.Core.Config.DelegationConfig.operator !=(Aw.Meta.Core.Config.DelegationConfig? left, Aw.Meta.Core.Config.DelegationConfig? right) -> bool
+static Aw.Meta.Core.Config.DelegationConfig.operator ==(Aw.Meta.Core.Config.DelegationConfig? left, Aw.Meta.Core.Config.DelegationConfig? right) -> bool
+static Aw.Meta.Core.Delegations.DelegationBook.Format(System.Collections.Generic.IEnumerable<Aw.Meta.Core.Delegations.Delegation!>! delegations) -> string!
+static Aw.Meta.Core.Delegations.DelegationBook.Parse(string? stored) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Delegations.Delegation!>!
+static Aw.Meta.Core.Delegations.DelegationBook.With(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Delegations.Delegation!>! delegations, Aw.Meta.Core.Delegations.Delegation! delegation) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Delegations.Delegation!>!
+static Aw.Meta.Core.Delegations.Delegation.operator !=(Aw.Meta.Core.Delegations.Delegation? left, Aw.Meta.Core.Delegations.Delegation? right) -> bool
+static Aw.Meta.Core.Delegations.Delegation.operator ==(Aw.Meta.Core.Delegations.Delegation? left, Aw.Meta.Core.Delegations.Delegation? right) -> bool
+static Aw.Meta.Core.Delegations.DelegationText.Footer(string! lane) -> string!
+static Aw.Meta.Core.Delegations.DelegationText.HasWord(string! text, string! keyword) -> bool
+static Aw.Meta.Core.Delegations.DelegationText.Message(int issue, string! title, string! url) -> string!
+static Aw.Meta.Core.Delegations.DelegationText.Names(string! text, int issue) -> bool
+static Aw.Meta.Core.Github.GhIssues.View(string! json) -> Aw.Meta.Core.Github.IssueRef?
+static Aw.Meta.Core.Obligations.DelegationStates.IsSent(Aw.Meta.Core.Delegations.Delegation! delegation, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.Outbound!>! outbound, Aw.Meta.Core.Lanes.LaneMapState! lanes) -> bool
+static Aw.Meta.Core.Obligations.DelegationStates.Of(Aw.Meta.Core.Delegations.Delegation! delegation, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>! inbound, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.Outbound!>! outbound, Aw.Meta.Core.Lanes.LaneMapState! lanes) -> Aw.Meta.Core.Delegations.DelegationState
+Aw.Meta.Core.Coordination.LaneDelivered
+Aw.Meta.Core.Coordination.LaneDelivered.Attention.get -> string?
+Aw.Meta.Core.Coordination.LaneDelivered.Attention.init -> void
+Aw.Meta.Core.Coordination.LaneDelivered.<Clone>$() -> Aw.Meta.Core.Coordination.LaneDelivered!
+Aw.Meta.Core.Coordination.LaneDelivered.Deconstruct(out Aw.Meta.Core.Ids.MessageId Id, out bool Woken, out string? WakeSkipped, out string? Attention, out bool ViewerAttached) -> void
+Aw.Meta.Core.Coordination.LaneDelivered.Equals(Aw.Meta.Core.Coordination.LaneDelivered? other) -> bool
+Aw.Meta.Core.Coordination.LaneDelivered.Id.get -> Aw.Meta.Core.Ids.MessageId
+Aw.Meta.Core.Coordination.LaneDelivered.Id.init -> void
+Aw.Meta.Core.Coordination.LaneDelivered.LaneDelivered(Aw.Meta.Core.Ids.MessageId Id, bool Woken, string? WakeSkipped, string? Attention, bool ViewerAttached) -> void
+Aw.Meta.Core.Coordination.LaneDelivered.ViewerAttached.get -> bool
+Aw.Meta.Core.Coordination.LaneDelivered.ViewerAttached.init -> void
+Aw.Meta.Core.Coordination.LaneDelivered.WakeSkipped.get -> string?
+Aw.Meta.Core.Coordination.LaneDelivered.WakeSkipped.init -> void
+Aw.Meta.Core.Coordination.LaneDelivered.Woken.get -> bool
+Aw.Meta.Core.Coordination.LaneDelivered.Woken.init -> void
+Aw.Meta.Core.Coordination.LaneDelivery
+Aw.Meta.Core.Coordination.LaneDelivery.Deliver(Aw.Meta.Core.Coordination.LaneTarget! target, string! text, System.TimeSpan confirm, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Coordination.LaneDelivered!>!>
+Aw.Meta.Core.Coordination.LaneDelivery.LaneDelivery(Aw.Meta.Core.Ports.ILaneFiles! files, Aw.Meta.Core.Ports.ILaneMail! mail, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Coordination.LaneBeats! beats, Aw.Meta.Core.Ports.ILanePane! pane, System.TimeProvider! clock) -> void
+Aw.Meta.Core.Coordination.LaneTarget
+Aw.Meta.Core.Coordination.LaneTarget.Agent.get -> Aw.Meta.Core.Lanes.LaneAgent!
+Aw.Meta.Core.Coordination.LaneTarget.Agent.init -> void
+Aw.Meta.Core.Coordination.LaneTarget.<Clone>$() -> Aw.Meta.Core.Coordination.LaneTarget!
+Aw.Meta.Core.Coordination.LaneTarget.Deconstruct(out string! Team, out string! Lane, out Aw.Meta.Core.Lanes.LaneRecord! Record, out Aw.Meta.Core.Lanes.LaneAgent! Agent) -> void
+Aw.Meta.Core.Coordination.LaneTarget.Equals(Aw.Meta.Core.Coordination.LaneTarget? other) -> bool
+Aw.Meta.Core.Coordination.LaneTarget.Lane.get -> string!
+Aw.Meta.Core.Coordination.LaneTarget.Lane.init -> void
+Aw.Meta.Core.Coordination.LaneTarget.LaneTarget(string! Team, string! Lane, Aw.Meta.Core.Lanes.LaneRecord! Record, Aw.Meta.Core.Lanes.LaneAgent! Agent) -> void
+Aw.Meta.Core.Coordination.LaneTarget.Record.get -> Aw.Meta.Core.Lanes.LaneRecord!
+Aw.Meta.Core.Coordination.LaneTarget.Record.init -> void
+Aw.Meta.Core.Coordination.LaneTarget.Session.get -> string!
+Aw.Meta.Core.Coordination.LaneTarget.Team.get -> string!
+Aw.Meta.Core.Coordination.LaneTarget.Team.init -> void
+Aw.Meta.Core.Delegations.DelegationView
+Aw.Meta.Core.Delegations.DelegationView.At.get -> System.DateTimeOffset
+Aw.Meta.Core.Delegations.DelegationView.At.init -> void
+Aw.Meta.Core.Delegations.DelegationView.<Clone>$() -> Aw.Meta.Core.Delegations.DelegationView!
+Aw.Meta.Core.Delegations.DelegationView.Deconstruct(out int Issue, out string! Url, out string! Title, out string! Lane, out string! Session, out System.DateTimeOffset At, out string! State, out string! Message) -> void
+Aw.Meta.Core.Delegations.DelegationView.DelegationView(int Issue, string! Url, string! Title, string! Lane, string! Session, System.DateTimeOffset At, string! State, string! Message) -> void
+Aw.Meta.Core.Delegations.DelegationView.Equals(Aw.Meta.Core.Delegations.DelegationView? other) -> bool
+Aw.Meta.Core.Delegations.DelegationView.Issue.get -> int
+Aw.Meta.Core.Delegations.DelegationView.Issue.init -> void
+Aw.Meta.Core.Delegations.DelegationView.Lane.get -> string!
+Aw.Meta.Core.Delegations.DelegationView.Lane.init -> void
+Aw.Meta.Core.Delegations.DelegationView.Message.get -> string!
+Aw.Meta.Core.Delegations.DelegationView.Message.init -> void
+Aw.Meta.Core.Delegations.DelegationView.Session.get -> string!
+Aw.Meta.Core.Delegations.DelegationView.Session.init -> void
+Aw.Meta.Core.Delegations.DelegationView.State.get -> string!
+Aw.Meta.Core.Delegations.DelegationView.State.init -> void
+Aw.Meta.Core.Delegations.DelegationView.Title.get -> string!
+Aw.Meta.Core.Delegations.DelegationView.Title.init -> void
+Aw.Meta.Core.Delegations.DelegationView.Url.get -> string!
+Aw.Meta.Core.Delegations.DelegationView.Url.init -> void
+const Aw.Meta.Core.Coordination.LaneDelivery.WakeLine = "A message from the meta is waiting (aw-meta lane-inbox). Answer it, ending your turn with a line starting REPLY TO META:" -> string!
+override Aw.Meta.Core.Coordination.LaneDelivered.Equals(object? obj) -> bool
+override Aw.Meta.Core.Coordination.LaneDelivered.GetHashCode() -> int
+override Aw.Meta.Core.Coordination.LaneDelivered.ToString() -> string!
+override Aw.Meta.Core.Coordination.LaneTarget.Equals(object? obj) -> bool
+override Aw.Meta.Core.Coordination.LaneTarget.GetHashCode() -> int
+override Aw.Meta.Core.Coordination.LaneTarget.ToString() -> string!
+override Aw.Meta.Core.Delegations.DelegationView.Equals(object? obj) -> bool
+override Aw.Meta.Core.Delegations.DelegationView.GetHashCode() -> int
+override Aw.Meta.Core.Delegations.DelegationView.ToString() -> string!
+static Aw.Meta.Core.Coordination.LaneDelivered.operator !=(Aw.Meta.Core.Coordination.LaneDelivered? left, Aw.Meta.Core.Coordination.LaneDelivered? right) -> bool
+static Aw.Meta.Core.Coordination.LaneDelivered.operator ==(Aw.Meta.Core.Coordination.LaneDelivered? left, Aw.Meta.Core.Coordination.LaneDelivered? right) -> bool
+static Aw.Meta.Core.Coordination.LaneTarget.operator !=(Aw.Meta.Core.Coordination.LaneTarget? left, Aw.Meta.Core.Coordination.LaneTarget? right) -> bool
+static Aw.Meta.Core.Coordination.LaneTarget.operator ==(Aw.Meta.Core.Coordination.LaneTarget? left, Aw.Meta.Core.Coordination.LaneTarget? right) -> bool
+static Aw.Meta.Core.Delegations.DelegationView.Name(Aw.Meta.Core.Delegations.DelegationState state) -> string!
+static Aw.Meta.Core.Delegations.DelegationView.Of(Aw.Meta.Core.Delegations.Delegation! delegation, Aw.Meta.Core.Delegations.DelegationState state) -> Aw.Meta.Core.Delegations.DelegationView!
+static Aw.Meta.Core.Delegations.DelegationView.operator !=(Aw.Meta.Core.Delegations.DelegationView? left, Aw.Meta.Core.Delegations.DelegationView? right) -> bool
+static Aw.Meta.Core.Delegations.DelegationView.operator ==(Aw.Meta.Core.Delegations.DelegationView? left, Aw.Meta.Core.Delegations.DelegationView? right) -> bool
+Aw.Meta.Core.Delegations.Delegation.Attempt.get -> Aw.Meta.Core.Ids.MessageId?
+Aw.Meta.Core.Delegations.Delegation.Attempt.init -> void
+static Aw.Meta.Core.Delegations.DelegationBook.Add(string? stored, Aw.Meta.Core.Delegations.Delegation! delegation) -> string!
+static Aw.Meta.Core.Delegations.DelegationBook.Without(string? stored, int issue) -> string!
+static Aw.Meta.Core.Delegations.DelegationBook.Find(string? stored, int issue) -> Aw.Meta.Core.Delegations.Delegation?
+Aw.Meta.Core.Coordination.DelegationLedger.Remove(int issue, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Delegations.Delegation?>!>
+Aw.Meta.Core.Coordination.LaneAddress
+Aw.Meta.Core.Coordination.LaneAddress.Find(string! team, string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
+Aw.Meta.Core.Coordination.LaneAddress.LaneAddress(Aw.Meta.Core.Ports.ILaneFiles! files, Aw.Meta.Core.Ports.ILaneSessions! sessions, Aw.Meta.Core.Ports.ISessionDirectory! live) -> void
+Aw.Meta.Core.Lanes.LiveSession.Address.get -> string?
+Aw.Meta.Core.Lanes.LiveSession.Address.init -> void

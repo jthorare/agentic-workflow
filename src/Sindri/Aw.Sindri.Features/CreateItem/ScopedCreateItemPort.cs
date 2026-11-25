@@ -8,7 +8,7 @@ namespace Aw.Sindri.Features.CreateItem;
 /// and this port calls through it (ARCH-DI-001: only a registration lambda resolves from the provider).
 /// </summary>
 /// <param name="inScope">Makes one item through a scoped <see cref="WorkflowItemMaker"/>.</param>
-internal sealed class ScopedCreateItemPort(Func<ItemToCreate, CancellationToken, ValueTask<Result<string>>> inScope) : ICreateItemPort
+internal sealed class ScopedCreateItemPort(Func<ItemToCreate, CancellationToken, ValueTask<Result<ItemMade>>> inScope) : ICreateItemPort
 {
-    public ValueTask<Result<string>> Create(ItemToCreate item, CancellationToken cancellationToken) => inScope(item, cancellationToken);
+    public ValueTask<Result<ItemMade>> Create(ItemToCreate item, CancellationToken cancellationToken) => inScope(item, cancellationToken);
 }

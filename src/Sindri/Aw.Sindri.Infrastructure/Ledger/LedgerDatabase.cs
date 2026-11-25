@@ -141,6 +141,27 @@ internal sealed class LedgerDatabase : IDisposable
     /// <summary>The first migration with 'memory_fact.written_by' (#2460); reads of an older file find no writer.</summary>
     internal const int MemoryFactWrittenByVersion = 16;
 
+    /// <summary>The first migration with 'memory_fact.refreshed_by' (#2505); reads of an older file find no refresher.</summary>
+    internal const int MemoryFactRefreshedByVersion = 17;
+
+    /// <summary>The first migration with 'toolkit' and 'toolkit_call' (agent-first PR 16); reads of an older file find no toolkit.</summary>
+    internal const int ToolkitsVersion = 18;
+
+    /// <summary>The first migration with the 'events_item_seq' index (#2773); an older file still answers an item-filtered scan, by walking the rowid range.</summary>
+    internal const int EventsItemSeqVersion = 19;
+
+    /// <summary>The first migration with 'workflow_node_run.raw' (#3196); the column is read by every node-run query, so it is always on a file Sindri opens.</summary>
+    internal const int NodeRunRawVersion = 20;
+
+    /// <summary>The first migration with 'workflow_run.mode' and 'test_options' and the 'workflow_pin' table (Workflows page spec §3.1, §3.2); the run store reads and writes the columns, so they are always on a file Sindri opens.</summary>
+    internal const int TestRunsVersion = 21;
+
+    /// <summary>The first migration with 'workflow_run.seen_at' (Home spec §3.2, E1); the run store reads the column in every run query.</summary>
+    internal const int RunSeenVersion = 22;
+
+    /// <summary>The first migration with 'workflow_node_run.started_at' and 'ended_at' and 'workflow.was_activated' (#3683); every workflow and node-run query reads them, so they are always on a file Sindri opens.</summary>
+    internal const int NodeTimesAndWasActivatedVersion = 23;
+
     private static IReadOnlyList<Migration> LoadMigrations()
     {
         var own = EmbeddedMigrations.Load(typeof(LedgerDatabase).Assembly, "Aw.Sindri.Infrastructure.Ledger.Migrations.").Value;

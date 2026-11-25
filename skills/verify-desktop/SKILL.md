@@ -91,9 +91,9 @@ Artifacts: $AW_DIR/verification/<run-id>/
 
 ## Next steps
 
-- **PASS** — `/shipRelease` — the screens match their mockups, ship the release
-- **WARN** — `/design-verify` — cover the missing screens, then verify again
-- **FAIL** — `/design-refine` or `/design-implement` — fix the mismatches the pack lists, then `/verify-desktop` again; do **not** ship until it passes
+- **PASS** — `/shipRelease`: the screens match their mockups, ship the release
+- **WARN** — `/design-verify`: cover the missing screens, then verify again
+- **FAIL** — `/design-refine` or `/design-implement`: fix the mismatches the pack lists, then `/verify-desktop` again; do **not** ship until it passes
 
 ## Done checklist
 

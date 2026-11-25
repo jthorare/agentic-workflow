@@ -65,13 +65,22 @@ if [ "${1:-}" = "--run-one" ]; then
     echo "bash-tests: $suite populated a private NuGet cache in its sandbox HOME; keep NUGET_PACKAGES at the shared cache" >>"$out/$idx.log"
     [ "$rc" -ne 0 ] || rc=1
   fi
+  # Whatever a suite left at the top of its TMPDIR is a leak: its own cleanup should have removed it. The sandbox delete below hides it
+  # from the outer tmp-leak-check, so the runner names it here and fails the suite (#3262).
+  note=""
+  leaked="$(ls -A "$sandbox/tmp" 2>/dev/null | tr '\n' ' ')"
+  if [ -n "$leaked" ]; then
+    echo "bash-tests: $suite left in TMPDIR: $leaked" >>"$out/$idx.log"
+    [ "$rc" -ne 0 ] || rc=1
+    note="  (left files in TMPDIR)"
+  fi
   find "$sandbox" -delete 2>/dev/null
   secs=$((SECONDS - start))
   echo "$rc" >"$out/$idx.rc"; echo "$secs" >"$out/$idx.secs"
   if [ "$rc" -eq 0 ]; then
     printf 'PASS  %s  %s  %ss\n' "$mode" "$suite" "$secs"
   else
-    printf 'FAIL  %s  %s  %ss  exit %s\n' "$mode" "$suite" "$secs" "$rc"
+    printf 'FAIL  %s  %s  %ss  exit %s%s\n' "$mode" "$suite" "$secs" "$rc" "$note"
   fi
   exit 0
 fi
@@ -83,6 +92,7 @@ cd "$ROOT" || exit 2
 EXCLUDED=(
   "config/lib/tests/judge-cs-hook-surface.test.sh	needs the .NET SDK to build the C# judge; CI runs it in the dotnet job (step: Hook contract), which changed-areas.sh also selects for a hook, statusline or hook-library change; the local gate runs it directly"
   "config/lib/tests/sindri-cs-hook-surface.test.sh	needs the .NET SDK to build the C# sindri; CI runs it in the dotnet job (step: Hook contract, sindri), which changed-areas.sh also selects for a hook change; the local gate runs it directly"
+  "scripts/tests/lane-cap-sindri.test.sh	runs dotnet test on three heavy Sindri test classes (40 shards and ConnectionRefresh) and checks their per-test lane cap; the dotnet job's lane-cap check covers it on CI; run it by hand under heavy (#2534)"
   "config/tests/statusline-judge.test.sh	stale on main: it extracts only judge_segment() from statusline.sh, which now calls judge_health(), so all 3 cases fail; config/lib/tests/statusline.test.sh covers the judge column"
 )
 
@@ -90,16 +100,18 @@ EXCLUDED=(
 # their own sandbox: they run after the pool, one at a time, so CPU contention or another
 # suite's writes can't turn a pass into a failure.
 # Everything else must be safe to run beside any other suite (its own mktemp dirs, its
-# own HOME or AW_STATE_DIR, stubs on PATH, no fixed ports).
+# own HOME or AW_STATE_DIR, stubs on PATH, no fixed ports: scripts/ci/test-ports.sh checks it).
 SERIAL=(
   "scripts/tests/agent-token.test.sh	starts a fake HTTP server under a 30 s start budget and sends signals mid-request, asserting the script exits before the fake answers and its curl is gone"
   "scripts/tests/formal-verify-tlc.test.sh	SIGHUPs and TERMs tlc.sh while a real TLC java run is going and asserts the signal exit code (129) and that java and the temp dir are gone; a loaded box lets the run finish first or exit 2"
-  "scripts/tests/signal-suites-ignored-hup.test.sh	runs agent-token.test.sh and formal-verify-tlc.test.sh again with SIGHUP ignored, so it carries both of their timing budgets (#2377)"
+  "scripts/tests/signal-suites-ignored-hup.test.sh	runs agent-token.test.sh, formal-verify-tlc.test.sh and meta-launch.test.sh again with SIGHUP ignored, so it carries all three timing budgets (#2377, #2566)"
   "scripts/tests/meta-launch.test.sh	drives a pty and asserts the agent, the lane script and the id watcher are gone right after the pty closes; under load they are still alive at the check"
   "config/hooks/tests/failopen.test.sh	SIGTERMs hooks 0.5 s into a 4 s fake-judge wait and runs each hook under a 10 s watchdog; a loaded machine shifts both"
   "config/lib/tests/failopen.test.sh	runs hooks against hung and slow fake judges under a short watchdog (rc=hung) and checks the fail-open path within the hook's own timeout"
   "config/lib/tests/statusline.test.sh	asserts the statusline returns within 1 s while a 3 s scorer runs, then polls a 10 s deadline for the cache"
   "config/hooks/tests/fleet-state.test.sh	asserts every aw:fleet hook event runs under 100 ms (best of 5), which CPU contention from a parallel suite can turn into a false failure"
+  "config/hooks/tests/dup-script.test.sh	asserts the duplicate-script gate's no-match path has a median under 20 ms over 50 runs, which CPU contention from a parallel suite can turn into a false failure"
+  "config/hooks/tests/retry-guard.test.sh	asserts the retry gate's empty path has a median under 20 ms over 50 runs, which CPU contention from a parallel suite can turn into a false failure"
   "config/hooks/tests/sindri-nudge.test.sh	asserts the nudge gives up within a 300 ms budget (AW_SINDRI_NUDGE_BUDGET_MS) against a 5 s sleeping sindri"
   "config/hooks/tests/sindri-tasks.test.sh	asserts one prompt returns within 500 ms with no sindri on PATH, which CPU contention from a parallel suite can turn into a false failure"
   "config/lib/tests/prompt-sort.test.sh	asserts the hook gives up within a 600 ms budget (AW_PROMPT_SORT_BUDGET_MS) against a 5 s sleeping sorter"
@@ -107,6 +119,7 @@ SERIAL=(
   "config/lib/tests/installed-hooks-smoke.test.sh	runs scripts/install-judge-hooks.sh for real and fires the installed hooks against a fake judge under their timeouts; it built judge/dist before the cutover and stays serial until the switch PR rechecks it"
   "config/lib/tests/install-wake-gating.test.sh	runs scripts/install-judge-hooks.sh and the wake-gating hooks against a fake judge under their timeouts; it built judge/ before the cutover and stays serial until the switch PR rechecks it"
   "scripts/tests/forge-fixture.test.sh	dotnet-builds src/Forge in the shared checkout (obj dirs), which races any other dotnet build there; builds once, then runs git and jq only"
+  "scripts/tests/aw-run.test.sh	times a 2 s timeout and a 1 s grace, waits 5 s for a zombie the KILL can't remove and sends INT mid-run; a loaded machine shifts the windows"
   "scripts/tests/run-test-guard.test.sh	asserts a 2 s timeout plus 3 s grace returns within 20 s and reaps a daemonized sleep by token; a loaded machine shifts the windows"
   "scripts/tests/cutover-clean-ts.test.sh	dotnet-builds src/BugFix in the shared checkout (obj dirs), which races any other dotnet build there; builds once, then runs git and jq only"
   "scripts/tests/aot-smoke-cleanup.test.sh	starts fake serve and temporal processes that ignore TERM and polls up to 15 s per scenario for them to be gone; a loaded machine shifts the windows"
@@ -115,8 +128,12 @@ SERIAL=(
   "scripts/tests/heavy-reclaim-leftovers.test.sh	bounds each take at 6 s and needs the \"kept\" rows to time out; a loaded machine can push a real take past it"
   "scripts/tests/heavy-dead-holder.test.sh	bounds each take at 6 s and needs the \"kept\" rows to time out; a loaded machine can push a real take past it"
   "scripts/tests/heavy-cap-reserve.test.sh	bounds the wrapper row at 5 s and needs it to time out while waiting; a loaded machine can push a real take past it"
+  "scripts/tests/heavy-stale-cap.test.sh	bounds each wrapper row at 5 s and times the cap change against a 0.7 s awk shim; a loaded machine shifts the window"
   "scripts/tests/heavy-full-reserve.test.sh	bounds each locks.sh take at 5 s from outside; a loaded machine can push a real take past it"
+  "scripts/tests/heavy-pgid-race.test.sh	bounds each case at 10 s against a 1 s slow setsid/perl stub and the watchdog's 5 s group wait; a loaded machine shifts it (#2799)"
+  "scripts/tests/ci-runner-parity.test.sh	runs heavy-cap-reserve.test.sh (timing-bound, see its row) under a stripped PATH and without /proc/meminfo; in the parallel pool its wrapper row timed out once in 6 runs (#2584)"
   "scripts/tests/readiness-baseline.test.sh	asserts a 200 ms gh timeout (READINESS_GH_TIMEOUT_MS) fires against a 3 s stub and is reported as the timeout, not a parse error"
+  "scripts/tests/aw-pr-watch.test.sh	sends INT and TERM to a polling watcher and asserts a 2 s deadline stops it within 6 s; a loaded machine shifts both"
 )
 
 if [ "${BASH_TESTS_EXCLUDED+set}" = set ]; then

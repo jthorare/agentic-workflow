@@ -5,6 +5,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Host.Commands.Probe;
 
@@ -106,17 +107,17 @@ internal static partial class CommandTable
             ["status", .. var rest] when Follow(rest) is { } json => await new FollowVerbs(client, probe, output, services.GetRequiredService<TimeProvider>()).Run(json, ct).ConfigureAwait(false),
             ["status", .. var rest] when Json(rest) is { } json => await verbs.Status(json, ct).ConfigureAwait(false),
             ["scrub", .. var rest] => await new ScrubCommand(services, output, Console.In).Run(rest, ct).ConfigureAwait(false),
-            ["stop"] => await verbs.Stop(ct).ConfigureAwait(false),
+            ["stop"] or ["restart", ..] => await StopOrRestart(args, verbs, (client, probe, output), (services, start), ct).ConfigureAwait(false),
             ["profile", ..] => await Profile(args, verbs, a => new Verbs(client, probe, output, services, c => start.EnsureRunning(!a.NoStart, c)), (output, Headers(session, services)), ct).ConfigureAwait(false),
             ["views", "rebuild", .. var rest] when NoStart(rest) is { } noStart => await new Verbs(client, probe, output, services, c => start.EnsureRunning(!noStart, c))
                 .RebuildViews(ct).ConfigureAwait(false),
             ["handoff", .. var rest] => await new HandoffVerbs(client, output, start.EnsureRunning).Run(rest, ct).ConfigureAwait(false),
             ["open", .. var rest] => await new OpenCommand(client, output, start.EnsureRunning, services.GetRequiredService<TimeProvider>()).Run(rest, ct).ConfigureAwait(false),
-            ["queue" or "items" or "item" or "project" or "projects" or "todos" or "todo" or "connection" or "connections" or "memory" or "memories" or "resources", ..] => await ItemOrProject(args, (client, output, services), start, ct).ConfigureAwait(false),
+            ["queue" or "items" or "item" or "project" or "projects" or "todos" or "todo" or "connection" or "connections" or "memory" or "memories" or "resources" or "toolkit" or "toolkits", ..] => await ItemOrProject(args, (client, output, services), start, ct, interrupt.Again).ConfigureAwait(false),
             ["request" or "requests" or "decisions" or "decide" or "needs-you", ..] => await new RequestVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct).ConfigureAwait(false),
             ["index", "connect", .. var rest] => await new IndexConnectVerbs(services, output, environment).Run(["connect", .. rest], ct).ConfigureAwait(false),
             ["services" or "jobs", ..] or ["index", "embed", ..] => await JobCommands.Run(args, (client, output), start.EnsureRunning, services.GetRequiredService<TimeProvider>(), (ct, interrupt.Again)).ConfigureAwait(false),
-            ["agents" or "skill" or "skills" or "setup" or "code-index" or "index" or "library", ..] => await ReadVerbs(args, (client, output), (services, start), (ct, interrupt.Again)).ConfigureAwait(false),
+            ["agents" or "skill" or "skills" or "setup" or "code-index" or "index" or "library" or "transcripts", ..] => await ReadVerbs(args, (client, output), (services, start), session, (ct, interrupt.Again)).ConfigureAwait(false),
             ["repo", ..] => await Repo(args, client, output, services, (ct, interrupt.Again)).ConfigureAwait(false),
             ["ledger", .. var rest] => await new LedgerVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(rest, ct).ConfigureAwait(false),
             ["launch" or "session", ..] => await LaunchOrSession(args, client, (output, environment), services, (ct, interrupt.Again)).ConfigureAwait(false),
@@ -131,6 +132,11 @@ internal static partial class CommandTable
         };
     }
 
+    /// <summary>'sindri stop' and 'sindri restart [--wait] [--timeout D]'.</summary>
+    private static Task<int> StopOrRestart(string[] args, Verbs verbs, (ControlPlaneClient Client, IControlPlaneProbe Probe, Output Output) cli, (IServiceProvider Services, StartCommand Start) host, CancellationToken ct) => args is ["stop"]
+        ? verbs.Stop(ct)
+        : new RestartCommand(cli.Client, cli.Probe, host.Services.GetRequiredService<IProcessProbe>(), host.Start, cli.Output, host.Services.GetRequiredService<TimeProvider>()).Run(args[1..], ct);
+
     /// <summary>'sindri workflow|wf|outbox|takeover|handback|answer …'.</summary>
     private static async Task<int> Workflows(string[] args, IServiceProvider services, Output output, RecipeDesk desk, CancellationToken ct) => args switch
     {
@@ -144,6 +150,8 @@ internal static partial class CommandTable
         ["wf", "validate", .. var rest] => await WfValidateCommand.Run(rest, services, output, ct).ConfigureAwait(false),   // in process: reads the graph file, never starts or contacts serve
         ["wf", "run", .. var rest] => await WfRunCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "cancel", .. var rest] => await WfRunCommand.Cancel(rest, desk, output, ct).ConfigureAwait(false),
+        ["wf", "rerun", .. var rerunArgs] => await WfRerunCommand.Run(rerunArgs, desk, output, ct).ConfigureAwait(false),
+        ["wf", "seen", .. var rest] => await WfSeenCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "takeover", .. var rest] => await WfAgentNodeCommand.TakeOver(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "handback", .. var rest] => await WfAgentNodeCommand.HandBack(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "list", .. var rest] => await new WfReadVerbs(desk.Client, output).List(rest, ct).ConfigureAwait(false),   // the reads go to the routes and never start the control plane
@@ -168,13 +176,14 @@ internal static partial class CommandTable
             _ => await UnknownVerb(args, io.Output).ConfigureAwait(false),
         };
 
-    /// <summary>'sindri doctor [--json]' and 'sindri doctor --probe [--harness NAME] [--json]'.</summary>
+    /// <summary>'sindri doctor [--dev] [--json]' and 'sindri doctor --probe [--harness NAME] [--json]'.</summary>
     private static async Task<int> Doctor(string[] args, Verbs verbs, ProbeCommands harnesses, Output output, CancellationToken ct) =>
         args switch
         {
             ["doctor", "--probe"] or ["doctor", "--probe", "--json"] => await output.Json(await harnesses.Probe(harness: null, ct).ConfigureAwait(false), 0).ConfigureAwait(false),
             ["doctor", "--probe", "--harness", var name, .. var rest] when Json(rest) is not null => await output.Json(await harnesses.Probe(name, ct).ConfigureAwait(false), 0).ConfigureAwait(false),
-            ["doctor", .. var rest] when Json(rest) is { } json => await verbs.Doctor(json, ct, harnesses.DoctorChecks).ConfigureAwait(false),
+            ["doctor", .. var rest] when WithoutDev(rest) is var plain && Json(plain.Args) is { } json =>
+                await verbs.Doctor(json, ct, token => harnesses.DoctorChecks(plain.Dev, token)).ConfigureAwait(false),
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
 
@@ -238,6 +247,10 @@ internal static partial class CommandTable
         _ => null,
     };
 
+    /// <summary>'sindri doctor' arguments without '--dev', and whether it was there.</summary>
+    private static (bool Dev, string[] Args) WithoutDev(string[] rest) =>
+        rest.Contains("--dev", StringComparer.Ordinal) ? (true, [.. rest.Where(a => !string.Equals(a, "--dev", StringComparison.Ordinal))]) : (false, rest);
+
     private static bool? Json(string[] rest) => rest switch
     {
         [] => false,
@@ -266,13 +279,14 @@ internal static partial class CommandTable
 
     private static bool Interactive() => !Console.IsInputRedirected && !Console.IsOutputRedirected;
 
-    private static Task<int> ItemOrProject(string[] args, (ControlPlaneClient Client, Output Output, IServiceProvider Services) host, StartCommand start, CancellationToken ct) => args switch
+    private static Task<int> ItemOrProject(string[] args, (ControlPlaneClient Client, Output Output, IServiceProvider Services) host, StartCommand start, CancellationToken ct, CancellationToken again) => args switch
     {
         ["todo", "note", "set" or "stop", ..] => new TodoNoteVerbs(host.Services, host.Output).Run(args, ct),
         ["todos" or "todo", ..] => new TodoVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c), noteKey: c => TodoNoteTargets.Read(host.Services, c)).Run(args, ct),
         ["project" or "projects", ..] => new ProjectVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
         ["connection" or "connections", ..] => new ConnectionVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
         ["resources", ..] => new ResourceVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
+        ["toolkit" or "toolkits", ..] => new ToolkitVerbs(host.Client, host.Output, new JobFollower(host.Client, host.Output, host.Services.GetRequiredService<TimeProvider>()), (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct, again),
         ["memory" or "memories", ..] => new MemoryVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
         _ => new ItemVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
     };

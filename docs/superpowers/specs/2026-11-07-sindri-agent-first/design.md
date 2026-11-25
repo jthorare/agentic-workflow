@@ -338,7 +338,7 @@ workflow and gets its result submitted.
 - **Embeddings** use the local embedding model Sindri already pins for the code index (`context/code-index.lock`,
   `nomic-embed-text` through Ollama). Recall ranks by cosine similarity with three match levels (loose, balanced,
   strict); without the model, recall falls back to keyword ranking and says so.
-- **Writes deduplicate:** a fact very similar to an existing one with the same tags refreshes it instead of adding
+- **Writes deduplicate:** a fact similar to an existing one with the same tags refreshes it instead of adding
   another (the threshold is a constant with a test, calibrated on a fixture set).
 - **Blocks:** `memory_search`, `memory_write`, `memory_forget`, and an optional `memory` field on `prompt` and
   `run_agent` that recalls before the call and lets the agent write facts through its MCP tools.

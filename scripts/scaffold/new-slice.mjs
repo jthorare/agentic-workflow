@@ -19,8 +19,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { Journal, ScaffoldError, UsageError, trapSignals, camel, kebab, list, parseArgs, withHeavyLock } from "./lib/common.mjs";
+import { Journal, ScaffoldError, UsageError, trapSignals, camel, kebab, list, parseArgs, withHeavyLock, isMain } from "./lib/common.mjs";
 import { builderRoot, byNamespace, usingsBlock } from "./lib/package-templates.mjs";
 import { nodeOf, packageShape, readDeps } from "./lib/repo.mjs";
 import * as T from "./lib/slice-templates.mjs";
@@ -342,6 +341,6 @@ async function main(argv) {
   }
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   process.exitCode = await main(process.argv.slice(2));
 }

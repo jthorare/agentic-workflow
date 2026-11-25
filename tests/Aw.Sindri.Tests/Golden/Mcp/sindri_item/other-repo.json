@@ -21,6 +21,7 @@
     "updatedAt": "2026-01-01T00:00:00.0000000Z",
     "body": null,
     "link": null,
+    "runs": [],
     "launch": {
       "modes": [
         "open"
@@ -50,6 +51,10 @@
       "lists": {
         "actions": {
           "total": 2,
+          "more": false
+        },
+        "runs": {
+          "total": 0,
           "more": false
         }
       }

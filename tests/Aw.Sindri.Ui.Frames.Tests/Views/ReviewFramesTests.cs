@@ -60,6 +60,20 @@ public sealed class ReviewFramesTests : FrameHost
     });
 
     [Theory]
+    [InlineData(1000)]
+    [InlineData(1280)]
+    public Task The_Reviews_page_when_GitHub_is_not_connected(int width) => OnUi(async () =>
+    {
+        var (window, _) = await OnList("connect-github", width);
+
+        Assert.True(Visible(window, "ReviewsConnectLine"));
+        Assert.True(Visible(window, "ReviewsConnectButton"));
+        Assert.Contains("primary", Named<Button>(window, "ReviewsConnectButton").Classes, StringComparer.Ordinal);
+        Assert.False(Visible(window, "ReviewsHint"));
+        Frame(window, "reviews-connect-github-" + Width(width), Prefix);
+    });
+
+    [Theory]
     [InlineData("full", 1440)]
     [InlineData("full", 1000)]
     [InlineData("moving", 1440)]

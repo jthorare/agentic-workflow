@@ -19,29 +19,6 @@ internal sealed partial class SessionRow : UserControl
         AddHandler(GotFocusEvent, (_, _) => RaiseEvent(new RoutedEventArgs(SelectEvent, this)));
     }
 
-    private SessionRowViewModel? _watched;
-
-    /// <inheritdoc />
-    protected override void OnDataContextChanged(EventArgs e)
-    {
-        _watched?.PropertyChanged -= OnRowChanged;
-        base.OnDataContextChanged(e);
-        _watched = DataContext as SessionRowViewModel;
-        _watched?.PropertyChanged += OnRowChanged;
-        Columns();
-    }
-
-    private void OnRowChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        if (string.Equals(e.PropertyName, nameof(SessionRowViewModel.IsCompact), StringComparison.Ordinal))
-        {
-            Columns();
-        }
-    }
-
-    // The same grid, the hidden columns at zero width: Status, Agent and For are what is left.
-    private void Columns() => SessionRowGrid.ColumnDefinitions = ColumnDefinitions.Parse(_watched is { IsCompact: true } ? AgentColumnsLayout.Compact : AgentColumnsLayout.Wide);
-
     /// <summary>The row's session ref.</summary>
     internal string Key => (DataContext as SessionRowViewModel)?.Ref ?? string.Empty;
 

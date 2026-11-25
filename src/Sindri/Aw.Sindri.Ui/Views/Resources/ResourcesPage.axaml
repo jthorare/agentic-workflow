@@ -37,7 +37,7 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="rs:ResourceRowViewModel">
               <Border x:Name="ResourceFrame" Classes="item-row" Padding="16,8" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-                <StackPanel Spacing="6">
+                <StackPanel Spacing="8">
                   <DockPanel LastChildFill="True">
                     <Button x:Name="ResourcePurge" DockPanel.Dock="Right" Content="{Binding PurgeText}" IsVisible="{Binding ShowActions}" Click="OnPurge" AutomationProperties.Name="{Binding PurgeName}" />
                     <TextBlock x:Name="ResourceSize" DockPanel.Dock="Right" Classes="caption subtle" Text="{Binding SizeLine}" Margin="8,0" VerticalAlignment="Center" />

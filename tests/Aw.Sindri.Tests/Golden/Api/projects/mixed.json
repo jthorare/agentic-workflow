@@ -57,7 +57,16 @@
       ],
       "notes": null,
       "synced": true,
-      "version": 0
+      "version": 0,
+      "truth": {
+        "openPrs": [],
+        "openItems": 0,
+        "doneItems": 0,
+        "totalItems": 0,
+        "runningAgents": 0,
+        "health": null,
+        "blockedOnYou": false
+      }
     },
     {
       "id": "prj_0000000000000000000000000F",
@@ -79,7 +88,16 @@
       "links": [],
       "notes": null,
       "synced": true,
-      "version": 1
+      "version": 1,
+      "truth": {
+        "openPrs": [],
+        "openItems": 0,
+        "doneItems": 0,
+        "totalItems": 0,
+        "runningAgents": 0,
+        "health": null,
+        "blockedOnYou": false
+      }
     },
     {
       "id": "prj_00000000000000000000000008",
@@ -113,7 +131,16 @@
       ],
       "notes": "Waiting on the vendor",
       "synced": true,
-      "version": 1
+      "version": 1,
+      "truth": {
+        "openPrs": [],
+        "openItems": 0,
+        "doneItems": 0,
+        "totalItems": 0,
+        "runningAgents": 0,
+        "health": null,
+        "blockedOnYou": false
+      }
     }
   ],
   "finished": [
@@ -145,7 +172,16 @@
       ],
       "notes": null,
       "synced": true,
-      "version": 0
+      "version": 0,
+      "truth": {
+        "openPrs": [],
+        "openItems": 0,
+        "doneItems": 0,
+        "totalItems": 0,
+        "runningAgents": 0,
+        "health": null,
+        "blockedOnYou": false
+      }
     }
   ],
   "hidden": [
@@ -177,7 +213,17 @@
       ],
       "notes": null,
       "synced": true,
-      "version": 1
+      "version": 1,
+      "truth": {
+        "openPrs": [],
+        "openItems": 0,
+        "doneItems": 0,
+        "totalItems": 0,
+        "runningAgents": 0,
+        "health": null,
+        "blockedOnYou": false
+      }
     }
-  ]
+  ],
+  "emptyCode": null
 }

@@ -12,7 +12,8 @@
         "CloseItem:done",
         "CloseItem:cancelled"
       ],
-      "owner": null
+      "owner": null,
+      "parked": false
     },
     {
       "id": "ITM-0000000000000000000000000000000b",
@@ -26,7 +27,8 @@
         "CloseItem:done",
         "CloseItem:cancelled"
       ],
-      "owner": null
+      "owner": null,
+      "parked": false
     },
     {
       "id": "ITM-00000000000000000000000000000010",
@@ -40,7 +42,8 @@
         "CloseItem:done",
         "CloseItem:cancelled"
       ],
-      "owner": null
+      "owner": null,
+      "parked": false
     }
   ],
   "empty": null,

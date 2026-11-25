@@ -10,7 +10,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <summary>Starts <see cref="GraphWorkflow"/> on Temporal with the run id as the workflow id; Temporal refuses a second start of the same id.</summary>
 /// <param name="connect">Gives the Temporal client (a seam so a test passes its own).</param>
 /// <param name="taskQueue">The queue the worker polls.</param>
-internal sealed class TemporalGraphRunLauncher(Func<CancellationToken, ValueTask<Result<ITemporalClient>>> connect, string taskQueue) : IGraphRunLauncher
+/// <param name="agentLaunchAttempts">How many times a failing 'run_agent' launch is tried; 0 for the workflow's own default.</param>
+internal sealed class TemporalGraphRunLauncher(Func<CancellationToken, ValueTask<Result<ITemporalClient>>> connect, string taskQueue, int agentLaunchAttempts = 0) : IGraphRunLauncher
 {
     /// <summary>A launcher that connects to the dev server 'sindri serve' started, once per launch.</summary>
     /// <param name="frontend">Finds and connects to it.</param>
@@ -37,7 +38,7 @@ internal sealed class TemporalGraphRunLauncher(Func<CancellationToken, ValueTask
         };
         try
         {
-            _ = await client.Value.StartWorkflowAsync((GraphWorkflow w) => w.RunAsync(new GraphWorkflowInput(run.Id)), options).ConfigureAwait(false);
+            _ = await client.Value.StartWorkflowAsync((GraphWorkflow w) => w.RunAsync(new GraphWorkflowInput(run.Id, agentLaunchAttempts)), options).ConfigureAwait(false);
             return true;
         }
         catch (WorkflowAlreadyStartedException)   // boundary: Temporal already has this run id, so an earlier start of ours got through

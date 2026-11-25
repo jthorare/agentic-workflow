@@ -64,15 +64,26 @@ public sealed class FakeCodeIndex : ICodeIndex
         return this;
     }
 
+    /// <summary>Marks a repo's graph layer as disabled by the profile: it never ran, the structure still answers.</summary>
+    /// <param name="repo">The repo.</param>
+    /// <returns>This fake.</returns>
+    public FakeCodeIndex WithGraphDisabled(RepoName repo)
+    {
+        _repos[repo].GraphOff = true;
+        return this;
+    }
+
     /// <summary>Scripts a repo's embeddings layer: <see cref="Status"/> lists it, and <see cref="Embed"/> leaves it in <paramref name="afterEmbed"/> (or answers <see cref="EmbedError"/>).</summary>
     /// <param name="repo">The repo; it needs a readable index.</param>
     /// <param name="state">The layer's state now.</param>
     /// <param name="afterEmbed">The state an embed run leaves it in.</param>
+    /// <param name="code">The layer's code now (an unavailable layer's cause), or null.</param>
     /// <returns>This fake.</returns>
-    public FakeCodeIndex WithEmbeddings(RepoName repo, LayerState state, LayerState afterEmbed = LayerState.Ok)
+    public FakeCodeIndex WithEmbeddings(RepoName repo, LayerState state, LayerState afterEmbed = LayerState.Ok, string? code = null)
     {
         _repos[repo].Embeddings = state;
         _repos[repo].AfterEmbed = afterEmbed;
+        _repos[repo].EmbeddingsCode = code;
         return this;
     }
 
@@ -119,6 +130,7 @@ public sealed class FakeCodeIndex : ICodeIndex
         }
 
         index.Embeddings = index.AfterEmbed;
+        index.EmbeddingsCode = null;
         return Ok(new EmbedReport(repo, Embedded: 1, Embeddable: 1, Carried: 0, Made: 1, index.Embeddings ?? LayerState.Ok));
     }
 
@@ -239,14 +251,14 @@ public sealed class FakeCodeIndex : ICodeIndex
     private static List<LayerStatus> LayersOf(Repo repo)
     {
         var layers = new List<LayerStatus> { new(LayerName.Structure, LayerState.Ok, Code: null, "ok") };
-        if (repo.GraphDown)
+        if (repo.GraphDown || repo.GraphOff)
         {
             layers.Add(GraphOf(repo));
         }
 
         if (repo.Embeddings is { } state)
         {
-            layers.Add(new LayerStatus(LayerName.Embeddings, state, Code: null, state.ToString().ToLowerInvariant()));
+            layers.Add(new LayerStatus(LayerName.Embeddings, state, repo.EmbeddingsCode, state.ToString().ToLowerInvariant()));
         }
 
         return layers;
@@ -256,7 +268,8 @@ public sealed class FakeCodeIndex : ICodeIndex
 
     private static AnswerStamp Stamp(Repo repo) => new(repo.Name, repo.Commit!.Value, BuiltAt, IndexState.Ok, GraphOf(repo));
 
-    private static LayerStatus GraphOf(Repo repo) => repo.GraphDown
+    private static LayerStatus GraphOf(Repo repo) => repo.GraphOff ? new LayerStatus(LayerName.Graph, LayerState.Disabled, Code: null, "disabled by the profile")
+        : repo.GraphDown
         ? new LayerStatus(LayerName.Graph, LayerState.Unavailable, "SND-CODEIDX-008", "graphify is missing")
         : new LayerStatus(LayerName.Graph, LayerState.Ok, Code: null, "ok");
 
@@ -287,9 +300,13 @@ public sealed class FakeCodeIndex : ICodeIndex
 
         internal bool GraphDown { get; set; }
 
+        internal bool GraphOff { get; set; }
+
         internal LayerState? Embeddings { get; set; }
 
         internal LayerState AfterEmbed { get; set; } = LayerState.Ok;
+
+        internal string? EmbeddingsCode { get; set; }
 
         internal Dictionary<(SymbolRef, CallDirection), (int Unresolved, List<CallEdge> Edges)> Edges { get; } = [];
 

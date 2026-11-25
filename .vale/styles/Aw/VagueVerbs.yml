@@ -1,0 +1,18 @@
+# Structure rule "one word per meaning": no vague verbs (config/voice/reply.md, "Structure").
+extends: existence
+message: "'%s' says nothing about the action. Name what physically happens: read, write, retry, refuse, route, store."
+level: error
+ignorecase: true
+tokens:
+  - "handl(?:e|es|ed|ing)"
+  - "manag(?:e|es|ed|ing)"
+  - "deal(?:s|t)? with"
+  - "dealing with"
+  - "takes? care of"
+  - "took care of"
+  - "taking care of"
+# The nouns and adjectives are fine prose: a file handle, managed code.
+exceptions:
+  - "(?:file|window|process|socket|open|native|wait|the) handles?"
+  - "handles? (?:leak|count)s?"
+  - "[Mm]anaged (?:code|Agents?|identity|identities|service|services|runtime|memory|heap|package|packages)"

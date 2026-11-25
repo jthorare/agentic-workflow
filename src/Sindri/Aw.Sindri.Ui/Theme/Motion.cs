@@ -20,7 +20,7 @@ internal static class Motion
         }
     }
 
-    private static readonly string[] _keys = ["Motion.Instant", "Motion.Fast", "Motion.Base", "Motion.Pulse", "Motion.Spin"];
+    private static readonly string[] _keys = ["Motion.Instant", "Motion.Fast", "Motion.Hover", "Motion.Base", "Motion.Pulse", "Motion.Spin"];
 
     // The token's duration, from the merged token dictionary (the app's own dictionary holds the applied copy).
     private static TimeSpan Base(IResourceDictionary resources, string key) =>

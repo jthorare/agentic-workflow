@@ -85,4 +85,25 @@ public sealed class ShellSetupCountTests
         Assert.Contains(shell.NeedsYou.Rows, r => r.Id == "setup:mcp");
         Assert.Equal(shell.NeedsYou.Rows.Count, shell.NeedsYou.Count);   // the badge and tray read this count
     }, Token);
+
+    // #2781: the decision and the setup:mcp row the Home line names. Home lists one row, so every count says 1.
+    [Fact]
+    public Task The_title_the_badge_the_tray_and_the_announcement_count_the_rows_Home_lists_not_the_setup_row_its_line_names() => UiThread.Run(async () =>
+    {
+        var list = GoldenFiles.Node("needs-you", "fixture");
+        var rows = list["rows"]!.AsArray();
+        foreach (var row in rows.ToArray().Where(r => !((string)r!["id"]!).StartsWith("decision:", StringComparison.Ordinal) && !string.Equals((string)r!["id"]!, "setup:mcp", StringComparison.Ordinal)))
+        {
+            _ = rows.Remove(row);
+        }
+
+        _server.NeedsYouView = new RouteAnswer(System.Net.HttpStatusCode.OK, list.ToJsonString());
+        _server.SetupAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, SetupFixture.With("extra-priority-mix", "profile", "done").ToJsonString());   // the first open step is mcp
+        var shell = await Connected(s => s.Setup.IsHomeLineShown);
+
+        Assert.Equal("mcp", shell.Setup.HomeStepId);
+        _ = Assert.Single(shell.NeedsYou.Rows);
+        Assert.StartsWith("1 need you", shell.Attention.SummaryLine, StringComparison.Ordinal);
+        Assert.Equal(("(1) Needs you · Sindri", 1, 1, "1 now need you"), (shell.WindowTitle, shell.Attention.Badge, shell.Attention.Tray.Count, shell.NeedsYouAnnouncement));
+    }, Token);
 }

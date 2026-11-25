@@ -17,4 +17,10 @@ public enum ViewColumn
 
     /// <summary>The row's kind, in its wire name ('failure').</summary>
     Kind,
+
+    /// <summary>How a launch's session ended, in its wire name ('idle'); the launches view only (issue #2786).</summary>
+    Reason,
+
+    /// <summary>The workflow instance address of a launch's Step; the launches view only (issue #2786).</summary>
+    Instance,
 }

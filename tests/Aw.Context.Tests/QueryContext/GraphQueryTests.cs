@@ -193,6 +193,20 @@ public sealed class GraphQueryTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_question_lists_its_suggestions_with_their_labels_and_kinds_in_the_same_order_as_the_bare_keys()
+    {
+        _ = await _world.ImportFixture();
+
+        var result = (await _world.Engine.Query(new ContextQuery("What else is affected if I change how split orientation works?"), MapWorld.Human, MapWorld.None)).Value;
+
+        Assert.NotEmpty(result.SuggestedAnchors);
+        var suggestions = result.Suggestions ?? [];
+        Assert.Equal(result.SuggestedAnchors, [.. suggestions.Select(s => s.Key)]);
+        Assert.All(suggestions, s => Assert.Equal(s.Key[..s.Key.IndexOf(':', StringComparison.Ordinal)], s.Kind));
+        Assert.All(suggestions, s => Assert.False(string.IsNullOrWhiteSpace(s.Label) || s.Label == s.Key, $"{s.Key} has no label of its own"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Without_a_map_a_question_is_answered_as_in_phase_1()
     {
         var result = (await _world.Engine.Query(new ContextQuery("orientation toggle"), MapWorld.Human, MapWorld.None)).Value;

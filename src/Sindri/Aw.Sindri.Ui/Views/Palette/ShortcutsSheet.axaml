@@ -36,7 +36,7 @@
           <ItemsControl x:Name="ShortcutRows" ItemsSource="{Binding Rows}" AutomationProperties.Name="{Binding Title}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="palette:ShortcutRow">
-                <Grid ColumnDefinitions="220,*" MinHeight="{StaticResource Size.Row}" AutomationProperties.Name="{Binding Name}">
+                <Grid ColumnDefinitions="220,*" MinHeight="{StaticResource Row.Height.Comfortable}" AutomationProperties.Name="{Binding Name}">
                   <Border Classes="kbd" HorizontalAlignment="Left" VerticalAlignment="Center">
                     <TextBlock Classes="kbd" Text="{Binding Keys}" TextWrapping="Wrap" />
                   </Border>

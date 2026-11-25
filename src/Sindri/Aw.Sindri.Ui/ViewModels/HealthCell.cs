@@ -5,7 +5,8 @@ namespace Aw.Sindri.Ui.ViewModels;
 /// <param name="Value">The value in words.</param>
 /// <param name="Glyph">The value's state glyph, drawn before it (§11.3), or none.</param>
 /// <param name="IsPath">True when the value is a path, shown in mono (S3).</param>
-internal sealed record HealthCell(string Label, string Value, StateGlyph Glyph = StateGlyph.None, bool IsPath = false)
+/// <param name="IsAttention">True when the value draws in the attention colour (a stalled view).</param>
+internal sealed record HealthCell(string Label, string Value, StateGlyph Glyph = StateGlyph.None, bool IsPath = false, bool IsAttention = false)
 {
     /// <summary>True when the value has a glyph.</summary>
     public bool HasGlyph => Glyph != StateGlyph.None;

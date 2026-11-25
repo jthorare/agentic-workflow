@@ -29,6 +29,10 @@ public sealed class WorkflowGoldenContractTests
         Assert.Null(list.Workflows[1].ActiveRevision);
         Assert.Empty(Read<WorkflowList>("workflows", "list-empty").Workflows);
 
+        // includeArchived (#2702): the same two rows, the archived one marked.
+        var held = Read<WorkflowList>("workflows", "list-include-archived").Workflows;
+        Assert.Equal(["morning-check:", "weekly-report:True"], [.. held.Select(w => w.Slug + ":" + w.Archived)], StringComparer.Ordinal);
+
         var one = Read<WorkflowView>("workflows-slug", "found");
         Assert.Equal(("WF-00000000000000000000000000000001", "morning-check", "Morning check", 1, 1, 2), (one.Id, one.Slug, one.Name, one.Revision, one.ActiveRevision, one.LatestRevision));
         Assert.Equal(("owner", "session:golden"), (one.CreatedBy, one.ChangedBy));
@@ -48,12 +52,12 @@ public sealed class WorkflowGoldenContractTests
         Assert.Equal("manual", run.Trigger!.Value.GetProperty("kind").GetString());
         Assert.Equal("no drift", run.Outputs!.Value.GetProperty("summary").GetString());
         Assert.True(run.Error is null && run.ItemId is null);
-        Assert.Equal(["agent", "start"], run.Nodes.Select(n => n.Node), StringComparer.Ordinal);
-        Assert.Equal((0, "succeeded", false), (run.Nodes[0].ItemIndex, run.Nodes[0].Status, run.Nodes[0].Truncated));
-        Assert.Null(run.Nodes[0].Error);
-        Assert.Equal("Look for drift", run.Nodes[0].Input!.Value.GetProperty("prompt").GetString());
-        Assert.Equal("no drift", run.Nodes[0].Output!.Value.GetProperty("text").GetString());
-        Assert.Null(run.Nodes[1].Input);
+        Assert.Equal(["start", "agent"], run.Nodes.Select(n => n.Node), StringComparer.Ordinal);   // graph order (#3307)
+        Assert.Equal((0, "succeeded", false), (run.Nodes[1].ItemIndex, run.Nodes[1].Status, run.Nodes[1].Truncated));
+        Assert.Null(run.Nodes[1].Error);
+        Assert.Equal("Look for drift", run.Nodes[1].Input!.Value.GetProperty("prompt").GetString());
+        Assert.Equal("no drift", run.Nodes[1].Output!.Value.GetProperty("text").GetString());
+        Assert.Null(run.Nodes[0].Input);
     }
 
     [Fact]
@@ -62,8 +66,8 @@ public sealed class WorkflowGoldenContractTests
         var run = Read<WorkflowRunView>("workflow-runs-run", "running");
 
         Assert.True(run.Status == "running" && run.Outputs is null && run.EndedAt is null);
-        Assert.Null(run.Nodes[0].Output);
-        Assert.Equal(JsonValueKind.Object, run.Nodes[0].Input!.Value.ValueKind);
+        Assert.Null(run.Nodes[1].Output);
+        Assert.Equal(JsonValueKind.Object, run.Nodes[1].Input!.Value.ValueKind);
     }
 
     [Fact]
@@ -96,7 +100,7 @@ public sealed class WorkflowGoldenContractTests
         var activate = Encoding.UTF8.GetString(AwJson.Serialize(new ActivateWorkflowBody(Revision: null), SindriApiClient.Json));
         var ops = Encoding.UTF8.GetString(AwJson.Serialize(new ApplyWorkflowOpsBody(2, JsonDocument.Parse("[{\"op\":\"remove_node\",\"node\":\"a\"}]").RootElement), SindriApiClient.Json));
 
-        Assert.Equal("{\"revision\":null}", activate);
+        Assert.Equal("{\"revision\":null,\"ifLatest\":false,\"untestedOk\":false}", activate);
         Assert.Equal("{\"baseRevision\":2,\"ops\":[{\"op\":\"remove_node\",\"node\":\"a\"}]}", ops);
     }
 
@@ -111,9 +115,13 @@ public sealed class WorkflowGoldenContractTests
         Assert.Equal("start", manual.ExampleSpec!.Value.GetProperty("nodes")[0].GetProperty("id").GetString());
         Assert.Equal(["prompt", "run_agent"], read.Groups[2].Blocks.Select(b => b.Type), StringComparer.Ordinal);
         var prompt = read.Groups[2].Blocks[0];
-        Assert.Equal(new WorkflowBlockField("prompt", "text", Required: true), prompt.Config[0]);
+        Assert.Equal(("prompt", "text", true), (prompt.Config[0].Name, prompt.Config[0].Type, prompt.Config[0].Required));
+        Assert.False(string.IsNullOrEmpty(prompt.Config[0].Caption), "a field is served with its caption");
+        var cron = read.Groups[0].Blocks.Single(b => b.Type == "schedule").Config.Single(f => f.Name == "cron");
+        Assert.Equal(("Runs at", "0 7 * * 1-5", "Every weekday at 7:00"), (cron.Caption, cron.Presets![0].Value, cron.Presets[0].Label));
         Assert.Equal("Summarize {{search.facts}}", prompt.ExampleConfig!.Value.GetProperty("prompt").GetString());
-        Assert.Equal(["collect", "for_each", "condition", "only_new", "run_workflow", "wait"], read.Groups[3].Blocks.Select(b => b.Type), StringComparer.Ordinal);
+        Assert.Equal(["http", "memory_search", "skill_catalog", "call_tool", "workflow_result"], read.Groups[1].Blocks.Select(b => b.Type), StringComparer.Ordinal);
+        Assert.Equal(["code", "collect", "for_each", "memory_forget", "condition", "only_new", "memory_write", "run_workflow", "wait"], read.Groups[3].Blocks.Select(b => b.Type), StringComparer.Ordinal);
         Assert.Equal(["ask_owner", "create_item", "notify"], read.Groups[4].Blocks.Select(b => b.Type), StringComparer.Ordinal);
     }
 

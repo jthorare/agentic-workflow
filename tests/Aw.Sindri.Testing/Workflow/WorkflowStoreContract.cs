@@ -69,6 +69,34 @@ public abstract class WorkflowStoreContract
         Expect.Equal(SindriErrors.GraphSlugTaken.Code, other.Error.Code);
     }
 
+    /// <summary>A live taker is named "another workflow" and the text speaks of a short id, not a slug.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_slug_taken_by_a_live_workflow_says_so_in_plain_words()
+    {
+        var store = Create();
+        _ = (await store.Create(_id, _slug, Spec("one"), "owner", Token)).Value;
+
+        var other = await store.Create(WorkflowId.From("WF-00000000000000000000000000000002"), _slug, Spec("two"), "owner", Token);
+
+        Expect.Equal("The short id 'contract-drift' is taken by another workflow. Pick another.", other.Error.Message);
+    }
+
+    /// <summary>An archived taker is named as archived, because the list hides it.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_slug_taken_by_an_archived_workflow_says_it_is_archived()
+    {
+        var store = Create();
+        _ = (await store.Create(_id, _slug, Spec("one"), "owner", Token)).Value;
+        _ = (await store.Archive(_id, Token)).Value;
+
+        var other = await store.Create(WorkflowId.From("WF-00000000000000000000000000000002"), _slug, Spec("two"), "owner", Token);
+
+        Expect.Equal(SindriErrors.GraphSlugTaken.Code, other.Error.Code);
+        Expect.Equal("The short id 'contract-drift' is taken by an archived workflow. Pick another.", other.Error.Message);
+    }
+
     /// <summary>Pausing clears the active revision and keeps every revision; pausing an unknown workflow is not found.</summary>
     /// <returns>The test.</returns>
     [Fact]
@@ -174,5 +202,23 @@ public abstract class WorkflowStoreContract
         var store = Create();
 
         Expect.Equal(SindriErrors.GraphNotFound.Code, (await store.Get(_id, Token)).Error.Code);
+    }
+
+    /// <summary>Activate sets WasActivated, Pause keeps it with no active revision, and a never-activated workflow has it false (#3683).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Was_activated_is_set_by_activate_and_kept_by_pause()
+    {
+        var store = Create();
+        _ = (await store.Create(_id, _slug, Spec("one"), "owner", Token)).Value;
+        Expect.Equal(expected: false, (await store.Get(_id, Token)).Value.WasActivated);
+
+        var active = (await store.Activate(_id, 1, Token)).Value;
+        var paused = (await store.Pause(_id, Token)).Value;
+
+        Expect.Equal(expected: true, active.WasActivated);
+        Expect.Equal(expected: true, paused.WasActivated);
+        Expect.Equal(expected: null, paused.ActiveRevision);
+        Expect.Equal(expected: true, (await store.Get(_id, Token)).Value.WasActivated);
     }
 }

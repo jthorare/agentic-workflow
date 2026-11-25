@@ -1,5 +1,5 @@
+using System.Globalization;
 using Avalonia.Controls;
-using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
@@ -37,7 +37,7 @@ public sealed class ProjectsFramesTests : FrameHost
         var (window, shell) = await OnProjects("mixed", width, height);
 
         Shown(window, shell);
-        Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"projects-mixed-{width}"), prefix: string.Empty);
+        Frame(window, string.Create(CultureInfo.InvariantCulture, $"projects-mixed-{width}"), prefix: string.Empty);
     });
 
     [Fact]
@@ -46,8 +46,6 @@ public sealed class ProjectsFramesTests : FrameHost
         var (window, shell) = await OnProjects("with-prs", 1440, 900);
 
         Shown(window, shell);
-        Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && (t.Text ?? "").Contains("repos: api, web", StringComparison.Ordinal));
-        Assert.Null(shell.Projects.Groups.SelectMany(g => g.Cards).Single(c => c.Name == "Mobile app").PrsValue);
         Frame(window, "projects-with-prs-1440", prefix: string.Empty);
     });
 
@@ -79,20 +77,8 @@ public sealed class ProjectsFramesTests : FrameHost
         var (window, shell) = await OnProjects("empty-leads-nothing", 1440, 900);
 
         Shown(window, shell);
-        Assert.True(Visible(window, "ProjectsEmptyBlock"));
+        Assert.True(Visible(window, "ProjectsEmptyCard"));
         Frame(window, "projects-empty-leads-nothing-1440", prefix: string.Empty);
-    });
-
-    [Fact]
-    public Task A_cards_notes_open_for_editing() => OnUi(async () =>
-    {
-        var (window, shell) = await OnProjects("mixed", 1440, 900);
-        shell.Projects.Groups[0].Cards[0].BeginEdit();
-        await Until(window, () => Visible(window, "ProjectNotesBox"), "the notes box never showed");
-        Settle(window);
-
-        Shown(window, shell);
-        Frame(window, "projects-notes-edit-1440", prefix: string.Empty);
     });
 
     [Theory]
@@ -106,7 +92,7 @@ public sealed class ProjectsFramesTests : FrameHost
         Settle(window);
 
         Assert.True(shell.IsProjectSheet);
-        Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"projects-sheet-{width}"), prefix: string.Empty);
+        Frame(window, string.Create(CultureInfo.InvariantCulture, $"projects-sheet-{width}"), prefix: string.Empty);
     });
 
     [Fact]
@@ -149,7 +135,7 @@ public sealed class ProjectsFramesTests : FrameHost
     });
 
     [Fact]
-    public Task Before_the_first_answer_the_page_shows_card_shaped_placeholders() => OnUi(async () =>
+    public Task Before_the_first_answer_the_page_shows_row_shaped_placeholders() => OnUi(async () =>
     {
         var gate = new TaskCompletionSource();
         Server.ProjectsGate = gate;

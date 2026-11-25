@@ -70,14 +70,14 @@ public sealed class ApplyOpsTests
     [Fact]
     public void Add_node_appends_the_node_and_refuses_a_used_id()
     {
-        var added = Apply(Base(), new AddNodeOp(Id("gate"), "condition", Title: "Is it new?", new JsonObject { ["when"] = "a.facts" }, OnFailure: "continue"));
+        var added = Apply(Base(), new AddNodeOp(Id("gate"), "condition", Title: "Is it new?", new JsonObject { ["when"] = "a.facts" }, OnFailure: "stop"));
         var again = Apply(Base(), new AddNodeOp(Id("a"), "memory_search", Title: null, new JsonObject { ["memory"] = "drift", ["query"] = "q" }));
 
         var node = added.Value.Nodes[^1];
         Assert.Equal("gate", node.Id.Value);
         Assert.Equal("condition", node.Type);
         Assert.Equal("Is it new?", node.Title);
-        Assert.Equal("continue", node.OnFailure);
+        Assert.Equal("stop", node.OnFailure);
         Assert.Equal("a.facts", node.Config["when"]!.GetValue<string>());
         Assert.Equal("SND-GRAPH-012", again.Error.Code);
         Assert.Contains("'a'", again.Error.Message, StringComparison.Ordinal);
@@ -188,6 +188,25 @@ public sealed class ApplyOpsTests
         Assert.Equal("Renamed", result.Value.Name);
         Assert.Null(result.Value.Description);
         Assert.Equal("one-per-workflow", result.Value.Concurrency);
+    }
+
+    [Fact]
+    public void Set_meta_sets_and_clears_the_result()
+    {
+        var set = Apply(Base(), new SetMetaOp(Result: "a"));
+        var cleared = Apply(set.Value, new SetMetaOp(Result: ""));
+
+        Assert.Equal(Id("a"), set.Value.Result);
+        Assert.Null(cleared.Value.Result);
+    }
+
+    [Fact]
+    public void Set_meta_with_a_result_that_names_no_node_is_refused()
+    {
+        var result = Apply(Base(), new SetMetaOp(Result: "ghost"));
+
+        Assert.True(result.IsError);
+        Assert.Contains("GRAPH-RESULT-001", result.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact]

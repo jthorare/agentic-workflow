@@ -6,31 +6,27 @@
              x:DataType="queue:ItemRowViewModel">
   <!-- One item row (UI spec §4.5, queue.html): title, repo, the state as a word, step, since, and the row's
        primary action from the catalog. A click on the title, or Enter, opens the sheet (§3.2); the row is named by its
-       id, title and state (the id is read out, never drawn). -->
-  <Border x:Name="RowFrame" Classes="item-row" Classes.selected="{Binding IsSelected}" Focusable="True"
+       id, title and state (the id is read out and shown as the title's tooltip, never drawn in the row). -->
+  <Border x:Name="RowFrame" AutomationProperties.AutomationId="{Binding AutomationId}" Classes="item-row clickable" Classes.selected="{Binding IsSelected}" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
     <Grid x:Name="TableRow" VerticalAlignment="Center">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" MinWidth="160" /><ColumnDefinition Width="150" /><ColumnDefinition Width="130" />
         <ColumnDefinition Width="110" /><ColumnDefinition Width="70" /><ColumnDefinition Width="260" />
       </Grid.ColumnDefinitions>
-      <!-- The title and the id share the title column: the title takes what is left and trims, the id trims inside its own
-           cap, and the right margin keeps a gap before the Repo cell (A-11). -->
-      <Button x:Name="TitleButton" Classes="row-title" Click="OnOpen" Margin="0,0,8,0" ClipToBounds="True" AutomationProperties.Name="{Binding OpenName}">
-        <Grid ColumnDefinitions="*,Auto">
-          <TextBlock Classes="body-strong" Text="{Binding Title}" TextTrimming="CharacterEllipsis" AutomationProperties.Name="{Binding Title}" />
-          <TextBlock x:Name="IdText" Grid.Column="1" Margin="8,0,0,0" MaxWidth="120" Classes="mono subtle" Text="{Binding Id}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-        </Grid>
+      <!-- The title takes the title column and trims; the id is its tooltip, never drawn in the row. The right margin keeps a gap before the next cell (A-11). -->
+      <Button x:Name="TitleButton" Classes="row-title" Click="OnOpen" Margin="0,0,8,0" ClipToBounds="True" ToolTip.Tip="{Binding Id}" AutomationProperties.Name="{Binding OpenName}">
+        <TextBlock Classes="body-strong" Text="{Binding Title}" TextTrimming="CharacterEllipsis" AutomationProperties.Name="{Binding Title}" />
       </Button>
       <TextBlock x:Name="RepoText" AutomationProperties.Name="{Binding RepoCell}" Grid.Column="1" Classes="caption subtle" Text="{Binding RepoCell}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
         <TextBlock x:Name="StateText" AutomationProperties.Name="{Binding StateWord}" Classes="body" Text="{Binding StateWord}" VerticalAlignment="Center" />
         <Border x:Name="Badge" Classes="badge" IsVisible="{Binding HasBadge}" VerticalAlignment="Center">
           <TextBlock x:Name="BadgeText" Classes="caption" Text="{Binding Badge}" AutomationProperties.Name="{Binding Badge}" />
         </Border>
       </StackPanel>
       <TextBlock x:Name="StepText" AutomationProperties.Name="{Binding Stage}" Grid.Column="3" Classes="body" Classes.raw="{Binding StageIsRaw}" Text="{Binding Stage}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-      <TextBlock x:Name="AgeText" AutomationProperties.Name="{Binding Age}" Grid.Column="4" Classes="caption subtle" Text="{Binding Age}" VerticalAlignment="Center" />
+      <TextBlock x:Name="AgeText" AutomationProperties.Name="{Binding Age}" Grid.Column="4" Classes="caption subtle" Text="{Binding Age}" HorizontalAlignment="Right" TextAlignment="Right" VerticalAlignment="Center" />
       <Panel Grid.Column="5" IsVisible="{Binding HasPrimaryAction}">
         <controls:CommandControl x:Name="PrimaryAction" DataContext="{Binding PrimaryAction}" />
       </Panel>

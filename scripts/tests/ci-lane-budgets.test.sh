@@ -219,34 +219,34 @@ $OUT"
   echo "PASS: test_default_budgets_are_the_rule_numbers"
 }
 
-test_sindri_ui_budgets_are_105_s_and_17_s() {
+test_sindri_ui_budgets_are_130_s_and_17_s() {
   local d="$WORK/sindriui"; make_fixture "$d"
   mkdir -p "$d/tests/Aw.Sindri.Ui.Tests"; echo '<Project />' > "$d/tests/Aw.Sindri.Ui.Tests/Aw.Sindri.Ui.Tests.csproj"
   perl -pi -e 's#^(\s*)</Folder>#$1  <Project Path="tests/Aw.Sindri.Ui.Tests/Aw.Sindri.Ui.Tests.csproj" />\n$1</Folder>#' "$d/AgenticWorkflow.slnx"
   printf '  - id: SindriUi\n    kind: package\n    tier: 4\n    projectPrefix: Aw.Sindri.Ui\n' >> "$d/deps.yaml"
   run_check "$d"
-  printf '%s\n' "$OUT" | has -E 'SindriUi +integration +[0-9.]+ s +limit 105 s' || fail "SindriUi's integration limit is 105 s (#1546, 2026-11-02: the slowest of 10 main runs + 25%):
+  printf '%s\n' "$OUT" | has -E 'SindriUi +integration +[0-9.]+ s +limit 130 s' || fail "SindriUi's integration limit is 130 s (#2841, 2026-11-12: the slowest of 22 main runs, rounded up to 5 s):
 $OUT"
   printf '%s\n' "$OUT" | has -E 'SindriUi +unit +[0-9.]+ s +limit 17 s' || fail "SindriUi's unit limit is 17 s (#1546, 2026-10-31: the slowest of 9 main runs + 25%):
 $OUT"
   printf '%s\n' "$OUT" | has -E '^ok +Foo +integration +[0-9.]+ s +limit 60 s' || fail "other packages keep 60 s:
 $OUT"
-  echo "PASS: test_sindri_ui_budgets_are_105_s_and_17_s"
+  echo "PASS: test_sindri_ui_budgets_are_130_s_and_17_s"
 }
 
-test_sindri_budgets_are_165_s_and_37_s() {
+test_sindri_budgets_are_195_s_and_37_s() {
   local d="$WORK/sindri"; make_fixture "$d"
   mkdir -p "$d/tests/Aw.Sindri.Tests"; echo '<Project />' > "$d/tests/Aw.Sindri.Tests/Aw.Sindri.Tests.csproj"
   perl -pi -e 's#^(\s*)</Folder>#$1  <Project Path="tests/Aw.Sindri.Tests/Aw.Sindri.Tests.csproj" />\n$1</Folder>#' "$d/AgenticWorkflow.slnx"
   printf '  - id: Sindri\n    kind: package\n    tier: 4\n    projectPrefix: Aw.Sindri.Tests\n' >> "$d/deps.yaml"
   run_check "$d"
-  printf '%s\n' "$OUT" | has -E '^ok +Sindri +integration +[0-9.]+ s +limit 165 s' || fail "Sindri's integration limit is 165 s (#1546, 2026-11-02: the slowest of 10 main runs + 25%):
+  printf '%s\n' "$OUT" | has -E '^ok +Sindri +integration +[0-9.]+ s +limit 195 s' || fail "Sindri's integration limit is 195 s (#2841, 2026-11-12: the slowest of 22 main runs, rounded up to 5 s):
 $OUT"
   printf '%s\n' "$OUT" | has -E 'Sindri +unit +[0-9.]+ s +limit 37 s' || fail "Sindri's unit limit is 37 s (owner, 2026-10-30, #1546):
 $OUT"
   printf '%s\n' "$OUT" | has -E '^ok +Foo +integration +[0-9.]+ s +limit 60 s' || fail "other packages keep 60 s:
 $OUT"
-  echo "PASS: test_sindri_budgets_are_165_s_and_37_s"
+  echo "PASS: test_sindri_budgets_are_195_s_and_37_s"
 }
 
 test_a_listed_test_project_is_its_own_row_outside_the_package_sum() {
@@ -259,7 +259,7 @@ test_a_listed_test_project_is_its_own_row_outside_the_package_sum() {
   printf '  - id: Sindri\n    kind: package\n    tier: 4\n    projectPrefix: Aw.Sindri\n' >> "$d/deps.yaml"
   # Each project is under its own limit; a Sindri sum would count both.
   STUB_Aw_Sindri_Tests_integration=1 STUB_Aw_Sindri_Engine_Tests_integration=1 run_check "$d"
-  printf '%s\n' "$OUT" | has -E '^ok +Sindri +integration +[0-9.]+ s +limit 165 s +\(1 project\)' || fail "Aw.Sindri.Tests is the Sindri row on its own (owner, 2026-10-18):
+  printf '%s\n' "$OUT" | has -E '^ok +Sindri +integration +[0-9.]+ s +limit 195 s +\(1 project\)' || fail "Aw.Sindri.Tests is the Sindri row on its own (owner, 2026-10-18):
 $OUT"
   printf '%s\n' "$OUT" | has -E '^ok +Aw\.Sindri\.Engine\.Tests +integration +[0-9.]+ s +limit 110 s +\(1 project\)' || fail "Aw.Sindri.Engine.Tests is a row of its own, kept out of the Sindri sum (owner, 2026-10-18):
 $OUT"
@@ -269,8 +269,8 @@ $OUT"
 }
 
 test_sums_each_package_and_passes_under_budget
-test_sindri_ui_budgets_are_105_s_and_17_s
-test_sindri_budgets_are_165_s_and_37_s
+test_sindri_ui_budgets_are_130_s_and_17_s
+test_sindri_budgets_are_195_s_and_37_s
 test_a_listed_test_project_is_its_own_row_outside_the_package_sum
 test_a_package_over_budget_fails_with_the_rule_id
 test_a_failing_test_run_fails_the_check

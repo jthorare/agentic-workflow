@@ -55,7 +55,6 @@ public sealed class LinuxSandboxFixtureTests : IDisposable
             Assert.True(File.Exists(session + "/control.json"));
             Assert.True(Directory.Exists(session + "/gh-config"));
             Assert.True(Directory.Exists(_dir + "/sindri/launches"));
-            Assert.True(Directory.Exists(_dir + "/sindri/approved"));
         }
     }
 

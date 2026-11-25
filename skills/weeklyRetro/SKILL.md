@@ -141,7 +141,7 @@ Identify files or directories that may need attention:
 ### Suggested Focus
 Based on the data, suggest 2-3 concrete actions for the next week. **Every suggestion must cite the metric that motivates it**, in the form `(evidence: <metric>=<value> in <path>)` — a suggestion without computed evidence is dropped:
 - Areas with high churn that might benefit from refactoring — e.g. `(evidence: commits=7 by 3 authors in src/db/client.ts)`
-- Test coverage gaps, only if coverage data was actually captured — e.g. `(evidence: coverage=64% in verification/<run-id>/pack.json)`
+- Test coverage gaps, only if coverage data was captured — e.g. `(evidence: coverage=64% in verification/<run-id>/pack.json)`
 - Knowledge sharing opportunities — e.g. `(evidence: authors=1 in judge/src/prompt-sort/)`
 - Verification failures to chase — e.g. `(evidence: verdict=FAIL in verification/<run-id>/pack.json)`
 

@@ -19,6 +19,7 @@
   "updatedAt": "2026-01-01T00:00:00.0000000Z",
   "body": null,
   "link": "linear:issue/abc-123",
+  "runs": [],
   "launch": {
     "modes": [
       "open"

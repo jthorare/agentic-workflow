@@ -2,7 +2,7 @@
 name: rootCause
 description: Use BEFORE fixing any bug — a failing or flaky test, a bug report or customer complaint, an error, crash or stack trace, a regression, or anything described as broken, wrong or not working, even when the fix looks small. Finds and proves the root cause first with scope frozen to the module boundary. Not for new features, refactors, or explaining how code works.
 argument-hint: "[--depth N] [--investigate-only] [error-message-or-issue-description | canary incident JSON]"
-allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo *), Bash(go *), Bash(bundle *), Bash(SHARED_DIR=*), Bash(source *), Bash(mkdir *), Bash(cat *), Agent, Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
+allowed-tools: Bash(git *), Bash(gh issue view *), Bash(gh pr view *), Bash(bash *repo-config.sh*), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo *), Bash(go *), Bash(bundle *), Bash(SHARED_DIR=*), Bash(source *), Bash(mkdir *), Bash(cat *), Agent, Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
 
 # Root Cause Analysis
@@ -21,7 +21,7 @@ Every run ends with the [Result block](#result-block), whatever the outcome: fix
 Extract the starting point for the investigation from the argument:
 
 - **`--depth N`** — dispatch-chain depth guard (default 0). If N ≥ 2, this run must NOT dispatch any sub-skill (Sub-skill Dispatch is disabled) — report findings only. When dispatching, always pass `--depth N+1`.
-- **`--investigate-only`** — diagnose without fixing (used by `/bugFixOrchestrator`, whose implementers write the fix). Run Phases 0–3.6, skip Phase 4, write the Phase 5 report + handoff — status `diagnosed` when a hypothesis is confirmed, `unfixed` when all were ruled out — and never dispatch a sub-skill (one exception: `formal-verify` for a race or ordering bug, Phase 3, since it writes only under `$AW_DIR`). The working tree must end exactly as it started.
+- **`--investigate-only`** — diagnose without fixing (used by `/bugFixOrchestrator`, whose implementers write the fix). Run Phases 0–3.7, skip Phase 4, write the Phase 5 report + handoff, status `diagnosed` when a hypothesis is confirmed, `unfixed` when all were ruled out — and never dispatch a sub-skill (one exception: `formal-verify` for a race or ordering bug, Phase 3, since it writes only under `$AW_DIR`). The working tree must end exactly as it started.
 - **Error message or issue description** — the normal entry.
 - **Production-incident entry** — if the argument is a JSON object of the shape `{merge_sha, release_id, symptom, logs_excerpt}` (as passed by `/canary` on an UNHEALTHY verdict), treat this as a production incident:
   - `logs_excerpt` is the primary evidence; `symptom` is the failure description.
@@ -61,7 +61,7 @@ For a race or ordering bug (two or more actors that can interleave: locks, lease
 - A TLC counterexample whose steps reproduce the reported symptom counts as the "Confirms if" check for that hypothesis; record the `report.md` path in the hypotheses table. A `pass` within its bounds rules out only what the model covers.
 - Never implement a fix whose hypothesis has not been confirmed by its own check. "Confirms if / Rules out if" is an executable contract, not documentation.
 
-**With `--investigate-only`:** run the confirm check for each hypothesis in order until one is confirmed or all are ruled out, recording every result. Revert any temporary instrumentation (log lines, narrowed test edits) — `git status --porcelain` must show nothing you added. Then run Phase 3.6 for the confirmed cause (skip it when every hypothesis was ruled out), skip Phase 4 and go to Phase 5 with status `diagnosed` if a hypothesis was confirmed, or `unfixed` if every one was ruled out (the caller must not fix an unconfirmed cause). In the report, write `n/a — investigate-only` under **Fix Applied** and **Verification**.
+**With `--investigate-only`:** run the confirm check for each hypothesis in order until one is confirmed or all are ruled out, recording every result. Revert any temporary instrumentation (log lines, narrowed test edits) — `git status --porcelain` must show nothing you added. Then run Phases 3.6 and 3.7 for the confirmed cause (skip them when every hypothesis was ruled out), skip Phase 4 and go to Phase 5 with status `diagnosed` if a hypothesis was confirmed, or `unfixed` if every one was ruled out (the caller must not fix an unconfirmed cause). In the report, write `n/a — investigate-only` under **Fix Applied** and **Verification**.
 
 ## Phase 3.6: Prevent the Class
 
@@ -71,11 +71,34 @@ After the cause is confirmed and before a fix is chosen, read `$SHARED_DIR/preve
 
 Follow steps 1-4 of that file: name the failure class and the invariant, search for the other instances (file:line each, or how you searched and found none), pick the smallest mechanism that holds the invariant, and keep mitigation apart from prevention. Output the handoff block (Failure class, Invariant, Affected scope, Prevention decision, Mitigation, Proof) before Phase 4. The answer shapes the fix; it is not a follow-up note written after a local patch. The scope freeze still holds: a mechanism that needs files outside the boundary becomes a recorded follow-up (an issue with the class, the instances and the proposed mechanism), not an edit.
 
+## Phase 3.7: Classify (baseline parity, regression or by design)
+
+After the cause is confirmed and before Phase 4 picks a fix, answer two questions. This step reads only; it edits nothing, so it runs under `--investigate-only` too.
+
+**A. Baseline parity.** Run only when the repo names a baseline variant AND the bug is reported on a different variant.
+
+1. Run `bash "$SHARED_DIR/repo-config.sh" get repo variants --json` (source `repo-slug.sh` as in Phase 5 for `SHARED_DIR`). Exit 3 (no file), 4 (no key) or a missing reader: skip A and write "Baseline parity: skipped (no variants config)" in the Classification. Exit 5 (file fails its schema): skip A and say so. Do not guess the baseline.
+2. Find the `values` entry with `"baseline": true`. When the reported variant is the baseline itself, or there is no baseline entry, skip A the same way.
+3. Trace the same flow on the baseline variant: the same entry point down to the code that decides the behaviour. Cite `file:line` for each hop that differs or decides.
+4. Give one verdict: `matches baseline` (the baseline behaves the same), `differs (intended)` (it differs and the code, a comment or a linked issue says why) or `differs (bug)` (it differs and nothing says it should). On `matches baseline`, the "bug" may be the reference behaviour: say so and do not propose a fix until the person confirms.
+
+**B. Regression or by design?** Always runs.
+
+1. Find the change that introduced the behaviour at the cause site: `git log -S '<the changed expression>' -- <cause file>`, `git log -L <start>,<end>:<cause file>` and `git blame -L <start>,<end> <cause file>`. Take the first commit where the behaviour appears. Name its sha and its PR link: the `#N` in the subject or merge commit, resolved to the repo's PR URL from `git remote get-url origin`. No remote or no `#N`: name the sha only.
+2. Read the intended behaviour: `gh pr view <N>` for that PR's text and, when it links an issue, `gh issue view <M>`. Read the spec, comment or test next to the cause site too. Without `gh` or access, say "intent unread: no tracker access" and use the in-repo text only.
+3. Classify:
+   - `regression (introduced by <PR or sha>)`: the behaviour was right before that change and the intended behaviour (PR text, issue, spec or an earlier test) says it should still be.
+   - `as designed`: the introducing change or the spec says this is wanted. Stop at Phase 5 with status `diagnosed` (or `unfixed` when you were already fixing) and ask the person; do not change intended behaviour.
+   - `long-standing bug`: it was never right (present since the file's first commit, or the introducing change shows no intent for it).
+4. For a recent regression, put `revert <PR or sha>` first in the fix options, then say what the revert would also undo: `git show --stat <sha>` lists the other files and behaviours that change with it. A revert that undoes more than the bug is still listed first, with that cost beside it, and the narrower fix goes second.
+
+Write both results in the report and the handoff `## Classification` section.
+
 ## Phase 4: Implement
 
 Fix the confirmed cause.
 
-1. **Implement the fix** for the confirmed hypothesis, shaped by the Phase 3.6 decision: the chosen mechanism, or the instance fix plus the recorded follow-up. Label any stopgap as mitigation. All changes MUST stay within the declared module boundary.
+1. **Implement the fix** for the confirmed hypothesis, shaped by the Phase 3.6 decision and the Phase 3.7 classification (a `regression` starts from the revert option; `matches baseline` or `as designed` stops here until the person confirms): the chosen mechanism, or the instance fix plus the recorded follow-up. Label any stopgap as mitigation. All changes MUST stay within the declared module boundary.
 2. **Verify:**
    - If a local failing command exists, re-run it, and run the mechanism's own proof from the handoff block (it must reject a second representative bad instance, or be shown working across more than one case).
    - If the symptom is production/UI-only (no local failing command), run the app-path check instead: **Invoke skill `verify-app`** with args `--yes --journey <repro steps from Phase 1>`. The fix is verified only on a PASS verdict in the resulting evidence pack. For a desktop app that pack comes from `verify-desktop` (the real app on seeded data, screens judged against their mockups).
@@ -139,6 +162,17 @@ Report format:
 ## Verification
 {Command run and its output — pass/fail; or the verify-app journey + evidence pack path and verdict}
 
+## Classification
+- Baseline parity: {matches baseline | differs (intended) | differs (bug) | skipped (<why>)}
+  - Reported on: {variant}; baseline: {variant}
+  - Baseline path: {file:line -> file:line, or n/a}
+- Origin: {regression (introduced by <PR or sha>) | as designed | long-standing bug}
+  - Introducing change: {sha, PR link, one-line subject}
+  - Intended behaviour: {what the PR, issue or spec says, with the source}
+- Fix options, first is preferred:
+  1. {revert <PR or sha>, plus what it also undoes} (regression only)
+  2. {narrower fix}
+
 ## Failure class
 {one sentence: the mistake that can recur}
 
@@ -185,6 +219,17 @@ repro: {failing command, or the verify-app journey steps}
 ## Suggested Fix
 {concrete fix direction, file paths, constraints}
 
+## Classification
+- Baseline parity: {matches baseline | differs (intended) | differs (bug) | skipped (<why>)}
+  - Reported on: {variant}; baseline: {variant}
+  - Baseline path: {file:line -> file:line, or n/a}
+- Origin: {regression (introduced by <PR or sha>) | as designed | long-standing bug}
+  - Introducing change: {sha, PR link, one-line subject}
+  - Intended behaviour: {what the PR, issue or spec says, with the source}
+- Fix options, first is preferred:
+  1. {revert <PR or sha>, plus what it also undoes} (regression only)
+  2. {narrower fix}
+
 ## Failure class
 {one sentence: the mistake that can recur}
 
@@ -213,6 +258,7 @@ Root cause analysis complete.
 Status: {fixed | unfixed | scope-breach | diagnosed}
 Module boundary: {path}
 Root cause: {one-line summary}
+Classification: {regression (introduced by <PR>) | as designed | long-standing bug}; baseline: {matches baseline | differs (intended) | differs (bug) | skipped}
 Original bug: {the check's before and after}
 Class prevention: {what was built and its proof | existing guard <which> | none built}
 Deferred: {follow-ups with links | none}

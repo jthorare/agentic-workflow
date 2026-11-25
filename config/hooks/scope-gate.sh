@@ -63,7 +63,7 @@ SKILL_INTERNAL="$(printf '%s' "$INPUT" | jq -r '.tool_input.skill_internal // fa
 ACCEPTANCE="$PROMPT_TEXT"
 PROOF_COMMAND="$PROMPT_TEXT"
 
-JUDGE_INPUT="$(jq -nc --arg t "$AGENT_TYPE" --arg g "$GOAL" --arg a "$ACCEPTANCE" --arg p "$PROOF_COMMAND" --argjson si "$SKILL_INTERNAL" \
+JUDGE_INPUT="$(jq -nc --arg t "$AGENT_TYPE" --rawfile g <(printf '%s' "$GOAL") --rawfile a <(printf '%s' "$ACCEPTANCE") --rawfile p <(printf '%s' "$PROOF_COMMAND") --argjson si "$SKILL_INTERNAL" \
   '{agentType: $t, goal: $g, acceptanceCriteria: $a, proofCommand: $p, skillInternal: $si}')"
 JUDGE_INPUT="$(aw_images_attach "$JUDGE_INPUT" "$(aw_image_paths "$GOAL"$'\n'"$ACCEPTANCE" scope-gate)")"
 JUDGE_OUT="$(printf '%s' "$JUDGE_INPUT" | AW_SESSION_ID="$SESSION_ID" judge brief-scope 2>/dev/null)" || { failopen "judge-exit-$?"; allow; }
@@ -75,7 +75,7 @@ case "$DECISION" in
     SAVE_INPUT="$(jq -nc \
       --arg tu "$TOOL_USE_ID" --arg s "$SESSION_ID" --arg p "$PROMPT_ID" \
       --arg dn "$DISPATCH_NAME" --arg st "$AGENT_TYPE" \
-      --arg g "$GOAL" --arg a "$ACCEPTANCE" --arg pc "$PROOF_COMMAND" \
+      --rawfile g <(printf '%s' "$GOAL") --rawfile a <(printf '%s' "$ACCEPTANCE") --rawfile pc <(printf '%s' "$PROOF_COMMAND") \
       '{toolUseId: $tu, sessionId: $s, promptId: $p, dispatchName: (if $dn == "" then null else $dn end), subagentType: $st, goal: $g, acceptanceCriteria: $a, proofCommand: $pc}')"
     printf '%s' "$SAVE_INPUT" | judge brief save > /dev/null 2>&1 || true
     allow

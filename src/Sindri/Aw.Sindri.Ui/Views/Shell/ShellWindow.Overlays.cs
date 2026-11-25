@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Palette;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Item;
@@ -51,7 +52,7 @@ internal sealed partial class ShellWindow
 
     // N opens the quick-add box (never in a text field or over a layer), and so does Ctrl+Shift+N (⌘⇧N) over a page or the palette (todo spec §3.3).
     // Both reach the view model even while Sindri isn't running, which says so instead of opening the box.
-    // This runs before every other key handler, so a page that takes N for itself must be guarded here (none does yet: the read-only Workflows page has no Start).
+    // This runs before every other key handler, so a page that takes N for itself must be guarded here: the Agents page (its New agent form) is the one that does.
     private bool QuickAddByKey(KeyEventArgs e)
     {
         if (e.Key != Key.N || Shell is not { IsChromeVisible: true } shell)
@@ -64,7 +65,7 @@ internal sealed partial class ShellWindow
             return shell.PressQuickAdd();
         }
 
-        return e.KeyModifiers == KeyModifiers.None && e.Source is not TextBox && !AnyLayerOpen(shell) && shell.PressQuickAdd();
+        return e.KeyModifiers == KeyModifiers.None && e.Source is not TextBox && !shell.IsAgents && !AnyLayerOpen(shell) && shell.PressQuickAdd();
     }
 
     private static bool FormOpen(ShellViewModel shell) => shell.Create.IsOpen || shell.NewIssue.IsOpen;
@@ -97,6 +98,10 @@ internal sealed partial class ShellWindow
         (e.Key is Key.K or Key.OemComma && e.KeyModifiers == _command) || (IsQuestionMark(e) && e.Source is not TextBox);
     private bool _openingSettings;
 
+    // A palette Settings entry shows Settings from the top, as ⌘, does (#3362).
+    private void OnSettingFilter(object? sender, ValueEventArgs<string> e) =>
+        Dispatcher.UIThread.Post(() => this.Get<Control>("SettingsSlot").FindAncestorOfType<ScrollViewer>()?.ScrollToHome(), DispatcherPriority.Loaded);
+
     private bool OpenSettingsByKey(KeyEventArgs e, ShellViewModel shell)
     {
         if (e.Key != Key.OemComma || e.KeyModifiers != _command)
@@ -119,15 +124,21 @@ internal sealed partial class ShellWindow
             _openingSettings = false;
         }
 
-        // Like the sheet's heading (§11.2), opening Settings moves focus into it: its first control.
-        Dispatcher.UIThread.Post(() => FirstFocusable(this.Get<Control>("SettingsSlot"))?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
+        // Like the sheet's heading (§11.2), opening Settings moves focus into it: the filter box (#3362), else its first control (the title is focusable and comes first).
+        Dispatcher.UIThread.Post(() =>
+        {
+            var slot = this.Get<Control>("SettingsSlot");
+            var target = slot.GetVisualDescendants().OfType<TextBox>().FirstOrDefault(static t => string.Equals(t.Name, "SettingsFilterBox", StringComparison.Ordinal) && t.IsEffectivelyVisible) ?? FirstFocusable(slot);
+            _ = target?.Focus(NavigationMethod.Tab);
+            slot.FindAncestorOfType<ScrollViewer>()?.ScrollToHome();   // the box brings itself into view and over-scrolls: the title stays under the top bar otherwise (#3453)
+        }, DispatcherPriority.Loaded);
         return true;
     }
 
     // A page's button is about to open an overlay: closing it returns focus there even when a click left focus on the page region.
     private void NoteInvoker(object? sender, OpenerNoteEventArgs e) => _invoker = e.Invoker;
 
-    private bool OverlayOpen => Shell is { } shell && (shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen || shell.QuickAdd.IsOpen);
+    private bool OverlayOpen => Shell is { } shell && (shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.NewIssue.IsOpen || shell.QuickAdd.IsOpen || shell.NewAgent.IsOpen);
 
     // `?` is Shift+/ on most layouts; the key symbol says so on the rest.
     private static bool IsQuestionMark(KeyEventArgs e) =>

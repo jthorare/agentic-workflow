@@ -1,0 +1,5 @@
+{"ok":true,"messages":[
+ {"type":"message","user":"U0ALICE","text":"SECRET-TEXT hello","ts":"1700000300.000100","user_profile":{"real_name":"SECRET-USER-alice","display_name":"SECRET-USER-al"}},
+ {"type":"message","user":"U0BOB","text":"SECRET-TEXT a thread root","ts":"1700000200.000100","thread_ts":"1700000200.000100","reply_count":2},
+ {"type":"message","user":"U0OWNER","text":"SECRET-TEXT mine","ts":"1700000100.000100"}
+],"has_more":false}

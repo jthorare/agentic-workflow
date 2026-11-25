@@ -43,9 +43,6 @@ internal static partial class Labels
     /// <summary>Home's one line while any step is open.</summary>
     internal const string SetupHomeLine = "Finish setting up Sindri";
 
-    /// <summary>Home's control that opens Settings at the first step still to do.</summary>
-    internal const string SetupContinue = "Continue";
-
     /// <summary>The step Home's line points at, as its name reads it.</summary>
     internal static string SetupNext(string step) => "Next: " + step;
 

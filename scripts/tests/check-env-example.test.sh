@@ -31,7 +31,7 @@ fixture() {
   cat > "$d/.env.example" <<'EOF'
 # State root.
 # AW_STATE_DIR=~/.agentic-workflow
-# Port.
+# Port. test-ports: ok: an env value in a fixture .env.example, nothing binds it
 AW_PORT=3100
 # Key name.
 # AW_KEY_NAME=

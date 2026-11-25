@@ -26,8 +26,11 @@ internal sealed class LedgerQuestionPort(ILedgerStore ledger, HeldLease held, Ev
         }
 
         var by = callers.Current?.Actor ?? "service:workflow";
-        var entry = events.Entry(EventTypes.WorkflowQuestion, new WorkflowQuestionPayload(ask.Run, ask.Node, scrubber.Scrub(ask.Question), [.. ask.Choices.Select(scrubber.Scrub)], ask.Default is null ? null : scrubber.Scrub(ask.Default), ask.TimeoutAt, by), $"{EventTypes.WorkflowQuestion}:{ask.Run.Value}:{ask.Node.Value}");
+        var entry = events.Entry(EventTypes.WorkflowQuestion, new WorkflowQuestionPayload(ask.Run, ask.Node, scrubber.Scrub(ask.Question), [.. ask.Choices.Select(scrubber.Scrub)], ask.Default is null ? null : scrubber.Scrub(ask.Default), ask.TimeoutAt, by) { Item = ask.Item, BatchWorkflow = ask.BatchWorkflow }, $"{EventTypes.WorkflowQuestion}:{ask.Run.Value}:{ask.Node.Value}{ItemSuffix(ask.Item)}");
         var appended = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
         return appended.IsError ? appended.Error : Unit.Value;
     }
+
+    // why: the key of a question outside a loop stays as it was; an item adds its position, so each item of a loop is its own event
+    private static string ItemSuffix(int? item) => item is { } at ? ":" + at.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty;
 }

@@ -21,9 +21,10 @@ public sealed class ParityPublishingTests
     [Theory, Trait("Lane", "unit")]
     [InlineData(Provenance.Seeded, true, true)]
     [InlineData(Provenance.Seeded, false, false)]
-    [InlineData(Provenance.Scrubbed, true, false)]
+    [InlineData(Provenance.Scrubbed, true, true)]
+    [InlineData(Provenance.Scrubbed, false, false)]
     [InlineData(Provenance.Unknown, true, false)]
-    public void Pr_comments_link_images_only_for_seeded_data_and_an_approved_uploader(Provenance provenance, bool uploader, bool allowed) =>
+    public void Pr_comments_link_images_for_seeded_or_scrubbed_data_and_an_approved_uploader(Provenance provenance, bool uploader, bool allowed) =>
         Assert.Equal(allowed, PublishPolicy.CanEmbedImagesInPr(provenance, uploader));
 
     [Fact, Trait("Lane", "unit")]

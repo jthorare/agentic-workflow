@@ -7,7 +7,7 @@ allowed-tools: Bash(git *), Bash(mkdir *), Bash(date *), Bash(SHARED_DIR=*), Age
 
 # Office Hours — Spec-Driven Brainstorming
 
-Runs a structured brainstorming session and produces four domain-owned outputs — one per team — so every participant leaves with a clear assignment rather than a monolithic doc no one owns.
+Runs a structured brainstorming session and produces four domain-owned outputs (one per team) so every participant leaves with a clear assignment rather than a monolithic doc no one owns.
 
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
@@ -38,7 +38,7 @@ Read project context to ground the brainstorming session:
 **External reference docs:** Scan each planning doc for an `## External References` section — the bootstrap skill appends these when `--product-docs` sources were provided. Collect all referenced sources across all docs, deduplicate by URL/path, and surface them before the first question:
 
 > **External reference docs available:**
-> - [{Type}] [{title}]({url-or-path}) — {note} *(from {doc}.md)* — mark inaccessible ones ⚠️
+> - [{Type}] [{title}]({url-or-path}) — {note} *(from {doc}.md)*; mark inaccessible ones ⚠️
 >
 > Should I consult any of these during our session? (yes / no / specify which)
 
@@ -108,7 +108,7 @@ Present the menu:
 
 Wait for the user's response. Parse their selection (numbers, "all", or "drop N" syntax).
 
-## Step 5: EARS Deep Dive
+## Step 5: EARS Requirements in Detail
 
 For each selected EARS type, run a focused sub-question. Present draft requirements based on the conversation so far and ask the user to refine them. **After each sub-question, wait for the user's response before moving on.**
 
@@ -130,7 +130,7 @@ Then ask: **"Are these the right triggers? Are there events I'm missing, or even
 
 Present 2-3 draft state-driven requirements based on conditions identified in Q2.
 
-Then ask: **"Are these the right states to handle? Any states where the system should behave differently that we haven't covered?"**
+Then ask: **"Are these the right states to cover? Any states where the system should behave differently that we haven't covered?"**
 
 ### 5d: Optional Requirements (if selected)
 
@@ -146,7 +146,7 @@ Then ask: **"Are these the right failure scenarios? What's the worst thing that 
 
 ### 5f: Approach (always runs)
 
-Based on the codebase, tech stack, existing infrastructure, and the requirements gathered so far, present 2-3 concrete approach options that leverage existing strengths.
+Based on the codebase, tech stack, existing infrastructure, and the requirements gathered so far, present 2-3 concrete approach options that use existing strengths.
 
 Then ask: **"Which of these resonates? Is there something I'm missing about your position?"**
 
@@ -492,6 +492,34 @@ _Tasks are ordered by dependency graph (topological sort). Each task points to i
 
 ...
 
+## TASK-{N-1}: Performance sweep
+
+- domain: engineering
+- complexity: medium
+- reqs: none
+- depends: {every build task}
+- owner: unassigned
+- status: blocked
+
+**What:** Profile every data or interactive surface in the real app and list each one that misses its budget.
+**Why:** The project is not done until it is fast in the real app.
+**Definition of Done:** Exit check: every data or interactive surface has a measured time in the real app at or under its budget. A miss passes only when the owner accepts it in writing (a D-number).
+**Reference:** See `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/closing-sweeps.md`, "Performance sweep"
+
+## TASK-{N}: Bug sweep
+
+- domain: engineering
+- complexity: medium
+- reqs: none
+- depends: TASK-{N-1}
+- owner: unassigned
+- status: blocked
+
+**What:** Walk the finished project in the real app, file each finding as an issue in the repo's tracker and route it as a fix.
+**Why:** The project is not done until a walk of it finds nothing new.
+**Definition of Done:** Exit check: every finding is an issue in the repo's tracker, and a merged fix or a written reason closes each one. A second walk of every surface finds nothing new.
+**Reference:** See `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/closing-sweeps.md`, "Bug sweep"
+
 ## Task Summary
 
 | Domain | Count | Complexity Breakdown |
@@ -512,6 +540,8 @@ graph TD
 
   TASK-1 --> TASK-3
   TASK-2 --> TASK-3
+  TASK-3 --> TASK-{N-1}[TASK-{N-1}: Performance sweep]
+  TASK-{N-1} --> TASK-{N}[TASK-{N}: Bug sweep]
 ```
 
 ---
@@ -522,9 +552,10 @@ graph TD
 
 Task guidelines:
 - Order tasks by dependency graph (topological sort)
+- The last two tasks are always the closing sweeps from `_shared/closing-sweeps.md`: the performance sweep, then the bug sweep. The performance sweep depends on every build task and the bug sweep depends on the performance sweep. Each one's Definition of Done is its exit check, word for word.
 - Complexity values: `small` (< 1 hour), `medium` (1-4 hours), `large` (4+ hours)
 - The `domain` field is `engineering`, `design`, or `product`
-- The `reqs` field traces each task back to one or more requirements
+- The `reqs` field traces each task back to one or more requirements. Only the two closing sweeps take `- reqs: none`
 - Each task's keys are list items (`- key: value`) right under its `## TASK-n: {title}` heading, never a `---` block: a `key: value` line followed by `---` reads as a heading in Markdown, and Sindri reads `- reqs:` and `- depends:` as links to the requirements and the tasks it waits on. `- depends: none` for a task with no dependencies
 - Each task has `owner` (assigned name or "unassigned") and `status` (todo/in-progress/blocked/done)
 - Each task should be atomic — one logical unit of work
@@ -532,7 +563,7 @@ Task guidelines:
 
 ## Step 6.5: Spec Self-Check (always runs)
 
-Before writing, evaluate the four drafted docs against the seven criteria below yourself and print the pass/fail table. This check is always on — no flag, no external service.
+Before writing, evaluate the four drafted docs against the eight criteria below yourself and print the pass/fail table. This check is always on — no flag, no external service.
 
 | # | Criterion | Pass? | Evidence (doc:section on ✗) |
 |---|---|---|---|
@@ -543,6 +574,7 @@ Before writing, evaluate the four drafted docs against the seven criteria below 
 | 5 | All selected EARS types present with ≥2 requirements each | ✓/✗ | … |
 | 6 | Every product.md requirement traces to ≥1 acceptance criterion | ✓/✗ | … |
 | 7 | TASKS.md dependency graph is topologically sorted with no cycles | ✓/✗ | … |
+| 8 | TASKS.md ends with the performance sweep, then the bug sweep, each with its exit check | ✓/✗ | … |
 
 On any ✗: fix the flagged section and re-run the check (max 2 passes). If a ✗ remains, ask the user:
 > "Self-check flagged: {failing criteria + evidence}. Fix before writing? (yes/no)"
@@ -576,6 +608,8 @@ Write the four files to `$AW_DIR/plans/{timestamp}-{slug}/`: `product.md`, `engi
 
 After the four domain docs are written, write `plans/{timestamp}-{slug}/plan.md` — a 1-page consolidated summary that downstream skills (`/autoplan`, `/planDesignReview`, `/planDevexReview`, `/cso --plan`, `/design-shotgun`) auto-discover per `_shared/plan-discovery.md`. This file is the canonical handoff — every plan-stage skill reads it first.
 
+Its first section is the ROI and data-analysis plan. Write it from `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/roi-analysis.md`, the same text system-design opens its TDD with. Measured values stay under `$AW_DIR/roi/{slug}/`.
+
 Structure:
 
 ```markdown
@@ -592,6 +626,10 @@ repos: [{owner/name}]
 
 **Generated:** <ISO date> by officeHours
 **Feature dir:** plans/<feature>/
+
+## ROI and data-analysis plan
+<the five parts of the shared ROI plan, in order: the bet, metrics, sources, dashboard shape, where the numbers live.
+Start the metrics from product.md's Success Metrics. A plan only: nothing runs against production data.>
 
 ## TL;DR
 <2-3 sentences capturing the feature in plain English>
@@ -636,6 +674,8 @@ Re-read the **written** product.md and verify every `REQ-*` ID appears in its Tr
 |---|---|---|
 | REQ-U1 | AC-1 | ✓/✗ |
 | … one row per requirement … | | |
+
+Then check the **written** plan.md. Its first `##` section is the ROI and data-analysis plan. Every metric in it names a source or sits under open questions. If not, fix plan.md before continuing.
 
 **If any REQ is uncovered, the run has NOT succeeded.** Fix product.md (add the missing AC or the missing Traceability row), re-verify, and only then continue. Do not print the Step 8 success report while any REQ lacks an AC.
 

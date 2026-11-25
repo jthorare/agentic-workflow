@@ -11,28 +11,49 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>The editor over the page's API.</summary>
     internal OpsEditor Editor { get; }
 
-    /// <summary>True while the editor sheet is open.</summary>
-    public bool IsEditing { get; private set => Set(ref field, value); }
+    /// <summary>True in graph edit mode (Edit pressed, Done not yet): the edit bar shows and works. The step settings sheet is separate, see <see cref="IsSettingsOpen"/>.</summary>
+    public bool IsEditing { get; private set { Set(ref field, value); OnChanged(nameof(ShowsEdit)); } }
+
+    /// <summary>True while the step settings sheet is open. It locks the edit bar, so the sheet's typed text is never reloaded under the person.</summary>
+    public bool IsSettingsOpen { get; private set { Set(ref field, value); OnChanged(nameof(StepSummaryText)); OnChanged(nameof(HasStepSummary)); OnChanged(nameof(CanOpenSettings)); OnChanged(nameof(ShowsStepRow)); } }
+
+    /// <summary>True when Step settings is offered: a step is selected, the sheet is shut and the workflow can be edited.</summary>
+    public bool CanOpenSettings => !IsSettingsOpen && CanEdit && Runs.Graph?.SelectedId is not null;
+
+    /// <summary>The selected step's title and summary, shown under the graph while the sheet is shut; empty otherwise.</summary>
+    public string StepSummaryText => IsSettingsOpen ? string.Empty : Runs.Graph?.StepLine ?? string.Empty;
+
+    /// <summary>True when the line under the graph shows.</summary>
+    public bool HasStepSummary => StepSummaryText.Length > 0;
+
+    /// <summary>True when the row under the graph shows: a step summary or Step settings.</summary>
+    public bool ShowsStepRow => HasStepSummary || CanOpenSettings;
 
     /// <summary>True when the open workflow can be edited: a workflow is open on its runs and it is not archived.</summary>
     public bool CanEdit => IsRuns && Runs.Shown is { ArchivedAt: null };
+
+    /// <summary>True when the Edit button shows: the workflow can be edited and edit mode is off (Done is the way out while it is on).</summary>
+    public bool ShowsEdit => CanEdit && !IsEditing;
 
     /// <summary>The Edit button's words.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     public string EditText => Labels.WfEdit;
 
+    /// <summary>The Done button's words.</summary>
+    public string DoneText => Labels.WfEditDone;
+
+    /// <summary>The Step settings button's words.</summary>
+    public string StepSettingsText => Labels.WfStepSettings;
+
     /// <summary>The Close button's words.</summary>
     public string CloseEditorText => Labels.WfEditClose;
 
     /// <summary>The line shown when the form has no fields.</summary>
-    public string NoFieldsText => Labels.WfEditorNoFields;
+    public string NoFieldsText => IsNewStep ? Labels.WfEditorNewStepNoFields : Labels.WfEditorNoFields;
 #pragma warning restore CA1822, MA0041
 
-    /// <summary>The sheet's heading: the workflow and the revision the edits are sent on.</summary>
-    public string EditorHeading => Labels.WfEditorHeading(Runs.Title, Editor.BaseRevision);
-
-    /// <summary>The line naming the node whose settings are shown; empty when none is selected.</summary>
-    public string EditorNodeText { get; private set => Set(ref field, value); } = string.Empty;
+    /// <summary>The sheet's heading: the selected step and its kind, or the workflow's name when none is selected.</summary>
+    public string EditorHeading => Editor.NodeHeading.Length > 0 ? Editor.NodeHeading : Labels.WfEditorHeading(Runs.Title);
 
     /// <summary>True when the form has no fields.</summary>
     public bool HasNoFields => Editor.Fields.Count == 0;
@@ -41,24 +62,39 @@ internal sealed partial class WorkflowsPageViewModel
     public string SaveText => Editor.IsSending ? Labels.WfEditSaving : Labels.WfEditSave;
 
     /// <summary>True when Save does something: the form has fields read for the workflow the page shows (and it is not archived), no edit is on the way and no reload is due.</summary>
-    public bool CanSave => Editor.Fields.Count > 0 && !Editor.IsSending && !Editor.NeedsReload && CanEdit && Editor.BaseRevision > 0 && string.Equals(Editor.Slug, Runs.Slug, StringComparison.Ordinal);
+    public bool CanSave => Editor.OneOfMet && (IsNewStep ? Editor.RequiredFilled && CanSend : Editor.Fields.Count > 0 && CanSend);
 
-    /// <summary>Opens the sheet on the selected graph node's fields.</summary>
+    // no edit is on the way, no reload is due, and the workflow the page shows is the one the editor read
+    private bool CanSend => !Editor.IsSending && !Editor.NeedsReload && CanEdit && Editor.BaseRevision > 0 && string.Equals(Editor.Slug, Runs.Slug, StringComparison.Ordinal);
+
+    /// <summary>Turns graph edit mode on: the edit bar shows and works, the sheet stays shut.</summary>
+    internal void Edit()
+    {
+        if (CanEdit)
+        {
+            IsEditing = true;
+        }
+    }
+
+    /// <summary>Opens the step settings sheet on the selected graph node's fields (and turns edit mode on).</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>A task that completes when the form is made.</returns>
-    internal async Task Edit(CancellationToken cancellationToken)
+    internal async Task OpenSettings(CancellationToken cancellationToken)
     {
         if (_url is not { } url || !CanEdit)
         {
             return;
         }
 
-        (IsEditing, GraphEdit.SheetOpen) = (true, true);
+        Editor.ClearPendingStep();   // Step settings on a node leaves a new step that was being filled in
+        Editor.ClearRefusal();   // an earlier refusal (a graph edit, or the new step just left) is not shown on this sheet, not even while it reads (#3999)
+        OnChanged(nameof(IsNewStep));
+        OnChanged(nameof(NoFieldsText));
+        (IsEditing, IsSettingsOpen, GraphEdit.SheetOpen) = (true, true, true);
         var (edit, slug) = (++_edits, Runs.Slug);
         var node = Runs.Graph?.SelectedId ?? string.Empty;
-        EditorNodeText = node.Length == 0 ? string.Empty : Labels.WfEditorNode(node);
         await Editor.Load(url, slug, cancellationToken).ConfigureAwait(true);
-        if (edit != _edits || !IsEditing || !string.Equals(Editor.Slug, slug, StringComparison.Ordinal))
+        if (edit != _edits || !IsSettingsOpen || !string.Equals(Editor.Slug, slug, StringComparison.Ordinal))
         {
             return;   // a newer Edit started or the sheet closed while this one read: its node belongs to an older sheet
         }
@@ -71,15 +107,32 @@ internal sealed partial class WorkflowsPageViewModel
     /// <returns>A task that completes when the answers are shown.</returns>
     internal async Task Save(CancellationToken cancellationToken)
     {
-        if (!IsEditing || !CanSave)
+        if (!IsSettingsOpen || !CanSave)
         {
             return;
         }
 
+        if (IsNewStep)
+        {
+            var slugNew = Runs.Slug;
+            var added = await Editor.AddPendingStep(cancellationToken).ConfigureAwait(true);
+            await RereadRuns(slugNew, cancellationToken).ConfigureAwait(true);
+            if (added)
+            {
+                CloseSettings();   // the step exists now; a refusal keeps the sheet open with the refusal shown and every typed value
+            }
+
+            return;
+        }
+
         var changed = Editor.Fields.Where(f => f.IsChanged).Select(f => (f.Name, f.Text)).ToList();
-        var slug = Runs.Slug;
+        var (slug, before) = (Runs.Slug, Editor.BaseRevision);
         await Editor.EditFields(changed, cancellationToken).ConfigureAwait(true);
         await RereadRuns(slug, cancellationToken).ConfigureAwait(true);   // the page shows the revision Sindri holds now, so a graph edit next is not held as "never showed"
+        if (string.Equals(Runs.Slug, slug, StringComparison.Ordinal) && Editor.BaseRevision > before && Runs.Shown is { } shown && shown.LatestRevision == Editor.BaseRevision)
+        {
+            NoteSaved();
+        }
     }
 
     /// <summary>Reads the workflow again from the sheet's Reload button.</summary>
@@ -100,8 +153,23 @@ internal sealed partial class WorkflowsPageViewModel
         }
     }
 
-    /// <summary>Closes the sheet.</summary>
-    internal void CloseEditor() => (IsEditing, GraphEdit.SheetOpen) = (false, false);
+    /// <summary>Closes the sheet; edit mode stays on. A new step being filled in is dropped: nothing was sent, nothing is added.</summary>
+    internal void CloseSettings()
+    {
+        Editor.ClearPendingStep();
+        Editor.ClearRefusal();   // the sheet's refusal is not left on the page line once the sheet is gone (#3944)
+        (IsSettingsOpen, GraphEdit.SheetOpen) = (false, false);
+        OnChanged(nameof(IsNewStep));
+        OnChanged(nameof(NoFieldsText));
+    }
+
+    /// <summary>Closes the sheet and leaves edit mode (Done, or leaving the workflow).</summary>
+    internal void CloseEditor()
+    {
+        CloseSettings();
+        IsEditing = false;
+        GraphEdit.Cancel();   // a half-made Add or Connect does not wait for the next Edit
+    }
 
     private void WatchEditor()
     {
@@ -112,18 +180,57 @@ internal sealed partial class WorkflowsPageViewModel
             if (string.Equals(e.PropertyName, nameof(RunsViewModel.Graph), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(RunsViewModel.IsReading), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(RunsViewModel.Shown), StringComparison.Ordinal))
             {
                 OnChanged(nameof(CanEdit));
+                OnChanged(nameof(ShowsEdit));
+                OnChanged(nameof(DetailStateText));
+                OnChanged(nameof(DetailChipWord));
+                OnChanged(nameof(DetailChipGlyph));
+                OnChanged(nameof(DetailChipTone));
+                OnChanged(nameof(ShowsDetailState));
+                OnChanged(nameof(CanOpenSettings));
+                OnChanged(nameof(ShowsStepRow));
                 OnChanged(nameof(CanSave));
                 OnChanged(nameof(EditorHeading));
+                OnChanged(nameof(StepSummaryText));
+                OnChanged(nameof(HasStepSummary));
+                NotifySaved();
+                if (string.Equals(e.PropertyName, nameof(RunsViewModel.Graph), StringComparison.Ordinal) && !ReferenceEquals(_watchedGraph, Runs.Graph))
+                {
+                    _watchedGraph?.PropertyChanged -= OnGraphChanged;   // the old workflow's graph stops reaching this page
+                    _watchedGraph = Runs.Graph;
+                    _watchedGraph?.PropertyChanged += OnGraphChanged;
+                }
             }
         };
+    }
+
+    // The graph whose StepLine and SelectedId this page follows; swapped, never stacked, when another workflow opens.
+    private WorkflowGraphViewModel? _watchedGraph;
+
+    private void OnGraphChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(WorkflowGraphViewModel.StepLine), StringComparison.Ordinal))
+        {
+            OnChanged(nameof(StepSummaryText));
+            OnChanged(nameof(HasStepSummary));
+            OnChanged(nameof(ShowsStepRow));
+        }
+
+        if (string.Equals(e.PropertyName, nameof(WorkflowGraphViewModel.SelectedId), StringComparison.Ordinal))
+        {
+            OnChanged(nameof(CanOpenSettings));
+            OnChanged(nameof(ShowsStepRow));
+        }
     }
 
     private void OnEditorChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (string.Equals(e.PropertyName, nameof(OpsEditor.BaseRevision), StringComparison.Ordinal))
         {
-            OnChanged(nameof(EditorHeading));
             OnChanged(nameof(CanSave));
+        }
+        else if (string.Equals(e.PropertyName, nameof(OpsEditor.NodeHeading), StringComparison.Ordinal))
+        {
+            OnChanged(nameof(EditorHeading));
         }
         else if (string.Equals(e.PropertyName, nameof(OpsEditor.Slug), StringComparison.Ordinal))
         {
@@ -144,5 +251,9 @@ internal sealed partial class WorkflowsPageViewModel
     {
         OnChanged(nameof(HasNoFields));
         OnChanged(nameof(CanSave));
+        foreach (var field in e.NewItems?.OfType<ConfigFieldViewModel>() ?? [])
+        {
+            field.PropertyChanged += (_, _) => OnChanged(nameof(CanSave));   // a new step's Save turns on as its required fields are filled
+        }
     }
 }

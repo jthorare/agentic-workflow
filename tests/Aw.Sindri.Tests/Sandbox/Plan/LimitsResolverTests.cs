@@ -1,5 +1,6 @@
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Sandbox.Resources;
 
 namespace Aw.Sindri.Tests.Sandbox.Plan;
 

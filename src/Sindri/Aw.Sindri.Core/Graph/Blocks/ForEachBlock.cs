@@ -27,7 +27,7 @@ public sealed class ForEachBlock(IForEachLimitSource limits) : IGraphBlock
     public bool IsTrigger => false;
 
     /// <inheritdoc />
-    public BlockSchema Config { get; } = new([new("items", BlockFieldType.Text), new("maxItems", BlockFieldType.Number, Required: false), new("batchSize", BlockFieldType.Number, Required: false)]);
+    public BlockSchema Config { get; } = new([new("items", BlockFieldType.Text, Caption: "List to loop over"), new("maxItems", BlockFieldType.Number, Required: false, Caption: "Most items"), new("batchSize", BlockFieldType.Number, Required: false, Caption: "Items per batch")]);
 
     /// <inheritdoc />
     public string Example => """{"items":"{{search.results}}","maxItems":100}""";

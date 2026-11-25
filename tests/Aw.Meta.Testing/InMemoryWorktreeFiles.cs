@@ -9,6 +9,18 @@ public sealed class InMemoryWorktreeFiles : IWorktreeFiles
 {
     private readonly Dictionary<string, Dictionary<string, DateTimeOffset>> _trees = new(StringComparer.Ordinal);
 
+    private readonly Dictionary<string, string> _roots = new(StringComparer.Ordinal);
+
+    /// <summary>Sets the worktree root configured for a repo (what the environment or worktrees.json would give).</summary>
+    /// <param name="repo">The repo.</param>
+    /// <param name="root">The raw root text.</param>
+    public void ConfigureRoot(string repo, string root)
+    {
+        ArgumentNullException.ThrowIfNull(repo);
+        ArgumentNullException.ThrowIfNull(root);
+        _roots[repo] = root;
+    }
+
     /// <summary>When set, every call fails with this error.</summary>
     public Error? Failure { get; set; }
 
@@ -44,6 +56,10 @@ public sealed class InMemoryWorktreeFiles : IWorktreeFiles
         var newest = entries.Where(e => Counts(e.Key, skipNames)).Select(e => e.Value).DefaultIfEmpty(DateTimeOffset.MinValue).Max();
         return Done.Of(newest);
     }
+
+    /// <inheritdoc />
+    public ValueTask<Result<string?>> ConfiguredRoot(string repo, CancellationToken cancellationToken) =>
+        Failure is { } error ? Done.Failed<string?>(error) : Done.Of(_roots.TryGetValue(repo, out var root) ? root : null);
 
     private static bool Counts(string relative, IReadOnlyCollection<string> skipNames)
     {

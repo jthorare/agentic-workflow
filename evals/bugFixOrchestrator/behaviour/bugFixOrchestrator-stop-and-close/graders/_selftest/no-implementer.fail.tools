@@ -1,0 +1,1 @@
+Agent	{"subagent_type": "lean-coder", "prompt": "Goal: write a failing test"}

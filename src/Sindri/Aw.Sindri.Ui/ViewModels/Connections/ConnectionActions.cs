@@ -44,6 +44,12 @@ internal sealed class ConnectionActions(ISindriApi api, Func<Uri?> url, ILaunche
         closing.Dispose();
     }
 
+    /// <summary>Opens a provider's web page in the browser.</summary>
+    /// <param name="page">The page.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>True when the system opened it.</returns>
+    internal Task<bool> OpenLink(Uri page, CancellationToken cancellationToken) => _launch.Open(page, cancellationToken);
+
     /// <summary>Reads one connection (connection_get).</summary>
     /// <param name="name">The connection's name.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
@@ -73,6 +79,13 @@ internal sealed class ConnectionActions(ISindriApi api, Func<Uri?> url, ILaunche
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>What was removed, or why not.</returns>
     internal Task<Result<ConnectionRemoved>> Remove(string name, CancellationToken cancellationToken) => With(u => api.RemoveConnection(u, name, cancellationToken));
+
+    /// <summary>Renames a connection's label (connection_rename); the service part of the name stays. Sent once.</summary>
+    /// <param name="name">The connection's name.</param>
+    /// <param name="label">The new label.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The new name, or why not.</returns>
+    internal Task<Result<ConnectionRenamed>> Rename(string name, string label, CancellationToken cancellationToken) => With(u => api.RenameConnection(u, name, new RenameConnectionBody(label), cancellationToken));
 
     /// <summary>
     /// Follows a started sign-in to its end: opens the consent page and reads the connection every <see cref="PollEvery"/> until it is 'connected' with a 'signedInAt' other than the one

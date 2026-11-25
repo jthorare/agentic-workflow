@@ -57,7 +57,7 @@
                       <Button x:Name="MemorySearchButton" Content="{Binding ActionText}" Click="OnSearch" AutomationProperties.Name="{Binding ActionText}" />
                     </StackPanel>
 
-                    <StackPanel DataContext="{Binding Search}" x:DataType="mm:MemorySearchViewModel" Spacing="6">
+                    <StackPanel DataContext="{Binding Search}" x:DataType="mm:MemorySearchViewModel" Spacing="8">
                       <Border x:Name="MemorySearchErrorName" IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding Error}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                         <TextBlock Classes="caption" Text="{Binding Error}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
                       </Border>
@@ -84,7 +84,7 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                       <DataTemplate x:DataType="mm:MemoryTagViewModel">
-                                        <Button x:Name="MemoryTagForget" Classes="caption" Content="{Binding Tag}" Click="OnForgetTag" IsEnabled="{Binding CanForget}" Margin="0,0,6,0" AutomationProperties.Name="{Binding ForgetText}" />
+                                        <Button x:Name="MemoryTagForget" Classes="caption" Content="{Binding Tag}" Click="OnForgetTag" IsEnabled="{Binding CanForget}" Margin="0,0,8,0" AutomationProperties.Name="{Binding ForgetText}" />
                                       </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                   </ItemsControl>
@@ -107,7 +107,7 @@
                     </Border>
                     <Button x:Name="MemoryForgetExpired" Content="{Binding ForgetExpiredText}" Click="OnForgetExpired" IsEnabled="{Binding CanForget}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ForgetExpiredText}" />
 
-                    <StackPanel Spacing="6">
+                    <StackPanel Spacing="8">
                       <TextBlock Classes="body-strong" Text="{Binding WriteHeading}" />
                       <TextBox x:Name="MemoryFactBox" Text="{Binding WriteText, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" AutomationProperties.Name="{Binding FactFieldName}" />
                       <TextBox x:Name="MemoryTagsBox" Text="{Binding WriteTags, Mode=TwoWay}" PlaceholderText="{Binding TagsFieldName}" AutomationProperties.Name="{Binding TagsFieldName}" />
@@ -129,7 +129,7 @@
     </Border>
 
     <Border Classes="panel" Padding="16,8">
-      <StackPanel x:Name="MemoryCreateForm" Spacing="6">
+      <StackPanel x:Name="MemoryCreateForm" Spacing="8">
         <TextBlock Classes="body-strong" Text="{Binding CreateHeading}" />
         <TextBox x:Name="MemoryNewName" Text="{Binding NewName, Mode=TwoWay}" PlaceholderText="{Binding NameFieldName}" AutomationProperties.Name="{Binding NameFieldName}" />
         <TextBox x:Name="MemoryNewDescription" Text="{Binding NewDescription, Mode=TwoWay}" PlaceholderText="{Binding DescriptionFieldName}" AutomationProperties.Name="{Binding DescriptionFieldName}" />

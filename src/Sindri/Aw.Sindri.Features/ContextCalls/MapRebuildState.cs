@@ -56,11 +56,6 @@ internal sealed class MapRebuildState(ContextScopes scopes, Func<IContextEngine>
 
     private async ValueTask<MapRebuildStatus> Stand(ContextScope scope, IReadOnlyList<JobRow> refreshes, CancellationToken cancellationToken)
     {
-        if (scope.Settings is null)
-        {
-            return MapRebuildStatus.Idle;
-        }
-
         var context = engine();
         var state = await context.Held(scope, cancellationToken).ConfigureAwait(false);
         var heads = await context.MapHeads(scope, cancellationToken).ConfigureAwait(false);

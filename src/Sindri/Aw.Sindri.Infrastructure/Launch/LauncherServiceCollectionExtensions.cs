@@ -1,10 +1,14 @@
 using Aw.Redaction;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Doctor;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
+using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Mcp;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox.Credentials;
+using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Infrastructure.Launch.Usage;
 using Aw.Sindri.Infrastructure.Sandbox;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,9 +22,14 @@ internal static class LauncherServiceCollectionExtensions
     {
         var builtinHashes = LauncherConfigFile.Read(LauncherStartup.Builtins(), user: null).Value.Agents.ToDictionary(static a => a.Id.Value, static a => a.ArgvHash, StringComparer.Ordinal);
         string? BuiltinHash(AgentId id) => builtinHashes.GetValueOrDefault(id.Value);
-        return services
+        return AddTerminalPanes(services)
             .AddSingleton(static _ => new TmuxSessionHost(new TmuxHostOptions()))
             .AddSingleton<ISessionHost>(static sp => sp.GetRequiredService<TmuxSessionHost>())   // the launcher service polls it for attached clients (API P10a U9)
+            .AddSingleton<ISessionPanes>(static sp => sp.GetRequiredService<TmuxSessionHost>())   // the one-off start asks it for the pane (agents spec §15.8)
+            .AddSingleton<IStartChecks>(_ => new StartChecks(environment))
+            .AddSingleton<IStartedSessions>(static sp => new StartedSessions(sp.GetRequiredService<ILedgerStore>(), sp.GetRequiredService<EventFactory>()))   // the start and the worktree remove share it (A7)
+            .AddSingleton<IStartChoices>(static sp => new StartChoicesFile(sp.GetRequiredService<ISindriHome>()))
+            .AddSingleton<Core.Worktrees.IOneOffWorktrees>(sp => new Worktrees.OneOffWorktrees(sp.GetRequiredService<Core.Worktrees.IWorktrees>(), environment))
             .AddSingleton<ISessionNudges>(static sp => new TmuxSessionNudges(sp.GetRequiredService<TmuxSessionHost>()))
             .AddSingleton<NoSessionHost>()
             .AddSingleton(sp => T3Options(sp, environment))
@@ -48,8 +57,14 @@ internal static class LauncherServiceCollectionExtensions
                 BuiltinHash = BuiltinHash,
                 Approved = Approved(sp),
                 Models = sp.GetRequiredService<IModelCatalog>(),
+                Timer = sp.GetService<IPartTimer>(),
             }));
     }
+
+    /// <summary>The terminal WebSocket's pane locator and tmux pane source (A8, agents spec §15.7).</summary>
+    private static IServiceCollection AddTerminalPanes(IServiceCollection services) => services
+        .AddSingleton<ITerminalPaneLocator>(static sp => new SnapshotTerminalPaneLocator(sp.GetRequiredService<ISessionSnapshot>(), new TmuxHostOptions()))
+        .AddSingleton<ITerminalPaneSource>(static sp => new TmuxTerminalPaneSource(new TmuxHostOptions(), sp.GetRequiredService<ITerminalPaneLocator>()));
 
     private static LauncherOptions Options(Func<string, string?> environment, SindriSettings settings) => new(settings.Home)
     {
@@ -226,7 +241,7 @@ internal static class LauncherServiceCollectionExtensions
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var claude = LauncherStartup.NonEmpty(environment("CLAUDE_CONFIG_DIR")) ?? Path.Combine(home, ".claude");
         var codex = LauncherStartup.NonEmpty(environment("CODEX_HOME")) ?? Path.Combine(home, ".codex");
-        IUsageReader[] readers = [new ClaudeCodeUsage(Path.Combine(claude, "projects"), [$"{AgentHomes.For(settings.Home, AgentId.From("claude-code"))}/projects"]), new CodexUsage(Path.Combine(codex, "sessions"), [$"{AgentHomes.For(settings.Home, AgentId.From("codex"))}/sessions"]), new CursorUsage(Path.Combine(home, ".cursor", "projects"))];
+        IUsageReader[] readers = [new ClaudeCodeUsage(Path.Combine(claude, "projects"), [$"{AgentHomes.For(settings.Home, AgentId.From("claude-code"))}/projects"], new UsageReadCache(Path.Combine(settings.Home, "usage-cache"))), new CodexUsage(Path.Combine(codex, "sessions"), [$"{AgentHomes.For(settings.Home, AgentId.From("codex"))}/sessions"]), new CursorUsage(Path.Combine(home, ".cursor", "projects"))];
         return readers.ToDictionary(static r => r.Name, StringComparer.Ordinal);
     }
 

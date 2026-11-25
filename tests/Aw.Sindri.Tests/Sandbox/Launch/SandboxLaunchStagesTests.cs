@@ -6,6 +6,7 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Sandbox.Resources;
 using Aw.Sindri.Core.Skills;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Infrastructure.Sandbox;
@@ -108,6 +109,36 @@ public sealed class SandboxLaunchStagesTests : IDisposable
         var asked = (await Make().Request(request, chosenSession: null, CancellationToken.None)).Value;
         return SandboxPlanner.Build(SandboxMechanism.Bubblewrap, asked).Value;
     }
+
+    [Fact]
+    public async Task A_node_launch_carries_the_workflows_resource_mounts_and_limits_into_the_plan()
+    {
+        var task = new AgentTask("brief", new Dictionary<string, string>(StringComparer.Ordinal), [], ResourceMounts: [new ResourceMount("resources", SandboxRequests.SindriHome + "/resources/workflow/web")], ResourceLimits: new ResourceLimitOverride(Memory: "1GiB"));
+
+        var plan = await PlanOf(PlannedStep() with { Task = task });
+
+        Expect.True(plan.Mounts.Any(m => m.Kind == PlanMountKind.State && string.Equals(m.Path, SandboxRequests.SindriHome + "/resources/workflow/web", StringComparison.Ordinal)));   // rw State mount
+        Expect.Equal(1024L * 1024 * 1024, plan.Limits.MemoryMaxBytes);   // the declared size, under the box's and the profile's
+    }
+
+    private async Task<string> ResourceLines(string memory)
+    {
+        var mount = new ResourceMount("resources", SandboxRequests.SindriHome + "/resources/workflow/web");
+        var task = new AgentTask("brief", new Dictionary<string, string>(StringComparer.Ordinal), [], ResourceMounts: [mount], ResourceLimits: new ResourceLimitOverride(Memory: memory));
+        var shown = SandboxPlanRenderer.Show(await PlanOf(PlannedStep() with { Task = task }));
+        var lines = shown.Split('\n').Where(l => l.Contains("(resource)", StringComparison.Ordinal) || l.StartsWith("  memory ", StringComparison.Ordinal));
+        return string.Join('\n', lines) + "\n";
+    }
+
+    private static void MatchPlan(string text, string golden) => Golden.Match(text, typeof(SandboxLaunchStagesTests).Assembly, "Sandbox/Plan/Golden/" + golden, Normalization.None);
+
+    [Fact]
+    public async Task The_shown_plan_of_a_node_launch_has_the_rw_resource_mount_and_the_declared_memory() =>
+        MatchPlan(await ResourceLines("1GiB"), "launch-resources-declared.txt");   // #2532
+
+    [Fact]
+    public async Task The_shown_plan_of_a_node_launch_clamps_a_declared_memory_above_the_boxs_to_the_box() =>
+        MatchPlan(await ResourceLines("64GiB"), "launch-resources-clamped.txt");   // #2532: the 32 GiB box sizes a run at 6.4GiB
 
     [Fact]
     public async Task A_skill_launch_with_a_pr_input_sets_the_branch_the_host_fetched_the_PR_head_to_inside_the_sandbox()

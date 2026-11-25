@@ -65,28 +65,25 @@ internal static partial class Labels
     /// <summary>The ⌘K field's placeholder (functional from U1).</summary>
     internal const string Search = "Search or run a command";
 
-    // The shell's chrome (§3.2; U0 Unit A). Eyebrows are written in capitals (Avalonia has no text-transform).
+    /// <summary>The visible placeholder in the top bar; the ⌘K / Ctrl K hint is in the keycap chip (#2710).</summary>
+    internal const string SearchPlaceholder = "Search…";
+
+    // The shell's chrome (§3.2; U0 Unit A). Home's card titles are sentence case (#2780); the other eyebrows are written in capitals (Avalonia has no text-transform).
 
     /// <summary>The brand mark's name.</summary>
     internal const string Sindri = "Sindri";
 
-    /// <summary>The ⌘K field's key chip.</summary>
-    internal const string SearchKey = "⌘K";
-
-    /// <summary>The ⌘K chip's letter, drawn after the ⌘ icon.</summary>
-    internal const string SearchKeyLetter = "K";
-
     /// <summary>Home's Needs you panel.</summary>
-    internal const string NeedsYouPanel = "NEEDS YOU";
+    internal const string NeedsYouPanel = "Needs you";
 
     /// <summary>Home's Running and With you panel.</summary>
-    internal const string RunningPanel = "RUNNING · WITH YOU";
+    internal const string RunningPanel = "Running · with you";
 
     /// <summary>Home's Queued panel.</summary>
-    internal const string QueuedPanel = "QUEUED";
+    internal const string QueuedPanel = "Queued";
 
     /// <summary>Home's health strip.</summary>
-    internal const string HealthPanel = "SINDRI HEALTH";
+    internal const string HealthPanel = "Sindri health";
 
     /// <summary>The Health page's process card.</summary>
     internal const string ControlPlaneCard = "Control plane";
@@ -104,7 +101,13 @@ internal static partial class Labels
     internal const string LastEventCard = "Last event";
 
     /// <summary>The services card with none scheduled.</summary>
-    internal const string NoServices = "none scheduled (the profile names no services)";
+    internal const string NoServices = "none scheduled";
+
+    /// <summary>The services card's line when the live profile won't load: the list holds the built-in services.</summary>
+    internal const string ServicesProfileWontLoad = "The profile won't load, so only the built-in services run.";
+
+    /// <summary>The services card's line when no profile is set up yet.</summary>
+    internal const string ServicesNoProfile = "No profile is set up, so only the built-in services run.";
 
     /// <summary>The not-running panel's fix prompt.</summary>
     internal const string StartIt = "Start it:";

@@ -13,6 +13,11 @@ public interface IMessageStore
     /// <returns>The offset, 0 when the transcript was never read.</returns>
     public ValueTask<Result<long>> Offset(string transcript, CancellationToken cancellationToken);
 
+    /// <summary>Every transcript path that has a stored offset, ordered by path.</summary>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The paths.</returns>
+    public ValueTask<Result<IReadOnlyList<string>>> Transcripts(CancellationToken cancellationToken);
+
     /// <summary>Stores new messages and the new offset together; a message whose id is already stored is skipped.</summary>
     /// <param name="transcript">The transcript path.</param>
     /// <param name="offset">The new offset.</param>
@@ -32,6 +37,13 @@ public interface IMessageStore
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>Success, or AW-META-005 for an unknown message.</returns>
     public ValueTask<Result<Unit>> Resolve(MessageId id, MessageResolution resolution, CancellationToken cancellationToken);
+
+    /// <summary>Records that `inbox --once` showed these messages.</summary>
+    /// <param name="ids">The messages.</param>
+    /// <param name="at">When they were shown.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Success; an unknown id is skipped.</returns>
+    public ValueTask<Result<Unit>> MarkShown(IReadOnlyList<MessageId> ids, DateTimeOffset at, CancellationToken cancellationToken);
 
     /// <summary>Stores a message the meta sent.</summary>
     /// <param name="sent">The send.</param>

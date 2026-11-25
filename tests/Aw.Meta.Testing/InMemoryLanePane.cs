@@ -34,6 +34,20 @@ public sealed class InMemoryLanePane : ILanePane
     /// <summary>How many Enter presses are swallowed (the text stays in the input box) before one submits.</summary>
     public int SwallowEnters { get; set; }
 
+    /// <summary>How many leading characters the next typed text loses before it reaches the input box, as when a lane's prompt reads them as keys (#3443).</summary>
+    public int EatNextTyped { get; set; }
+
+    /// <summary>When set, <see cref="ClearInput"/> leaves the input box as it is, as when the agent ignores Ctrl+U.</summary>
+    public bool IgnoreClear { get; set; }
+
+    /// <summary>How many times the input box was cleared.</summary>
+    public int Clears { get; private set; }
+
+    /// <summary>The text typed into the session's input box and not yet submitted or cleared.</summary>
+    /// <param name="session">The session name.</param>
+    /// <returns>The text, empty when the box is empty.</returns>
+    public string InputBox(string session) => _pending.GetValueOrDefault(session, string.Empty);
+
     /// <summary>How many Enter presses were made.</summary>
     public int Enters { get; private set; }
 
@@ -62,7 +76,9 @@ public sealed class InMemoryLanePane : ILanePane
             return Done.Failed<Unit>(MetaErrors.CommandFailed.With(WakeFailure ?? $"no such session: {session}"));
         }
 
-        _pending[session] = text;
+        var eaten = Math.Min(EatNextTyped, text.Length);
+        EatNextTyped = 0;
+        _pending[session] = _pending.GetValueOrDefault(session, string.Empty) + text[eaten..];
         return Done.Unit();
     }
 
@@ -82,6 +98,23 @@ public sealed class InMemoryLanePane : ILanePane
         else if (_pending.Remove(session, out var text))
         {
             _woken.Add((session, text));
+        }
+
+        return Done.Unit();
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<Unit>> ClearInput(string session, CancellationToken cancellationToken)
+    {
+        if (!_panes.ContainsKey(session))
+        {
+            return Done.Failed<Unit>(MetaErrors.CommandFailed.With($"no such session: {session}"));
+        }
+
+        Clears++;
+        if (!IgnoreClear)
+        {
+            _ = _pending.Remove(session);
         }
 
         return Done.Unit();
