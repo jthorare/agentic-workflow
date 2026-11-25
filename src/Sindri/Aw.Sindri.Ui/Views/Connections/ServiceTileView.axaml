@@ -65,8 +65,8 @@
         <TextBox x:Name="ServiceTileToken" PasswordChar="●" Text="{Binding Token.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.TileTokenLabel}" IsVisible="{Binding TakesToken}" AutomationProperties.Name="{Binding Text.TileTokenLabel}" />
         <TextBlock x:Name="ServiceTileHelp" Classes="caption subtle" Text="{Binding HelpText}" IsVisible="{Binding HasHelpText}" TextWrapping="Wrap" />
         <Button x:Name="ServiceTileHelpLink" Content="{Binding HelpLinkText}" IsVisible="{Binding HasHelpLink}" Click="OnHelp" HorizontalAlignment="Left" />
-        <Button x:Name="ServiceTileUseOAuth" Classes="link" Content="{Binding Text.UseOAuth}" IsVisible="{Binding ShowUseOAuth}" Click="OnUseOAuth" HorizontalAlignment="Left" />
-        <Button x:Name="ServiceTileUseToken" Classes="link" Content="{Binding Text.UseToken}" IsVisible="{Binding ShowUseToken}" Click="OnUseToken" HorizontalAlignment="Left" />
+        <Button x:Name="ServiceTileUseOAuth" Classes="link accent-link" Content="{Binding Text.UseOAuth}" IsVisible="{Binding ShowUseOAuth}" Click="OnUseOAuth" HorizontalAlignment="Left" />
+        <Button x:Name="ServiceTileUseToken" Classes="link accent-link" Content="{Binding Text.UseToken}" IsVisible="{Binding ShowUseToken}" Click="OnUseToken" HorizontalAlignment="Left" />
         <TextBlock x:Name="ServiceTileReason" Classes="caption subtle" Text="{Binding BlockedReason}" IsVisible="{Binding HasBlockedReason}" TextWrapping="Wrap" />
       </StackPanel>
 
