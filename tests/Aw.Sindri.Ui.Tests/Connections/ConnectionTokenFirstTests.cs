@@ -117,4 +117,19 @@ public sealed class ConnectionTokenFirstTests
         Assert.DoesNotContain("SND-", tile.ErrorText, StringComparison.Ordinal);
         Assert.False(tile.Token.HasValue);
     }
+
+    [Fact]
+    public async Task After_a_refused_token_the_button_reads_Add_token_until_a_new_token_is_pasted_never_a_greyed_Try_again()
+    {
+        var tile = await Tile("github");
+        await tile.Connect(Token);
+        tile.Token.Text = "github_pat_test_0001";
+        _f.Server.ConnectionWriteError = new Kernel.Error("SND-CONN-018", Kernel.ErrorKind.Invalid, "GitHub refused the key");
+
+        await tile.Connect(Token);
+
+        Assert.Equal(("Add token", false), (tile.PrimaryText, tile.CanPress));
+        tile.Token.Text = "github_pat_test_0002";
+        Assert.Equal(("Add token", true), (tile.PrimaryText, tile.CanPress));
+    }
 }
