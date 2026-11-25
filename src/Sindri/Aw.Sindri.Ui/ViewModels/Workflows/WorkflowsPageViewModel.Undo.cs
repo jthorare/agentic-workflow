@@ -8,6 +8,9 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>Raised after a step was saved: the shell shows the toast with its Undo.</summary>
     internal event EventHandler<WorkflowStepSavedEventArgs>? StepSaved;
 
+    /// <summary>Raised after an undo was saved and the page read the workflow again: the reload rebuilt the sheet's fields and the graph, so the view puts focus back where the person was.</summary>
+    internal event EventHandler? StepUndone;
+
     // The toast's Undo puts back the graph the save replaced, as a new revision on the revision the save made (its answer's), so a newer
     // edit is never overwritten: the server refuses a stale base, and the Undo is off as soon as the editor's base moves on (a canvas edit, a reload that found more).
     // It is also off while an Activate or Pause or another edit is on the way.
@@ -32,6 +35,14 @@ internal sealed partial class WorkflowsPageViewModel
 
         var failure = await Editor.Restore(slug, before, saved, CancellationToken.None).ConfigureAwait(true);
         await RereadRuns(slug, CancellationToken.None).ConfigureAwait(true);
+        if (failure is null)
+        {
+            NoteSaved();   // the undo made a new revision: the line names it
+            _undoneRevision = Runs.Shown?.LatestRevision ?? 0;   // the revision the undo wrote
+            NotifySaved();
+            StepUndone?.Invoke(this, EventArgs.Empty);
+        }
+
         return failure;
     }
 }

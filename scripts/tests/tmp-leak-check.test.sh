@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for scripts/ci/tmp-leak-check.sh: it names a new aw-* or tmp.* entry the command leaves, passes a clean
+# Tests for scripts/ci/tmp-leak-check.sh: it names a new aw-*, sindri-* or tmp.* entry the command leaves, passes a clean
 # command, keeps the command's own exit code, ignores entries that were there before, and deletes nothing.
 set -uo pipefail
 
@@ -38,6 +38,10 @@ if [ "$rc" = 1 ] && grep -qF "$T/tmp.leaked2" "$W/err" && grep -qF "$T/aw-leaked
 else fail "two leaks: rc=$rc $(cat "$W/err")"; fi
 if grep -qF "aw-leaked-1" "$W/err"; then fail "a leak from an earlier run was reported again"; else ok "a leak from an earlier run is not reported again"; fi
 if grep -qF "aw-old" "$W/err"; then fail "an entry from before the run was reported"; else ok "entries from before the run are not reported"; fi
+
+# 3b. A leaked sindri-* dir (the Sindri tests' prefix, e.g. sindri-ui-XXXXXX) counts too.
+run -- bash -c 'mkdir "$TMPDIR/sindri-ui-leaked"'; rc=$?
+if [ "$rc" = 1 ] && grep -qF "$T/sindri-ui-leaked" "$W/err"; then ok "a leaked sindri-* dir is named, exit 1"; else fail "sindri leak: rc=$rc $(cat "$W/err")"; fi
 
 # 4. Other names are ignored.
 run -- bash -c 'mkdir "$TMPDIR/unrelated-new"'; rc=$?
