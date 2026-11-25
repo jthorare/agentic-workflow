@@ -174,6 +174,7 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
         foreach (var node in Nodes)
         {
             var own = findings.Where(f => string.Equals(f.Node, node.Id, StringComparison.Ordinal)).ToList();
+            own.ForEach(f => f.StepTitle = node.Title);
             node.MarkFindings(own.Count, own.Exists(f => f.IsError));
             marked += own.Count;
         }
