@@ -206,7 +206,7 @@ public static class MergeGate
         {
             return new MergeCheck("main", Ok: true, gate.Stack.Count == 0
                 ? $"main moved from {gate.Main} to {facts.CurrentMain}, and the gated head merges onto it to the tested tree"
-                : $"the gated head merges onto main {facts.CurrentMain} to the tested tree (the gate stacked {string.Join(", ", gate.Stack.Select(s => "#" + s.Pr.ToString(CultureInfo.InvariantCulture)))})");
+                : $"the gated head merges onto main {facts.CurrentMain} to the tested tree (the gate stacked {StackList(gate)})");
         }
 
         if (QueueSettles(gate, facts) is { } queued)
@@ -216,13 +216,22 @@ public static class MergeGate
 
         if (gate.Tree is null)
         {
-            return new MergeCheck("main", Ok: false, $"gate ran on main {gate.Main}, main is {facts.CurrentMain}");
+            return new MergeCheck("main", Ok: false, NoTree(gate, facts));
         }
 
         return new MergeCheck("main", Ok: false, gate.Stack.Count == 0
             ? $"gate ran on main {gate.Main}, main is {facts.CurrentMain}, and the gated head no longer merges onto it to the tested tree"
-            : $"the gate stacked {string.Join(", ", gate.Stack.Select(s => "#" + s.Pr.ToString(CultureInfo.InvariantCulture)))}; merging the gated head onto main {facts.CurrentMain} does not give the tested tree");
+            : $"the gate stacked {StackList(gate)}; merging the gated head onto main {facts.CurrentMain} does not give the tested tree");
     }
+
+    // A gate recorded without its tree: an unstacked one failed the fast path because main moved; a stacked one can't vouch even on the same main.
+    private static string NoTree(GateRecord gate, MergeFacts facts) => gate.Stack.Count == 0
+        ? $"gate ran on main {gate.Main}, main is {facts.CurrentMain}"
+        : gate.Main == facts.CurrentMain
+            ? $"gate ran on main {gate.Main} with a stack ({StackList(gate)}) and recorded no tree; main didn't move, but a stacked gate vouches only through its tested tree: gate again"
+            : $"gate ran on main {gate.Main} with a stack ({StackList(gate)}) and recorded no tree, main is {facts.CurrentMain}: gate again";
+
+    private static string StackList(GateRecord gate) => string.Join(", ", gate.Stack.Select(s => "#" + s.Pr.ToString(CultureInfo.InvariantCulture)));
 
     // A merge queue re-tests the merged tree before it lands, so a main that moved past the gate is the queue's to settle. A head that
     // conflicts with main is not: the queue would drop the pull request, so it refuses here. Null when the base has no merge queue.
@@ -235,7 +244,9 @@ public static class MergeGate
 
         if (facts.MergeConflicts)
         {
-            return new MergeCheck("main", Ok: false, $"gate ran on main {gate.Main}, main is {facts.CurrentMain}, and the gated head conflicts with it; the merge queue would drop it too");
+            return new MergeCheck("main", Ok: false, gate.Main == facts.CurrentMain
+                ? $"gate ran on main {gate.Main} and main didn't move, but the gated head conflicts with it; the merge queue would drop it too"
+                : $"gate ran on main {gate.Main}, main is {facts.CurrentMain}, and the gated head conflicts with it; the merge queue would drop it too");
         }
 
         return new MergeCheck("main", Ok: true, gate.Main == facts.CurrentMain

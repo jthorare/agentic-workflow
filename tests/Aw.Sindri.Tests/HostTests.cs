@@ -17,9 +17,17 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests;
 
-public sealed class HostTests
+public sealed class HostTests : IDisposable
 {
-    private static readonly string _stateRoot = Path.Combine(Path.GetTempPath(), "aw-sindri-di-test");
+    private readonly string _stateRoot = Directory.CreateTempSubdirectory("aw-sindri-di-test-").FullName;
+    public void Dispose()
+    {
+        if (Directory.Exists(_stateRoot))
+        {
+            Directory.Delete(_stateRoot, recursive: true);
+        }
+    }
+
 
     [Fact, Trait("Lane", "unit")]
     public void Every_registered_service_resolves_in_a_scope()
@@ -109,7 +117,7 @@ public sealed class HostTests
         Assert.True(logger.IsEnabled(LogLevel.Warning));
     }
 
-    private static IServiceCollection Compose(string? logLevel = null)
+    private IServiceCollection Compose(string? logLevel = null)
         => Composition.Compose(
             new ServiceCollection(),
             name => name switch { "AW_STATE_DIR" => _stateRoot, "AW_LOG_LEVEL" => logLevel, _ => null },

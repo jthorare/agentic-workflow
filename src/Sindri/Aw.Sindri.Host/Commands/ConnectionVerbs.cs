@@ -78,7 +78,7 @@ internal sealed partial class ConnectionVerbs(ControlPlaneClient client, Output 
             _ = text.AppendLine(Line(view));
         }
 
-        return await _output.Text(answer.Value.Value.Connections.Count == 0 ? "No connections. Add one with: sindri connection add <service:label> --preset <preset> --client-id <id>\n" : text.ToString(), 0).ConfigureAwait(false);
+        return await _output.Text(answer.Value.Value.Connections.Count == 0 ? "No connections. Add one with: sindri connection add <service:label> --preset <preset> --key-env <NAME>\n" : text.ToString(), 0).ConfigureAwait(false);
     }
 
     private async Task<int> Show(Parsed command, CancellationToken ct)

@@ -1,0 +1,46 @@
+{
+  "schema": "aw-replay-fixture/1",
+  "id": "codex/block-destructive/deny-rm-rf",
+  "provider": "codex",
+  "scenario": "block-destructive",
+  "verified": "unverified",
+  "source": {
+    "hostVersion": "codex 0.158.0",
+    "capturedAt": null,
+    "sanitizedBy": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  },
+  "policy": "block-destructive/1",
+  "notes": "Hand-written: payload copied from config/hooks/tests/fixtures/codex/ (Codex 0.158.0 PreToolUse).",
+  "events": [
+    {
+      "n": 1,
+      "hook": "PreToolUse",
+      "script": "block-destructive.sh",
+      "payload": {
+        "session_id": "cx-1",
+        "turn_id": "t-1",
+        "transcript_path": null,
+        "cwd": "/tmp",
+        "hook_event_name": "PreToolUse",
+        "model": "gpt-5",
+        "permission_mode": "default",
+        "tool_name": "Bash",
+        "tool_use_id": "call_1",
+        "tool_input": {
+          "command": "rm -rf build"
+        }
+      }
+    }
+  ],
+  "judge": null,
+  "expect": [
+    {
+      "event": 1,
+      "decision": "deny",
+      "reasonCode": null,
+      "textContains": "is destructive"
+    }
+  ]
+}

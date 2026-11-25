@@ -27,5 +27,5 @@ case "$EVENT" in UserPromptSubmit|PostToolUse) ;; *) exit 0 ;; esac
 OUT="$(AW_LOG_LEVEL=none AW_META_HOOK="$EVENT" "$META" board-line 2> /dev/null)"; rc=$?
 [ "$rc" = 0 ] || { failopen "board-line-exit-$rc"; exit 0; }
 [ -n "$OUT" ] || exit 0
-jq -nc --arg e "$EVENT" --arg m "$OUT" '{hookSpecificOutput: {hookEventName: $e, additionalContext: $m}}' 2> /dev/null || true
+jq -nc --arg e "$EVENT" --rawfile m <(printf '%s' "$OUT") '{hookSpecificOutput: {hookEventName: $e, additionalContext: $m}}' 2> /dev/null || true
 exit 0

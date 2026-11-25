@@ -38,13 +38,17 @@ rg_call() {
     def sortkeys: if type == "object" then to_entries | sort_by(.key) | map(.value |= sortkeys) | from_entries
                   elif type == "array" then map(sortkeys) else . end;
     if type != "object" then error("not an object") else . end
+    | . as $top
     | (.tool_name // "" | tostring) as $tool
     | (.tool_input // {}) as $in
     | (if $tool == "Bash" and ($in | type) == "object" and (($in.command // null) | type) == "string" then
-         (($in.command | capture("^(?<c>[\\s\\S]*?)\\s*#\\s*aw-retry:(?<r>[^\\n]*)\\z") | . + {m: "true"})
+         (($in.command | capture("^(?<c>[\\s\\S]*?)\\s*#\\s*aw-retry:(?<r>[^\\n]*)\\s*\\z") | . + {m: "true"})
           // {c: $in.command, r: "", m: "false"})
        else {c: "", r: "", m: "false"} end) as $ov
-    | (if $tool == "Bash" and ($in | type) == "object" then ($in | .command = $ov.c) else $in end) as $canonIn
+    | (if $tool == "Bash" and ($in | type) == "object" then ($in | del(.description) | .command = $ov.c
+                                                       | if (.working_directory? // null) != null and .working_directory == ($top.cwd // null)
+                                                         then del(.working_directory) else . end)
+         else $in end) as $canonIn
     | ($ov.c | [splits("\\s+")] | map(select(length > 0 and (test("^[A-Za-z_][A-Za-z0-9_]*=") | not))) | .[0] // "") as $exe
     | $tool, ($canonIn | sortkeys | tojson), ($ov.r | clean | gsub("^\\s+|\\s+$"; "") | .[0:200]), ($exe | clean),
       ($ov.c | clean), (.cwd // "" | tostring | clean), (.hook_event_name // "" | tostring),
@@ -78,6 +82,31 @@ rg_text_hash() {
 
 # rg_mtime <file>: its mtime in epoch seconds, or "".
 rg_mtime() { stat -c %Y "$1" 2> /dev/null || stat -f %m "$1" 2> /dev/null || true; }
+
+# rg_input_stamp <cwd> <command>: prints a sorted "<name> <mtime>;..." stamp of the existing files the command names (at
+# most 8 words, relative ones from <cwd>) and of the common build files in <cwd>; "" when there are none. A bad-args row
+# records it at failure time and the gate compares it, so a fixed script or Makefile lets the same call run again.
+rg_input_stamp() {
+  local cwd="$1" w f n=0 out="" had_f=1
+  case "$-" in *f*) had_f=0 ;; esac
+  set -f   # the command's words are not globbed; the *.csproj glob below runs with globbing back on
+  for w in $2; do
+    n=$((n + 1)); [ "$n" -gt 8 ] && break
+    case "$w" in /*) f="$w" ;; *) [ -n "$cwd" ] && f="${cwd%/}/${w#./}" || f="$w" ;; esac
+    [ -f "$f" ] && out="$out$f $(rg_mtime "$f")
+"
+  done
+  [ "$had_f" = 1 ] && set +f
+  if [ -n "$cwd" ] && [ -d "$cwd" ]; then
+    for w in Makefile makefile GNUmakefile package.json Cargo.toml go.mod pyproject.toml setup.py CMakeLists.txt build.gradle pom.xml "$cwd"/*.csproj "$cwd"/*.sln; do
+      case "$w" in /*) f="$w" ;; *) f="${cwd%/}/$w" ;; esac
+      [ -f "$f" ] && out="$out$f $(rg_mtime "$f")
+"
+    done
+  fi
+  [ -n "$out" ] || return 0
+  printf '%s' "$out" | LC_ALL=C sort -u | tr '\n' ';'
+}
 
 # rg_auth_file <host>: the provider's auth file for that host, or "".
 rg_auth_file() {
