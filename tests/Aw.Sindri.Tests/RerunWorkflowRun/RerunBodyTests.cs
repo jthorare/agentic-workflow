@@ -2,11 +2,10 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Host;
-using Aw.Sindri.Host.Endpoints;
 
 namespace Aw.Sindri.Tests.RerunWorkflowRun;
 
-/// <summary>The re-run route's body takes <c>input</c> as a JSON object, the same shape the MCP tool workflow_rerun takes (#4205).</summary>
+/// <summary>The re-run route's body takes <c language="text">input</c> as a JSON object, the same shape the MCP tool workflow_rerun takes (#4205).</summary>
 [Lane(TestLane.Unit)]
 public sealed class RerunBodyTests
 {
