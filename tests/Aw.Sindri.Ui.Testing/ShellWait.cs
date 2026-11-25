@@ -51,6 +51,21 @@ internal static class ShellWait
         }
     }
 
+    /// <summary>
+    /// Completes when <paramref name="condition"/> holds; fails with the run's own exception should the shell's run end first
+    /// (a view that throws in the connect pass ends it, and nothing changes after that), else after 20 s without it.
+    /// </summary>
+    /// <param name="shell">The shell.</param>
+    /// <param name="run">The task the shell's Run returned.</param>
+    /// <param name="condition">What to wait for; read on the shell's thread.</param>
+    /// <param name="cancellationToken">Cancels the wait.</param>
+    /// <returns>A task that completes when the condition holds.</returns>
+    internal static Task Until(ShellViewModel shell, Task run, Func<bool> condition, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        return Until(shell, condition, cancellationToken);   // red (#4383): the run is not watched yet
+    }
+
     private static List<INotifyPropertyChanged> Sources(ShellViewModel shell) =>
         [shell, shell.Health, shell.Queue, shell.Item, shell.NeedsYou, shell.NeedsYou.Seen, shell.Decision];
 }
