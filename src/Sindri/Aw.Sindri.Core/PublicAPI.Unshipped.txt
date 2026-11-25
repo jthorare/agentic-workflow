@@ -23923,6 +23923,298 @@ static Aw.Sindri.Core.Graph.Blocks.GraphFence.Calls(Aw.Sindri.Core.Graph.Blocks.
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.ConnectionTools(Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort! live) -> Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort!
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.Toolkits(Aw.Sindri.Core.Toolkits.IRunningToolkits! live) -> Aw.Sindri.Core.Toolkits.IRunningToolkits!
 static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.At.init -> void
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.HumanTurnRef!
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.Deconstruct(out string! Ref, out string! Session, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.Equals(Aw.Sindri.Core.Graph.Blocks.HumanTurnRef? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.HumanTurnRef(string! Ref, string! Session, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.Ref.get -> string!
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.Ref.init -> void
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.Session.get -> string!
+Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.Session.init -> void
+Aw.Sindri.Core.Graph.Blocks.IGraphTranscriptPort
+Aw.Sindri.Core.Graph.Blocks.IGraphTranscriptPort.HumanTurns(Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery! query, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.HumanTurnRef!>!>!>
+Aw.Sindri.Core.Graph.Blocks.IGraphTranscriptPort.Read(System.Collections.Generic.IReadOnlyList<string!>! refs, bool withBefore, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText!>!>!>
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.TranscriptBatchBlock(Aw.Sindri.Core.Graph.Blocks.IGraphTranscriptPort! transcripts) -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Deconstruct(out System.DateTimeOffset Since, out System.Collections.Generic.IReadOnlyList<string!>! Providers, out string? Repo) -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Equals(Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Providers.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Providers.init -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Repo.get -> string?
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Repo.init -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Since.get -> System.DateTimeOffset
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Since.init -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.TranscriptTurnQuery(System.DateTimeOffset Since, System.Collections.Generic.IReadOnlyList<string!>! Providers, string? Repo) -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.TranscriptTurnsBlock(Aw.Sindri.Core.Graph.Blocks.IGraphTranscriptPort! transcripts, System.TimeProvider! clock) -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Before.get -> string?
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Before.init -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Deconstruct(out string! Ref, out string! Text, out string? Before) -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Equals(Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Ref.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Ref.init -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Text.get -> string!
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Text.init -> void
+Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.TranscriptTurnText(string! Ref, string! Text, string? Before) -> void
+const Aw.Sindri.Core.Graph.Blocks.TranscriptBatchBlock.MaxTurns = 20 -> int
+const Aw.Sindri.Core.Graph.Blocks.TranscriptTurnsBlock.MaxTurnsCeiling = 400 -> int
+override Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.TranscriptBlocks(Aw.Sindri.Core.Graph.Blocks.IGraphTranscriptPort! transcripts, System.TimeProvider! clock) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>!
+static Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.operator !=(Aw.Sindri.Core.Graph.Blocks.HumanTurnRef? left, Aw.Sindri.Core.Graph.Blocks.HumanTurnRef? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.operator ==(Aw.Sindri.Core.Graph.Blocks.HumanTurnRef? left, Aw.Sindri.Core.Graph.Blocks.HumanTurnRef? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.operator !=(Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery? left, Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery.operator ==(Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery? left, Aw.Sindri.Core.Graph.Blocks.TranscriptTurnQuery? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.operator !=(Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText? left, Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText.operator ==(Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText? left, Aw.Sindri.Core.Graph.Blocks.TranscriptTurnText? right) -> bool
+Aw.Sindri.Core.Evolve.IProposalStore
+Aw.Sindri.Core.Evolve.IProposalStore.Find(Aw.Sindri.Core.Evolve.ProposalId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Evolve.StoredProposal?>!>
+Aw.Sindri.Core.Evolve.IProposalStore.List(Aw.Sindri.Core.Evolve.ProposalState? state, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Evolve.StoredProposal!>!>!>
+Aw.Sindri.Core.Evolve.IProposalStore.Reject(Aw.Sindri.Core.Evolve.ProposalId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Evolve.StoredProposal!>!>
+Aw.Sindri.Core.Evolve.IProposalStore.Save(Aw.Sindri.Core.Evolve.ProposalToSave! proposal, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Evolve.ProposalSaved!>!>
+Aw.Sindri.Core.Evolve.LeakLayer
+Aw.Sindri.Core.Evolve.LeakLayer.Identifiers = 4 -> Aw.Sindri.Core.Evolve.LeakLayer
+Aw.Sindri.Core.Evolve.LeakLayer.Judge = 1 -> Aw.Sindri.Core.Evolve.LeakLayer
+Aw.Sindri.Core.Evolve.LeakLayer.Patterns = 3 -> Aw.Sindri.Core.Evolve.LeakLayer
+Aw.Sindri.Core.Evolve.LeakLayer.Personal = 6 -> Aw.Sindri.Core.Evolve.LeakLayer
+Aw.Sindri.Core.Evolve.LeakLayer.Rewrite = 0 -> Aw.Sindri.Core.Evolve.LeakLayer
+Aw.Sindri.Core.Evolve.LeakLayer.Scrubber = 7 -> Aw.Sindri.Core.Evolve.LeakLayer
+Aw.Sindri.Core.Evolve.LeakLayer.Terms = 2 -> Aw.Sindri.Core.Evolve.LeakLayer
+Aw.Sindri.Core.Evolve.LeakLayer.Verbatim = 5 -> Aw.Sindri.Core.Evolve.LeakLayer
+Aw.Sindri.Core.Evolve.LeakReasons
+Aw.Sindri.Core.Evolve.LeakSource
+Aw.Sindri.Core.Evolve.LeakSource.<Clone>$() -> Aw.Sindri.Core.Evolve.LeakSource!
+Aw.Sindri.Core.Evolve.LeakSource.Deconstruct(out string! Session, out System.Collections.Generic.IReadOnlyList<string!>! Turns) -> void
+Aw.Sindri.Core.Evolve.LeakSource.Equals(Aw.Sindri.Core.Evolve.LeakSource? other) -> bool
+Aw.Sindri.Core.Evolve.LeakSource.LeakSource(string! Session, System.Collections.Generic.IReadOnlyList<string!>! Turns) -> void
+Aw.Sindri.Core.Evolve.LeakSource.Session.get -> string!
+Aw.Sindri.Core.Evolve.LeakSource.Session.init -> void
+Aw.Sindri.Core.Evolve.LeakSource.Turns.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Evolve.LeakSource.Turns.init -> void
+Aw.Sindri.Core.Evolve.Proposal
+Aw.Sindri.Core.Evolve.ProposalChange
+Aw.Sindri.Core.Evolve.ProposalChange.<Clone>$() -> Aw.Sindri.Core.Evolve.ProposalChange!
+Aw.Sindri.Core.Evolve.ProposalChange.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Files, out string! Description) -> void
+Aw.Sindri.Core.Evolve.ProposalChange.Description.get -> string!
+Aw.Sindri.Core.Evolve.ProposalChange.Description.init -> void
+Aw.Sindri.Core.Evolve.ProposalChange.Equals(Aw.Sindri.Core.Evolve.ProposalChange? other) -> bool
+Aw.Sindri.Core.Evolve.ProposalChange.Files.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Evolve.ProposalChange.Files.init -> void
+Aw.Sindri.Core.Evolve.Proposal.Change.get -> Aw.Sindri.Core.Evolve.ProposalChange!
+Aw.Sindri.Core.Evolve.Proposal.Change.init -> void
+Aw.Sindri.Core.Evolve.ProposalChange.ProposalChange(System.Collections.Generic.IReadOnlyList<string!>! Files, string! Description) -> void
+Aw.Sindri.Core.Evolve.Proposal.<Clone>$() -> Aw.Sindri.Core.Evolve.Proposal!
+Aw.Sindri.Core.Evolve.Proposal.Deconstruct(out Aw.Sindri.Core.Evolve.ProposalKind Kind, out string! Target, out string! Title, out string! Rationale, out Aw.Sindri.Core.Evolve.ProposalChange! Change, out System.Collections.Generic.IReadOnlyList<string!>! Evidence) -> void
+Aw.Sindri.Core.Evolve.Proposal.Equals(Aw.Sindri.Core.Evolve.Proposal? other) -> bool
+Aw.Sindri.Core.Evolve.Proposal.Evidence.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Evolve.Proposal.Evidence.init -> void
+Aw.Sindri.Core.Evolve.ProposalId
+Aw.Sindri.Core.Evolve.ProposalId.Equals(Aw.Sindri.Core.Evolve.ProposalId other) -> bool
+Aw.Sindri.Core.Evolve.ProposalId.Equals(Aw.Sindri.Core.Evolve.ProposalId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Evolve.ProposalId>! comparer) -> bool
+Aw.Sindri.Core.Evolve.ProposalId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Evolve.ProposalId.IsInitialized() -> bool
+Aw.Sindri.Core.Evolve.ProposalId.ProposalId() -> void
+Aw.Sindri.Core.Evolve.ProposalId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Evolve.ProposalId.Value.get -> string!
+Aw.Sindri.Core.Evolve.ProposalKind
+Aw.Sindri.Core.Evolve.ProposalKind.Code = 3 -> Aw.Sindri.Core.Evolve.ProposalKind
+Aw.Sindri.Core.Evolve.ProposalKind.Docs = 2 -> Aw.Sindri.Core.Evolve.ProposalKind
+Aw.Sindri.Core.Evolve.Proposal.Kind.get -> Aw.Sindri.Core.Evolve.ProposalKind
+Aw.Sindri.Core.Evolve.Proposal.Kind.init -> void
+Aw.Sindri.Core.Evolve.ProposalKind.SkillEdit = 0 -> Aw.Sindri.Core.Evolve.ProposalKind
+Aw.Sindri.Core.Evolve.ProposalKind.StyleRule = 1 -> Aw.Sindri.Core.Evolve.ProposalKind
+Aw.Sindri.Core.Evolve.Proposal.Proposal(Aw.Sindri.Core.Evolve.ProposalKind Kind, string! Target, string! Title, string! Rationale, Aw.Sindri.Core.Evolve.ProposalChange! Change, System.Collections.Generic.IReadOnlyList<string!>! Evidence) -> void
+Aw.Sindri.Core.Evolve.Proposal.Rationale.get -> string!
+Aw.Sindri.Core.Evolve.Proposal.Rationale.init -> void
+Aw.Sindri.Core.Evolve.ProposalSaved
+Aw.Sindri.Core.Evolve.ProposalSaved.<Clone>$() -> Aw.Sindri.Core.Evolve.ProposalSaved!
+Aw.Sindri.Core.Evolve.ProposalSaved.Deconstruct(out Aw.Sindri.Core.Evolve.ProposalId Id, out Aw.Sindri.Core.Evolve.ProposalSaveOutcome Outcome) -> void
+Aw.Sindri.Core.Evolve.ProposalSaved.Equals(Aw.Sindri.Core.Evolve.ProposalSaved? other) -> bool
+Aw.Sindri.Core.Evolve.ProposalSaved.Id.get -> Aw.Sindri.Core.Evolve.ProposalId
+Aw.Sindri.Core.Evolve.ProposalSaved.Id.init -> void
+Aw.Sindri.Core.Evolve.ProposalSaved.Outcome.get -> Aw.Sindri.Core.Evolve.ProposalSaveOutcome
+Aw.Sindri.Core.Evolve.ProposalSaved.Outcome.init -> void
+Aw.Sindri.Core.Evolve.ProposalSaved.ProposalSaved(Aw.Sindri.Core.Evolve.ProposalId Id, Aw.Sindri.Core.Evolve.ProposalSaveOutcome Outcome) -> void
+Aw.Sindri.Core.Evolve.ProposalSaveOutcome
+Aw.Sindri.Core.Evolve.ProposalSaveOutcome.Merged = 1 -> Aw.Sindri.Core.Evolve.ProposalSaveOutcome
+Aw.Sindri.Core.Evolve.ProposalSaveOutcome.PreviouslyRejected = 2 -> Aw.Sindri.Core.Evolve.ProposalSaveOutcome
+Aw.Sindri.Core.Evolve.ProposalSaveOutcome.Saved = 0 -> Aw.Sindri.Core.Evolve.ProposalSaveOutcome
+Aw.Sindri.Core.Evolve.ProposalState
+Aw.Sindri.Core.Evolve.ProposalState.Held = 2 -> Aw.Sindri.Core.Evolve.ProposalState
+Aw.Sindri.Core.Evolve.ProposalState.Merged = 4 -> Aw.Sindri.Core.Evolve.ProposalState
+Aw.Sindri.Core.Evolve.ProposalState.Proposed = 0 -> Aw.Sindri.Core.Evolve.ProposalState
+Aw.Sindri.Core.Evolve.ProposalState.Published = 3 -> Aw.Sindri.Core.Evolve.ProposalState
+Aw.Sindri.Core.Evolve.ProposalState.Rejected = 5 -> Aw.Sindri.Core.Evolve.ProposalState
+Aw.Sindri.Core.Evolve.ProposalState.Staged = 1 -> Aw.Sindri.Core.Evolve.ProposalState
+Aw.Sindri.Core.Evolve.ProposalSummary
+Aw.Sindri.Core.Evolve.ProposalSummary.Attempts.get -> int
+Aw.Sindri.Core.Evolve.ProposalSummary.Attempts.init -> void
+Aw.Sindri.Core.Evolve.ProposalSummary.<Clone>$() -> Aw.Sindri.Core.Evolve.ProposalSummary!
+Aw.Sindri.Core.Evolve.ProposalSummary.Deconstruct(out Aw.Sindri.Core.Evolve.ProposalId Id, out Aw.Sindri.Core.Evolve.ProposalKind Kind, out string! Target, out string! Title, out Aw.Sindri.Core.Evolve.ProposalState State, out Aw.Sindri.Core.Evolve.ProposalTier Tier, out int Attempts, out string? HeldReason, out System.DateTimeOffset UpdatedAt) -> void
+Aw.Sindri.Core.Evolve.ProposalSummary.Equals(Aw.Sindri.Core.Evolve.ProposalSummary? other) -> bool
+Aw.Sindri.Core.Evolve.ProposalSummary.HeldReason.get -> string?
+Aw.Sindri.Core.Evolve.ProposalSummary.HeldReason.init -> void
+Aw.Sindri.Core.Evolve.ProposalSummary.Id.get -> Aw.Sindri.Core.Evolve.ProposalId
+Aw.Sindri.Core.Evolve.ProposalSummary.Id.init -> void
+Aw.Sindri.Core.Evolve.ProposalSummary.Kind.get -> Aw.Sindri.Core.Evolve.ProposalKind
+Aw.Sindri.Core.Evolve.ProposalSummary.Kind.init -> void
+Aw.Sindri.Core.Evolve.ProposalSummary.ProposalSummary(Aw.Sindri.Core.Evolve.ProposalId Id, Aw.Sindri.Core.Evolve.ProposalKind Kind, string! Target, string! Title, Aw.Sindri.Core.Evolve.ProposalState State, Aw.Sindri.Core.Evolve.ProposalTier Tier, int Attempts, string? HeldReason, System.DateTimeOffset UpdatedAt) -> void
+Aw.Sindri.Core.Evolve.ProposalSummary.State.get -> Aw.Sindri.Core.Evolve.ProposalState
+Aw.Sindri.Core.Evolve.ProposalSummary.State.init -> void
+Aw.Sindri.Core.Evolve.ProposalSummary.Target.get -> string!
+Aw.Sindri.Core.Evolve.ProposalSummary.Target.init -> void
+Aw.Sindri.Core.Evolve.ProposalSummary.Tier.get -> Aw.Sindri.Core.Evolve.ProposalTier
+Aw.Sindri.Core.Evolve.ProposalSummary.Tier.init -> void
+Aw.Sindri.Core.Evolve.ProposalSummary.Title.get -> string!
+Aw.Sindri.Core.Evolve.ProposalSummary.Title.init -> void
+Aw.Sindri.Core.Evolve.ProposalSummary.UpdatedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Evolve.ProposalSummary.UpdatedAt.init -> void
+Aw.Sindri.Core.Evolve.Proposal.Target.get -> string!
+Aw.Sindri.Core.Evolve.Proposal.Target.init -> void
+Aw.Sindri.Core.Evolve.ProposalTier
+Aw.Sindri.Core.Evolve.ProposalTier.Approval = 1 -> Aw.Sindri.Core.Evolve.ProposalTier
+Aw.Sindri.Core.Evolve.ProposalTier.Code = 0 -> Aw.Sindri.Core.Evolve.ProposalTier
+Aw.Sindri.Core.Evolve.Proposal.Title.get -> string!
+Aw.Sindri.Core.Evolve.Proposal.Title.init -> void
+Aw.Sindri.Core.Evolve.ProposalTitles
+Aw.Sindri.Core.Evolve.ProposalToSave
+Aw.Sindri.Core.Evolve.ProposalToSave.<Clone>$() -> Aw.Sindri.Core.Evolve.ProposalToSave!
+Aw.Sindri.Core.Evolve.ProposalToSave.Deconstruct(out Aw.Sindri.Core.Evolve.Proposal! Original, out Aw.Sindri.Core.Evolve.ProposalTier Tier, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Evolve.LeakSource!>! Sources, out string! Origin, out Aw.Sindri.Core.Evolve.ProposalDraft? Draft) -> void
+Aw.Sindri.Core.Evolve.ProposalToSave.Equals(Aw.Sindri.Core.Evolve.ProposalToSave? other) -> bool
+Aw.Sindri.Core.Evolve.ProposalToSave.Original.get -> Aw.Sindri.Core.Evolve.Proposal!
+Aw.Sindri.Core.Evolve.ProposalToSave.Original.init -> void
+Aw.Sindri.Core.Evolve.ProposalToSave.Origin.get -> string!
+Aw.Sindri.Core.Evolve.ProposalToSave.Origin.init -> void
+Aw.Sindri.Core.Evolve.ProposalToSave.ProposalToSave(Aw.Sindri.Core.Evolve.Proposal! Original, Aw.Sindri.Core.Evolve.ProposalTier Tier, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Evolve.LeakSource!>! Sources, string! Origin, Aw.Sindri.Core.Evolve.ProposalDraft? Draft = null) -> void
+Aw.Sindri.Core.Evolve.ProposalToSave.Sources.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Evolve.LeakSource!>!
+Aw.Sindri.Core.Evolve.ProposalToSave.Sources.init -> void
+Aw.Sindri.Core.Evolve.ProposalToSave.Tier.get -> Aw.Sindri.Core.Evolve.ProposalTier
+Aw.Sindri.Core.Evolve.ProposalToSave.Tier.init -> void
+Aw.Sindri.Core.Evolve.StoredProposal
+Aw.Sindri.Core.Evolve.StoredProposal.Attempts.get -> int
+Aw.Sindri.Core.Evolve.StoredProposal.Attempts.init -> void
+Aw.Sindri.Core.Evolve.StoredProposal.<Clone>$() -> Aw.Sindri.Core.Evolve.StoredProposal!
+Aw.Sindri.Core.Evolve.StoredProposal.CreatedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Evolve.StoredProposal.CreatedAt.init -> void
+Aw.Sindri.Core.Evolve.StoredProposal.Deconstruct(out Aw.Sindri.Core.Evolve.ProposalId Id, out Aw.Sindri.Core.Evolve.Proposal! Original, out Aw.Sindri.Core.Evolve.ProposalState State, out Aw.Sindri.Core.Evolve.ProposalTier Tier, out int Attempts, out Aw.Sindri.Core.Evolve.LeakLayer? HeldBy, out System.Collections.Generic.IReadOnlyList<string!>! Sessions, out string! Origin, out System.DateTimeOffset CreatedAt, out System.DateTimeOffset UpdatedAt, out Aw.Sindri.Core.Evolve.ProposalDraft? Draft) -> void
+Aw.Sindri.Core.Evolve.StoredProposal.Equals(Aw.Sindri.Core.Evolve.StoredProposal? other) -> bool
+Aw.Sindri.Core.Evolve.StoredProposal.HeldBy.get -> Aw.Sindri.Core.Evolve.LeakLayer?
+Aw.Sindri.Core.Evolve.StoredProposal.HeldBy.init -> void
+Aw.Sindri.Core.Evolve.StoredProposal.Id.get -> Aw.Sindri.Core.Evolve.ProposalId
+Aw.Sindri.Core.Evolve.StoredProposal.Id.init -> void
+Aw.Sindri.Core.Evolve.StoredProposal.Original.get -> Aw.Sindri.Core.Evolve.Proposal!
+Aw.Sindri.Core.Evolve.StoredProposal.Original.init -> void
+Aw.Sindri.Core.Evolve.StoredProposal.Origin.get -> string!
+Aw.Sindri.Core.Evolve.StoredProposal.Origin.init -> void
+Aw.Sindri.Core.Evolve.StoredProposal.Rejectable.get -> bool
+Aw.Sindri.Core.Evolve.StoredProposal.Sessions.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Evolve.StoredProposal.Sessions.init -> void
+Aw.Sindri.Core.Evolve.StoredProposal.State.get -> Aw.Sindri.Core.Evolve.ProposalState
+Aw.Sindri.Core.Evolve.StoredProposal.State.init -> void
+Aw.Sindri.Core.Evolve.StoredProposal.StoredProposal(Aw.Sindri.Core.Evolve.ProposalId Id, Aw.Sindri.Core.Evolve.Proposal! Original, Aw.Sindri.Core.Evolve.ProposalState State, Aw.Sindri.Core.Evolve.ProposalTier Tier, int Attempts, Aw.Sindri.Core.Evolve.LeakLayer? HeldBy, System.Collections.Generic.IReadOnlyList<string!>! Sessions, string! Origin, System.DateTimeOffset CreatedAt, System.DateTimeOffset UpdatedAt, Aw.Sindri.Core.Evolve.ProposalDraft? Draft = null) -> void
+Aw.Sindri.Core.Evolve.StoredProposal.Tier.get -> Aw.Sindri.Core.Evolve.ProposalTier
+Aw.Sindri.Core.Evolve.StoredProposal.Tier.init -> void
+Aw.Sindri.Core.Evolve.StoredProposal.UpdatedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Evolve.StoredProposal.UpdatedAt.init -> void
+override Aw.Sindri.Core.Evolve.LeakSource.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Evolve.LeakSource.GetHashCode() -> int
+override Aw.Sindri.Core.Evolve.LeakSource.ToString() -> string!
+override Aw.Sindri.Core.Evolve.ProposalChange.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Evolve.ProposalChange.GetHashCode() -> int
+override Aw.Sindri.Core.Evolve.ProposalChange.ToString() -> string!
+override Aw.Sindri.Core.Evolve.Proposal.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Evolve.Proposal.GetHashCode() -> int
+override Aw.Sindri.Core.Evolve.ProposalId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Evolve.ProposalId.GetHashCode() -> int
+override Aw.Sindri.Core.Evolve.ProposalId.ToString() -> string!
+override Aw.Sindri.Core.Evolve.ProposalSaved.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Evolve.ProposalSaved.GetHashCode() -> int
+override Aw.Sindri.Core.Evolve.ProposalSaved.ToString() -> string!
+override Aw.Sindri.Core.Evolve.ProposalSummary.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Evolve.ProposalSummary.GetHashCode() -> int
+override Aw.Sindri.Core.Evolve.ProposalSummary.ToString() -> string!
+override Aw.Sindri.Core.Evolve.ProposalToSave.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Evolve.ProposalToSave.GetHashCode() -> int
+override Aw.Sindri.Core.Evolve.ProposalToSave.ToString() -> string!
+override Aw.Sindri.Core.Evolve.Proposal.ToString() -> string!
+override Aw.Sindri.Core.Evolve.StoredProposal.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Evolve.StoredProposal.GetHashCode() -> int
+override Aw.Sindri.Core.Evolve.StoredProposal.ToString() -> string!
+static Aw.Sindri.Core.Evolve.LeakReasons.For(Aw.Sindri.Core.Evolve.LeakLayer layer) -> string!
+static Aw.Sindri.Core.Evolve.LeakSource.operator !=(Aw.Sindri.Core.Evolve.LeakSource? left, Aw.Sindri.Core.Evolve.LeakSource? right) -> bool
+static Aw.Sindri.Core.Evolve.LeakSource.operator ==(Aw.Sindri.Core.Evolve.LeakSource? left, Aw.Sindri.Core.Evolve.LeakSource? right) -> bool
+static Aw.Sindri.Core.Evolve.ProposalChange.operator !=(Aw.Sindri.Core.Evolve.ProposalChange? left, Aw.Sindri.Core.Evolve.ProposalChange? right) -> bool
+static Aw.Sindri.Core.Evolve.ProposalChange.operator ==(Aw.Sindri.Core.Evolve.ProposalChange? left, Aw.Sindri.Core.Evolve.ProposalChange? right) -> bool
+static Aw.Sindri.Core.Evolve.ProposalId.From(string! value) -> Aw.Sindri.Core.Evolve.ProposalId
+static Aw.Sindri.Core.Evolve.ProposalId.New(Aw.Kernel.Ids.IIdGenerator! ids) -> Aw.Sindri.Core.Evolve.ProposalId
+static Aw.Sindri.Core.Evolve.ProposalId.operator !=(Aw.Sindri.Core.Evolve.ProposalId left, Aw.Sindri.Core.Evolve.ProposalId right) -> bool
+static Aw.Sindri.Core.Evolve.ProposalId.operator ==(Aw.Sindri.Core.Evolve.ProposalId left, Aw.Sindri.Core.Evolve.ProposalId right) -> bool
+static Aw.Sindri.Core.Evolve.ProposalId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Evolve.ProposalId
+static Aw.Sindri.Core.Evolve.ProposalId.TryFrom(string? value, out Aw.Sindri.Core.Evolve.ProposalId vo) -> bool
+static Aw.Sindri.Core.Evolve.ProposalId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Evolve.ProposalId result) -> bool
+static Aw.Sindri.Core.Evolve.Proposal.operator !=(Aw.Sindri.Core.Evolve.Proposal? left, Aw.Sindri.Core.Evolve.Proposal? right) -> bool
+static Aw.Sindri.Core.Evolve.Proposal.operator ==(Aw.Sindri.Core.Evolve.Proposal? left, Aw.Sindri.Core.Evolve.Proposal? right) -> bool
+static Aw.Sindri.Core.Evolve.ProposalSaved.operator !=(Aw.Sindri.Core.Evolve.ProposalSaved? left, Aw.Sindri.Core.Evolve.ProposalSaved? right) -> bool
+static Aw.Sindri.Core.Evolve.ProposalSaved.operator ==(Aw.Sindri.Core.Evolve.ProposalSaved? left, Aw.Sindri.Core.Evolve.ProposalSaved? right) -> bool
+static Aw.Sindri.Core.Evolve.ProposalSummary.From(Aw.Sindri.Core.Evolve.StoredProposal! stored) -> Aw.Sindri.Core.Evolve.ProposalSummary!
+static Aw.Sindri.Core.Evolve.ProposalSummary.operator !=(Aw.Sindri.Core.Evolve.ProposalSummary? left, Aw.Sindri.Core.Evolve.ProposalSummary? right) -> bool
+static Aw.Sindri.Core.Evolve.ProposalSummary.operator ==(Aw.Sindri.Core.Evolve.ProposalSummary? left, Aw.Sindri.Core.Evolve.ProposalSummary? right) -> bool
+static Aw.Sindri.Core.Evolve.ProposalTitles.Normalized(string! title) -> string!
+static Aw.Sindri.Core.Evolve.ProposalToSave.operator !=(Aw.Sindri.Core.Evolve.ProposalToSave? left, Aw.Sindri.Core.Evolve.ProposalToSave? right) -> bool
+static Aw.Sindri.Core.Evolve.ProposalToSave.operator ==(Aw.Sindri.Core.Evolve.ProposalToSave? left, Aw.Sindri.Core.Evolve.ProposalToSave? right) -> bool
+static Aw.Sindri.Core.Evolve.StoredProposal.operator !=(Aw.Sindri.Core.Evolve.StoredProposal? left, Aw.Sindri.Core.Evolve.StoredProposal? right) -> bool
+static Aw.Sindri.Core.Evolve.StoredProposal.operator ==(Aw.Sindri.Core.Evolve.StoredProposal? left, Aw.Sindri.Core.Evolve.StoredProposal? right) -> bool
+Aw.Sindri.Core.Evolve.ProposalToSave.Draft.get -> Aw.Sindri.Core.Evolve.ProposalDraft?
+Aw.Sindri.Core.Evolve.ProposalToSave.Draft.init -> void
+Aw.Sindri.Core.Evolve.StoredProposal.Draft.get -> Aw.Sindri.Core.Evolve.ProposalDraft?
+Aw.Sindri.Core.Evolve.StoredProposal.Draft.init -> void
+Aw.Sindri.Core.Evolve.ProposalDraft
+Aw.Sindri.Core.Evolve.ProposalDraft.<Clone>$() -> Aw.Sindri.Core.Evolve.ProposalDraft!
+Aw.Sindri.Core.Evolve.ProposalDraft.Branch.get -> string!
+Aw.Sindri.Core.Evolve.ProposalDraft.Branch.init -> void
+Aw.Sindri.Core.Evolve.ProposalDraft.Commit.get -> string!
+Aw.Sindri.Core.Evolve.ProposalDraft.Commit.init -> void
+Aw.Sindri.Core.Evolve.ProposalDraft.Deconstruct(out string! Branch, out string! Commit) -> void
+Aw.Sindri.Core.Evolve.ProposalDraft.Equals(Aw.Sindri.Core.Evolve.ProposalDraft? other) -> bool
+Aw.Sindri.Core.Evolve.ProposalDraft.ProposalDraft(string! Branch, string! Commit) -> void
+override Aw.Sindri.Core.Evolve.ProposalDraft.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Evolve.ProposalDraft.GetHashCode() -> int
+override Aw.Sindri.Core.Evolve.ProposalDraft.ToString() -> string!
+static Aw.Sindri.Core.Evolve.ProposalDraft.operator !=(Aw.Sindri.Core.Evolve.ProposalDraft? left, Aw.Sindri.Core.Evolve.ProposalDraft? right) -> bool
+static Aw.Sindri.Core.Evolve.ProposalDraft.operator ==(Aw.Sindri.Core.Evolve.ProposalDraft? left, Aw.Sindri.Core.Evolve.ProposalDraft? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.ProposalNotFound -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ProposalNotRejectable -> Aw.Kernel.ErrorDefinition!
 
 Aw.Sindri.Core.Graph.Runs.NodeRunTimes
 static Aw.Sindri.Core.Graph.Runs.NodeRunTimes.Stamp(Aw.Sindri.Core.Graph.Runs.NodeRun! row, System.DateTimeOffset now) -> Aw.Sindri.Core.Graph.Runs.NodeRun!

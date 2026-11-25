@@ -12,6 +12,9 @@ internal sealed class SteppedClock(FakeTimeProvider fake) : TimeProvider
     private int _timers;
     private int _seen;
 
+    /// <summary>Gets how many waits the loop has armed so far.</summary>
+    internal int Arms => Volatile.Read(ref _timers);
+
     public override TimeZoneInfo LocalTimeZone => fake.LocalTimeZone;
 
     public override long TimestampFrequency => fake.TimestampFrequency;
@@ -40,9 +43,16 @@ internal sealed class SteppedClock(FakeTimeProvider fake) : TimeProvider
     /// A zero-length wait arms no timer (Task.Delay with TimeSpan.Zero completes at once), so a loop that waits zero
     /// goes round again and is seen only at its next non-zero wait.
     /// </summary>
-    public async Task Armed(Func<bool>? orElse = null)
+    public Task Armed(Func<bool>? orElse = null) => ArmedBeyond(_seen, orElse);
+
+    /// <summary>
+    /// Waits until more than <paramref name="count"/> waits have been armed in all, or <paramref name="orElse"/> holds. Pass the
+    /// count read while the loop was parked: a wait the loop armed after waking, even before the step call, then counts (#2449),
+    /// where <see cref="Step"/> would have folded it into its own baseline.
+    /// </summary>
+    public async Task ArmedBeyond(int count, Func<bool>? orElse = null)
     {
-        for (var waited = 0; Volatile.Read(ref _timers) <= _seen && orElse?.Invoke() != true; waited += 2)
+        for (var waited = 0; Volatile.Read(ref _timers) <= count && orElse?.Invoke() != true; waited += 2)
         {
             Assert.True(waited < 5000, "the loop didn't arm its next wait within 5 s");
             await Task.Delay(2, TestContext.Current.CancellationToken);

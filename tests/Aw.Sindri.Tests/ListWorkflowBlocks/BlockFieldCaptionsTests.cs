@@ -60,15 +60,7 @@ public sealed class BlockFieldCaptionsTests
     [Fact]
     public async Task Every_block_field_has_a_plain_words_caption()
     {
-        var registry = GraphBlockRegistry.Standard(
-            new BlockFakes.RecordingNotifyPort(),
-            new BlockFakes.ScriptedModelPort("{}"),
-            more: [.. GraphBlockRegistry.FlowBlocks(new FlowFakes.MemorySeenStore(), new FlowFakes.RecordingItemPort(), new FlowFakes.ScriptedCallPort(), new FlowFakes.ScriptedHttpPort()),
-                .. GraphBlockRegistry.ParkingBlocks(new BlockFakes.RecordingQuestionPort(), new FakeTimeProvider()),
-                .. GraphBlockRegistry.ResultBlocks(new FlowFakes.ScriptedResultPort()),
-                .. GraphBlockRegistry.MemoryBlocks(new BlockFakes.RecordingMemoryPort()),
-                new CallToolBlock(new FakeRunningToolkits([]), new NoConnections()),
-                .. GraphBlockRegistry.CodeBlocks(new FlowFakes.ScriptedCodePort())]);
+        var registry = Everything();
         var listed = await new ListWorkflowBlocksService(registry, new Docs()).Handle(new ListWorkflowBlocksRequest(), Token);
         Assert.True(listed.IsSuccess);
 
@@ -80,6 +72,17 @@ public sealed class BlockFieldCaptionsTests
 
         Assert.True(bare.Count == 0, "fields still captioned with their key: " + string.Join(", ", bare));
     }
+
+    internal static GraphBlockRegistry Everything() =>
+        GraphBlockRegistry.Standard(
+            new BlockFakes.RecordingNotifyPort(),
+            new BlockFakes.ScriptedModelPort("{}"),
+            more: [.. GraphBlockRegistry.FlowBlocks(new FlowFakes.MemorySeenStore(), new FlowFakes.RecordingItemPort(), new FlowFakes.ScriptedCallPort(), new FlowFakes.ScriptedHttpPort()),
+                .. GraphBlockRegistry.ParkingBlocks(new BlockFakes.RecordingQuestionPort(), new FakeTimeProvider()),
+                .. GraphBlockRegistry.ResultBlocks(new FlowFakes.ScriptedResultPort()),
+                .. GraphBlockRegistry.MemoryBlocks(new BlockFakes.RecordingMemoryPort()),
+                new CallToolBlock(new FakeRunningToolkits([]), new NoConnections()),
+                .. GraphBlockRegistry.CodeBlocks(new FlowFakes.ScriptedCodePort())]);
 
     private sealed class NoConnections : IConnectionToolPort
     {

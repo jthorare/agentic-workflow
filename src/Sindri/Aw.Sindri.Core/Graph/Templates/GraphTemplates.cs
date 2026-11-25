@@ -23,8 +23,12 @@ public static partial class GraphTemplates
             """{"version":1,"name":"hello-sindri","nodes":[ {"id":"start","type":"manual","title":"Start","config":{}}, {"id":"greet","type":"code","title":"Make a greeting","config":{"code":"return \"Hello from Sindri\";","timeout":"60s"}}, {"id":"tell","type":"notify","title":"Tell me","config":{"title":"hello-sindri","body":"{{greet.result}}"}}, {"id":"add_item","type":"create_item","title":"Add an item","config":{"title":"Hello from Sindri"}} ],"edges":[ {"from":"start","to":"greet"}, {"from":"greet","to":"tell"}, {"from":"tell","to":"add_item"} ]}"""),
         (
             SteeringMiner.Name,
-            "Run it with a list of batches of human turns from past agent sessions, each batch at most 60,000 bytes as JSON: a model labels each turn, and each mistake the human corrected at least twice comes back as one finding with its turns.",
-            SteeringMiner.Json()),
+            "Reads the human turns of your agent sessions from the last 7 days: a model labels each turn, and each mistake you corrected at least twice comes back as one finding with its turns.",
+            SteeringMiner.Json(fromTranscripts: true)),
+        (
+            SteeringMiner.PayloadName,
+            "The steering miner fed by hand: run it with a payload of batches of human turns, each batch at most 60,000 bytes as JSON, instead of reading the transcripts.",
+            SteeringMiner.Json(fromTranscripts: false)),
         (
             SkillProposer.Name,
             "Run it with a payload holding 'findings' (from a steering-miner run) and 'repo' (the toolkit repo's name in your profile): for each of the top 5, a model picks the skill to change and an agent drafts the edit on its own branch.",

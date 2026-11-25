@@ -19,10 +19,10 @@ namespace Aw.Sindri.Tests.Views;
 /// The projector over a ledger the recipe, pipeline and scoping engines wrote (Sindri v2 PR 4b): their event kinds are history, so they
 /// reach the item timeline and change nothing else, and 'sindri views rebuild' still reaches the head.
 /// </summary>
-public sealed class ProjectorRetiredKindsTests
+public sealed class ProjectorRetiredKindsTests : IDisposable
 {
     private static readonly ItemId _item = ItemId.From("ITM-" + new string('1', 32));
-    private static readonly string _stateRoot = Path.Combine(Path.GetTempPath(), "aw-sindri-di-test");
+    private readonly string _stateRoot = Directory.CreateTempSubdirectory("aw-sindri-di-test-").FullName;
     private readonly SliceHarness _h = new();
     private readonly InMemoryViewStore _views = new(SliceHarness.Json);
     private readonly ListLogger<Projector> _log = new();
@@ -80,7 +80,15 @@ public sealed class ProjectorRetiredKindsTests
         Assert.True(progress.Current is { Stalled: false, Rebuilding: false } && progress.Current.Cursor == head && progress.Current.LedgerHead == head);
     }
 
-    private static IServiceCollection Compose()
+    public void Dispose()
+    {
+        if (Directory.Exists(_stateRoot))
+        {
+            Directory.Delete(_stateRoot, recursive: true);
+        }
+    }
+
+    private IServiceCollection Compose()
         => Composition.Compose(
             new ServiceCollection(),
             name => name switch { "AW_STATE_DIR" => _stateRoot, _ => null },
