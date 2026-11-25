@@ -62,7 +62,7 @@ public sealed class AgentsCardProblemsTests
         await system.Show(A.Status() with { Sessions = new SessionCountsView(Live: 0, Asking: 0, Problems: 0, Running: 0, ProblemRows: [], Watching: "off") });
 
         Assert.True(system.Vm.IsAgentsWatchingOff);
-        Assert.Equal("Session watching is off · turn on in Settings", system.Vm.AgentsWatchingOffText);
+        Assert.Equal("Session watching is off · turn it on with sessions.enabled in launcher.json, then restart Sindri", system.Vm.AgentsWatchingOffText);
         Assert.Contains(new HealthCell(Labels.AgentsProblems, "0"), system.Vm.AgentsRows);
         Assert.False(system.Vm.HasAgentsProblems);
     }
