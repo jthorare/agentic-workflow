@@ -5,7 +5,7 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <summary>
 /// The Workflows page (<see cref="WorkflowsPageViewModel"/>, continued): the server's validation findings (#3803). Each time the open workflow's read brings a new revision, the page asks
 /// POST /sindri/workflows/validate on the revision the graph draws (the active one, else the newest; never a newer one the graph doesn't show) and shows what came back: a mark on each step's card, a count over the graph, and the selected step's findings with
-/// the server's sentence and fix line. GRAPH-PROMPT-001 has a fix button: it opens the step's sheet on its question field and asks for the <c>/</c> field picker, which #3033 builds.
+/// the server's sentence and fix line. GRAPH-PROMPT-001 has a fix button: it opens the step's sheet on its question field and asks for the "/" field picker, which #3033 builds.
 /// </summary>
 internal sealed partial class WorkflowsPageViewModel
 {
@@ -26,9 +26,9 @@ internal sealed partial class WorkflowsPageViewModel
     public bool ShowsStepFindingsUnderGraph => HasStepFindings && !IsSettingsOpen;
 
     // The config field a fix named (such as "prompt"), or null; it wins over the sheet's default in FocusFieldName and is forgotten when the sheet closes.
-    private string? _fixFieldName;
+    private string? FixFieldName { get; set; }
 
-    /// <summary>True when a fix asked for the <c>/</c> field picker on <see cref="FocusFieldName"/>. The picker does not exist yet: #3033 reads this flag to open it.</summary>
+    /// <summary>True when a fix asked for the "/" field picker on <see cref="FocusFieldName"/>. The picker does not exist yet: #3033 reads this flag to open it.</summary>
     public bool IsFieldPickerAsked { get; private set => Set(ref field, value); }
 
     /// <summary>The newest validate call (tests await it); a completed task before the first.</summary>
@@ -58,7 +58,7 @@ internal sealed partial class WorkflowsPageViewModel
 
         if (IsSettingsOpen)
         {
-            _fixFieldName = fieldName;
+            FixFieldName = fieldName;
             OnChanged(nameof(FocusFieldName));
             IsFieldPickerAsked = true;
         }
@@ -82,7 +82,7 @@ internal sealed partial class WorkflowsPageViewModel
                 OnChanged(nameof(ShowsStepFindingsUnderGraph));
                 if (!IsSettingsOpen)
                 {
-                    _fixFieldName = null;
+                    FixFieldName = null;
                     OnChanged(nameof(FocusFieldName));
                     IsFieldPickerAsked = false;
                 }

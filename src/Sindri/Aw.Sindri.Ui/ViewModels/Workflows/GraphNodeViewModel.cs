@@ -22,10 +22,10 @@ internal sealed class GraphNodeViewModel : ObservableObject
             "skipped" or "cancelled" => GraphTone.Muted,
             _ => GraphTone.None,
         };
-        _name = Labels.WfGraphNodeName(title, type, word.ToLowerInvariant());
+        BaseName = Labels.WfGraphNodeName(title, type, word.ToLowerInvariant());
     }
 
-    private readonly string _name;
+    private string BaseName { get; }
 
     /// <summary>The node's id.</summary>
     public string Id { get; }
@@ -64,7 +64,7 @@ internal sealed class GraphNodeViewModel : ObservableObject
     public GraphTone Tone { get; }
 
     /// <summary>The accessible name: title, type and status word, then the number of things to fix when the server found any (#3803).</summary>
-    public string Name => FindingCount == 0 ? _name : Labels.WfFindingNodeName(_name, FindingCount);
+    public string Name => FindingCount == 0 ? BaseName : Labels.WfFindingNodeName(BaseName, FindingCount);
 
     /// <summary>How many of the server's validation findings name this step (#3803); 0 when none.</summary>
     public int FindingCount { get; private set => Set(ref field, value); }
