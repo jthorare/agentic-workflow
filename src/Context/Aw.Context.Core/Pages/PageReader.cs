@@ -161,13 +161,14 @@ public static class PageReader
         {
             var owner = new List<(string Id, string? Repo, GraphNode Node)>();
             var suggested = new List<GraphNode>();
+            var components = PageKinds.ComponentImplemented(_graph.Edges);
             foreach (var node in _graph.Nodes.Where(n => n.Key.Kind == NodeKind.Surface))
             {
                 if (OwnerRef(node) is { } mark)
                 {
                     owner.Add((mark.Id, mark.Repo, node));
                 }
-                else if (PageKinds.IsPage(node, _graph.Edges))
+                else if (PageKinds.IsPageIn(node, components))
                 {
                     suggested.Add(node);
                 }

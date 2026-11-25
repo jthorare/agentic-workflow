@@ -69,7 +69,8 @@ internal sealed class AreaAssigner
             }
         }
 
-        foreach (var node in graph.Nodes.Where(n => _kinds.ContainsKey(n.Key.Value) && PageKinds.IsPage(n, graph.Edges)))
+        var components = PageKinds.ComponentImplemented(graph.Edges);
+        foreach (var node in graph.Nodes.Where(n => _kinds.ContainsKey(n.Key.Value) && PageKinds.IsPageIn(n, components)))
         {
             _ = _pages.Add(node.Key.Value);
         }
