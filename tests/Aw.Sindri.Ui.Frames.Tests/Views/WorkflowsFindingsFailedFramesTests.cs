@@ -61,18 +61,20 @@ public sealed class WorkflowsFindingsFailedFramesTests : FrameHost
         await Until(window, () => !Visible(window, "FindingsFailed"), "the failed-check line stayed after a good answer");
     });
 
+    private static readonly int[] RenderWidths = [1280, 1000];
+
     // A render for qa (AW_UI_FRAMES=1 saves it under frames/ in the test output; without it nothing is written): the failed-check line with its Retry, the fake validate answering an error.
     [Fact]
     public Task The_failed_check_line_is_saved_as_a_headless_render_at_both_widths() => OnUi(async () =>
     {
         var window = await OnTheWorkflowWithAFailedCheck();
 
-        foreach (var width in new[] { 1280, 1000 })
+        foreach (var width in RenderWidths)
         {
             window.Width = width;
             Settle(window);
             Assert.True(Visible(window, "FindingsRetry"));
-            FrameFile.Save(window, $"findings-failed-headless-fake-validate-{width}");
+            FrameFile.Save(window, "findings-failed-headless-fake-validate-" + width.ToString(System.Globalization.CultureInfo.InvariantCulture));
         }
     });
 }
