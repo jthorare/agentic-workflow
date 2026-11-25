@@ -119,7 +119,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         NodeIdLine = node is null ? string.Empty : Labels.WfEditorStepId(node.Id);
         foreach (var field in block?.Config ?? [])
         {
-            Fields.Add(Watched(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field), block!.Type, ExampleOf(block, field.Name))));   // why: a block was found, so node and block are not null
+            AddWatched(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field), block!.Type, ExampleOf(block, field.Name)));   // why: a block was found, so node and block are not null
         }
 
         AdvancedOpen = false;

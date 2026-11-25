@@ -38,10 +38,8 @@ internal sealed partial class OpsEditor
             var boolean = string.Equals(field.Type, "boolean", StringComparison.Ordinal);
             var hint = ExampleReferences.Hint(block.Type, field.Name, EditorFieldText.Of(example, field), steps, near);   // a step the new one can't read shows as the step it follows, else "<step id>" (#3944, #4272, #4330)
             var form = new ConfigFieldViewModel(field, boolean && field.Required ? "false" : string.Empty, block.Type) { Placeholder = hint };   // why: a required check box shows a value, and the value it shows is the one sent; the block type gives a new Code step its code box (#3682)
-            Fields.Add(Watched(form));
+            AddWatched(form);
         }
-
-        MarkNeeded();
 
         NodeHeading = Labels.WfEditorNewStep(block.Title);
         NodeIdLine = string.Empty;   // a new step has no id until it is saved
@@ -64,11 +62,12 @@ internal sealed partial class OpsEditor
         return new HintStep(after, block is null ? [] : [.. block.Outputs.Keys]);
     }
 
-    // Hooks a field so a change of its text recomputes the "why Save is off" lines.
-    private ConfigFieldViewModel Watched(ConfigFieldViewModel form)
+    // Adds a field to the form and hooks it so a change of its text recomputes the "why Save is off" lines; each add recomputes them, so a saved step opens with its line (#4369).
+    private void AddWatched(ConfigFieldViewModel form)
     {
         form.PropertyChanged += OnPendingFieldChanged;
-        return form;
+        Fields.Add(form);
+        MarkNeeded();
     }
 
     // The "exactly one of" groups of the block the form is for: the new step's block, else the selected step's.
