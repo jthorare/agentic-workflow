@@ -9,7 +9,7 @@ internal static partial class Labels
     internal const string ContextCodeUnavailable = "code lens unavailable";
 
     /// <summary>The symbols column's heading.</summary>
-    internal const string ContextSymbolsColumn = "symbols";
+    internal const string ContextSymbolsColumn = "Symbols";
 
     /// <summary>Why the column is empty when the profile turns the code graph off (reason graph-off): the note line under the table, and a dash cell's hover text. Two whole sentences, so the heading's "from b3f29d6" and this "off" read as one story (#3862).</summary>
     internal const string ContextSymbolsGraphOff = ContextSymbolsGraphLead + "is off for this repo (index.graph.enabled in the profile).";

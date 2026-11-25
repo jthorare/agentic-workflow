@@ -47,6 +47,7 @@ default_output() {
 aw_adapter_parse_args "$@" || { aw_adapter_failopen cursor args-invalid; default_output "${AW_ADAPTER_EVENT:-}"; exit 0; }
 
 RAW_INPUT="$(cat 2>/dev/null || true)"
+aw_adapter_capture cursor "$RAW_INPUT"
 # An empty or unreadable host payload becomes {} below, which the canonical
 # hook can't check: log it here, where the raw payload is still visible.
 aw_adapter_failopen cursor input "$RAW_INPUT"

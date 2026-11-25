@@ -90,7 +90,13 @@ internal sealed class ToastHostViewModel : ObservableObject
     internal void SetFocused(bool focused) => _focused = focused;
 
     /// <summary>Whether the visible toast has an Undo to run.</summary>
-    internal bool CanUndo => IsShown && _current?.Undo is not null;
+    internal bool CanUndo => IsShown && _current?.Undo is not null && (_current.UndoAllowed?.Invoke() ?? true);
+
+    /// <summary>Whether the Undo button is on: the toast has one and its owner allows it now.</summary>
+    public bool IsUndoEnabled => CanUndo;
+
+    /// <summary>The owner's answer to "may Undo run now" may have changed (a newer edit, an Activate): the button reads it again at once instead of at the next tick.</summary>
+    internal void RefreshUndo() => OnChanged(nameof(IsUndoEnabled));
 
     /// <summary>Runs the visible toast's Undo and closes its window; false when nothing visible offers one.</summary>
     /// <returns>True when an Undo ran.</returns>
@@ -197,6 +203,7 @@ internal sealed class ToastHostViewModel : ObservableObject
         }
 
         OnChanged(nameof(UndoLabel));
+        OnChanged(nameof(IsUndoEnabled));
     }
 
     // Closes the slot, then shows the toast that waited behind a pick's window.
@@ -235,6 +242,7 @@ internal sealed class ToastHostViewModel : ObservableObject
         OnChanged(nameof(Text));
         OnChanged(nameof(HasUndo));
         OnChanged(nameof(UndoLabel));
+        OnChanged(nameof(IsUndoEnabled));
     }
 
     private void StopTimer()

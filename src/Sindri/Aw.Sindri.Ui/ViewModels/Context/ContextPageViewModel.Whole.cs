@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
@@ -156,7 +157,7 @@ internal sealed partial class ContextPageViewModel
         }
         else
         {
-            Whole.Failed();
+            Whole.Failed(SindriUiErrors.IsDeadline(read.Error));   // a passed deadline reads as a timeout, not "couldn't read"
         }
     }
 

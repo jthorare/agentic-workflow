@@ -2791,6 +2791,8 @@ Aw.Context.Core.Lenses.LensSymbols.AsOfMismatch.get -> bool
 Aw.Context.Core.Lenses.LensSymbols.AsOfMismatch.init -> void
 Aw.Context.Core.Lenses.LensSymbols.Code.get -> string?
 Aw.Context.Core.Lenses.LensSymbols.Code.init -> void
+Aw.Context.Core.Lenses.LensSymbols.Repos.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Lenses.LensSymbols.Repos.init -> void
 Aw.Context.Core.Lenses.LensSymbols.Commit.get -> string?
 Aw.Context.Core.Lenses.LensSymbols.Commit.init -> void
 Aw.Context.Core.Lenses.LensSymbols.Deconstruct(out Aw.Context.Core.Symbols.SymbolsState State, out string? Reason, out System.Collections.Generic.IReadOnlyList<string!>! Items) -> void
@@ -10313,7 +10315,9 @@ Aw.Context.Core.Concepts.PageExpresses
 static Aw.Context.Core.Concepts.PageExpresses.Apply(Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Graph.GraphSnapshot!
 const Aw.Context.Core.Concepts.PageExpresses.MostPerSource = 3 -> int
 Aw.Context.Core.Graph.PageKinds
+static Aw.Context.Core.Graph.PageKinds.ComponentImplemented(System.Collections.Generic.IEnumerable<Aw.Context.Core.Graph.GraphEdge!>! edges) -> System.Collections.Generic.IReadOnlySet<string!>!
 static Aw.Context.Core.Graph.PageKinds.IsPage(Aw.Context.Core.Graph.GraphNode! node, System.Collections.Generic.IEnumerable<Aw.Context.Core.Graph.GraphEdge!>! edges) -> bool
+static Aw.Context.Core.Graph.PageKinds.IsPageIn(Aw.Context.Core.Graph.GraphNode! node, System.Collections.Generic.IReadOnlySet<string!>! componentImplemented) -> bool
 Aw.Context.Core.Graph.PageNames
 static Aw.Context.Core.Graph.PageNames.Offer(Aw.Context.Core.Graph.GraphNode! node) -> string!
 Aw.Context.Core.Engine.ModelKind.ProductSurfaces = 6 -> Aw.Context.Core.Engine.ModelKind

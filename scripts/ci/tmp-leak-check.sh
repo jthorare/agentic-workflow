@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/ci/tmp-leak-check.sh — run a command and fail when it leaves new temp entries behind (#3262).
 #
-# Lists the entries of ${TMPDIR:-/tmp} named `aw-*` or `tmp.*` (mktemp's default name) before the command,
+# Lists the entries of ${TMPDIR:-/tmp} named `aw-*`, `sindri-*` (the Sindri tests' and app's prefix) or `tmp.*` (mktemp's default name) before the command,
 # runs it, lists them again, and names each entry that is new and still there. It never deletes anything.
 #
 # Usage: scripts/ci/tmp-leak-check.sh -- <command...>
@@ -23,7 +23,7 @@ dir="${dir%/}"
 [ -n "$dir" ] || dir=/
 
 list() {
-  find "$dir" -mindepth 1 -maxdepth 1 \( -name 'aw-*' -o -name 'tmp.*' \) 2>/dev/null | LC_ALL=C sort
+  find "$dir" -mindepth 1 -maxdepth 1 \( -name 'aw-*' -o -name 'sindri-*' -o -name 'tmp.*' \) 2>/dev/null | LC_ALL=C sort
 }
 
 # The two bookkeeping files are named aw-leak-*, so the listing sees them: they are filtered from the result and removed on exit.

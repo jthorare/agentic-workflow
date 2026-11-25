@@ -2297,6 +2297,8 @@ Aw.Sindri.Features.GetStatus.SessionStatus.Problems.init -> void
 Aw.Sindri.Features.GetStatus.SessionStatus.Running.get -> int
 Aw.Sindri.Features.GetStatus.SessionStatus.Running.init -> void
 Aw.Sindri.Features.GetStatus.SessionStatus.SessionStatus(int Live, int Asking, int Problems, int Running) -> void
+Aw.Sindri.Features.GetStatus.SessionStatus.Watching.get -> string!
+Aw.Sindri.Features.GetStatus.SessionStatus.Watching.init -> void
 Aw.Sindri.Features.ListSessions.EndedSessionRow
 Aw.Sindri.Features.ListSessions.EndedSessionRow.<Clone>$() -> Aw.Sindri.Features.ListSessions.EndedSessionRow!
 Aw.Sindri.Features.ListSessions.EndedSessionRow.Deconstruct(out Aw.Sindri.Core.Sessions.SessionRow! Session, out System.DateTimeOffset EndedAt, out System.Collections.Generic.IReadOnlyList<string!>? Resume) -> void
