@@ -299,7 +299,7 @@ Hard facts that shape every row (read first):
 
 **Desktop gain**: store survives restarts and offline: reopen with no network shows the last synced state in < 100 ms.
 
-**Sindri today**: `slack` preset is refused (Slack accepts only https redirect URLs); use a REST connection with a user token: `connection add slack:work --kind rest --key-env SLACK_TOKEN` (`docs/sindri/connections.md:66`). Context sources read Slack with a bot token (`docs/sindri/sources.md:61`).
+**Sindri today**: the `slack` preset's browser sign-in is refused (Slack accepts only https redirect URLs); connect with a user token: `connection add slack:work --preset slack --key-env SLACK_TOKEN` (`docs/sindri/connections.md`, the `slack` row of the presets table). Context sources read Slack with a bot token (`docs/sindri/sources.md:61`).
 
 **Verdict**: take and change (official tokens only). This row decides #2979 P0.
 
