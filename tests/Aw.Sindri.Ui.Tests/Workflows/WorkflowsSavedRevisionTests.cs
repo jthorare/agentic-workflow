@@ -205,4 +205,43 @@ public sealed class WorkflowsSavedRevisionTests
 
         Assert.Equal("Undone. Saved as revision 4. Not live yet.", page.SavedLineText);
     }
+
+    // A canvas Remove with the sheet shut: it writes revision 5, and the page reads it.
+    private async Task RemoveOnCanvas(WorkflowsPageViewModel page, int? active)
+    {
+        page.CloseSettings();
+        Serve(active, latest: 5);
+        page.GraphEdit.RequestRemove();
+        await page.GraphEdit.ConfirmRemove(Token);
+    }
+
+    [Fact]
+    public async Task On_a_workflow_that_is_off_a_canvas_edit_after_a_save_moves_the_line_to_the_edits_revision()
+    {
+        var page = await Saved(active: null);
+
+        await RemoveOnCanvas(page, active: null);
+
+        Assert.Equal("Saved as revision 5.", page.SavedLineText);
+    }
+
+    [Fact]
+    public async Task On_a_workflow_that_is_off_a_canvas_edit_after_an_undo_no_longer_says_undone()
+    {
+        var page = await SavedThenUndone(active: null);
+
+        await RemoveOnCanvas(page, active: null);
+
+        Assert.Equal("Saved as revision 5.", page.SavedLineText);
+    }
+
+    [Fact]
+    public async Task On_a_live_workflow_a_canvas_edit_after_an_undo_no_longer_says_undone()
+    {
+        var page = await SavedThenUndone(active: 1);
+
+        await RemoveOnCanvas(page, active: 1);
+
+        Assert.Equal("Saved as revision 5. Not live yet.", page.SavedLineText);
+    }
 }
