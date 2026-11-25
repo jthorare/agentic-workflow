@@ -50,7 +50,7 @@ internal sealed partial class SindriApiClient
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            return SindriUiErrors.Unreachable.With(string.Create(CultureInfo.InvariantCulture, $"{api.Authority} didn't answer within {CallTimeout.TotalSeconds:0} s"));
+            return SindriUiErrors.Unreachable.With(SindriUiErrors.DeadlineMessage(api.Authority, CallTimeout.TotalSeconds));
         }
         catch (HttpRequestException)
         {

@@ -107,6 +107,7 @@ public sealed class ConnectionTokenFirstTests
     [Theory]
     [InlineData("SND-CONN-018", "Linear refused the token.")]
     [InlineData("SND-CONN-019", "Couldn't reach Linear to check the token.")]
+    [InlineData("SND-CONN-020", "Linear is limiting requests right now, so the token wasn't checked. Wait a minute, then try again.")]
     public async Task A_refused_or_unchecked_token_names_the_service_in_words_and_no_code(string code, string words)
     {
         var tile = await Tile("linear");

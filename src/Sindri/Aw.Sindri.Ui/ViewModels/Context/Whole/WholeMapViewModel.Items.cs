@@ -1,35 +1,43 @@
+using Aw.Sindri.Ui.Api.Context;
+
 namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 /// <summary>The map's accessible list (<see cref="WholeMapViewModel"/>, continued; UX pass C-3): what the canvas draws, as items a keyboard and a screen reader reach. Enter on one does what a click on the map does.</summary>
 internal sealed partial class WholeMapViewModel
 {
     private (WholeMapGeometry Source, IReadOnlyList<MapItemViewModel> Items)? _items;
+    private (WholeMapView? Source, IReadOnlyList<MapItemViewModel> Items)? _listed;
 
     /// <summary>The list's name.</summary>
     public string ItemsName { get; } = Labels.ContextMapItems;
 
     /// <summary>What the canvas draws now, in reading order: the features of the overview, or the nodes.</summary>
-    public IReadOnlyList<MapItemViewModel> Items
+    public IReadOnlyList<MapItemViewModel> Items => _hits is { } hits ? SearchRows(hits) : ShowAreaList ? ListedRows() : Shown is { } shown ? ShownRows(shown) : [];
+
+    private IReadOnlyList<MapItemViewModel> ListedRows()
     {
-        get
+        if (_listed is not { } have || !ReferenceEquals(have.Source, Answer))
         {
-            if (Shown is not { } shown)
-            {
-                return [];
-            }
-
-            if (_items is not { } cached || !ReferenceEquals(cached.Source, shown))
-            {
-                IReadOnlyList<MapItemViewModel> built = shown.ByArea
-                    ? [.. shown.Tiles.Select(t => new MapItemViewModel(t.Key, t.Label, Labels.ContextMapItemName(t.Label, Labels.ContextWholeMembers(t.Members)), IsTile: true))]
-                    : [.. shown.Nodes
-                        .OrderByDescending(n => n.Confirmed).ThenByDescending(n => n.Confidence).ThenBy(PathOf, StringComparer.Ordinal)
-                        .Select(n => new MapItemViewModel(n.Key, n.Label, Labels.ContextMapItemName(n.Label, n.Kind), IsTile: false) { Path = PathOf(n) })];
-                _items = cached = (shown, built);
-            }
-
-            return cached.Items;
+            IReadOnlyList<MapItemViewModel> rows = [.. (Answer?.Nodes ?? []).Select(n => new MapItemViewModel(n.Key, n.Label, Labels.ContextMapItemName(n.Label, n.Kind), IsTile: false))];
+            _listed = have = (Answer, rows);
         }
+
+        return have.Items;
+    }
+
+    private IReadOnlyList<MapItemViewModel> ShownRows(WholeMapGeometry shown)
+    {
+        if (_items is not { } cached || !ReferenceEquals(cached.Source, shown))
+        {
+            IReadOnlyList<MapItemViewModel> built = shown.ByArea
+                ? [.. shown.Tiles.Select(t => new MapItemViewModel(t.Key, t.Label, Labels.ContextMapItemName(t.Label, Labels.ContextWholeMembers(t.Members)), IsTile: true))]
+                : [.. shown.Nodes
+                    .OrderByDescending(n => n.Confirmed).ThenByDescending(n => n.Confidence).ThenBy(PathOf, StringComparer.Ordinal)
+                    .Select(n => new MapItemViewModel(n.Key, n.Label, Labels.ContextMapItemName(n.Label, n.Kind), IsTile: false) { Path = PathOf(n) })];
+            _items = cached = (shown, built);
+        }
+
+        return cached.Items;
     }
 
     // A file's full path: a code node's key carries it ("code:src/ledger/Events.cs"); a doc's label is it. Any other node has none.
@@ -45,11 +53,16 @@ internal sealed partial class WholeMapViewModel
     internal void ChooseItem(MapItemViewModel item)
     {
         ArgumentNullException.ThrowIfNull(item);
+        Chose(item.Key);
         if (item.IsTile)
         {
             Pinned = item.Key;
             Refocus();
             OpenArea(item.Key);
+        }
+        else if (Geometry is null || IsSearchList)
+        {
+            ChooseNode(item.Key);   // the list stage has no canvas to centre on: the click is the node's panel
         }
         else
         {

@@ -495,7 +495,7 @@ Each failure maps to `{code, sentence, fix}`. The mapping lives in one catalog f
 | `SND-NOTE-011` | error (v1.1, P8) | "Agents can't edit {folder}." (a proposal into a folder with rule "can't edit", or with read off) | Change rule / none |
 | `SND-NOTE-012` | error | "Couldn't read this note's history. Check the notes folder is reachable." | Open notes folder / `sindri note history <path>` |
 | `SND-NOTE-013` | state | "No earlier versions." (listed so the catalog test covers the sentence) | none |
-| `SND-NOTE-014` | error | "Linear isn't connected. Connect it in Settings, then try again." (the Issue kind of the capture window in v1; make issue in v1.1) | Open Settings / `sindri connection add linear:<label> --preset linear --client-id <id>` |
+| `SND-NOTE-014` | error | "Linear isn't connected. Connect it in Settings, then try again." (the Issue kind of the capture window in v1; make issue in v1.1) | Open Settings / `sindri connection add linear:<label> --preset linear --key-env LINEAR_KEY` |
 | `SND-NOTE-015` | error | "Couldn't create the issue. The line stays as you wrote it. Check your connection, then try again." (the Issue kind in v1; make issue in v1.1) | Try again / none |
 | `SND-NOTE-016` | error | "{repo} isn't a repo of your profile, so Sindri can't show this link's state." (unknown chip) | Add the repo in Settings / `sindri repo add <path>` |
 | `SND-NOTE-017` | error | "The OS refused this hotkey. The tray item 'New issue or note' still works." | Pick another key / none (shared with #3170) |

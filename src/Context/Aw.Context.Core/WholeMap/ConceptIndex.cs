@@ -24,6 +24,7 @@ internal sealed class ConceptIndex
 
         JoinMembers(edges);
         JoinOther();
+        SortLists();
         IndexImplementers(edges);
     }
 
@@ -54,6 +55,10 @@ internal sealed class ConceptIndex
     /// <summary>The distinct keys ('code:src/a.cs') of the code nodes the member features of <paramref name="members"/> are implemented by.</summary>
     internal IEnumerable<string> CodeKeysOf(IEnumerable<string> members) =>
         members.Where(m => Known[m].Key.Kind == NodeKind.Feature).SelectMany(m => _implementedBy.TryGetValue(m, out var code) ? code : []).Distinct(StringComparer.Ordinal);
+
+    /// <summary>The distinct code keys (ordinal) the member features of <paramref name="members"/> are implemented by.</summary>
+    internal IReadOnlyList<string> SortedCodeKeysOf(IEnumerable<string> members) =>
+        [.. members.Where(m => Known[m].Key.Kind == NodeKind.Feature).SelectMany(m => _implementedBy.TryGetValue(m, out var code) ? code : []).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 
     private static List<GraphNode> SortedConcepts(IReadOnlyDictionary<string, GraphNode> known) =>
         [.. known.Values.Where(n => n.Key.Kind == NodeKind.Concept && n.Key.Value != ConceptKeys.Other)
@@ -95,8 +100,20 @@ internal sealed class ConceptIndex
 
         Append(_conceptsOf, member, concept);
         Append(_membersOf, concept, member);
-        _conceptsOf[member].Sort(StringComparer.Ordinal);
-        _membersOf[concept].Sort((a, b) => Compare(Known[a].Key, Known[b].Key));
+    }
+
+    // One sort per list after every join: sorting on each append made 'concept:other' quadratic (#4363).
+    private void SortLists()
+    {
+        foreach (var list in _conceptsOf.Values)
+        {
+            list.Sort(StringComparer.Ordinal);
+        }
+
+        foreach (var list in _membersOf.Values)
+        {
+            list.Sort((a, b) => Compare(Known[a].Key, Known[b].Key));
+        }
     }
 
     private static int Compare(NodeKey a, NodeKey b)

@@ -30,7 +30,7 @@ internal sealed partial class WholeMapViewModel
     {
         ArgumentNullException.ThrowIfNull(name);
         Clear();
-        (_conceptName, _conceptKey) = (name, key);
+        (_conceptName, _conceptKey, ConceptTab, ConceptPage) = (name, key, "all", 1);
         Changed();
         OnChanged(nameof(HasConcept));
     }
@@ -39,7 +39,7 @@ internal sealed partial class WholeMapViewModel
     internal void LeaveConcept()
     {
         Clear();
-        (_conceptName, _conceptKey) = (null, null);
+        (_conceptName, _conceptKey, ConceptTab, ConceptPage) = (null, null, "all", 1);
         Pages.Clear();
         Changed();
         OnChanged(nameof(HasConcept));
