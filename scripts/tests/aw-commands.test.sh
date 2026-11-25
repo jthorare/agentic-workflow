@@ -246,6 +246,12 @@ catalog "$WS" \
 out="$(cd "$WORK" && AW_COMMANDS_TOOLKIT="$WS" bash "$CLI" search ci 2>&1)"
 lacks "search: 'ci' does not match inside the word 'decide'" "$out" "tk-decide"
 has "search: 'ci' lists the entry with the term ci" "$out" "tk-ci"
+# an exact term hit ranks above a purpose-only hit, even when the purpose-only id sorts first
+WR="$WORK/rank/commands.json"
+catalog "$WR" \
+  "$(entry aa-purpose 'Rerun the ci job' '["rerun"]' '["true"]' any)" \
+  "$(entry zz-term 'Read the build result' '["ci"]' '["true"]' any)"
+check "search: an exact term hit ranks first" "$(cd "$WORK" && AW_COMMANDS_TOOLKIT="$WR" bash "$CLI" search ci 2>&1 | head -1 | cut -d' ' -f1)" "zz-term"
 SP="$WORK/setp/commands.json"
 catalog "$SP" \
   "$(entry tk-plain 'Do a thing' '["thing"]' '["true"]' any)" \
