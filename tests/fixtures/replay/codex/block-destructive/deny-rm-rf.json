@@ -3,7 +3,7 @@
   "id": "codex/block-destructive/deny-rm-rf",
   "provider": "codex",
   "scenario": "block-destructive",
-  "verified": "captured",
+  "verified": "unverified",
   "source": {
     "hostVersion": "codex 0.158.0",
     "capturedAt": null,
@@ -12,7 +12,7 @@
     "reviewedAt": null
   },
   "policy": "block-destructive/1",
-  "notes": "Payload copied from config/hooks/tests/fixtures/codex/ (Codex 0.158.0 PreToolUse).",
+  "notes": "Hand-written: payload copied from config/hooks/tests/fixtures/codex/ (Codex 0.158.0 PreToolUse).",
   "events": [
     {
       "n": 1,
