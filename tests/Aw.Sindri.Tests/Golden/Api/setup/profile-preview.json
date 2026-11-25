@@ -1,6 +1,30 @@
 {
   "steps": [
     {
+      "id": "serve",
+      "title": "Sindri is current",
+      "state": "done",
+      "why": "Sindri is running the installed build.",
+      "detail": null,
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [],
+      "cli": null
+    },
+    {
+      "id": "sources",
+      "title": "Connect your accounts",
+      "state": "todo",
+      "why": "No source is connected yet.",
+      "detail": "Connect GitHub, Slack or Linear so Sindri can read your issues and chat.",
+      "error": null,
+      "action": "ConnectAccount",
+      "progress": null,
+      "items": [],
+      "cli": null
+    },
+    {
       "id": "repo",
       "title": "Add your repo",
       "state": "done",
@@ -15,7 +39,8 @@
           "state": "done",
           "detail": null
         }
-      ]
+      ],
+      "cli": null
     },
     {
       "id": "profile",
@@ -27,6 +52,7 @@
       "action": null,
       "progress": null,
       "items": [],
+      "cli": null,
       "preview": [
         {
           "kind": "repo",
@@ -47,6 +73,18 @@
       ]
     },
     {
+      "id": "agent",
+      "title": "Agent for workflows",
+      "state": "todo",
+      "why": "Sindri picks the first agent it finds.",
+      "detail": null,
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [],
+      "cli": null
+    },
+    {
       "id": "mcp",
       "title": "Connect your agents",
       "state": "todo",
@@ -55,7 +93,8 @@
       "error": null,
       "action": null,
       "progress": null,
-      "items": []
+      "items": [],
+      "cli": null
     },
     {
       "id": "map",
@@ -66,18 +105,20 @@
       "error": null,
       "action": null,
       "progress": null,
-      "items": []
+      "items": [],
+      "cli": null
     },
     {
-      "id": "sources",
-      "title": "Connect your sources",
+      "id": "first-workflow",
+      "title": "Run hello-sindri",
       "state": "todo",
-      "why": "No source is connected yet.",
-      "detail": "Connect GitHub, Slack or Linear so Sindri can read your issues and chat.",
+      "why": "hello-sindri has not run yet.",
+      "detail": null,
       "error": null,
-      "action": "ConnectIndexSource",
+      "action": null,
       "progress": null,
-      "items": []
+      "items": [],
+      "cli": null
     }
   ],
   "asOf": {

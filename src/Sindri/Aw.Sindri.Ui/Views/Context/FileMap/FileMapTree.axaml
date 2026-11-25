@@ -32,7 +32,7 @@
   </UserControl.Styles>
 
   <!-- The Files view (F3 spec 1 §2): one folder at a time, 36 px rows, a suggested row hatched. A folder opens; a file is a row. -->
-  <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="8">
+  <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="8">
     <Grid ColumnDefinitions="*,Auto">
       <!-- The path as a breadcrumb: "~" is the top of the repo; every level but the last is a link, the last is where you are. -->
       <ctl:CrumbTrail x:Name="FilesCrumbs" Crumbs="{Binding Crumbs}" Navigated="OnCrumb" VerticalAlignment="Center" AutomationProperties.Name="{Binding CrumbsName}" />
@@ -42,16 +42,20 @@
     <TextBox x:Name="FilesFilter" Grid.Row="1" Text="{Binding FilterText, Mode=TwoWay}" PlaceholderText="{Binding FilterHint}" AutomationProperties.Name="{Binding FilterHint}" />
 
     <Grid Grid.Row="2" ColumnDefinitions="2*,3*,2*,2*" Margin="8,0" AutomationProperties.AccessibilityView="Raw">
-      <TextBlock Classes="eyebrow" Text="{Binding ColFile}" />
-      <TextBlock Grid.Column="1" Classes="eyebrow" Text="{Binding ColFor}" />
-      <TextBlock Grid.Column="2" Classes="eyebrow" Text="{Binding ColIntent}" />
-      <TextBlock Grid.Column="3" Classes="eyebrow" Text="{Binding SymbolsHeading}" />
+      <TextBlock Classes="eyebrow" Text="{Binding ColFile}" TextTrimming="CharacterEllipsis" />
+      <TextBlock Grid.Column="1" Classes="eyebrow" Text="{Binding ColFor}" TextTrimming="CharacterEllipsis" />
+      <TextBlock Grid.Column="2" Classes="eyebrow" Text="{Binding ColIntent}" TextTrimming="CharacterEllipsis" />
+      <TextBlock Grid.Column="3" Classes="eyebrow" Text="{Binding SymbolsHeading}" TextTrimming="CharacterEllipsis" />
     </Grid>
 
-    <Panel Grid.Row="3">
+    <!-- The note line follows the last row (#3862): the dock panel takes only the height its rows and note need, from the top of the
+         star row. The note is measured first, so a long list gets what is left and scrolls, with the note still in view under it. -->
+    <DockPanel Grid.Row="3" VerticalAlignment="Top">
+    <TextBlock x:Name="FilesNote" DockPanel.Dock="Bottom" Classes="caption subtle" Text="{Binding Note}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" Margin="8,8,8,0" />
+    <Panel>
       <!-- Rows are 36 px and built as they scroll into view; a plain StackPanel would build every row of a big folder. -->
       <ScrollViewer x:Name="FileScroll" IsVisible="{Binding HasRows}" HorizontalScrollBarVisibility="Disabled">
-      <ItemsControl x:Name="FileRows" ItemsSource="{Binding Rows}">
+      <ItemsControl x:Name="FileRows" ctl:ResultListKeys.Arrows="True" ItemsSource="{Binding Rows}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
             <VirtualizingStackPanel />
@@ -61,17 +65,22 @@
           <DataTemplate x:DataType="ctx:FileRowViewModel">
             <Border Classes="file-row" Classes.suggested="{Binding IsSuggested}" AutomationProperties.Name="{Binding AutomationName}" AutomationProperties.AccessibilityView="Control">
               <Grid ColumnDefinitions="2*,3*,2*,2*" Margin="8,0">
-                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                  <Button Classes="file-open" IsVisible="{Binding IsDirectory}" Click="OnOpen" AutomationProperties.Name="{Binding Name}">
-                    <TextBlock Classes="body-strong" Text="{Binding Name}" />
-                  </Button>
-                  <TextBlock Classes="body" Text="{Binding Name}" IsVisible="{Binding IsFile}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-                  <TextBlock Classes="caption subtle" Text="{Binding FilesText}" IsVisible="{Binding IsDirectory}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-                  <TextBlock Classes="caption subtle" Text="{Binding StatusWord}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-                </StackPanel>
+                <!-- Name and file count keep their size; the status takes what is left of the column and trims, so it never draws over the next column. -->
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" VerticalAlignment="Center">
+                  <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Classes="file-open result-open" IsVisible="{Binding IsDirectory}" Click="OnOpen" AutomationProperties.Name="{Binding Name}">
+                      <TextBlock Classes="body-strong" Text="{Binding Name}" />
+                    </Button>
+                    <Button Classes="file-open result-open" IsVisible="{Binding IsFile}" Click="OnOpen" AutomationProperties.Name="{Binding Name}">
+                      <TextBlock Classes="body" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                    </Button>
+                    <TextBlock Classes="caption subtle" Text="{Binding FilesText}" IsVisible="{Binding IsDirectory}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                  </StackPanel>
+                  <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding StatusWord}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                </Grid>
                 <TextBlock Grid.Column="1" Classes="body" Text="{Binding ForText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
                 <TextBlock Grid.Column="2" Classes="body" Text="{Binding IntentText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-                <TextBlock x:Name="FileSymbols" Grid.Column="3" Classes="body" Text="{Binding SymbolsText}" Opacity="{Binding SymbolsOpacity}" IsVisible="{Binding IsFile}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                <TextBlock x:Name="FileSymbols" Grid.Column="3" Classes="body" Text="{Binding SymbolsText}" ToolTip.Tip="{Binding SymbolsTip}" Opacity="{Binding SymbolsOpacity}" IsVisible="{Binding IsFile}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
               </Grid>
             </Border>
           </DataTemplate>
@@ -86,7 +95,6 @@
         <TextBlock Classes="body" Text="{Binding Problem}" TextWrapping="Wrap" />
       </Border>
     </Panel>
-
-    <TextBlock x:Name="FilesNote" Grid.Row="4" Classes="caption subtle" Text="{Binding Note}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" Margin="8,0" />
+    </DockPanel>
   </Grid>
 </UserControl>

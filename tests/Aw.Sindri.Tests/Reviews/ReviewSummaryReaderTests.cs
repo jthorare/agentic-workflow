@@ -1,4 +1,6 @@
+using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Reviews;
@@ -7,6 +9,7 @@ using Aw.Sindri.Infrastructure.Reviews;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Forge;
 using Aw.Sindri.Tests.Ledger;
+using Aw.Sindri.Tests.Server;
 using Microsoft.Extensions.Time.Testing;
 using static Aw.Sindri.Tests.Reviews.ReviewPulls;
 
@@ -19,12 +22,13 @@ public sealed class ReviewSummaryReaderTests : IDisposable
     private readonly TempHome _home = new();
     private readonly FakePullRequests _forge = new(["github.com"]);
     private readonly FileReviewSummaries _cache;
+    private readonly ListLogger<ReviewSummaryReader> _log = new();
     private readonly ReviewSummaryReader _reader;
 
     public ReviewSummaryReaderTests()
     {
         _cache = new FileReviewSummaries(new FakeSindriHome(_home.Path));
-        _reader = new ReviewSummaryReader(_cache, _forge, new FakeTimeProvider(KnownInstants.Epoch));
+        _reader = new ReviewSummaryReader(_cache, _forge, new FakeTimeProvider(KnownInstants.Epoch), _log);
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -184,5 +188,57 @@ public sealed class ReviewSummaryReaderTests : IDisposable
 
         Assert.Empty(read);
         Assert.Empty(_forge.Calls);
+    }
+
+    private static Error RepoRefused() => SindriErrors.ForgeRepoRefused.With("AW-FORGE-009: The forge refused this request for the repo: Resource not accessible");
+
+    [Fact]
+    public async Task A_repo_the_forge_refuses_skips_its_PRs_and_not_the_other_repos()
+    {
+        _forge.GetFailuresByRepo["acme/locked"] = RepoRefused();
+        var open = _forge.Add(new PullRepo("github.com", "acme", "api"), "feat/x", Head);
+        open.Checks = new PullChecks(PullChecksState.Passing, Head, [], Passed: 1, Pending: 0, [new PullCheckRun("ui-tests", "github-actions", "success", Head)]);
+        List<ReviewPull> pulls = [.. Enumerable.Range(1, 6).Select(n => Pull(repo: "acme/locked", number: n, url: string.Create(System.Globalization.CultureInfo.InvariantCulture, $"https://github.com/acme/locked/pull/{n}"))), Pull(repo: "acme/api", number: 1, url: open.Link)];
+
+        var read = await _reader.Read(pulls, Strict(), Token);
+
+        Assert.Equal([("acme/api", 1)], read.Keys);
+        Assert.Equal(ReviewCi.Pass, read[("acme/api", 1)].Ci);
+    }
+
+    [Fact]
+    public async Task A_refused_repo_is_read_once_per_call()
+    {
+        _forge.GetFailuresByRepo["acme/locked"] = RepoRefused();
+        var pulls = Enumerable.Range(1, 12).Select(n => Pull(repo: "acme/locked", number: n, url: string.Create(System.Globalization.CultureInfo.InvariantCulture, $"https://github.com/acme/locked/pull/{n}"))).ToList();
+
+        _ = await _reader.Read(pulls, Strict(), Token);
+
+        Assert.InRange(_forge.Calls.Count(static c => c == "Get"), 1, ReviewSummaryReader.MaxHeadsAtOnce);   // only the first batch in flight reads; the rest see the repo is refused
+    }
+
+    [Fact]
+    public async Task A_refused_repo_warns_once_per_call_with_SND_FORGE_005()
+    {
+        _forge.GetFailuresByRepo["acme/locked"] = RepoRefused();
+        var pulls = Enumerable.Range(1, 12).Select(n => Pull(repo: "acme/locked", number: n, url: string.Create(System.Globalization.CultureInfo.InvariantCulture, $"https://github.com/acme/locked/pull/{n}"))).ToList();
+
+        _ = await _reader.Read(pulls, Strict(), Token);
+
+        var line = Assert.Single(_log.Lines);
+        Assert.StartsWith("SND-FORGE-005 the forge refused acme/locked", line, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_credential_error_still_stops_the_call()
+    {
+        _forge.GetFailure = SindriErrors.ForgeRefused.With("AW-FORGE-003: The forge credential is missing or was rejected");
+        var open = _forge.Add(new PullRepo("github.com", "acme", "api"), "feat/x", Head);
+        var pulls = Enumerable.Range(1, 12).Select(n => Pull(repo: "acme/other", number: n, url: string.Create(System.Globalization.CultureInfo.InvariantCulture, $"https://github.com/acme/other/pull/{n}"))).ToList();
+
+        var read = await _reader.Read([.. pulls, Pull(repo: "acme/api", number: 1, url: open.Link)], Strict(), Token);
+
+        Assert.Empty(read);
+        Assert.InRange(_forge.Calls.Count(static c => c == "Get"), 1, ReviewSummaryReader.MaxHeadsAtOnce);
     }
 }

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Forge;
@@ -27,9 +26,9 @@ internal sealed class ReviewAccountReader(IGitHubAccount account, IPullRequests 
             return current.Error;
         }
 
-        var connect = ReviewConnectRules.For(current.Value, HasProfileToken(profile?.Context), lastCode);
+        var connect = ReviewConnectRules.For(current.Value, ReviewConnectRules.HasProfileToken(profile?.Context), lastCode);
         var typed = profile?.Review?.Login;
-        return new ReviewIdentity(connect, string.IsNullOrWhiteSpace(typed) ? current.Value.Login : typed);
+        return new ReviewIdentity(connect, string.IsNullOrWhiteSpace(typed) ? current.Value.Login : typed, current.Value.Connection, current.Value.Miss);
     }
 
     /// <summary>The forge credential's own login, for the login prompt to suggest.</summary>
@@ -40,11 +39,4 @@ internal sealed class ReviewAccountReader(IGitHubAccount account, IPullRequests 
         var suggested = await forge.Self(cancellationToken).ConfigureAwait(false);
         return suggested.IsError ? null : suggested.Value;
     }
-
-    // why: the profile's token pointer lets the feed read without a connection, so a missing connection is not a reason to ask for one
-    private static bool HasProfileToken(JsonElement? context) =>
-        context is { ValueKind: JsonValueKind.Object } root
-        && root.TryGetProperty("sources", out var sources) && sources.ValueKind == JsonValueKind.Object
-        && sources.TryGetProperty("github", out var github) && github.ValueKind == JsonValueKind.Object
-        && github.TryGetProperty("token", out var token) && token.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(token.GetString());
 }

@@ -12,7 +12,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <summary>
 /// A batch of a 'for_each' (PR 9): for each of its items, in order, walks the loop's nodes (the body, then the 'collect') the way the run's walk does, one activity per
 /// block execution, writing a node row per item (the item's position counted from 1 is the row's item index). The batch has its own history, and its size is fixed by the batch size.
-/// The first node that fails and says 'stop' ends the batch; the nodes left for that item are 'skipped'.
+/// The first node that fails and says 'stop' ends the batch; the nodes left for that item are 'skipped'. A body node that fails and says 'skip-item' ends only its item:
+/// the nodes left for that item are 'skipped', the batch goes on with its next item and counts the item in its result (#3806).
 /// </summary>
 [Workflow("GraphIteration")]
 internal sealed partial class GraphIterationWorkflow
@@ -27,6 +28,7 @@ internal sealed partial class GraphIterationWorkflow
     private int _agentLaunchAttempts = GraphAgentLoop.DefaultAgentLaunchAttempts;
     private LoopShape? _shape;
     private int _last;
+    private int _skipped;
     private List<GraphNode> _left = [];
     private readonly Dictionary<(string Node, int Item), GraphAnswerInput> _answers = [];
     private (string Node, int Item)? _asking;
@@ -61,7 +63,7 @@ internal sealed partial class GraphIterationWorkflow
                 }
             }
 
-            return new GraphIterationResult(Failure: null);
+            return new GraphIterationResult(Failure: null, _skipped);
         }
         catch (Exception e) when (TemporalException.IsCanceledException(e))
         {
@@ -94,7 +96,8 @@ internal sealed partial class GraphIterationWorkflow
         _left = pending;
         _item = item;
         string? failure = null;
-        while (failure is null && pending.Find(n => GraphWalkRules.Ready(spec, n, decided)) is { } node)
+        var dropped = false;
+        while (failure is null && !dropped && pending.Find(n => GraphWalkRules.Ready(spec, n, decided)) is { } node)
         {
             _ = pending.Remove(node);
             if (!GraphWalkRules.Live(spec, node, taken))
@@ -106,12 +109,14 @@ internal sealed partial class GraphIterationWorkflow
 
             var outcome = await Execute(node, item).ConfigureAwait(true);
             _ = decided.Add(node.Id);
-            if (outcome.Status == NodeRunStatus.Failed && !string.Equals(node.OnFailure, "continue", StringComparison.Ordinal))
+            if (Drops(shape, node, outcome))
             {
-                failure = $"node '{node.Id.Value}' failed on item {item.ToString(System.Globalization.CultureInfo.InvariantCulture)}: {outcome.Error}";
+                dropped = true;
+                _skipped++;
                 continue;
             }
 
+            failure = ItemFailure(spec, node, item, outcome);
             taken[node.Id] = outcome.Status == NodeRunStatus.Succeeded ? outcome.Taken : ["out"];
         }
 
@@ -154,7 +159,7 @@ internal sealed partial class GraphIterationWorkflow
 
         // why: as in the run's walk, once the block has answered the node's result is decided, so the write is not cancelled with the workflow
         _current = null;
-        await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(new NodeRun(_run, node.Id, item, outcome.Status, outcome.Input, outcome.Output, Truncated: false, outcome.Error, Usage: null)), _detached).ConfigureAwait(true);
+        await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(new NodeRun(_run, node.Id, item, outcome.Status, outcome.Input, outcome.Output, outcome.Truncated, outcome.Error, Usage: null, Raw: outcome.Raw)), _detached).ConfigureAwait(true);
         return outcome;
     }
 
@@ -179,9 +184,9 @@ internal sealed partial class GraphIterationWorkflow
     // why: a 'wait' or an 'ask_owner' parks after its block answered, while the node is still 'running', so a cancel ends it 'cancelled'; the patches keep the commands of a body without one as before (#2490, #2543)
     private async Task<GraphBlockOutcome> Park(GraphNode node, GraphBlockOutcome outcome)
     {
-        if (outcome.Status != NodeRunStatus.Succeeded)
+        if (outcome.Status != NodeRunStatus.Succeeded || outcome.Fenced)
         {
-            return outcome;
+            return outcome;   // why: a test run's block activity already answered the wait or the question (GraphTestWalk)
         }
 
         if (string.Equals(node.Type, "wait", StringComparison.Ordinal) && Workflow.Patched("graph-iteration-wait"))

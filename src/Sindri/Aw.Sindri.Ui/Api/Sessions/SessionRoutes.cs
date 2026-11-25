@@ -5,6 +5,12 @@ internal static class SessionRoutes
 {
     private const string Root = "/sindri/sessions";
 
+    /// <summary>POST /sindri/sessions: start a one-off agent session.</summary>
+    internal const string Start = Root;
+
+    /// <summary>GET /sindri/sessions/last-start: the repo and agent of the last start.</summary>
+    internal const string LastStart = Root + "/last-start";
+
     internal static string List(SessionQuery query)
     {
         var parts = new List<string>();

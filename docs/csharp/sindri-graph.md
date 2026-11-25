@@ -25,13 +25,18 @@ A workflow is a JSON document Sindri stores as revisions. This page covers what 
 | `GRAPH-TRIGGER-001` / `-002` | more than one trigger (names all) / none |
 | `GRAPH-WIRING-001` | a node no trigger reaches |
 | `GRAPH-CYCLE-001` | a loop, with its path in spec order (`a -> b -> c -> a`) |
-| `GRAPH-REF-001` / `-002` / `-003` / `-004` / `-005` | a reference to a node that is not upstream / to an output name the node does not have, or a `{{workflow.<field>}}` a run does not have (`id`, `name`, `runId`, `revision`) / to no node / a `{{` that is never closed (a `{{` inside a string literal of a condition is text, not a reference) / an output whose type does not fit the field it fills |
+| `GRAPH-REF-001` / `-002` / `-003` / `-004` / `-005` | a reference that can be empty at run time: to a node that is not upstream, to a node that can be skipped on a path to the reader (it sits on one branch of a condition that later joins), to a loop-body node from outside its for_each body (read the collect), or `{{item}}` / `{{itemIndex}}` outside a for_each body / to an output name the node does not have, or a `{{workflow.<field>}}` a run does not have (`id`, `name`, `runId`, `revision`) / to no node / a `{{` that is never closed (a `{{` inside a string literal of a condition is text, not a reference) / an output whose type does not fit the field it fills |
 | `GRAPH-BLOCK-001`, `GRAPH-CONFIG-001` | unknown block type, config that fails the block's schema |
-| `GRAPH-CRON-001`, `GRAPH-COND-001` | unreadable cron or timezone, unreadable condition |
+| `GRAPH-CRON-001`, `GRAPH-COND-001` | unreadable cron or timezone (a timezone or cron that is not text too), unreadable condition |
 | `GRAPH-REPO-001`, `GRAPH-NAME-001` | repo, connection or memory that does not exist (`-002` is the warning when nobody can answer yet) |
 | `GRAPH-LOOP-003` | retired (#2470): a `run_agent` node in a `for_each` body runs one agent per item; only a run that started on the old walk still fails it |
 | `GRAPH-LOOP-001` / `-002` | a `for_each` that can't run as a loop: no `collect` after it, more than one, a loop inside it, or a node of the loop also fed from outside it / a `collect` no `for_each` reaches |
 | `GRAPH-NODE-001` / `-002`, `GRAPH-EDGE-001` / `-002` | repeated node id / a node id that is `trigger`, `item`, `itemIndex` or `workflow` (reserved reference roots), edge to a missing node, edge by an output the block lacks (an edge with no `output` leaves by `out`) |
+| `GRAPH-NODE-003` | an `onFailure` value other than `stop`, `continue` or `skip-item`; write `stop` (halt the run when the node fails, the default), `continue` (keep walking) or `skip-item` (on a for_each body node: drop the item and go on with the next) |
+| `GRAPH-NODE-004` | `onFailure: continue` on a node with no single `out` output, such as a condition. A failed node takes no named branch, so the nodes after it never run. Put the condition's work in a step with `onFailure: continue`, or remove `onFailure` |
+| `GRAPH-NODE-005` | `onFailure: skip-item` on a node that is not in a for_each body: outside every loop, on the `for_each` node, or on the `collect` itself. Only a body node has an item to drop. Put it on the body node that can fail, or write `stop` or `continue` |
+| `GRAPH-RESULT-001` | the top-level `result` names no node of the graph; name the node whose output is the run's result, or clear `result` with `set_meta` and `"result": ""` (a `remove_node` of the result node needs that op in the same batch) (#3807) |
+| `GRAPH-PROMPT-001` | warning: a `prompt` whose question (`config.prompt`) has no `{{...}}` reference and whose only parents are triggers, so the model answers about no data. Add a step before it and read its output with `{{step.field}}` |
 
 `GRAPH-TRIGGER-001` / `-002`, `GRAPH-CYCLE-001` and `GRAPH-WIRING-001` are node-level findings: they name nodes and have no field.
 
@@ -56,21 +61,34 @@ saving on a revision that is no longer the latest is `SND-GRAPH-007`; `Activate`
 
 ## The `prompt` block's `output` schema
 
-`prompt` asks the model once and checks the answer against its `output` JSON schema, with a hand-written subset (Core has no JSON-schema library). **It checks exactly this:** the answer is a JSON object (a ``` fence around it is removed); every name in `required` is present (names must be text); and every property that has a `type` has a value of that type, where `type` is `string`, `number`, `integer`, `boolean`, `object` or `array` (`integer` accepts any number, so `1.5` passes), or a list of type names, of which the first one other than `"null"` is used. **It does not check:** `enum`, nested `properties` or `items`, `additionalProperties`, `null`/union members beyond the first type, formats or ranges. An `output: {}` accepts any JSON object. A `type` that is not text or lists only `"null"`, or a non-text `required` entry, is a `GRAPH-CONFIG-001` finding when the workflow is validated and `SND-GRAPH-103` when the node runs (before the model is asked). Only the schema's `properties` become the node's outputs. Without `output`, the answer isn't read and the node has no outputs.
+`prompt` asks the model once and checks the answer against its `output` JSON schema, with a hand-written subset (Core has no JSON-schema library). **It checks exactly this:** the answer is a JSON object (a ``` fence around it is removed); every name in `required` is present (names must be text); and every property that has a `type` has a value of that type, where `type` is `string`, `number`, `integer`, `boolean`, `object` or `array` (`integer` accepts any number, so `1.5` passes), or a list of type names, of which the first one other than `"null"` is used. **It does not check:** `enum`, nested `properties` or `items`, `additionalProperties`, `null`/union members beyond the first type, formats or ranges. An `output: {}` accepts any JSON object. A `type` that is not text or lists only `"null"`, or a non-text `required` entry, is a `GRAPH-CONFIG-001` finding when the workflow is validated and `SND-GRAPH-103` when the node runs (before the model is asked). Only the schema's `properties` become the node's outputs. The model is also asked for two implicit fields, `couldNotAnswer` (boolean) and `couldNotAnswerWhy` (text); when `couldNotAnswer` is `true` the node fails with `SND-GRAPH-133` and `couldNotAnswerWhy` (cut at 200 characters) in the message, before the shape is checked. A missing `couldNotAnswer` counts as false, and neither field is an output, and a field of your own named `why` is not touched. Without `output`, the answer isn't read and the node has no outputs.
 
 ## Runs (PR 6)
 
-A run is a row in `workflow_run` (ledger migration `0009_workflow_runs`; the number is renumbered at the final main merge). Its id is `<slug>@<revision>:<occurrence>`, the primary key, so a second insert of the same id is refused with `SND-GRAPH-100`. Statuses: `queued`, `running`, `waiting`, `succeeded`, `failed`, `cancelled`. `workflow_node_run` holds one row per node and item index; a node's input and output are each cut at 64 KB (UTF-8) and `truncated` is set.
+A run is a row in `workflow_run` (ledger migration `0009_workflow_runs`; the number is renumbered at the final main merge). Its id is `<slug>@<revision>:<occurrence>`, the primary key, so a second insert of the same id is refused with `SND-GRAPH-100`. Statuses: `queued`, `running`, `waiting`, `succeeded`, `failed`, `cancelled`. `workflow_node_run` holds one row per node and item index; a node's input and output are each cut at 64 KB (UTF-8). `truncated` is set only when the output was cut: a cut input is kept for display and never hides a whole output (#3896).
 
 `GraphRunStarter.Start` turns a trigger into a run by the workflow's `concurrency`: `one-per-workflow` (the default) skips and logs a trigger while another run is in flight, `queue` records it as `queued` without starting it, `unlimited` starts every trigger. A failed launch marks the run `failed`.
 
-**Walking a run.** A started run is one Temporal workflow, `GraphWorkflow`, with the run id as its workflow id (`TemporalGraphRunLauncher`). It walks the revision's nodes in edge order through activities (`GraphRunActivities`), records every node in `workflow_node_run` and mirrors each transition into the ledger (`workflow.run.started`, `.finished` and `.cancelled` and `workflow.node.started`, `.finished` and `.failed` are public and carry ids only; `workflow.node.taken-over`, `workflow.node.handed-back` and `workflow.notify` stay private). Its end sets the run's status (`succeeded`, `failed` or `cancelled`).
+**Walking a run.** A started run is one Temporal workflow, `GraphWorkflow`, with the run id as its workflow id (`TemporalGraphRunLauncher`). It walks the revision's nodes in edge order through activities (`GraphRunActivities`), records every node in `workflow_node_run` and mirrors each transition into the ledger (`workflow.run.started`, `.finished` and `.cancelled` and `workflow.node.started`, `.finished` and `.failed` are public and carry ids only; `workflow.node.taken-over`, `workflow.node.handed-back` and `workflow.notify` stay private). Its end sets the run's status (`succeeded`, `failed` or `cancelled`). The run's own writes (load, begin, the re-run's read of the earlier steps, each node's `running` and final row, the block commit and the finish) are local activities under the patch `graph-local-activities-1`: they run in the worker without a task-queue round trip, with the same timeout and retry as before (#3685); a retry wait over one second is a workflow timer, not a sleep in the worker. Once a patched run exists, an older build can't replay it (it does not know the marker), so don't roll back past this change while such a run is in flight. Block runs stay ordinary activities, and a run that started before the patch replays the old calls.
+
+**The run's result (#3807).** A succeeded run's `outputs` (what `run_workflow` with `wait` and `workflow_result` read) are built by `GraphResultOutputs.Build` in `GraphRunActivities.FinishAsync`: an object keyed by node id holding the node the spec's top-level `result` (`GraphSpec.Result`) names, or, with no `result`, every node no edge leaves, in spec order, that succeeded. A for_each body node (rows at items 1 to N, none at 0) gives an array in item order. A `collect` gives its own row at item 0 only (`items`, `count`, `skipped`), never its item rows (#4093; before, it gave `[own result, item 1, item 2, ...]`). The 64 KB cap (`NodeRunLimits.PayloadBytes`) applies to that result on its own, not to the sum of every node row. A result node whose row is `truncated`, or a result over the cap, is stored as `RunResultMarker` (`{"truncated":true,"bytes":N}`; `RunResultMarker.IsMarker` matches only that shape, `truncated` true with an optional `bytes` and no other key, so a step output such as GitHub's tree body `{"truncated":true,"tree":[...]}` is not one, #4089), and both blocks fail with `SND-GRAPH-108` (`RunResultMarker.Refusal`) instead of handing it on. Before #3807 the outputs held every succeeded node and were `null` past 64 KB together; runs already stored keep that shape. The run read (`GET /sindri/workflow-runs/{run}`) still lists every node row. An edit sets `result` with the `set_meta` op (`{"op":"set_meta","result":"rank"}`; `""` clears it), and `rename` carries it along.
 
 **The queue moves on.** When a run ends, and when a launch fails, `IGraphQueueAdvance.StartNextQueued` starts the oldest `queued` run of the workflow, once nothing else of it is in flight. `IWorkflowRunStore.PromoteOldestQueued` checks and promotes in one transaction, so two runs ending together start one queued run, not two. A queued run whose own launch fails is marked `failed` and the next one gets the turn. Queued runs are not in `view_workflow_runs` until they start.
 
 **By hand.** `sindri wf run <slug> [--payload JSON] [--json]` (`POST /sindri/workflows/{slug}/runs`) starts a run of the active revision with trigger `{"kind":"manual",...}`: it answers started, queued or skipped by the concurrency. `sindri wf cancel <run> [--json]` (`POST /sindri/workflow-runs/{run}/cancel`) asks a run in flight to stop (Temporal cancel); a queued run is cancelled in place and never starts. `sindri wf takeover <run> <node> [--item <index>] [--json]` (`POST /sindri/workflow-runs/{run}/nodes/{node}/takeover`) takes over the `run_agent` node the run waits on (its timeout pauses, only the human reports it) and `sindri wf handback ...` (`.../handback`) gives it back; both answer `{"run","node","itemIndex","agent"}` with `agent` `taken_over` or `waiting`, and both are open to a human and to an agent session alike. A node the run isn't waiting on is `SND-GRAPH-110`, a handback of a node nobody holds `SND-GRAPH-111`. Each takeover that changed the node and each handback appends a ledger event about the run's item (`workflow.node.taken-over`, `workflow.node.handed-back`: run, node, itemIndex, `by` the caller's actor; not public), which the item's timeline shows; a takeover of a node already held answers the same and appends nothing (#2497). `GET /sindri/workflow-runs/{run}` marks such a node row with `agent`: `waiting`, `taken_over` or null.
 
 **Codes.** `SND-GRAPH-100` the run id is used, `101` no such run, `102` a block could not finish, `103` a prompt answer does not fit its schema, `105` the workflow is not active, `106` a manual payload is not a JSON object, `107` the run already ended, `108` a referenced node output was cut at 64 KB, `109` a run of this workflow can't start the workflow again, `110` the run is not waiting on an agent at that node, `111` that agent node is not taken over.
+
+## Re-run from a step (Workflows page P7, #3204)
+
+A run that ended can start again from one of its steps. The steps before it keep their stored output, so nothing that already ran runs a second time.
+
+- **Route, CLI, tool.** `POST /sindri/workflow-runs/{run}/rerun` with `{"fromNode": "<node id>", "input": "<json object>"}`; `sindri wf rerun <run> --from <node> [--input JSON] [--json]`; MCP `workflow_rerun` (`run`, `from`, `input`). An agent session may run all three. The answer is `started`, `queued` or `skipped` like `wf run`, plus the source run, the steps restored and the steps that run again.
+- **What happens.** `RerunWorkflowRunService` splits the graph with `RerunPlan.Restored`: the chosen step and every step reachable from it run again. Every other step is restored when the steps it reads from are restored and its rows say it is done: it succeeded, or it was skipped on a branch the restored steps did not take. The walk also writes `skipped` for every step still pending when a failure or a cancel ends the run; such a step runs again. A restored step's branch comes from its own stored row (`RerunPlan.Branches`): a condition's `result`, an ask_owner's `answeredBy` (`timeout` or answered), `out` for every other step. A branching step whose whole row does not say runs again. A restored branching step whose row was cut at 64 KB can't say its branch either, and running it again would ask an ask_owner's question a second time, so the re-run is refused with SND-GRAPH-108; re-run from that step instead. The walk's `GraphRestored` reads the branch the same way from the copied rows, so it never counts a branch as taken because the step after it has no row. A `for_each` is restored only with every body and collect row succeeded or skipped, and the walk then decides its body and collect with it; otherwise the whole loop runs again. A step after a step that runs again runs again too. The restored node runs (every item row of a repeated step) are copied to the new run, and `GraphRunStarter` stores them right after it admits the run, before the walk starts or the run leaves the queue. The walk's patched `GraphRestored` activity marks those steps decided and gives each the branches it took, so the steps that run again read their output as before.
+- **The new run.** It walks the source run's revision, not the active one. Its trigger has kind `rerun`, `of` (the source run id), `fromNode`, `by`, the source trigger's fields at the top level (so `{{trigger.payload.repo}}` still resolves) and the whole source trigger as `original`. Manual runs and re-runs share one run number count (`WorkflowRunNumbers.Next`: one more than the highest manual run or re-run of the workflow), so neither starts inside the other's numbers. Hashed connection and call runs start at 100,000,000, so they never hold a counted number. Only two starts at once can read the same number: on a used number the re-run tries the next, up to 50 times, and a manual run tries once more.
+- **Refusals.** `SND-GRAPH-101` no such run; `008` the workflow was deleted; `001` the revision has no such step, or the step sits inside a `for_each` body; `125` the run has not ended; `126` a step before the chosen one did not succeed (re-run from that step instead); `108` a step to restore had its output cut at 64 KB; `106` the input is not a JSON object.
+- **Re-running a skipped step.** Re-running from a step the source run skipped, on a branch it did not take, runs that step on purpose: the restored steps before it count as having taken their edges into it (`RerunPlan.WithChosen`, from the trigger's `fromNode`), because the owner asked for the step.
+- **Known limits.** `input` is stored in the trigger and nothing in the engine reads it yet. A step inside a `for_each` body can't be the start: re-run from the `for_each` step. Restored steps write no `workflow.node.finished` events, so the Runs view's last-step field does not move for them. The mode of a test run is not carried over until the test-mode work (P4a) lands.
 
 ## The `run_agent` block (PR 7)
 
@@ -82,11 +100,26 @@ One node run is one agent session on the existing launcher and agent runtime. Co
 
 **Report.** The agent reports with `sindri workflow complete <run id> --run <token> --outcome done --output fact:<field>=<file>...` (the exact line is in its brief); the token is `<node position>.<item index + 1>` (`RunAgentWire`). `CompleteStepService` finds the node, decides who may report it (`AgentReportAuthority.DecideNode`: the launched session with its launch secret, or the human of a taken-over node; a wrong secret is `SND-AUTH-003`), checks the report against the declared outputs (`RunAgentReport`: a missing, undeclared or mistyped field is refused and named, and the agent may report again; a string output is the file's text, any other type is JSON) and sends the values to the run's workflow (`agent-report` update). A session that ended unreported completes the node from `.sindri-out` only when every declared output (except optional ones) is there (`AgentRecovery.DecideNode`).
 
+**Agent state events (#3151).** Each `run_agent` node run writes a `workflow.node.agent.changed` ledger event about the run's item every time its session changes state, waiting-on text or last tool (`NodeAgentRecorder`). The Agents page reads these to show a workflow session as a row. The public shape carries only `runId`, `nodeId` and `itemIndex`; the full payload (`WorkflowNodeAgentChangedPayload`) is private. The private payload has these fields: `runId`, `nodeId`, `itemIndex` (0 outside a loop), `state` (below), `waitingOn` (text or null), `lastTool` and `lastToolAt` (or null), `launchId` (null before launch), `branch`, `deadline` (null before launch) and `by` (who recorded it). The idempotency key is `workflow.node.agent.changed:<run>:<node>:<item index>:<sequence>`. The sequence is counted in the workflow, so a replay writes the same keys and the ledger keeps each event once. A history recorded before the events (patch `node-agent-events-1`) writes none.
+
+| `state` | When | `waitingOn` |
+|---|---|---|
+| `waiting-for-slot` | the launch cap is full; the node's timeout has not started | `launch slot (waiting)` (no queue position yet) |
+| `launching` | the launch is under way | null |
+| `working` | the session runs | null |
+| `waiting-on-you` | the session's aw:fleet state file says it asks for an approval | `permission prompt` |
+| `ended-succeeded`, `ended-failed`, `ended-timed-out` | the node finished; the failure text picks one (`timeout:` gives timed out) | null |
+| `limited` | defined, not recorded yet | |
+
+The workflow watches the permission prompt with one long call at a time (activity `AskingAgentNode`, patch `node-agent-ask-1`), beside the wait on the session. The activity finds the session through the launch's row and reads that session's aw:fleet state file every 2 s, heartbeating on each read. It takes the ask the workflow last saw (tool and time, or none) and returns as soon as the file says something different, or after a 10 minute cap with nothing new. The workflow records the change and starts the next call. It stops the call when the wait ends (report, session end, timeout) and while a person holds the node. One call per cap, not one per few seconds, keeps a 2 h node to about a dozen history events for the ask, far from Temporal's 51,200 limit. A read that fails counts as no ask. A call that fails ends the watching and the node goes on as working. The node's timeout is exact: it is not cut into slices. `lastTool` and `lastToolAt` are the tool that approval asks for and when the hook saw it. They stay on the events after the person answers the prompt. The tool name is dropped from the event when it does not match the hook's own pattern (letters, digits, `_ . : -`, at most 64 characters), and the event writer scrubs it like `waitingOn`. They are null until the first approval, because the hook records no tool for a working session: PostToolUse writes nothing unless the file says asking (`config/hooks/fleet-state.sh`). A lane row has the same rule, so a lane row and a workflow row never disagree (Agents page spec §3.1 note, open question 3). Each event links the session: `launchId` (from launch on), `branch` (the branch the session may push) and `deadline`. The deadline is launch time plus the node's timeout. The clock stops while a person holds the node, so a handback moves the deadline to now plus the time left and writes a new `working` event that carries it.
+
+A cancelled run writes `ended-failed` as its last event for the node (written detached, so the cancel does not cancel it).
+
 ## Flow blocks (agent-first PR 9, part C)
 
 Five more blocks, each with an example spec page under `docs/workflows/blocks/`: [`only_new`](../workflows/blocks/only_new.md), [`create_item`](../workflows/blocks/create_item.md), [`run_workflow`](../workflows/blocks/run_workflow.md), the [`workflow_call`](../workflows/blocks/workflow_call.md) trigger and [`http`](../workflows/blocks/http.md). Registered by `GraphBlockRegistry.FlowBlocks`.
 
-**`workflow_result`** ([page](../workflows/blocks/workflow_result.md)) reads a finished run and starts nothing: config `workflow` and `run` (`latest-succeeded`, the default, or a run id of that workflow); outputs `runId`, `status`, `finishedAt`, `outputs`. `WorkflowResultBlock` (Core) reads through `IGraphResultPort`; `GraphRunResults` (Workflows) answers it from the workflow and run stores, looking for the latest succeeded run among the workflow's 1,000 newest. A run id that isn't that workflow's, a run not finished, or a workflow with no succeeded run is `SND-GRAPH-124`. Registered by `GraphBlockRegistry.ResultBlocks`.
+**`workflow_result`** ([page](../workflows/blocks/workflow_result.md)) reads a finished run and starts nothing: config `workflow` and `run` (`latest-succeeded`, the default, or a run id of that workflow); outputs `runId`, `status`, `finishedAt`, `outputs` (the run's result, see "The run's result"). `WorkflowResultBlock` (Core) reads through `IGraphResultPort`; `GraphRunResults` (Workflows) answers it from the workflow and run stores, looking for the latest succeeded run among the workflow's 1,000 newest. A run id that isn't that workflow's, a run not finished, or a workflow with no succeeded run is `SND-GRAPH-124`. Registered by `GraphBlockRegistry.ResultBlocks`.
 
 - **After-success hook.** `IGraphBlock.Commit` runs after a node's `Execute` succeeded (in `GraphBlockActivities`); a failure there fails the node. `only_new` records its keys there, so a node that fails leaves its items unseen. It runs at the node, not at the end of the run: a later node that fails does not give the items back.
 - **`workflow.id`.** A node may read `{{workflow.id}}` (with `name`, `runId` and `revision`). `only_new` keys its memory by it.
@@ -110,16 +143,100 @@ Four reads, each one slice (`Features/ListWorkflows`, `GetWorkflow`, `ListWorkfl
 
 | Read | Route | MCP tool | CLI |
 |---|---|---|---|
-| The workflows that are not archived | `GET /sindri/workflows` | `workflow_list` | `sindri wf list [--json]` |
-| One workflow: the revision it runs (the newest when off), the spec, the spec hash, who saved the newest revision, node positions | `GET /sindri/workflows/{slug}` | `workflow_get` (`slug`) | `sindri wf show <slug> [--json]` |
+| The workflows that are not archived, each with its trigger in words and `nextRunAt` | `GET /sindri/workflows` | `workflow_list` | `sindri wf list [--json]` |
+| One workflow: the revision it runs (the newest when off), the spec, the spec hash, who saved the newest revision, node positions, the next run time of an active schedule (`nextRunAt`) | `GET /sindri/workflows/{slug}` | `workflow_get` (`slug`) | `sindri wf show <slug> [--json]` |
 | A workflow's newest 50 runs, newest first, any status | `GET /sindri/workflows/{slug}/runs` | `workflow_runs` (`slug`) | `sindri wf runs <slug> [--json]` |
 | One run with its trigger, outputs and node runs | `GET /sindri/workflow-runs/{run}` | `workflow_run_get` (`run`) | `sindri wf run-show <run> [--json]` |
 
-An unknown slug is `SND-GRAPH-008` (404), an unknown run `SND-GRAPH-101`, a slug or run id of the wrong shape invalid input. "Who changed it last" is the `createdBy` of the newest revision (`owner` or `session:<id>`). Node payloads the store cut at its size limit come back as a string with `truncated: true` on the node run. Over MCP, names, descriptions, node titles and every string of a node config (prompts), failure text, trigger payloads, outputs and node inputs and outputs are fenced as untrusted. `IWorkflowRunStore.Recent` is the new store read behind the run list.
+`nextRunAt` is the soonest tick of the active revision's schedule trigger after now, computed by one Core helper (`Core/Graph/Schedule/WorkflowNextRun.cs`), so the list row and the single read always agree. It is null when the workflow is off, archived, run by hand or by an event, or when its schedule has no tick (#3756); `sindri wf show` prints a `next run` line only when it is set.
+
+An unknown slug is `SND-GRAPH-008` (404), an unknown run `SND-GRAPH-101`, a slug or run id of the wrong shape invalid input. "Who changed it last" is the `createdBy` of the newest revision (`owner` or `session:<id>`). Node payloads the store cut at its size limit come back as a string. `truncated: true` on the node run means its output was cut; a cut input alone leaves it false. Over MCP, names, descriptions, node titles and every string of a node config (prompts), failure text, trigger payloads, outputs and node inputs and outputs are fenced as untrusted. `IWorkflowRunStore.Recent` is the new store read behind the run list.
+
+### The fields the list row and the runs table read (#3683, #3756)
+
+The list row, the run list and the run read carry the fields below on top of the ones above. The MCP tools answer the same JSON as the routes. The MCP tools also fence `workflows[].trigger` and `runs[].result` as untrusted (`Host/Mcp/FencePlan.cs`): a cron with no words comes back as written, and a result line is error or output text an agent or a service wrote.
+
+**`GET /sindri/workflows`, `workflow_list`: each row** (`Features/ListWorkflows/WorkflowSummary.cs`).
+
+| Field | Type | What it holds | When it is empty |
+|---|---|---|---|
+| `trigger` | string | The trigger in words (`TriggerWords.Of`): `By hand`, `Every 20 min`, `Every day 7:00`, `Every weekday 7:00` (weekdays as `1-5` or `MON-FRI`), `N schedules` for a node with more than one cron, `On a schedule` for a schedule node with no cron. A cron it has no words for comes back as its text; any other trigger as its node type (`connection_event`, `workflow_call`). The trigger node is the first node no edge leads into, read from the active revision, else the newest | `""` when the graph has no trigger node |
+| `paused` | bool | True when the workflow was on once and is off now (`workflow.was_activated` set by an activate, kept by a pause). A workflow never turned on is off, not paused | Always present. A workflow that was off before migration 0023 reads `false` |
+| `nextRunAt` | timestamp or null | The soonest tick of the active schedule, the same value as `GET /sindri/workflows/{slug}` | Null when the workflow is off, archived, run by hand or by an event, or its schedule has no tick |
+| `lastRun` | object or null | The newest run of any status: `run` (the run id), `status`, `at` (when the store recorded the run) | Null when the workflow never ran |
+| `recent` | array | The newest 10 runs of any status, newest first: `run`, `status`, `startedAt`, `seconds` (null while the run has not ended) | `[]` when the workflow never ran |
+
+```json
+{
+  "workflows": [
+    {
+      "slug": "morning-check",
+      "trigger": "Every weekday 7:00",
+      "paused": false,
+      "nextRunAt": "2026-01-02T07:00:00.0000000Z",
+      "lastRun": { "run": "morning-check@1:2", "status": "running", "at": "2026-01-01T07:00:00.0000000Z" },
+      "recent": [
+        { "run": "morning-check@1:2", "status": "running", "startedAt": "2026-01-01T07:00:00.0000000Z", "seconds": null },
+        { "run": "morning-check@1:1", "status": "succeeded", "startedAt": "2025-12-31T07:00:00.0000000Z", "seconds": 42.5 }
+      ]
+    }
+  ]
+}
+```
+
+**`GET /sindri/workflows/{slug}`, `workflow_get`** (`Features/GetWorkflow/GetWorkflowResponse.cs`).
+
+| Field | Type | What it holds | When it is empty |
+|---|---|---|---|
+| `nextRunAt` | timestamp or null | The soonest tick of the active revision's schedule, whichever revision the read shows (`?revision=latest` or a number) | Null in the same cases as the list row |
+
+```json
+{ "slug": "morning-check", "revision": 1, "activeRevision": 1, "nextRunAt": "2026-01-01T07:00:00.0000000Z" }
+```
+
+**`GET /sindri/workflows/{slug}/runs`, `workflow_runs`: each run** (`Features/ListWorkflowRuns/WorkflowRunSummary.cs`).
+
+| Field | Type | What it holds | When it is empty |
+|---|---|---|---|
+| `trigger` | string | What started the run (`RunWords.TriggerWord`): `manual` (the app or HTTP), `cli` (`sindri wf run`, stored as `by: "human:cli"`), `agent` (a stored `manual` trigger by `session:<id>`) or `schedule`. Any other stored kind (`workflow_call`, `connection_event`) comes back as stored | `unknown` when the stored trigger has no `kind` |
+| `seconds` | number or null | `endedAt` minus `startedAt`, in seconds | Null while the run has not ended |
+| `result` | string or null | One line for the table (`RunWords.Result`): the first line of `error` for a failed or cancelled run, the outputs as compact JSON for a succeeded run, cut at 120 characters with a trailing `…` | Null for a queued, running or waiting run, a failed run with no error, or a succeeded run with no outputs |
+
+```json
+{
+  "slug": "morning-check",
+  "runs": [
+    { "id": "morning-check@1:3", "status": "running", "trigger": "agent", "seconds": null, "result": null },
+    { "id": "morning-check@1:2", "status": "failed", "trigger": "schedule", "seconds": 12.0, "result": "node 'agent' failed" },
+    { "id": "morning-check@1:1", "status": "succeeded", "trigger": "cli", "seconds": 42.5, "result": "{\"summary\":\"no drift\"}" }
+  ],
+  "more": false
+}
+```
+
+**`GET /sindri/workflow-runs/{run}`, `workflow_run_get`** (`Features/GetWorkflowRun/GetWorkflowRunResponse.cs`, `NodeRunView.cs`). The `trigger` object stays as it was.
+
+| Field | Type | What it holds | When it is empty |
+|---|---|---|---|
+| `triggerKind` | string | The same word as the run list's `trigger` | Always present |
+| `nodes[].seconds` | number or null | How long the node row ran: `ended_at` minus `started_at` of `workflow_node_run` (migration 0023). The store stamps `started_at` when it writes a `running` row and `ended_at` on the final write, with its own clock; a later write keeps the first `started_at` (`Core/Graph/Runs/NodeRunTimes.cs`) | Null while the node runs, for a row written before migration 0023, and for a row written once at its end (`skipped` rows, `collect` rows) |
+
+```json
+{
+  "id": "morning-check@1:1",
+  "status": "succeeded",
+  "trigger": { "kind": "manual", "by": "human:cli" },
+  "triggerKind": "cli",
+  "nodes": [
+    { "node": "start", "itemIndex": 0, "status": "succeeded", "seconds": null },
+    { "node": "agent", "itemIndex": 0, "status": "succeeded", "seconds": 41.8 }
+  ]
+}
+```
 
 ## Writing workflows (PR 8b)
 
-Seven writes, each one slice (`Features/CreateWorkflow`, `ApplyWorkflowOps`, `ReplaceWorkflow`, `ValidateWorkflow`, `ActivateWorkflow`, `PauseWorkflow`, `DeleteWorkflow`) behind a route, an MCP tool and a `sindri wf` verb. `workflow_run` and `workflow_cancel` are the existing run and cancel slices (PR 6) as tools. Every write is a catalog row (`Host/Catalog/WorkflowRows.cs`) an agent session may run. The CLI verbs start the control plane first, like `wf run`.
+Seven writes, each one slice (`Features/CreateWorkflow`, `ApplyWorkflowOps`, `ReplaceWorkflow`, `ValidateWorkflow`, `ActivateWorkflow`, `PauseWorkflow`, `DeleteWorkflow`) behind a route, an MCP tool and a `sindri wf` verb. `workflow_run` and `workflow_cancel` are the existing run and cancel slices (PR 6) as tools. Every write is a catalog row (`Host/Catalog/WorkflowRows.cs`) an agent session may run, except activate and pause: those are the owner's, and a session is refused with `SND-AUTH-002` (the check sits in `ActivateWorkflowService` and `PauseWorkflowService`, so the route, the MCP tool and the CLI share it; the rows have `SessionOk: false`). The CLI verbs start the control plane first, like `wf run`.
 
 | Write | Route | MCP tool | CLI |
 |---|---|---|---|
@@ -134,7 +251,7 @@ Seven writes, each one slice (`Features/CreateWorkflow`, `ApplyWorkflowOps`, `Re
 | The workflow docs: rank a question, read a page (`--page block-schedule`) or list the pages | `GET /sindri/workflows/docs?question=&page=` | `workflow_docs` | `sindri wf docs [<words>] [--page <slug>]` |
 | Start / stop a run | `POST /sindri/workflows/{slug}/runs`, `POST /sindri/workflow-runs/{run}/cancel` | `workflow_run`, `workflow_cancel` | `sindri wf run`, `sindri wf cancel` |
 
-**Docs and blocks.** The pages in `docs/workflows/*.md` are embedded in the binary (`IWorkflowDocs`) and searched by `WorkflowDocSearch`; `blocks` and `docs` are reserved, since the literal routes win over `/workflows/{slug}`. Each block says its picker `Group` and `Title` (`IGraphBlockType`; a block that says nothing is Logic, shown by its type), and the block list is read from the block definitions only.
+**Docs and blocks.** The pages in `docs/workflows/*.md` are embedded in the binary (`IWorkflowDocs`) and searched by `WorkflowDocSearch`; `blocks` and `docs` are reserved, since the literal routes win over `/workflows/{slug}`. Each block says its picker `Group` and `Title` (`IGraphBlockType`; a block that says nothing is Logic, shown by its type), and the block list is read from the block definitions only. A config field that names a connection carries `services` in the list: the services whose connections fit it (`connection_event`'s `connection`: every service with pollable events, `github`, `linear`, `slack`, `google`), or `[]` for any connection (`call_tool`'s); other fields leave it out. The step sheet's connection picker reads it, so no service is hard-wired in the app (#3704).
 
 **Conflicts.** An edit or replace names the newest revision it read. If a newer one exists, nothing is written and the answer is `409 SND-GRAPH-007` with `currentRevision`; the caller reads the workflow again and retries. A batch of ops applies all or none (`SND-GRAPH-012` names the failing op). Create, edit and replace check the graph in draft mode and refuse blocking findings (`SND-GRAPH` findings); activate checks in activate mode. The checks use the running Sindri's block catalog and the repos of the approved profile (`IWorkflowChecker`, `Host/Commands/ProfileWorkflowChecker.cs`).
 
@@ -151,12 +268,12 @@ The built-in service `workflow-poll` (`Features/PollConnections`, every 30 secon
 The built-in service `workflow-schedule` (`Features/WorkflowSchedule`, every minute) starts runs for `schedule` nodes.
 
 1. For each active workflow, take the `schedule` node of its active revision.
-2. Compute the latest cron tick after the latest of the revision's save time, the last schedule run's tick and the last handled tick, up to now (`CronExpression.LastTick`, in the node's timezone).
+2. Compute the latest cron tick after the latest of the revision's save time, the last schedule run's tick and the last marked tick, up to now (`CronExpression.LastTick`, in the node's timezone).
 3. Start one run through `IGraphRunStarter` with trigger `{"kind":"schedule","scheduledFor":"<tick>"}`. The starter decides start, queue or skip by the workflow's `concurrency`.
 
 - Three missed days fire one run, for the latest tick only.
 - **Occurrence** of a schedule run is the tick in whole minutes since the Unix epoch, so firing the same tick twice is SND-GRAPH-100 (one run row).
-- **Handled ticks.** The store keeps the last handled tick per workflow (`IWorkflowRunStore.MarkTick` / `LastTick`, table `workflow_schedule_tick` in the run tables' migration; it only moves forward). The service marks a tick when the starter started it, queued it **or skipped it** (a run was in flight), and when the tick already has a run (SND-GRAPH-100). A skipped tick is therefore done: it is not retried each minute and does not fire late when the run in flight ends; the next cron tick fires on its own. The newest schedule run's occurrence (`IWorkflowRunStore.LatestOccurrence`) stays a second floor.
+- **Marked ticks.** The store keeps the last marked tick per workflow (`IWorkflowRunStore.MarkTick` / `LastTick`, table `workflow_schedule_tick` in the run tables' migration; it only moves forward). The service marks a tick when the starter started it, queued it **or skipped it** (a run was in flight), and when the tick already has a run (SND-GRAPH-100). A skipped tick is therefore done: it is not retried each minute and does not fire late when the run in flight ends; the next cron tick fires on its own. The newest schedule run's occurrence (`IWorkflowRunStore.LatestOccurrence`) stays a second floor.
 - **A failed launch does not use up its tick.** When the starter returns any other error (the engine is down, say), the tick is not marked, the pass logs a warning, and the next pass tries the same tick again (as long as it is still the latest). A pass keeps going over the other workflows after one fails and returns the first error at the end.
 - **One schedule node.** A workflow has exactly one trigger (`GRAPH-TRIGGER-001`), so the service reads only the first `schedule` node (up to six crons inside it).
 - **Known gap:** nothing stores when a revision was activated, so the floor is `WorkflowRevision.CreatedAt`. A tick between saving and activating a revision can fire once on activation.
@@ -177,13 +294,19 @@ How it runs, in order:
 
 1. `GraphRunBlock` runs the `for_each` like any block: it checks that `items` is a list of at most `maxItems` and outputs `count` and `batchSize`. A spec whose loop can't be found fails the `for_each` here, before any item.
 2. `GraphWorkflow` starts one child workflow, `GraphIteration`, per batch of `batchSize` items (`GraphWorkflow.Loop.cs`), one after the other, so items run in order. The parent holds one entry per batch, never one per item, and the items themselves are never in its history: each activity re-reads the list from the stored output the `for_each` read.
-3. `GraphIteration` (`GraphIterationWorkflow.cs`) loads the spec and, for each item of its batch, walks the loop's nodes with the same two rules as the run's walk (`GraphWalkRules`): one `GraphRunBlock` activity per node, a `workflow_node_run` row per node and item. The row's item index is the item's position counted from 1; the `for_each` and `collect` rows of the loop as a whole are at index 0. A failing `stop` node ends the batch and the nodes left for that item are `skipped`.
-4. After the last batch the `GraphCollect` activity reads the `collect` rows of items 1 to N, in item order, and writes the `collect` node's own row (`items`, `count`). Values never pass through workflow history.
+3. `GraphIteration` (`GraphIterationWorkflow.cs`) loads the spec and, for each item of its batch, walks the loop's nodes with the same two rules as the run's walk (`GraphWalkRules`): one `GraphRunBlock` activity per node, a `workflow_node_run` row per node and item. The row's item index is the item's position counted from 1; the `for_each` and `collect` rows of the loop as a whole are at index 0. A failing `stop` node ends the batch and the nodes left for that item are `skipped`. A failing `skip-item` node ends only its item: the nodes left for that item are `skipped`, the batch goes on with its next item, and the batch's result counts the item in `Skipped`.
+4. After the last batch the `GraphCollect` activity reads the `collect` rows of items 1 to N, in item order, and writes the `collect` node's own row (`items`, `count`, `skipped`). `skipped` is the sum of the batches' `Skipped` counts, passed in `GraphCollect`; an item a `skip-item` dropped has a `skipped` collect row, so it is not in `items`. Values never pass through workflow history.
 
 Limits: `forEach.maxItems` (profile `workflow.forEach.maxItems`, default 200, at most 10,000; this is the cap, not a default: a node's own `maxItems` can lower it and never raise it, so the effective limit is the smaller of the two, and a list over it fails the `for_each` naming the profile key) and `batchSize` (default 20, at most 100). Temporal stops a workflow at 51,200 events; the parent adds about 12 events per batch (child initiated, started, completed, and the parent's own workflow task events), so 10,000 items at the default batch size are 500 batches, about 6,000 events. A batch's own history grows with its items times the loop's nodes (about 9 events per node per item). `ForEachWorkflowTests.Five_hundred_items_stay_under_the_history_budget` asserts the parent stays under 500 events for 500 items; it measured 298 (25 batches, 2026-11-09).
 
 `GraphRunBlock` reads `IWorkflowRunStore.NodeRunsForItem` (every index 0 row plus the current item's rows), not the whole run, so a loop of N items reads O(N) rows in all. It still re-interpolates the `for_each` config (the whole `items` list) once per call, which costs CPU, not row reads.
 
-**Sizes.** A block's input and output are cut at 64 KB before they enter workflow history (`GraphBlockActivities.Fit`): an activity result over Temporal's 2 MB limit fails the workflow task, which Temporal retries without end. A cut value keeps one extra character so the store still flags it `truncated`. The `collect` node's own output (all the values together) must also fit in 64 KB: when it does not, `GraphCollect` fails the `collect` and the message names the collected size and the cap (for example 200 items of 400 bytes are about 80 KB).
+**Sizes.** A block's input and output are cut at 64 KB before they enter workflow history (`GraphBlockActivities.Fit`): an activity result over Temporal's 2 MB limit fails the workflow task, which Temporal retries without end. A cut output keeps one extra character so the store still flags it `truncated`; a cut input sets no flag. The `collect` node's own output (all the values together) must also fit in 64 KB: when it does not, `GraphCollect` fails the `collect` and the message names the collected size and the cap (for example 200 items of 400 bytes are about 80 KB).
 
-**Failures in a body node.** A failing body node (item 25 of a batch of 20 is in the second batch) stops the loop and lands on the `collect` node: the `collect` row is `failed` and the run's error names the item. Only the `collect`'s `onFailure` decides what happens next (`continue` lets the walk go on to the nodes after the loop; anything else fails the run). `ForEachLaterBatchTests` covers item 25 of 30 with the default batch size, both ways.
+**Failures in a body node.** A failing body node whose `onFailure` is not `skip-item` (item 25 of a batch of 20 is in the second batch) stops the loop and lands on the `collect` node: the `collect` row is `failed` and the run's error names the item. Only the `collect`'s `onFailure` decides what happens next (`continue` lets the walk go on to the nodes after the loop; anything else fails the run). `ForEachLaterBatchTests` covers item 25 of 30 with the default batch size, both ways.
+
+**Dropping one item (`skip-item`, #3806).** A body node with `onFailure: skip-item` that fails ends only its item (`GraphIterationWorkflow.ItemFailure.cs` `Drops`). Its row is `failed` with its error, the item's later nodes are `skipped`, and no failure goes up: the run's `error` stays empty and the run's status does not change. Batches run one after the other, so a dropped item never cancels another. The `collect` gives the kept items in input order and `skipped: N`; when all N items are dropped, `items` is empty and the walk goes on after the `collect`. `SkipItemInLoopTests` covers one dropped item with one batch and with one batch per item, and every item dropped.
+
+**What a failed node stores.** A failed node's stored output is for the run page, and most blocks store none. A failed `run_agent` stores `{lastRefusedReport, files}` when it has them. `lastRefusedReport` is the last report the engine refused. `files` holds the declared output files the agent left: a file that parses is stored as its JSON value, else as text. The engine reads them when the session exited, went idle or stopped heartbeating before its outputs were complete. A sandbox limit, a lost watch and a timeout store no output.
+
+**Reading a node that failed and continued.** A later node can't read a node that failed with `onFailure: continue`, whatever it stored. When its config reads `{{a.x}}` from such a node, it fails with `SND-GRAPH-131` (`'a' failed and continued, so '{{a.x}}' has no value`), and a condition that reads it fails the same way. The run fails at that reader, not later on a null. A reference to a node that succeeded, or to one a branch skipped, reads as before.

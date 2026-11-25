@@ -37,7 +37,14 @@ internal sealed class StatusService(IMetaConfig config, StatusReader status, IKe
         // The reservation and the advice are extras: a host or file that can't be read leaves them out instead of failing the status.
         var host = await resources.Read(cancellationToken).ConfigureAwait(false);
         var advice = host.IsError ? null : await advisor.Advise(team.Value, host.Value, refresh: true, cancellationToken).ConfigureAwait(false);
-        return read.Value with { Context = await status.Context(team.Value, cancellationToken).ConfigureAwait(false), LastHealth = stored.Value.Health, Train = await Train(stored.Value.Train, cancellationToken).ConfigureAwait(false), Heavy = advice?.IsSuccess == true ? advice.Value.Heavy : null, Builders = advice?.IsSuccess == true ? advice.Value.Builders : null, Consumer = await Consumer(read.Value, cancellationToken).ConfigureAwait(false), Defects = await Defects(cancellationToken).ConfigureAwait(false) };
+        return read.Value with { Context = await status.Context(team.Value, cancellationToken).ConfigureAwait(false), LastHealth = stored.Value.Health, Train = await Train(stored.Value.Train, cancellationToken).ConfigureAwait(false), Heavy = advice?.IsSuccess == true ? advice.Value.Heavy : null, Builders = advice?.IsSuccess == true ? advice.Value.Builders : null, Consumer = await Consumer(read.Value, cancellationToken).ConfigureAwait(false), Defects = await Defects(cancellationToken).ConfigureAwait(false), RecycleStuck = await RecycleStuck(team.Value.Lanes, cancellationToken).ConfigureAwait(false) };
+    }
+
+    // A recycle waiter that gave up (#4264); an unreadable record leaves the line out rather than failing the status.
+    private async ValueTask<string?> RecycleStuck(IReadOnlyCollection<string> lanes, CancellationToken cancellationToken)
+    {
+        var stored = await values.Get(KvKeys.RecycleGaveUp, cancellationToken).ConfigureAwait(false);
+        return stored.IsError ? null : RecycleGiveUps.Line(stored.Value, lanes);
     }
 
     // An unreadable count leaves the line out rather than failing the status.

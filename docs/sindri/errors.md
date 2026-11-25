@@ -43,11 +43,11 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-LEDGER-001` | The ledger was written by a newer sindri. | Upgrade sindri (`git pull` then `scripts/install-cs.sh`), then rerun. |
 | `SND-LOCK-001` | Another sindri run holds the lock. | wait a moment and rerun; `sindri doctor` shows the holder |
 | `SND-LOCK-003` | This run's fencing epoch is stale; another run took over. | Nothing to do; the newer run continues. Check `sindri doctor` if this repeats. |
-| `SND-PROFILE-001` | The profile is invalid. | Run `sindri profile validate` and fix each listed key. |
-| `SND-PROFILE-002` | No profile was found. | Run `sindri profile init`, pass --profile &lt;dir&gt;, or set AW_PROFILE_DIR. |
-| `SND-PROFILE-003` | No such profile key. | See docs/sindri/profile.md for the keys. |
-| `SND-PROFILE-004` | No such repo in the profile. | Use a name listed under repos in profile.yaml. |
-| `SND-PROFILE-005` | The profile was written for a newer sindri. | Upgrade sindri (`git pull` then `scripts/install-cs.sh`). |
+| `SND-PROFILE-001` | No profile was found. | Run `sindri profile init`, then `sindri repo add <path>`. |
+| `SND-PROFILE-002` | The profile is invalid (doesn't parse, doesn't match the schema, or has a layout Sindri won't edit). | Run `sindri profile validate` and fix each listed key. |
+| `SND-PROFILE-003` | The `--if-hash` you passed isn't the live profile's: the file changed since you read it. | Read the profile again and retry with the new hash. |
+| `SND-PROFILE-004` | The profile file exists but can't be read (permissions, an I/O error, or a directory at its path). Nothing is written over it. | Check the file's permissions, e.g. `chmod 600 <path>`, or move a directory at that path out of the way, then retry. |
+| `SND-PROFILE-005` | The profile file can't be written (permissions or an I/O error). | Check the file's permissions, e.g. `chmod 600 <path>`, then retry. |
 | `SND-PROFILE-006` | The hash doesn't match the current profile. | Run `sindri profile validate` for the current hash and retry with it. |
 | `SND-PROFILE-007` | A profile already exists there. | Edit it, or pass --force to overwrite it. |
 | `SND-PROFILE-008` | This repo has no plan files for --ring0. | Run --ring0 from a repo with docs/superpowers/plans, or run `sindri profile init` without it. |
@@ -95,6 +95,10 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-CONN-013` | The provider rejected the saved poll cursor. | ask for a full re-read (the owner's call); Sindri does not re-read on its own |
 | `SND-CONN-014` | The provider is rate limiting this connection (429 or 5xx on a poll). | nothing: the next poll waits for Retry-After, then doubles the wait on each repeat |
 | `SND-CONN-015` | A rename was refused: an active workflow's `connection_event` trigger watches the connection, and the old name would stop it firing. The message names the workflows. | pause those workflows (`sindri wf pause <slug>`), rename, point their triggers at the new name, then activate them again |
+| `SND-CONN-016` | The poller was given a connection with no preset (`slack:messages` has none on purpose), so it made no call. | none; the Messages page reads that connection, not the poller |
+| `SND-CONN-017` | A generic add or a rename used the name `slack:messages` (a rename counts when `slack:messages` is the old name or the new one). | run `sindri messages connect` |
+| `SND-CONN-018` | The service refused the pasted key when Sindri checked it. Nothing was stored. | check that the key was copied whole and has not expired or been revoked, then paste it again |
+| `SND-CONN-019` | Sindri could not reach the service to check the pasted key. Nothing was stored. | check the network and try again |
 | `SND-CONN-101` | A polled event found its run ids, five in a row, held by runs of other events. | nothing: the cursor stays and the next poll tries again; the event is never dropped |
 | `SND-CONN-201` | The handoff inbox's answer breaks the inbox contract; the message names the field. | fix the inbox so it answers as `schemas/handoff/inbox.openapi.yaml` says (docs/sindri/handoff.md) |
 | `SND-CONN-202` | Another caller claimed the offer first. Informational: nothing starts. | none; the next poll lists what is still open |
@@ -154,8 +158,22 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-ONYX-010` | Docker points at another machine |
 | `SND-ONYX-011` | A docker compose command failed |
 | `SND-ONYX-012` | Sindri can't use its Onyx directory |
-| `SND-SETUP-005` | The Onyx admin email and password were both needed |
-| `SND-SETUP-006` | No Onyx setup was waiting for the login |
+
+## SND-SETUP (first run)
+
+Words from the first-run spec (`docs/superpowers/specs/2026-11-12-sindri-first-run-design.md` §6). The app shows the sentence and puts the code in Details.
+
+| Code | Meaning | Fix |
+|---|---|---|
+| `SND-SETUP-008` | The scan root is missing, unreadable or outside the home folder. | `sindri setup scan --root DIR` |
+| `SND-SETUP-009` | Restart refused: agent sessions, workflow runs or jobs are open. | `sindri restart --wait`; `sindri wf run-show <run>` for each run |
+| `SND-SETUP-010` | `sindri setup --apply` named no repo and none here is one you worked on in GitHub lately. | `sindri setup --apply --repo <path>` |
+| `SND-SETUP-011` | The installed Sindri has no `build-info`, so it isn't finished installing. | `scripts/install-cs.sh --link` |
+| `SND-SETUP-012` | Sindri didn't answer 30 seconds after a start or restart. | `sindri serve` |
+| `SND-SETUP-013` | GitHub or Linear refused Sindri's OAuth app (an org policy). | Paste a token: `sindri setup connect <provider> --token-env NAME` |
+| `SND-SETUP-014` | This build ships no client id for the provider and the profile sets none (`setup.oauth.github`, `setup.oauth.linear`), or GitHub doesn't take the client id: it is wrong, or the app has no Device Flow. | Paste a token: `sindri setup connect <provider> --token-env NAME` |
+| `SND-SETUP-015` | The setup pass of `sindri setup --apply` didn't finish within `--timeout`; it keeps running. | `sindri jobs show <id>`, then `sindri setup` |
+| `SND-SETUP-016` | The setup pass of `sindri setup --apply` failed. | `sindri jobs show <id>` |
 
 ## SND-GRAPH (workflow graphs)
 
@@ -185,9 +203,16 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-109` | A run of this workflow can't start the workflow again |
 | `SND-GRAPH-110` | The run is not waiting on an agent at that node, so there is nothing to take over |
 | `SND-GRAPH-111` | That agent node is not taken over, so there is nothing to hand back |
+| `SND-GRAPH-113` | A prompt field came out empty |
+| `SND-GRAPH-119` | That part of workflows is not built yet: the Workflows page contract routes (`POST .../test`, `POST .../pins`, `GET .../trigger-events`, `GET .../templates`) and the `replace_node` op answer this until their phase lands |
 | `SND-GRAPH-120` | A workflow call is nested too deep: the call would be past `workflow.callDepth` (default 3) |
 | `SND-GRAPH-121` | A run can't start its own workflow, or the workflow that called it |
 | `SND-GRAPH-122` | An `http` node's request was refused before it was sent: host not on `workflow.http.hosts`, an address that is this machine, plain http, or a credential header |
 | `SND-GRAPH-123` | An `http` node's request got no acceptable answer: status outside `expect`, a redirect loop, an answer over 1 MB, or a network failure |
 | `SND-GRAPH-124` | A `workflow_result` node found no result: the run is not that workflow's, is not finished, or the workflow has no succeeded run |
+| `SND-GRAPH-125` | A re-run from a step was asked of a run that has not ended (queued, running or waiting): wait for it to end or cancel it first |
+| `SND-GRAPH-126` | A re-run from a step was refused: a step before the chosen one failed, never ran, or was skipped only because the run halted, so it has no output to restore; re-run from that step instead |
 | `SND-GRAPH-130` | No question waits at that node |
+| `SND-GRAPH-131` | A reference reads a node that failed and continued |
+| `SND-GRAPH-132` | The setup service ran a workflow other than the hello-sindri one it made, or ran it a second time |
+| `SND-GRAPH-133` | A prompt step's answer said `couldNotAnswer: true`; the message carries the model's `couldNotAnswerWhy` |

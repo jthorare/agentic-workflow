@@ -7,7 +7,7 @@ internal static class RunStatus
     /// <param name="status">The served status.</param>
     /// <returns>True when the run is live.</returns>
     internal static bool IsLive(string status) =>
-        string.Equals(status, "running", StringComparison.Ordinal) || string.Equals(status, "waiting", StringComparison.Ordinal) || string.Equals(status, "queued", StringComparison.Ordinal);
+        string.Equals(status, "running", StringComparison.Ordinal) || string.Equals(status, "waiting", StringComparison.Ordinal) || string.Equals(status, "queued", StringComparison.Ordinal) || string.Equals(status, "starting", StringComparison.Ordinal);
 
     /// <summary>True while a cancel can be asked for: the run is running or waiting.</summary>
     /// <param name="status">The served status.</param>
@@ -24,5 +24,17 @@ internal static class RunStatus
         "waiting" => Api.ChipTone.Attn,
         "failed" => Api.ChipTone.Fail,
         _ => Api.ChipTone.Neutral,
+    };
+
+    /// <summary>The StateChipView tone word of a served status: each live state shows as itself, so a run can read Running or Waiting.</summary>
+    /// <param name="status">The served status.</param>
+    /// <returns>ok for succeeded, running, waiting, error for failed, else neutral (queued, cancelled, skipped, and a status this build does not know).</returns>
+    internal static string ToneWord(string status) => status switch
+    {
+        "succeeded" => "ok",
+        "running" => "running",
+        "waiting" => "waiting",
+        "failed" => "error",
+        _ => "neutral",
     };
 }

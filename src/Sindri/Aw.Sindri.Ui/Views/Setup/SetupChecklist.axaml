@@ -30,6 +30,11 @@
       </Border>
     </Grid>
 
+    <!-- A fix several failed steps share (an unreadable profile), said once for the page (#3610). -->
+    <Border x:Name="SetupProblem" Classes="error-panel" IsVisible="{Binding HasProblem}" AutomationProperties.Name="{Binding ProblemText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock Classes="caption" Text="{Binding ProblemText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+
     <Border x:Name="SetupRunLine" Classes="run-line" IsVisible="{Binding HasSteps}">
       <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
         <TextBlock Classes="caption muted" Text="{Binding RunLineText}" />

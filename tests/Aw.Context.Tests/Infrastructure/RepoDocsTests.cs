@@ -7,7 +7,7 @@ using Microsoft.Data.Sqlite;
 
 namespace Aw.Context.Tests.Infrastructure;
 
-public sealed class RepoDocsTests
+public sealed partial class RepoDocsTests
 {
     [Fact, Trait("Lane", "integration")]
     public async Task A_planted_secret_never_reaches_the_index_and_an_edit_reads_as_a_new_version()
@@ -93,6 +93,33 @@ public sealed class RepoDocsTests
         Assert.Empty(hits);
         Assert.Equal((1, 2), (refreshed.Recleaned, refreshed.Added));
         Assert.Equal(0L, Count(home, $"SELECT count(*) FROM doc WHERE ruleset <> '{home.Scrubbers.Ruleset.Value}'"));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task FetchMany_cuts_two_chunks_of_one_doc_from_one_read_and_a_missing_blob_is_not_found()
+    {
+        using var home = new TempHome();
+        using var fixture = FixtureRepo.Build();
+        var repo = new ContextRepo(ContextRepoName.From("split-panes"), fixture.Path);
+        var blob = Git(fixture.Path, "rev-parse", "HEAD:docs/architecture.md");
+        var source = new RepoDocsSource([repo], home.Database, home.Git, home.Scrubbers, home.Clock);
+        static SourceRef Ref(string id, string version) => new(SourceId.From("repo-docs"), ExternalId.From(id), SourceVersion.From(version), Permalink: null, RecordKey.From("repo:split-panes/docs/architecture.md"));
+        var first = Ref("split-panes/docs/architecture.md#L1-L2", blob);
+        var second = Ref("split-panes/docs/architecture.md#L3-L4", blob);
+        var gone = Ref("split-panes/docs/architecture.md#L1-L2", "0123456789abcdef0123456789abcdef01234567");
+        var stray = Ref("other/docs/a.md#L1-L2", blob);
+
+        var many = await source.FetchMany([first, second, gone, stray], TestContext.Current.CancellationToken);
+        var one = await source.Fetch(first, TestContext.Current.CancellationToken);
+        var other = await source.Fetch(second, TestContext.Current.CancellationToken);
+
+        Assert.True(many.IsSuccess);
+        Assert.Equal(4, many.Value.Count);
+        Assert.Equal(one.Value.Text, many.Value[0].Value.Text);
+        Assert.Equal(other.Value.Text, many.Value[1].Value.Text);
+        Assert.NotEqual(many.Value[0].Value.Text, many.Value[1].Value.Text, StringComparer.Ordinal);
+        Assert.Equal("SND-CONTEXT-003", many.Value[2].Error.Code);
+        Assert.Equal("SND-CONTEXT-003", many.Value[3].Error.Code);
     }
 
     [Fact, Trait("Lane", "integration")]

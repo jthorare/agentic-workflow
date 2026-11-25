@@ -166,4 +166,10 @@ internal static partial class Labels
 
     /// <summary>The item sheet's heading for the requests filed against the item.</summary>
     internal static string ItemRequests => "Requests";
+
+    /// <summary>Home's Needs you card when its first read failed.</summary>
+    internal const string NeedsYouReadFailed = "Couldn't load what needs you";
+
+    /// <summary>The Retry button beside <see cref="NeedsYouReadFailed"/>.</summary>
+    internal const string NeedsYouRetry = "Retry";
 }

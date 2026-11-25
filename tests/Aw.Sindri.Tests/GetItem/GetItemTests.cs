@@ -11,8 +11,10 @@ using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.GetItem;
 using Aw.Sindri.Features.Items;
+using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Items;
+using Aw.Sindri.Tests.Sessions;
 
 namespace Aw.Sindri.Tests.GetItem;
 
@@ -138,6 +140,22 @@ public sealed class GetItemTests
         public ValueTask<Result<string>> Mark(string view, CancellationToken cancellationToken) => inner.Mark(view, cancellationToken);
 
         public ValueTask<Result<ProjectorState?>> State(CancellationToken cancellationToken) => inner.State(cancellationToken);
+    }
+
+    [Fact]
+    public async Task An_invalid_live_profile_reads_the_item_like_no_profile()
+    {
+        await _q.Item('1', "Ship it", repo: "web");
+        using var entered = _q.Human();
+        var slice = _q.Views.Slice;
+        var real = new ItemLaunchSource(new LaunchViews(_q.Views.Views), new LaunchTargetsReader(slice.Store, slice.Events, slice.Profiles, new FixedLaunchSpend(), _q.Views.Progress), slice.Profiles, new AgentCatalog(SessionData.Agents), slice.Clock);
+        var service = new GetItemService(new ViewItemResolver(_q.Views.Views), _q.Views.Progress, slice.Callers, real, _q.Views.Views);
+        slice.Profiles.Live = SindriErrors.ProfileInvalid.With("/home/thor/profile.yaml: line 3: unknown key 'tennant'");
+
+        var result = await service.Handle(A.GetItemRequest().WithItem(ItemRef.To(ItemQueryHarness.Id('1'))).Build(), ItemQueryHarness.Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        Assert.Equal("Ship it", result.Value.Title);
     }
 
     private async Task Link(char digit, string record) =>

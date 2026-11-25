@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Todos.Note;
 
@@ -11,8 +12,12 @@ namespace Aw.Sindri.Features.GetTodoNote;
 /// <param name="source">Reads the note.</param>
 /// <param name="ledger">Reads the hold's opening event.</param>
 /// <param name="clock">Sindri's clock.</param>
-internal sealed class TodoNoteReads(TodoPickWindow picks, TodoHolds holds, ITodoNoteSource source, ILedgerReader ledger, TimeProvider clock)
+/// <param name="profileFile">Says whether the profile file is on disk, to tell a new home from a file it can't read; null counts it absent.</param>
+internal sealed class TodoNoteReads(TodoPickWindow picks, TodoHolds holds, ITodoNoteSource source, ILedgerReader ledger, TimeProvider clock, IProfileFile? profileFile = null)
 {
+    /// <summary>Whether the profile file is on disk (readable or not).</summary>
+    internal bool ProfileFileExists() => profileFile?.Exists() == true;
+
     internal async ValueTask<Result<TodoNoteHold?>> Hold(IReadOnlyList<TodoRow> rows, CancellationToken cancellationToken)
     {
         var open = await holds.Open(cancellationToken).ConfigureAwait(false);

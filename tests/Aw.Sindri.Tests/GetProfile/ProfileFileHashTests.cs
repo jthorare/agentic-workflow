@@ -62,6 +62,20 @@ public sealed class ProfileFileHashTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task The_read_serves_workflow_editor_from_the_live_file_and_null_when_unset()
+    {
+        TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
+        await using var host = await Checked();
+        var unset = await Profile(host);
+
+        await File.AppendAllTextAsync(ProfilePath(host), "workflow:\n  editor: steps\n", Token);
+        var set = await Profile(host);
+
+        Assert.Equal(JsonValueKind.Null, unset.GetProperty("workflowEditor").ValueKind);
+        Assert.Equal("steps", set.GetProperty("workflowEditor").GetString());
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task A_missing_profile_file_gives_a_null_fileHash()
     {
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();

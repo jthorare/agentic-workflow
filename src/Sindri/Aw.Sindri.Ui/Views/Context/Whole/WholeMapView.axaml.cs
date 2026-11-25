@@ -83,6 +83,15 @@ internal sealed partial class WholeMapView : UserControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
+
+        // Enter on an open node panel opens its source: the file on this machine, else the link (#3715). A focused button or text box keeps its own Enter.
+        if (!e.Handled && e.Key == Key.Enter && e.Source is not (TextBox or Button) && _map?.Panel is { IsOpen: true, HasSource: true } panel)
+        {
+            _ = panel.OpenSource();
+            e.Handled = true;
+            return;
+        }
+
         if (!e.Handled && e.Source is not TextBox && WholeCanvas.HandleZoomKey(e.Key))
         {
             e.Handled = true;
@@ -112,7 +121,11 @@ internal sealed partial class WholeMapView : UserControl
 
     private void OnNodePanelClose(object? sender, RoutedEventArgs e) => _ = _map?.Panel.Close();
 
-    private void OnNodePanelOpenSource(object? sender, RoutedEventArgs e) => _ = _map?.Panel.OpenSource();
+    private void OnNodePanelOpenFile(object? sender, RoutedEventArgs e) => _ = _map?.Panel.OpenLocalFile();
+
+    private void OnNodePanelCopyPath(object? sender, RoutedEventArgs e) => _ = _map?.Panel.CopyPath();
+
+    private void OnNodePanelOpenSource(object? sender, RoutedEventArgs e) => _ = _map?.Panel.OpenLink();
 
     private void OnNodePanelEdge(object? sender, RoutedEventArgs e)
     {

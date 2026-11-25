@@ -86,6 +86,20 @@ internal sealed class SqliteDecisionLog(JudgeDatabase database, JsonSerializerOp
         }
     }
 
+    public async ValueTask<Result<IReadOnlyList<FailureRecord>>> LatestFailuresSince(DateTimeOffset since, int count, CancellationToken cancellationToken)
+    {
+        var begun = await database.BeginRead(cancellationToken).ConfigureAwait(false);
+        if (begun.IsError)
+        {
+            return begun.Error;
+        }
+
+        await using (begun.Value.ConfigureAwait(false))
+        {
+            return await SqliteQueries.List(begun.Value, DecisionSql.LatestFailures(since, count), ScalarMapper.Failure, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
     public async ValueTask<Result<IReadOnlyList<DecisionOutcome>>> LastAttemptOutcomes(int count, CancellationToken cancellationToken)
     {
         var begun = await database.BeginRead(cancellationToken).ConfigureAwait(false);

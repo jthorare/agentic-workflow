@@ -10,7 +10,7 @@ public sealed class CiMergeCheckTests
 {
     private readonly MetaWorld _world = new();
 
-    private CheckMergeService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages));
+    private CheckMergeService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages, new LaneAddress(_world.LaneFiles, _world.LaneSessions, _world.Sessions)));
 
     private async Task CiTeam()
     {
@@ -158,7 +158,8 @@ public sealed class CiMergeCheckTests
             .When("rev-parse --verify --quiet origin/main", "newmain\n")
             .When("diff --name-only oldmain...headsha", "src/a.cs\n")
             .When("merge-tree", exitCode: 1)
-            .When("git fetch");
+            .When("git fetch")
+            .When("gh api graphql", MergeRun.QueueAnswers.Off);
 
         var response = await Check();
 

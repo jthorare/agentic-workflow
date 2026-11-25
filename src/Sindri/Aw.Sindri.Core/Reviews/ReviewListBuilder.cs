@@ -81,7 +81,11 @@ public static class ReviewListBuilder
 
     private static ReviewRow Row(ReviewPull pull, ReviewWait? wait, ReviewSummary? summary) =>
         new(pull.Repo, pull.Number, pull.Title, pull.Author, pull.Draft, pull.OpenedAt, pull.UpdatedAt, wait?.Kind, wait?.Text, wait?.NewCommits,
-            summary?.Ci ?? ReviewCi.None, summary?.RequiredOpen, summary?.RequiredText, pull.Claims.Count > 0, string.Create(CultureInfo.InvariantCulture, $"/reviews/{pull.Repo}/{pull.Number}"));
+            summary?.Ci ?? ReviewCi.None, summary?.RequiredOpen, RequiredState(summary), summary?.RequiredText, pull.Claims.Count > 0, string.Create(CultureInfo.InvariantCulture, $"/reviews/{pull.Repo}/{pull.Number}"));
+
+    // why: a null count means two things on the row, so the word says which: no summary at all, or a summary of a PR whose settings name no checks
+    private static string RequiredState(ReviewSummary? summary) =>
+        summary is null ? ReviewRequiredState.NotRead : summary.RequiredOpen is null ? ReviewRequiredState.NoneNamed : ReviewRequiredState.Counted;
 
     private static bool Same(string a, string b) => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 }

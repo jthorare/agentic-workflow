@@ -5,8 +5,8 @@
 # AW_HEAVY_SESSION_PID (this shell, or a dead pid, or a sleeping stand-in session). Nothing real is built or tested.
 # Covers: usage (exit 2); the exit code of the job passes through; the lock files (heavy-session/<pid>.lock, heavy-job.lock
 # and .k, the owner line, released on exit, a dead owner reclaimed, an ownerless dir never); the cap file heavy-slots-cap;
-# the memory guard (AW_HEAVY_MIN_FREE_MB and _STEP_MB, Linux /proc/meminfo only); the meta reserve heavy-meta-reserve (capped at slots-1, #2060) and
-# AW_HEAVY_PRIORITY=meta; the lock timeout (75, on a copy of the script with TIMEOUT=0: the real one is a constant 5400 s);
+# the memory guard (AW_HEAVY_MIN_FREE_MB and _HIGH_MB, Linux /proc/meminfo only); the meta reserve heavy-meta-reserve (capped at slots-1, #2060) and
+# AW_HEAVY_PRIORITY=meta, and the note of a wait beside a free reserved slot (#3907, on a copy with HOLD_NOTE_EVERY=1); the lock timeout (75, on a copy of the script with TIMEOUT=0: the real one is a constant 5400 s);
 # the session dying (124); INT and TERM (130); the job launched through `systemd-run --user --scope -p OOMPolicy=continue` when
 # that works, and the old direct launch when it doesn't (#2931, stub systemd-run); a nested run under AW_HEAVY_LOCK_HELD=1 taking no lock; --light, --expensive
 # and the auto classification; the --timeout added to `dotnet test`.
@@ -23,18 +23,21 @@ check() {
 }
 shown() { printf '%s\n' "$1" | sed 's/^/  in: /'; }   # every line prefixed: the CI runner keeps only "  in:" lines of a failing suite
 has() { # has <name> <text> <fixed string>
-  if printf '%s' "$2" | grep -qF -- "$3"; then echo "ok - $1"; else echo "not ok - $1"; echo "  missing: $3"; shown "$2"; fail=1; fi
+  if grep -qF -- "$3" <<<"$2"; then echo "ok - $1"; else echo "not ok - $1"; echo "  missing: $3"; shown "$2"; fail=1; fi
 }
 lacks() {
-  if printf '%s' "$2" | grep -qF -- "$3"; then echo "not ok - $1"; echo "  unexpected: $3"; shown "$2"; fail=1; else echo "ok - $1"; fi
+  if grep -qF -- "$3" <<<"$2"; then echo "not ok - $1"; echo "  unexpected: $3"; shown "$2"; fail=1; else echo "ok - $1"; fi
 }
+# #3660: `has` was `printf | grep -qF` under pipefail: a needle on the first line of a long text read as missing (SIGPIPE, 141).
+needle_first="$(printf 'AW_HEAVY_NEEDLE: on line one\n'; head -c 100000 /dev/zero | tr '\0' x | fold -w 80)"
+for _i in 1 2 3 4 5; do has "has finds a needle on the first line of a 100 KB text ($_i)" "$needle_first" "AW_HEAVY_NEEDLE: on line one"; done
 WORK="$(mktemp -d)"
 bgpids=()
 cleanup() { for p in ${bgpids[@]+"${bgpids[@]}"}; do kill "$p" 2> /dev/null; done; find "$WORK" -delete 2> /dev/null; }   # by recorded pid only
 trap cleanup EXIT
 
 for v in $(compgen -e | grep -E '^AW_(HEAVY|SESSION_HEAVY)'); do unset "$v"; done   # this suite may itself run under a heavy job
-unset DOTNET_PROCESSOR_COUNT MSBUILDDISABLENODEREUSE
+unset DOTNET_PROCESSOR_COUNT MSBUILDDISABLENODEREUSE UseSharedCompilation
 STATE="$WORK/state"; LOCKS="$STATE/locks"
 export AW_STATE_DIR="$STATE" AW_HEAVY_SESSION_PID="$$"
 STUB="$WORK/stub"; mkdir -p "$STUB"
@@ -68,6 +71,9 @@ mkdir -p "$WORK/scripts"; ln -s "$DIR/../config" "$WORK/config"   # the copies f
 FAST="$WORK/scripts/heavy-fast.sh"; sed 's/^TIMEOUT=5400$/TIMEOUT=0/' "$HEAVY" > "$FAST"
 ONE="$WORK/scripts/heavy-one.sh"; sed 's/^TIMEOUT=5400$/TIMEOUT=1/' "$HEAVY" > "$ONE"
 check "the copies differ from the wrapper only in TIMEOUT" "$(diff "$HEAVY" "$FAST" | grep -c '^>')$(diff "$HEAVY" "$ONE" | grep -c '^>')" "11"
+# NOTE repeats the reserve-wait note every second (#3907; the wrapper's interval is the constant HOLD_NOTE_EVERY=300).
+NOTE="$WORK/scripts/heavy-note.sh"; sed 's/^HOLD_NOTE_EVERY=300$/HOLD_NOTE_EVERY=1/' "$HEAVY" > "$NOTE"
+check "the note copy differs from the wrapper only in HOLD_NOTE_EVERY" "$(diff "$HEAVY" "$NOTE" | grep -c '^>')" "1"
 
 # The wrapper's watchdog leaves a `sleep 5` holding its stdout after the job ends, so a $(...) around it would wait up to 5 s for
 # the pipe to close (pinned as is). H and F (the wrapper, and the TIMEOUT=0 copy) write to a file and cat it: the sleep holds the file.
@@ -104,6 +110,21 @@ check "a second flag is taken as the command (pinned as is): setsid or perl reje
 check "a second flag is taken as the command: echo never runs" "$(printf '%s\n' "$out" | grep -cx 'x')" "0"
 reset
 
+# --- through a link, on a system whose readlink has no -f (#4376) ---
+# heavy.sh:43 resolves its own folder with `readlink -f`. The stub dir goes on PATH in the call's env: AW_HEAVY_TEST_PATH only applies after that line.
+# The cwd is two levels down: a failed readlink makes the folder ".", and ../config/lib from $WORK itself would find the suite's config link.
+RL_REAL="$(command -v readlink)"; RL_STUB="$WORK/rl-stub"; LINKDIR="$WORK/linkdir"; LINKCWD="$WORK/nolink/cwd"
+mkdir -p "$RL_STUB" "$LINKDIR" "$LINKCWD"; ln -s "$HEAVY" "$LINKDIR/heavy"
+printf '#!/bin/sh\nfor a in "$@"; do [ "$a" = "-f" ] && { echo "readlink: illegal option -- f" >&2; echo "usage: readlink [-n] [file ...]" >&2; exit 1; }; done\nexec "%s" "$@"\n' "$RL_REAL" > "$RL_STUB/readlink"
+chmod +x "$RL_STUB/readlink"
+L() { local f rc; f="$(mktemp "$WORK/l.XXXXXX")"; (cd "$LINKCWD" && "$LINKDIR/heavy" "$@" > "$f" 2>&1); rc=$?; cat "$f"; return $rc; }
+out="$(L --light echo linked)"; rc=$?
+check "control: heavy through a link, readlink with -f: exit 0 (#4376)" "$rc" "0"
+out="$(PATH="$RL_STUB:$PATH" L --light echo linked)"; rc=$?
+check "heavy through a link finds its config when readlink has no -f: exit 0 (#4376)" "$rc" "0"
+lacks "heavy through a link, readlink without -f: no 'heavy-config.sh not found' (#4376)" "$out" "heavy-config.sh not found"
+reset
+
 # --- lock files while a job runs, and after ---
 child='echo "ppid=$PPID"; echo "mode=${AW_HEAVY_MODE-}"; echo "held=${AW_HEAVY_LOCK_HELD-}"; echo "slot=${AW_HEAVY_SLOT-unset}"; echo "cpus=${DOTNET_PROCESSOR_COUNT-}"; echo "nodereuse=${MSBUILDDISABLENODEREUSE-}"; echo "pgid=$(ps -o pgid= -p $$ | tr -d " ")/$$"; ls "$1"; for f in "$2"/owner "$3"/owner; do [ -f "$f" ] && echo "owner $(cat "$f")"; done; true'
 out="$(H --light bash -c "$child" _ "$LOCKS" "$SESSLOCK" "$LOCKS/heavy-job.lock" 2>&1)"
@@ -114,6 +135,11 @@ has "light: AW_HEAVY_LOCK_HELD=1 is exported" "$out" "held=1"
 has "light: AW_HEAVY_SLOT is not set" "$out" "slot=unset"
 has "default DOTNET_PROCESSOR_COUNT is 4" "$out" "cpus=4"
 has "MSBuild node reuse is off" "$out" "nodereuse=1"
+# #3178: no shared Roslyn server; a caller's own value is kept
+ucmd='echo "usc=${UseSharedCompilation-unset}"'
+check "UseSharedCompilation=false for a light job (#3178)" "$(unset UseSharedCompilation; H --light bash -c "$ucmd" 2>&1)" "usc=false"
+check "UseSharedCompilation=false for an expensive job (#3178)" "$(unset UseSharedCompilation; H --expensive bash -c "$ucmd" 2>&1)" "usc=false"
+check "a caller's UseSharedCompilation=true is kept (#3178)" "$(UseSharedCompilation=true H --light bash -c "$ucmd" 2>&1)" "usc=true"
 pg="$(printf '%s\n' "$out" | sed -n 's/^pgid=//p')"
 check "the job is its own process group leader" "${pg%%/*}" "${pg##*/}"
 wp="$(printf '%s\n' "$out" | sed -n 's/^ppid=//p')"
@@ -167,7 +193,16 @@ for sub in build publish format run; do check "dotnet $sub is expensive" "$(mode
 check "dotnet test is expensive" "$(mode_of dotnet test x)" "expensive"
 check "dotnet test --no-build is light" "$(mode_of dotnet test x --no-build)" "light"
 check "dotnet --version is light" "$(mode_of dotnet --version)" "light"
-check "a path-qualified dotnet is not matched (pinned as is): light" "$(mode_of "$STUB/dotnet" build x)" "light"
+check "a path-qualified dotnet build is matched by its basename: expensive" "$(mode_of "$STUB/dotnet" build x)" "expensive"
+check "a path-qualified dotnet build inside a bash -c string: expensive" "$(mode_of bash -c "$STUB/dotnet build x")" "expensive"
+check "dotnet msbuild is expensive, like dotnet build (#3810 item 3)" "$(mode_of dotnet msbuild x)" "expensive"
+check "a path-qualified dotnet msbuild is expensive (#3810 item 3)" "$(mode_of "$STUB/dotnet" msbuild x)" "expensive"
+check "a path-qualified dotnet --version stays light" "$(mode_of "$STUB/dotnet" --version)" "light"
+check "dotnet clean stays light" "$(mode_of dotnet clean)" "light"
+check "a path-qualified dotnet clean stays light" "$(mode_of "$STUB/dotnet" clean)" "light"
+check "a path-qualified dotnet test --no-build stays light" "$(mode_of "$STUB/dotnet" test x --no-build)" "light"
+check "a path argument ending in /dotnet before build counts (pinned as is, review of #3882): expensive" "$(mode_of sh -c "$sh_mode" x /srv/dotnet build)" "expensive"
+check "a word that only ends in dotnet is not dotnet: light" "$(mode_of sh -c "$sh_mode" x mydotnet build)" "light"
 for w in "npm ci" "npx vitest"; do
   # shellcheck disable=SC2086
   check "$w anywhere in the args is expensive" "$(mode_of sh -c "$sh_mode" x $w)" "expensive"
@@ -194,7 +229,7 @@ check "AW_HEAVY_RUN_MAX=abc: the default 45" "$(AW_HEAVY_RUN_MAX=abc args_of dot
 check "the caller's --timeout stays alone" "$(args_of dotnet test --timeout 10m)" "test --timeout 10m"
 check "the caller's --timeout=... stays alone" "$(args_of dotnet test --timeout=10m)" "test --timeout=10m"
 check "dotnet build gets no --timeout" "$(args_of dotnet build x)" "build x"
-check "a path-qualified dotnet test gets it, though it is classified light (pinned as is)" "$(args_of "$STUB/dotnet" test x)" "test x --timeout 40m"
+check "a path-qualified dotnet test gets it" "$(args_of "$STUB/dotnet" test x)" "test x --timeout 40m"
 
 # --- the lock timeout (75), on the TIMEOUT=0 copy ---
 reset
@@ -239,11 +274,12 @@ if [ "$have_meminfo" = 1 ]; then
   has "...the wait names both slots" "$out" "(2 slot(s), $LOCKS/heavy-job.lock)"
   check "free memory is not asked for slot 1" "$(reset; AW_HEAVY_MIN_FREE_MB=999999999 H --expensive echo ran)" "ran"
   reset; hold "$LOCKS/heavy-job.lock"; hold "$LOCKS/heavy-job.lock.2"
-  out="$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=0 AW_HEAVY_MIN_FREE_STEP_MB=999999999 F --expensive echo ran 2>&1)"; rc=$?
-  check "slot 3 needs MIN + STEP free: refused when STEP is huge" "$rc" "75"
-  check "...taken when STEP is 0" "$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=0 AW_HEAVY_MIN_FREE_STEP_MB=0 slot_of)" "$LOCKS/heavy-job.lock.3"
-  check "a garbage STEP falls back to 4096 (slot 3 refused when MIN is huge)" \
-    "$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=999999999 AW_HEAVY_MIN_FREE_STEP_MB=x F --expensive echo ran > /dev/null 2>&1; echo $?)" "75"
+  out="$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=0 AW_HEAVY_MIN_FREE_HIGH_MB=999999999 F --expensive echo ran 2>&1)"; rc=$?
+  check "slot 3 has its own floor (#3813): refused when HIGH is huge" "$rc" "75"
+  check "...taken when HIGH is 0, whatever slot 2's floor is" "$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=999999999 AW_HEAVY_MIN_FREE_HIGH_MB=0 slot_of)" "$LOCKS/heavy-job.lock.3"
+  reset; hold "$LOCKS/heavy-job.lock"
+  check "slot 2's floor not met, slot 3's met: slot 2 is skipped, slot 3 taken" "$(AW_HEAVY_SLOTS=3 AW_HEAVY_MIN_FREE_MB=999999999 AW_HEAVY_MIN_FREE_HIGH_MB=0 slot_of)" "$LOCKS/heavy-job.lock.3"
+  check "a garbage HIGH falls back to 3072 (the script's default line)" "$(grep -c 'HIGH_FREE_MB=3072 ;;' "$HEAVY")" "1"
 
   # the cap file: the box-wide slot count, whatever AW_HEAVY_SLOTS says
   reset; hold "$LOCKS/heavy-job.lock"
@@ -259,7 +295,7 @@ if [ "$have_meminfo" = 1 ]; then
   out="$(AW_HEAVY_SLOTS=3 F --expensive echo ran 2>&1)"; has "heavy-slots-cap=1 beats AW_HEAVY_SLOTS=3" "$out" "(1 slot(s)"
   # the cap file with a newline, as `echo` writes it, is read whole
   echo 3 > "$STATE/heavy-slots-cap"
-  out="$(AW_HEAVY_MIN_FREE_MB=999999999 F --expensive echo ran 2>&1)"; has "heavy-slots-cap=3 (with its newline) sets 3 slots" "$out" "(3 slot(s)"
+  out="$(AW_HEAVY_MIN_FREE_MB=999999999 AW_HEAVY_MIN_FREE_HIGH_MB=999999999 F --expensive echo ran 2>&1)"; has "heavy-slots-cap=3 (with its newline) sets 3 slots" "$out" "(3 slot(s)"
 
   # --- the meta reserve ---
   reset
@@ -274,10 +310,11 @@ if [ "$have_meminfo" = 1 ]; then
   # from outside, since a job blocked only by the reserve never times out
   out="$(AW_HEAVY_PRIORITY=other AW_HEAVY_MIN_FREE_MB=0 timeout 5 bash "$HEAVY" --expensive bash -c 'echo slot=$AW_HEAVY_SLOT' 2>&1 | sed -n 's/^slot=//p')"
   check "reserve 2 of 2 is capped to 1: a lane job (AW_HEAVY_PRIORITY=other is not meta) takes slot 2" "$out" "$LOCKS/heavy-job.lock.2"
-  # the reserve is also capped at the slots free memory allows minus one: memory for slot 1 only means no reserve
+  # the reserve is a slot count whatever memory is free (#3885): memory for slot 1 only leaves a lane job waiting (bounded from
+  # outside), not on meta's slot 1
   echo 1 > "$STATE/heavy-meta-reserve"
   out="$(AW_HEAVY_MIN_FREE_MB=999999999 timeout 5 bash "$HEAVY" --expensive bash -c 'echo slot=$AW_HEAVY_SLOT' 2>&1 | sed -n 's/^slot=//p')"
-  check "reserve 1 of 2, memory for slot 1 only: a lane job takes slot 1" "$out" "$LOCKS/heavy-job.lock"
+  check "reserve 1 of 2, memory for slot 1 only: a lane job waits, it does not take reserved slot 1 (#3885)" "$out" ""
   out="$(AW_HEAVY_MIN_FREE_MB=0 timeout 5 bash "$HEAVY" --expensive bash -c 'echo slot=$AW_HEAVY_SLOT' 2>&1 | sed -n 's/^slot=//p')"
   check "reserve 1 of 2, memory for both: a lane job still takes slot 2" "$out" "$LOCKS/heavy-job.lock.2"
   # blocked only by the reserve (slot 1 free, slot 2 busy): the wait is not counted; the file is re-read each second
@@ -288,10 +325,40 @@ if [ "$have_meminfo" = 1 ]; then
   check "reserved: a lane job is still waiting after 2 s although TIMEOUT is 1 s" "$(kill -0 "$rp" 2> /dev/null && echo waiting || echo exited)" "waiting"
   has "reserved: it announced the wait" "$(cat "$WORK/res.err")" "heavy: waiting for the box-wide lock"
   lacks "reserved: no timeout sentence" "$(cat "$WORK/res.err")" "timeout"
+  # #3907: a wait beside a free reserved slot says why, once at its start; the next note is 300 s away
+  has "reserved: the note names the reserve and the slot count (#3907)" "$(cat "$WORK/res.err")" "heavy: waiting although a box-wide slot is free: meta reserves 1 of 2 slot(s) (heavy-meta-reserve)"
+  check "reserved: the note names the MB available (#3907)" "$(grep -cE 'held or under its memory floor; [0-9]+ MB available$' "$WORK/res.err")" "1"
+  check "reserved: one note in the first 2 s, the next is due at 300 s (#3907)" "$(grep -c 'meta reserves' "$WORK/res.err")" "1"
   echo 0 > "$STATE/heavy-meta-reserve"
   wait "$rp"; rc=$?
   check "reserve drained: the waiting job runs on slot 1 and exits 0" "$rc" "0"
   check "...and printed its output" "$(cat "$WORK/res.out")" "ran"
+  # #3907: the reserve-wait note repeats on its interval (a copy with HOLD_NOTE_EVERY=1), comes back at once when a wait that
+  # ended starts again, and is not printed when every slot is held or for a meta job
+  unhold() { rm -f "$1/owner"; rmdir "$1" 2> /dev/null; return 0; }
+  echo 1 > "$STATE/heavy-meta-reserve"
+  AW_HEAVY_MIN_FREE_MB=0 bash "$NOTE" --expensive echo ran > "$WORK/rn.out" 2> "$WORK/rn.err" &
+  rp=$!; bgpids+=("$rp")
+  sleep 3.5
+  check "reserved, a note every 1 s: printed again after 3.5 s (#3907)" "$([ "$(grep -c 'meta reserves' "$WORK/rn.err")" -ge 2 ] && echo again || echo once)" "again"
+  kill "$rp" 2> /dev/null; wait "$rp" 2> /dev/null
+  AW_HEAVY_MIN_FREE_MB=0 bash "$HEAVY" --expensive echo ran > "$WORK/rs.out" 2> "$WORK/rs.err" &
+  rp=$!; bgpids+=("$rp")
+  # polled, not slept (#4054): on a loaded box, or on heavy's path without setsid and timeout, a pass takes longer than 1 s.
+  # The slot is held for 5 s so several passes see it; the next note of an unbroken wait is 300 s away, so 2 means "at once"
+  notes() { grep -c 'meta reserves' "$WORK/rs.err" 2> /dev/null || true; }
+  notes_reach() { local n=$1 i; for ((i = 0; i < 300; i++)); do [ "$(notes)" -ge "$n" ] && return 0; sleep 0.1; done; return 0; }
+  notes_reach 1; hold "$LOCKS/heavy-job.lock"; sleep 5; unhold "$LOCKS/heavy-job.lock"
+  notes_reach 2
+  check "reserved, then every slot held, then reserved again: a second note at once (#3907)" "$(notes)" "2"
+  kill "$rp" 2> /dev/null; wait "$rp" 2> /dev/null
+  hold "$LOCKS/heavy-job.lock"
+  out="$(AW_HEAVY_MIN_FREE_MB=0 bash "$ONE" --expensive echo ran 2>&1)"; rc=$?
+  check "every slot held, reserve 1: the plain wait times out (75)" "$rc" "75"
+  lacks "every slot held: no reserve note (#3907)" "$out" "meta reserves"
+  out="$(AW_HEAVY_PRIORITY=meta AW_HEAVY_MIN_FREE_MB=0 bash "$ONE" --expensive echo ran 2>&1)"
+  lacks "a meta job waiting with every slot held: no reserve note (#3907)" "$out" "meta reserves"
+  unhold "$LOCKS/heavy-job.lock"; unhold "$LOCKS/heavy-job.lock.2"
 else
   echo "ok - (skipped: no /proc/meminfo; the memory guard fails closed there, so slots above 1 are never taken - pinned as is)"
 fi
@@ -360,6 +427,28 @@ for sig in INT TERM; do
   check "$sig: the job is gone" "$(gone "${jp:-0}" && echo gone || echo alive)" "gone"
   check "$sig: locks released" "$(find "$LOCKS" -name '*.lock*' -type d | wc -l | tr -d ' ')" "0"
   rm -f "$WORK/job.pid"
+done
+
+# --- the reason file (heavy-reason.*) is gone on every way out (#3699) ---
+# A private TMPDIR, so only this wrapper's files count. Passing, failing and watchdog-killed jobs, then INT and TERM.
+RTMP="$WORK/rtmp"; mkdir -p "$RTMP"
+left() { find "$RTMP" -name 'heavy-reason.*' | wc -l | tr -d ' '; }
+reset; TMPDIR="$RTMP" H --light echo hi > /dev/null 2>&1
+check "reason file: none left after a passing job" "$(left)" "0"
+reset; TMPDIR="$RTMP" H --light sh -c 'exit 7' > /dev/null 2>&1
+check "reason file: none left after a failing job" "$(left)" "0"
+reset; TMPDIR="$RTMP" AW_HEAVY_SESSION_PID="$DEAD" H --light sleep 30 > /dev/null 2>&1; rc=$?
+check "reason file: the watchdog kill still exits 124" "$rc" "124"
+check "reason file: none left after the watchdog kill" "$(left)" "0"
+for sig in INT TERM; do
+  reset; rm -f "$WORK/job.pid"
+  TMPDIR="$RTMP" perl -e '$SIG{INT}="DEFAULT"; $SIG{TERM}="DEFAULT"; exec @ARGV' bash "$HEAVY" --expensive bash "$WORK/job.sh" "$WORK/job.pid" > /dev/null 2>&1 &
+  hp=$!; bgpids+=("$hp")
+  wait_file "$WORK/job.pid" || echo "  (job did not start)"
+  check "reason file: one exists while the job runs ($sig)" "$(left)" "1"
+  kill -"$sig" "$hp"; wait "$hp" 2> /dev/null
+  check "reason file: none left after $sig" "$(left)" "0"
+  find "$RTMP" -name 'heavy-reason.*' -delete
 done
 
 # --- the job runs in its own systemd scope (#2931) ---

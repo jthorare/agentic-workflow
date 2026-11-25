@@ -32,6 +32,19 @@ public interface IWorkflowRunStore
     /// <returns>The run, now running; null when none is queued or another run is running or waiting.</returns>
     public ValueTask<Result<WorkflowRun?>> PromoteOldestQueued(WorkflowId workflow, CancellationToken cancellationToken);
 
+    /// <summary>The live runs of every workflow that ended 'failed' and have not been marked seen, newest first (a test run never counts; the Home failed-run row reads it).</summary>
+    /// <param name="limit">How many runs to keep, the newest first; 1 or more.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The runs; none when every failed run was seen.</returns>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(int limit, CancellationToken cancellationToken);
+
+    /// <summary>Marks a failed run seen. The first mark wins: a run that is already seen keeps its time, and a run that did not fail stays unseen.</summary>
+    /// <param name="id">The run.</param>
+    /// <param name="at">When the owner saw it.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>The run after the call, or SND-GRAPH-101.</returns>
+    public ValueTask<Result<WorkflowRun>> MarkSeen(WorkflowRunId id, DateTimeOffset at, CancellationToken cancellationToken);
+
     /// <summary>One run.</summary>
     /// <param name="id">The run.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
@@ -44,7 +57,7 @@ public interface IWorkflowRunStore
     /// <returns>The runs.</returns>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> InFlight(WorkflowId workflow, CancellationToken cancellationToken);
 
-    /// <summary>A workflow's runs in every status, newest first (by start time, then by occurrence number, so occurrence 10 comes before 9), one page.</summary>
+    /// <summary>A workflow's live runs in every status (a test run is never listed), newest first (by start time, then by occurrence number, so occurrence 10 comes before 9), one page.</summary>
     /// <param name="workflow">The workflow.</param>
     /// <param name="offset">How many of the newest runs to skip, 0 or more.</param>
     /// <param name="limit">How many runs to keep, 1 or more.</param>
@@ -56,6 +69,11 @@ public interface IWorkflowRunStore
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The runs.</returns>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Running(CancellationToken cancellationToken);
+
+    /// <summary>The workflows that have at least one run in 'queued' (the sweep starts the head of each queue whose workflow has nothing in flight, issue 3102).</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>Each workflow once; none when nothing is queued.</returns>
+    public ValueTask<Result<IReadOnlyList<WorkflowId>>> QueuedWorkflows(CancellationToken cancellationToken);
 
     /// <summary>The highest occurrence among a workflow's runs started by one kind of trigger, over every revision and every status (a schedule reads its last fired tick from it).</summary>
     /// <param name="workflow">The workflow.</param>
@@ -109,7 +127,7 @@ public interface IWorkflowRunStore
     /// <returns>True when the row was removed; false when it was not running or does not exist.</returns>
     public ValueTask<Result<bool>> Discard(WorkflowRunId id, CancellationToken cancellationToken);
 
-    /// <summary>Writes one node run, replacing the row with the same run, node and item index. Input and output over <see cref="NodeRunLimits.PayloadBytes"/> are cut and 'Truncated' is set.</summary>
+    /// <summary>Writes one node run, replacing the row with the same run, node and item index. Input and output over <see cref="NodeRunLimits.PayloadBytes"/> are cut; 'Truncated' is set only when the output was cut (#3896).</summary>
     /// <param name="nodeRun">The node run.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
     /// <returns>The node run as stored, or SND-GRAPH-101 when the run does not exist.</returns>

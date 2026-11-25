@@ -17,6 +17,7 @@ public sealed class SetupEventsTests
         { "recipe.registration.completed", "recipe.registration.completed:<epoch>" },
         { "mcp.registered", "mcp.registered:<commandId>" },
         { "setup.consent.given", "setup.consent.given:<profileHash>" },
+        { "setup.first_workflow.created", "setup.first_workflow.created" },
     };
 
     [Theory, Trait("Lane", "unit")]

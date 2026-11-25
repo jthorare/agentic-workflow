@@ -22,8 +22,23 @@ public sealed class ContextQueryRouteTests
         var answer = await client.QueryAnchors(_api, "drag & drop shifts", Token);
 
         var seen = Assert.Single(handler.Requests);
-        Assert.Equal(("GET", "/sindri/context/query", "?q=drag%20%26%20drop%20shifts"), (seen.Method, seen.Path, seen.Query));
+        Assert.Equal(("GET", "/sindri/context/query"), (seen.Method, seen.Path));
+        Assert.StartsWith("?q=drag%20%26%20drop%20shifts", seen.Query, StringComparison.Ordinal);
         Assert.Equal(["feature:a"], answer.Value.Anchors);
         Assert.Equal(["feature:b"], answer.Value.SuggestedAnchors);
+    }
+
+    // The anchor lookup reads only the anchors, so it asks for a window of one record: the host then fetches and cleans one record, not all of them (#3524).
+    [Fact]
+    public async Task QueryAnchors_asks_for_a_window_of_one_record()
+    {
+        var server = new FakeSindriApi { QueryAnswer = _ => FakeSindriApi.QueryAnchorsBody(["feature:a"], []) };
+        var handler = new FakeSindriHandler(server);
+        var client = new SindriApiClient(new HttpClient(handler), new InMemoryHumanToken(A.HumanToken), TimeProvider.System);
+
+        _ = await client.QueryAnchors(_api, "drag", Token);
+        _ = await client.QueryAnchors(_api, "drag", Token, concept: "concept:scheduling");
+
+        Assert.Equal(["?q=drag&limit=1", "?q=drag&concept=concept%3Ascheduling&limit=1"], handler.Requests.Select(static r => r.Query), StringComparer.Ordinal);
     }
 }

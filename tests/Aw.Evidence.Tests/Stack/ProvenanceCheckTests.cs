@@ -10,7 +10,7 @@ public sealed class ProvenanceCheckTests
         await ProvenanceCheck.RunAsync(query, policy ?? SeedPolicy.Default, database: null, CancellationToken.None);
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Only_seed_rows_on_seed_domains_are_seeded()
+    public async Task A_seed_row_makes_the_data_seeded()
     {
         var query = new FakeProvenanceQuery { Emails = { "seed-admin-1@example.com", "nurse@example.com" } };
 
@@ -29,12 +29,11 @@ public sealed class ProvenanceCheckTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task One_real_looking_email_makes_the_data_unknown()
+    public async Task Faker_emails_on_real_looking_domains_beside_a_seed_row_stay_seeded()
     {
-        var finding = await Check(new FakeProvenanceQuery { Emails = { "seed-admin-1@example.com", "jane@hospital.org" } });
+        var finding = await Check(new FakeProvenanceQuery { Emails = { "seed-admin-1@example.com", "Lavada.Kuhn@yahoo.com", string.Empty } });
 
-        Assert.Equal(DbProvenance.Unknown, finding.Provenance);
-        Assert.Contains("jane@hospital.org", finding.Reason, StringComparison.Ordinal);
+        Assert.Equal(DbProvenance.Seeded, finding.Provenance);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -44,18 +43,8 @@ public sealed class ProvenanceCheckTests
     [Fact, Trait("Lane", "unit")]
     public void Seed_settings_override_the_fail_closed_default_only_when_set()
     {
-        Assert.Equal(SeedPolicy.Default.Domains, SeedPolicy.From(" ", emailPattern: null).Domains);
-        Assert.Equal("seed-admin-%@example.com", SeedPolicy.From(domains: null, "").EmailPattern);
-        var custom = SeedPolicy.From("seed.test, demo.test,", "admin-%@seed.test");
-        Assert.Equal(["seed.test", "demo.test"], custom.Domains);
-        Assert.Equal("admin-%@seed.test", custom.EmailPattern);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task A_profile_without_an_email_makes_the_data_unknown()
-    {
-        var finding = await Check(new FakeProvenanceQuery { Emails = { "seed-admin-1@example.com", string.Empty } });
-
-        Assert.Equal(DbProvenance.Unknown, finding.Provenance);
+        Assert.Equal(SeedPolicy.Default, SeedPolicy.From(" "));
+        Assert.Equal(SeedPolicy.Default, SeedPolicy.From(emailPattern: null));
+        Assert.Equal("admin-%@seed.test", SeedPolicy.From("admin-%@seed.test").EmailPattern);
     }
 }

@@ -13,11 +13,15 @@ internal static class WorkflowRoutes
 
     internal static string One(string slug) => $"{Root}/{Uri.EscapeDataString(slug)}";
 
+    internal static string Newest(string slug) => $"{One(slug)}?revision=latest";
+
     internal static string Runs(string slug) => $"{One(slug)}/runs";
 
     internal static string Run(string runId) => $"/sindri/workflow-runs/{Uri.EscapeDataString(runId)}";
 
     internal static string Cancel(string runId) => $"{Run(runId)}/cancel";
+
+    internal static string Seen(string runId) => $"{Run(runId)}/seen";
 
     internal static string TakeOver(string runId, string node) => $"{Run(runId)}/nodes/{Uri.EscapeDataString(node)}/takeover";
 
@@ -28,6 +32,17 @@ internal static class WorkflowRoutes
     internal static string Ops(string slug) => $"{One(slug)}/ops";
 
     internal static string Activate(string slug) => $"{One(slug)}/activate";
+
+    internal static string Validate() => $"{Root}/validate";
+
+    internal static string Test(string slug) => $"{One(slug)}/test";
+
+    internal static string Pins(string slug) => $"{One(slug)}/pins";
+
+    internal static string Templates() => $"{Root}/templates";
+
+    internal static string TriggerEvents(string kind, string? connection = null) =>
+        $"{Root}/trigger-events?kind={Uri.EscapeDataString(kind)}" + (connection is null ? string.Empty : $"&connection={Uri.EscapeDataString(connection)}");
 
     internal static string Pause(string slug) => $"{One(slug)}/pause";
 }

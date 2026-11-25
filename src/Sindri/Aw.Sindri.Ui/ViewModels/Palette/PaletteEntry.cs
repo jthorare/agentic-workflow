@@ -93,6 +93,9 @@ internal sealed class PaletteEntry : ObservableObject
     /// <summary>A catalog row's control, or null for a page.</summary>
     public ControlViewModel? Control { get; }
 
+    /// <summary>For a Settings entry, the words that filter the Settings page to its setting; empty otherwise (#3362).</summary>
+    public string SettingWords { get; private init; } = string.Empty;
+
     /// <summary>A page entry's page, or null.</summary>
     public PageId? Page { get; }
 
@@ -121,6 +124,13 @@ internal sealed class PaletteEntry : ObservableObject
     /// <param name="key">Its key.</param>
     /// <returns>The entry.</returns>
     internal static PaletteEntry NewTodo(string key) => new(NewTodoId, Labels.QuickAddName, key, enabled: true, control: null, page: null);
+
+    /// <summary>A Settings entry, listed under the palette's "Settings" heading ("Text size"): it shows Settings filtered to its words.</summary>
+    /// <param name="id">The setting's id ("TextSize").</param>
+    /// <param name="label">Its name ("Text size").</param>
+    /// <param name="words">The filter words that show only its section.</param>
+    /// <returns>The entry.</returns>
+    internal static PaletteEntry ForSetting(string id, string label, string words) => new("setting:" + id, label, key: string.Empty, enabled: true, control: null, page: null) { SettingWords = words };
 
     /// <summary>A page's entry.</summary>
     /// <param name="page">The page.</param>

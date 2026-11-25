@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "provider": "claude-code",
+  "sessionId": "3970893f-1c2d-4e5f-8a9b-0c1d2e3f4a5b",
+  "event": "PostToolUse",
+  "state": "running",
+  "tool": "mcp__github__get_issue",
+  "toolAt": "2026-10-16T11:02:03.123Z",
+  "at": "2026-10-16T11:02:03.123Z",
+  "cwd": "/home/dev/repo",
+  "transcript": "/home/dev/.claude/projects/-home-dev-repo/3970893f.jsonl",
+  "agentPid": 3023421,
+  "agentStartTicks": 13279367,
+  "env": {}
+}

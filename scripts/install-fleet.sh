@@ -15,8 +15,9 @@ source "$ROOT/config/hooks/adapters/install-lib.sh"
 aw_parse_provider_args "$@" || exit 1
 set -- ${AW_ARGS[@]+"${AW_ARGS[@]}"}
 
-# Claude Code's events (spec 5.2). PostToolUse runs on every tool call, so the hook leaves it before jq unless the file says asking.
-EVENTS="SessionStart UserPromptSubmit PermissionRequest Notification PostToolUse Stop SessionEnd"
+# Claude Code's events (spec 5.2). PreToolUse and PostToolUse run on every tool call (they record the session's last tool), so the hook
+# rewrites a running file in bash and runs jq only on a change of state.
+EVENTS="SessionStart UserPromptSubmit PermissionRequest Notification PreToolUse PostToolUse Stop SessionEnd"
 
 if [ "$AW_PROVIDER" != "claude" ]; then
   aw_hooks_init "$AW_PROVIDER"
@@ -38,7 +39,7 @@ cp "$ROOT/config/hooks/fleet-state.sh" "$HOOKS_DIR/fleet-state.sh"
 chmod +x "$HOOKS_DIR/fleet-state.sh"
 for e in $EVENTS; do
   matcher=""
-  [ "$e" = "PostToolUse" ] && matcher=".*"
+  case "$e" in PreToolUse|PostToolUse) matcher=".*" ;; esac
   entry="$(jq -nc --arg cmd "$HOOKS_DIR/fleet-state.sh # aw:fleet" --arg m "$matcher" \
     '(if $m == "" then {} else {matcher: $m} end) + {hooks: [{type: "command", command: $cmd}]}')"
   merge_hook "$SETTINGS_FILE" "$e" aw:fleet "$entry"

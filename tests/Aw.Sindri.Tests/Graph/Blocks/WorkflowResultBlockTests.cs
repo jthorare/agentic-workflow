@@ -69,6 +69,33 @@ public sealed class WorkflowResultBlockTests
         Assert.Equal(SindriErrors.GraphResultUnavailable.Code, result.Error.Code);
     }
 
+    [Theory]
+    [InlineData("""{"fetch":{"truncated":true,"items":[{"path":"a.cs"}]}}""")]
+    [InlineData("""{"fetch":{"truncated":true,"items":[]},"tell":{"sent":true}}""")]
+    public async Task A_step_output_with_its_own_truncated_field_is_handed_on_not_read_as_cut(string outputs)
+    {
+        // why: GitHub's tree API body carries 'truncated' (#4089); only the marker's own shape means the result was cut at 64 KB
+        var port = new ScriptedResultPort(new GraphRunResult(_found, "succeeded", FinishedAt: null, JsonNode.Parse(outputs)));
+
+        var result = await Run(port, new JsonObject { ["workflow"] = "triage" });
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        Assert.True(result.Value.Outputs["outputs"]!["fetch"]!["truncated"]!.GetValue<bool>());
+    }
+
+    [Theory]
+    [InlineData("""{"big":{"truncated":true,"bytes":70012}}""")]
+    [InlineData("""{"big":{"truncated":true}}""")]
+    [InlineData("""{"truncated":true,"bytes":90000}""")]
+    public async Task A_result_that_holds_the_marker_is_refused_as_cut(string outputs)
+    {
+        var port = new ScriptedResultPort(new GraphRunResult(_found, "succeeded", FinishedAt: null, JsonNode.Parse(outputs)));
+
+        var result = await Run(port, new JsonObject { ["workflow"] = "triage" });
+
+        Assert.Equal(SindriErrors.GraphOutputTruncated.Code, result.Error.Code);
+    }
+
     private sealed class ScriptedResultPort(Result<GraphRunResult> answer) : IGraphResultPort
     {
 

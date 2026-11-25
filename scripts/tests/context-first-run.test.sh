@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Tests for scripts/context-first-run.sh: the dry-run transcript (a golden), the refusal of a home that looks real, the stop at
-# approval, a whole run against a stub sindri in a temp state dir, and `down` on a missing home. Nothing here touches a real
+# approval, a whole run against a stub sindri in a temp state dir, the --time mode against stub sindri, sindri-ui, aw-ui-driver and
+# Xvfb, and `down` on a missing home. Nothing here touches a real
 # Sindri home, port or profile, starts a server, pulls a model or needs ollama, graphify or temporal (the stub run turns the
 # embeddings and graph layers off). Run: bash scripts/tests/context-first-run.test.sh
 # Regenerate the golden after an intended change: CFR_GOLDEN_UPDATE=1 bash scripts/tests/context-first-run.test.sh
@@ -32,9 +33,14 @@ REPO="$T/work/agentic-workflow"
 mkdir -p "$STATE" "$REPO"
 git -C "$REPO" init -q -b main && git -C "$REPO" -c user.name=t -c user.email=t@t commit -q --allow-empty -m init
 
+# The runs that reach the preflight probe their port, so they take a free one from the kernel: the script's default 7481 is
+# shared by every checkout and by a real first run on the box, and a listener there turned this suite red (#3029). The dry runs
+# keep the default, because they print the port and bind or probe nothing.
+PORT="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()')"
+
 # run <args…>: the script against the temp state and repo, with the stub sindri. Sets OUT (both streams) and CODE.
 run() {
-  OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$REPO" SINDRI="$T/stub-sindri" "$SCRIPT" "$@" 2>&1)"; CODE=$?
+  OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_PORT="$PORT" FIRST_RUN_REPO_PATH="$REPO" SINDRI="$T/stub-sindri" "$SCRIPT" "$@" 2>&1)"; CODE=$?
 }
 norm() { sed -e "s#$T#<T>#g" -e "s#$ROOT#<ROOT>#g"; }
 
@@ -48,7 +54,7 @@ case "$*" in
   "profile init") printf 'schemaVersion: 1\nuser: "thor"\nworkflow:\n  effects: []\n' > "$AW_SINDRI_HOME/profile/profile.yaml" ;;
   "profile validate --json")
     printf '{"valid":true,"hash":"%s"}\n' "$(printf 'ab%.0s' $(seq 1 32))" ;;
-  "--headless") mkdir -p "$AW_SINDRI_HOME/stub"; touch "$AW_SINDRI_HOME/stub/serving" ;;
+  "--headless") mkdir -p "$AW_SINDRI_HOME/stub"; touch "$AW_SINDRI_HOME/stub/serving" "$AW_SINDRI_HOME/control.json" ;;
   "status --json")
     if flag serving; then echo '{"running":true}'; else echo '{"running":false}'; fi; exit 1 ;;
   "status") echo "running" ;;
@@ -75,6 +81,10 @@ case "$*" in
     if [ -s "$f" ]; then st="$(head -1 "$f")"; [ "$(wc -l < "$f")" -le 1 ] || sed -i.bak 1d "$f"; fi
     [ "$st" != succeeded ] || touch "$AW_SINDRI_HOME/stub/mapped"
     printf '{"id":"JOB-0123abcd","kind":"RefreshContextMap","state":"%s"}\n' "$st"; exit 0 ;;
+  "wf show hello-sindri") [ -e "$AW_SINDRI_HOME/stub/wf-exists" ] || { echo "SND-WF-404 no such workflow" >&2; exit 2; } ;;
+  "wf create hello-sindri --template hello-sindri") touch "$AW_SINDRI_HOME/stub/wf-exists" ;;
+  "wf activate hello-sindri") ;;
+  "wf run hello-sindri") [ -e "$AW_SINDRI_HOME/stub/wf-run-fails" ] && { echo "SND-WF-500 the engine is down" >&2; exit 1; }; echo '{"run":"RUN-1"}' ;;
   "stop") rm -f "$AW_SINDRI_HOME/stub/serving" ;;
   *) echo "stub: unexpected: $*" >&2; exit 2 ;;
 esac
@@ -144,7 +154,7 @@ expect "with no origin the name falls back to the path's basename" 0 "--repo fir
 echo "context-first-run: the checkout preflight"
 # A real (non-dry) run reaches the preflight; --no-embeddings --no-graph keep it to git, jq and temporal. Only the repo checks matter here.
 pf() { # pf <repo path>: sets OUT and CODE of a real up against that repo
-  OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$1" SINDRI="$T/stub-sindri" "$SCRIPT" up --stop-after 0 --no-embeddings --no-graph --no-ui 2>&1)"; CODE=$?
+  OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_PORT="$PORT" FIRST_RUN_REPO_PATH="$1" SINDRI="$T/stub-sindri" "$SCRIPT" up --stop-after 0 --no-embeddings --no-graph --no-ui 2>&1)"; CODE=$?
 }
 G() { git -C "$1" -c user.name=t -c user.email=t@t "${@:2}"; }
 if command -v jq >/dev/null 2>&1; then
@@ -192,7 +202,7 @@ else
   P="$STATE/sindri-app-firstrun/profile/profile.yaml"
   if grep -q "path: $REPO" "$P" && grep -q 'context-docs-refresh' "$P" && grep -q 'enabled: false' "$P" && grep -q '^context:' "$P" && grep -q '^index:' "$P"; then ok "the profile onboards the repo with services, index and context"; else fail "the profile onboards the repo with services, index and context"; sed 's/^/       | /' "$P"; fi
   # test-ports: ok: the port=N strings are what the stub sindri logged, matched as text; nothing binds them
-  if logged "home=sindri-app-firstrun port=7481" && ! logged "port=7480" && ! logged "port=7410"; then ok "every call used the scratch home and port 7481"; else fail "every call used the scratch home and port 7481"; fi
+  if logged "home=sindri-app-firstrun port=$PORT " && ! logged "port=7480" && ! logged "port=7410"; then ok "every call used the scratch home and the run's port"; else fail "every call used the scratch home and the run's port"; fi
   before="$(wc -l < "$P" | tr -d ' ')"
   run up --no-embeddings --no-graph --no-ui
   expect "a second up finishes too (exit 0)" 0 "context-first-run up: done"
@@ -211,7 +221,7 @@ else
     : > "$STATE/sindri-app-firstrun/stub/mapstate"
     local st; for st in "$@"; do echo "$st" >> "$STATE/sindri-app-firstrun/stub/mapstate"; done
     : > "$STUB_LOG"
-    OUT="$(FIRST_RUN_MAP_POLL_SECONDS=1 FIRST_RUN_MAP_TIMEOUT=3 AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$REPO" SINDRI="$T/stub-sindri" "$SCRIPT" continue --no-embeddings --no-graph --no-ui 2>&1)"; CODE=$?
+    OUT="$(FIRST_RUN_MAP_POLL_SECONDS=1 FIRST_RUN_MAP_TIMEOUT=3 AW_STATE_DIR="$STATE" FIRST_RUN_PORT="$PORT" FIRST_RUN_REPO_PATH="$REPO" SINDRI="$T/stub-sindri" "$SCRIPT" continue --no-embeddings --no-graph --no-ui 2>&1)"; CODE=$?
   }
   step6 held held published
   expect "a held map is waited for, then published (exit 0)" 0 "the map is held" "map published (v1, published)"
@@ -246,6 +256,125 @@ else
   run down
   expect "down deletes the home" 0 "deleted"
   if [ ! -e "$STATE/sindri-app-firstrun" ]; then ok "the home is gone"; else fail "the home is gone"; fi
+fi
+
+echo "context-first-run: --time"
+if ! command -v jq >/dev/null 2>&1; then
+  echo "  skip the --time cases: jq isn't installed"
+else
+  # The stub app: logs what the script gave it and stays up until the script stops it by pid.
+  cat > "$T/stub-ui" <<'STUB'
+#!/usr/bin/env bash
+echo "ui driver=${AW_UI_DRIVER:-unset} dir=${AW_UI_DRIVER_DIR:-unset} display=${DISPLAY:-unset} home=$(basename "${AW_SINDRI_HOME:-unset}")" >> "$STUB_LOG.ui"
+exec sleep 300
+STUB
+  # The stub driver: `ready` succeeds; `tree --name L` shows one text row under L when $STUB_ROWS_FILE names L.
+  cat > "$T/stub-driver" <<'STUB'
+#!/usr/bin/env bash
+echo "dir=${AW_UI_DRIVER_DIR:-unset} home=$([ -e "$STUB_HOME" ] && echo exists || echo absent) $*" >> "$STUB_LOG.drv"
+if [ -n "${STUB_DRV_PUBLISH_FAILS:-}" ]; then echo "aw-ui-driver.sh: publishing aw-ui-driver failed" >&2; exit 1; fi
+if [ -n "${STUB_DRV_SLOW:-}" ] && [ ! -e "$STUB_DRV_SLOW" ]; then touch "$STUB_DRV_SLOW"; sleep 5; fi
+case "$1" in
+  ready) [ "$2" = --wait-ms ] && [ "$3" = 1 ] && [ -n "${STUB_DRV_NOAPP:-}" ] && { echo "no app running" >&2; exit 4; }; exit 0 ;;
+  tree)
+    list=""; while [ "$#" -gt 0 ]; do [ "$1" = --name ] && list="$2"; shift; done
+    if [ -s "$STUB_ROWS_FILE" ] && [ "$(cat "$STUB_ROWS_FILE")" = "$list" ]; then
+      echo '{"id":"0","type":"ItemsControl","children":[{"id":"0/0","type":"ContentPresenter","text":"a row"}]}'
+    else
+      echo '{"id":"0","type":"ItemsControl","children":[]}'
+    fi ;;
+  *) echo "stub-driver: unexpected: $*" >&2; exit 2 ;;
+esac
+STUB
+  # A fake Xvfb: the lock file is the readiness signal when XVFB_LOCK_DIR is set (tests/ui-checks/xvfb-lib.sh).
+  mkdir -p "$T/fakebin" "$T/xlock"
+  cat > "$T/fakebin/Xvfb" <<'STUB'
+#!/usr/bin/env bash
+touch "$XVFB_LOCK_DIR/.X${1#:}-lock"
+trap 'rm -f "$XVFB_LOCK_DIR/.X${1#:}-lock"; exit 0' TERM
+sleep 300 & wait $!
+STUB
+  chmod +x "$T/stub-ui" "$T/stub-driver" "$T/fakebin/Xvfb"
+  export STUB_ROWS_FILE="$T/rows-list"
+  HOME_T="$STATE/sindri-app-firstrun"
+  trun() { # trun <env assignment>… -- <args…>: the script with --time, stub sindri, app and driver
+    local envs=() a
+    while [ "$#" -gt 0 ] && [ "$1" != -- ]; do envs+=("$1"); shift; done
+    shift
+    OUT="$(env AW_STATE_DIR="$STATE" FIRST_RUN_PORT="$PORT" FIRST_RUN_REPO_PATH="$REPO" SINDRI="$T/stub-sindri" AW_SINDRI_UI="$T/stub-ui" \
+      FIRST_RUN_UI_DRIVER="$T/stub-driver" FIRST_RUN_XVFB=0 ${envs[@]+"${envs[@]}"} "$SCRIPT" "$@" 2>&1)"; CODE=$?
+  }
+
+  : > "$STUB_LOG"; rm -f "$STUB_LOG.ui" "$STUB_LOG.drv"
+  echo QueuedRows > "$STUB_ROWS_FILE"
+  export STUB_HOME="$HOME_T"
+  trun STUB_DRV_NOAPP=1 STUB_DRV_SLOW="$T/drv-slow" -- up --time
+  if [ "$(head -1 "$STUB_LOG.drv")" = "dir=$HOME_T/first-run/driver home=absent ready --wait-ms 1" ]; then ok "the warm-up driver call comes first, before the home exists"; else fail "the warm-up driver call comes first, before the home exists"; head -2 "$STUB_LOG.drv" | sed 's/^/       | /'; fi
+  case "$OUT" in *"driver ready (not on the clock)"*) ok "a no-app exit from the warm-up does not stop the run" ;; *) fail "a no-app exit from the warm-up does not stop the run" ;; esac
+  app_s="$(printf '%s\n' "$OUT" | awk '$1=="first-run" && $2=="app"{print $3}')"; tot_s="$(printf '%s\n' "$OUT" | awk '$1=="first-run" && $2=="total"{print $3}')"
+  if awk -v a="$app_s" -v t="$tot_s" 'BEGIN{exit !(a<5 && t<5)}'; then ok "a slow first driver call does not raise the app time or the total"; else fail "a slow first driver call does not raise the app time or the total (app $app_s, total $tot_s)"; fi
+  run down
+  : > "$STUB_LOG"; rm -f "$STUB_LOG.ui" "$STUB_LOG.drv"
+  trun STUB_DRV_PUBLISH_FAILS=1 -- up --time
+  expect "a failing driver publish stops the run (exit 1)" 1 "driver warm-up failed" "publishing aw-ui-driver failed"
+  case "$OUT" in *"first-run home "*) fail "a failed publish prints no first-run line" ;; *) ok "a failed publish prints no first-run line" ;; esac
+  [ ! -e "$HOME_T" ] && ok "a failed publish made no home" || fail "a failed publish made no home"
+  : > "$STUB_LOG"; rm -f "$STUB_LOG.ui" "$STUB_LOG.drv"
+  trun -- up --time
+  expect "--time prints the six steps and the total (exit 0)" 0 "first-run home " "first-run profile " "first-run serve " "first-run workflow " "first-run app " "first-run rows " "first-run total "
+  order="$(printf '%s\n' "$OUT" | grep -E '^first-run ' | awk '{print $2}' | tr '\n' ' ')"
+  if [ "$order" = "home profile serve workflow app rows total " ]; then ok "the lines come in order: home profile serve workflow app rows total"; else fail "the lines come in order (got: $order)"; fi
+  if printf '%s\n' "$OUT" | grep -qE '^first-run (home|profile|serve|workflow|app|rows|total) [0-9]+\.[0-9]$'; then ok "each number has one decimal"; else fail "each number has one decimal"; fi
+  J="$HOME_T/first-run.json"
+  if jq -e '(.ok == true) and ((.steps | keys | sort) == ["app","home","profile","rows","serve","workflow"]) and (.total | type == "number") and ([.steps[]] | all(type == "number"))' "$J" >/dev/null 2>&1; then ok "first-run.json holds ok, the six steps and the total"; else fail "first-run.json holds ok, the six steps and the total"; cat "$J" 2>/dev/null | sed 's/^/       | /'; fi
+  if logged 'wf show hello-sindri' && logged 'wf create hello-sindri --template hello-sindri' && logged 'wf activate hello-sindri' && logged 'wf run hello-sindri' \
+    && [ "$(grep -E ' wf (create|activate|run) ' "$STUB_LOG" | sed -E 's/.* wf ([a-z]+) .*/\1/' | tr '\n' ' ')" = "create activate run " ]; then ok "the workflow step makes, activates and runs hello-sindri in that order"; else fail "the workflow step makes, activates and runs hello-sindri in that order"; sed 's/^/       | /' "$STUB_LOG"; fi
+  if ! logged 'services run' && ! logged 'context map' && ! logged 'code-index'; then ok "--time never builds the index or the map"; else fail "--time never builds the index or the map"; sed 's/^/       | /' "$STUB_LOG"; fi
+  if grep -q 'driver=1 dir=.*first-run/driver' "$STUB_LOG.ui" 2>/dev/null && grep -q 'home=sindri-app-firstrun' "$STUB_LOG.ui"; then ok "the app starts with AW_UI_DRIVER=1 on the scratch home"; else fail "the app starts with AW_UI_DRIVER=1 on the scratch home"; cat "$STUB_LOG.ui" 2>/dev/null | sed 's/^/       | /'; fi
+  if grep -q '^dir=.*first-run/driver home=.* ready --wait-ms 60000' "$STUB_LOG.drv" && grep -q -- 'tree --name NeedsYouRows' "$STUB_LOG.drv" && grep -q -- 'tree --name QueuedRows' "$STUB_LOG.drv"; then ok "the driver is asked ready, then each list"; else fail "the driver is asked ready, then each list"; sed 's/^/       | /' "$STUB_LOG.drv"; fi
+  uipid="$(cat "$HOME_T/first-run/ui.pid" 2>/dev/null)"
+  if [ -n "$uipid" ] && ! kill -0 "$uipid" 2>/dev/null; then ok "the app is stopped at the end"; else fail "the app is stopped at the end"; [ -z "$uipid" ] || kill "$uipid" 2>/dev/null; fi
+  run down; expect "down after --time deletes the home" 0 "deleted"
+
+  # hello-sindri already made (the setup service may have): no create. A failing run ends the run and names the step.
+  mkdir -p "$HOME_T/stub" "$HOME_T/profile" "$HOME_T/first-run" "$HOME_T/logs"; touch "$HOME_T/.first-run-scratch" "$HOME_T/stub/wf-exists"
+  : > "$STUB_LOG"; echo QueuedRows > "$STUB_ROWS_FILE"
+  trun -- up --time
+  expect "an existing hello-sindri is not created again (exit 0)" 0 "first-run workflow "
+  if logged 'wf activate hello-sindri' && logged 'wf run hello-sindri' && ! logged 'wf create'; then ok "show answered: activate and run, no create"; else fail "show answered: activate and run, no create"; sed 's/^/       | /' "$STUB_LOG"; fi
+  touch "$HOME_T/stub/wf-run-fails"
+  trun -- up --time
+  expect "a failing 'wf run' ends the run and names the step with the verb's stderr" 1 "workflow: 'wf run hello-sindri' failed" "the engine is down"
+  case "$OUT" in *"first-run app "*|*"first-run total "*) fail "a failed workflow step prints no later step" ;; *) ok "a failed workflow step prints no later step" ;; esac
+  run down
+
+  # a fresh home with no rows: the wait times out, the finished steps still print
+  : > "$STUB_ROWS_FILE"
+  trun FIRST_RUN_ROWS_TIMEOUT=2 -- up --time
+  expect "no row before the timeout: exit 1, the timeout line, the steps that finished" 1 "first-run home " "first-run profile " "first-run serve " "first-run workflow " "first-run app " "first-run total " "first-run rows timeout"
+  case "$OUT" in *"first-run rows "[0-9]*) fail "a timed-out rows step has no number" ;; *) ok "a timed-out rows step has no number" ;; esac
+  if jq -e '(.ok == false) and (.steps | has("rows") | not) and (.steps | has("app"))' "$HOME_T/first-run.json" >/dev/null 2>&1; then ok "first-run.json says ok false and omits rows"; else fail "first-run.json says ok false and omits rows"; fi
+  run down
+
+  # Xvfb comes from xvfb-lib.sh: the app gets its DISPLAY
+  : > "$STUB_LOG.ui"; echo NeedsYouRows > "$STUB_ROWS_FILE"
+  trun "PATH=$T/fakebin:$PATH" "XVFB_LOCK_DIR=$T/xlock" FIRST_RUN_XVFB=1 -- up --time
+  expect "with FIRST_RUN_XVFB=1 the run starts Xvfb through xvfb-lib.sh (exit 0)" 0 "first-run total "
+  if grep -qE 'display=:(9[0-9]|1[0-9][0-9])( |$)' "$STUB_LOG.ui"; then ok "the app runs on the Xvfb display"; else fail "the app runs on the Xvfb display"; cat "$STUB_LOG.ui" | sed 's/^/       | /'; fi
+  if [ -z "$(ls -A "$T/xlock" 2>/dev/null)" ]; then ok "the Xvfb is stopped when the script ends"; else fail "the Xvfb is stopped when the script ends"; ls -A "$T/xlock"; fi
+  run down
+
+  : > "$STUB_LOG"; : > "$STUB_LOG.ui"; : > "$STUB_LOG.drv"
+  : > "$STUB_LOG"; : > "$STUB_LOG.ui"
+  trun -- up --time --dry-run
+  expect "--time --dry-run prints the steps and the clock lines (exit 0)" 0 "== time:" "driver ready (not on the clock)" "ready --wait-ms 1" "clock: home ends" "clock: rows ends" "first-run.json" "skip: ollama and graphify"
+  if [ ! -e "$HOME_T" ] && [ ! -s "$STUB_LOG" ] && [ ! -s "$STUB_LOG.ui" ] && [ ! -s "$STUB_LOG.drv" ]; then ok "--time --dry-run writes nothing and calls nothing"; else fail "--time --dry-run writes nothing and calls nothing"; fi
+  trun -- up --time --stop-after 3
+  expect "--time with --stop-after is refused" 2 "--stop-after"
+  trun -- up --time --no-ui
+  expect "--time with --no-ui is refused" 2 "--no-ui"
+  trun -- status --time
+  expect "--time belongs to up only" 2
 fi
 
 echo "context-first-run: down on a missing home"

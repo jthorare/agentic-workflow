@@ -10,6 +10,9 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="owners">Reads what decides which pull requests the team owns; null keeps every pull request.</param>
 internal sealed class PollFollowUps(WatchSweeper sweeper, GithubQueueWatch queue, TeamPrInputs? owners = null)
 {
+    /// <summary>The same follow-ups over a poll's gh and git calls, bound by its limit and the stop signal.</summary>
+    internal PollFollowUps Using(Core.Coordination.RepoCommands github) => new(sweeper.Using(github), queue.Using(github), owners?.Using(github));
+
     // Only the pull requests the team owns (#2771): the watch's lines, the board and the ended-PR sweep all read this one set.
     internal async ValueTask<Result<IReadOnlyList<PrView>>> Owned(TeamConfig team, IReadOnlyList<PrView> prs, CancellationToken cancellationToken)
     {
@@ -23,6 +26,12 @@ internal sealed class PollFollowUps(WatchSweeper sweeper, GithubQueueWatch queue
             ? facts.Error
             : Results.Success(TeamPrs.Owned(prs, facts.Value.Queued, facts.Value.Ready, team.Watch.PrBranchPrefixes, facts.Value.CheckedOut));
     }
+
+    /// <summary>The pull requests lanes said were ready that fell out of the listing and have ended on GitHub (none without the team inputs).</summary>
+    internal async ValueTask<Result<IReadOnlyList<PrView>>> EndedOutsideListing(TeamConfig team, IReadOnlyList<PrView> listed, IReadOnlySet<int> ended, CancellationToken cancellationToken) =>
+        owners is null
+            ? Results.Success<IReadOnlyList<PrView>>([])
+            : await owners.EndedOutsideListing(team, listed.Select(static pr => pr.Number).ToHashSet(), ended, cancellationToken).ConfigureAwait(false);
 
     internal async ValueTask<(IReadOnlyList<string> Worktrees, IReadOnlyList<string> Queue)> Run(TeamConfig team, IReadOnlyList<int> ended, WatchSnapshot snapshot, CancellationToken cancellationToken) =>
         (await sweeper.Sweep(ended, cancellationToken).ConfigureAwait(false), await queue.Settle(team, snapshot, cancellationToken).ConfigureAwait(false));

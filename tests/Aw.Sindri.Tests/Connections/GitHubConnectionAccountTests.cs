@@ -1,6 +1,8 @@
 using System.Net;
+using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Infrastructure.Connections.GitHub;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
 using Microsoft.Extensions.Time.Testing;
 
@@ -21,7 +23,22 @@ public sealed class GitHubConnectionAccountTests : IDisposable
 
     public void Dispose() => _http.Dispose();
 
-    private GitHubConnectionAccount Account() => new(_store, _secrets, new FakeConnectionPresets(), _http, _clock);
+    // why: a gh login row carries no probeUrl of its own, so the read takes the shipped preset's (config/connections/presets/github.json)
+    private static readonly ConnectionPreset _github = new(
+        "github",
+        "GitHub",
+        ConnectionKind.OAuth,
+        AuthorizeUrl: "https://github.com/login/oauth/authorize",
+        TokenUrl: "https://github.com/login/oauth/access_token",
+        RevokeUrl: null,
+        DefaultScopes: ["repo", "read:org"],
+        HostGroup: "github",
+        LoopbackAllowed: true,
+        SignInNote: "A note.",
+        PollableEvents: [],
+        ProbeUrl: "https://api.github.com/user");
+
+    private GitHubConnectionAccount Account(bool ghSignedIn = true) => new(_store, new FakeConnectionPresets(_github), _http, _clock, new ConnectionCredentials(_store, _secrets, new FakeSecretWriter(), new GhRows.Commands(ghSignedIn)));
 
     private async Task Add(string label, ConnectionStatus status, string probe = "https://api.github.com/user")
     {
@@ -38,6 +55,7 @@ public sealed class GitHubConnectionAccountTests : IDisposable
 
         Assert.Equal(GitHubAccountState.Missing, account.State);
         Assert.Null(account.Connection);
+        Assert.Equal(GitHubLoginMiss.None, account.Miss);
         Assert.Equal(0, _handler.Calls);
     }
 
@@ -76,7 +94,7 @@ public sealed class GitHubConnectionAccountTests : IDisposable
         var first = (await account.Current(CancellationToken.None)).Value;
         _ = await account.Current(CancellationToken.None);
 
-        Assert.Equal(new GitHubAccount(GitHubAccountState.Connected, "github:work", Login: null), first);
+        Assert.Equal(new GitHubAccount(GitHubAccountState.Connected, "github:work", Login: null, GitHubLoginMiss.Unreachable), first);
         Assert.Equal(1, _handler.Calls);
     }
 
@@ -88,6 +106,49 @@ public sealed class GitHubConnectionAccountTests : IDisposable
         var account = (await Account().Current(CancellationToken.None)).Value;
 
         Assert.Null(account.Login);
+        Assert.Equal(GitHubLoginMiss.UnsupportedHost, account.Miss);
+        Assert.Equal(0, _handler.Calls);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(HttpStatusCode.Unauthorized, GitHubLoginMiss.SignIn)]
+    [InlineData(HttpStatusCode.ServiceUnavailable, GitHubLoginMiss.Unreachable)]
+    [InlineData(HttpStatusCode.Forbidden, GitHubLoginMiss.Unreachable)]
+    [InlineData(HttpStatusCode.TooManyRequests, GitHubLoginMiss.Unreachable)]
+    public async Task Current_names_why_user_gave_no_login(HttpStatusCode status, GitHubLoginMiss miss)
+    {
+        await Add("work", ConnectionStatus.Connected);
+        _handler.Answer = new HttpResponseMessage(status);
+
+        var account = (await Account().Current(CancellationToken.None)).Value;
+
+        Assert.Null(account.Login);
+        Assert.Equal(miss, account.Miss);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Current_keeps_the_miss_with_the_cached_null_login()
+    {
+        await Add("work", ConnectionStatus.Connected);
+        _handler.Answer = new HttpResponseMessage(HttpStatusCode.Unauthorized);
+        var account = Account();
+
+        _ = await account.Current(CancellationToken.None);
+        var second = (await account.Current(CancellationToken.None)).Value;
+
+        Assert.Equal(GitHubLoginMiss.SignIn, second.Miss);
+        Assert.Equal(1, _handler.Calls);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Current_says_sign_in_when_the_token_cannot_be_read()
+    {
+        await Add("work", ConnectionStatus.Connected);
+        _secrets.Fails = true;
+
+        var account = (await Account().Current(CancellationToken.None)).Value;
+
+        Assert.Equal(GitHubLoginMiss.SignIn, account.Miss);
         Assert.Equal(0, _handler.Calls);
     }
 
@@ -110,8 +171,57 @@ public sealed class GitHubConnectionAccountTests : IDisposable
 
         var account = (await Account().Current(CancellationToken.None)).Value;
 
-        Assert.Equal(new GitHubAccount(GitHubAccountState.NeedsSignIn, "github:work", Login: null), account);
+        Assert.Equal(new GitHubAccount(GitHubAccountState.NeedsSignIn, "github:work", Login: null, GitHubLoginMiss.SignIn), account);
         Assert.Equal(0, _handler.Calls);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Current_reads_the_login_with_the_gh_login_connection_token()
+    {
+        _ = (await _store.Insert(GhRows.Row(), CancellationToken.None)).Value;
+        _handler.Answer = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""{"login":"ada"}""") };
+
+        var account = (await Account().Current(CancellationToken.None)).Value;
+
+        Assert.Equal(new GitHubAccount(GitHubAccountState.Connected, "github:gh", "ada"), account);
+        Assert.Equal("Bearer " + GhRows.Token, _handler.Authorization);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Current_takes_the_most_recently_added_connected_row_over_an_older_oauth_one()
+    {
+        await Add("default", ConnectionStatus.Connected);   // added at the samples' epoch, and sorts before github:gh by name
+        _ = (await _store.Insert(GhRows.Row(KnownInstants.Epoch.AddHours(1)), CancellationToken.None)).Value;
+        _handler.Answer = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""{"login":"ada"}""") };
+
+        var account = (await Account().Current(CancellationToken.None)).Value;
+
+        Assert.Equal(("github:gh", "Bearer " + GhRows.Token), (account.Connection, _handler.Authorization));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Current_reads_with_the_work_row_when_the_newer_gh_login_reads_no_token()
+    {
+        await Add("work", ConnectionStatus.Connected);
+        _ = (await _store.Insert(GhRows.Row(), CancellationToken.None)).Value;   // newer, but gh was signed out since
+        _handler.Answer = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""{"login":"joi-example"}""") };
+
+        var account = (await Account(ghSignedIn: false).Current(CancellationToken.None)).Value;
+
+        Assert.Equal(new GitHubAccount(GitHubAccountState.Connected, "github:work", "joi-example"), account);
+        Assert.Equal("Bearer gho_secret", _handler.Authorization);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Current_with_a_gh_login_and_a_work_row_reads_with_the_newer_gh_login()
+    {
+        await Add("work", ConnectionStatus.Connected);
+        _ = (await _store.Insert(GhRows.Row(), CancellationToken.None)).Value;
+        _handler.Answer = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""{"login":"ada"}""") };
+
+        var account = (await Account().Current(CancellationToken.None)).Value;
+
+        Assert.Equal(("github:gh", "ada", "Bearer " + GhRows.Token), (account.Connection, account.Login, _handler.Authorization));
     }
 
     private sealed class Handler : HttpMessageHandler

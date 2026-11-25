@@ -65,14 +65,14 @@
     </Style>
   </UserControl.Styles>
 
-  <!-- The Context page (F3 spec 1 §2): the head, a control row (the search box, Map or Files, coverage), and the stage, which
+  <!-- The Context page (F3 spec 1 §2): the head, a control row (the search box, Map or Files), the coverage sentence under it, and the stage, which
        is the pannable map. The hosts below are the seams the later stages fill: the lens stack is the stage, the node card and the
        sources are the inspector, the review and the file map are the Files view. -->
   <Grid RowDefinitions="Auto,Auto,*" RowSpacing="{StaticResource Size.PanelGap}">
     <Grid ColumnDefinitions="Auto,*,Auto">
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock x:Name="ContextTitle" Classes="page-title" Text="{Binding Title}" />
-        <TextBlock x:Name="ContextHead" Classes="caption subtle" Text="{Binding Head}" IsVisible="{Binding HasHead}" VerticalAlignment="Center" />
+        <TextBlock x:Name="ContextHead" Classes="caption subtle" Text="{Binding HeadDetail}" IsVisible="{Binding HasHead}" VerticalAlignment="Center" />
         <!-- The pages no concept takes (pages spec §3.4): counted by the concepts read, read only when pressed. -->
         <Button x:Name="ContextNoConceptLink" IsVisible="{Binding ShowNoConceptLink}" Click="OnNoConcept" Padding="0,1" Background="Transparent" BorderThickness="0" VerticalAlignment="Center"
                 AutomationProperties.Name="{Binding NoConceptLinkText}">
@@ -93,35 +93,42 @@
       </Border>
     </Grid>
 
-    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" MinHeight="{StaticResource Size.TopBar}">
-      <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
-        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,16,8">
-          <TextBlock Classes="eyebrow" Text="{Binding StartsAtLabel}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-          <TextBox x:Name="AnchorBox" KeyDown="OnAnchorKey" MinWidth="220" Text="{Binding AnchorText, Mode=TwoWay}" PlaceholderText="{Binding AnchorHint}"
-                   AutomationProperties.Name="{Binding AnchorLabel}" />
-          <Button x:Name="AnchorClear" IsVisible="False" Click="OnClearSearch" VerticalAlignment="Center" Content="{Binding SearchClearText}" AutomationProperties.Name="{Binding SearchClearText}" />
-          <TextBlock x:Name="SearchNoteText" Classes="caption subtle" Text="{Binding SearchNote}" IsVisible="{Binding HasSearchNote}" VerticalAlignment="Center"
-                     AutomationProperties.Name="{Binding SearchNote}" />
+    <!-- The control row (#3677): the question box takes the row, with the repo and the Map or Files switch to its right. The coverage sentence has its own full-width line under the row (#3900). No label: the box's placeholder and name say Ask a question. -->
+    <!-- Bound to the page's width: the page scrolls, so a star column would otherwise shrink to what the box wants and leave the row short of the view switch (as ContextChoices does).
+         Gaps are left margins on each control, not ColumnSpacing: Grid spacing stays between columns whose control is hidden, so a hidden clear button, note and repo picker left 48 px of empty row. -->
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" MinHeight="{StaticResource Size.TopBar}" HorizontalAlignment="Left" Width="{Binding $parent[UserControl].Bounds.Width}">
+      <Grid ColumnDefinitions="*,Auto,Auto" VerticalAlignment="Center" Margin="0,0,0,8">
+        <TextBox x:Name="AnchorBox" KeyDown="OnAnchorKey" MinWidth="220" Text="{Binding AnchorText, Mode=TwoWay}" PlaceholderText="{Binding AnchorHint}"
+                 AutomationProperties.Name="{Binding AnchorLabel}" />
+        <Button x:Name="AnchorClear" Grid.Column="1" IsVisible="False" Click="OnClearSearch" VerticalAlignment="Center" Margin="8,0,0,0" Content="{Binding SearchClearText}" AutomationProperties.Name="{Binding SearchClearText}" />
+        <TextBlock x:Name="SearchNoteText" Grid.Column="2" Classes="caption subtle" Text="{Binding SearchNote}" IsVisible="{Binding HasSearchNote}" VerticalAlignment="Center" Margin="8,0,0,0"
+                   AutomationProperties.Name="{Binding SearchNote}" />
+      </Grid>
+      <ComboBox x:Name="ContextRepo" Grid.Column="1" ItemsSource="{Binding Repos}" SelectedItem="{Binding SelectedRepo, Mode=TwoWay}" IsVisible="{Binding HasRepoPicker}" MinWidth="140" Height="28" Margin="16,0,0,8"
+                VerticalAlignment="Center" AutomationProperties.Name="{Binding RepoName}" />
+      <Border x:Name="ContextViewSwitch" Grid.Column="2" Background="{DynamicResource Brush.Surface2}" CornerRadius="{StaticResource Radius.MD}" Padding="2" Margin="16,0,0,8" VerticalAlignment="Center"
+              AutomationProperties.Name="{Binding ViewName}">
+        <StackPanel Orientation="Horizontal">
+          <RadioButton x:Name="ViewMapButton" GroupName="ContextView" Classes="segment" IsChecked="{Binding ShowMap, Mode=TwoWay}" Content="{Binding ViewMapWord}" AutomationProperties.Name="{Binding ViewMapWord}" />
+          <RadioButton x:Name="ViewFilesButton" GroupName="ContextView" Classes="segment" IsChecked="{Binding ShowFiles, Mode=TwoWay}" Content="{Binding ViewFilesWord}" AutomationProperties.Name="{Binding ViewFilesWord}" />
         </StackPanel>
-        <ComboBox x:Name="ContextRepo" ItemsSource="{Binding Repos}" SelectedItem="{Binding SelectedRepo, Mode=TwoWay}" IsVisible="{Binding HasRepoPicker}" MinWidth="140" Height="28" Margin="0,0,16,8"
-                  VerticalAlignment="Center" AutomationProperties.Name="{Binding RepoName}" />
-        <Border x:Name="ContextViewSwitch" Background="{DynamicResource Brush.Surface2}" CornerRadius="{StaticResource Radius.MD}" Padding="2" Margin="0,0,16,8" VerticalAlignment="Center"
-                AutomationProperties.Name="{Binding ViewName}">
-          <StackPanel Orientation="Horizontal">
-            <RadioButton x:Name="ViewMapButton" GroupName="ContextView" Classes="segment" IsChecked="{Binding ShowMap, Mode=TwoWay}" Content="{Binding ViewMapWord}" AutomationProperties.Name="{Binding ViewMapWord}" />
-            <RadioButton x:Name="ViewFilesButton" GroupName="ContextView" Classes="segment" IsChecked="{Binding ShowFiles, Mode=TwoWay}" Content="{Binding ViewFilesWord}" AutomationProperties.Name="{Binding ViewFilesWord}" />
-          </StackPanel>
-        </Border>
-      </WrapPanel>
-      <ctl:CoverageStrip x:Name="ContextCoverageStrip" Grid.Column="1" IsVisible="{Binding HasStack}" VerticalAlignment="Center" Margin="0,0,0,8" />
+      </Border>
     </Grid>
 
-    <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="8">
+    <Grid Grid.Row="2" RowDefinitions="Auto,*,Auto" RowSpacing="8">
       <StackPanel Spacing="8">
-        <Border x:Name="ContextProblem" Classes="refusal" IsVisible="{Binding HasProblem}" AutomationProperties.Name="{Binding Problem}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <!-- A miss is a plain sentence with its one action, no banner and no red mark (#3677). -->
+        <StackPanel x:Name="ContextMiss" Orientation="Horizontal" Spacing="12" IsVisible="{Binding IsMiss}">
+          <TextBlock Classes="body" Text="{Binding Problem}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.Name="{Binding Problem}" />
+          <Button x:Name="ContextMissClear" Click="OnClearSearch" Content="{Binding SearchClearText}" AutomationProperties.Name="{Binding SearchClearText}" />
+        </StackPanel>
+        <Border x:Name="ContextProblem" Classes="refusal" IsVisible="{Binding ShowBanner}" AutomationProperties.Name="{Binding Problem}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <StackPanel Orientation="Horizontal" Spacing="10">
             <icons:StateIcon Glyph="Down" VerticalAlignment="Top" Margin="0,2,0,0" />
             <TextBlock Classes="body" Text="{Binding Problem}" TextWrapping="Wrap" />
+            <Panel IsVisible="{Binding ProblemFix, Converter={x:Static ObjectConverters.IsNotNull}}">
+              <ctl:CommandControl x:Name="ContextProblemFix" DataContext="{Binding ProblemFix}" />
+            </Panel>
           </StackPanel>
         </Border>
         <!-- Bound to the page's width: the page scrolls, so a long title would otherwise widen the row past the window and push the kind tag off it. -->
@@ -143,8 +150,29 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
+        <!-- The coverage sentence on its own line under the control row, as wide as the page: in a 420 px column beside the controls its last words wrapped alone (#3900). -->
+        <TextBlock x:Name="ContextCoverage" Classes="caption subtle" Text="{Binding Coverage}" IsVisible="{Binding HasCoverage}" TextWrapping="Wrap"
+                   AutomationProperties.Name="{Binding Coverage}" />
         <TextBlock x:Name="ConceptsNote" Classes="caption subtle" Text="{Binding Concepts.Note}" ToolTip.Tip="{Binding Concepts.NoteTip}" IsVisible="{Binding Concepts.HasNote}" TextWrapping="Wrap"
                    AutomationProperties.Name="{Binding Concepts.Note}" />
+        <StackPanel x:Name="ContextAnswerFiles" IsVisible="{Binding HasAnswerFiles}" Spacing="4" AutomationProperties.Name="{Binding AnswerFilesName}">
+          <TextBlock Classes="caption subtle" Text="{Binding AnswerFilesName}" />
+          <ScrollViewer MaxHeight="280">
+            <ItemsControl ItemsSource="{Binding AnswerFiles}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="ctx:AnswerFile">
+                  <StackPanel Margin="0,0,0,6" ToolTip.Tip="{Binding Path}" AutomationProperties.Name="{Binding Path}">
+                    <TextBlock TextTrimming="CharacterEllipsis">
+                      <Run Classes="subtle" Text="{Binding Directory}" /><Run Text="{Binding Name}" FontWeight="SemiBold" />
+                    </TextBlock>
+                    <TextBlock Classes="caption subtle" Text="{Binding Reason}" TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+          <TextBlock x:Name="ContextAnswerFilesMore" Classes="caption subtle" Text="{Binding AnswerFilesMore}" IsVisible="{Binding HasAnswerFilesMore}" AutomationProperties.Name="{Binding AnswerFilesMore}" />
+        </StackPanel>
         <ItemsControl x:Name="ContextMissing" ItemsSource="{Binding Missing}" ItemTemplate="{StaticResource LineTemplate}" />
       </StackPanel>
 
@@ -172,17 +200,19 @@
             <Button x:Name="WholeBackToConcepts" Content="{Binding BackText}" IsVisible="{Binding HasConcept}" Click="OnUp" AutomationProperties.Name="{Binding BackText}" />
           </StackPanel>
         </Border>
+        <TextBlock x:Name="ContextStageMessage" IsVisible="{Binding HasStageMessage}" Classes="body subtle" Text="{Binding StageMessage}" TextWrapping="Wrap" TextAlignment="Center"
+                   HorizontalAlignment="Center" VerticalAlignment="Top" MaxWidth="560" Margin="0,96,0,0" AutomationProperties.Name="{Binding StageMessage}" />
         <Panel x:Name="LensStackHost" IsVisible="{Binding MapVisible}">
           <mv:ContextMapView x:Name="ContextStack" />
         </Panel>
         <!-- The Building and No map overlays cover the map view only; the Files view has its own states. -->
         <Panel x:Name="ContextOverlays" IsVisible="{Binding ShowMap}">
-          <Border x:Name="ContextBuilding" Classes="overlay" IsVisible="{Binding ShowBuilding}" AutomationProperties.Name="{Binding BuildingTitle}" AutomationProperties.AccessibilityView="Control">
+          <Border x:Name="ContextBuilding" Classes="overlay" IsVisible="{Binding ShowBuilding}" AutomationProperties.Name="{Binding BuildingName}" AutomationProperties.AccessibilityView="Control">
             <StackPanel Spacing="16" VerticalAlignment="Top" Margin="0,96,0,0" HorizontalAlignment="Center" MaxWidth="560">
-              <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+              <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" HorizontalAlignment="Center" MaxWidth="560">
                 <icons:StateIcon Icon="Spinner" Spins="True" VerticalAlignment="Center" />
-                <TextBlock x:Name="ContextBuildingTitle" Classes="detail-title" Text="{Binding BuildingTitle}" VerticalAlignment="Center" />
-              </StackPanel>
+                <TextBlock x:Name="ContextBuildingTitle" Grid.Column="1" Classes="detail-title" Text="{Binding BuildingTitle}" ToolTip.Tip="{Binding BuildingTitle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+              </Grid>
               <TextBlock x:Name="ContextBuildingBody" Classes="body subtle" Text="{Binding BuildingBody}" IsVisible="{Binding HasBuildingBody}" TextWrapping="Wrap" TextAlignment="Center" />
               <Button x:Name="ContextBuildingJob" Classes="row-title" HorizontalAlignment="Center" IsVisible="{Binding HasBuildJob}" Content="{Binding BuildJobText}" Click="OnViewBuildJob"
                       AutomationProperties.Name="{Binding BuildJobText}" />
@@ -216,6 +246,8 @@
           </StackPanel>
         </Border>
       </Panel>
+      <!-- The one key-hint row under the list (#3677). -->
+      <TextBlock x:Name="ContextKeyHints" Grid.Row="2" Classes="caption subtle" Text="{Binding KeyHints}" IsVisible="{Binding HasKeyHints}" AutomationProperties.AutomationId="ContextKeyHints" />
     </Grid>
   </Grid>
 </UserControl>

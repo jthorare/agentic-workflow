@@ -3,7 +3,7 @@
              xmlns:cb="using:Aw.Sindri.Ui.ViewModels.Connections"
              x:Class="Aw.Sindri.Ui.Views.Connections.ServiceTileView"
              x:DataType="cb:ServiceTileViewModel">
-  <!-- One service tile (#2537): the service, a status chip, and ONE primary button (Connect, Add token, Try again or Reconnect; a connected tile has none). Connected, it shows the account
+  <!-- One service tile (#2537): the service, a status chip, and ONE primary button (Add token, Connect, Try again or Reconnect; a connected tile has none). Connected, it shows the account
        and the last use, with a menu for Reconnect and Disconnect. A service that needs a client id or a token asks for it on the tile, with one help line, a link to the provider's page and
        the reason the button waits. A failed or cancelled sign-in shows here. Hover and pressed come from the shared clickable class. -->
   <UserControl.Styles>
@@ -35,7 +35,7 @@
           <DataTemplate x:DataType="cb:ConnectionRowViewModel">
             <Grid ColumnDefinitions="*,Auto">
               <TextBlock Classes="caption" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-              <Button Grid.Column="1" Classes="link" Content="{Binding Text.Rename}" AutomationProperties.Name="{Binding RenameName}" AutomationProperties.AutomationId="{Binding RenameId}" Click="OnRenameRow" />
+              <Button Grid.Column="1" Content="{Binding Text.Rename}" AutomationProperties.Name="{Binding RenameName}" AutomationProperties.AutomationId="{Binding RenameId}" Click="OnRenameRow" />
             </Grid>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
@@ -45,18 +45,28 @@
         <TextBlock x:Name="ServiceTileRenameError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding RenameReason}" IsVisible="{Binding HasRenameReason}" TextWrapping="Wrap" />
         <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
           <Button x:Name="ServiceTileRenameSave" Classes="command-control primary" Content="{Binding Text.RenameSave}" IsEnabled="{Binding CanSaveRename}" Click="OnRenameSave" />
-          <Button x:Name="ServiceTileRenameCancel" Classes="link" Content="{Binding Text.Cancel}" Click="OnRenameCancel" />
+          <Button x:Name="ServiceTileRenameCancel" Content="{Binding Text.Cancel}" Click="OnRenameCancel" />
         </StackPanel>
       </StackPanel>
       <TextBlock x:Name="ServiceTileLastUsed" Classes="caption subtle" Text="{Binding LastUsedText}" IsVisible="{Binding IsConnected}" AutomationProperties.AccessibilityView="Raw" />
       <TextBlock x:Name="ServiceTileAttention" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding ReasonText}" IsVisible="{Binding HasReason}" TextWrapping="Wrap" ToolTip.Tip="{Binding ReasonTip}" />
 
+      <!-- #4357: a service with a key asks for a token first, under three numbered steps; GitHub and Linear swap to their own OAuth app's fields with the link under the input. -->
       <StackPanel x:Name="ServiceTileInput" Spacing="{StaticResource Space.XS}" IsVisible="{Binding IsAsking}">
+        <ItemsControl x:Name="ServiceTileSteps" ItemsSource="{Binding TokenSteps}" IsVisible="{Binding ShowTokenSteps}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="x:String">
+              <TextBlock Classes="caption" Text="{Binding}" TextWrapping="Wrap" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
         <TextBox x:Name="ServiceTileClientId" Text="{Binding ClientId, Mode=TwoWay}" PlaceholderText="{Binding Text.TileClientLabel}" IsVisible="{Binding NeedsClientId}" AutomationProperties.Name="{Binding Text.TileClientLabel}" />
         <TextBox x:Name="ServiceTileClientSecret" PasswordChar="●" Text="{Binding ClientSecret.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.TileSecretLabel}" IsVisible="{Binding NeedsSecret}" AutomationProperties.Name="{Binding Text.TileSecretLabel}" />
         <TextBox x:Name="ServiceTileToken" PasswordChar="●" Text="{Binding Token.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.TileTokenLabel}" IsVisible="{Binding TakesToken}" AutomationProperties.Name="{Binding Text.TileTokenLabel}" />
-        <TextBlock x:Name="ServiceTileHelp" Classes="caption subtle" Text="{Binding HelpText}" TextWrapping="Wrap" />
-        <Button x:Name="ServiceTileHelpLink" Classes="link" Content="{Binding HelpLinkText}" IsVisible="{Binding HasHelpLink}" Click="OnHelp" HorizontalAlignment="Left" />
+        <TextBlock x:Name="ServiceTileHelp" Classes="caption subtle" Text="{Binding HelpText}" IsVisible="{Binding HasHelpText}" TextWrapping="Wrap" />
+        <Button x:Name="ServiceTileHelpLink" Content="{Binding HelpLinkText}" IsVisible="{Binding HasHelpLink}" Click="OnHelp" HorizontalAlignment="Left" />
+        <Button x:Name="ServiceTileUseOAuth" Classes="link" Content="{Binding Text.UseOAuth}" IsVisible="{Binding ShowUseOAuth}" Click="OnUseOAuth" HorizontalAlignment="Left" />
+        <Button x:Name="ServiceTileUseToken" Classes="link" Content="{Binding Text.UseToken}" IsVisible="{Binding ShowUseToken}" Click="OnUseToken" HorizontalAlignment="Left" />
         <TextBlock x:Name="ServiceTileReason" Classes="caption subtle" Text="{Binding BlockedReason}" IsVisible="{Binding HasBlockedReason}" TextWrapping="Wrap" />
       </StackPanel>
 
@@ -65,7 +75,7 @@
 
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
         <Button x:Name="ServiceTilePrimary" Classes="command-control primary" Content="{Binding PrimaryText}" IsVisible="{Binding HasPrimary}" IsEnabled="{Binding CanPress}" Click="OnPrimary" ToolTip.Tip="{Binding BlockedReason}" />
-        <Button x:Name="ServiceTileCancel" Classes="link" Content="{Binding Text.Cancel}" IsVisible="{Binding IsAsking}" Click="OnCancel" />
+        <Button x:Name="ServiceTileCancel" Content="{Binding Text.Cancel}" IsVisible="{Binding IsAsking}" Click="OnCancel" />
       </StackPanel>
     </StackPanel>
   </Border>

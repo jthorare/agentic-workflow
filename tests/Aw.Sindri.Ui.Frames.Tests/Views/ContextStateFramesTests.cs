@@ -75,18 +75,20 @@ public sealed class ContextStateFramesTests : FrameHost
 
         Assert.Equal(1, Server.BuildContextMapCalls);
         Assert.False(Visible(window, "ContextEmpty"));
-        Assert.Equal(Labels.ContextStateBuilding, Named<TextBlock>(window, "ContextBuildingTitle").Text);
+        Assert.Equal(Labels.ContextBuildingFor([]), Named<TextBlock>(window, "ContextBuildingTitle").Text);   // why: the bare page names no item, so the title promises no ticket (#3391)
         Frame(window, "context-building-1440", "f3-");
     });
 
     [Fact]
-    public Task A_refusal_that_is_not_no_map_is_the_banner_and_hides_the_canvas() => OnUi(async () =>
+    public Task A_miss_is_a_plain_sentence_with_one_action_and_no_banner_and_hides_the_canvas() => OnUi(async () =>
     {
         var (window, shell) = await Open();
 
         await Ask(shell, "feature:nobody.knows");
-        await Until(window, () => Visible(window, "ContextProblem"), "the banner never drew");
+        await Until(window, () => Visible(window, "ContextMiss"), "the sentence never drew");
         Settle(window);
+
+        Assert.False(Visible(window, "ContextProblem"));   // #3677: a miss is not a refusal banner
 
         Assert.False(Visible(window, "ContextEmpty"));
         Assert.False(Visible(window, "ContextBuilding"));

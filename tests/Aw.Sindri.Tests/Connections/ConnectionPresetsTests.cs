@@ -20,8 +20,9 @@ public sealed class ConnectionPresetsTests
         Assert.Equal(_shipped, presets.Value.Select(static p => p.Key), StringComparer.Ordinal);
     }
 
+    // first-run spec decision 15a: only github and linear ship Sindri's own OAuth app id (a client id is not a secret); no preset ships a secret
     [Fact]
-    public void No_shipped_preset_carries_a_client_id_or_a_secret()
+    public void No_shipped_preset_carries_a_secret_and_only_github_and_linear_carry_a_client_id()
     {
         var files = Directory.GetFiles(PresetsFolder(), "*.json");
 
@@ -30,8 +31,31 @@ public sealed class ConnectionPresetsTests
         {
             using var json = JsonDocument.Parse(File.ReadAllText(file));
             var keys = json.RootElement.EnumerateObject().Select(static p => p.Name).ToList();
-            Assert.DoesNotContain(keys, static k => k.Contains("client", StringComparison.OrdinalIgnoreCase) || k.Contains("secret", StringComparison.OrdinalIgnoreCase));
+            var name = Path.GetFileNameWithoutExtension(file);
+            string[] clientKeys = string.Equals(name, "github", StringComparison.Ordinal) || string.Equals(name, "linear", StringComparison.Ordinal) ? ["clientId"] : [];
+            Assert.DoesNotContain(keys, static k => k.Contains("secret", StringComparison.OrdinalIgnoreCase));
+            Assert.Equal(clientKeys, keys.Where(static k => k.Contains("client", StringComparison.OrdinalIgnoreCase)), StringComparer.Ordinal);
         }
+    }
+
+    [Fact]
+    public void The_github_preset_has_the_device_endpoint_and_ships_no_client_id_until_the_owner_registers_the_app()
+    {
+        var github = new EmbeddedConnectionPresets().Find("github");
+
+        Assert.NotNull(github);
+        Assert.Equal(("https://github.com/login/device/code", string.Empty), (github.DeviceCodeUrl, github.ShippedClient));
+    }
+
+    [Fact]
+    public void A_plain_http_device_endpoint_is_refused()
+    {
+        var parsed = ConnectionPresets.Parse("""
+            {"id":"x","displayName":"X","kind":"oauth","authorizeUrl":"https://x/a","tokenUrl":"https://x/t","defaultScopes":[],"hostGroup":"x","loopbackAllowed":true,"signInNote":"n","deviceCodeUrl":"http://x/d"}
+            """);
+
+        Assert.True(parsed.IsError);
+        Assert.Contains("deviceCodeUrl", parsed.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -56,7 +80,37 @@ public sealed class ConnectionPresetsTests
     {
         foreach (var preset in new EmbeddedConnectionPresets().List().Value.Where(static p => !p.LoopbackAllowed))
         {
-            Assert.Contains("--kind rest", preset.SignInNote, StringComparison.Ordinal);
+            Assert.Contains($"--preset {preset.Key} --key-env", preset.SignInNote, StringComparison.Ordinal);
+        }
+    }
+
+    // #4357: a key first where the service has one (Sindri runs on loopback, so an OAuth app has no good callback); OAuth only where there is no key
+    [Fact]
+    public void GitHub_Linear_and_Slack_take_a_key_first_and_Google_and_Spotify_sign_in_only()
+    {
+        var auth = new EmbeddedConnectionPresets().List().Value.ToDictionary(static p => p.Key, static p => string.Join(',', p.Auth), StringComparer.Ordinal);
+
+        Assert.Equal(
+            new Dictionary<string, string>(StringComparer.Ordinal) { ["github"] = "key,oauth", ["google"] = "oauth", ["linear"] = "key,oauth", ["slack"] = "key", ["spotify"] = "oauth" },
+            auth);
+    }
+
+    [Fact]
+    public void A_preset_without_auth_signs_in_only_and_a_bad_auth_list_does_not_parse()
+    {
+        const string Head = """{"id":"x","displayName":"X","kind":"oauth","authorizeUrl":"https://x.test/a","tokenUrl":"https://x.test/t","defaultScopes":["a"],"hostGroup":"x","loopbackAllowed":true,"signInNote":"n" """;
+
+        var bare = ConnectionPresets.Parse(Head + "}").Value;
+        var keyed = ConnectionPresets.Parse(Head + ",\"auth\":[\"key\",\"oauth\"]}").Value;
+
+        Assert.Equal(["oauth"], bare.Auth, StringComparer.Ordinal);
+        Assert.False(bare.KeyFirst);
+        Assert.True(keyed.KeyFirst);
+        foreach (var bad in (string[])["[]", "[\"password\"]", "[\"key\",\"key\"]", "\"key\""])
+        {
+            var parsed = ConnectionPresets.Parse(Head + ",\"auth\":" + bad + "}");
+            Assert.True(parsed.IsError, bad);
+            Assert.Contains("'auth'", parsed.Error.Message, StringComparison.Ordinal);
         }
     }
 

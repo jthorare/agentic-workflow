@@ -20,7 +20,7 @@ public sealed class ActivateWorkflowServiceTests : IDisposable
 
     public ActivateWorkflowServiceTests()
     {
-        _service = new ActivateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Log, _provisioner);
+        _service = new ActivateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Log, _rig.Harness.Callers, _provisioner);
     }
 
     private static GraphSpec WithDatabase() => SampleGraph() with { Resources = new GraphResources(new GraphDatabase("state"), Sandbox: null) };

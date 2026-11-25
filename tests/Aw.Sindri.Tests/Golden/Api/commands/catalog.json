@@ -6,7 +6,8 @@
       "allowedCallers": [
         "human+terminal",
         "human",
-        "session"
+        "session",
+        "service:setup"
       ],
       "terminal": false,
       "method": "POST",
@@ -421,6 +422,24 @@
       "confirm": null
     },
     {
+      "action": "ConnectAccount",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/setup/accounts/{provider}",
+      "cli": "sindri setup connect <provider>",
+      "ui": "pending:FR5",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ConnectIndexSource",
       "class": "local",
       "allowedCallers": [],
@@ -429,6 +448,24 @@
       "route": null,
       "cli": "sindri index connect <source>",
       "ui": "cli-only:local",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "ConnectMessages",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/messages/connect",
+      "cli": "sindri messages connect [--manifest]",
+      "ui": "pending:M1d",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -531,7 +568,8 @@
       "allowedCallers": [
         "human+terminal",
         "human",
-        "session"
+        "session",
+        "service:setup"
       ],
       "terminal": false,
       "method": "POST",
@@ -594,6 +632,24 @@
       "ui": "ready",
       "destructive": true,
       "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "DisconnectAccount",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "DELETE",
+      "route": "/sindri/setup/accounts/{provider}",
+      "cli": "sindri setup disconnect <provider>",
+      "ui": "pending:FR5",
+      "destructive": true,
+      "readsViews": false,
       "shortcut": null,
       "confirm": null
     },
@@ -897,6 +953,42 @@
       "confirm": null
     },
     {
+      "action": "MarkAllRead:read",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/messages/lists/unread/read",
+      "cli": "sindri messages read --all",
+      "ui": "pending:M1h",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "MarkAllRead:unread",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/messages/lists/unread/unread",
+      "cli": "sindri messages unread --all",
+      "ui": "pending:M1h",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "MarkTodo:done",
       "class": "request",
       "allowedCallers": [
@@ -969,6 +1061,60 @@
       "ui": "ready",
       "destructive": false,
       "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "MarkWorkflowRunSeen",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflow-runs/{run}/seen",
+      "cli": "sindri wf seen <run>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "MoveReadPointer:read",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/messages/conversations/{id}/read",
+      "cli": "sindri messages read <conversation> <ts>",
+      "ui": "pending:M1h",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "MoveReadPointer:unread",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/messages/conversations/{id}/unread",
+      "cli": "sindri messages unread <conversation> <ts>",
+      "ui": "pending:M1h",
+      "destructive": false,
+      "readsViews": false,
       "shortcut": null,
       "confirm": null
     },
@@ -1150,6 +1296,24 @@
       "method": "POST",
       "route": "/sindri/context/pins",
       "cli": "sindri context pin set <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "PinWorkflowOutput",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflows/{slug}/pins",
+      "cli": "sindri wf pin <slug> --node <node> --run <run>",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -1397,6 +1561,24 @@
       "confirm": null
     },
     {
+      "action": "RemoveSessionWorktree",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "DELETE",
+      "route": "/sindri/sessions/{actId}/worktree",
+      "cli": "sindri agents worktree remove <actId>",
+      "ui": "ready",
+      "destructive": true,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "RenameConnection",
       "class": "desk",
       "allowedCallers": [
@@ -1428,6 +1610,42 @@
       "cli": "sindri wf edit <slug> --base <revision> --file <specFile>",
       "ui": "ready",
       "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "RerunWorkflowRun",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflow-runs/{run}/rerun",
+      "cli": "sindri wf rerun <run> --from <node> [--input <json>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "RestartProcess",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/restart",
+      "cli": "sindri restart [--wait] [--timeout <duration>]",
+      "ui": "ready",
+      "destructive": true,
       "readsViews": false,
       "shortcut": null,
       "confirm": null
@@ -1760,7 +1978,8 @@
       "allowedCallers": [
         "human+terminal",
         "human",
-        "session"
+        "session",
+        "service:setup"
       ],
       "terminal": false,
       "method": "POST",
@@ -1952,6 +2171,42 @@
       "confirm": null
     },
     {
+      "action": "SkipSetupStep",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/setup/skip",
+      "cli": "sindri setup skip <step> [--undo]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "StartSession",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/sessions",
+      "cli": "sindri agents start --repo <r> --agent <a> [--prompt <text>] [--worktree] [--act-id <id>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "StartToolkit",
       "class": "desk",
       "allowedCallers": [
@@ -2093,6 +2348,24 @@
       "method": "POST",
       "route": "/sindri/connections/{name}/test",
       "cli": "sindri connection test <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "TestWorkflow",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflows/{slug}/test",
+      "cli": "sindri wf test <slug> [--revision <n>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,

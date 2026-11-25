@@ -34,7 +34,7 @@ internal sealed partial class ContextPageViewModel
 
         if (!zoomed)
         {
-            Problem = Labels.ContextWholeNoMatch;
+            SetProblem(Labels.ContextWholeNoMatch);
         }
 
         Head = Whole.Head;
@@ -53,7 +53,7 @@ internal sealed partial class ContextPageViewModel
         var located = await Ports.Api.WholeMap(api, new WholeMapQuery("areas", Area: null, [.. keys.Take(MaxLocate)], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId), cancellationToken).ConfigureAwait(true);
         if (located.IsError)
         {
-            Problem = located.Error.Message;
+            ShowProblem(located.Error);
             return true;   // the refusal is the banner; nothing else says "no match"
         }
 
@@ -68,7 +68,7 @@ internal sealed partial class ContextPageViewModel
         var reads = await ReadAreas(api, touched, cancellationToken).ConfigureAwait(true);
         if (reads.FirstOrDefault(r => r.IsError) is { } failed)
         {
-            Problem = failed.Error.Message;
+            ShowProblem(failed.Error);
             return true;
         }
 
@@ -156,6 +156,11 @@ internal sealed partial class ContextPageViewModel
     {
         AnchorText = string.Empty;   // an empty box ends the search itself
         _ = BackToWholeMap();
+        if (HasProblem)
+        {
+            SetProblem(string.Empty);   // a miss (or a refusal) ends with the search, zoomed or not
+            Refresh();
+        }
     }
 
     /// <summary>Back to the whole map: the answer stops standing out and the camera fits the world again.</summary>
@@ -189,7 +194,7 @@ internal sealed partial class ContextPageViewModel
         Map = null;
         Missing = [];
         Choices = [];
-        Problem = string.Empty;
+        SetProblem(string.Empty);
         Refresh();
     }
 }

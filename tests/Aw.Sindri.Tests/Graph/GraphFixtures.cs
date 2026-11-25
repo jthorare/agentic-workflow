@@ -18,6 +18,7 @@ internal static class GraphFixtures
         ["run_agent"] = new TestBlock("run_agent", trigger: false, [new("repo", BlockFieldType.Text), new("readOnlyRepos", BlockFieldType.TextList, Required: false), new("prompt", BlockFieldType.Text, Required: false)], new Dictionary<string, string>(StringComparer.Ordinal) { ["drifted"] = "boolean" }),
         ["webhook"] = new TestBlock("webhook", trigger: false, [new("url", BlockFieldType.Text), new("headers", BlockFieldType.Map, Required: false), new("args", BlockFieldType.TextList, Required: false)], new Dictionary<string, string>(StringComparer.Ordinal)),
         ["limit"] = new TestBlock("limit", trigger: false, [new("count", BlockFieldType.Number), new("enabled", BlockFieldType.Boolean, Required: false)], new Dictionary<string, string>(StringComparer.Ordinal)),
+        ["prompt"] = new TestBlock("prompt", trigger: false, [new("prompt", BlockFieldType.Text), new("output", BlockFieldType.Map, Required: false)], new Dictionary<string, string>(StringComparer.Ordinal)),
         ["condition"] = new TestBlock("condition", trigger: false, [new("when", BlockFieldType.Text)], new Dictionary<string, string>(StringComparer.Ordinal), ["true", "false"]),
     };
 
@@ -28,6 +29,8 @@ internal static class GraphFixtures
     public static GraphNode Trigger(string id) => new(NodeId.From(id), "schedule", Title: null, new JsonObject { ["cron"] = "0 7 * * 1-5", ["timezone"] = "America/Los_Angeles" });
 
     public static GraphNode Search(string id, string query = "last checked") => new(NodeId.From(id), "memory_search", Title: null, new JsonObject { ["memory"] = "drift", ["query"] = query });
+
+    public static GraphNode Prompt(string id, string question) => new(NodeId.From(id), "prompt", Title: null, new JsonObject { ["prompt"] = question });
 
     public static GraphNode Notify(string id, string body) => new(NodeId.From(id), "notify", Title: null, new JsonObject { ["title"] = "Drifted", ["body"] = body });
 

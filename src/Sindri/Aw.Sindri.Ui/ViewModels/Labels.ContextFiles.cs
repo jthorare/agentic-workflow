@@ -30,6 +30,14 @@ internal static partial class Labels
     internal static string ContextFilesFilterPartial(int loaded, int total) =>
         string.Create(CultureInfo.InvariantCulture, $"Still reading this folder: the filter covers {loaded} of {total} so far.");
 
+    /// <summary>The note when the function names come from an index at another commit than the checkout's.</summary>
+    /// <param name="commit">The index's commit, when the server names it.</param>
+    /// <returns>"Function names come from an older index build (7c3e1a2), so they may be out of date."</returns>
+    internal static string ContextFilesNamesStale(string? commit) =>
+        commit is { Length: > 0 }
+            ? $"Function names come from an older index build ({(commit.Length > 7 ? commit[..7] : commit)}), so they may be out of date."
+            : "Function names come from an older index build, so they may be out of date.";
+
     /// <summary>The word while a folder is read.</summary>
     internal const string ContextFilesLoading = "Reading the files...";
 
@@ -120,16 +128,33 @@ internal static partial class Labels
     /// <summary>The No map state's body when no item is picked.</summary>
     internal const string ContextStateEmptyBody = "Build one to see what your repo is made of and how its parts connect.";
 
+    /// <summary>The Building title on the bare page: which repository is being built, and no time.</summary>
+    /// <param name="repos">The repositories the no-map answer named, or none.</param>
+    /// <returns>"Building the map for agentic-workflow", "Building the map for 3 repos", or "Building the map".</returns>
+    internal static string ContextBuildingFor(IReadOnlyList<string> repos) => repos.Count switch
+    {
+        0 => "Building the map",
+        1 => "Building the map for " + repos[0],
+        _ => string.Create(CultureInfo.InvariantCulture, $"Building the map for {repos.Count} repos"),
+    };
+
     /// <summary>The whole map's Building overlay when the API says how far it is: the parts it knows, joined.</summary>
     /// <param name="parts">The parts that are known ("3 of 7 sources", "started 4 min ago").</param>
+    /// <param name="head">The line's first words.</param>
     /// <returns>"Building the map · 3 of 7 sources · started 4 min ago".</returns>
-    internal static string ContextBuildingLine(IEnumerable<string> parts) => string.Join(" · ", ((string[])["Building the map"]).Concat(parts));
+    internal static string ContextBuildingLine(IEnumerable<string> parts, string head = "Building the map") => string.Join(" · ", ((string[])[head]).Concat(parts));
 
     /// <summary>How far a build has read.</summary>
     /// <param name="done">Sources read.</param>
     /// <param name="total">Sources to read.</param>
     /// <returns>"3 of 7 sources".</returns>
     internal static string ContextBuildingSources(int done, int total) => string.Create(CultureInfo.InvariantCulture, $"{done} of {total} {(total == 1 ? "source" : "sources")}");
+
+    /// <summary>How far the build has read in the repo it is on (the count restarts for each repo of a multi-repo build, #3452).</summary>
+    /// <param name="done">Files read.</param>
+    /// <param name="total">Files to read.</param>
+    /// <returns>"4 of 7 files of the current repo".</returns>
+    internal static string ContextBuildingFiles(int done, int total) => string.Create(CultureInfo.InvariantCulture, $"{done:N0} of {total:N0} {(total == 1 ? "file" : "files")} of the current repo");
 
     /// <summary>When a build started.</summary>
     /// <param name="age">How long ago.</param>
@@ -145,9 +170,19 @@ internal static partial class Labels
     internal const string ContextBuildingJob = "View build job";
 
     /// <summary>The No map overlay's title when the API names the repositories.</summary>
-    /// <param name="repos">How many repositories.</param>
-    /// <returns>"No map yet for 2 repositories".</returns>
-    internal static string ContextNoMapRepos(int repos) => string.Create(CultureInfo.InvariantCulture, $"No map yet for {repos} {(repos == 1 ? "repository" : "repositories")}");
+    /// <param name="repos">The repositories the answer names.</param>
+    /// <returns>"No map yet for aw-split-panes", or "No map yet for 2 repositories".</returns>
+    internal static string ContextNoMapRepos(IReadOnlyList<string> repos) => repos.Count == 1
+        ? "No map yet for " + repos[0]
+        : string.Create(CultureInfo.InvariantCulture, $"No map yet for {repos.Count} repositories");
+
+    /// <summary>The No map overlay's sentence when the answer names several repositories: the one Build map button maps them all into one map (#3997).</summary>
+    /// <param name="repos">The repositories the answer names (two or more).</param>
+    /// <returns>"Build map makes one map of both, a and b: ...", or "Build map makes one map of all 3 repositories: ...".</returns>
+    internal static string ContextNoMapReposBody(IReadOnlyList<string> repos) => (repos.Count == 2
+        ? "Build map makes one map of both, " + repos[0] + " and " + repos[1]
+        : string.Create(CultureInfo.InvariantCulture, $"Build map makes one map of all {repos.Count} repositories"))
+        + ": what they are made of and how their parts connect.";
 
     // A short age in the Context page's words.
     private static string ContextAgo(TimeSpan age) => age.TotalMinutes switch

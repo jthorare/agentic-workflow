@@ -20,4 +20,7 @@ public enum ObligationKind
 
     /// <summary>Recycling the meta lane itself with a detached lane-recycle, owed while its context is at or over the recycle mark and no waiter is recorded.</summary>
     RecycleSelf = 6,
+
+    /// <summary>Sending a delegation's ACTION message to a lane: owed from `aw-meta delegate` until a send to that lane names the issue.</summary>
+    Delegate = 7,
 }

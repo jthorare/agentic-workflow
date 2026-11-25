@@ -50,8 +50,8 @@ S0="$VIEW_S"; WB_X0="$WB_X"; WB_W0="$WB_W"   # the whole world, before the searc
 shot before-filter
 
 term="Area 3"
-"$DRIVER" type --name "Ask or look up" --value "$term" --replace >/dev/null 2>&1 || setup_fail "could not type into the search box"
-"$DRIVER" key --chord Enter --name "Ask or look up" >/dev/null 2>&1 || setup_fail "Enter in the search box was not accepted"
+"$DRIVER" type --name "Ask a question" --value "$term" --replace >/dev/null 2>&1 || setup_fail "could not type into the search box"
+"$DRIVER" key --chord Enter --name "Ask a question" >/dev/null 2>&1 || setup_fail "Enter in the search box was not accepted"
 sleep 3   # the feature's files are read before the camera moves
 settle
 shot after-filter

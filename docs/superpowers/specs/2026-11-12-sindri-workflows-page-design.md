@@ -85,6 +85,8 @@ Done-checks. Each is a test or a measured run in the real app (`aw-ui-driver`). 
 12. **State is a chip.** "Active, next weekday 7:00" or "Off" beside the title, the same word and glyph as the list row (#2970).
 13. **Agents get the same verbs.** Every action here has a CLI verb and an MCP tool; a session reads and tests but never presses the owner's Activate (§8).
 14. **The old canvas-only editor stays until P5.** The new profile key `workflow.editor` (`sheet` | `steps`; added to the profile schema in P1, a field on `WorkflowSettings`, since the profile section is `workflow` and has no JSON schema; set with `sindri profile set workflow.editor steps`, a doc row, error text lists both values) picks the canvas layout only. The three bug fixes (sheet-first Add step #3072, Change trigger #3075, step names #3074) live in `GraphEditViewModel` and ship in BOTH layouts from P1, so a default user never saves an empty step. P1 to P5 ship `sheet` as the default; P5ui flips it; P6 deletes the old path after one week with no miss of W1 to W3. W1 to W5 run on `steps` and W5 also runs on `sheet`. After P6 the key is accepted and ignored for one release.
+15. **Delete asks once, keeps the runs, has no undo (§4.9, #3306).** The confirm names the run count and the resource size. Past runs stay readable. The workflow's resources are deleted. An active workflow must be paused first, and a run in flight blocks the delete. *Why:* `DeleteWorkflowService` already archives: it keeps every revision and run and clears `active_revision` (`WorkflowSql.Archive`). Only the page, the refusals and the resource purge are new. Meta's pick, 2026-11-12.
+16. **After Save the page shows the newest revision, and Run now names the revision it runs (§4.10, #3303).** On an active workflow the header says "Revision 2 saved · revision 1 is still active · Activate". *Why:* on main the sheet snaps back to the active revision's text and Run now runs revision 1 without saying so, so a fix looks lost and the rerun proves nothing. Meta's pick, 2026-11-12.
 
 ## 3. The model
 
@@ -108,7 +110,8 @@ The page's step is derived, not stored:
 3. any finding -> "Fix N things" (opens the first)
 4. no passing test of this revision -> "Test run"
 5. tested and off -> "Activate"
-6. active -> "Active, next <time>"
+6. active, and a newer revision is saved -> "Activate rev N" (§4.10)
+7. active -> "Active, next <time>"
 
 ### 3.2 A test run
 
@@ -199,7 +202,7 @@ Grammar from #2978: rows and steps lead with mono ids; a bare letter never commi
 | Ctrl+Enter in the sheet | Save step | yes, one op |
 | Ctrl+Z | the shell's toast undo: Save shows "Step saved. Undo (Ctrl+Z)", and while that toast is up Ctrl+Z restores the previous graph as a new revision. No toast, no page-level Ctrl+Z (the `.` panel has "Undo last edit") | yes, one op |
 
-Activate, Pause, Delete and Remove are buttons or the `.` panel, not bare keys. Activate has the canvas key Ctrl+Shift+A, which activates in one click, and opens the confirm for an untested revision. Bare `N`, `T` and `1` fire only when the canvas has focus, never inside a field. Ctrl+K opens Add step only on this page; it yields to the shell's command palette when the shell owns focus.
+Activate, Pause, Delete and Remove are buttons or the `.` panel, not bare keys (Delete: §4.9). Activate has the canvas key Ctrl+Shift+A, which activates in one click, and opens the confirm for an untested revision. Bare `N`, `T` and `1` fire only when the canvas has focus, never inside a field. Ctrl+K opens Add step only on this page; it yields to the shell's command palette when the shell owns focus.
 
 **Focus contract.**
 
@@ -239,6 +242,45 @@ Title, then the state chip (decision 12), then the test fact in one shape everyw
 | Save refused by the server | the sheet stays open, keeps the text, shows the sentence of §6.1 on the field or at its top |
 | Run page loading / failed | steps from the list's cache first; "Couldn't read this run. Retry" |
 | Describe it | "Thinking" with Esc to cancel; "No agent chosen. Choose one" (the fix line) when `workflow.agent.target` is unset; a failed agent shows its sentence and keeps the text typed |
+| Active, newer revision saved | the header line of §4.10; "Activate rev N" is the primary button; Run now reads "Run now (rev 1)" |
+| Delete confirm / delete refused / delete in flight | §4.9's confirm; the refusal sentence in the confirm with its one fix button; Delete shows a spinner and is off |
+
+### 4.9 Delete (#3306)
+
+Delete is the last item of the header's ⋯ menu and a row of the `.` panel. It is never a bare key. It always opens one confirm. The confirm has three forms:
+
+| The workflow is | The confirm says | Buttons |
+|---|---|---|
+| off, no run in flight | "Delete Nightly size check? Its 12 runs stay readable on the Runs page. Its 1.2 MB of resources are deleted. You can't undo this." | Cancel, **Delete** (red) |
+| active | "Nightly size check is active. Pause it, then delete it." | Cancel, **Pause** |
+| off, a run in flight | "A run of Nightly size check is still going. Delete it after the run ends." | Cancel, **Open the run** |
+
+1. Focus starts on Cancel, so a stray Enter deletes nothing. Ctrl+Enter presses Delete, and the footer shows both keys. Esc closes the confirm. The confirm traps focus, the same as the Activate confirm (§4.6 focus contract 3).
+2. The run count is all of the workflow's run rows, test runs included. The size is the sum of `ListResources` sizes for the owner `workflow:<slug>` and each `node:<slug>/<id>`. An unmeasured resource adds nothing, and then the text says "at least 1.2 MB". With no resources the second sentence drops out.
+3. Pause in the active form pauses the workflow and then shows the first form in place. The owner still presses Delete.
+4. After the delete, the list drops the row and the toast says "Deleted Nightly size check". The toast has no Undo. Focus moves to the next row, or to the previous one when the deleted row was last, or to the empty state of §4.1.
+5. Past runs stay on the Runs page. They show "Nightly size check (deleted)" and open read-only: no Re-run, no Run now.
+6. The slug stays taken, because the run ids `slug@rev:N` keep it. A new workflow with the same name gets the slug `nightly-size-2`, and the start screen says so before Save.
+
+Engine and API (the same rules in the app, `sindri wf delete`, `DELETE /sindri/workflows/{slug}` and `workflow_delete`):
+
+- An active workflow is refused with `SND-GRAPH-114` "This workflow is active; pause it first, then delete it". Today `WorkflowSql.Archive` clears `active_revision` without a word.
+- A workflow with a run in flight (`IWorkflowRunStore.InFlight`, live and test) is refused with `SND-GRAPH-115` "A run of this workflow is still going; delete it after the run ends or cancel the run".
+- After the archive, the service purges the resources of `workflow:<slug>` and every `node:<slug>/<id>`, through the code `PurgeResourcesService` uses. A failed purge doesn't undo the archive. The response says what stayed, and `sindri doctor` lists the owner as an orphan.
+- The response gains `runsKept` and `bytesFreed`, and `wf delete` prints "Deleted nightly-size. 12 runs kept, 1.2 MB freed". A session may delete a workflow that is off, the same as today. It can never delete an active one, because it can't press Pause (§8).
+
+### 4.10 Editing an active workflow (#3303)
+
+Every Save makes a revision (§3.1), and triggers keep running the active one. So an active workflow with a newer saved revision is a state of its own:
+
+1. After Save, the sheet and the canvas show the newest revision, the one just saved. The page never reloads the active revision over the owner's edit.
+2. The header shows one line under the title: "Revision 2 saved · revision 1 is still active · **Activate**". The header's primary button reads "Activate rev 2" and does the same as the line's link. It follows decision 8: an untested revision opens "Not tested yet. Activate anyway?", and a tested one activates in one click. The line replaces "Revision 1 of 2".
+3. Run now names its revision: "Run now (rev 1)". Its tooltip says "Runs the active revision. Test run tries rev 2 first". Test run is the way to try the edit: it runs the newest revision (§3.2).
+4. Run now sends the revision it named. `RunWorkflowService` takes an optional `expectRevision` (`wf run --revision N`, `revision` on the route and the MCP tool). When the active revision differs, the run is refused with `SND-GRAPH-007` and the page shows "Changed elsewhere. Reload". Without the field, Run now runs the active revision, as on main.
+5. Activate rev 2 clears the line. After Pause, the workflow is off and the line goes too. The step list of §3.1 then decides the primary button.
+6. Every revision after the active one counts: with revisions 3 and 4 saved over an active 2, the line says "Revision 4 saved · revision 2 is still active". Activate sends 4.
+
+Until P8 ships, ui's stopgap line from #3303 stays.
 
 ## 5. Test run
 
@@ -303,6 +345,11 @@ Each failure code maps to `{code, sentence template, fixAction}`. The mapping li
 | `SND-GRAPH-107` | "This run already ended." | none |
 | `SND-GRAPH-108` | "The output of {step} was cut at 64 KB, so a later step can't read it." | Open the step |
 | `SND-GRAPH-109` | "A run of this workflow can't start the workflow again." | Open the step that does |
+| `SND-CODE-001` | "{step} doesn't compile: {message}." ({message} lists each error with its line and column) | Open {step} |
+| `SND-CODE-002` | "{step} ran past its time limit." | Open {step} |
+| `SND-CODE-003` | "{step} used more memory than its limit." | Open {step} |
+| `SND-CODE-004` | "{step} stopped: {message}." ({message} is the exception message, or says the result is not JSON) | Open {step} |
+| `SND-CODE-005` | "Sindri can't run code steps: the code runner couldn't start." with the SND message underneath (the runner binary missing, a refused sandbox plan, a run area that can't be made, a process that doesn't start, a runner exit 2) | None |
 | `SND-GRAPH-007` | "Changed elsewhere." | Reload / `wf show S` |
 | `SND-API-001` | "Sindri is not running." | Start Sindri / `sindri serve` |
 
@@ -438,6 +485,8 @@ Phases are the PRs. Every lane has work from day one; the red and stubs of each 
 | P5ui | Trigger step events picker (#3032), field picker (#3033), Prompt output as a form (#2968), flip `workflow.editor` default | ui | P4b, P5 |
 | P6 | Describe it; delete the old editor path | ui, engine | P5ui, one week of green W1 to W3 |
 | P7 | Re-run from here; undo | engine, ui | P4a |
+| P8a | Delete's refusals `SND-GRAPH-114` and `SND-GRAPH-115`, the resource purge, `runsKept` and `bytesFreed` (§4.9); `expectRevision` on Run now and `wf run --revision` (§4.10). The response fields change goldens, so the gate runs the API goldens, `EndpointCqrsTests` and the aot-smoke if `wf delete` output is in `expected.txt` | api, engine | none (start now) |
+| P8 | Delete in the ⋯ menu and the `.` panel with its three confirms, "(deleted)" runs (§4.9); the newest-revision sheet, the header line, "Activate rev N" and "Run now (rev N)" (§4.10) | ui | P8a stubs |
 | X1 | Design: frames for §4.2, §4.8 (every state row, including loading and failed), §7.1 and the Activate confirm, in the Inspora bar; type scale, motion (state change, dot arc, sheet open) and density; token names for the dots. First frames (§4.2, §4.8) land before P1's visual pass | design | none |
 | X2 | UX: the walk of A, B and C at each phase's end; filing every miss as an issue `Part of #2978` | ux | each phase |
 | X3 | Perf: W9, W10 in the real app; the canvas at 200 steps | perf | P1, P2 |

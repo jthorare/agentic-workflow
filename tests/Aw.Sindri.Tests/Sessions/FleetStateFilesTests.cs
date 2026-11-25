@@ -28,6 +28,21 @@ public sealed class FleetStateFilesTests
         Assert.Equal(valid.Count, read.Count);
         var asking = read.Single(static f => f.State == HookState.Asking && f.Tool == "Bash" && f.Provider.Value == "claude-code" && f.Cwd is not null && f.Transcript is not null && f.AgentPid is not null);
         Assert.Equal(AskingReason.Approval, asking.Reason);
+        Assert.Null(asking.ToolAt);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public void A_running_file_carries_the_last_tool_name_and_when_it_ran()
+    {
+        var read = new FleetStateFiles(SessionFixtures.Fleet, _providers, pruning: false).Read(TestContext.Current.CancellationToken).Value;
+
+        var running = read.Where(static f => f.State == HookState.Running && f.Tool is not null).OrderBy(static f => f.Tool, StringComparer.Ordinal).ToList();
+
+        Assert.Equal(2, running.Count);
+        Assert.Equal("Bash", running[0].Tool);
+        Assert.Equal("mcp__github__get_issue", running[1].Tool);
+        Assert.All(running, static f => Assert.Equal(new DateTimeOffset(2026, 10, 16, 11, 2, 3, 123, TimeSpan.Zero), f.ToolAt));
+        Assert.All(running, static f => Assert.Null(f.Reason));
     }
 
     [Fact, Trait("Lane", "integration")]

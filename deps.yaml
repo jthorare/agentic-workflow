@@ -212,7 +212,7 @@ packages:
     projectPrefix: Aw.Sindri
     src: src/Sindri
     bins: [sindri, sindri-code-runner]
-    db: [sindri-app/ledger.db, sindri-app/views.db]
+    db: [sindri-app/ledger.db, sindri-app/views.db, sindri-app/messages.db]
     files: [sindri-app/control.json, sindri-app/auth/human.token, fleet]
     namespace: sindri
     routes: [/sindri/]
@@ -293,6 +293,12 @@ packages:
     projectPrefix: Aw.Sindri.Toolkit
     src: src/Toolkit
     note: "the SDK a toolkit project references (name, needs, typed tools, an MCP stdio host); packed alone into the SDK feed, so it has no repo references (no Kernel edge); toolkits live outside the repo and reference it through that feed, and Sindri never references it: Sindri talks to a toolkit over MCP stdio only (PR 15)"
+  - id: Transcripts
+    kind: package
+    tier: 1
+    projectPrefix: Aw.Transcripts
+    src: src/Transcripts
+    note: "the local agent transcript corpus: Claude Code, Codex and Cursor session files read as one provider-neutral list of sessions and human/assistant turns, with opaque refs and scrubbed text; no model calls (issue 3787)"
 
 edges:
   # ---- current: found in the source today ----
@@ -519,6 +525,11 @@ edges:
     status: planned
     note: "step.judge.choose (DT spec 3.1, 8.3) runs `judge choose --providers a,b` with the question on stdin, through the IJudgeChoice port and its CLI adapter (AW_SINDRI_JUDGE, set by sindri-app and the sandbox e2e to the C# judge published next to sindri, else judge on the PATH; AW_JUDGE_STATE_DIR is Sindri's own judge directory under its home), and the sandbox's hook canary (SandboxCanaries.cs, SB-2) runs `judge brief get task:selfcheck` inside a session, the hooks' own round trip, since the use cases live in Host and a project edge reaches only Core (spec 4c); Judge's stores never join Sindri's"
   - from: Sindri
+    to: Meta
+    kind: cli
+    status: planned
+    note: "the home-lanes collector (home spec §3.3, E1) runs `aw-meta lanes-context|status|usage|team-list --json`, read-only, through the IMetaTeamReader port and its CLI adapter (AW_SINDRI_AW_META, else aw-meta on the PATH); it never runs merge-run, gate-run or lane-recycle"
+  - from: Sindri
     to: Readiness
     kind: cli
     status: planned
@@ -697,6 +708,26 @@ edges:
     kind: compose
     status: current
     note: "Host calls AddConnectorsFeatures and AddConnectorsInfrastructure and nothing else from them"
+  - from: Sindri
+    to: Transcripts
+    kind: project
+    status: current
+    note: "Sindri's Host reads the local agent transcripts through ITranscriptCorpus in Aw.Transcripts.Core ('sindri transcripts list|show', issue 3787)"
+  - from: Sindri
+    to: Transcripts
+    kind: compose
+    status: current
+    note: "Sindri's Host calls AddTranscriptsInfrastructure (and nothing else from that project) in Composition"
+  - from: Transcripts
+    to: Kernel
+    kind: project
+    status: current
+    note: "Result, IService, ports (scaffolded by /new-package)"
+  - from: Transcripts
+    to: Redaction
+    kind: project
+    status: current
+    note: "turn text goes through the scrubber before it leaves the library (Aw.Transcripts.Infrastructure only)"
 
 exceptions:
   - rule: DEPS-CYCLE-001

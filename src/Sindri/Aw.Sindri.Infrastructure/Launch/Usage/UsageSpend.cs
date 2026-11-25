@@ -20,10 +20,39 @@ internal sealed class UsageSpend(IAgentCatalog catalog, IReadOnlyDictionary<stri
     private readonly ConcurrentDictionary<AgentId, (DateTimeOffset At, DateOnly Day, AgentSpend Spend)> _read = new();
     private readonly Lock _gate = new();
     private readonly Dictionary<AgentId, (DateOnly Day, Task<AgentSpend> Task)> _flights = [];
+    private readonly Dictionary<AgentId, (DateTimeOffset At, DateOnly Day, Task<AgentSpend> Task)> _failures = [];
 
     /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<ModelTokens>?> OfSession(AgentId target, SessionId session, CancellationToken cancellationToken) =>
         catalog.Resolve(target)?.Usage is { } name && readers.TryGetValue(name, out var reader) ? await reader.OfSession(session, cancellationToken).ConfigureAwait(false) : null;
+
+    /// <inheritdoc/>
+    public SpendPeek Peek(AgentId target)
+    {
+        if (catalog.Resolve(target)?.Usage is not { } name || !readers.TryGetValue(name, out var reader))
+        {
+            return new SpendPeek(Landed: true, Spend: null);
+        }
+
+        var now = clock.GetUtcNow();
+        var window = LocalDay(now, clock.LocalTimeZone);
+        if (_read.TryGetValue(target, out var cached) && cached.Day == window.Day)
+        {
+            if (now - cached.At >= _fresh)
+            {
+                Background(Flight(target, reader, window));
+            }
+
+            return new SpendPeek(Landed: true, cached.Spend);
+        }
+
+        // the day's first read: start (or join) the shared one and answer at once; the caller is not told its value
+        Background(Flight(target, reader, window));
+        return new SpendPeek(Landed: false, Spend: null);
+    }
+
+    private static void Background(Task<AgentSpend> read) =>
+        _ = read.ContinueWith(static t => _ = t.Exception, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
     /// <inheritdoc/>
     public async ValueTask<Result<AgentSpend?>> Today(AgentId target, CancellationToken cancellationToken)
@@ -61,6 +90,12 @@ internal sealed class UsageSpend(IAgentCatalog catalog, IReadOnlyDictionary<stri
                 return flight.Task;
             }
 
+            // a read that just failed is not walked again for the fresh window (#3751): a broken reader would otherwise re-walk every transcript on each call
+            if (_failures.TryGetValue(target, out var failed) && failed.Day == window.Day && clock.GetUtcNow() - failed.At < _fresh)
+            {
+                return failed.Task;
+            }
+
             source = new TaskCompletionSource<AgentSpend>(TaskCreationOptions.RunContinuationsAsynchronously);
             _flights[target] = (window.Day, source.Task);
         }
@@ -76,11 +111,20 @@ internal sealed class UsageSpend(IAgentCatalog catalog, IReadOnlyDictionary<stri
             var used = Budgets.Spend(await reader.Between(window.Start, window.End, CancellationToken.None).ConfigureAwait(false));
             var spend = reader.Verified ? used : new AgentSpend(0m, used.Tokens, SpendBasis.TokensOnly);
             _read[target] = (clock.GetUtcNow(), window.Day, spend);
+            lock (_gate)
+            {
+                _ = _failures.Remove(target);
+            }
+
             _ = source.TrySetResult(spend);
         }
         catch (Exception e)
         {
             _ = source.TrySetException(e);
+            lock (_gate)
+            {
+                _failures[target] = (clock.GetUtcNow(), window.Day, source.Task);
+            }
         }
         finally
         {

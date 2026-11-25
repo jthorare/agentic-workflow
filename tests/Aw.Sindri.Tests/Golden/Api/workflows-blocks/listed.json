@@ -55,7 +55,13 @@
               "type": "text",
               "required": true,
               "caption": "Connection",
-              "advanced": false
+              "advanced": false,
+              "services": [
+                "github",
+                "linear",
+                "slack",
+                "google"
+              ]
             },
             {
               "name": "event",
@@ -77,20 +83,14 @@
             "occurredAt": "string",
             "connection": "string",
             "event": "string",
-            "repo?": "string",
-            "number?": "string",
-            "title?": "string",
-            "url?": "string",
-            "author?": "string",
-            "ref?": "string",
-            "identifier?": "string",
-            "label?": "string",
-            "to?": "string",
-            "channel?": "string",
-            "ts?": "string",
-            "user?": "string",
-            "text?": "string",
-            "start?": "string"
+            "repo": "string",
+            "number": "number",
+            "title": "string",
+            "author": "string",
+            "url": "string",
+            "headSha": "string",
+            "baseRef": "string",
+            "draft": "boolean"
           },
           "branches": [
             "out"
@@ -155,7 +155,7 @@
                 },
                 {
                   "value": "0 8 * * 1",
-                  "label": "Mondays at 8:00"
+                  "label": "Every Monday at 8:00"
                 }
               ],
               "advanced": false
@@ -307,7 +307,9 @@
             }
           ],
           "outputs": {
-            "scheduledFor": "string"
+            "scheduledFor": "string",
+            "localDate": "string",
+            "weekday": "string"
           },
           "branches": [
             "out"
@@ -572,6 +574,53 @@
           }
         },
         {
+          "type": "skill_catalog",
+          "title": "Skill catalog",
+          "isTrigger": false,
+          "config": [],
+          "outputs": {
+            "skills": "array",
+            "count": "number"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {},
+          "exampleSpec": {
+            "version": 1,
+            "name": "List the skills",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "skills",
+                "type": "skill_catalog",
+                "config": {}
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "{{skills.count}} skills"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "skills"
+              },
+              {
+                "from": "skills",
+                "to": "tell"
+              }
+            ]
+          }
+        },
+        {
           "type": "call_tool",
           "title": "Toolkit tool",
           "isTrigger": false,
@@ -588,7 +637,8 @@
               "type": "text",
               "required": false,
               "caption": "Connection",
-              "advanced": false
+              "advanced": false,
+              "services": []
             },
             {
               "name": "arguments",
@@ -1069,7 +1119,8 @@
           ],
           "outputs": {
             "items": "array",
-            "count": "number"
+            "count": "number",
+            "skipped": "number"
           },
           "branches": [
             "out"
@@ -1722,7 +1773,13 @@
                 "to": "tell"
               }
             ]
-          }
+          },
+          "oneOf": [
+            [
+              "duration",
+              "until"
+            ]
+          ]
         }
       ]
     },
@@ -1936,7 +1993,7 @@
             "out"
           ],
           "exampleConfig": {
-            "title": "Drifted",
+            "title": "Workflow update",
             "body": "{{agent.summary}}"
           },
           "exampleSpec": {

@@ -63,6 +63,15 @@ public sealed class ScopeRulesTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_context_repos_name_the_host_left_out_as_no_checkout_is_001_saying_so_with_the_fix()
+    {
+        var scoped = ScopeRules.Resolve(new ContextSettings { Repos = [ContextRepoName.From("notes")] }, _repos, new(ContextCallerKind.Human, Repo: null, ContextClient.Cli), [ContextRepoName.From("notes")]);
+
+        Assert.Equal(ContextErrors.SettingsInvalid.Code, scoped.Error.Code);
+        Assert.Equal("context.repos: 'notes' is a profile repo but not a git checkout (fix: git init and commit in it, or remove it from repos:)", scoped.Error.Message);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_usable_repo_carries_the_profiles_deny_paths_on_top_of_the_built_in_secret_globs()
     {
         var usable = ScopeRules.Usable([new ProfileRepoEntry("split-panes", "/r/a", ["**/fixtures/**"]), new ProfileRepoEntry("other", "/r/b")]);

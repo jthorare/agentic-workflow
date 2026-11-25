@@ -425,11 +425,20 @@ The ledger is `docs/sindri/prior-art/projects.md`. Issues that already exist (#2
 |---|---|---|---|---|
 | 1 | Peek shows a burn-up (done over total, by day) and PR throughput, and lists the fixed health rules | §8, Linear cycle graph and GitBiased | The peek shows progress as `6/9` only. A reader cannot see whether "at risk" came from slow merges or growing scope | #3168 |
 | 2 | Triage applies an action to a multi-selection, then moves to the next row | §4, Plane Intake | `projects-triage` acts on one row. Thirteen new items take thirteen actions without `x` select | #3169 |
-| 3 | A global hotkey from the tray opens the one-line create window with the main window closed | §5, Raycast and Linear | A desktop app can capture an issue in under 10 seconds from anywhere. The web tools cannot | #3170 |
+| 3 | A global hotkey from the tray opens the one-line create window with the main window closed | §5, Raycast and Linear | A desktop app can capture an issue in under 10 seconds from anywhere. The web tools cannot. The shared window creates on Ctrl+Enter; Enter never creates (Notes spec decision 5). The Notes spec (`2026-11-12-sindri-notes-page-design.md`, §4.1) owns that window. The hotkey is one "Capture hotkey" row under Settings › Shortcuts, shared with Notes. | #3170 |
 | 4 | The `.` menu on a row offers open PR, re-run CI, Scope this and Ask an agent to fix | §6 and §10, take 6 | The footer shows `. actions` and no frame draws the menu. #2997 covers delegation only | #3171 |
 | 5 | "Draft update" fills a project update from derived health and merged PRs; the reminder lands as a Home row | §9, Linear reminders | The peek has "Post update…" with an empty box. #3006 posts an update and does not draft or remind | #3172 |
 
 ### Health rules (#3168)
+
+**Superseded by #3718:** health comes from `HealthOf` (`src/Sindri/Aw.Sindri.Core/Projects/TruthSources/ProjectTruths.cs`), not from the rules below. It reads only open PRs (drafts are not open); a project with no open PR has no health. Off track at half red or more, at risk at any red, unknown when none is red but some have no CI summary on their current head, on track otherwise. With N open PRs the noun is "PR" for 1 and "PRs" otherwise. The reason strings, exactly:
+
+- `Off track: {red} of {open} PRs red` (with a tail `, {n} not checked yet` when some are unchecked)
+- `At risk: {red} of {open} PRs red` (same tail)
+- `CI not checked yet for {n} of {open} PRs`
+- `On track: {open} open PRs, none red`
+
+The rules below stay as the original design.
 
 Sindri works out a project's health from its linked PRs, CI and reviews. It uses Linear's own words, so the derived value and the hand-set one compare 1:1. The first rule that matches wins. The row shows that rule's reason, with counts.
 

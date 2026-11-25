@@ -14,5 +14,11 @@ internal sealed class ScriptedLaunchSetup(Result<LaunchInitReport> init, Result<
         return ValueTask.FromResult(init);
     }
 
-    public ValueTask<Result<LaunchShowReport>> Show(AgentId? only, CancellationToken cancellationToken) => ValueTask.FromResult(show);
+    public int ShowCalls { get; private set; }
+
+    public ValueTask<Result<LaunchShowReport>> Show(AgentId? only, CancellationToken cancellationToken)
+    {
+        ShowCalls++;
+        return ValueTask.FromResult(show);
+    }
 }

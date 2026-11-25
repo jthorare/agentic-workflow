@@ -31,6 +31,11 @@ done
 case "$timeout_s$grace" in *[!0-9]*|"") echo "run-test-guard: --timeout and --grace are whole seconds ($usage)" >&2; exit 2 ;; esac
 
 token="rtg-$$-$(date +%s%N)"
+# The watchdog writes this file BEFORE it TERMs the check, so the guard reads the timeout from a record, not from whether
+# the watchdog has exited yet: on a loaded box the watchdog can still be alive when the check is already dead (#3219).
+mark_dir="$(mktemp -d)" || { echo "run-test-guard: mktemp -d failed" >&2; exit 2; }
+fired="$mark_dir/fired"
+unmark() { rm -f -- "$fired"; rmdir -- "$mark_dir" 2>/dev/null; return 0; }
 
 tagged() {  # every PID of this user (but us) whose environment holds the token
   local p
@@ -78,16 +83,18 @@ fi
 
 AW_RUN_GUARD="$token" setsid "${scope[@]+"${scope[@]}"}" "$@" &
 pgid=$!
-trap 'sweep; exit 143' TERM INT HUP
+trap 'sweep; unmark; exit 143' TERM INT HUP
 
 ( trap 'kill "$s" 2>/dev/null; exit 0' TERM; sleep "$timeout_s" & s=$!; wait "$s"
-  kill -0 "$pgid" 2>/dev/null && { echo "run-test-guard: timed out after ${timeout_s}s; stopping the check" >&2; kill -TERM -- "-$pgid" 2>/dev/null; } ) &
+  kill -0 "$pgid" 2>/dev/null && { : > "$fired"; echo "run-test-guard: timed out after ${timeout_s}s; stopping the check" >&2; kill -TERM -- "-$pgid" 2>/dev/null
+    # Test seam: the watchdog lingers this many seconds after its TERM, the way a loaded box delays its exit (#3219).
+    [ -n "${AW_GUARD_TEST_WATCHDOG_HOLD:-}" ] && sleep "$AW_GUARD_TEST_WATCHDOG_HOLD"; } ) &
 watchdog=$!
 
 wait "$pgid"; rc=$?
-timed_out=0
-if ! kill -0 "$watchdog" 2>/dev/null; then timed_out=1; fi
 kill "$watchdog" 2>/dev/null; wait "$watchdog" 2>/dev/null
+timed_out=0; [ -e "$fired" ] && timed_out=1
 sweep
+unmark
 [ "$timed_out" = 1 ] && [ "$rc" -ne 0 ] && rc=124
 exit "$rc"

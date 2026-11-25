@@ -21,4 +21,13 @@ public sealed record HostSession(string Name, string WorkDir, IReadOnlyList<stri
 
     /// <summary>The catalog agent the launch asked for, for a host that picks its own runtime for it (T3); null when not given.</summary>
     public AgentId? Agent { get; init; }
+
+    /// <summary>The window size for a host that takes one (tmux 'new-session -x W -y H'); null leaves the host's default.</summary>
+    public HostSize? Size { get; init; }
+
+    /// <summary>True keeps the pane when the agent exits ('set-option remain-on-exit on'), so the view can show Ended (agents spec §15.2).</summary>
+    public bool RemainOnExit { get; init; }
+
+    /// <summary>True runs the command in a clean environment: only <see cref="Env"/> plus TERM reaches it ('env -i'), so nothing the tmux server inherited from Sindri's own process (every AW_ variable, GH_TOKEN) does (agents spec §15.4).</summary>
+    public bool CleanEnvironment { get; init; }
 }

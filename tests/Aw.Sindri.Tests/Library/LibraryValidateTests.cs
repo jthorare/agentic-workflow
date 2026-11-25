@@ -175,7 +175,7 @@ public sealed class LibraryValidateTests : IDisposable
     private static string Generated(string id, string sourceSha) =>
         $"---\naw-doc: 1\nid: {id}\ntitle: Generated\nkind: spec\nstatus: draft\ngenerated: write_packet.py\nsource-sha256: {sourceSha}\n---\n# Generated\n\n## REQ-1 Size the queue\n";
 
-    private static string RepoRoot()
+    internal static string RepoRoot()
     {
         for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
         {

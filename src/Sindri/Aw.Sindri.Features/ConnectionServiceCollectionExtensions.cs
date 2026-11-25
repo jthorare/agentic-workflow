@@ -30,6 +30,7 @@ internal static class ConnectionServiceCollectionExtensions
             .AddScoped<IScheduledService, PollConnectionsService>()   // the built-in 'workflow-poll' service (#2258, PR 11): connection_event triggers, every 30 s
             .AddSingleton(PollConnectionsService.BuiltIn)
             .AddSingleton<PollWake>()
+            .AddSingleton<RecentEvents>()   // the events each poll saw, for GET /sindri/workflows/trigger-events (#3201)
             .AddScoped<PollRound>()
             .AddScoped<CatchUp>()
             .AddScoped<GroupReader>()
@@ -38,6 +39,7 @@ internal static class ConnectionServiceCollectionExtensions
             .AddScoped<ConnectionStatusWriter>()
             .AddSingleton<SignInOutcomes>()
             .AddScoped<OAuthSignInFlow>()
+            .AddScoped<KeyConnectionAdd>()
             .AddScoped<IValidator<AddConnectionRequest>, AcceptAllValidator<AddConnectionRequest>>().AddCommand<AddConnectionRequest, AddConnectionResponse, AddConnectionService>()
             .AddScoped<IValidator<TestConnectionRequest>, AcceptAllValidator<TestConnectionRequest>>().AddUngatedCommand<TestConnectionRequest, TestConnectionResponse, TestConnectionService>()
             .AddScoped<IValidator<RemoveConnectionRequest>, AcceptAllValidator<RemoveConnectionRequest>>().AddCommand<RemoveConnectionRequest, RemoveConnectionResponse, RemoveConnectionService>()

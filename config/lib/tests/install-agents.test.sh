@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Temp-dir cleanup (#3262): every mktemp this suite makes is recorded and removed when it exits.
+__aw_tmp_reg="$(command mktemp)"
+mktemp() { local p; p="$(command mktemp "$@")" || return; printf '%s\n' "$p" >>"$__aw_tmp_reg"; printf '%s\n' "$p"; }
+__aw_tmp_clean() { local rc=$? p; while IFS= read -r p; do [ -z "$p" ] || { chmod -R u+rwX "$p" 2>/dev/null || true; rm -rf "$p" || true; }; done <"$__aw_tmp_reg"; rm -f "$__aw_tmp_reg"; exit "$rc"; }
+trap __aw_tmp_clean EXIT
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$DIR/../install-agents.sh"
 
@@ -66,6 +72,20 @@ test_upgrades_a_file_unmodified_since_install() {
   echo "PASS: test_upgrades_a_file_unmodified_since_install"
 }
 
+# #3660: `printf | grep -q` under pipefail. grep exits at the first match, printf dies of SIGPIPE (141) and pipefail turns a found
+# write tool into "no write tool". The tools value is one line today; this feeds the helper a long multi-line one with the match on line 1.
+test_readonly_check_finds_a_write_tool_on_line_one_of_a_long_value() {
+  _agent_field() { printf 'Read, Edit\n'; head -c 100000 /dev/zero | tr '\0' x | fold -w 80; }
+  local i wrong=0
+  for i in $(seq 20); do
+    if _agent_is_readonly /nonexistent; then wrong=$((wrong + 1)); fi
+  done
+  unset -f _agent_field
+  if [ "$wrong" -ne 0 ]; then echo "FAIL: a found write tool read as read-only $wrong of 20 times"; exit 1; fi
+  echo "PASS: test_readonly_check_finds_a_write_tool_on_line_one_of_a_long_value"
+}
+
 test_installs_all_four_and_records_their_hashes
 test_skips_a_file_hand_edited_since_install
 test_upgrades_a_file_unmodified_since_install
+test_readonly_check_finds_a_write_tool_on_line_one_of_a_long_value

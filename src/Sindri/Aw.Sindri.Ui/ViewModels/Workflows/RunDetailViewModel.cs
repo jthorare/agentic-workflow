@@ -5,10 +5,11 @@ using Aw.Sindri.Ui.Api.Workflows;
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
 /// <summary>One run with every node's status, input, output and error. Nodes keep the order they were served in, grouped by node id.</summary>
-internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
+internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
 {
     private int _reads;
     private Uri? _url;
+    private string? _toMarkSeen;
 
     /// <summary>The run's id.</summary>
     public string Id { get; private set => Set(ref field, value); } = string.Empty;
@@ -16,20 +17,20 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <summary>"Run morning-check@1:1".</summary>
     public string TitleText { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The status: glyph and word.</summary>
-    public string ChipText { get; private set => Set(ref field, value); } = string.Empty;
-
     /// <summary>The served status word; empty before the first answer.</summary>
     public string Status { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>The chip's tone; the glyph and word carry the status too.</summary>
     public ChipTone Tone { get; private set => Set(ref field, value); } = ChipTone.Neutral;
 
-    /// <summary>True for a succeeded or running run (the ok colour).</summary>
-    public bool IsOk => Tone == ChipTone.Ok;
+    /// <summary>The chip's word without its glyph.</summary>
+    public string ChipWord { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>True for a waiting run (the attention colour).</summary>
-    public bool IsAttention => Tone == ChipTone.Attn;
+    /// <summary>The chip's glyph.</summary>
+    public string ChipGlyph { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The chip's StateChipView tone: ok, running, waiting, error or neutral.</summary>
+    public string ChipToneWord { get; private set => Set(ref field, value); } = "neutral";
 
     /// <summary>True for a failed run (the error colour).</summary>
     public bool IsError => Tone == ChipTone.Fail;
@@ -52,7 +53,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <summary>True when there is a note under the run's title.</summary>
     public bool HasNotice => NoticeText.Length > 0;
 
-    /// <summary>"Started by manual".</summary>
+    /// <summary>"Started by hand".</summary>
     public string TriggerText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>"Revision 1".</summary>
@@ -95,7 +96,18 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <summary>The sentence for a failed read.</summary>
     public string FailedText { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>Reads one run and shows it.</summary>
+    /// <summary>Opens the run page on one run: reads it, and marks a failed run seen once for this open so its Home row clears.</summary>
+    /// <param name="url">The API's base URL.</param>
+    /// <param name="runId">The run.</param>
+    /// <param name="cancellationToken">Cancels the read and the mark.</param>
+    /// <returns>A task that completes when the run is shown or the failure is.</returns>
+    internal Task Open(Uri url, string runId, CancellationToken cancellationToken)
+    {
+        _toMarkSeen = runId;
+        return Read(url, runId, cancellationToken);
+    }
+
+    /// <summary>Reads one run and shows it. A read alone never marks the run seen; only <see cref="Open"/> does.</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="runId">The run.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
@@ -104,17 +116,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     {
         var read = ++_reads;
         _url = url;
-        if (!string.Equals(Id, runId, StringComparison.Ordinal))
-        {
-            Id = runId;
-            Groups = [];   // another run: nothing of the old one stays
-            Graph = null;
-            (Status, Tone, NoticeText) = (string.Empty, ChipTone.Neutral, string.Empty);
-            (IsFailed, FailedText) = (false, string.Empty);
-            (TitleText, ChipText, TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (Labels.WfRunTitle(runId), string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
-            Changed();
-        }
-
+        SwitchTo(runId);
         IsReading = Groups.Count == 0;
         if (IsReading)
         {
@@ -130,20 +132,74 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         IsReading = false;
         if (run.IsError)
         {
+            if (string.Equals(_startingId, runId, StringComparison.Ordinal))
+            {
+                ShowStarting(runId);   // the views row is not there yet: not a failure
+                return;
+            }
+
             (IsFailed, FailedText) = (true, Labels.WfRunFailed(run.Error));
             return;
         }
 
+        (_startingId, _timedOutId, DidNotStart) = (null, null, false);   // the run landed, late or not: it replaces the did-not-start page
         (IsFailed, FailedText) = (false, string.Empty);
         Show(run.Value);
+        await MarkSeen(url, run.Value, cancellationToken).ConfigureAwait(true);
+    }
+
+    // A read of another run empties the page first; the old open's mark is not wanted then.
+    private void SwitchTo(string runId)
+    {
+        if (string.Equals(Id, runId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (!string.Equals(_toMarkSeen, runId, StringComparison.Ordinal))
+        {
+            _toMarkSeen = null;
+        }
+
+        Empty(runId);
+    }
+
+    // Another run: nothing of the old one stays.
+    private void Empty(string runId)
+    {
+        Id = runId;
+        Groups = [];
+        Graph = null;
+        (Status, Tone, NoticeText) = (string.Empty, ChipTone.Neutral, string.Empty);
+        (ChipWord, ChipGlyph, ChipToneWord) = (string.Empty, string.Empty, "neutral");
+        (IsFailed, FailedText) = (false, string.Empty);
+        (TitleText, TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (Labels.WfRunTitle(runId), string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+        Changed();
+    }
+
+    // Once per open: the first read that shows the run failed sends the mark; a run that ended another way has nothing to mark.
+    // The read does not say whether the run is a test run, so the mark goes anyway and Sindri answers Marked=false for one.
+    private async Task MarkSeen(Uri url, WorkflowRunView run, CancellationToken cancellationToken)
+    {
+        if (!string.Equals(_toMarkSeen, run.Id, StringComparison.Ordinal) || RunStatus.IsLive(run.Status))
+        {
+            return;
+        }
+
+        _toMarkSeen = null;
+        if (string.Equals(run.Status, "failed", StringComparison.Ordinal))
+        {
+            _ = await api.MarkWorkflowRunSeen(url, run.Id, cancellationToken).ConfigureAwait(true);   // best effort: a failed mark leaves the Home row, the page shows the run as read
+        }
     }
 
     private void Show(WorkflowRunView run)
     {
         var (glyph, word) = Labels.WfChip(run.Status);
         TitleText = Labels.WfRunTitle(run.Id);
-        ChipText = glyph + " " + word;
+        (ChipWord, ChipGlyph) = (word, glyph);
         (Status, Tone) = (run.Status, RunStatus.Tone(run.Status));
+        ChipToneWord = RunStatus.ToneWord(run.Status);
         TriggerText = Labels.WfStartedBy(KindOf(run.Trigger));
         RevisionText = Labels.WfRunRevision(run.Revision);
         var live = RunStatus.IsLive(run.Status);
@@ -153,6 +209,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         ErrorText = run.Error ?? string.Empty;
         OutputsText = WorkflowJson.Pretty(run.Outputs);
         Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode))];
+        // No next-run time on purpose (#4188): this page shows a past run, so its Schedule card carries no "next ..." chip.
         Graph = Shape is { } shape && shape.Revision == run.Revision ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(shape, Statuses(run))) : null;
         Changed();
     }
@@ -166,69 +223,6 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <summary>Marks Cancel's call as on the way, or as done.</summary>
     /// <param name="cancelling">True while the call is on the way.</param>
     internal void SetCancelling(bool cancelling) => IsCancelling = cancelling;
-
-    /// <summary>
-    /// Take over or Hand back on one agent node: sent once (a press while one is on the way does nothing), the note says what Sindri answered, and a success reads the run again.
-    /// A refusal shows the server's text and reads nothing.
-    /// </summary>
-    /// <param name="node">The node run the button belongs to.</param>
-    /// <param name="takeOver">True for Take over, false for Hand back.</param>
-    /// <param name="cancellationToken">Cancels the call and the read.</param>
-    /// <returns>A task that completes when the answer is shown.</returns>
-    private async Task ControlNode(NodeRunViewModel node, bool takeOver, CancellationToken cancellationToken)
-    {
-        if (_url is not { } url || node.IsBusy || !(takeOver ? node.CanTakeOver : node.CanHandBack))
-        {
-            return;
-        }
-
-        var id = Id;
-        node.IsBusy = true;
-        Note(string.Empty);
-        try
-        {
-            var (ok, note, agent) = await Send(url, id, node, takeOver, cancellationToken).ConfigureAwait(true);
-            if (!string.Equals(Id, id, StringComparison.Ordinal))
-            {
-                return;   // another run is open now
-            }
-
-            Note(note);
-            if (ok)
-            {
-                await Read(url, id, cancellationToken).ConfigureAwait(true);
-                KeepAnswered(node, agent);
-            }
-        }
-        finally
-        {
-            node.IsBusy = false;
-        }
-    }
-
-    // The read can lag the call (the engine writes its marker late), so what Sindri answered wins on the rebuilt row of the same node and item.
-    // A row the read shows with no agent has ended since the call: it keeps no button.
-    private void KeepAnswered(NodeRunViewModel node, string? agent)
-    {
-        var row = Groups.FirstOrDefault(g => string.Equals(g.Node, node.Node, StringComparison.Ordinal))?.Runs.FirstOrDefault(r => r.ItemIndex == node.ItemIndex);
-        if (row is { Agent: not null } && agent is not null)
-        {
-            row.Agent = agent;
-        }
-    }
-
-    private async Task<(bool Ok, string Note, string? Agent)> Send(Uri url, string id, NodeRunViewModel node, bool takeOver, CancellationToken cancellationToken)
-    {
-        var sent = takeOver
-            ? await api.TakeOverAgentNode(url, id, node.Node, node.ItemIndex, cancellationToken).ConfigureAwait(true)
-            : await api.HandBackAgentNode(url, id, node.Node, node.ItemIndex, cancellationToken).ConfigureAwait(true);
-        if (sent.IsSuccess)
-        {
-            return (true, takeOver ? Labels.WfTakeOverDone : Labels.WfHandBackDone, sent.Value.Agent);
-        }
-
-        return (false, takeOver ? Labels.WfTakeOverRefused(sent.Error) : Labels.WfHandBackRefused(sent.Error), null);
-    }
 
     /// <summary>Shows what Cancel said, in words.</summary>
     /// <param name="text">The note; empty clears it.</param>
@@ -250,16 +244,14 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     {
         OnChanged(nameof(HasError));
         OnChanged(nameof(HasOutputs));
-        OnChanged(nameof(IsOk));
-        OnChanged(nameof(IsAttention));
         OnChanged(nameof(IsError));
         OnChanged(nameof(CanCancel));
         OnChanged(nameof(CanPressCancel));
     }
 
-    // The trigger is the stored object; its "kind" names it. One without a kind reads as an unknown trigger rather than failing the run.
-    private static string KindOf(JsonElement? trigger) =>
+    // The trigger is the stored object; its "kind" names it. One without a kind reads as "an unknown trigger" rather than failing the run.
+    private static string? KindOf(JsonElement? trigger) =>
         trigger is { ValueKind: JsonValueKind.Object } t && t.TryGetProperty("kind", out var kind) && kind.ValueKind == JsonValueKind.String && kind.GetString() is { Length: > 0 } text
             ? text
-            : Labels.WfUnknownTrigger;
+            : null;
 }

@@ -42,7 +42,7 @@ internal sealed partial class BuildMapService
 
     private static Result<(ContextSettings Settings, IReadOnlyList<ContextRepo> Repos)> Mapped(ContextScope scope)
     {
-        var mapped = SettingsReader.Read(scope.Settings).Bind(settings => ScopeRules.Resolve(settings, scope.Repos, scope.Caller).Map(r => (Settings: settings, Repos: r)));
+        var mapped = SettingsReader.Read(scope.Settings).Bind(settings => ScopeRules.Resolve(settings, scope.Repos, scope.Caller, scope.LeftOut).Map(r => (Settings: settings, Repos: r)));
         if (mapped.IsError)
         {
             return mapped.Error;

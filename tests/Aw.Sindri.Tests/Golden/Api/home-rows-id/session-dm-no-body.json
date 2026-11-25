@@ -1,0 +1,40 @@
+{
+  "asOf": {
+    "cursor": 1,
+    "ledgerHead": 1,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "row": {
+    "id": "slack:dm:sam-0902",
+    "version": 1,
+    "kind": "dm",
+    "group": "needs-you",
+    "title": "",
+    "facts": [],
+    "waitsOn": "you",
+    "since": "2026-11-12T09:02:00.0000000Z",
+    "rank": {
+      "blocks": 0,
+      "weight": 4,
+      "sinceRank": 6,
+      "position": 6
+    },
+    "blocksList": [],
+    "links": [],
+    "state": "open",
+    "snoozeUntil": null,
+    "doneAt": null,
+    "actions": [
+      "reply",
+      "open-in-slack"
+    ],
+    "source": {
+      "name": "slack",
+      "readAt": "2026-11-12T09:10:00.0000000Z",
+      "connection": "work-slack"
+    },
+    "repo": null
+  }
+}

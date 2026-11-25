@@ -1,0 +1,1 @@
+{"session_id":"claude-fixture-1","transcript_path":"/tmp/none.jsonl","cwd":"/tmp","permission_mode":"default","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"aw-nosuch-tool --version","description":"Show the version"},"tool_use_id":"toolu_01AbCdEg"}

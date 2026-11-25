@@ -262,7 +262,7 @@ Launch with bare `sindri`. Start it from a folder that stays put. Click into a t
 | Recipes / recipe sheet | G R; "Recipe ▸" in the frame or a group head | States, inputs, outputs of the pinned version |
 | Start form | N on Workflows, ⌘N / Ctrl+N from any page | Start an instance from the app: pick a recipe, fill inputs, send |
 | Agents | G A | Live sessions by provider/lane, ASKING rows, filters, session sheet (Enter), ended fold (E), copy resume (Y); the tab count; tray line |
-| Context | G C | Type an anchor (or two), Enter: head "map vN · K anchors", intent/product/code bands with edges, coverage strip, searched-source chips; "not found" and suggested anchors |
+| Context | G C | Type an anchor (or two), Enter: head "map vN · K anchors", intent/product/code bands with edges, a coverage sentence under the search box (what was searched and why the rest was not; none on an exact hit), searched-source chips; "not found" and suggested anchors |
 | Work (queue) | G Q | Items with sizes; item sheet; Create (C) and Close item |
 | System / Health | G . (or G S) | Control plane, services, freshness |
 
@@ -309,7 +309,7 @@ An interactive agent asks to approve the five `mcp__sindri__context_*` tools onc
 | Tools return nothing / MCP "failed to connect" | The control plane restarted on another port | `sindri status` for the port; remove and re-add the MCP entry; start a new agent session |
 | `context_sources` says `degraded, never refreshed` | `context-docs-refresh` is not in the profile | Add it, validate, owner re-approves |
 | `SND-CLI-001` on `context lenses` | Used `--anchor` | Pass anchors positionally |
-| `sindri doctor` exits 1 on a clean box | Warnings such as `context:map` "no map yet" or a harness-probe version note | Read each row; a warning is not a stop. Fail rows are |
+| `sindri doctor` exits 1 on a clean box | Warnings such as a harness-probe version note | Read each row; a warning is not a stop. Fail rows are |
 
 ## Plan B
 

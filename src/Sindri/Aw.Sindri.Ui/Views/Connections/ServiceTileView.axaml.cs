@@ -23,6 +23,10 @@ internal sealed partial class ServiceTileView : UserControl
 
     private void OnCancel(object? sender, RoutedEventArgs e) => Tile?.Cancel();
 
+    private void OnUseOAuth(object? sender, RoutedEventArgs e) => Tile?.UseOAuth();
+
+    private void OnUseToken(object? sender, RoutedEventArgs e) => Tile?.UseToken();
+
     private void OnSignIn(object? sender, RoutedEventArgs e) => _ = Tile?.SignInAgain(CancellationToken.None);
 
     // The field opens holding the current label, focused and selected, so typing replaces it.

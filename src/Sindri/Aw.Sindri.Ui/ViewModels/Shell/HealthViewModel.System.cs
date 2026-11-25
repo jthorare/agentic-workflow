@@ -101,7 +101,15 @@ internal sealed partial class HealthViewModel
     public IReadOnlyList<ServiceRowViewModel> ServiceTable { get; private set => Set(ref field, value); } = [];
 
     /// <summary>The first services, for the Overview's card.</summary>
-    public IReadOnlyList<ServiceRowViewModel> ServiceCard { get; private set => Set(ref field, value); } = [];
+    public IReadOnlyList<ServiceRowViewModel> ServiceCard
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(HasServices));
+        }
+    } = [];
 
     /// <summary>The heading over the problem lines.</summary>
     public string NeedsALookHeading { get; } = Labels.SystemNeedsALook;
@@ -124,6 +132,20 @@ internal sealed partial class HealthViewModel
     /// <summary>The Views card's state: Up to date, Rebuilding or Stalled.</summary>
     public string ViewsWord { get; private set => Set(ref field, value); } = Labels.ViewsUnknown;
 
+    /// <summary>The mark beside <see cref="ViewsWord"/> (#4331): the ok check for Up to date, the red ✕ for Stalled (the headline is red then), none while rebuilding or not read.</summary>
+    public StateGlyph ViewsGlyph
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(HasViewsGlyph));
+        }
+    } = StateGlyph.None;
+
+    /// <summary>True when the Views card has a mark to draw, so a card with none leaves no gap before its word.</summary>
+    public bool HasViewsGlyph => ViewsGlyph != StateGlyph.None;
+
     /// <summary>The Views card's rows: read up to, updated.</summary>
     public IReadOnlyList<HealthCell> ViewsRows { get; private set => Set(ref field, value); } = [];
 
@@ -140,7 +162,7 @@ internal sealed partial class HealthViewModel
     private void ShowSystemState()
     {
         var look = NeedsLook();
-        Sentence = SentenceFor(new SentenceInputs(State, _health is not null, Pill.IsHealthy, Pill.Problems, _health?.Sentence, look));
+        Sentence = SentenceFor(new SentenceInputs(State, _health is not null, Pill.IsHealthy || (IsProfileUnreadable && string.Equals(_health?.Word, "healthy", StringComparison.Ordinal)), Pill.Problems, _health?.Sentence, look));
         (ToneWarn, ToneError) = ToneFor(State, _health?.Word, look.Length > 0);
         ProblemLines = [.. (_health?.Problems ?? []).Select(p => HealthProblemLine.From(p, _health?.Word))];
         OnChanged(nameof(HasProblemLines));
@@ -198,6 +220,7 @@ internal sealed partial class HealthViewModel
         ServiceCard = [.. shown];
         ServicesTabLabel = Labels.ServicesTab(shown.Count);
         ServicesScheduled = Labels.ServicesScheduled(shown.Count);
+        ShowServicesNote();
         lock (_gate)
         {
             ShowSystemState();

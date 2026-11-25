@@ -18,11 +18,18 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="reservation">Keeps the heavy-slot reservation in step with the merge queue on every poll.</param>
 internal sealed class WatchPoller(RepoCommands repo, IHostResources resources, InboxCounts inbox, IKeyValueStore values, PollFollowUps followUps, HeavyReservation reservation, LaneContextReader contexts)
 {
+    /// <summary>The longest one gh or git call of a poll may run.</summary>
+    internal static readonly TimeSpan CallLimit = TimeSpan.FromMinutes(2);
+
     internal async ValueTask<Result<Polled>> Poll(TeamConfig team, bool allPrs, CancellationToken cancellationToken)
     {
         var repoDirectory = team.Repo;
-        var prs = await repo.List(repoDirectory).ConfigureAwait(false);
-        var main = prs.IsError ? Results.Failure<string>(prs.Error) : await repo.RemoteMain(repoDirectory).ConfigureAwait(false);
+        // Every call of the poll stops on the stop signal and gives up after CallLimit: a GitHub that never answers fails the poll (AW-META-012) instead of hanging the watch (#3603).
+        var github = repo.Cancelling(cancellationToken).Limited(CallLimit);
+        var follow = followUps.Using(github);
+        var reserved = reservation.Using(github);
+        var prs = await github.List(repoDirectory).ConfigureAwait(false);
+        var main = prs.IsError ? Results.Failure<string>(prs.Error) : await github.RemoteMain(repoDirectory).ConfigureAwait(false);
         var disk = await resources.Read(cancellationToken).ConfigureAwait(false);
         var counts = await inbox.Read(cancellationToken).ConfigureAwait(false);
         if (FirstError(prs, main, disk, counts) is { } failed)
@@ -30,22 +37,22 @@ internal sealed class WatchPoller(RepoCommands repo, IHostResources resources, I
             return failed;
         }
 
-        var kept = allPrs ? Results.Success(prs.Value) : await followUps.Owned(team, prs.Value, cancellationToken).ConfigureAwait(false);
+        var kept = allPrs ? Results.Success(prs.Value) : await follow.Owned(team, prs.Value, cancellationToken).ConfigureAwait(false);
         if (kept.IsError)
         {
             return kept.Error;
         }
 
-        var remembered = await Remember(kept.Value, cancellationToken).ConfigureAwait(false);
+        var remembered = await Remember(team, kept.Value, follow, cancellationToken).ConfigureAwait(false);
         if (remembered.IsError)
         {
             return remembered.Error;
         }
 
         // Advisory: the queue changes with ready messages, drops and pull requests that end, so every poll follows it (and renews the time).
-        _ = await reservation.Apply(team, cancellationToken).ConfigureAwait(false);
+        _ = await reserved.Apply(team, cancellationToken).ConfigureAwait(false);
         var snapshot = new WatchSnapshot(kept.Value, main.Value, ResourceRules.DiskLow(disk.Value, team.Resources), ResourceRules.MemoryLow(disk.Value, team.Resources));
-        var (worktrees, queue) = await followUps.Run(team, remembered.Value, snapshot, cancellationToken).ConfigureAwait(false);
+        var (worktrees, queue) = await follow.Run(team, remembered.Value, snapshot, cancellationToken).ConfigureAwait(false);
         // Advisory: a transcript that can't be read leaves the poll's context out instead of failing it.
         return new Polled(snapshot, counts.Value.Total, worktrees, await contexts.ReadOrNull(team, cancellationToken).ConfigureAwait(false)) { Open = counts.Value.Open, Status = counts.Value.Status, Queue = queue };
     }
@@ -54,13 +61,22 @@ internal sealed class WatchPoller(RepoCommands repo, IHostResources resources, I
         prs.IsError ? prs.Error : main.IsError ? main.Error : disk.IsError ? disk.Error : counts.IsError ? counts.Error : null;
 
     // Keeps the pull requests GitHub shows merged or closed, so the merge queue can drop them; returns the ones not seen ended before.
-    private async ValueTask<Result<IReadOnlyList<int>>> Remember(IReadOnlyList<PrView> prs, CancellationToken cancellationToken)
+    // Also those a lane said were ready that the listing no longer holds (#3738).
+    private async ValueTask<Result<IReadOnlyList<int>>> Remember(TeamConfig team, IReadOnlyList<PrView> listed, PollFollowUps follow, CancellationToken cancellationToken)
     {
         var kept = await values.Get(KvKeys.EndedPrs, cancellationToken).ConfigureAwait(false);
         if (kept.IsError)
         {
             return kept.Error;
         }
+
+        var outside = await follow.EndedOutsideListing(team, listed, EndedPrs.Parse(kept.Value), cancellationToken).ConfigureAwait(false);
+        if (outside.IsError)
+        {
+            return outside.Error;
+        }
+
+        IReadOnlyList<PrView> prs = [.. listed, .. outside.Value];
 
         var added = EndedPrs.Added(kept.Value, prs);
         var stored = EndedPrs.Merge(kept.Value, prs) is { } ended ? await values.Set(KvKeys.EndedPrs, ended, cancellationToken).ConfigureAwait(false) : Results.Ok();

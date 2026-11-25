@@ -18,19 +18,36 @@ internal sealed partial class ProjectSheetViewModel
         }
 
         var card = one.Project;
-        var target = EditTarget.Trim();
-        var links = EditLinks.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var change = new ProjectChange(
-            card.Version,
-            Name: CanEditName && !string.Equals(EditName.Trim(), card.Name, StringComparison.Ordinal) ? EditName.Trim() : null,
-            Links: links.SequenceEqual(OwnerLinks(card), StringComparer.Ordinal) ? null : links,
-            Target: target.Length > 0 && !string.Equals(target, card.Target, StringComparison.Ordinal) ? target : null,
-            ClearTarget: target.Length == 0 && card.Target is not null);
+        var change = EditedChange(card);
         if (await Send((url, ct) => Api.ChangeProject(url, card.Id, change, ct), cancellationToken).ConfigureAwait(true))
         {
             await Saved(cancellationToken).ConfigureAwait(true);
         }
     }
+
+    // The form's fields as a change: only what differs from the card read, an emptied target or notes as a clear.
+    private ProjectChange EditedChange(ProjectCardView card)
+    {
+        var target = EditTarget.Trim();
+        var notes = EditNotes.Trim();
+        var links = EditLinks.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return new ProjectChange(
+            card.Version,
+            Name: EditedName(card),
+            Links: links.SequenceEqual(OwnerLinks(card), StringComparer.Ordinal) ? null : links,
+            Target: NewText(target, card.Target),
+            ClearTarget: target.Length == 0 && card.Target is not null,
+            Notes: NewText(notes, card.Notes),
+            ClearNotes: notes.Length == 0 && !string.IsNullOrEmpty(card.Notes));
+    }
+
+    // The edited name when the name can be edited and differs, else null.
+    private string? EditedName(ProjectCardView card) =>
+        CanEditName && !string.Equals(EditName.Trim(), card.Name, StringComparison.Ordinal) ? EditName.Trim() : null;
+
+    // The edited text when it is not empty and differs from the one read, else null.
+    private static string? NewText(string edited, string? was) =>
+        edited.Length > 0 && !string.Equals(edited, was, StringComparison.Ordinal) ? edited : null;
 
     /// <summary>Sets the owner's state to the picked one.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
@@ -45,8 +62,27 @@ internal sealed partial class ProjectSheetViewModel
         var change = new ProjectChange(one.Project.Version, State: state.Value);
         if (await Send((url, ct) => Api.ChangeProject(url, one.Project.Id, change, ct), cancellationToken).ConfigureAwait(true))
         {
-            await Saved(cancellationToken).ConfigureAwait(true);
+            await Saved(cancellationToken, closeForm: false).ConfigureAwait(true);
         }
+        else
+        {
+            SelectedState = StateChoices.FirstOrDefault(s => string.Equals(s.Value, one.Project.State, StringComparison.Ordinal));   // a refused pick leaves no mark
+        }
+    }
+
+    /// <summary>A state chip was picked: the state is saved at once (#3719).</summary>
+    /// <param name="choice">The chip.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>A task that ends when the answer is drawn.</returns>
+    internal Task PickState(ProjectStateChoice choice, CancellationToken cancellationToken)
+    {
+        if (IsSaving)
+        {
+            return Task.CompletedTask;   // the chip is disabled while a write is in flight; a pick that gets here is dropped unmarked
+        }
+
+        SelectedState = choice;
+        return SetState(cancellationToken);
     }
 
     /// <summary>Gives the state back to Linear's.</summary>
@@ -62,7 +98,7 @@ internal sealed partial class ProjectSheetViewModel
         var change = new ProjectChange(one.Project.Version, ClearState: true);
         if (await Send((url, ct) => Api.ChangeProject(url, one.Project.Id, change, ct), cancellationToken).ConfigureAwait(true))
         {
-            await Saved(cancellationToken).ConfigureAwait(true);
+            await Saved(cancellationToken, closeForm: false).ConfigureAwait(true);
         }
     }
 
@@ -147,9 +183,14 @@ internal sealed partial class ProjectSheetViewModel
         return false;
     }
 
-    private async Task Saved(CancellationToken cancellationToken)
+    // A state write leaves an open edit form and its typed fields alone; the form's own Save closes it.
+    private async Task Saved(CancellationToken cancellationToken, bool closeForm = true)
     {
-        IsEditing = false;
+        if (closeForm)
+        {
+            IsEditing = false;
+        }
+
         Announcement = Labels.ProjectSaved(Heading);
         await Read(cancellationToken).ConfigureAwait(true);
     }

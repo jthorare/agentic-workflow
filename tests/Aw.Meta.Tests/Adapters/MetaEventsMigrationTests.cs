@@ -30,8 +30,8 @@ public sealed class MetaEventsMigrationTests : IDisposable
         var read = await events.Read(after: 0, kind: null, lane: null, max: 10, cancellationToken: CancellationToken.None);
         var messages = await new SqliteMessageStore(database).Messages(CancellationToken.None);
 
-        Assert.Equal([id.Value], read.Value.Select(e => e.Id));
-        Assert.Equal("lane.down", read.Value[0].Kind);
+        Assert.Equal([id.Value], read.Value.Events.Select(e => e.Id));
+        Assert.Equal("lane.down", read.Value.Events[0].Kind);
         Assert.Equal(["old message"], messages.Value.Select(m => m.Body), StringComparer.Ordinal);
         await using var check = (await connections.Open(CancellationToken.None)).Value;
         await using var version = check.CreateCommand();

@@ -53,5 +53,5 @@ internal sealed partial class SindriApiClient
 
     /// <inheritdoc />
     public Task<Result<QueryAnchorsView>> QueryAnchors(Uri api, string text, CancellationToken cancellationToken, string? concept = null) =>
-        Get<QueryAnchorsView>(api, ContextRoutes.Query(text, concept), cancellationToken);
+        Get<QueryAnchorsView>(api, ContextRoutes.QueryAnchors(text, concept), cancellationToken);
 }

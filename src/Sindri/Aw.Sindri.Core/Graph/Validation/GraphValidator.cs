@@ -1,3 +1,5 @@
+using Aw.Sindri.Core.Graph.Loops;
+
 namespace Aw.Sindri.Core.Graph.Validation;
 
 /// <summary>
@@ -26,14 +28,32 @@ public sealed partial class GraphValidator(GraphValidationContext context)
         }
 
         Triggers(spec, structure, found);
+        ResultNode(spec, structure, found);
         Cycles(structure, found);
         Loops(spec, found);
+        PromptReads(spec, structure, found);
+        var loops = spec.Nodes
+            .Where(static n => string.Equals(n.Type, LoopBody.ForEachType, StringComparison.Ordinal))
+            .Select(n => LoopBody.Find(spec, n.Id))
+            .Where(static r => r.IsSuccess)
+            .Select(static r => r.Value)
+            .ToList();
         foreach (var node in spec.Nodes)
         {
-            References(new NodeScope(node, structure, structure.Upstream(node.Id.Value)), found);
+            References(new NodeScope(node, structure, structure.Upstream(node.Id.Value), loops), found);
         }
 
         return new GraphValidation(mode, found);
+    }
+
+    internal bool IsTriggerType(string type) => context.Blocks.TryGetValue(type, out var block) && block.IsTrigger;
+
+    private static void ResultNode(GraphSpec spec, GraphStructure structure, List<GraphFinding> found)
+    {
+        if (spec.Result is { } result && !structure.Has(result.Value))
+        {
+            found.Add(new GraphFinding("GRAPH-RESULT-001", GraphSeverity.Error, [], "result", $"'result' names node '{result.Value}', which does not exist", "name the node whose output is the run's result, or clear 'result' with the set_meta op and result \"\" (removing the result node needs that op in the same batch)"));
+        }
     }
 
     private static void Duplicates(GraphSpec spec, List<GraphFinding> found)

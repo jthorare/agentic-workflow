@@ -193,7 +193,7 @@
 
       <StackPanel x:Name="ItemTimeline" Spacing="8">
         <TextBlock Classes="eyebrow" Text="{Binding Text.Timeline}" />
-        <ItemsControl x:Name="TimelineList" ItemsSource="{Binding Timeline}">
+        <ItemsControl x:Name="TimelineList" ItemsSource="{Binding Timeline}" controls:RowKeys.Enabled="True">
           <!-- Only the rows in the sheet's viewport are built, however long the history is (#2776). -->
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>

@@ -18,8 +18,14 @@ check() {
   fi
 }
 has() { # has <name> <text> <fixed string>
-  if printf '%s' "$2" | grep -qF -- "$3"; then echo "ok - $1"; else echo "not ok - $1"; echo "  missing: $3"; echo "  in: $2"; fail=1; fi
+  # No `printf | grep -q`: under pipefail grep's early exit kills printf with SIGPIPE and a present needle reads as missing (#3551).
+  case "$2" in *"$3"*) echo "ok - $1" ;; *) echo "not ok - $1"; echo "  missing: $3"; echo "  in: $2"; fail=1 ;; esac
 }
+# #3551: `has` was `printf | grep -q` under pipefail. printf writes one line per write(), and grep -q exits at the first match, so
+# a later write hit a closed pipe, printf died of SIGPIPE and pipefail made `has` say "missing" for text that was there. It fired when
+# the box was slow enough for grep to exit between two writes. 100 KB of lines after the needle makes it happen every time.
+needle_first="$(printf 'AW_SINDRI_STOP_OK=1: going on\n'; head -c 100000 /dev/zero | tr '\0' x | fold -w 80)"
+has "has finds a needle on the first line of a 100 KB output" "$needle_first" "AW_SINDRI_STOP_OK=1: going on"
 WORK="$(cd "$(mktemp -d)" && pwd -P)"
 serve_pid=""
 cleanup() { if [ -n "$serve_pid" ]; then kill "$serve_pid" 2> /dev/null; fi; find "$WORK" -delete 2> /dev/null; }   # by recorded pid only
@@ -63,7 +69,9 @@ case "${1:-}" in
     shift 2; out="" ver=""
     while [ $# -gt 0 ]; do case "$1" in -o) out="$2"; shift ;; -p:Version=*) ver="${1#*=}" ;; esac; shift; done
     an=no; [ -f src/Aw.Analyzers/Aw.Analyzers.csproj ] && an=yes
-    echo "pack version=$ver analyzers=$an" >> "$FAKE_LOG"
+    # lock=: whether an install-cs publish lock is held while the pack runs (another run's reclaim removes sdk-tree.* under it)
+    lk=no; [ -s "$AW_STATE_DIR/bin/cs/.lock/pid" ] && lk=yes
+    echo "pack version=$ver analyzers=$an lock=$lk" >> "$FAKE_LOG"
     [ -z "${FAKE_PACK_FAIL:-}" ] || { echo "boom packing" >&2; exit 1; }
     mkdir -p "$out"; : > "$out/Aw.Sindri.Toolkit.$ver.nupkg"; exit 0 ;;
   *) exit 0 ;;
@@ -84,6 +92,21 @@ case "$proj" in
 esac
 echo "$name rev=$rev" >> "$FAKE_LOG"
 [ "${FAKE_FAIL:-}" != "$name" ] || { echo "boom publishing $name" >&2; exit 1; }
+# FAKE_SLOW_SECS: each publish takes this long, so a holder keeps its lock while a test moves another run.
+[ -z "${FAKE_SLOW_SECS:-}" ] || sleep "$FAKE_SLOW_SECS"
+# FAKE_ENOSPC=<binary>: ilc ran out of disk writing that binary's object file.
+[ "${FAKE_ENOSPC:-}" != "$name" ] || { echo "EXEC : error : No space left on device : '/tmp/${name}.o'" >&2; exit 1; }
+# FAKE_TRACK_DISK=1: the previous publish left artifacts/bin and a NativeAOT .o in this tree. The real
+# script has to remove both before the next `dotnet publish`, or this one refuses.
+if [ -n "${FAKE_TRACK_DISK:-}" ]; then
+  earlier=""
+  [ -e artifacts/bin/from-earlier-publish ] && earlier=bin
+  [ -z "$earlier" ] && earlier="$(find artifacts -name '*.o' 2> /dev/null | head -1)"
+  [ -z "$earlier" ] || { echo "earlier publish left its bin or object file ($earlier)" >&2; exit 1; }
+  mkdir -p artifacts/bin artifacts/obj/native
+  : > artifacts/bin/from-earlier-publish
+  : > artifacts/obj/native/sindri-ui.o
+fi
 mkdir -p "$out"
 printf '#!/usr/bin/env bash\nFAKE_SELF="$0" FAKE_NAME=%s FAKE_REV=%s FAKE_CALLS="%s" FAKE_BAD_VERSION="%s" exec bash "%s" "$@"\n' "$name" "$rev" "$FAKE_CALLS" "${FAKE_BAD_VERSION:-}" "$FAKE_BIN" > "$out/$name"
 chmod +x "$out/$name"
@@ -112,6 +135,10 @@ cp "$DIR/install-cs.sh" "$REPO/scripts/"
 cp "$DIR/lib/sindri-build-inputs.sh" "$DIR/lib/sindri-open-runs.sh" "$REPO/scripts/lib/"
 printf '#!/usr/bin/env bash\n[ "${1:-}" = --expensive ] && shift\nexec "$@"\n' > "$REPO/scripts/heavy.sh"; chmod +x "$REPO/scripts/heavy.sh"
 printf '#!/bin/sh\necho "reserve-stub $*"\n' > "$REPO/scripts/meta-gate-reserve.sh"; chmod +x "$REPO/scripts/meta-gate-reserve.sh"
+printf '#!/bin/sh\necho "pr-watch-stub $*"\n' > "$REPO/scripts/aw-pr-watch.sh"; chmod +x "$REPO/scripts/aw-pr-watch.sh"
+printf '#!/bin/sh\necho "aw-commands-stub $*"\n' > "$REPO/scripts/aw-commands.sh"; chmod +x "$REPO/scripts/aw-commands.sh"
+mkdir -p "$REPO/config"; echo '{"version":1,"entries":[]}' > "$REPO/config/commands.toolkit.json"
+printf '#!/bin/sh\necho "aw-run-stub $*"\n' > "$REPO/scripts/aw-run.sh"; chmod +x "$REPO/scripts/aw-run.sh"
 printf '{"sdk":{"version":"%s"}}\n' "$FAKE_SDK" > "$REPO/global.json"
 echo a > "$REPO/src/Sindri/Aw.Sindri.Host/a.cs"; echo b > "$REPO/src/Judge/b.cs"
 # A small reference graph that mirrors the real one where it matters (#3041): sindri, judge and aw-packets reference the shared
@@ -157,6 +184,7 @@ check "dry run writes no state" "$([ -e "$AW_STATE_DIR" ] && echo yes || echo no
 check "dry run publishes nothing" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "0"
 has "dry run says it would link heavy through current" "$out" "[dry-run] would link $AW_STATE_DIR/bin-r1b/heavy -> $AW_STATE_DIR/bin/cs/current/heavy"
 has "dry run says it would link meta-gate-reserve through current" "$out" "[dry-run] would link $AW_STATE_DIR/bin-r1b/meta-gate-reserve -> $AW_STATE_DIR/bin/cs/current/meta-gate-reserve"
+has "dry run says it would link aw-pr-watch through current" "$out" "[dry-run] would link $CLAUDE_LOCAL_BIN/aw-pr-watch -> $AW_STATE_DIR/bin/cs/current/aw-pr-watch when the build has it"
 
 # --- link before any build ---
 out="$(bash "$INSTALL" --link 2>&1)"; rc=$?
@@ -179,6 +207,13 @@ check "the build carries heavy, executable" "$([ -x "$B/$S1/heavy" ] && echo yes
 check "the build's heavy is scripts/heavy.sh" "$(cmp -s "$B/$S1/heavy" "$REPO/scripts/heavy.sh" && echo same || echo differs)" "same"
 check "the build carries meta-gate-reserve, executable" "$([ -x "$B/$S1/meta-gate-reserve" ] && echo yes || echo no)" "yes"
 check "the build's meta-gate-reserve is scripts/meta-gate-reserve.sh" "$(cmp -s "$B/$S1/meta-gate-reserve" "$REPO/scripts/meta-gate-reserve.sh" && echo same || echo differs)" "same"
+check "the build carries aw-pr-watch, executable" "$([ -x "$B/$S1/aw-pr-watch" ] && echo yes || echo no)" "yes"
+check "the build's aw-pr-watch is scripts/aw-pr-watch.sh" "$(cmp -s "$B/$S1/aw-pr-watch" "$REPO/scripts/aw-pr-watch.sh" && echo same || echo differs)" "same"
+check "--publish leaves the aw-pr-watch link alone" "$([ -e "$CLAUDE_LOCAL_BIN/aw-pr-watch" ] || [ -L "$CLAUDE_LOCAL_BIN/aw-pr-watch" ] && echo yes || echo no)" "no"
+check "the build's aw-commands is scripts/aw-commands.sh, executable" "$([ -x "$B/$S1/aw-commands" ] && cmp -s "$B/$S1/aw-commands" "$REPO/scripts/aw-commands.sh" && echo same || echo differs)" "same"
+check "the build carries the toolkit catalog as commands.json" "$(cmp -s "$B/$S1/commands.json" "$REPO/config/commands.toolkit.json" && echo same || echo differs)" "same"
+check "the build carries aw-run, executable" "$([ -x "$B/$S1/aw-run" ] && echo yes || echo no)" "yes"
+check "the build's aw-run is scripts/aw-run.sh" "$(cmp -s "$B/$S1/aw-run" "$REPO/scripts/aw-run.sh" && echo same || echo differs)" "same"
 check "--publish leaves the meta-gate-reserve link alone" "$([ -e "$AW_STATE_DIR/bin-r1b/meta-gate-reserve" ] || [ -L "$AW_STATE_DIR/bin-r1b/meta-gate-reserve" ] && echo yes || echo no)" "no"
 check "--publish leaves the heavy link alone" "$([ -e "$AW_STATE_DIR/bin-r1b/heavy" ] || [ -L "$AW_STATE_DIR/bin-r1b/heavy" ] && echo yes || echo no)" "no"
 check "--publish leaves current alone" "$([ -e "$B/current" ] && echo yes || echo no)" "no"
@@ -220,7 +255,23 @@ check "the resolved meta-gate-reserve is scripts/meta-gate-reserve.sh" "$(cmp -s
 check "the old real meta-gate-reserve moved to meta-gate-reserve.pre-repo" "$(sh "$MR.pre-repo")" "old-reserve"
 check "a second --link adds no other file" "$(ls "$AW_STATE_DIR/bin-r1b" | tr '\n' ' ')" "heavy heavy.pre-repo meta-gate-reserve meta-gate-reserve.pre-repo "
 check "the linked meta-gate-reserve runs" "$("$MR" --show)" "reserve-stub --show"
+PW="$CLAUDE_LOCAL_BIN/aw-pr-watch"
+check "aw-pr-watch links through current" "$(readlink "$PW")" "$B/current/aw-pr-watch"
+check "aw-pr-watch resolves into the build dir" "$(readlink -f "$PW")" "$(cd "$B/$S1" && pwd -P)/aw-pr-watch"
+case "$(readlink -f "$PW")" in "$REPO"/*) r=repo ;; *) r=outside ;; esac
+check "aw-pr-watch never resolves into the repo" "$r" "outside"
+check "the linked aw-pr-watch runs" "$("$PW" --help)" "pr-watch-stub --help"
+# aw-pr-watch is optional: a build without it still links, and writes no aw-pr-watch link
+mv "$B/$S1/aw-pr-watch" "$B/$S1/aw-pr-watch.away"; mv "$PW" "$WORK/pw-link.away"
+out="$(bash "$INSTALL" --link 2>&1)"; rc=$?
+check "--link of a build without aw-pr-watch still exits 0" "$rc" "0"
+check "...and writes no aw-pr-watch link" "$([ -e "$PW" ] || [ -L "$PW" ] && echo yes || echo no)" "no"
+mv "$B/$S1/aw-pr-watch.away" "$B/$S1/aw-pr-watch"; mv "$WORK/pw-link.away" "$PW"
 check "the linked heavy runs its command" "$("$HV" --expensive echo ran)" "ran"
+check "aw-commands links through current" "$(readlink "$CLAUDE_LOCAL_BIN/aw-commands")" "$B/current/aw-commands"
+check "the linked aw-commands runs" "$("$CLAUDE_LOCAL_BIN/aw-commands" list)" "aw-commands-stub list"
+check "aw-run links through current" "$(readlink "$CLAUDE_LOCAL_BIN/aw-run")" "$B/current/aw-run"
+check "the linked aw-run runs" "$("$CLAUDE_LOCAL_BIN/aw-run" -- x)" "aw-run-stub -- x"
 mv "$B/$S1/heavy" "$B/$S1/heavy.away"
 out="$(bash "$INSTALL" --link 2>&1)"; rc=$?
 check "--link of a build without heavy fails" "$rc" "1"
@@ -236,7 +287,7 @@ check "...current unchanged" "$(readlink "$B/current")" "$S1"
 check "...meta-gate-reserve link unchanged" "$(readlink "$MR")" "$B/current/meta-gate-reserve"
 mv "$B/$S1/meta-gate-reserve.away" "$B/$S1/meta-gate-reserve"
 check "current is a symlink to the stamp" "$(readlink "$B/current")" "$S1"
-check "the six wrappers, not sindri-ui" "$(ls "$CLAUDE_LOCAL_BIN" | tr '\n' ' ')" "aw-packets aw-readiness bugfix-state judge sindri ui-evidence "
+check "the six wrappers and the aw-commands, aw-pr-watch and aw-run links, not sindri-ui" "$(ls "$CLAUDE_LOCAL_BIN" | tr '\n' ' ')" "aw-commands aw-packets aw-pr-watch aw-readiness aw-run bugfix-state judge sindri ui-evidence "
 check "the TS judge wrapper was replaced" "$(grep -c ts-wrapper "$CLAUDE_LOCAL_BIN/judge")" "0"
 check "no temp file left in the bin dir" "$(ls -A "$CLAUDE_LOCAL_BIN" | grep -c '^\.')" "0"
 envline="$(cd / && AW_STATE_DIR="$WORK/other" "$CLAUDE_LOCAL_BIN/sindri" env)"
@@ -356,6 +407,7 @@ has "not a git checkout: the sentence" "$out" "can only be published from a git 
 # rows stage stubs, so this one stages the REAL scripts into the miniature checkout, publishes, and runs them from the build.
 mkdir -p "$REPO/config/lib"
 cp "$DIR/heavy.sh" "$REPO/scripts/heavy.sh"; cp "$DIR/meta-gate-reserve.sh" "$REPO/scripts/meta-gate-reserve.sh"
+cp "$DIR/aw-pr-watch.sh" "$REPO/scripts/aw-pr-watch.sh"
 cp "$DIR/../config/lib/"*.sh "$REPO/config/lib/"
 g add -A; ccommit -m "real heavy and meta-gate-reserve"
 bash "$INSTALL" --publish > /dev/null 2>&1; check "staged-scripts: the publish with the real scripts exits 0" "$?" "0"
@@ -370,6 +422,9 @@ check "staged heavy runs from its build folder alone: no 'No such file' (heavy-c
 check "staged meta-gate-reserve runs from its build folder alone: exit 0" "$rc" "0"
 check "staged meta-gate-reserve runs from its build folder alone: no 'command not found'" "$(grep -c 'command not found' "$errf")" "0"
 check "staged meta-gate-reserve runs from its build folder alone: no 'No such file'" "$(grep -c 'No such file' "$errf")" "0"
+(cd / && AW_STATE_DIR="$SCR" timeout 20 "$SB/aw-pr-watch" --help > /dev/null 2> "$errf"); rc=$?
+check "staged aw-pr-watch runs from its build folder alone: --help exits 0" "$rc" "0"
+check "staged aw-pr-watch runs from its build folder alone: nothing on stderr" "$(wc -c < "$errf" | tr -d ' ')" "0"
 
 
 # --- the toolkit SDK package (PR 15) ---
@@ -405,6 +460,33 @@ check "the pack copy did not touch the checkout" "$(git -C "$REPO" status --porc
 out="$(bash "$INSTALL" --publish 2>&1)"
 has "second run says the SDK package is current" "$out" "toolkit SDK package is current"
 check "second run packs nothing" "$(packs)" "1"
+# Follow-up to #3218: a git that dies on the pack path's own `ls-files` (the only call that names src/Toolkit) must stop with a message.
+REALGIT="$(command -v git)"
+mkdir "$WORK/failpack"
+cat > "$WORK/failpack/git" <<STUB
+#!/usr/bin/env bash
+case " \$* " in *" ls-files "*src/Toolkit*) exit 137 ;; esac
+exec "$REALGIT" "\$@"
+STUB
+chmod +x "$WORK/failpack/git"
+fpout="$(PATH="$WORK/failpack:$PATH" bash "$INSTALL" --publish 2>&1)" && fprc=0 || fprc=$?
+check "git ls-files failing on the pack path: the publish exits 1" "$fprc" "1"
+has "git ls-files failing on the pack path: says which step failed" "$fpout" "git ls-files failed while listing the toolkit SDK inputs"
+check "git ls-files failing on the pack path: packs nothing" "$(packs)" "1"
+# Follow-up to #3218: the stamp's own git calls. Its `ls-files` is the only one that names scripts/heavy.sh; `status` decides "-dirty".
+for what in "ls-files:*scripts/heavy.sh*" "status:*"; do
+  verb="${what%%:*}"; pat="${what#*:}"
+  mkdir "$WORK/failstamp-$verb"
+  cat > "$WORK/failstamp-$verb/git" <<STUB
+#!/usr/bin/env bash
+case " \$* " in *" $verb "*$pat) exit 137 ;; esac
+exec "$REALGIT" "\$@"
+STUB
+  chmod +x "$WORK/failstamp-$verb/git"
+  fsout="$(PATH="$WORK/failstamp-$verb:$PATH" bash "$INSTALL" --publish 2>&1)" && fsrc=0 || fsrc=$?
+  check "git $verb failing in the stamp: the publish exits 1" "$fsrc" "1"
+  has "git $verb failing in the stamp: says which step failed" "$fsout" "git $verb failed while stamping the build"
+done
 echo 'class B {}' >> "$REPO/src/Toolkit/Aw.Sindri.Toolkit/A.cs"
 sleep 1
 bash "$INSTALL" --publish > /dev/null 2>&1
@@ -420,7 +502,7 @@ rm -f "$CLAUDE_LOCAL_BIN"/*
 out="$(FAKE_PACK_FAIL=1 bash "$INSTALL" 2>&1)"; rc=$?
 check "a failed pack in the default publish + link exits 0" "$rc" "0"
 has "a failed pack warns and names the step" "$out" "warning: packing the toolkit SDK failed; the next install retries"
-check "a failed pack still links the wrappers" "$(ls "$CLAUDE_LOCAL_BIN" | tr '\n' ' ')" "aw-packets aw-readiness bugfix-state judge sindri ui-evidence "
+check "a failed pack still links the wrappers" "$(ls "$CLAUDE_LOCAL_BIN" | tr '\n' ' ')" "aw-commands aw-packets aw-pr-watch aw-readiness aw-run bugfix-state judge sindri ui-evidence "
 check "a failed pack leaves the feed as it was" "$(ls "$FEED" | tr '\n' ' ')" "$before"
 check "a failed pack leaves the stamp as it was" "$(cat "$FEED/.sdk-stamp")" "$stamp_before"
 out="$(bash "$INSTALL" --link 2>&1)"
@@ -444,12 +526,57 @@ run_pl() { : > "$FAKE_LOG"; out="$(bash "$INSTALL" --publish "$@" 2>&1)"; rc=$?;
 have_all() { local n r=yes; for n in $ALL8; do [ -x "$B/$NB/$n" ] || r=no; done; echo "$r"; }
 differs() { if [ "$1" != "$2" ]; then echo yes; else echo no; fi; }
 
+# The rows below publish through a fake heavy, not the real scripts/heavy.sh copied in above (a real one waits for a free slot and
+# memory, so a loaded box held a publish there for ~12 min after its suite was SIGKILLed, #3668). The fake runs the command at once.
+# FAKE_HEAVY_HOLD=<file> makes it wait like a busy heavy while that file exists, after it records its pid in FAKE_HEAVY_PIDFILE.
+cat > "$REPO/scripts/heavy.sh" <<'FH'
+#!/usr/bin/env bash
+[ "${1:-}" = --expensive ] && shift
+if [ -n "${FAKE_HEAVY_HOLD:-}" ] && [ -e "$FAKE_HEAVY_HOLD" ]; then
+  echo $$ > "$FAKE_HEAVY_PIDFILE"
+  # A SIGKILLed suite can't clean up: give up when it is gone or its work dir was removed (#3668).
+  while [ -e "$FAKE_HEAVY_HOLD" ]; do
+    kill -0 "${FAKE_HEAVY_SUITE_PID:-$PPID}" 2> /dev/null || exit 75
+    [ -d "${FAKE_HEAVY_WORK:-/}" ] || exit 75
+    sleep 1
+  done
+fi
+export PATH="${AW_HEAVY_TEST_PATH:+$AW_HEAVY_TEST_PATH:}$PATH"
+exec "$@"
+FH
+chmod +x "$REPO/scripts/heavy.sh"; g add -A; ccommit -m "fake heavy for the per-binary rows"
+
 run_pl; S0="$NB"
 check "per-binary: the first publish builds all eight" "$(pubs)" "$ALL8"
 check "per-binary: the build records a hash per binary" "$(ls "$B/$S0/inputs"/*.sha256 2> /dev/null | wc -l | tr -d ' ')" "8"
 check "per-binary: the build records the file list per binary" "$(ls "$B/$S0/inputs"/*.files 2> /dev/null | wc -l | tr -d ' ')" "8"
 check "per-binary: the judge file list names its libe_sqlite3.so" "$(grep -cx 'libe_sqlite3.so' "$B/$S0/inputs/judge.files" 2> /dev/null)" "1"
 check "per-binary: the ui-evidence file list names its dot folder" "$(grep -cx '.playwright' "$B/$S0/inputs/ui-evidence.files" 2> /dev/null)" "1"
+
+# A suite that is SIGKILLed can't clean up, and the publish it started waits on in heavy (#3668). The fake heavy gives up when the
+# suite's pid is gone or $WORK is removed. Each case starts a publish held in the fake heavy, ends the suite stand-in (a recorded
+# pid) or removes the work dir, and expects the held heavy gone within 6 s. The held publish is released at the end either way.
+orphan_case() { # orphan_case <name> <suite|workdir>
+  local what="$2" standin="" probe="$WORK" hold="$WORK/hold" hpid_f="$WORK/held.pid" hpid="" ipid i alive
+  if [ "$what" = suite ]; then bash -c 'exec sleep 120' & standin=$!; else bash -c 'exec sleep 120' & standin=$!; probe="$WORK/probe-dir"; mkdir -p "$probe"; fi
+  echo "orphan probe $1" >> "$REPO/src/Judge/Aw.Judge.Host/J.cs"   # new inputs, so the publish has work to do
+  : > "$hold"; rm -f "$hpid_f"
+  FAKE_HEAVY_HOLD="$hold" FAKE_HEAVY_PIDFILE="$hpid_f" FAKE_HEAVY_SUITE_PID="$standin" FAKE_HEAVY_WORK="$probe" \
+    bash "$INSTALL" --publish > "$WORK/held.log" 2>&1 &
+  ipid=$!
+  for i in $(seq 1 100); do [ -s "$hpid_f" ] && break; sleep 0.1; done
+  check "orphan ($1): the publish reached the held heavy" "$([ -s "$hpid_f" ] && echo yes || echo no)" "yes"
+  hpid="$(cat "$hpid_f" 2> /dev/null)"
+  if [ "$what" = suite ]; then kill -9 "$standin"; else find "$probe" -delete; fi
+  wait "$standin" 2> /dev/null
+  alive=no
+  for i in $(seq 1 60); do if [ -n "$hpid" ] && kill -0 "$hpid" 2> /dev/null; then alive=yes; sleep 0.1; else alive=no; break; fi; done
+  check "orphan ($1): the held heavy exits within 6 s" "$alive" "no"
+  rm -f "$hold"; wait "$ipid" 2> /dev/null   # release a heavy that stayed; no pid is signalled
+  [ "$what" = suite ] || kill "$standin" 2> /dev/null
+}
+orphan_case "its suite was SIGKILLed" suite
+orphan_case "its work dir was removed" workdir
 
 # (a) a change under the judge project: judge only
 echo "judge change" >> "$REPO/src/Judge/Aw.Judge.Host/J.cs"
@@ -469,6 +596,37 @@ check "judge change: the copied binaries carry their hash and file list" "$(cmp 
 check "judge change: judge's hash changed" "$(differs "$(cat "$B/$S0/inputs/judge.sha256")" "$(cat "$B/$S1/inputs/judge.sha256")")" "yes"
 check "judge change: no stage left" "$(find "$B" -mindepth 1 -maxdepth 1 -name '.stage*' | wc -l | tr -d ' ')" "0"
 check "judge change: current points at the new build" "$S1" "$(readlink "$B/current")"
+
+# (a2) #3218: a git that fails while the per-binary hashes are made (killed under memory pressure) must stop the publish with a message.
+# It used to end the script silently after the "uncommitted changes" line (set -e), which looked like a dirty tree that would not reuse sindri.
+# The stub fails every `git ls-files` after the first (the stamp's own call), like a git killed mid-publish.
+REALGIT="$(command -v git)"
+mkdir "$WORK/failgit"
+cat > "$WORK/failgit/git" <<STUB
+#!/usr/bin/env bash
+case " \$* " in *" ls-files "*) n="\$(cat "$WORK/failgit/n" 2> /dev/null || echo 0)"; echo \$((n + 1)) > "$WORK/failgit/n"; [ "\$n" -lt 1 ] || exit 137 ;; esac
+exec "$REALGIT" "\$@"
+STUB
+chmod +x "$WORK/failgit/git"
+cp "$REPO/src/Judge/Aw.Judge.Host/J.cs" "$WORK/J.cs.before"
+echo "git fails" >> "$REPO/src/Judge/Aw.Judge.Host/J.cs"
+fgout="$(PATH="$WORK/failgit:$PATH" bash "$INSTALL" --publish 2>&1)" && fgrc=0 || fgrc=$?
+mv "$WORK/J.cs.before" "$REPO/src/Judge/Aw.Judge.Host/J.cs"  # copy back, not an in-place sed edit: BSD sed differs (#3575)
+check "git failing in the per-binary hashes: the publish exits 1" "$fgrc" "1"
+has "git failing in the per-binary hashes: says which step failed" "$fgout" "git ls-files failed"
+
+# (a3) Follow-up to #3218: the same for `git hash-object`, which the stamp and every per-binary hash pipe into sha256. A hash-object that dies
+# (137, killed) under pipefail ended the script silently. The stub fails every hash-object, so the stamp's own call fails first.
+mkdir "$WORK/failhash"
+cat > "$WORK/failhash/git" <<STUB
+#!/usr/bin/env bash
+case " \$* " in *" hash-object "*) exit 137 ;; esac
+exec "$REALGIT" "\$@"
+STUB
+chmod +x "$WORK/failhash/git"
+fhout="$(PATH="$WORK/failhash:$PATH" bash "$INSTALL" --publish 2>&1)" && fhrc=0 || fhrc=$?
+check "git hash-object failing: the publish exits 1" "$fhrc" "1"
+has "git hash-object failing: says which step failed" "$fhout" "git hash-object failed"
 
 # (b) scripts/heavy.sh only: nothing is published, the new build has the new heavy
 echo "# a comment" >> "$REPO/scripts/heavy.sh"
@@ -515,5 +673,106 @@ check "no inputs/ in current: the publish exits 0" "$rc" "0"
 check "no inputs/ in current: all eight are published" "$(pubs)" "$ALL8"
 check "no inputs/ in current: the new build records its inputs" "$(ls "$B/$NB/inputs"/*.sha256 2> /dev/null | wc -l | tr -d ' ')" "8"
 unset AW_HEAVY_TEST_PATH
+
+# A killed publish leaves its tree, sdk tree, verify dir and stage. The next publish removes them, including
+# when the build is already current (that path returns before it would have compiled anything).
+CACHE="$AW_STATE_DIR/cache/install-cs"
+mkdir -p "$CACHE/tree.orphan" "$CACHE/sdk-tree.orphan" "$CACHE/verify.orphan" "$B/.stage.dead"
+echo leak > "$CACHE/tree.orphan/big"
+diskout="$(bash "$INSTALL" --publish 2>&1)"
+check "a current build still short-circuits" "$(printf '%s\n' "$diskout" | grep -c '^install-cs: build .* is current$')" "1"
+check "a dead publish tree is removed" "$([ -d "$CACHE/tree.orphan" ] && echo yes || echo no)" "no"
+check "a dead sdk tree is removed" "$([ -d "$CACHE/sdk-tree.orphan" ] && echo yes || echo no)" "no"
+check "a dead verify dir is removed" "$([ -d "$CACHE/verify.orphan" ] && echo yes || echo no)" "no"
+check "a dead stage is removed" "$([ -e "$B/.stage.dead" ] && echo yes || echo no)" "no"
+
+# A publish that has made the lock folder but not yet written its pid is live: a second run must not take the
+# lock over and remove that publish's scratch (review of #4243).
+mkdir -p "$B/.lock" "$CACHE/tree.starting" "$B/.stage.starting"
+diskout="$(bash "$INSTALL" --publish 2>&1)"
+check "a lock without a pid: the build is still reported current" "$(printf '%s\n' "$diskout" | grep -c '^install-cs: build .* is current$')" "1"
+check "a lock without a pid stays" "$([ -d "$B/.lock" ] && echo yes || echo no)" "yes"
+check "a lock without a pid: the starting publish keeps its tree" "$([ -d "$CACHE/tree.starting" ] && echo yes || echo no)" "yes"
+check "a lock without a pid: the starting publish keeps its stage" "$([ -e "$B/.stage.starting" ] && echo yes || echo no)" "yes"
+rmdir "$B/.lock" "$CACHE/tree.starting" "$B/.stage.starting" 2> /dev/null
+
+# The toolkit pack of a run whose build is current holds the lock, so a second run's reclaim leaves its sdk-tree
+# alone (review of #4243). An empty feed stamp makes this run pack.
+: > "$AW_SINDRI_HOME/sdk/packages/.sdk-stamp"
+: > "$FAKE_LOG"
+diskout="$(bash "$INSTALL" --publish 2>&1)"
+check "a current build that packs: nothing is published" "$(pubs)" ""
+check "a current build that packs: the pack holds the lock" "$(grep -c '^pack .* lock=yes$' "$FAKE_LOG" | tr -d ' ')" "1"
+check "a current build that packs: the lock is released after" "$([ -e "$B/.lock" ] && echo yes || echo no)" "no"
+check "a current build that packs: no sdk tree is left" "$(ls -d "$CACHE"/sdk-tree.* 2> /dev/null | wc -l | tr -d ' ')" "0"
+
+# The next binary must not be published beside the previous one's bin/ or its NativeAOT object file.
+echo "<!-- disk -->" >> "$REPO/Directory.Build.props"
+: > "$FAKE_LOG"
+diskout="$(FAKE_TRACK_DISK=1 bash "$INSTALL" --publish 2>&1)"; drc=$?
+check "dropping the previous publish's bin and object file: the publish exits 0" "$drc" "0"
+unset FAKE_TRACK_DISK
+
+# ilc's "No space left on device" is reported as the disk being full, not only as a tail of the compiler log.
+echo "<!-- disk full -->" >> "$REPO/Directory.Build.props"
+: > "$FAKE_LOG"
+diskout="$(FAKE_ENOSPC=sindri-ui bash "$INSTALL" --publish 2>&1)"; drc=$?
+check "a full disk while publishing sindri-ui exits 1" "$drc" "1"
+has "a full disk names the disk, not only the compiler" "$diskout" "the disk is full (No space left on device) while publishing sindri-ui"
+has "a full disk still names the binary that failed" "$diskout" "publishing sindri-ui failed"
+
+# #4247: a lock folder without a pid, left by a run killed between its mkdir and its pid write, made every later publish wait
+# forever. An old one (mtime over 60 s) is taken over; a fresh one may still be a run about to write its pid, so it is waited for.
+mkdir -p "$B/.lock"; touch_ago "$B/.lock" "5 minutes ago"
+bump "<!-- old pidless lock -->"
+lockout="$(timeout 60 bash "$INSTALL" --publish 2>&1)"; lrc=$?
+check "an old lock without a pid: the publish ends and exits 0" "$lrc" "0"
+check "an old lock without a pid: the lock is released after" "$([ -e "$B/.lock" ] && echo yes || echo no)" "no"
+
+mkdir -p "$B/.lock"
+bump "<!-- fresh pidless lock -->"
+: > "$FAKE_LOG"
+lockout="$(timeout 4 bash "$INSTALL" --publish 2>&1)"; lrc=$?
+check "a fresh lock without a pid: the publish is still waiting" "$lrc" "124"
+has "a fresh lock without a pid: the publish says it waits" "$lockout" "waiting for another install-cs publish"
+check "a fresh lock without a pid: nothing is published" "$(pubs)" ""
+check "a fresh lock without a pid stays" "$([ -d "$B/.lock" ] && echo yes || echo no)" "yes"
+rmdir "$B/.lock" 2> /dev/null
+
+# A waiter that ends (Ctrl-C, a kill) must not remove the holder's lock: its EXIT trap removes only a lock it took (#4247).
+sleep 300 & holder=$!
+mkdir -p "$B/.lock"; echo "$holder" > "$B/.lock/pid"
+bump "<!-- held lock -->"
+bash "$INSTALL" --publish > "$WORK/waiter.log" 2>&1 & waiter=$!
+for _ in $(seq 1 100); do grep -q "waiting for another install-cs publish" "$WORK/waiter.log" && break; sleep 0.1; done
+kill -TERM "$waiter" 2> /dev/null; wait "$waiter" 2> /dev/null
+check "a waiter killed by a signal: the holder's lock folder stays" "$([ -d "$B/.lock" ] && echo yes || echo no)" "yes"
+check "a waiter killed by a signal: the lock still names the holder" "$(cat "$B/.lock/pid" 2> /dev/null)" "$holder"
+kill "$holder" 2> /dev/null; wait "$holder" 2> /dev/null
+find "$B/.lock" -delete 2> /dev/null
+
+# #4279: two waiters that both saw one stale lock. The first takes it over and publishes; the second must not remove the
+# first one's new lock and publish beside it. The test seam holds each waiter between "saw stale" and the takeover, so the
+# first is let go, holds the lock (each publish takes 0.5 s), and only then is the second let go.
+mkdir -p "$B/.lock"; touch_ago "$B/.lock" "5 minutes ago"
+bump "<!-- two waiters on one stale lock -->"
+: > "$FAKE_LOG"
+P="$WORK/stale-pause"
+AW_INSTALL_CS_TEST_STALE_PAUSE="$P" FAKE_SLOW_SECS=0.5 bash "$INSTALL" --publish > "$WORK/w1.log" 2>&1 & w1=$!
+AW_INSTALL_CS_TEST_STALE_PAUSE="$P" FAKE_SLOW_SECS=0.5 bash "$INSTALL" --publish > "$WORK/w2.log" 2>&1 & w2=$!
+for _ in $(seq 1 100); do [ -e "$P.$w1.seen" ] && [ -e "$P.$w2.seen" ] && break; sleep 0.1; done
+check "two waiters: both saw the stale lock" "$([ -e "$P.$w1.seen" ] && [ -e "$P.$w2.seen" ] && echo yes || echo no)" "yes"
+: > "$P.$w1.go"
+for _ in $(seq 1 100); do [ "$(cat "$B/.lock/pid" 2> /dev/null)" = "$w1" ] && break; sleep 0.1; done
+check "two waiters: the first holds the lock" "$(cat "$B/.lock/pid" 2> /dev/null)" "$w1"
+: > "$P.$w2.go"
+wait "$w1"; r1=$?; wait "$w2"; r2=$?
+check "two waiters: the first exits 0" "$r1" "0"
+check "two waiters: the second exits 0" "$r2" "0"
+# A run that starts publishing beside another can also lose its tree to the other's scratch reclaim, so count the runs
+# that started, not only the publishes that finished.
+check "two waiters: exactly one run started publishing" "$(cat "$WORK/w1.log" "$WORK/w2.log" | grep -c '^install-cs: publishing sindri$')" "1"
+check "two waiters: exactly one publish ran" "$(grep -c '^sindri rev=' "$FAKE_LOG")" "1"
+check "two waiters: the lock is released after" "$([ -e "$B/.lock" ] && echo yes || echo no)" "no"
 
 [ "$fail" = 0 ] && echo "all install-cs tests passed" || { echo "install-cs tests FAILED"; exit 1; }

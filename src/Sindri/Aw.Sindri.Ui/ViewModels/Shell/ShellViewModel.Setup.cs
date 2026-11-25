@@ -25,6 +25,8 @@ internal sealed partial class ShellViewModel
     private void InitSetup()
     {
         Health.Follow(Setup.Refresh);
+        Health.SetupRequested += (_, _) => GoTo(PageId.Settings);
+        Health.AgentsRequested += (_, _) => GoTo(PageId.Agents);   // the System page's Agents card link (#4012)
         Setup.ChecklistRequested += (_, _) => GoTo(PageId.Settings);
         Setup.PropertyChanged += (_, e) =>
         {

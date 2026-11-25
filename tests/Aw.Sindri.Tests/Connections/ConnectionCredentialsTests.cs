@@ -1,3 +1,4 @@
+using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
@@ -77,6 +78,34 @@ public sealed class ConnectionCredentialsTests
         await Connect(preset, ConnectionStatus.Connected, "alpha");
 
         Assert.Equal(preset + "-connection-token-alpha", Credentials().TokenFor(preset, profilePointer: null));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_gh_login_connection_gives_the_gh_token_with_no_secret_stored()
+    {
+        _ = (await _connections.Insert(GhRows.Row(), CancellationToken.None)).Value;
+
+        Assert.Equal(GhRows.Token, new ConnectionCredentials(_connections, _connectionSecrets, _pointers, new GhRows.Commands()).TokenFor("github", profilePointer: null));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_most_recently_added_connected_row_wins_over_an_older_oauth_one()
+    {
+        await Connect("github", ConnectionStatus.Connected, "default");   // added at the samples' epoch, and sorts before github:gh by name
+        _ = (await _connections.Insert(GhRows.Row(KnownInstants.Epoch.AddHours(1)), CancellationToken.None)).Value;
+        var credentials = new ConnectionCredentials(_connections, _connectionSecrets, _pointers, new GhRows.Commands());
+
+        Assert.Equal(GhRows.Token, credentials.TokenFor("github", profilePointer: null));
+        Assert.Equal(GhRows.Token, credentials.TokenOf(GhRows.Row()));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_signed_out_gh_login_does_not_hide_the_older_work_row()
+    {
+        await Connect("github", ConnectionStatus.Connected, "work");
+        _ = (await _connections.Insert(GhRows.Row(), CancellationToken.None)).Value;
+
+        Assert.Equal("github-connection-token-work", new ConnectionCredentials(_connections, _connectionSecrets, _pointers, new GhRows.Commands(signedIn: false)).TokenFor("github", profilePointer: null));
     }
 
     // ideas on #2590: a pointer that doesn't resolve gives null alone, and never hides a connected connection

@@ -10,6 +10,8 @@ internal sealed record FleetStateDocument(int Schema, string Provider, string Se
 
     public string? Tool { get; init; }
 
+    public DateTimeOffset? ToolAt { get; init; }
+
     public string? Cwd { get; init; }
 
     public string? Transcript { get; init; }

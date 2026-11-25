@@ -47,7 +47,7 @@ Put provider-specific parsing in the adapter, not the canonical hook. The one ex
 
 | Hook | Outputs |
 |------|---------|
-| `git-context.sh` | Current branch, last 5 commits, working tree status |
+| `git-context.sh` | Current branch, last 5 commits, working tree status, and one `Commands: N in .agentic-workflow/commands.json; find one with: aw-commands search <words>` line when the repo has a command catalog (#4221; nothing without jq or for a file that isn't JSON) |
 | `prism-context.sh` | One-line warning if prism-mcp dashboard at `PRISM_DASHBOARD_PORT` (default 7180) is unreachable; silent on success |
 | `sindri-nudge.sh` | One line when the session's repo is not in the approved sindri profile; silent otherwise; bounded by `AW_SINDRI_NUDGE_BUDGET_MS` |
 
@@ -58,7 +58,7 @@ Put provider-specific parsing in the adapter, not the canonical hook. The one ex
 **PreToolUse protocol:**
 - Scripts read JSON from stdin: `{"tool_name": "...", "tool_input": {...}}`
 - Exit 0 = allow the tool call to proceed
-- Exit 2 = deny with a message on stdout explaining why
+- Exit 2 = deny with the reason on stderr (Claude Code shows only stderr on a deny; the Codex and Cursor adapters join stdout and stderr)
 
 **SessionStart protocol:**
 - No stdin input — scripts receive no data from the host (adapters discard any provider payload)
@@ -85,6 +85,9 @@ All hook scripts live in `config/hooks/`:
 | `meta-lane-gate.sh` | UserPromptSubmit, Stop (Codex); sessionStart, postToolUse, stop (Cursor) | — |
 | `session-id-report.sh` | SessionStart (Codex); sessionStart (Cursor) | — |
 | `fleet-state.sh` | SessionStart, UserPromptSubmit, PermissionRequest, Notification, PostToolUse, Stop, SessionEnd (Claude; Codex and Cursor in CO-1b) | PostToolUse: `.*` |
+| `retry-gate.sh` | PreToolUse (`scripts/install-retry-guard.sh`, every provider; Cursor `preToolUse`) | `.*` |
+| `retry-record.sh` | PostToolUseFailure + PostToolUse (Codex: PostToolUse; Cursor: `postToolUseFailure` + `postToolUse`) | `.*` |
+| `dup-script-gate.sh` | PreToolUse (`scripts/install-dup-script-guard.sh`, every provider; Cursor `preToolUse`) | `Bash\|Write` (Codex `.*`) |
 
 Each provider's `install-hooks.sh` installs them by copying, not symlinking, so they survive repo moves. Claude Code's copies go to `~/.claude/hooks/`, and Codex and Cursor copies go to `~/.agentic-workflow/hooks/`. The script then registers the command in that provider's hook config, wrapped by the adapter for Codex and Cursor.
 
@@ -97,6 +100,8 @@ Tests (all run under a temp `HOME`): `config/hooks/tests/{codex-adapter,cursor-a
 ## Images for the judge
 
 Four hooks attach images to their judge input: `done-gate.sh` (`ask-check`: the PNG/JPEG files the last assistant turn opened with `Read`, from the transcript tail it already reads; none under Codex/Cursor, which send no `transcript_path`), `scope-gate.sh` (`brief-scope`: absolute image paths named in the goal or the dispatch prompt), `send-gate.sh` (`wake-gate`: named in the message) and `prompt-sort.sh` (named in the prompt; a pasted `[Image #1]` has no path). `trait-check.sh` adds nothing: the judge reads an edited PNG/JPEG `--file` as an image itself. The text sources share `config/lib/image-paths.sh` (`aw_image_paths <text> <hook>`: existing absolute `.png`/`.jpg`/`.jpeg` files under the checkout of the hook's cwd, deduped, last named first, at most 4 files and 4 MiB by `wc -c`); done-gate feeds its list through `aw_image_files` with the same limits and the checkout of its cwd as the root. Every path is resolved through its symlinks (no `readlink -f`/`realpath`, for macOS) and must really be under the checkout's real path; a file outside it is never sent and is counted as dropped. A hook adds `images` and `imagesBestEffort: true` to its `jq` input (`aw_images_attach`) only when it found an image, so a call without images is today's input byte for byte, and no hook gets a new argument, exit code, stderr line or stdout field. When more than 4 were found, the newest 4 go and one line `{"event":"image-paths","input":{"hook","sent","dropped"}}` goes to `probe/image-paths.jsonl` (only if the probe directory exists). The hooks source `lib/image-paths.sh` from `<hooks>/lib` or `<hooks>/../lib` like `failopen.sh` (every installer copies both: `aw_install_failopen_lib`, `providers/claude/install-hooks.sh`, `scripts/install-judge-hooks.sh`) and, if it is missing, send no images. Tests: `config/lib/tests/{image-paths,done-gate,scope-gate,send-gate,prompt-sort}.test.sh`, `judge-cs-hook-surface.test.sh` (a stub Jev through `AW_JUDGE_JEV_URL`).
+
+The three watchdog hooks (`done-gate.sh`, `prompt-sort.sh`, `sindri-tasks.sh`; #3778) kill a timed-out script and everything under it with `_aw_kill_tree <pid>` from `config/lib/kill-tree.sh`. It kills by pid only (`pgrep -P`, never a name match) and freezes each process before it lists the children. They source it from `<hooks>/lib` or `<hooks>/../lib`, and every installer copies it beside `failopen.sh` and `image-paths.sh`. When the file is missing, each hook defines the lib's one-line definition itself, word for word, so a timeout still leaves no judge running. A fix goes in the lib and in that fallback line of all three hooks; `config/lib/tests/kill-tree.test.sh` fails when a copy differs.
 
 ## Trait check (opt-in)
 
@@ -140,9 +145,9 @@ A hook **fails open** when its own error turns into an allow or a let-through: j
   - `scope-gate`: the judge causes plus `judge-decision-unknown`
   - `trait-check`: `judge-missing`, `jev-unavailable`, `judge-exit-<N>`, `mktemp`, plus the input causes
   - `external-write-guard`: `session-id-missing`, `session-state-unreadable`
-  - `done-gate`: `transcript-unreadable`, `no-assistant-line`, `transcript-line-unparsable`, `judge-ask-check-exit-<N>`, `judge-brief-exit-<N>` (but not "no brief for …")
+  - `done-gate`: `transcript-unreadable`, `no-assistant-line`, `transcript-line-unparsable`, `judge-ask-check-exit-<N>`, `judge-brief-exit-<N>` (but not "no brief for …"), `timeout` (the hook outlived `AW_DONE_GATE_BUDGET_MS`, default 10000; it exits 0 and prints nothing)
   - `outbox-flush`: `outbox-unreadable`
-  - `prompt-sort`, `sindri-nudge`: `timeout` (the judge or CLI outlived its budget and the hook printed nothing)
+  - `prompt-sort`, `sindri-nudge`, `sindri-tasks`: `timeout` (the hook or its CLI outlived its budget and the hook printed nothing)
   - `meta-stop-gate`: `meta-exit-<N>` (aw-meta erroring; exit 1 is its block, not a failure)
   - `meta-outbox`: `meta-exit-<N>`
   - `meta-lane-gate`: `lane-inbox-exit-<N>`, `lane-reply-exit-<N>`, `lane-stop-check-exit-<N>` (exit 1 is its block, not a failure), each followed by `-AW-META-NNN` when aw-meta printed a coded error (the code only, never its text), and `lane-name-invalid`
@@ -154,7 +159,7 @@ A hook **fails open** when its own error turns into an allow or a let-through: j
 - **Crashes are not counted under Claude Code (known gap).** No fail-open hook has an `EXIT` trap. On bash 3.2 a trap turns a `set -u` or `${x:?}` abort under `set -e` into exit 0, and it defers `SIGTERM` until a running `$(judge …)` returns, so a hook killed by the host's timeout would live seconds longer. Both are decision or behavior changes. A hook that crashes (exit other than 0 or 2) keeps its exit code, and Claude Code treats it as a non-blocking error. Under Codex/Cursor the adapter logs `hook-exit-<N>`. The test pins the crash exit codes and checks that `SIGTERM` during a slow judge exits as fast as the baseline.
 - **Not counted (known gap):** a hook killed by the host's own timeout. On `SIGKILL` no trap runs. On `SIGTERM` the hook dies at once, as it did before the logging. A `TERM` trap that logs and re-raises would count it, but it isn't decision-neutral: with a `TERM` trap set, bash waits for the running foreground command (a slow `judge`) to finish before handling the signal, instead of dying at once. Wrapping `judge` in a shorter timeout would change when a slow judge's decision is used. Both are decision changes, so they are out of scope for logging-only work.
 - **Not counted (known limit):** an event written while `date` is missing from PATH has an empty `ts`. The line is still written, but a reader can't place it in a time window. `date` is a POSIX base utility in `/bin`, and bash 3.2 (macOS) has no builtin clock to fall back on.
-- Advisory hooks with no allow/deny (context-guard, done-gate-annotate, rtk-rewrite, the other SessionStart hooks) don't log; prompt-sort and sindri-nudge log only their budget timeout. Neither do hooks that fail closed (turn-origin; send-gate's unknown decision, which queues and denies).
+- Advisory hooks with no allow/deny (context-guard, done-gate-annotate, rtk-rewrite, the other SessionStart hooks) don't log; prompt-sort, sindri-nudge and sindri-tasks log only their budget timeout. Neither do hooks that fail closed (turn-origin; send-gate's unknown decision, which queues and denies).
 - Read `failopen.log.1` and `failopen.log` as untrusted input. The log is general observability: it shows when and why a hook let something through on its own error. It is not a release or cutover gate.
 - A new hook with a fail-open path must call `failopen` with a fixed cause word on it.
 
@@ -166,19 +171,26 @@ The steps below apply to **PreToolUse hooks**. SessionStart hooks have different
 
 1. Create the script in `config/hooks/<name>.sh` — make it executable (`chmod +x`)
 2. Read JSON from stdin: `input=$(cat)` then parse with `jq`
-3. Exit 0 to allow the action, exit 2 to block with a message on stdout
+3. Exit 0 to allow the action, exit 2 to block with the reason on stderr
 4. Register it in each `providers/<name>/install-hooks.sh` (or a `scripts/install-*.sh --provider` lever installer) via `aw_hook_set`; skip providers whose hook system lacks the event and record it in the `config/hooks/adapters/README.md` mapping table
 5. Document it in this file and in AGENTS.md's `config/` directory comment
+
+**Never put payload-sized text on argv** (#4300, #4308). Linux caps one argument (and one env string) at 128 KiB. Past it, exec fails, the
+hook gets empty output and fails open: a padded `rm -rf` passed the Cursor adapter, and a long message skipped send-gate. Pipe the
+payload to `jq` on stdin and pass other big strings as `--rawfile name <(printf '%s' "$VAR")` (or `--slurpfile` for JSON). Keep `--arg`
+/ `--argjson` for short values: ids, event names, paths, fixed reasons. Shell functions and builtins (`printf`, `echo`) are fine; the limit
+is on exec. A hook test for a new input path adds a 200 KB row. Short text a hook builds itself is exempt: `done-gate-annotate.sh`
+(fixed text plus the brief quote cut to 120 characters), `context-guard.sh`'s and `retry-gate.sh`'s `--arg m "$MSG"`.
 
 ## Probe Hook (cheap-agent-harness rollout step 0.5)
 
 `probe-log.sh <Event>` appends raw hook stdin to `~/.agentic-workflow/probe/<Event>.jsonl`. It prints nothing and always exits 0. `scripts/probe.sh on|off|status` installs and removes it on `UserPromptSubmit`, `Stop`, `SubagentStop`, `TeammateIdle`, `SubagentStart`, `PermissionRequest`, `Notification`, `SessionStart`, `SessionEnd`, and `PreToolUse`/`PostToolUse` (matcher `Agent|SendMessage`). The last four are the aw:fleet hook's events (a payload change shows up in the probe log first); `tests/fixtures/fleet-input/` holds real scrubbed payloads of them. Every probe command ends in `# aw:probe`, and `config/lib/merge-hook.sh` only ever touches commands with its own tag. `scripts/probe.sh --provider codex|cursor on|off|status` installs the Codex/Cursor equivalents (no TeammateIdle; Cursor entries use the adapter's `--raw` mode) and logs to `probe/<provider>/`.
 
-`prompt-sort.sh` (`# aw:prompt-sort`) is the prompt sorter's UserPromptSubmit hook. It sorts the real prompt with `judge prompt-sort` (one Jev request), prints a scaffold note only when a scaffold switch is on and fires, never prints skill names (Prism's `prism-route` hook owns skill routing), always exits 0, and kills the judge after `AW_PROMPT_SORT_BUDGET_MS` (default 4000, logging `timeout` to the fail-open log). A non-zero exit or crash of the judge is swallowed. Skips machine text, slash commands and `AW_JUDGE_CHILD`. Install opt-out: `AW_NO_PROMPT_SORT=1`.
+`prompt-sort.sh` (`# aw:prompt-sort`) is the prompt sorter's UserPromptSubmit hook. It sorts the real prompt with `judge prompt-sort` (one Jev request), prints a scaffold note only when a scaffold switch is on and fires, never prints skill names (Prism's `prism-route` hook owns skill routing), always exits 0, and ends itself after `AW_PROMPT_SORT_BUDGET_MS` of wall-clock time (default 4000, counted from the hook's start): a watchdog kills the script and the judge under it and logs `timeout` to the fail-open log. Host timeout 10 s (Claude Code and Codex), a backstop the budget ends well before. A non-zero exit or crash of the judge is swallowed. Skips machine text, slash commands and `AW_JUDGE_CHILD`. Install opt-out: `AW_NO_PROMPT_SORT=1`.
 
 `sindri-nudge.sh` (`# aw:sindri-nudge`) is installed by `scripts/install-sindri-hooks.sh --provider X` (the providers run it, because the C# Sindri is always installed). It runs `sindri repo status --nudge`, which reads the approved profile read-only and never writes the ledger, prints at most one line, kills the CLI after `AW_SINDRI_NUDGE_BUDGET_MS` (default 4000, logging `timeout`), always exits 0, and is silent outside git, without sindri, before any approval, for an onboarded repo (a linked worktree counts), on any error, and for `AW_JUDGE_CHILD` / `AW_SINDRI_CHILD` sessions.
 
-`sindri-tasks.sh` (`# aw:sindri-tasks`, installed by the same `install-sindri-hooks.sh`) tells a session once that a Sindri fix task is waiting on its branch (spec 2026-11-04-sindri-pr-review-page-design.md §8.2). It starts no .NET process: it reads the session id from the hook's stdin, the checkout's GitHub `origin` (https and ssh forms, lowercased) and branch through `git`, and `$AW_SINDRI_HOME/fix-tasks/<sha256 of "owner/repo:branch">.json`. It prints "Fix task <item> on #<pr> is waiting. `sindri review tasks` shows it." per task not in `fix-tasks/seen/<session id>` (item must be a 26-character ULID and pr digits, else the row is skipped; a session id outside `[A-Za-z0-9-]` is ignored) and records what it showed; seen files older than 7 days are pruned. Always exit 0, bounded at 500 ms, silent for `AW_JUDGE_CHILD` / `AW_SINDRI_CHILD` and on any error. Per provider: Claude Code `UserPromptSubmit` (timeout 1 s); Codex `UserPromptSubmit` through `adapters/codex.sh`; Cursor none (`beforeSubmitPrompt` can't add context), so a Cursor session sees fix tasks through `sindri review tasks` and the Work item.
+`sindri-tasks.sh` (`# aw:sindri-tasks`, installed by the same `install-sindri-hooks.sh`) tells a session once that a Sindri fix task is waiting on its branch (spec 2026-11-04-sindri-pr-review-page-design.md §8.2). It starts no .NET process: it reads the session id from the hook's stdin, the checkout's GitHub `origin` (https and ssh forms, lowercased) and branch through `git`, and `$AW_SINDRI_HOME/fix-tasks/<sha256 of "owner/repo:branch">.json`. It prints "Fix task <item> on #<pr> is waiting. `sindri review tasks` shows it." per task not in `fix-tasks/seen/<session id>` (item must be a 26-character ULID and pr digits, else the row is skipped; a session id outside `[A-Za-z0-9-]` is ignored) and records what it showed; seen files older than 7 days are pruned. Always exit 0, bounded at `AW_SINDRI_TASKS_BUDGET_MS` of wall-clock time (default 1500, the whole script; a spent budget kills it with its `git` and `jq` and logs `timeout`), silent for `AW_JUDGE_CHILD` / `AW_SINDRI_CHILD` and on any error. Per provider: Claude Code `UserPromptSubmit` (timeout 4 s); Codex `UserPromptSubmit` through `adapters/codex.sh`; Cursor none (`beforeSubmitPrompt` can't add context), so a Cursor session sees fix tasks through `sindri review tasks` and the Work item.
 
 ## Session state hook (`aw:fleet`)
 
@@ -211,4 +223,4 @@ Contract: `docs/csharp/meta.md`. Tests: `config/hooks/tests/meta-hooks.test.sh` 
 - `external-write-guard.sh` never denies in a meta-harness lane or the meta itself (`AW_META_TEAM` and `AW_META_LANE` both set): they work unattended and never get a human turn to clear `auto_continued_at`. Interactive sessions keep the block.
 - `send-gate.sh`: in a lane or the meta (`AW_META_LANE` set), a message to `main`, `team-lead` or the team's `metaLane` skips wake gating. Queued items no longer expire (the 2 h expiry and `expired.jsonl` are gone).
 - `outbox-flush.sh`: a queued item with a null `agentType` is the lead's own and matches the lead (no `teammate_name`) only, never a teammate.
-- `done-gate.sh`: a done claim needs some evidence (URL, `npm`/`pytest`/`vitest`, `PR #n`, `dotnet`/`cargo`/`go` test or build output, "N passed"), without a brief; with a brief it passes. The acceptance-criteria prefix match is gone.
+- `done-gate.sh`: a done claim needs some evidence (URL, `npm`/`pytest`/`vitest`, `PR #n`, `dotnet`/`cargo`/`go` test or build output, "N passed"), without a brief; with a brief it passes. The acceptance-criteria prefix match is gone. It ends itself after `AW_DONE_GATE_BUDGET_MS` of wall-clock time (default 10000), kills the judge under it, logs `timeout` and exits 0; host timeout 25 s.

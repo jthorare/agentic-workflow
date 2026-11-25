@@ -9,24 +9,25 @@ namespace Aw.Sindri.Infrastructure.Launch.Usage;
 /// </summary>
 /// <param name="root">The owner's projects directory.</param>
 /// <param name="alsoUnder">The projects directories of the separate agent homes (a separate-login launch writes there); empty for an owner-copy box.</param>
+/// <param name="cache">Where the read state is kept between runs, or null to keep it in memory only (#3420).</param>
 #pragma warning disable CA1001 // the semaphore is never waited on through a handle, so it holds nothing to release; the reader lives as long as the process
-internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnder) : IUsageReader
+internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnder, UsageReadCache? cache) : IUsageReader
 {
     private const string Marker = "\"usage\"";
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly Dictionary<string, FileState> _files = new(StringComparer.Ordinal);
+    private readonly SeenWindow _seen = new();
 
-    /// <summary>What was read of one transcript: the byte just past its last complete line, and each message by id with its timestamp.</summary>
-    private sealed class FileState
+    public ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnder) : this(root, alsoUnder, cache: null)
     {
-        public long Offset { get; set; }
-
-        public Dictionary<string, (DateTimeOffset? At, ModelTokens Tokens)> Messages { get; } = new(StringComparer.Ordinal);
     }
 
     public ClaudeCodeUsage(string root) : this(root, [])
     {
     }
+
+    /// <summary>How many changed message ids the read state holds that no save has taken yet; always 0 for a reader with no cache. For tests.</summary>
+    internal int PendingChangedIds => _files.Values.Sum(static state => state.ChangedIds.Count);
 
     /// <inheritdoc/>
     public string Name => "claude-code";
@@ -42,7 +43,9 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var files = TranscriptFiles.Jsonl([root, .. alsoUnder], from);
+            Resume();
+
+            var files = TranscriptFiles.Jsonl([root, .. alsoUnder], _seen.Widen(from, to));
             foreach (var gone in _files.Keys.Except(files, StringComparer.Ordinal).ToList())
             {
                 _ = _files.Remove(gone);
@@ -62,11 +65,57 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
                 }
             }
 
+            Persist();
             return UsageJson.PerModel(byMessage.Values);
         }
         finally
         {
             _ = _gate.Release();
+        }
+    }
+
+    /// <summary>Saves what changed; a save that fails keeps the state in memory and writes it whole on the next pass (the cache file was dropped by then).</summary>
+    private void Persist()
+    {
+        if (cache is null)
+        {
+            // nothing is saved, so nothing may pile up in the changed ids either
+            foreach (var state in _files.Values)
+            {
+                state.MarkSaved();
+            }
+
+            return;
+        }
+
+        try
+        {
+            cache.Save(Name, _files);
+            foreach (var state in _files.Values)
+            {
+                state.MarkSaved();
+            }
+        }
+        catch (Exception e) when (e is InvalidDataException or IOException or UnauthorizedAccessException)
+        {
+            foreach (var state in _files.Values)
+            {
+                state.MarkUnsaved();
+            }
+        }
+    }
+
+    /// <summary>On the first call after a start, takes up the read state the last run saved.</summary>
+    private void Resume()
+    {
+        if (_files.Count != 0 || cache is null)
+        {
+            return;
+        }
+
+        foreach (var (path, saved) in cache.Load(Name))
+        {
+            _files[path] = saved;
         }
     }
 
@@ -77,6 +126,8 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
         if (restarted)
         {
             state.Messages.Clear();
+            state.ChangedIds.Clear();
+            state.Rewrite = true;
         }
 
         foreach (var line in lines)
@@ -85,9 +136,11 @@ internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnd
             if (document is not null && Counted(document.RootElement) is { } counted)
             {
                 state.Messages[counted.Id] = (UsageJson.Timestamp(document.RootElement), counted.Tokens);
+                _ = state.ChangedIds.Add(counted.Id);
             }
         }
 
+        state.Dirty |= restarted || offset != state.Offset;
         state.Offset = offset;
     }
 

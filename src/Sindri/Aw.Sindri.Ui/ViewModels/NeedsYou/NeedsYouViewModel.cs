@@ -18,7 +18,7 @@ internal sealed partial class NeedsYouViewModel : ObservableObject
 
     private static readonly string[] _listProperties =
     [
-        nameof(Rows), nameof(Count), nameof(HasOverflow), nameof(OverflowText), nameof(IsExpanded), nameof(IsEmpty), nameof(EmptyText), nameof(IsLoading), nameof(EmptyLine),
+        nameof(Rows), nameof(Count), nameof(HasOverflow), nameof(OverflowText), nameof(IsExpanded), nameof(IsEmpty), nameof(EmptyText), nameof(IsLoading), nameof(EmptyLine), nameof(ReadError), nameof(HasReadError),
         nameof(HasBanner), nameof(Banner), nameof(HeldCount), nameof(HeldText), nameof(HasHeld), nameof(SheetRow),
     ];
 
@@ -80,8 +80,7 @@ internal sealed partial class NeedsYouViewModel : ObservableObject
     /// <summary>The served empty sentence; empty unless the list is empty.</summary>
     internal string EmptyText => IsEmpty ? _feed.Sentence : "";
 
-    /// <summary>True until the first list is read: Home shows skeleton rows instead of an empty line.</summary>
-    internal bool IsLoading => !_loaded;
+    // IsLoading, ReadError, HasReadError and ReadFailed are in NeedsYouViewModel.ReadError.cs.
 
     // The served sentence can carry the running and queued counts ("Nothing needs you. 0 running, 0 queued."); those live in their own cards, so only its first sentence shows.
     // This depends on the API copy: the cut is at the first ". "; a sentence with no ". " (one sentence, or the end of a longer text) shows whole.
@@ -154,6 +153,7 @@ internal sealed partial class NeedsYouViewModel : ObservableObject
     {
         _feed = feed;
         _loaded = true;
+        ReadError = "";
         _filter = show;
         Apply();
     }
@@ -191,11 +191,11 @@ internal sealed partial class NeedsYouViewModel : ObservableObject
     private void Apply()
     {
         var before = Rows.Select(r => r.Entry).ToList();
-        var holding = PointerOver && _hasShown;
+        var holding = PointerOver && _hasShown;   // nothing is held back before the first read: it is the first paint, never "new" rows (#3734)
         _shown = [.. _feed.Rows.Where(e => _filter is null || _filter(e))];
         _visible = [.. _shown.Where(e => !holding || _shownIds.Contains(e.Id))];
         _shownIds = [.. _visible.Select(e => e.Id)];
-        _hasShown = true;
+        _hasShown = _loaded;
         Seen.Update(_visible, [.. _feed.Rows.Select(e => e.Id)]);
         var selected = SelectedId;
         if (selected is not null && !_visible.Exists(e => string.Equals(e.Id, selected, StringComparison.Ordinal)))

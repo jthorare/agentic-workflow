@@ -33,7 +33,7 @@ internal static class ApiScenarios
         ["Streams"] = StreamScenarios.All,
         ["Jobs"] = [.. JobScenarios.All, .. JobScopeScenarios.All],
         ["Launches"] = [.. LaunchScenarios.All, .. WrapSessionScenarios.All],
-        ["Setup"] = [.. SetupScenarios.All, .. SetupRepoScenarios.All],
+        ["Setup"] = [.. SetupScenarios.All, .. SetupRepoScenarios.All, .. SetupAccountScenarios.All],
         ["Recipes"] = AppChallengeScenarios.All,
         ["CodeIndex"] = CodeIndexScenarios.All,
         ["Sandbox"] = SandboxScenarios.All,
@@ -51,8 +51,12 @@ internal static class ApiScenarios
         ["WorkflowRuns"] = WorkflowRunScenarios.All,
         ["WorkflowReads"] = WorkflowReadScenarios.All,
         ["Resources"] = ResourceScenarios.All,
+        ["AgentStarts"] = AgentStartScenarios.All,
         ["Toolkits"] = ToolkitScenarios.All,
+        ["Home"] = HomeScenarios.All,
         ["WorkflowWrites"] = WorkflowWriteScenarios.All,
+        ["Messages"] = MessageScenarios.Built,
+        ["Links"] = LinkScenarios.All,
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>
@@ -64,7 +68,7 @@ internal static class ApiScenarios
     /// <summary>Starts the host the scenario runs on: the plain golden host, or for the context routes one over a small git repo with a map.</summary>
     public static async Task<GoldenHost> Start(string slug, string scenario, CancellationToken ct) =>
         CodeIndexScenarios.Handles(slug, scenario)
-            ? await CodeIndexScenarios.Start(ct, demoBehindMain: scenario == CodeIndexScenarios.StaleScenario)
+            ? await CodeIndexScenarios.Start(ct, demoBehindMain: CodeIndexScenarios.DemoBehindMain(scenario))
             : ConnectionSignInScenarios.Handles(slug, scenario)
             ? await ConnectionSignInScenarios.Start(scenario, ct)
             : ConnectionScenarios.Handles(slug, scenario)
@@ -83,7 +87,9 @@ internal static class ApiScenarios
 
     /// <summary>The last hosts of <see cref="Start"/>: the answered workflow run, the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
-        WorkflowRunScenarios.NeedsHost(slug, scenario)
+        HomeScenarios.Handles(slug, scenario)
+            ? await HomeScenarios.Start(scenario, ct)
+            : WorkflowRunScenarios.NeedsHost(slug, scenario)
             ? await WorkflowRunScenarios.Start(ct)
             : IsSkillOrLinear(slug, scenario)
             ? await StartSkillOrLinear(slug, scenario, ct)
@@ -97,6 +103,14 @@ internal static class ApiScenarios
             ? await LaunchScenarios.Start(scenario, ct)
             : AppChallengeScenarios.Handles(slug, scenario)
             ? await GoldenHost.Start(temporary: true, ct)
+            : await StartSessionOrPlain(slug, scenario, ct);
+
+    /// <summary>The host of a links-resolve, terminal-route, wrapped-session or cgroup scenario, else the plain golden host.</summary>
+    private static async Task<GoldenHost> StartSessionOrPlain(string slug, string scenario, CancellationToken ct) =>
+        LinkScenarios.Handles(slug, scenario)
+            ? await LinkScenarios.Start(scenario, ct)
+            : AgentStartScenarios.NeedsLocator(slug, scenario)
+            ? await AgentStartScenarios.StartHost(scenario, ct)
             : WrapSessionScenarios.Handles(slug, scenario)
             ? await GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml)
             : SessionScenarios.NeedsCgroup(slug, scenario)
@@ -139,11 +153,13 @@ internal static class ApiScenarios
 
     /// <summary>Whether the scenario is a setup one (the steps, or adding a repo).</summary>
     private static bool IsSetup(string slug, string scenario) =>
-        SetupScenarios.Handles(slug, scenario) || SetupRepoScenarios.Handles(slug, scenario);
+        SetupScenarios.Handles(slug, scenario) || SetupRepoScenarios.Handles(slug, scenario) || SetupAccountScenarios.Handles(slug, scenario);
 
-    /// <summary>The host of a setup scenario (the steps, or adding a repo).</summary>
+    /// <summary>The host of a setup scenario (the steps, adding a repo, or the accounts step).</summary>
     private static Task<GoldenHost> SetupHost(string slug, string scenario, CancellationToken ct) =>
-        SetupScenarios.Handles(slug, scenario) ? SetupScenarios.Start(scenario, ct) : SetupRepoScenarios.Start(scenario, ct);
+        SetupScenarios.Handles(slug, scenario) ? SetupScenarios.Start(scenario, ct)
+        : SetupAccountScenarios.Handles(slug, scenario) ? SetupAccountScenarios.Start(scenario, ct)
+        : SetupRepoScenarios.Start(scenario, ct);
 
     /// <summary>The live profile the scenario's host starts with: the item scenarios need two repos.</summary>
     public static string ProfileYaml(string slug, string scenario) => SessionScenarios.Handles(slug, scenario) ? SessionScenarios.ProfileYaml : ItemScenarios.Handles(slug, scenario) || RequestScenarios.Handles(slug, scenario) || StreamScenarios.Handles(slug, scenario) ? ItemScenarios.ProfileYaml : GoldenHost.ProfileYaml;
@@ -188,8 +204,11 @@ internal static class ApiScenarios
     private static Func<Task<string>>? DelegatedOrWorkflow(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
         WorkflowRunScenarios.Handles(slug, scenario) ? () => WorkflowRunScenarios.Body(host, slug, scenario, ct)
         : WorkflowReadScenarios.Handles(slug, scenario) ? () => WorkflowReadScenarios.Body(host, slug, scenario, ct)
+        : AgentStartScenarios.Handles(slug, scenario) ? () => AgentStartScenarios.Body(host, slug, scenario)
         : ResourceScenarios.Handles(slug, scenario) ? () => ResourceScenarios.Body(host, slug, scenario, ct)
         : ToolkitScenarios.Handles(slug, scenario) ? () => ToolkitScenarios.Body(host, slug, scenario, ct)
+        : MessageScenarios.Handles(slug, scenario) ? () => MessageScenarios.Body(host, slug, scenario, ct)
+        : HomeScenarios.Handles(slug, scenario) ? () => HomeScenarios.Body(host, slug, scenario, ct)
         : WorkflowWriteScenarios.Handles(slug, scenario) ? () => WorkflowWriteScenarios.Body(host, slug, scenario, ct)
         : Delegated(host, slug, scenario, ct);
 
@@ -209,6 +228,7 @@ internal static class ApiScenarios
     private static Func<Task<string>>? SessionBody(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
         AppChallengeScenarios.Handles(slug, scenario) ? () => AppChallengeScenarios.Body(host, scenario, ct)
         : SetupRepoScenarios.Handles(slug, scenario) ? () => SetupRepoScenarios.Body(host, slug, scenario)
+        : SetupAccountScenarios.Handles(slug, scenario) ? () => SetupAccountScenarios.Body(host, slug, scenario)
         : SessionScenarios.Handles(slug, scenario) ? () => SessionScenarios.Body(host, slug, scenario, ct)
         : WrapSessionScenarios.Handles(slug, scenario) ? () => WrapSessionScenarios.Body(host, slug, scenario, ct)
         : SandboxScenarios.Handles(slug, scenario) ? () => SandboxScenarios.Body(host, slug, scenario, ct)
@@ -235,6 +255,7 @@ internal static class ApiScenarios
         : ConnectionSignInScenarios.Handles(slug, scenario) ? () => ConnectionSignInScenarios.Body(host, scenario, ct)
         : ConnectionScenarios.Handles(slug, scenario) ? () => ConnectionScenarios.Body(host, slug, scenario, ct)
         : MemoryScenarios.Handles(slug, scenario) ? () => MemoryScenarios.Body(host, slug, scenario, ct)
+        : LinkScenarios.Handles(slug, scenario) ? () => LinkScenarios.Answer(host)
         : null;
 
 

@@ -26,7 +26,13 @@
 # alive, its command line naming the build dir): that one is neither pruned nor rebuilt (it says to run `sindri stop`).
 # A publish while a control plane runs first checks for open agent runs (scripts/lib/sindri-open-runs.sh, #1000): it lists
 # them and asks go/wait/stop on a terminal, and stops without one unless AW_SINDRI_STOP_OK=1.
-# One publish at a time per state dir (a lock dir holding the owner's pid; a dead owner's lock is taken over).
+# One publish at a time per state dir (a lock dir holding the owner's pid, made in one rename; a dead owner's lock, and
+# a pidless one older than 60 s, is taken over).
+# A killed publish leaves tree.*, sdk-tree.*, verify.* and .stage.* (its EXIT trap never ran). The next publish
+# removes them while it holds the lock, including when the build is already current. The toolkit pack holds the same
+# lock, so its sdk-tree is never taken for a dead one. Between binaries the publish removes the
+# previous publish's bin/ and any NativeAOT .o, so the next object file (sindri-ui.o is the large one) is not written
+# beside them. A publish that dies with "No space left on device" says the disk is full.
 #
 # Binaries (all published from a copy of the sources, under the box-wide heavy slot when it exists, so the checkout's lock
 # files never change):
@@ -59,6 +65,18 @@
 # The meta gate's slot reserve works the same way: scripts/meta-gate-reserve.sh is copied into each build as <build>/meta-gate-reserve
 # (mode 755, part of the stamp, checked by verify), --link points $AW_STATE_DIR/bin-r1b/meta-gate-reserve at
 # bin/cs/current/meta-gate-reserve, refuses a build without it, and moves a real file there to meta-gate-reserve.pre-repo.
+# The command catalog reader (#4221) too: scripts/aw-commands.sh is copied into each build as <build>/aw-commands and
+# config/commands.toolkit.json as <build>/commands.json (the toolkit catalog it reads from its own folder), both part of the
+# stamp, and --link points <link dir>/aw-commands (~/.local/bin by default) at bin/cs/current/aw-commands, moving a real file
+# there to aw-commands.pre-repo. A tree without scripts/aw-commands.sh ships neither and gets no link.
+# The bounded command runner (#4237) too: scripts/aw-run.sh is copied into each build as <build>/aw-run (mode 755, part of the
+# stamp), and --link points <link dir>/aw-run (~/.local/bin by default) at bin/cs/current/aw-run, moving a real file there to
+# aw-run.pre-repo. A tree without scripts/aw-run.sh ships none and gets no link.
+#
+# The read-only PR watcher (#4221) rides along too, but optionally: when the checkout has scripts/aw-pr-watch.sh it is copied
+# into the build as <build>/aw-pr-watch (mode 755, part of the stamp, checked by verify), and --link points
+# $CLAUDE_LOCAL_BIN/aw-pr-watch (default ~/.local/bin, beside the wrappers) at bin/cs/current/aw-pr-watch. A build without it
+# links nothing and is not refused.
 #
 # The toolkit SDK (src/Toolkit/Aw.Sindri.Toolkit, package id Aw.Sindri.Toolkit): after the publish step (also when the build is
 # current) it is `dotnet pack`ed from a copy of the sources into the folder feed $AW_SINDRI_SDK_FEED (default
@@ -100,6 +118,7 @@ cache="$state/cache/install-cs"
 heavy="$state/bin-r1b/heavy"
 reserve="$state/bin-r1b/meta-gate-reserve"
 link_dir="${CLAUDE_LOCAL_BIN:-$HOME/.local/bin}"
+pr_watch="$link_dir/aw-pr-watch"
 skip_dl="${AW_CS_SKIP_DOWNLOADS:-0}"
 BINARIES=(sindri judge bugfix-state ui-evidence aw-packets aw-readiness)
 
@@ -116,21 +135,38 @@ commit="$(git -C "$root" rev-parse --verify -q HEAD 2> /dev/null || true)"
 [ -n "$commit" ] || die "the C# binaries can only be published from a git checkout"
 # shellcheck source=lib/sindri-build-inputs.sh
 source "$here/lib/sindri-build-inputs.sh"
-PATHSPECS=("${SINDRI_BUILD_PATHSPECS[@]}" src/Evidence src/BugFix src/Readiness scripts/heavy.sh scripts/meta-gate-reserve.sh config/lib/heavy-config.sh)
+PATHSPECS=("${SINDRI_BUILD_PATHSPECS[@]}" src/Evidence src/BugFix src/Readiness scripts/heavy.sh scripts/meta-gate-reserve.sh scripts/aw-commands.sh config/commands.toolkit.json scripts/aw-run.sh scripts/aw-pr-watch.sh config/lib/heavy-config.sh)
 sha256() { shasum -a 256 2> /dev/null || sha256sum; }
+# hash_list <list> <header line>...: sha256 (16 hex) of the header lines, the file list and git's hash of each listed file. A git that
+# dies (killed under memory pressure) stops the script with a message; piped into sha256 it ended the script silently (#3218).
+hash_list() {
+  local list="$1" hashes
+  shift
+  hashes="$(mktemp "${TMPDIR:-/tmp}/install-cs-hash.XXXXXX")"
+  (cd "$root" && git hash-object --stdin-paths < "$list") > "$hashes" \
+    || { rm -f "$hashes"; die "git hash-object failed while hashing the build inputs (git ended with an error; run it again)"; }
+  { printf '%s\n' "$@"; cat "$list" "$hashes"; } | sha256 | cut -c1-16
+  rm -f "$hashes"
+}
 inputs="$(mktemp "${TMPDIR:-/tmp}/install-cs-inputs.XXXXXX")"
 # a tracked file deleted in the working tree is left out: it isn't part of the build, and tar would fail on it
-git -C "$root" ls-files -z --cached --others --exclude-standard -- "${PATHSPECS[@]}" \
-  | while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done | LC_ALL=C sort -u > "$inputs"
+# A git that dies in the stamp (ls-files, status) stops the script with a message, never silently or as a wrong "clean" (#3218).
+git -C "$root" ls-files -z --cached --others --exclude-standard -- "${PATHSPECS[@]}" > "$inputs.z" \
+  || { rm -f "$inputs" "$inputs.z"; die "git ls-files failed while stamping the build (git ended with an error; run it again)"; }
+while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done < "$inputs.z" | LC_ALL=C sort -u > "$inputs"
+rm -f "$inputs.z"
 [ -s "$inputs" ] || die "no build inputs found under $root"
-stamp="$( { printf '%s\n' "$sdk" "$platform" "$commit"; cat "$inputs"; (cd "$root" && git hash-object --stdin-paths < "$inputs"); } | sha256 | cut -c1-16)"
+stamp="$(hash_list "$inputs" "$sdk" "$platform" "$commit")"
 dirty=""
-if [ -n "$(git -C "$root" status --porcelain -- "${PATHSPECS[@]}" 2> /dev/null)" ]; then dirty="-dirty"; fi
+status="$(git -C "$root" status --porcelain -- "${PATHSPECS[@]}" 2> /dev/null)" \
+  || { rm -f "$inputs"; die "git status failed while stamping the build (git ended with an error; run it again)"; }
+if [ -n "$status" ]; then dirty="-dirty"; fi
 revision="$commit$dirty"
 
-lock="" stage="" tree=""
+lock="" lock_new="" stage="" tree=""
 cleanup() {
   rm -f "$inputs"
+  if [ -n "$lock_new" ]; then rm -rf "$lock_new"; fi
   if [ -n "$stage" ]; then rm -rf "$stage" "$stage".*; fi
   if [ -n "$tree" ]; then rm -rf "$tree"; fi
   if [ -n "$lock" ]; then rm -rf "$lock"; fi
@@ -228,10 +264,156 @@ input_hash() { # input_hash <csproj>: the hash of one binary's inputs, made as t
       src/Judge | src/Judge/*) specs+=("${JUDGE_EXTRA_INPUTS[@]}") ;;
     esac
   done
-  git -C "$root" ls-files -z --cached --others --exclude-standard -- "${specs[@]}" \
-    | while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done | LC_ALL=C sort -u > "$list"
-  { printf '%s\n' "$sdk" "$platform"; cat "$list"; (cd "$root" && git hash-object --stdin-paths < "$list"); } | sha256 | cut -c1-16
+  # A git that dies here (killed under memory pressure) stops the publish with a message; it never ends the script silently (#3218).
+  git -C "$root" ls-files -z --cached --others --exclude-standard -- "${specs[@]}" > "$list.z" \
+    || { rm -f "$list" "$list.z"; die "git ls-files failed while hashing the inputs of $1 (git ended with an error; run it again)"; }
+  while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done < "$list.z" | LC_ALL=C sort -u > "$list"
+  rm -f "$list.z"
+  hash_list "$list" "$sdk" "$platform"
   rm -f "$list"
+}
+
+# Dead scratch from a killed install-cs. Call only while this process holds $lock: another publish's tree is live
+# until that process exits. $tree and $stage, when set, belong to this process and stay.
+reclaim_scratch() {
+  local d
+  [ -d "$cache" ] || return 0
+  for d in "$cache"/tree.* "$cache"/sdk-tree.* "$cache"/verify.*; do
+    [ -d "$d" ] || continue
+    [ -n "$tree" ] && [ "$d" = "$tree" ] && continue
+    rm -rf "$d"
+  done
+  # make_lock's temp folder, or take_over's renamed stale lock, of a killed run. A live run's is a few ms old, so only
+  # one older than 60 s goes.
+  for d in "$base"/.lock-new.* "$base"/.lock-dead.*; do
+    [ -d "$d" ] || continue
+    [ -n "$(find "$d" -maxdepth 0 -mmin +1 2> /dev/null)" ] || continue
+    rm -rf "$d"
+  done
+  for d in "$base"/.stage.*; do
+    [ -e "$d" ] || continue
+    if [ -n "$stage" ] && { [ "$d" = "$stage" ] || [ "${d#"$stage".}" != "$d" ]; }; then continue; fi
+    rm -rf "$d"
+  done
+}
+
+# Renames folder $1 to $2 in one rename(2), which fails when $2 is a folder with anything in it. GNU mv has -T for
+# that; BSD mv (macOS) has no -T and would move $1 into $2, so perl's rename does it there.
+rename_dir() {
+  if mv --version > /dev/null 2>&1; then
+    mv -T "$1" "$2" 2> /dev/null
+  else
+    perl -e 'rename($ARGV[0], $ARGV[1]) or exit 1' "$1" "$2" 2> /dev/null
+  fi
+}
+
+# Makes the publish lock $1 in one step (#4247): a temp folder holding this pid is renamed to $1, so no lock is ever
+# seen without its pid. rename(2) replaces an empty folder, so an existing $1 (a pidless lock of an older install-cs)
+# is checked for first. Exit 1 when $1 exists, 2 when the lock could not be made at all.
+make_lock() {
+  local lk="$1"
+  [ ! -e "$lk" ] || return 1
+  lock_new="$(mktemp -d "$base/.lock-new.XXXXXX")" || return 2
+  echo $$ > "$lock_new/pid" || { rm -rf "$lock_new"; lock_new=""; return 2; }
+  if rename_dir "$lock_new" "$lk"; then lock_new=""; return 0; fi
+  rm -rf "$lock_new"; lock_new=""
+  if [ -e "$lk" ]; then return 1; fi
+  return 2
+}
+
+# Whether lock $1 may be taken over: its pid is dead, or it has no pid and is older than 60 s. A lock without a pid
+# comes from an older install-cs killed between its mkdir and its pid write; a fresh one may still be such a run, so
+# it is waited for like a live one.
+lock_stale() {
+  local lk="$1" owner
+  owner="$(cat "$lk/pid" 2> /dev/null || true)"
+  if [ -n "$owner" ]; then
+    ! kill -0 "$owner" 2> /dev/null
+    return
+  fi
+  [ -d "$lk" ] && [ -n "$(find "$lk" -maxdepth 0 -mmin +1 2> /dev/null)" ]
+}
+
+# Takes over the stale lock $1; 0 when this call removed it (#4279). Two waiters can both see one stale lock, and if each
+# removed it, the second would remove the first one's new lock and both would publish. So the takeover runs under a second
+# lock, .lock-takeover (a plain mkdir, held for milliseconds), and checks again under it: only a lock that is still stale is
+# renamed aside to .lock-dead.<pid> (one rename, so one waiter moves it) and removed. A loser goes back to waiting.
+take_over() {
+  local lk="$1" mx="$base/.lock-takeover" dead="$base/.lock-dead.$$" rc=1
+  if ! mkdir "$mx" 2> /dev/null; then
+    # One older than 60 s was left by a run killed while it held it; the next takeover gets it.
+    if [ -n "$(find "$mx" -maxdepth 0 -mmin +1 2> /dev/null)" ]; then rmdir "$mx" 2> /dev/null; fi
+    return 1
+  fi
+  if lock_stale "$lk" && rename_dir "$lk" "$dead"; then
+    rm -rf "$dead"; rc=0
+  fi
+  rmdir "$mx" 2> /dev/null
+  return "$rc"
+}
+
+# Wait for the publish lock and take it; a stale lock (lock_stale) is taken over (take_over). $lock is set only once the lock is
+# this run's, so a run that ends while it waits never removes the holder's lock in its EXIT trap (#4247).
+take_lock() {
+  local lk="$base/.lock" owner rc
+  mkdir -p "$base"
+  while :; do
+    rc=0; make_lock "$lk" || rc=$?
+    if [ "$rc" = 0 ]; then break; fi
+    if [ "$rc" = 2 ]; then die "could not make the publish lock $lk (mktemp or rename failed in $base)"; fi
+    if lock_stale "$lk"; then
+      # Test seam (scripts/tests/install-cs.test.sh, #4279): hold between "saw stale" and the takeover until the test says go.
+      if [ -n "${AW_INSTALL_CS_TEST_STALE_PAUSE:-}" ]; then
+        : > "$AW_INSTALL_CS_TEST_STALE_PAUSE.$$.seen"
+        until [ -e "$AW_INSTALL_CS_TEST_STALE_PAUSE.$$.go" ]; do sleep 0.1; done
+      fi
+      if take_over "$lk"; then continue; fi
+    fi
+    owner="$(cat "$lk/pid" 2> /dev/null || true)"
+    say "waiting for another install-cs publish (pid ${owner:-?})"
+    sleep 2
+  done
+  lock="$lk"
+}
+
+# Take the publish lock if no install holds it, reclaim dead scratch, and release the lock. It never waits.
+# A live holder and a fresh lock without a pid are left alone; a stale lock (lock_stale) is taken over.
+reclaim_unlocked() {
+  local lk="$base/.lock"
+  mkdir -p "$base" "$cache"
+  if ! make_lock "$lk"; then
+    lock_stale "$lk" && take_over "$lk" || return 0
+    make_lock "$lk" || return 0
+  fi
+  lock="$lk"
+  reclaim_scratch
+  rm -rf "$lock"
+  lock=""
+}
+
+# The previous binary's bin/ and any NativeAOT .o. obj/ stays, so the next publish still compiles incrementally.
+# sindri-ui.o is written under obj/ during that binary's own publish, after the previous .o is gone.
+drop_earlier_outputs() {
+  [ -n "$tree" ] || return 0
+  rm -rf "$tree/artifacts/bin"
+  [ -d "$tree/artifacts" ] || return 0
+  find "$tree/artifacts" -type f -name '*.o' -exec rm -f {} +
+}
+
+# ilc reports ENOSPC as an IOException in the publish log. Name it before the compiler tail.
+publish_failed() { # publish_failed <binary> <log>
+  local kb vol
+  if grep -q "No space left on device" "$2"; then
+    kb="$(df -Pk "$cache" 2> /dev/null | awk 'NR==2 {print $4}')"
+    vol="$(df -Pk "$cache" 2> /dev/null | awk 'NR==2 {print $6}')"
+    if [ -n "$kb" ] && [ -n "$vol" ]; then
+      warn "the disk is full (No space left on device) while publishing $1; $((kb / 1024)) MB free on $vol. Free space, then re-run."
+    else
+      warn "the disk is full (No space left on device) while publishing $1. Free space on the volume that holds $cache, then re-run."
+    fi
+  fi
+  tail -20 "$2" >&2
+  die "publishing $1 failed (log: $2)"
 }
 
 # --- publish ---------------------------------------------------------------------------------------------------------
@@ -263,10 +445,12 @@ publish() {
 
   # 2. A build that exists for the stamp is only reported; a build a running serve executes is never replaced.
   if [ "$rebuild" = 1 ] && in_use "$stamp"; then
+    reclaim_unlocked
     say "the running control plane uses build $stamp; not rebuilding it (run sindri stop, then re-run)"
     return 0
   fi
   if [ "$rebuild" = 0 ] && built "$stamp"; then
+    reclaim_unlocked
     say "build $stamp is current"
     return 0
   fi
@@ -285,19 +469,15 @@ publish() {
     if [ -n "$guard_bin" ] && ! sindri_open_runs_guard "$guard_bin"; then exit 1; fi
   fi
 
-  mkdir -p "$base"
-  lock="$base/.lock"
-  until mkdir "$lock" 2> /dev/null; do
-    local owner
-    owner="$(cat "$lock/pid" 2> /dev/null || true)"
-    if [ -n "$owner" ] && ! kill -0 "$owner" 2> /dev/null; then rm -rf "$lock"; continue; fi
-    say "waiting for another install-cs publish (pid ${owner:-?})"
-    sleep 2
-  done
-  echo $$ > "$lock/pid"
-  if [ "$rebuild" = 0 ] && built "$stamp"; then say "build $stamp is current"; return 0; fi   # published while this one waited
+  take_lock
+  if [ "$rebuild" = 0 ] && built "$stamp"; then
+    reclaim_scratch
+    say "build $stamp is current"
+    return 0
+  fi   # published while this one waited
 
   mkdir -p "$cache"
+  reclaim_scratch
   local log="$cache/publish.log" pre=() when
   : > "$log"
   if [ -x "$heavy" ]; then pre=("$heavy" --expensive); fi
@@ -319,6 +499,7 @@ publish() {
   # or, when the hash of its inputs is the one in the current build, copy its files from there (the same order, the same rule)
   pub() {
     local name="$1" proj="$2" out f want have; shift 2
+    drop_earlier_outputs
     want="$(input_hash "$proj")"
     if [ -n "$from" ]; then
       have="$(cat "$from/inputs/$name.sha256" 2> /dev/null || true)"
@@ -330,7 +511,7 @@ publish() {
     out="$stage.$name"; rm -rf "$out"
     say "publishing $name"
     (cd "$tree" && ${pre[@]+"${pre[@]}"} dotnet publish "$proj" -c Release "${stampargs[@]}" "$@" -o "$out") < /dev/null >> "$log" 2>&1 \
-      || { tail -20 "$log" >&2; die "publishing $name failed (log: $log)"; }
+      || publish_failed "$name" "$log"
     [ -e "$out/$name" ] || die "the publish left no $name in $out (log: $log)"
     # Dot entries too: ui-evidence's Playwright driver is .playwright/, and without it every browser call fails.
     # The file list holds every top-level entry of the output (also those the stage already had), so a later copy can walk it.
@@ -377,9 +558,22 @@ publish() {
   fi
 
   install -m 755 "$tree/scripts/meta-gate-reserve.sh" "$stage/meta-gate-reserve" || die "staging scripts/meta-gate-reserve.sh failed"
+  # The read-only PR watcher (#4221), when the tree has it.
+  if [ -f "$tree/scripts/aw-pr-watch.sh" ]; then
+    install -m 755 "$tree/scripts/aw-pr-watch.sh" "$stage/aw-pr-watch" || die "staging scripts/aw-pr-watch.sh failed"
+  fi
+  if [ -f "$tree/scripts/aw-commands.sh" ]; then
+    install -m 755 "$tree/scripts/aw-commands.sh" "$stage/aw-commands" || die "staging scripts/aw-commands.sh failed"
+    if [ -f "$tree/config/commands.toolkit.json" ]; then
+      install -m 644 "$tree/config/commands.toolkit.json" "$stage/commands.json" || die "staging config/commands.toolkit.json failed"
+    fi
+  fi
+  if [ -f "$tree/scripts/aw-run.sh" ]; then
+    install -m 755 "$tree/scripts/aw-run.sh" "$stage/aw-run" || die "staging scripts/aw-run.sh failed"
+  fi
 
   # 3. "Install didn't take": each binary answers its state-free call, in a scratch state dir and with no inherited environment.
-  verify "$stage" "$revision" "$tree/scripts/heavy.sh" "$tree/scripts/meta-gate-reserve.sh"
+  verify "$stage" "$revision" "$tree/scripts/heavy.sh" "$tree/scripts/meta-gate-reserve.sh" "$tree/scripts/aw-pr-watch.sh"
 
   printf 'commit=%s\nbuilt=%s\n' "$revision" "$when" > "$stage/build-info"
   rm -rf "$tree"; tree=""
@@ -402,8 +596,8 @@ check_skia_fontconfig() { # check_skia_fontconfig <dir>
     || die "install didn't take: the staged libSkiaSharp.so does not need libfontconfig, so it is not sindri-ui's build (judge's NoDependencies one won the stage: keep sindri-ui before judge in the pub lines)"
 }
 
-verify() { # verify <dir> <revision> <heavy source> <meta-gate-reserve source>
-  local d="$1" rev="$2" src="$3" rsrc="$4" scratch b out rc
+verify() { # verify <dir> <revision> <heavy source> <meta-gate-reserve source> <aw-pr-watch source, may be missing>
+  local d="$1" rev="$2" src="$3" rsrc="$4" wsrc="$5" scratch b out rc
   scratch="$(mktemp -d "$cache/verify.XXXXXX")"
   for b in "${BINARIES[@]}" sindri-ui sindri-code-runner; do
     [ -x "$d/$b" ] || { rm -rf "$scratch"; die "install didn't take: $d/$b is missing or not executable"; }
@@ -413,6 +607,9 @@ verify() { # verify <dir> <revision> <heavy source> <meta-gate-reserve source>
   { [ -x "$d/heavy" ] && cmp -s "$d/heavy" "$src"; } || { rm -rf "$scratch"; die "install didn't take: $d/heavy is missing, not executable or not scripts/heavy.sh"; }
   if grep -q heavy-config "$d/heavy" && [ ! -f "$d/heavy-config.sh" ]; then rm -rf "$scratch"; die "install didn't take: $d/heavy-config.sh is missing"; fi
   { [ -x "$d/meta-gate-reserve" ] && cmp -s "$d/meta-gate-reserve" "$rsrc"; } || { rm -rf "$scratch"; die "install didn't take: $d/meta-gate-reserve is missing, not executable or not scripts/meta-gate-reserve.sh"; }
+  if [ -f "$wsrc" ]; then
+    { [ -x "$d/aw-pr-watch" ] && cmp -s "$d/aw-pr-watch" "$wsrc"; } || { rm -rf "$scratch"; die "install didn't take: $d/aw-pr-watch is missing, not executable or not scripts/aw-pr-watch.sh"; }
+  fi
   mkdir -p "$scratch/state"
   rc=0; out="$(run "$d/sindri" help)" || rc=$?
   [ "$rc" = 0 ] || { rm -rf "$scratch"; die "install didn't take: sindri help exited $rc"; }
@@ -421,7 +618,7 @@ verify() { # verify <dir> <revision> <heavy source> <meta-gate-reserve source>
   # a ui-evidence copied from an earlier build names the commit that build was made at (inputs/ui-evidence.rev)
   if [ -s "$d/inputs/ui-evidence.rev" ]; then rev="$(cat "$d/inputs/ui-evidence.rev")"; fi
   rc=0; out="$(run "$d/ui-evidence" version)" || rc=$?
-  { [ "$rc" = 0 ] && printf '%s' "$out" | grep -qF "${rev:0:7}"; } \
+  { [ "$rc" = 0 ] && grep -qF "${rev:0:7}" <<<"$out"; } \
     || { rm -rf "$scratch"; die "install didn't take: ui-evidence version (exit $rc) does not name commit ${rev:0:7}: $out"; }
   for b in aw-packets bugfix-state aw-readiness; do
     rc=0; out="$(run "$d/$b")" || rc=$?
@@ -484,6 +681,9 @@ link() {
   if [ "$dry" = 1 ]; then
     say "[dry-run] would link $heavy -> $base/current/heavy"
     say "[dry-run] would link $reserve -> $base/current/meta-gate-reserve"
+    say "[dry-run] would link $pr_watch -> $base/current/aw-pr-watch when the build has it"
+    say "[dry-run] would link $link_dir/aw-commands -> $base/current/aw-commands (when the build carries aw-commands)"
+    say "[dry-run] would link $link_dir/aw-run -> $base/current/aw-run (when the build carries aw-run)"
     say "[dry-run] would point $base/current at $stamp, write wrappers for ${BINARIES[*]} into $link_dir, and run ui-evidence install-browser"
     return 0
   fi
@@ -504,6 +704,9 @@ link() {
   say "current -> $stamp"
   link_through_current heavy "$heavy"
   link_through_current meta-gate-reserve "$reserve"
+  if [ -x "$base/$stamp/aw-pr-watch" ]; then link_through_current aw-pr-watch "$pr_watch"; fi
+  if [ -x "$base/$stamp/aw-commands" ]; then link_through_current aw-commands "$link_dir/aw-commands"; fi
+  if [ -x "$base/$stamp/aw-run" ]; then link_through_current aw-run "$link_dir/aw-run"; fi
   for b in "${BINARIES[@]}"; do write_wrapper "$b"; done
   say "wrappers in $link_dir: ${BINARIES[*]}"
   case ":$PATH:" in *":$link_dir:"*) ;; *) warn "$link_dir is not on your PATH" ;; esac
@@ -545,9 +748,11 @@ pack_sdk() {
   fi
   local list want have
   list="$(mktemp "${TMPDIR:-/tmp}/install-cs-sdk.XXXXXX")"
-  git -C "$root" ls-files -z --cached --others --exclude-standard -- "${SDK_PATHSPECS[@]}" \
-    | while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done | LC_ALL=C sort -u > "$list"
-  want="$( { printf '%s\n' "$sdk"; cat "$list"; (cd "$root" && git hash-object --stdin-paths < "$list"); } | sha256 | cut -c1-16)"
+  git -C "$root" ls-files -z --cached --others --exclude-standard -- "${SDK_PATHSPECS[@]}" > "$list.z" \
+    || { rm -f "$list" "$list.z"; die "git ls-files failed while listing the toolkit SDK inputs (git ended with an error; run it again)"; }
+  while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done < "$list.z" | LC_ALL=C sort -u > "$list"
+  rm -f "$list.z"
+  want="$(hash_list "$list" "$sdk")"
   have="$(cat "$sdk_feed/.sdk-stamp" 2> /dev/null || true)"
   if [ "$rebuild" = 0 ] && [ "$want" = "$have" ] && ls "$sdk_feed"/Aw.Sindri.Toolkit.*.nupkg > /dev/null 2>&1; then
     say "toolkit SDK package is current ($sdk_feed)"
@@ -556,6 +761,9 @@ pack_sdk() {
   export DOTNET_ROOT="${DOTNET_ROOT:-$HOME/.dotnet}"
   export PATH="$DOTNET_ROOT:$PATH"
   mkdir -p "$cache" "$sdk_feed"
+  # why: a run whose build was current released the lock, and another run's reclaim_scratch removes every sdk-tree.*
+  # it finds under the lock. The EXIT trap releases it.
+  [ -n "$lock" ] || take_lock
   local ptree version out="$cache/pack-sdk.log" pre=()
   ptree="$(mktemp -d "$cache/sdk-tree.XXXXXX")"
   version="0.1.0-local.$(date -u +%Y%m%d%H%M%S)"

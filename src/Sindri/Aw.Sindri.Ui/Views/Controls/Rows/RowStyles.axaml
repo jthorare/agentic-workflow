@@ -1,0 +1,115 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:rows="using:Aw.Sindri.Ui.Views.Controls.Rows"
+        xmlns:vm="using:Aw.Sindri.Ui.ViewModels.Rows">
+  <!-- Row (#2978, grammar v2, #3189): a flat control, drawn in code (Row.Render): no template. Its fill comes from here: rest is transparent, hover Surface2,
+       the selected row PrimarySoft; the cursor ring and the 2 px Primary bar are drawn by the row. No borders between rows. -->
+  <Style Selector="rows|Row">
+    <Setter Property="Height" Value="{DynamicResource Row.Height.Default}" />
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector=".comfortable rows|Row">
+    <Setter Property="Height" Value="{DynamicResource Row.Height.Comfortable}" />
+  </Style>
+  <Style Selector="rows|Row:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+  </Style>
+  <Style Selector="rows|Row.sel">
+    <Setter Property="Background" Value="{DynamicResource Brush.PrimarySoft}" />
+  </Style>
+  <!-- RowList: one scroll viewer over a virtualizing panel of header and row entries; the sticky header is an overlay that the scroll moves. -->
+  <Style Selector="rows|RowList">
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate>
+        <VirtualizingStackPanel />
+      </ItemsPanelTemplate>
+    </Setter>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel ClipToBounds="True">
+          <ScrollViewer Name="PART_ScrollViewer" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" Margin="0,8" />
+          </ScrollViewer>
+          <rows:RowGroupHeader Name="PART_Sticky" Focusable="False" VerticalAlignment="Top" IsVisible="False" AutomationProperties.AccessibilityView="Raw" Background="{DynamicResource Brush.Canvas}" />
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="rows|RowGroupHeader">
+    <Setter Property="Height" Value="{DynamicResource Row.GroupHeader}" />
+    <Setter Property="Padding" Value="{DynamicResource Row.Inset.Thickness}" />
+  </Style>
+  <!-- PeekPane: 440 px, Surface1, a left hairline. Header 48; fields in 2 columns of 28 px rows (label InkSubtle, value InkMuted); body scrolls; actions at the bottom. -->
+  <Style Selector="rows|PeekPane">
+    <Setter Property="Width" Value="{DynamicResource Peek.Width}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1,0,0,0">
+          <DockPanel>
+            <Border Name="PART_Head" DockPanel.Dock="Top" Height="{StaticResource Peek.Header}" Padding="16,0" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,0,0,1">
+              <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="8">
+                <TextBlock Name="PART_Title" Text="{TemplateBinding Title}" Classes="peek-title" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" VerticalAlignment="Center" />
+                <TextBlock Name="PART_Id" Grid.Column="1" Text="{TemplateBinding ItemId}" Classes="peek-id" VerticalAlignment="Center" />
+                <Button Name="PART_OpenFull" Grid.Column="3" Content="⤢" Command="{TemplateBinding OpenFullCommand}" Classes="peek-icon" ToolTip.Tip="Open full" AutomationProperties.Name="Open full" />
+                <Button Name="PART_Close" Grid.Column="4" Content="×" Command="{TemplateBinding CloseCommand}" Classes="peek-icon" ToolTip.Tip="Close" AutomationProperties.Name="Close" />
+              </Grid>
+            </Border>
+            <Border Name="PART_PeekActionsBox" DockPanel.Dock="Bottom" Padding="16,12" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">
+              <ContentPresenter Name="PART_Actions" Content="{TemplateBinding Actions}" />
+            </Border>
+            <Border Name="PART_FieldsBox" DockPanel.Dock="Top" Padding="16,8" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,0,0,1">
+              <ItemsControl Name="PART_Fields" ItemsSource="{TemplateBinding Fields}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <UniformGrid Columns="2" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:PeekField">
+                    <Grid Height="{StaticResource Peek.FieldRow}" ColumnDefinitions="96,*">
+                      <TextBlock Text="{Binding Label}" Classes="peek-label" Foreground="{DynamicResource Brush.InkSubtle}" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="1" Text="{Binding Value}" Classes="peek-value" Foreground="{DynamicResource Brush.InkMuted}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Border>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+              <ContentPresenter Name="PART_Body" Content="{TemplateBinding Body}" Margin="16,12" />
+            </ScrollViewer>
+          </DockPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="rows|PeekPane /template/ TextBlock.peek-title">
+    <Setter Property="FontSize" Value="{DynamicResource Type.SectionTitle.Size}" />
+    <Setter Property="FontWeight" Value="{DynamicResource Type.SectionTitle.Weight}" />
+  </Style>
+  <Style Selector="rows|PeekPane /template/ TextBlock.peek-id">
+    <Setter Property="FontFamily" Value="{DynamicResource Font.Mono}" />
+    <Setter Property="FontSize" Value="{DynamicResource Type.Mono.Size}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+  </Style>
+  <Style Selector="rows|PeekPane /template/ TextBlock.peek-label">
+    <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+  </Style>
+  <Style Selector="rows|PeekPane /template/ TextBlock.peek-value">
+    <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkMuted}" />
+  </Style>
+  <Style Selector="rows|PeekPane /template/ Button.peek-icon">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Width" Value="24" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius.XS}" />
+  </Style>
+  <!-- The peek body style (wrap, 20 px pitch, ink-muted) is in SindriApp.axaml, after the catch-all TextBlock style that would overwrite its Foreground (#3584). -->
+</Styles>

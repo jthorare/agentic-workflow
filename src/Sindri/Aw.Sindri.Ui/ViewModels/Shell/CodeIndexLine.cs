@@ -4,6 +4,6 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 /// <param name="Text">"repo @ abcdef0, 3 min old, structure ok · graph ok · embeddings pending 31%".</param>
 internal sealed record CodeIndexLine(string Text)
 {
-    /// <summary>The line read aloud: "Code index: " first.</summary>
+    /// <summary>The line read aloud: "Code index: " first, then the words.</summary>
     public string Name { get; } = Labels.CodeIndexNamePrefix + Text;
 }

@@ -37,7 +37,13 @@ internal sealed class SetItemFailingRunStore(IWorkflowRunStore inner) : IWorkflo
 
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Recent(WorkflowId workflow, int offset, int limit, CancellationToken cancellationToken) => inner.Recent(workflow, offset, limit, cancellationToken);
 
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> FailedUnseen(int limit, CancellationToken cancellationToken) => inner.FailedUnseen(limit, cancellationToken);
+
+    public ValueTask<Result<WorkflowRun>> MarkSeen(WorkflowRunId id, DateTimeOffset at, CancellationToken cancellationToken) => inner.MarkSeen(id, at, cancellationToken);
+
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Running(CancellationToken cancellationToken) => inner.Running(cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<WorkflowId>>> QueuedWorkflows(CancellationToken cancellationToken) => inner.QueuedWorkflows(cancellationToken);
 
     public ValueTask<Result<int?>> LatestOccurrence(WorkflowId workflow, string triggerKind, CancellationToken cancellationToken) => inner.LatestOccurrence(workflow, triggerKind, cancellationToken);
 

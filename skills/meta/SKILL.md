@@ -86,6 +86,10 @@ With several ready pull requests use `aw-meta queue-gate` (a train); the steps a
 
 `aw-meta owner` lists the queue. Ask the user each question (the lane's recommended default first), then `aw-meta owner-answer <q> --answer "<the owner's words>"`, and send the printed `OWNER ANSWER` text back to the asking lane. Your own question for the owner: `aw-meta owner-ask --text "..."`.
 
+## Owner requests for work
+
+An owner request for work goes to a lane, never into your own hands: you never edit code, run builds or investigate for a lane. Run `aw-meta delegate --lane <lane> --title <title> --what <text>`, or `--issue <n>` for an existing issue. For a Claude lane, send the printed text with SendMessage; `stop-check` keeps it open until that send names `#<n>`. Lane choice, `delegated`, `--drop`: `docs/csharp/meta-skill-reference.md`, "Delegating owner requests".
+
 ## Toolkit defects
 
 Whenever you'd write a NOTE that says you did something by hand, or you hit an aw-meta or harness defect, run `aw-meta report-defect --code <code> --title <title> --what <what happened> --error <exact error line> [--path <path>]` instead of only logging it. Lanes send you a `DEFECT:` line for aw-meta and harness defects; run `report-defect` for them. Lanes still file their own product bugs and UX issues; this command is only for toolkit defects.

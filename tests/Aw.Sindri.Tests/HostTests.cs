@@ -2,10 +2,14 @@ using Aw.Kernel.Services;
 using Aw.Kernel.Telemetry;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.NeedsYou;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Views;
+using Aw.Sindri.Features.CodeIndexReads;
+using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Host;
 using Aw.Sindri.Host.Registration;
 using Aw.Sindri.Host.Server;
+using Aw.Sindri.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -44,8 +48,10 @@ public sealed class HostTests
 
         var hosted = provider.GetServices<IHostedService>().ToList();
 
-        Assert.Equal(16, hosted.Count);
+        Assert.Equal(19, hosted.Count);
         _ = Assert.Single(hosted.OfType<ServeListenerCheck>());
+        _ = Assert.Single(hosted.OfType<QueuedClockStart>());
+        _ = Assert.Single(hosted.OfType<SourceSyncClockStart>());
         _ = Assert.Single(hosted.OfType<SchedulerHost>());
         _ = Assert.Single(hosted.OfType<ProjectorHost>());
         _ = Assert.Single(hosted.OfType<LostSessionsHost>());
@@ -60,6 +66,7 @@ public sealed class HostTests
         _ = Assert.Single(hosted.OfType<ToolkitAdoptionHost>());
         _ = Assert.Single(hosted.OfType<GraphRunRecoveryHost>());
         _ = Assert.Single(hosted.OfType<ContextWarmHost>());
+        _ = Assert.Single(hosted.OfType<SpendWarmHost>());
         _ = Assert.Single(hosted.OfType<RunItemRepairHost>());
     }
 
@@ -107,4 +114,36 @@ public sealed class HostTests
             new ServiceCollection(),
             name => name switch { "AW_STATE_DIR" => _stateRoot, "AW_LOG_LEVEL" => logLevel, _ => null },
             new FakeTimeProvider());
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Serve_start_seeds_the_queued_clock_so_a_profile_repo_counts_from_serve_start_and_a_later_one_from_its_first_read_3480()
+    {
+        var clock = new FakeTimeProvider(new DateTimeOffset(2026, 11, 13, 12, 0, 0, TimeSpan.Zero));
+        var live = SliceHarness.Profile();
+        var profiles = new InMemoryProfiles { Live = live with { Profile = live.Profile with { Repos = [new RepoEntry("demo", "/work/demo")] } } };
+        await using var provider = Compose().AddSindriServe().AddOptions().AddSingleton<TimeProvider>(clock)
+            .AddSingleton<IApprovedProfile>(profiles).AddSingleton<IProfileSource>(profiles).BuildServiceProvider();
+        _ = provider.GetRequiredService<TelemetryRuntime>();
+
+        var start = Assert.Single(provider.GetServices<IHostedService>().OfType<QueuedClockStart>());   // the host resolves its hosted services as serve starts
+        await start.StartAsync(TestContext.Current.CancellationToken);
+        clock.Advance(TimeSpan.FromMinutes(31));
+
+        var queued = provider.GetRequiredService<QueuedClock>();
+        Assert.Equal((TimeSpan.FromMinutes(31), TimeSpan.Zero), (queued.For("demo", queued: true, clock.GetUtcNow()), queued.For("added", queued: true, clock.GetUtcNow())));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Serve_start_starts_the_source_look_clock_so_the_first_pass_limit_counts_from_serve_start_3832()
+    {
+        var clock = new FakeTimeProvider(new DateTimeOffset(2026, 11, 21, 12, 0, 0, TimeSpan.Zero));
+        await using var provider = Compose().AddSindriServe().AddOptions().AddSingleton<TimeProvider>(clock).BuildServiceProvider();
+        _ = provider.GetRequiredService<TelemetryRuntime>();
+
+        var start = Assert.Single(provider.GetServices<IHostedService>().OfType<SourceSyncClockStart>());   // the host resolves its hosted services as serve starts
+        await start.StartAsync(TestContext.Current.CancellationToken);
+        clock.Advance(TimeSpan.FromMinutes(15));
+
+        Assert.Equal(TimeSpan.FromMinutes(15), provider.GetRequiredService<SourceSyncClock>().Running());
+    }
 }

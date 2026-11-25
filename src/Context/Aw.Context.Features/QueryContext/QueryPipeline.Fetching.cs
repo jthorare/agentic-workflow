@@ -14,20 +14,18 @@ internal sealed partial class QueryPipeline
         DateTimeOffset deadline, List<DegradedSource> degraded, CancellationToken ct)
     {
         var (sources, ingest) = call;
-        var fetched = new List<FetchedRecord>();
         var gone = new Dictionary<SourceId, int>();
+        var read = await ReadBatches(items, sources, deadline, degraded, ct).ConfigureAwait(false);
+        var fetched = new List<FetchedRecord>();
         for (var next = 0; next < items.Count; next++)
         {
-            var item = items[next];
-            if (deadline - clock.GetUtcNow() <= TimeSpan.Zero)
+            if (read[next] is not { } record)
             {
-                NoteUnread(items.Skip(next), degraded);   // no claim without a citation: what wasn't fetched in time isn't shown, but the answer says so
-                break;
+                continue;   // its source's batch didn't run or failed: already noted
             }
 
+            var item = items[next];
             var hit = item.Hits[0];
-            var source = sources.First(s => s.Describe().Id == hit.Ref.Source);
-            var record = await SourceCalls.Within(source, (deadline - clock.GetUtcNow(), clock), t => source.Fetch(hit.Ref, t), ct).ConfigureAwait(false);
             if (record.IsError)
             {
                 if (record.Error.Kind == ErrorKind.NotFound)
@@ -42,6 +40,7 @@ internal sealed partial class QueryPipeline
                 continue;   // a record gone since the search, or a source that stopped answering: no claim without a citation
             }
 
+            var source = sources.First(s => s.Describe().Id == hit.Ref.Source);
             var text = record.Value.Blocked   // the adapter's own whole-document clean withheld it: cite it as scrub-blocked
                 ? new ScrubbedField(string.Empty, Redacted: false, Blocked: true)
                 : ingest.Clean(record.Value.Text, singleLine: false);   // cleaned whole and kept whole
@@ -51,6 +50,64 @@ internal sealed partial class QueryPipeline
 
         NoteGone(gone, fetched, degraded);
         return fetched;
+    }
+
+    // One FetchMany call per source (#3085), sources in the order of their best-ranked item; the answers land at each item's rank.
+    private async Task<Result<SourceRecord>?[]> ReadBatches(List<FusedItem> items, IReadOnlyList<IContextSource> sources, DateTimeOffset deadline, List<DegradedSource> degraded, CancellationToken ct)
+    {
+        var read = new Result<SourceRecord>?[items.Count];
+        foreach (var group in Enumerable.Range(0, items.Count).GroupBy(i => items[i].Hits[0].Ref.Source))
+        {
+            if (deadline - clock.GetUtcNow() <= TimeSpan.Zero)
+            {
+                NoteUnread(group.Select(i => items[i]), degraded);   // no claim without a citation: what wasn't fetched in time isn't shown, but the answer says so
+                continue;
+            }
+
+            var id = group.Key;
+            var source = sources.First(s => s.Describe().Id == id);
+            var indexes = group.ToList();
+            var refs = indexes.ConvertAll(i => items[i].Hits[0].Ref);
+            var batch = await SourceCalls.Within(source, (deadline - clock.GetUtcNow(), clock), t => source.FetchMany(refs, t), ct).ConfigureAwait(false);
+            if (batch.IsError && ContextErrors.IsMissedDeadline(batch.Error))
+            {
+                NoteUnread(indexes.Select(i => items[i]), degraded);   // the deadline cut the whole batch off: its hits are unread, the source isn't broken
+                continue;
+            }
+
+            if (batch.IsError || batch.Value.Count != refs.Count)
+            {
+                if (degraded.TrueForAll(d => d.Source != id))
+                {
+                    degraded.Add(SourceCalls.Degraded(id, batch.IsError ? batch.Error : ContextErrors.SourceUnavailable.With($"{id.Value} answered {batch.Value.Count} of {refs.Count} records"), clock.GetUtcNow()));
+                }
+
+                continue;
+            }
+
+            Place(items, indexes, batch.Value, read, degraded);
+        }
+
+        return read;
+    }
+
+    // The batch's answers go to their ranks; a read the deadline cut off is noted as unread, not as a failure of the source.
+    private void Place(List<FusedItem> items, List<int> indexes, IReadOnlyList<Result<SourceRecord>> answers, Result<SourceRecord>?[] read, List<DegradedSource> degraded)
+    {
+        var unread = new List<FusedItem>();
+        for (var n = 0; n < indexes.Count; n++)
+        {
+            if (answers[n].IsError && ContextErrors.IsMissedDeadline(answers[n].Error))
+            {
+                unread.Add(items[indexes[n]]);
+            }
+            else
+            {
+                read[indexes[n]] = answers[n];
+            }
+        }
+
+        NoteUnread(unread, degraded);
     }
 
     // A source whose every matching record was gone when read says so: an empty answer is never silent.

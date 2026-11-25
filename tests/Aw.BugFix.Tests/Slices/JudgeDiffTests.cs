@@ -28,6 +28,22 @@ public sealed class JudgeDiffTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task The_diff_holds_the_red_commits_own_change()
+    {
+        await _w.Reproduced();
+        _ = World.Ok(await _w.Start());
+        _w.Repos.BranchChangeOverride = new CommitDiff(
+            " src/wiring.ts | 1 +\n 1 file changed, 1 insertion(+)\n",
+            "diff --git a/src/wiring.ts b/src/wiring.ts\n+wire it\n");
+
+        var asked = await Judged();
+
+        Assert.Contains("src/wiring.ts", asked.Diff, StringComparison.Ordinal);
+        Assert.Contains("src/wiring.ts", asked.DiffStat, StringComparison.Ordinal);
+        Assert.Contains("src/app.ts", asked.Diff, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task The_diff_leaves_out_main_commits_of_other_issues_and_unrelated_ones()
     {
         _w.Repos.Write(World.TicketFile, A.TicketJson(source: "github", id: "#1189"));

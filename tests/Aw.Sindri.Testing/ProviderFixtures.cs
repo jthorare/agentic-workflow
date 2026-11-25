@@ -16,6 +16,33 @@ public static class ProviderFixtures
     public static string GitHubPrMerged(string eventId, string repo, int number, string title, string author, string createdAt)
         => GitHubPr(eventId, repo, number, title, author, createdAt, "closed", merged: true, reviewer: null);
 
+    /// <summary>A GitHub PullRequestEvent as the repo events feed sends it since late 2026: the action is 'merged' for a merge and pull_request holds only base, head, id, number and url (the API url), with no title, user or html_url.</summary>
+    /// <param name="eventId">GitHub's event id.</param>
+    /// <param name="repo">'owner/name'.</param>
+    /// <param name="number">The pull request number.</param>
+    /// <param name="action">'merged', 'opened' ...</param>
+    /// <param name="headSha">The head commit sha.</param>
+    /// <param name="createdAt">ISO time.</param>
+    /// <returns>The JSON object.</returns>
+    public static string GitHubPrTrimmed(string eventId, string repo, int number, string action, string headSha, string createdAt)
+    {
+        var n = number.ToString(CultureInfo.InvariantCulture);
+        var pr = "{\"base\":{\"ref\":\"main\",\"sha\":\"0000000000000000000000000000000000000000\"},\"head\":{\"ref\":\"topic\",\"sha\":\"" + headSha + "\"},\"id\":" + n + "00,\"number\":" + n + ",\"url\":\"https://api.github.com/repos/" + repo + "/pulls/" + n + "\"}";
+        return "{\"id\":\"" + eventId + "\",\"type\":\"PullRequestEvent\",\"repo\":{\"name\":\"" + repo + "\"},\"created_at\":\"" + createdAt + "\",\"payload\":{\"action\":\"" + action + "\",\"number\":" + n + ",\"pull_request\":" + pr + "}}";
+    }
+
+    /// <summary>GitHub's answer to GET /repos/{owner}/{name}/pulls/{n}: the full pull request, with its title, author and page url.</summary>
+    /// <param name="repo">'owner/name'.</param>
+    /// <param name="number">The pull request number.</param>
+    /// <param name="title">The title.</param>
+    /// <param name="author">The author's login.</param>
+    /// <returns>The JSON object.</returns>
+    public static string GitHubPull(string repo, int number, string title, string author)
+    {
+        var n = number.ToString(CultureInfo.InvariantCulture);
+        return "{\"number\":" + n + ",\"title\":\"" + title + "\",\"html_url\":\"https://github.com/" + repo + "/pull/" + n + "\",\"user\":{\"login\":\"" + author + "\"}}";
+    }
+
     /// <summary>A GitHub PullRequestEvent with action 'review_requested'.</summary>
     /// <param name="eventId">GitHub's event id.</param>
     /// <param name="repo">'owner/name'.</param>

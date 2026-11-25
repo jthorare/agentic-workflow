@@ -64,5 +64,15 @@
       "weight": 1
     }
   ],
-  "pagesInNoConcept": 1
+  "pagesInNoConcept": 1,
+  "repos": [
+    {
+      "name": "aw-split-panes",
+      "nodeCount": 9
+    },
+    {
+      "name": "elsewhere",
+      "nodeCount": 2
+    }
+  ]
 }

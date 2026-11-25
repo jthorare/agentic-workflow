@@ -5,7 +5,7 @@
              xmlns:sv="using:Aw.Sindri.Ui.Views.Sandbox"
              x:Class="Aw.Sindri.Ui.Views.Sandbox.SandboxHealthCard"
              x:DataType="sb:SandboxCardViewModel">
-  <!-- Health's Sandbox card (sandbox spec 8): one wrapped row "Sandbox: <state>" with the state as a word and a mark; a learn window is a warning and Sindri not answering is
+  <!-- Health's Sandbox card (sandbox spec 8): one wrapped row "Sandbox: <state>" with the state as a word and a mark (the mark sits beside the word in the heading, so the row lines up with the title, #3357); a learn window is a warning and Sindri not answering is
        dimmed. Check again shows while the row is blocked or never checked. -->
   <UserControl.Styles>
     <Style Selector="Border.dimmed"><Setter Property="Opacity" Value="0.5" /></Style>
@@ -15,11 +15,13 @@
       <StackPanel Spacing="{StaticResource Space.XS}">
         <Grid ColumnDefinitions="*,Auto">
           <TextBlock x:Name="SandboxEyebrow" Classes="section-title head-title" Text="{Binding Heading}" AutomationProperties.Name="{Binding Heading}" />
-          <TextBlock x:Name="SandboxWord" Grid.Column="1" Classes="body-strong head-word" Text="{Binding StateWord}" AutomationProperties.Name="{Binding StateWord}" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <icons:StateIcon x:Name="SandboxGlyph" Glyph="{Binding Glyph}" VerticalAlignment="Center" />
+            <TextBlock x:Name="SandboxWord" Classes="body-strong head-word" Text="{Binding StateWord}" AutomationProperties.Name="{Binding StateWord}" />
+          </StackPanel>
         </Grid>
-        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" AutomationProperties.Name="{Binding RowText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
-          <icons:StateIcon x:Name="SandboxGlyph" Glyph="{Binding Glyph}" VerticalAlignment="Top" Margin="0,2,0,0" />
-          <TextBlock x:Name="SandboxRow" Grid.Column="1" Classes="body" Text="{Binding RowText}" TextWrapping="Wrap"
+        <Grid AutomationProperties.Name="{Binding RowText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+          <TextBlock x:Name="SandboxRow" Classes="body" Text="{Binding RowText}" TextWrapping="Wrap"
                      AutomationProperties.Name="{Binding RowText}" />
         </Grid>
         <StackPanel x:Name="SandboxCheckSlot" IsVisible="{Binding ShowsCheck}">

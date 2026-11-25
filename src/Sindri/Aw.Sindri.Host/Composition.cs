@@ -23,6 +23,7 @@ using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Registration;
 using Aw.Sindri.Infrastructure.Sandbox.Launch;
 using Aw.Sindri.Infrastructure.Workflows;
+using Aw.Transcripts.Infrastructure;
 
 namespace Aw.Sindri.Host;
 
@@ -53,6 +54,7 @@ internal static class Composition
             .AddContextInfrastructure(ContextEnvironment(environment))   // context engine: $AW_SINDRI_HOME/context (compose edge); pointers resolve here
             .AddCodeIndexFeatures()
             .AddCodeIndexInfrastructure(environment)   // the code index: $AW_SINDRI_HOME/code-index (compose edge)
+            .AddTranscriptsInfrastructure(environment)   // the local agent transcripts (compose edge): ~/.claude, ~/.codex, ~/.cursor and the agent homes, read-only
             .AddSlackConnectorFactory()
             .AddGitHubConnectorFactory()   // the source readers are built per token (owned-index spec §9.2), so only the factory; the Host adapter over IConnector is IndexSources/ConnectorFeed
             .AddConnectorsInfrastructure(environment)
@@ -61,7 +63,7 @@ internal static class Composition
             .AddSingleton<IModelCallLog, LedgerModelCallLog>()   // the router's 'context.model.called' event, as service:context, best effort
             .AddSingleton(sp => new JudgeCatalog(environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<System.Text.Json.JsonSerializerOptions>()))   // Judge's provider catalog, built on first use; the router and the doctor's context:models row share it
             .AddSingleton<IModelPort>(sp => new RoutedModelPort(sp.GetRequiredService<JudgeCatalog>().Get,
-                sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJobContextAccessor>(), sp.GetRequiredService<IModelCallLog>(), sp.GetRequiredService<Kernel.Ids.IIdGenerator>(), sp.GetRequiredService<TimeProvider>()))
+                sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJobContextAccessor>(), sp.GetRequiredService<IModelCallLog>(), sp.GetRequiredService<Kernel.Ids.IIdGenerator>(), sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<IModelCatalog>()))
             .AddScoped<IWorkflowChecker, ProfileWorkflowChecker>().AddScoped<WorkflowChangeLog>()   // the workflow write slices (#2258, PR 8b): the validator with this Sindri's blocks and repos, and the lifecycle events
             .AddSingleton<IGraphModelPort, GraphModelPortAdapter>().AddSingleton<INotifyPort, LedgerNotifyPort>()   // the prompt and notify blocks of the graph engine (#2258, PR 6): the routed model port and a 'workflow.notify' event
             .AddSingleton<IQuestionPort, LedgerQuestionPort>()   // the ask_owner block (#2258, PR 9): a 'workflow.question' event

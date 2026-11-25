@@ -16,6 +16,9 @@ internal sealed record SindriSettings(string Home, string ProfilePath)
     /// <summary>The views database (derived from the ledger; deleting it rebuilds it).</summary>
     public string ViewsPath => Path.Combine(Home, "views.db");
 
+    /// <summary>The Messages store (messages spec §8.1): Slack text, a cache plus owner state, with its own migrations; never rebuilt from the ledger.</summary>
+    public string MessagesPath => Path.Combine(Home, "messages.db");
+
     /// <summary>The old approved-profile snapshots (gone since #2258 PR 1; only the cleanup class reads this path, to remove it once).</summary>
     public string ApprovalsDirectory => Path.Combine(Home, "approved");
 

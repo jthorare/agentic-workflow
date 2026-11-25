@@ -120,8 +120,11 @@ public sealed class CommandPaletteTests : IDisposable
         Assert.All(shell.Health.Catalog.Controls, c => Assert.Single(names, n => n.StartsWith(c.Label + ", ", StringComparison.Ordinal)));
         Assert.Contains("Run doctor, Copy: sindri doctor", names, StringComparer.Ordinal);
         Assert.Contains("Check launch targets again, " + Labels.CopyCli(shell.Health.Catalog.Row("ProbeLaunchTargets")!.Cli), names, StringComparer.Ordinal);   // why: the catalog serves the row
-        Assert.Equal(["Actions", "Go to", "Sindri"], Named<ItemsControl>(window, "PaletteSections").GetVisualDescendants().OfType<TextBlock>()
+        Assert.Equal(["Actions", "Go to", "Settings", "Sindri"], Named<ItemsControl>(window, "PaletteSections").GetVisualDescendants().OfType<TextBlock>()
             .Where(t => t.Classes.Contains("palette-heading")).Select(t => t.Text ?? string.Empty), StringComparer.Ordinal);
+        Assert.Equal(shell.Palette.Sections.Single(s => s.Heading == "Settings").Entries.Select(e => e.Label), names.Where(n => shell.Palette.Sections.Single(s => s.Heading == "Settings").Entries.Any(e => e.Label == n)), StringComparer.Ordinal);
+        Assert.Contains("Text size", names, StringComparer.Ordinal);
+        Assert.Contains("Reduce motion", names, StringComparer.Ordinal);
         Frame(window, "palette");
     });
 
@@ -249,7 +252,9 @@ public sealed class CommandPaletteTests : IDisposable
         Press(window, Key.K, PhysicalKey.K, _command, "k");
         var scroll = Named<ScrollViewer>(window, "PaletteScroll");
 
-        Assert.Equal(("CreateItem", 0d), (shell.Palette.Selected?.Id, scroll.Offset.Y));   // the first enabled action by name
+        // The first enabled action by name: "Add project" (AttachProject) runs since the Projects rows slice (issue 3717)
+        // and sorts before "Create item" (issue 4211).
+        Assert.Equal(("AttachProject", 0d), (shell.Palette.Selected?.Id, scroll.Offset.Y));
         var heading = Named<ItemsControl>(window, "PaletteSections").GetVisualDescendants().OfType<TextBlock>().First(t => t.Text == "Actions");
         Assert.True(heading.TranslatePoint(default, scroll) is { Y: >= 0 } at && at.Y < scroll.Viewport.Height, "the Actions heading is in view");
         Frame(window, "palette-top");

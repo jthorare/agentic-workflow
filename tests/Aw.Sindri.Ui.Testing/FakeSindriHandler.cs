@@ -426,7 +426,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
 
     /// <summary>A status body as this handler writes it.</summary>
     internal static string Status(StatusView s) => string.Create(CultureInfo.InvariantCulture,
-        $$"""{"running":{{Bool(s.Running)}},"pid":{{s.Pid}},"epoch":{{s.Epoch}},"leaseExpiresAt":{{Quoted(s.LeaseExpiresAt)}},"profile":{"live":{{Quoted(s.Profile.Live)}},"problem":{{Quoted(s.Profile.Problem)}},"source":{{Quoted(s.Profile.Source)}},"modelPick":{{Quoted(s.Profile.ModelPick)}},"labelPick":{{Quoted(s.Profile.LabelPick)}},"surfacePick":{{Quoted(s.Profile.SurfacePick)}}},"services":[{{string.Join(',', s.Services.Select(Service))}}]{{ApiVersion(s.ApiVersion)}}{{Views(s.Views)}}{{Health(s.Health)}}{{Sessions(s.Sessions)}}}""");
+        $$"""{"running":{{Bool(s.Running)}},"pid":{{s.Pid}},"epoch":{{s.Epoch}},"leaseExpiresAt":{{Quoted(s.LeaseExpiresAt)}},"profile":{"live":{{Quoted(s.Profile.Live)}},"problem":{{Quoted(s.Profile.Problem)}},"source":{{Quoted(s.Profile.Source)}},"modelPick":{{Quoted(s.Profile.ModelPick)}},"labelPick":{{Quoted(s.Profile.LabelPick)}},"surfacePick":{{Quoted(s.Profile.SurfacePick)}},"problemKind":{{Quoted(s.Profile.ProblemKind)}}},"services":[{{string.Join(',', s.Services.Select(Service))}}]{{ApiVersion(s.ApiVersion)}}{{Views(s.Views)}}{{Health(s.Health)}}{{Sessions(s.Sessions)}}}""");
 
     // Absent before API P1 (the field doesn't exist on S1's status), so the app must read a status without it.
     private static string ApiVersion(int? version) => version is { } v ? string.Create(CultureInfo.InvariantCulture, $",\"apiVersion\":{v}") : string.Empty;
@@ -439,10 +439,14 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
         $$""","health":{"word":"{{h.Word}}","problems":[{{string.Join(',', h.Problems.Select(p => $$"""{"code":"{{p.Code}}","text":"{{p.Text}}","clause":{{Quoted(p.Clause)}}}"""))}}],"sentence":{{Quoted(h.Sentence)}}}""";
 
     // Absent before CO-3 (the spec-shaped status goldens carry none), so a null count is left out.
-    private static string Sessions(SessionCountsView? c) => c is null ? string.Empty : string.Create(CultureInfo.InvariantCulture, $",\"sessions\":{{\"live\":{c.Live},\"asking\":{c.Asking},\"problems\":{c.Problems}{Running(c.Running)}}}");
+    private static string Sessions(SessionCountsView? c) => c is null ? string.Empty : string.Create(CultureInfo.InvariantCulture, $",\"sessions\":{{\"live\":{c.Live},\"asking\":{c.Asking},\"problems\":{c.Problems}{Running(c.Running)}{ProblemRows(c.ProblemRows)}}}");
 
     // Absent on a Sindri that predates the running count, so a null one is left out.
     private static string Running(int? n) => n is { } v ? string.Create(CultureInfo.InvariantCulture, $",\"running\":{v}") : string.Empty;
+
+    // The counted problems' rows (#4012); absent on a Sindri that predates them, so a null list is left out.
+    private static string ProblemRows(IReadOnlyList<SessionProblemView>? rows) =>
+        rows is null ? string.Empty : $",\"problemRows\":[{string.Join(',', rows.Select(static r => $$"""{"source":{{Quoted(r.Source)}},"code":{{Quoted(r.Code)}},"text":{{Quoted(r.Text)}}}"""))}]";
 
     private static string Service(ServiceView v) => $$"""{"name":"{{v.Name}}","every":"{{v.Every}}","lastRun":{{Quoted(v.LastRun)}}}""";
 

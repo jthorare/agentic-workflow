@@ -31,8 +31,8 @@ internal sealed class SandboxCheckViewModel : ObservableObject
     /// <summary>How long a check runs before "Sending…" is announced.</summary>
     internal static TimeSpan SendingAfter { get; } = TimeSpan.FromMilliseconds(300);
 
-    /// <summary>The button's label, kept while a check runs.</summary>
-    public string Label { get; } = Labels.SandboxCheckAgain;
+    /// <summary>The button's label, kept while a check runs: "Check now" until a check has run, then "Check again".</summary>
+    public string Label { get; private set => Set(ref field, value); } = Labels.SandboxCheckAgain;
 
     /// <summary>Where the check stands.</summary>
     public SandboxCheckPhase Phase { get; private set; }
@@ -77,6 +77,8 @@ internal sealed class SandboxCheckViewModel : ObservableObject
         CheckedAt = checkedAt;
         CheckedText = checkedAt is { } at ? Labels.SandboxChecked(Max(_clock.GetUtcNow() - at)) : string.Empty;
         OnChanged(nameof(HasChecked));
+        Label = checkedAt is null ? Labels.SandboxCheckNow : Labels.SandboxCheckAgain;
+        Live.Rest(Label);
     }
 
     private static TimeSpan Max(TimeSpan age) => age < TimeSpan.Zero ? TimeSpan.Zero : age;

@@ -21,6 +21,22 @@ public static class GraphOps
     /// <returns>The edited graph, or why nothing changed.</returns>
     public static Result<GraphSpec> Apply(GraphSpec spec, int baseRevision, int currentRevision, IReadOnlyList<GraphOp> ops, GraphValidator validator)
     {
+        var edited = ApplyWithGaps(spec, baseRevision, currentRevision, ops, validator);
+        return edited.IsError ? edited.Error : edited.Value.Spec;
+    }
+
+    /// <summary>
+    /// Like <see cref="Apply"/>, and also returns the findings an edit leaves as wiring gaps: a 'replace_node' that swaps the trigger saves even when a step reads a field the new trigger lacks
+    /// (GRAPH-REF-*), and each such reference comes back in the Gaps item as a warning (Workflows page spec decision 5). A node that is not the trigger is SND-GRAPH-112.
+    /// </summary>
+    /// <param name="spec">The graph at <paramref name="currentRevision"/>.</param>
+    /// <param name="baseRevision">The revision the caller read before it made these ops.</param>
+    /// <param name="currentRevision">The latest revision now.</param>
+    /// <param name="ops">The edits, applied in order.</param>
+    /// <param name="validator">Checks the edited graph.</param>
+    /// <returns>The edited graph and its gaps, or why nothing changed.</returns>
+    public static Result<(GraphSpec Spec, IReadOnlyList<GraphFinding> Gaps)> ApplyWithGaps(GraphSpec spec, int baseRevision, int currentRevision, IReadOnlyList<GraphOp> ops, GraphValidator validator)
+    {
         ArgumentNullException.ThrowIfNull(spec);
         ArgumentNullException.ThrowIfNull(ops);
         ArgumentNullException.ThrowIfNull(validator);
@@ -37,21 +53,39 @@ public static class GraphOps
             return SindriErrors.GraphOpInvalid.With("send at least one op");
         }
 
-        var working = new GraphEditSession(spec);
+        var working = new GraphEditSession(spec, validator.IsTriggerType);
         for (var i = 0; i < ops.Count; i++)
         {
+            var number = (i + 1).ToString(CultureInfo.InvariantCulture);
+            if (working.NotTheTrigger(ops[i]) is { } notTrigger)
+            {
+                return SindriErrors.GraphOnlyTriggerReplaceable.With($"op {number} (replace_node): {notTrigger} Only the trigger can be replaced.");
+            }
+
             if (working.Apply(ops[i]) is { } problem)
             {
-                return SindriErrors.GraphOpInvalid.With($"op {(i + 1).ToString(CultureInfo.InvariantCulture)} ({Kind(ops[i])}): {problem}");
+                return SindriErrors.GraphOpInvalid.With($"op {number} ({Kind(ops[i])}): {problem}");
             }
         }
 
         var edited = working.ToSpec();
         var validation = validator.Validate(edited, GraphMode.Draft);
-        return validation.Passed
-            ? edited
-            : SindriErrors.GraphFindings.With(string.Join("; ", validation.Blocking.Select(static f => f.ToString())));
+        var swapped = ops.Any(static o => o is ReplaceNodeOp) ? SwapGaps(spec, validator, validation) : [];
+        var refusing = validation.Blocking.Where(f => !swapped.Contains(f)).ToList();
+        return refusing.Count == 0
+            ? (edited, [.. swapped.Select(static f => f with { Severity = GraphSeverity.Warning, WiringGap = true })])
+            : SindriErrors.GraphFindings.With(string.Join("; ", refusing.Select(static f => f.ToString())));
     }
+
+    // why: a swapped trigger may lack a field a step reads; that is a gap the person fixes next, not a refusal. Only references the swap newly broke count, so an old mistake still refuses.
+    private static IReadOnlyList<GraphFinding> SwapGaps(GraphSpec before, GraphValidator validator, GraphValidation after)
+    {
+        var old = validator.Validate(before, GraphMode.Draft).Findings.Select(Key).ToHashSet(StringComparer.Ordinal);
+        return [.. after.Blocking.Where(f => f.Code.StartsWith("GRAPH-REF-", StringComparison.Ordinal) && !old.Contains(Key(f)))];
+    }
+
+    // why: GraphFinding holds its nodes in a list, so record equality compares the list by reference
+    private static string Key(GraphFinding f) => $"{f.Code}|{string.Join(',', f.Nodes)}|{f.Field}|{f.Message}";
 
     private static string Kind(GraphOp op) => op switch
     {
@@ -62,6 +96,7 @@ public static class GraphOps
         DisconnectOp => "disconnect",
         RenameOp => "rename",
         SetMetaOp => "set_meta",
+        ReplaceNodeOp => "replace_node",
         _ => "unknown",
     };
 }

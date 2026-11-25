@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
 using Aw.Meta.Core.Config;
-using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Ids;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Features.CheckMerge;
@@ -21,7 +20,7 @@ public sealed class ReviewMergeTests
 
     private int _next;
 
-    private CheckMergeService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages));
+    private CheckMergeService Service() => new(_world.Readiness);
 
     // The team file as the reader sees it: the reviewer lane under "review", an optional key.
     private async Task Team(bool withReview = true)
@@ -72,6 +71,23 @@ public sealed class ReviewMergeTests
         var response = await Check();
 
         Assert.DoesNotContain("gate", Failed(response), StringComparer.Ordinal);
+        Assert.True(response.Ready);
+    }
+
+    // #4332: the reviewer's OK reached the meta during its current turn, so it sits in the meta's own transcript and not yet
+    // in the messages store (only stop-check syncs it, at the turn's end). merge-check syncs the meta's transcript first.
+    [Fact, Trait("Lane", "unit")]
+    public async Task Merge_check_sees_a_reviewer_OK_from_the_meta_transcript_not_yet_synced()
+    {
+        await Team();
+        await Inbox("t1-api", ReadyBody());
+        _world.Sessions.Add(A.Live("t1-meta", MetaWorld.MetaSessionId));
+        _world.Transcripts.Write("/transcripts/" + MetaWorld.MetaSessionId + ".jsonl", MetaWorld.PeerLine("m-ok", "t1-ideas", $"OK #190 at {Head}"));
+        Script();
+
+        var response = await Check();
+
+        Assert.DoesNotContain("review", Failed(response), StringComparer.Ordinal);
         Assert.True(response.Ready);
     }
 

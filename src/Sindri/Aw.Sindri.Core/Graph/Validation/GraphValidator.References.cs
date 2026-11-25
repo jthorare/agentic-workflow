@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Interpolation;
+using Aw.Sindri.Core.Graph.Loops;
 
 namespace Aw.Sindri.Core.Graph.Validation;
 
@@ -67,11 +68,7 @@ public sealed partial class GraphValidator
 
         if (_scopeRoots.Contains(root))
         {
-            if (string.Equals(root, "workflow", StringComparison.Ordinal) && reference.Split('.') is [_, var name, ..] && !_workflowFields.Contains(name, StringComparer.Ordinal))
-            {
-                found.Add(Found.At("GRAPH-REF-002", id, field, $"'{reference}' reads '{name}', which a workflow run does not have", $"use one of: {string.Join(", ", _workflowFields)}"));
-            }
-
+            ScopeReference(scope, field, reference, found);
             return;
         }
 
@@ -83,6 +80,10 @@ public sealed partial class GraphValidator
         {
             found.Add(Found.At("GRAPH-REF-001", id, field, $"'{reference}' reads node '{root}', which is not upstream of '{id}'", $"connect '{root}' before '{id}', or read from a node that runs earlier"));
         }
+        else if (Unreachable(scope, root, reference) is { } unreachable)
+        {
+            found.Add(Found.At("GRAPH-REF-001", id, field, unreachable.Message, unreachable.Fix));
+        }
         else if (OutputProblem(scope.Structure.Find(root), reference) is { } problem)
         {
             found.Add(Found.At("GRAPH-REF-002", id, field, problem.Message, problem.Fix));
@@ -91,6 +92,37 @@ public sealed partial class GraphValidator
         {
             TypeProblem(new RefSite(scope, field, reference, expected), scope.Structure.Find(root), found);
         }
+    }
+
+    private static void ScopeReference(NodeScope scope, string field, string reference, List<GraphFinding> found)
+    {
+        var id = scope.Node.Id.Value;
+        var root = reference.Split('.', 2)[0];
+        if ((string.Equals(root, "item", StringComparison.Ordinal) || string.Equals(root, "itemIndex", StringComparison.Ordinal)) && !scope.Loops.Exists(l => l.Repeats(scope.Node.Id)))
+        {
+            found.Add(Found.At("GRAPH-REF-001", id, field, $"'{reference}' reads '{root}', but '{id}' is not inside a for_each loop, so there is no item to read", $"use '{root}' only in nodes between a for_each and its collect"));
+        }
+
+        if (string.Equals(root, "workflow", StringComparison.Ordinal) && reference.Split('.') is [_, var name, ..] && !_workflowFields.Contains(name, StringComparer.Ordinal))
+        {
+            found.Add(Found.At("GRAPH-REF-002", id, field, $"'{reference}' reads '{name}', which a workflow run does not have", $"use one of: {string.Join(", ", _workflowFields)}"));
+        }
+    }
+
+    // why: 'upstream' only says a path exists; a value is there only when the node has run every time the reader runs (GraphStructure.RunsWhenever) and, for a loop body node, the reader is in the same body
+    private static (string Message, string Fix)? Unreachable(NodeScope scope, string root, string reference)
+    {
+        var id = scope.Node.Id.Value;
+        if (scope.Loops.Find(l => l.Body.Any(b => string.Equals(b.Id.Value, root, StringComparison.Ordinal))) is { } loop && !loop.Repeats(scope.Node.Id))
+        {
+            var each = loop.ForEach.Id.Value;
+            var gather = loop.Collect.Id.Value;
+            return ($"'{reference}' reads node '{root}', which runs inside the for_each '{each}', so it has no single value in '{id}'", $"read '{gather}' instead");
+        }
+
+        return scope.Structure.RunsWhenever(id, root)
+            ? null
+            : ($"'{reference}' reads node '{root}', which does not run on every path to '{id}' (a path to '{id}' skips it)", "read it inside the branch it runs on, or join the branches first");
     }
 
     private void TriggerReference(RefSite site, List<GraphFinding> found)
@@ -186,7 +218,7 @@ public sealed partial class GraphValidator
 
     private sealed record RefSite(NodeScope Scope, string Field, string Reference, BlockFieldType? Expected);
 
-    private sealed record NodeScope(GraphNode Node, GraphStructure Structure, HashSet<string> Upstream);
+    private sealed record NodeScope(GraphNode Node, GraphStructure Structure, HashSet<string> Upstream, List<LoopShape> Loops);
 
     // why: a double-quoted literal of a condition (with backslash escapes) is text, so a '{{' inside it is not an unclosed reference
     [GeneratedRegex("\"(?:\\\\.|[^\"\\\\])*\"", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]

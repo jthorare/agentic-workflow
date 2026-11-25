@@ -13,6 +13,7 @@ using Aw.Sindri.Features.GetProject;
 using Aw.Sindri.Features.HideProject;
 using Aw.Sindri.Features.ListProjects;
 using Aw.Sindri.Features.ProjectFacts;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Workflow.Blocks.Input;
 
 namespace Aw.Sindri.Tests.Projects;
@@ -32,7 +33,7 @@ public sealed class LedProjectsReachThePageTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private ProjectPageReader Reader() => new(_h.Views.Views, new ContextProjectFacts(_h.Slice.Profiles, _h.Slice.Callers, EngineProxy.Of(_context)), _h.Slice.Profiles, FakeContextEngine.Instance, _h.Slice.Clock);
+    private ProjectPageReader Reader() => new(_h.Views.Views, new ContextProjectFacts(_h.Slice.Profiles, _h.Slice.Callers, EngineProxy.Of(_context)), _h.Slice.Profiles, FakeContextEngine.Instance, _h.Slice.Clock, new FakeProjectTruthFacts());
 
     private async Task ApproveProfile() => _ = await _h.Slice.Profiles.Save(SliceHarness.Profile(), Token);
 

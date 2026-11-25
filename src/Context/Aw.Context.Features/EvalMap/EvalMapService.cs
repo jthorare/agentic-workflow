@@ -84,7 +84,7 @@ internal sealed class EvalMapService(MapReader reader, IMergeHistory history, IE
     {
         var none = (new Ratio(0, 0), (string?)null);
         var version = map.Snapshot.Version;
-        var repos = SettingsReader.Read(scope.Settings).Bind(s => ScopeRules.Resolve(s, scope.Repos, scope.Caller));
+        var repos = SettingsReader.Read(scope.Settings).Bind(s => ScopeRules.Resolve(s, scope.Repos, scope.Caller, scope.LeftOut));
         var repo = repos.IsError ? null : repos.Value.FirstOrDefault(r => r.Name == version.Repo);
         if (repo is null || version.Commit is not { Length: > 0 } commit)
         {

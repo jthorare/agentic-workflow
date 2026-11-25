@@ -29,7 +29,10 @@ public static class ForgeErrors
     /// <summary>AW-FORGE-008: git could not push (not a lease refusal, which is a PushOutcome).</summary>
     public static readonly ErrorDefinition PushFailed = new("AW-FORGE-008", ErrorKind.Unavailable, "The push failed");
 
+    /// <summary>AW-FORGE-009: the forge refused this request for the repo (an HTTP 403 that is not a rate limit); the credential itself was accepted.</summary>
+    public static readonly ErrorDefinition Refused = new("AW-FORGE-009", ErrorKind.Forbidden, "The forge refused this request for the repo");
+
     /// <summary>Every Forge error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
-        [Invalid, HostNotAllowed, Unauthorized, NotFound, Unavailable, RateLimited, Rejected, PushFailed];
+        [Invalid, HostNotAllowed, Unauthorized, NotFound, Unavailable, RateLimited, Rejected, PushFailed, Refused];
 }

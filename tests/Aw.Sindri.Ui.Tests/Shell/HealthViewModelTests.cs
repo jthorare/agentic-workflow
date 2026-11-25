@@ -487,10 +487,21 @@ public sealed class HealthViewModelTests : IDisposable
     public async Task An_unreadable_live_profile_reads_unreadable_with_its_problem()
     {
         _records.Write(A.Record());
-        _server.Current = A.Status(profile: new(Live: null, Problem: "SND-PROFILE-002 bad key", Source: null));
+        _server.Current = A.Status(profile: new(Live: null, Problem: "SND-PROFILE-002 bad key", Source: null, ProblemKind: "unreadable"));
         Start();
 
         await Eventually(() => _vm.ProfileState == "unreadable", "profile state");
+        Assert.Equal("SND-PROFILE-002 bad key", _vm.ProfileDetail);
+    }
+
+    [Fact]
+    public async Task An_invalid_live_profile_reads_invalid_with_its_problem()
+    {
+        _records.Write(A.Record());
+        _server.Current = A.Status(profile: new(Live: null, Problem: "SND-PROFILE-002 bad key", Source: null, ProblemKind: "invalid"));
+        Start();
+
+        await Eventually(() => _vm.ProfileState == "invalid", "profile state");
         Assert.Equal("SND-PROFILE-002 bad key", _vm.ProfileDetail);
     }
 

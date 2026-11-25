@@ -31,6 +31,14 @@ public sealed class ContextCliTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void Query_limit_and_offset_flags_send_the_window_the_engine_reads()
+    {
+        var parsed = ContextVerbs.QueryArguments.Parse(["tabs", "--limit", "25", "--offset", "100"]);
+
+        Assert.Equal("?q=tabs&limit=25&offset=100", parsed.Value.QueryString);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void Query_map_version_flag_sends_mapVersion_and_a_draft_beside_it_is_still_the_servers_006()
     {
         var parsed = ContextVerbs.QueryArguments.Parse(["--node", "feature:tabs", "--map-version", "v3@a41b07d", "--json"]);
