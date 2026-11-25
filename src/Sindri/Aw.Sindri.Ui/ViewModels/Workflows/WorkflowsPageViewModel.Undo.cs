@@ -38,7 +38,7 @@ internal sealed partial class WorkflowsPageViewModel
         if (failure is null)
         {
             NoteSaved();   // the undo made a new revision: the line names it
-            _undone = true;
+            _undoneRevision = Runs.Shown?.LatestRevision ?? 0;   // the revision the undo wrote
             NotifySaved();
             StepUndone?.Invoke(this, EventArgs.Empty);
         }
