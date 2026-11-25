@@ -681,6 +681,17 @@ run_pl
 check "no inputs/ in current: the publish exits 0" "$rc" "0"
 check "no inputs/ in current: all eight are published" "$(pubs)" "$ALL8"
 check "no inputs/ in current: the new build records its inputs" "$(ls "$B/$NB/inputs"/*.sha256 2> /dev/null | wc -l | tr -d ' ')" "8"
+
+# (h) #3727: a binary's publish arguments are part of its inputs. Sindri's sources are unchanged, but its publish now takes one more
+# argument: the next install must publish sindri again, not copy the earlier build's (it kept the plain sindri when ReadyToRun came in).
+SH="$(cat "$B/$NB/inputs/sindri.sha256")"
+sed -i.bak 's|-p:PublishReadyToRun=true$|-p:PublishReadyToRun=true -p:AwTestArg=1|' "$INSTALL" && rm -f "$INSTALL.bak"
+check "args change: the test edited sindri's publish line" "$(grep -c 'PublishReadyToRun=true -p:AwTestArg=1$' "$INSTALL")" "1"
+g commit -qam "sindri publish args"
+run_pl
+check "args change: the publish exits 0" "$rc" "0"
+check "args change: only sindri is published" "$(pubs)" "sindri "
+check "args change: sindri's recorded hash changed" "$(differs "$SH" "$(cat "$B/$NB/inputs/sindri.sha256")")" "yes"
 unset AW_HEAVY_TEST_PATH
 
 # A killed publish leaves its tree, sdk tree, verify dir and stage. The next publish removes them, including

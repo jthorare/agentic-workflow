@@ -254,10 +254,12 @@ project_dirs() { # project_dirs <csproj, relative to the checkout>: the project 
   done
   printf '%s\n' $dirs
 }
-input_hash() { # input_hash <csproj>: the hash of one binary's inputs, made as the stamp is: SDK, platform, the files and their git hashes
-  local list d specs=("${ROOT_BUILD_INPUTS[@]}")
+input_hash() { # input_hash <csproj> [<publish arg>...]: the hash of one binary's inputs, made as the stamp is: SDK, platform, its
+  # publish arguments (#3727: a new one, such as ReadyToRun, must publish it again), the files and their git hashes
+  local proj="$1" list d specs=("${ROOT_BUILD_INPUTS[@]}")
+  shift
   list="$(mktemp "${TMPDIR:-/tmp}/install-cs-bin.XXXXXX")"
-  for d in $(project_dirs "$1"); do
+  for d in $(project_dirs "$proj"); do
     specs+=("$d")
     case "$d" in
       src/Sindri | src/Sindri/*) specs+=("${SINDRI_EXTRA_INPUTS[@]}") ;;
@@ -266,10 +268,10 @@ input_hash() { # input_hash <csproj>: the hash of one binary's inputs, made as t
   done
   # A git that dies here (killed under memory pressure) stops the publish with a message; it never ends the script silently (#3218).
   git -C "$root" ls-files -z --cached --others --exclude-standard -- "${specs[@]}" > "$list.z" \
-    || { rm -f "$list" "$list.z"; die "git ls-files failed while hashing the inputs of $1 (git ended with an error; run it again)"; }
+    || { rm -f "$list" "$list.z"; die "git ls-files failed while hashing the inputs of $proj (git ended with an error; run it again)"; }
   while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done < "$list.z" | LC_ALL=C sort -u > "$list"
   rm -f "$list.z"
-  hash_list "$list" "$sdk" "$platform"
+  hash_list "$list" "$sdk" "$platform" "$@"
   rm -f "$list"
 }
 
@@ -500,7 +502,7 @@ publish() {
   pub() {
     local name="$1" proj="$2" out f want have; shift 2
     drop_earlier_outputs
-    want="$(input_hash "$proj")"
+    want="$(input_hash "$proj" "$@")"
     if [ -n "$from" ]; then
       have="$(cat "$from/inputs/$name.sha256" 2> /dev/null || true)"
       if [ "$have" = "$want" ] && [ -f "$from/inputs/$name.files" ] && reuse "$name" "$from"; then
