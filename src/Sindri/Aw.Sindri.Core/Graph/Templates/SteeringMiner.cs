@@ -9,8 +9,11 @@ namespace Aw.Sindri.Core.Graph.Templates;
 /// </summary>
 internal static partial class SteeringMiner
 {
-    /// <summary>The template's name.</summary>
+    /// <summary>The template's name: it reads the local agent transcripts itself ('transcript_turns', then 'transcript_batch' per batch).</summary>
     public const string Name = "steering-miner";
+
+    /// <summary>The same graph fed by hand: the run's payload carries the turns as 'turns', a list of batches of {ref, text, before?}.</summary>
+    public const string PayloadName = "steering-miner-payload";
 
     /// <summary>The most batches one run takes (the 'for_each' cap); with <see cref="TurnsPerBatch"/> it caps a run at 400 turns.</summary>
     public const int MaxBatches = 20;
@@ -39,15 +42,15 @@ internal static partial class SteeringMiner
         + "and same lists the ids of the other phrases of the set. Merge only phrases that mean the same mistake, and leave every other phrase out. Use only the ids you were given. "
         + "When nothing should merge, or there are no phrases, answer with an empty merges list.\n\nThe phrases: {{group.result.phrases}}";
 
-    /// <summary>Builds the template's spec as JSON text.</summary>
+    /// <summary>Builds a template's spec as JSON text.</summary>
+    /// <param name="fromTranscripts">True for <see cref="Name"/> (it reads the transcripts), false for <see cref="PayloadName"/> (it reads the payload).</param>
     /// <returns>The spec.</returns>
-    public static string Json()
+    public static string Json(bool fromTranscripts)
     {
         JsonNode?[] nodes =
         [
-            Node("start", "manual", "Run with a list of turns", []),
-            Node("each", "for_each", "Each batch of turns", new JsonObject { ["items"] = "{{trigger.payload.turns}}", ["maxItems"] = MaxBatches }),
-            Node("shape", "code", "Check and cut the batch", new JsonObject { ["input"] = "{{item}}", ["code"] = ShapeCode, ["timeout"] = "10s" }),
+            .. Source(fromTranscripts),
+            Node("shape", "code", "Check and cut the batch", new JsonObject { ["input"] = fromTranscripts ? "{{load.turns}}" : "{{item}}", ["code"] = ShapeCode, ["timeout"] = "10s" }),
             Node("label", "prompt", "Label each turn", new JsonObject { ["prompt"] = LabelPrompt, ["output"] = Answer("labels", LabelRow()) }),
             Node("keep", "code", "Keep the corrections", new JsonObject { ["input"] = """{"refs":{{shape.result.refs}},"labels":{{label.labels}}}""", ["code"] = KeepCode, ["timeout"] = "10s" }),
             Node("gather", "collect", "Gather the corrections", new JsonObject { ["value"] = "{{keep.result}}" }),
@@ -66,6 +69,21 @@ internal static partial class SteeringMiner
             ["edges"] = Chain(nodes),
         }.ToJsonString();
     }
+
+    // why: both graphs are the same from 'shape' on; only where the batches come from differs
+    private static JsonNode?[] Source(bool fromTranscripts) => fromTranscripts
+        ?
+        [
+            Node("start", "manual", "Run now", []),
+            Node("turns", "transcript_turns", "Read the newest human turns", new JsonObject { ["since"] = "7d", ["batchSize"] = TurnsPerBatch, ["maxTurns"] = MaxBatches * TurnsPerBatch }),
+            Node("each", "for_each", "Each batch of turns", new JsonObject { ["items"] = "{{turns.batches}}", ["maxItems"] = MaxBatches }),
+            Node("load", "transcript_batch", "Read the batch's text", new JsonObject { ["refs"] = "{{item}}", ["before"] = true }),
+        ]
+        :
+        [
+            Node("start", "manual", "Run with a list of turns", []),
+            Node("each", "for_each", "Each batch of turns", new JsonObject { ["items"] = "{{trigger.payload.turns}}", ["maxItems"] = MaxBatches }),
+        ];
 
     // why: the graph is one straight line, so each node's edge goes to the next one in the list
     private static JsonArray Chain(JsonNode?[] nodes)

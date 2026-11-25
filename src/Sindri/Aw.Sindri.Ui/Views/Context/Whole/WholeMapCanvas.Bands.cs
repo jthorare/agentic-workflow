@@ -12,6 +12,7 @@ internal sealed partial class WholeMapCanvas
     private const double LaneTitleSize = 13;
 
     // A lane per band across the whole world, under the columns' contents: its title and what it holds on the strip over its rows.
+    // In dots mode the heading is the title alone (#4305): the counts would be drawn up to 4x larger in the same world room and cut.
     private void DrawLanes(DrawingContext context, WholeMapGeometry geometry, WholeRect view, bool dots)
     {
         var fill = Brush("Brush.LaneFill");
@@ -24,7 +25,7 @@ internal sealed partial class WholeMapCanvas
             var size = LaneSize(dots);
             var title = LaneTitle(band, size, Brush(BandAccent(band.Band)));
             context.DrawText(title, new Point(WholeMapLayout.Margin / 2, band.LaneTop + 3));
-            if (band.Meta.Length > 0)
+            if (!dots && band.Meta.Length > 0)
             {
                 context.DrawText(LaneMeta(geometry, band, title, size, muted), new Point(LaneMetaX(title), band.LaneTop + 3));
             }

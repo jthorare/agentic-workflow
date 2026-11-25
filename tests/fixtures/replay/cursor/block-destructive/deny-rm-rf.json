@@ -3,7 +3,7 @@
   "id": "cursor/block-destructive/deny-rm-rf",
   "provider": "cursor",
   "scenario": "block-destructive",
-  "verified": "captured",
+  "verified": "unverified",
   "source": {
     "hostVersion": "cursor 2026.09.02",
     "capturedAt": null,
@@ -12,7 +12,7 @@
     "reviewedAt": null
   },
   "policy": "block-destructive/1",
-  "notes": "Payload copied from config/hooks/tests/fixtures/cursor/ (cursor_version 2026.09.02).",
+  "notes": "Hand-written: payload copied from config/hooks/tests/fixtures/cursor/ (cursor_version 2026.09.02).",
   "events": [
     {
       "n": 1,

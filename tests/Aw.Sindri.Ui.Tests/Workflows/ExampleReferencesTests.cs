@@ -52,4 +52,15 @@ public sealed class ExampleReferencesTests
     [InlineData("condition", "note", "agent.drifted", "agent.drifted")]
     public void A_hint_names_a_step_the_new_one_cant_read_as_a_step_id(string type, string field, string text, string hint) =>
         Assert.Equal(hint, ExampleReferences.Hint(type, field, text, _tell));
+
+    // #4330: with a step the new one follows, the hint names that step, and a field its block has.
+    [Theory]
+    [InlineData("notify", "body", "{{agent.summary}}", "summary,status", "{{tell.summary}}")]
+    [InlineData("notify", "body", "{{ agent.summary }} again", "result", "{{ tell.result }} again")]
+    [InlineData("notify", "body", "{{agent}}", "result", "{{tell}}")]
+    [InlineData("notify", "body", "{{agent.summary}}", "", "{{<step id>.summary}}")]
+    [InlineData("condition", "when", "agent.drifted and tell.ok", "drifted", "tell.drifted and tell.ok")]
+    [InlineData("condition", "when", "not agent.drifted", "result", "not tell.result")]
+    public void A_hint_names_the_step_the_new_one_follows(string type, string field, string text, string outputs, string hint) =>
+        Assert.Equal(hint, ExampleReferences.Hint(type, field, text, _tell, new HintStep("tell", outputs.Split(',', StringSplitOptions.RemoveEmptyEntries))));
 }

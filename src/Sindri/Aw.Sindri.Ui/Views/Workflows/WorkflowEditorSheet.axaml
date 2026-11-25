@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:wf="using:Aw.Sindri.Ui.ViewModels.Workflows"
              xmlns:api="using:Aw.Sindri.Ui.Api.Workflows"
+             xmlns:wv="using:Aw.Sindri.Ui.Views.Workflows"
              xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
              x:Class="Aw.Sindri.Ui.Views.Workflows.WorkflowEditorSheet"
              x:DataType="wf:WorkflowsPageViewModel">
@@ -15,6 +16,8 @@
       <Border x:Name="EditorNoFieldsName" IsVisible="{Binding HasNoFields}" AutomationProperties.Name="{Binding NoFieldsText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption quiet" Text="{Binding NoFieldsText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
+      <!-- The step's validation findings (#3803); Fix puts the keyboard in the field it names. -->
+      <wv:WorkflowFindingsList x:Name="EditorFindings" IsVisible="{Binding HasStepFindings}" />
 
       <!-- Held back until Reload: nothing is retried. -->
       <StackPanel x:Name="EditorReload" Spacing="8" IsVisible="{Binding Editor.NeedsReload}">
@@ -40,6 +43,9 @@
               <TextBox Name="EditorFieldText" IsVisible="{Binding IsRawVisible}" Text="{Binding Text, Mode=TwoWay}" PlaceholderText="{Binding Placeholder}" AutomationProperties.Name="{Binding Caption}" />
               <CheckBox Name="EditorFieldCheck" AutomationProperties.AutomationId="{Binding CheckAutomationId}" IsVisible="{Binding IsBoolean}" IsChecked="{Binding IsOn, Mode=TwoWay}" AutomationProperties.Name="{Binding Caption}" />
               <TextBox Name="EditorFieldLines" IsVisible="{Binding IsMultiline}" Text="{Binding Text, Mode=TwoWay}" PlaceholderText="{Binding Placeholder}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding Caption}" />
+              <Border Name="EditorFieldNeed" IsVisible="{Binding HasNeed}" AutomationProperties.Name="{Binding NeedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                <TextBlock Classes="caption subtle" Text="{Binding NeedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+              </Border>
               <Border Name="EditorFieldError" IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding ErrorText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                 <TextBlock Classes="caption" Text="{Binding ErrorText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
               </Border>
