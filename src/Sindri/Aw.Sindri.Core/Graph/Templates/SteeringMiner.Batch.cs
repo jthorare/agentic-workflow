@@ -3,7 +3,8 @@ namespace Aw.Sindri.Core.Graph.Templates;
 internal static partial class SteeringMiner
 {
     /// <summary>
-    /// 'shape', once per batch: keeps the first 20 well-formed turns ({ref, text, before?}; a ref is text of at most 80 characters with no white space, seen once),
+    /// 'shape', once per batch: keeps the first 20 well-formed turns ({ref, text, before?}; a ref is text of at most 80 characters and 100 bytes counted as JSON
+    /// written twice, with no white space, seen once; a turn whose ref fails is dropped and counted),
     /// cuts 'text' to its first 1,500 characters and 'before' to its last 400, and keeps each under a size counted as JSON twice (2,000 and 500 bytes; the turns
     /// reach 'label' inside its prompt text), so 20 turns stay under the 64 KB step cap of shape's output and of label's input. A batch whose own JSON passes
     /// 60,000 bytes fails here with that cap in its message: the engine marks a step whose input it cut at 64 KB as unreadable (StoredJson.Fit), so 'label'
@@ -13,6 +14,7 @@ internal static partial class SteeringMiner
     [
         "const int MaxTurns = 20;",
         "const int RefChars = 80;",
+        "const int RefBytes = 100;",
         "const int TextChars = 1500;",
         "const int TextBytes = 2000;",
         "const int BeforeChars = 400;",
@@ -33,7 +35,7 @@ internal static partial class SteeringMiner
         "    var row = turn as JsonObject;",
         "    var id = Str(row?[\"ref\"]);",
         "    var text = Str(row?[\"text\"])?.Trim();",
-        "    if (turns.Count == MaxTurns || id is null || id.Length == 0 || id.Length > RefChars || id.Any(char.IsWhiteSpace) || string.IsNullOrEmpty(text) || !seen.Add(id))",
+        "    if (turns.Count == MaxTurns || id is null || id.Length == 0 || id.Length > RefChars || Size(id) > RefBytes || id.Any(char.IsWhiteSpace) || string.IsNullOrEmpty(text) || !seen.Add(id))",
         "    {",
         "        continue;",
         "    }",
