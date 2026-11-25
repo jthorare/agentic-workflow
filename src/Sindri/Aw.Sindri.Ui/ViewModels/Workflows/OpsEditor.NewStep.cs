@@ -18,6 +18,9 @@ internal sealed partial class OpsEditor
     /// <summary>True when every required field of the form has text.</summary>
     internal bool RequiredFilled => Fields.All(f => !f.IsRequired || !string.IsNullOrWhiteSpace(f.Text));
 
+    /// <summary>True when each "exactly one of" group the block declares (a wait's "Wait for" and "Wait until") has exactly one field with text (#4359).</summary>
+    internal bool OneOfMet => OneOfProblem() is null;
+
     /// <summary>Makes the form of a step that does not exist yet, from its block's config fields; nothing is sent.</summary>
     /// <param name="block">The block picked.</param>
     /// <param name="id">The id the new node gets.</param>
@@ -35,8 +38,7 @@ internal sealed partial class OpsEditor
             var boolean = string.Equals(field.Type, "boolean", StringComparison.Ordinal);
             var hint = ExampleReferences.Hint(block.Type, field.Name, EditorFieldText.Of(example, field), steps, near);   // a step the new one can't read shows as the step it follows, else "<step id>" (#3944, #4272, #4330)
             var form = new ConfigFieldViewModel(field, boolean && field.Required ? "false" : string.Empty, block.Type) { Placeholder = hint };   // why: a required check box shows a value, and the value it shows is the one sent; the block type gives a new Code step its code box (#3682)
-            form.PropertyChanged += OnPendingFieldChanged;
-            Fields.Add(form);
+            Fields.Add(Watched(form));
         }
 
         MarkNeeded();
@@ -62,6 +64,38 @@ internal sealed partial class OpsEditor
         return new HintStep(after, block is null ? [] : [.. block.Outputs.Keys]);
     }
 
+    // Hooks a field so a change of its text recomputes the "why Save is off" lines.
+    private ConfigFieldViewModel Watched(ConfigFieldViewModel form)
+    {
+        form.PropertyChanged += OnPendingFieldChanged;
+        return form;
+    }
+
+    // The "exactly one of" groups of the block the form is for: the new step's block, else the selected step's.
+    private IReadOnlyList<IReadOnlyList<string>> OneOfGroups()
+    {
+        var type = _pending?.Type ?? Nodes.FirstOrDefault(n => string.Equals(n.Id, _selected, StringComparison.Ordinal))?.Type;
+        return Groups.SelectMany(static g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, type, StringComparison.Ordinal))?.OneOf ?? [];
+    }
+
+    // The first group with none or two fields filled: the group's first field and the line it shows; null when every group has exactly one.
+    private (ConfigFieldViewModel Field, string Line)? OneOfProblem()
+    {
+        foreach (var group in OneOfGroups())
+        {
+            var fields = Fields.Where(f => group.Contains(f.Name, StringComparer.Ordinal)).ToList();
+            var filled = fields.Count(static f => !string.IsNullOrWhiteSpace(f.Text));
+            if (fields.Count > 1 && filled != 1)
+            {
+                return (fields[0], filled == 0
+                    ? Labels.WfFieldNeededToSave(string.Join(" or ", fields.Select(static f => f.Label)))
+                    : Labels.WfFieldOnlyOne(string.Join(" and ", fields.Select(static f => f.Label))));
+            }
+        }
+
+        return null;
+    }
+
     private void OnPendingFieldChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (string.Equals(e.PropertyName, nameof(ConfigFieldViewModel.Text), StringComparison.Ordinal))
@@ -70,13 +104,14 @@ internal sealed partial class OpsEditor
         }
     }
 
-    // Says why a new step's Save is off: a line on its first empty required field, none once every required field has text (#4330).
+    // Says why Save is off: a line on a new step's first empty required field (#4330), and on the first field of an "exactly one of" group that has none or two (#4359).
     private void MarkNeeded()
     {
         var first = _pending is null ? null : Fields.FirstOrDefault(static f => f.IsRequired && string.IsNullOrWhiteSpace(f.Text));
+        var oneOf = OneOfProblem();
         foreach (var field in Fields)
         {
-            field.MarkNeeded(ReferenceEquals(field, first));
+            field.MarkNeeded(ReferenceEquals(field, first) ? Labels.WfFieldNeededToSave(field.Label) : oneOf is { } o && ReferenceEquals(field, o.Field) ? o.Line : string.Empty);
         }
     }
 

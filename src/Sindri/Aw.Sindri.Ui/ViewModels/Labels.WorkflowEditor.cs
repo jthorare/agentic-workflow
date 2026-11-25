@@ -74,4 +74,9 @@ internal static partial class Labels
     /// <param name="name">The field's caption, without "(required)".</param>
     /// <returns>The words.</returns>
     internal static string WfFieldNeededToSave(string name) => $"Fill in {name} to save.";
+
+    /// <summary>The line under a step's field when two or more fields of one "exactly one of" group have text (#4359).</summary>
+    /// <param name="names">The group's captions, joined with "and" ("Wait for and Wait until").</param>
+    /// <returns>The words.</returns>
+    internal static string WfFieldOnlyOne(string names) => $"Fill in only one of {names}.";
 }
