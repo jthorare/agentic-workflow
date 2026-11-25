@@ -50,7 +50,7 @@ internal static partial class Labels
     internal const string ContextWholeFailed = "Couldn't read the map";
 
     /// <summary>The failure line when the read passed the app's deadline (#4363): a timeout, not an unreachable service.</summary>
-    internal const string ContextWholeTimedOut = "The map took too long to read (over 2 minutes). Try again, or see System for the context service.";
+    internal const string ContextWholeTimedOut = "The map read timed out";
 
     /// <summary>The button that reads the map again.</summary>
     internal const string ContextWholeRetry = "Retry";

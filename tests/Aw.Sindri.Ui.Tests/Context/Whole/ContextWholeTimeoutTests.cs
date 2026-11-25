@@ -1,5 +1,6 @@
 using System.Net;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context;
@@ -30,7 +31,7 @@ public sealed class ContextWholeTimeoutTests
     [Fact]
     public async Task A_read_past_the_deadline_shows_the_timeout_line()
     {
-        var page = await Open(RouteAnswer.Problem(HttpStatusCode.GatewayTimeout, "SND-UI-002", "127.0.0.1:7410 didn't answer within 120 s"));
+        var page = await Open(RouteAnswer.Problem(HttpStatusCode.GatewayTimeout, "SND-UI-002", SindriUiErrors.DeadlineMessage("127.0.0.1:7410", SindriApiClient.CallTimeout.TotalSeconds)));
 
         Assert.Equal((true, Labels.ContextWholeTimedOut), (page.Whole.IsFailed, page.Whole.FailedText));
     }
