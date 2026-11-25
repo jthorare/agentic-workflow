@@ -25,8 +25,16 @@ public sealed class WorkflowsCompareFramesTests : FrameHost
 
     private JsonObject Run(string id, int revision, TimeSpan ago, string by, string status) => new()
     {
-        ["id"] = id, ["slug"] = Slug, ["revision"] = revision, ["status"] = status, ["trigger"] = new JsonObject { ["kind"] = "manual" }, ["outputs"] = null, ["error"] = null, ["itemId"] = null,
-        ["startedAt"] = (Clock.GetUtcNow() - ago).ToString("O", System.Globalization.CultureInfo.InvariantCulture), ["endedAt"] = (Clock.GetUtcNow() - ago).AddSeconds(10).ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+        ["id"] = id,
+        ["slug"] = Slug,
+        ["revision"] = revision,
+        ["status"] = status,
+        ["trigger"] = new JsonObject { ["kind"] = "manual" },
+        ["outputs"] = null,
+        ["error"] = null,
+        ["itemId"] = null,
+        ["startedAt"] = (Clock.GetUtcNow() - ago).ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+        ["endedAt"] = (Clock.GetUtcNow() - ago).AddSeconds(10).ToString("O", System.Globalization.CultureInfo.InvariantCulture),
         ["nodes"] = new JsonArray(Step("start", "succeeded", new JsonObject { ["payload"] = new JsonObject { ["by"] = by } }), Step("sum", status, new JsonObject { ["result"] = 3 })),
     };
 
