@@ -148,9 +148,9 @@ internal sealed class ConnectionHarness
     /// <summary>The test slice over another probe, with the capturing log, so a probe that echoes the credential is seen by the log canary.</summary>
     /// <param name="probe">The probe.</param>
     /// <returns>The service.</returns>
-    public TestConnectionService TestWith(IConnectionProbe probe) => new(Store, Secrets, Presets, probe, Writer(), new TypedLog<TestConnectionService>(Logs));
+    public TestConnectionService TestWith(IConnectionProbe probe) => new(Store, Secrets, new KeyedCredentialCheck(Presets, probe, Keys), Writer(), new TypedLog<TestConnectionService>(Logs));
 
-    public TestConnectionService Test(IMcpConnectionClient? mcp = null) => new(Store, Secrets, Presets, Probe, Writer(), new TypedLog<TestConnectionService>(Logs), mcp);
+    public TestConnectionService Test(IMcpConnectionClient? mcp = null) => new(Store, Secrets, new KeyedCredentialCheck(Presets, Probe, Keys), Writer(), new TypedLog<TestConnectionService>(Logs), mcp);
 
     /// <summary>Lends the capturing log to a service that wants an ILogger of its own type.</summary>
     /// <typeparam name="T">The service.</typeparam>
