@@ -73,4 +73,32 @@ public sealed class ShellStepSavedToastTests
         Assert.Equal(2, _server.ReplacedWorkflows[0].BaseRevision);
         Assert.False(shell.Toast.IsShown);   // the toast's window ends with the Undo
     }, Token);
+
+    [Fact]
+    public Task Ctrl_Z_with_no_toast_does_nothing() => UiThread.Run(async () =>
+    {
+        var shell = await SavedStep();
+        Assert.True(shell.Toast.PressUndoKey(inTextField: false));   // the toast's Undo
+        await Until(() => _server.ReplacedWorkflows.Count == 1);
+        Assert.False(shell.Toast.IsShown);
+
+        Assert.False(shell.Toast.PressUndoKey(inTextField: false));   // no toast now: the key is not spent and nothing is sent
+
+        _ = Assert.Single(_server.ReplacedWorkflows);
+    }, Token);
+
+    [Fact]
+    public Task Ctrl_Z_on_the_Workflows_page_before_any_save_does_nothing() => UiThread.Run(async () =>
+    {
+        _records.Write(A.Record());
+        var shell = new ShellViewModel(_records, _server, new FakeTimeProvider(A.Noon), new Preferences(new InMemoryPreferencesStore()), new FakeClipboard());
+        await shell.Restore(Token);
+        _ = shell.Run(Token);
+        await Until(() => shell.State == ShellState.Normal);
+        shell.GoTo(PageId.Workflows);
+
+        Assert.False(shell.Toast.PressUndoKey(inTextField: false));
+
+        Assert.Empty(_server.ReplacedWorkflows);
+    }, Token);
 }

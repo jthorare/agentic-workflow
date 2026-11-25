@@ -20,10 +20,10 @@ public sealed class WorkflowsUndoTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static void ServeRevisionTwo(WorkflowsFixture f)
+    private static void ServeRevision(WorkflowsFixture f, int revision)
     {
         var newest = Golden("workflows-slug", "found");
-        (newest["revision"], newest["latestRevision"]) = (2, 2);
+        (newest["revision"], newest["latestRevision"]) = (revision, revision);
         newest["spec"]!["nodes"]![1]!["config"]!["prompt"] = "Look twice";
         f.Server.WorkflowNewestAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, newest.ToJsonString());
     }
@@ -36,7 +36,7 @@ public sealed class WorkflowsUndoTests
         await page.OpenWorkflow(Slug, Token);
         Assert.True(page.Runs.Graph!.SelectNode("agent"));
         await page.OpenSettings(Token);
-        ServeRevisionTwo(_f);   // after the sheet read revision 1: the read after the save finds revision 2
+        ServeRevision(_f, 2);   // after the sheet read revision 1: the read after the save finds revision 2
         return page;
     }
 
@@ -133,5 +133,43 @@ public sealed class WorkflowsUndoTests
         await page.Save(Token);
 
         _ = Assert.Single(_saved);
+    }
+
+    [Fact]
+    public async Task A_canvas_edit_after_the_save_turns_Undo_off_and_nothing_is_overwritten()
+    {
+        var page = await SavedAgent();
+        ServeRevision(_f, 3);   // the canvas edit makes revision 3: the editor's base moves on
+
+        await page.Editor.RemoveNode("agent", Token);
+
+        Assert.False(_saved[0].CanUndo());
+        Assert.NotNull(await _saved[0].Undo());
+        Assert.Empty(_f.Server.ReplacedWorkflows);   // revision 3's edit is not put back to the graph before the save
+    }
+
+    [Fact]
+    public async Task A_reload_that_finds_a_newer_revision_turns_Undo_off()
+    {
+        var page = await SavedAgent();
+        ServeRevision(_f, 3);   // someone else saved in the window
+
+        await page.ReloadEditor(Token);
+
+        Assert.False(_saved[0].CanUndo());
+        Assert.NotNull(await _saved[0].Undo());
+        Assert.Empty(_f.Server.ReplacedWorkflows);
+    }
+
+    [Fact]
+    public async Task A_reload_that_finds_the_same_revision_keeps_Undo_on_and_sends_the_revision_the_save_made()
+    {
+        var page = await SavedAgent();
+
+        await page.ReloadEditor(Token);
+
+        Assert.True(_saved[0].CanUndo());
+        Assert.Null(await _saved[0].Undo());
+        Assert.Equal(2, Assert.Single(_f.Server.ReplacedWorkflows).BaseRevision);
     }
 }
