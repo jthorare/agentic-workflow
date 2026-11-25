@@ -261,7 +261,7 @@ todo      Run hello-sindri: Waits for Sindri to run.
 exit 1
 ## sindri doctor
 ok    lease             free (last epoch 1)
-ok    ledger            schema 23/23
+ok    ledger            schema 24/24
 ok    views             cursor N of head M
 ok    profile           hash HASH6
 fail  api               unreachable: no control plane is recorded (fix: sindri)

@@ -19,6 +19,8 @@ internal static class Usage
         "       sindri profile approve [<hash>]   removed (edits apply on save): prints that line and exits 0",
         "       sindri views rebuild [--no-start]   replay the ledger into the views (the fix when they stall); starts the control plane unless --no-start",
         "       sindri queue [--json] [--no-start]   the queue's groups, one line per item; exit 1 while the views rebuild or stall; starts the control plane unless --no-start",
+        "       sindri proposals [--state proposed|staged|held|published|merged|rejected] [--json] [--fence | --no-fence]   the self-evolution proposals, newest change first; titles are model output, fenced as untrusted when stdout isn't a terminal; never starts the control plane",
+        "       sindri proposal show <id> [--json] [--fence | --no-fence]   one proposal's text, files, evidence refs and source sessions (never the turns); proposal reject <id> [--json]   the owner turns it down for good (an agent session is refused, SND-AUTH-002)",
         "       sindri ledger [--after N] [--item X] [--type T] [--max N] [--json] [--no-start]   the audit read: one line per event (a human also sees non-public types), then 'next: N' while more remain; starts the control plane unless --no-start",
         "       sindri sandbox explain <path|host|command> [--plan <file>] [--json]   why a path, host or command is allowed or blocked in the sandbox, and how the owner can change it; reads only the plan file (--plan or AW_SANDBOX_PLAN), no control plane",
         "       sindri sandbox check [--json]   every reason this machine can't confine a Step, each with its fix, or the Steps a Check again would resume; asks the running control plane (exit 0 ready, 1 blocked or not running)",

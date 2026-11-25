@@ -1,7 +1,10 @@
+using System.Text.Json.Serialization;
+
 namespace Aw.Sindri.Core.Evolve;
 
 /// <summary>Where a proposal stands. Only a staged proposal has a public version that passed the leak gate.</summary>
-internal enum ProposalState
+[JsonConverter(typeof(JsonStringEnumConverter<ProposalState>))]
+public enum ProposalState
 {
     /// <summary>Saved from a finding; local only.</summary>
     Proposed,

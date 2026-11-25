@@ -1506,6 +1506,24 @@
       "confirm": null
     },
     {
+      "action": "RejectProposal",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/proposals/{id}/reject",
+      "cli": "sindri proposal reject <id>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "RelinkPinAliases",
       "class": "job",
       "allowedCallers": [

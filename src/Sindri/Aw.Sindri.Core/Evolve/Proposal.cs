@@ -7,4 +7,4 @@ namespace Aw.Sindri.Core.Evolve;
 /// <param name="Rationale">Why, in general words.</param>
 /// <param name="Change">The files and the change.</param>
 /// <param name="Evidence">Opaque refs of the turns behind it, never their text.</param>
-internal sealed record Proposal(ProposalKind Kind, string Target, string Title, string Rationale, ProposalChange Change, IReadOnlyList<string> Evidence);
+public sealed record Proposal(ProposalKind Kind, string Target, string Title, string Rationale, ProposalChange Change, IReadOnlyList<string> Evidence);
