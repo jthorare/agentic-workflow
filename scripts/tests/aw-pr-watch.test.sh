@@ -38,6 +38,8 @@ trap cleanup EXIT
 mkdir -p "$WORK/bin"
 export AW_STATE_DIR="$WORK/state"
 export AW_PR_WATCH_BACKOFF=0
+# The poll floor (#4293) is 10 s; the suite polls back to back. Section 17 checks the floor with this unset.
+export AW_PR_WATCH_MIN_INTERVAL=0
 unset GH_TOKEN GITHUB_TOKEN GH_HOST
 
 cat > "$WORK/bin/gh" <<'STUB'
@@ -310,5 +312,72 @@ check "json: every line is a JSON object" "$(printf '%s\n' "$out" | jq -c 'type'
 check "json: the first line is the snapshot" "$(printf '%s\n' "$out" | head -1 | jq -r .type)" "snapshot"
 check "json: a change object" "$(printf '%s\n' "$out" | jq -r 'select(.type=="change") | "\(.key) \(.from) \(.to)"')" "state open merged"
 check "json: the end object" "$(printf '%s\n' "$out" | tail -1 | jq -r '"\(.type) \(.reason)"')" "end merged"
+
+# --- 15. a read that 403s on every try is exit 5, not "incomplete" (#4293) ---------------------------------------------
+# gh prints the HTTP error body on stdout, so the failed read leaves JSON that parses; it must not pass as a partial page.
+rm -rf "$AW_STATE_DIR"
+scen forbidden
+pull 1 open false; reviews 1
+printf '{"message":"Resource not accessible by integration","documentation_url":"https://docs.github.com/rest","status":"403"}\n' > "$S/checks.1.json"
+for k in 1 2 3; do echo "HTTP 403: Resource not accessible by integration (https://api.github.com/repos/acme/app/commits/x/check-runs)" > "$S/checks.$k.partial"; done
+out="$(watch --once 2>&1)"; rc=$?
+check "403: exit 5" "$rc" "5"
+has "403: gh's text is named" "$out" "HTTP 403"
+hasnt "403: never reported as incomplete" "$out" "incomplete"
+
+# --- 16. two watchers reclaiming one dead lock leave one holder (#4293) ------------------------------------------------
+# A stub cat slows the lock pid reads of the watcher started with AW_TEST_CAT_PAUSE, so it reads the dead pid, the other
+# watcher takes the lock over meanwhile, and the slow one must not then remove the new holder's lock.
+rm -rf "$AW_STATE_DIR"
+scen race
+pull 1 open false; checks 1 0; reviews 1
+real_cat="$(command -v cat)"
+cat > "$WORK/bin/cat" << STUB
+#!/usr/bin/env bash
+# Reads first, then pauses: the caller acts on what the file held before the pause.
+if [ -n "\${AW_TEST_CAT_PAUSE:-}" ]; then
+  for a in "\$@"; do case "\$a" in */lock/pid | */lock/pid.*)
+    out="\$("$real_cat" "\$@")" || exit 1; sleep "\$AW_TEST_CAT_PAUSE"; printf '%s\\n' "\$out"; exit 0 ;; esac; done
+fi
+exec "$real_cat" "\$@"
+STUB
+chmod 755 "$WORK/bin/cat"
+sh -c 'exit 0' & dead=$!; wait "$dead"
+mkdir -p "$LOCK"; echo "$dead" > "$LOCK/pid"
+AW_TEST_CAT_PAUSE=2 bash "$SCRIPT" --repo acme/app --pr 7 --interval 1 --deadline 8s > "$WORK/slow.out" 2>&1 &
+slowpid=$!
+sleep 0.5
+bash "$SCRIPT" --repo acme/app --pr 7 --interval 1 --deadline 30s > "$WORK/bg.out" 2>&1 &
+bgpid=$!
+for _ in $(seq 1 50); do [ "$(cat "$LOCK/pid" 2> /dev/null)" = "$bgpid" ] && break; sleep 0.1; done
+check "race: the fast watcher took the dead lock over" "$(cat "$LOCK/pid" 2> /dev/null)" "$bgpid"
+rc=0; wait "$slowpid" || rc=$?
+check "race: the slow watcher finds a live holder (exit 3)" "$rc" "3"
+check "race: the fast watcher still holds the lock" "$(cat "$LOCK/pid" 2> /dev/null)" "$bgpid"
+check "race: the fast watcher still runs" "$(kill -0 "$bgpid" 2> /dev/null && echo yes || echo no)" "yes"
+kill -TERM "$bgpid"; wait "$bgpid" 2> /dev/null; bgpid=""
+rm -f "$WORK/bin/cat"
+
+# --- 17. --interval has a 10 s floor (#4293) ---------------------------------------------------------------------------
+rm -rf "$AW_STATE_DIR"
+scen floor
+pull 1 open false; checks 1 0; reviews 1
+for v in 0 9; do
+  rc=0; out="$(env -u AW_PR_WATCH_MIN_INTERVAL bash "$SCRIPT" --repo acme/app --pr 7 --interval "$v" --once 2>&1)" || rc=$?
+  check "floor: --interval $v exits 2" "$rc" "2"
+  has "floor: --interval $v names the 10 s floor" "$out" "at least 10"
+done
+rc=0; env -u AW_PR_WATCH_MIN_INTERVAL bash "$SCRIPT" --repo acme/app --pr 7 --interval 10 --once > /dev/null 2>&1 || rc=$?
+check "floor: --interval 10 is accepted" "$rc" "0"
+
+# --- 18. a leading zero is base 10 (#4293) ------------------------------------------------------------------------------
+rm -rf "$AW_STATE_DIR"
+scen octal
+pull 1 open false; checks 1 0; reviews 1
+for v in 08 09s; do
+  rc=0; out="$(watch --deadline "$v" --once 2>&1)" || rc=$?
+  check "octal: --deadline $v exits 0" "$rc" "0"
+  hasnt "octal: --deadline $v is not an arithmetic error" "$out" "value too great"
+done
 
 exit "$fail"
