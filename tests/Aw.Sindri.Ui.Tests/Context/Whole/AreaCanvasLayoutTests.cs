@@ -27,13 +27,13 @@ public sealed class AreaCanvasLayoutTests
     }
 
     [Fact]
-    public void A_band_with_no_nodes_is_thin_and_says_none_in_this_area()
+    public void A_band_with_no_nodes_is_as_wide_as_its_heading_and_says_none_in_this_area()
     {
         var map = AreaCanvasLayout.Place([Node("OrderService", "code")], [], 1440);
 
         var entry = map.AreaBands!.Single(b => string.Equals(b.Title, "Entry points", StringComparison.Ordinal));
         Assert.True(entry.IsEmpty);
-        Assert.Equal(AreaCanvasLayout.EmptyWidth, entry.Rect.Width);
+        Assert.InRange(entry.Rect.Width, AreaCanvasLayout.EmptyWidth, 340);   // the title and its hint on one line, never a full column
     }
 
     [Fact]
@@ -133,12 +133,12 @@ public sealed class AreaCanvasLayoutTests
         map.ShowArea(draft with { Nodes = rows, Edges = [], Area = draft.Area! with { Counts = draft.Area.Counts with { Nodes = 30 } } });
         await map.AreaLaidOut;
 
-        map.ViewportChanged(new WholeRect(0, 0, 2000, 150));
+        map.ViewportChanged(new WholeRect(0, 0, 2000, 150));   // 30 nodes wrap to 4 columns of at most 8 rows: the first 3 rows show
 
         Assert.True(map.ShowAreaBar);
-        Assert.Equal("30 nodes · 3 in view", map.AreaBarText);
+        Assert.Equal("30 nodes · 12 in view", map.AreaBarText);
         Assert.True(map.ShowMoreBelow);
-        Assert.Equal("27 more below", map.MoreBelowText);
+        Assert.Equal("18 more below", map.MoreBelowText);
     }
 }
 
