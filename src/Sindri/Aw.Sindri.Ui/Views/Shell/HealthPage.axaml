@@ -315,8 +315,13 @@
               <ItemsControl x:Name="ContextIndexLines" ItemsSource="{Binding Lines}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="shell:ContextIndexLine">
+                    <!-- #4269: the label in its own column, so a line that wraps at a large text scale hangs past it and doesn't read as a new row. -->
                     <Border MinHeight="{StaticResource Row.Height.Data}">
-                      <TextBlock Classes="body" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
+                      <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
+                        <TextBlock Classes="body" Text="{Binding Label}" IsVisible="{Binding HasLabel}" Margin="0,0,4,0" VerticalAlignment="Top"
+                                   AutomationProperties.AccessibilityView="Raw" />
+                        <TextBlock Grid.Column="1" Classes="body" Text="{Binding Rest}" TextWrapping="Wrap" VerticalAlignment="Top" AutomationProperties.Name="{Binding Name}" />
+                      </Grid>
                     </Border>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -351,7 +356,7 @@
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="shell:AgentProblemLine">
                     <TextBlock Classes="body" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text}">
-                      <Run Text="{Binding Text}" /><Run Classes="subtle" Text=" · " /><Run Classes="subtle" Text="{Binding Code}" />
+                      <Run Text="{Binding Text}" /><Run Classes="subtle" Text=" · " /><Run Classes="subtle" Text="{Binding ShownCode}" />
                     </TextBlock>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
