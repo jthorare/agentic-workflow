@@ -41,6 +41,35 @@ internal sealed class TeamPrInputs(RepoCommands repo, IKeyValueStore values, IMe
         return branches.IsError ? branches.Error : new TeamPrFacts(MergeQueued.Parse(handed.Value).Keys.ToHashSet(), ready, branches.Value);
     }
 
+    /// <summary>The pull requests lanes said were ready that the poll's listing (the 50 newest) does not hold and that are not known to have ended: each is read from GitHub, and those found merged or closed are returned. Without this a queued pull request that merged and scrolled out of the listing stayed in the merge queue for good (#3738). A read that fails leaves the pull request for the next poll.</summary>
+    /// <param name="team">The team config (the repo).</param>
+    /// <param name="listed">The numbers the listing holds.</param>
+    /// <param name="ended">The numbers already known to have ended.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The ended pull requests found, or the inbox read's error.</returns>
+    internal async ValueTask<Result<IReadOnlyList<PrView>>> EndedOutsideListing(TeamConfig team, IReadOnlySet<int> listed, IReadOnlySet<int> ended, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(team);
+        var inbound = await messages.Messages(cancellationToken).ConfigureAwait(false);
+        if (inbound.IsError)
+        {
+            return inbound.Error;
+        }
+
+        var found = new List<PrView>();
+        var ready = inbound.Value.Where(m => m.Class is { Kind: MessageKind.Ready, Pr: not null }).Select(m => m.Class.Pr.GetValueOrDefault()).ToHashSet();
+        foreach (var pr in ready.Where(pr => !listed.Contains(pr) && !ended.Contains(pr)).Order())
+        {
+            var view = await repo.View(team.Repo, pr, "state").ConfigureAwait(false);
+            if (view.IsSuccess && view.Value.State is PrState.Merged or PrState.Closed)
+            {
+                found.Add(new PrView(pr, view.Value.State, IsDraft: false, string.Empty, string.Empty));
+            }
+        }
+
+        return found;
+    }
+
     private async ValueTask<Result<IReadOnlySet<string>>> CheckedOut(TeamConfig team, CancellationToken cancellationToken)
     {
         var listed = await repo.Git(team.Repo, "worktree", "list", "--porcelain").ConfigureAwait(false);
