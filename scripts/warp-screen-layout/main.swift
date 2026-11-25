@@ -236,9 +236,22 @@ func describe(_ frame: CGRect) -> String {
   "x=\(Int(frame.minX)) y=\(Int(frame.minY)) \(Int(frame.width))x\(Int(frame.height))"
 }
 
+var permissionPrompt: PermissionPrompt?
+var permissionPromptShown = false
+
+/// Shows the Accessibility window once per run. The window is built here, after NSApplication exists, and never in --print mode.
+func showPermissionPromptOnce() {
+  if permissionPromptShown { return }
+  permissionPromptShown = true
+  let prompt = PermissionPrompt()
+  permissionPrompt = prompt
+  prompt.show()
+}
+
 func tile(sections: Int, apply: Bool) {
   guard AXIsProcessTrusted() else {
     fputs("Accessibility permission is off. Enable Warp Screen Layout in System Settings > Privacy & Security > Accessibility.\n", stderr)
+    showPermissionPromptOnce()
     return
   }
   guard let screen = screenUnderPointer() else {
@@ -353,13 +366,13 @@ func installKeyTap() {
         return Unmanaged.passUnretained(event)
       }
       let code = event.getIntegerValueField(.keyboardEventKeycode)
-      guard let sections = sections(for: code) else {
+      guard let sectionCount = sections(for: code) else {
         logLine("ignored control-option key code \(code)")
         return Unmanaged.passUnretained(event)
       }
       DispatchQueue.main.async {
-        logLine("key tap \(sections)")
-        tile(sections: sections, apply: true)
+        logLine("key tap \(sectionCount)")
+        tile(sections: sectionCount, apply: true)
       }
       return nil
     },
@@ -390,6 +403,17 @@ func runWorker() {
   }
   logLine("worker listening (accessibility: \(AXIsProcessTrusted()))")
   installKeyTap()
+  if retainedKeyTap == nil {
+    // No grant yet, so the tap could not be created. Retry every 5 seconds until Accessibility is on.
+    Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { timer in
+      guard AXIsProcessTrusted() else { return }
+      installKeyTap()
+      if retainedKeyTap != nil {
+        logLine("accessibility granted, key tap recovered")
+        timer.invalidate()
+      }
+    }
+  }
   DispatchQueue.global(qos: .userInitiated).async {
     while true {
       let client = accept(fd, nil, nil)
@@ -429,6 +453,7 @@ let hotkeyCallback: EventHandlerUPP = { _, event, _ in
     tile(sections: sections, apply: true)
   } else {
     logLine("hotkey \(sections) could not move windows")
+    showPermissionPromptOnce()
   }
   return noErr
 }
@@ -486,12 +511,12 @@ final class PermissionPrompt: NSObject {
     window.isReleasedWhenClosed = false
 
     let text = NSTextField(wrappingLabelWithString: """
-    Control-Option-5 is installed, and macOS is blocking it from moving windows.
+    The Control-Option shortcuts are installed, and macOS is blocking it from moving windows.
 
     Click Open Settings. In the Accessibility list, turn on Warp Screen Layout.
     If it is not listed, click +, then choose Warp Screen Layout in Applications.
 
-    Press Control-Option-5 again after the switch is on. This window closes itself once macOS allows it.
+    Press Control-Option and a number again after the switch is on. This window closes itself once macOS allows it.
     """)
     text.frame = NSRect(x: 20, y: 64, width: 520, height: 160)
     window.contentView?.addSubview(text)
@@ -534,8 +559,6 @@ final class PermissionPrompt: NSObject {
     NSWorkspace.shared.activateFileViewerSelecting([appURL])
   }
 }
-
-let permissionPrompt = PermissionPrompt()
 
 let arguments = CommandLine.arguments
 NSApplication.shared.setActivationPolicy(.accessory)
