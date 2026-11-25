@@ -4,10 +4,10 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 internal sealed partial class WorkflowsPageViewModel
 {
     /// <summary>True while Done asks "Save your changes?" because a field of the open sheet changed.</summary>
-    public bool AsksSaveFirst { get; private set => Set(ref field, value); }
+    public bool AsksSaveFirst { get; private set { Set(ref field, value); OnChanged(nameof(ShowsEditorButtons)); } }
 
     /// <summary>True when the sheet's own Save and Close row shows: not while the question, which has its own Save, is up.</summary>
-    public bool ShowsEditorButtons => IsEditing;   // red stub: the old behaviour (the row shows whenever the editor is on)
+    public bool ShowsEditorButtons => !AsksSaveFirst;
 
 #pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
     /// <summary>The question's words.</summary>
