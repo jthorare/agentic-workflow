@@ -222,8 +222,8 @@ internal static partial class Labels
 
     /// <summary>The fade at the foot of an area's canvas.</summary>
     /// <param name="count">How many nodes lie below the screen.</param>
-    /// <returns>"2 more below".</returns>
-    internal static string ContextAreaMoreBelow(int count) => string.Create(CultureInfo.InvariantCulture, $"{count} more below");
+    /// <returns>"2 more out of view".</returns>
+    internal static string ContextAreaMoreOutOfView(int count) => string.Create(CultureInfo.InvariantCulture, $"{count} more out of view");
 
     /// <summary>The tooltip of a link.</summary>
     /// <param name="from">The first node's label.</param>

@@ -26,10 +26,10 @@ internal sealed partial class WholeMapViewModel
     public string AreaBarText => Geometry is { IsAreaCanvas: true } g ? Labels.ContextAreaBar(g.Nodes.Count, _inView) : string.Empty;
 
     /// <summary>Gets whether nodes lie below the screen, so the fade at the foot shows.</summary>
-    public bool ShowMoreBelow => ShowAreaBar && _below > 0;
+    public bool ShowMoreOutOfView => ShowAreaBar && _below > 0;
 
-    /// <summary>Gets the fade's words: "2 more below".</summary>
-    public string MoreBelowText => Labels.ContextAreaMoreBelow(_below);
+    /// <summary>Gets the fade's words: "2 more out of view".</summary>
+    public string MoreOutOfViewText => Labels.ContextAreaMoreOutOfView(_below);
 
     /// <summary>The part of the world on screen changed: counts the nodes in it and below it.</summary>
     /// <param name="view">The part of the world on screen.</param>
@@ -49,8 +49,8 @@ internal sealed partial class WholeMapViewModel
 
         (_inView, _below) = (inView, below);
         OnChanged(nameof(AreaBarText));
-        OnChanged(nameof(ShowMoreBelow));
-        OnChanged(nameof(MoreBelowText));
+        OnChanged(nameof(ShowMoreOutOfView));
+        OnChanged(nameof(MoreOutOfViewText));
     }
 
     /// <summary>Gets the accessible name of the ranked list.</summary>

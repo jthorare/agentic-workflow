@@ -87,9 +87,9 @@
       </ctl:ZoomBorder>
 
       <!-- An opened area's canvas with nodes below the screen (#3674): a pill at the foot says how many. -->
-      <Border x:Name="WholeMoreBelow" IsVisible="{Binding ShowMoreBelow}" IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,64" Padding="12,4"
+      <Border x:Name="WholeMoreOutOfView" IsVisible="{Binding ShowMoreOutOfView}" IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,64" Padding="12,4"
               Background="{DynamicResource Brush.Surface3}" CornerRadius="{StaticResource Radius.MD}">
-        <TextBlock x:Name="WholeMoreBelowText" Classes="caption" Text="{Binding MoreBelowText}" AutomationProperties.Name="{Binding MoreBelowText}" />
+        <TextBlock x:Name="WholeMoreOutOfViewText" Classes="caption" Text="{Binding MoreOutOfViewText}" AutomationProperties.Name="{Binding MoreOutOfViewText}" />
       </Border>
 
       <!-- The whole repo above 60 nodes (#3674): one tile per area, largest first, with its name whole and its counts; no edges, no zoom. -->

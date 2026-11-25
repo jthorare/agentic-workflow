@@ -134,7 +134,7 @@ public sealed class AreaCanvasLayoutTests
     }
 
     [Fact]
-    public async Task The_fade_counts_every_node_out_of_view_not_only_the_ones_below()
+    public async Task The_pill_counts_every_node_out_of_view_when_the_view_is_panned_past_all_of_them()
     {
         var map = new WholeMapViewModel(() => _utc);
         map.Show(WholeMapLayoutTests.Draft("areas-over-budget"));
@@ -143,11 +143,11 @@ public sealed class AreaCanvasLayoutTests
         map.ShowArea(draft with { Nodes = rows, Edges = [], Area = draft.Area! with { Counts = draft.Area.Counts with { Nodes = 10 } } });
         await map.AreaLaidOut;
 
-        map.ViewportChanged(new WholeRect(-5000, -5000, 100, 100));
+        map.ViewportChanged(new WholeRect(50000, 50000, 100, 100));
 
         Assert.Equal("10 nodes · 0 in view", map.AreaBarText);
-        Assert.True(map.ShowMoreBelow);
-        Assert.Equal("10 more below", map.MoreBelowText);
+        Assert.True(map.ShowMoreOutOfView);
+        Assert.Equal("10 more out of view", map.MoreOutOfViewText);
     }
 
     [Fact]
@@ -167,8 +167,8 @@ public sealed class AreaCanvasLayoutTests
         Assert.InRange(inView, 1, 29);
         Assert.True(map.ShowAreaBar);
         Assert.Equal(string.Create(CultureInfo.InvariantCulture, $"30 nodes · {inView} in view"), map.AreaBarText);
-        Assert.True(map.ShowMoreBelow);
-        Assert.Equal(string.Create(CultureInfo.InvariantCulture, $"{30 - inView} more below"), map.MoreBelowText);
+        Assert.True(map.ShowMoreOutOfView);
+        Assert.Equal(string.Create(CultureInfo.InvariantCulture, $"{30 - inView} more out of view"), map.MoreOutOfViewText);
     }
 }
 
