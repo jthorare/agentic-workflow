@@ -247,7 +247,7 @@ The footer holds one of two buttons. Before GitHub connects: **Skip for now** (s
 | Waiting on admin | "Waiting on your workspace admin to approve Sindri." with Check again (decision 16) |
 | Sign-in failed | "GitHub refused the sign-in: <reason>." with Retry |
 | Token refused (Slack) | the field is cleared and focused; "Slack refused this token: <reason>. Paste a new one." |
-| Store failed | "Couldn't store the token: <reason>. Nothing was saved." with Retry (`SND-REVIEW-025`'s rule, Reviews spec §9) |
+| Store failed | "Couldn't store the token: <reason>. Nothing was saved." with Retry (a failed keychain write stores nothing and says so) |
 | Expired, later | the same row with **Reconnect GitHub**, on the Setup page and as a Needs you row (#3050 item 3) |
 
 The screen reader announces each result once: "GitHub connected as ada", "Linear sign-in failed".
