@@ -25,6 +25,7 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
     private readonly HashSet<string> _didNotStart = new(StringComparer.Ordinal);
     private int _reads;
     private List<RunRowViewModel> _all = [];
+    private bool _more;   // the server holds runs older than the ones read (it serves the newest 50): the filters and the count only see these
     private readonly HashSet<string> _ticked = new(StringComparer.Ordinal);   // ticked run ids survive a re-read
     private readonly List<string> _starting = [];   // runs Run now started whose views row the server has not shown yet: each is drawn as a Starting placeholder until its real row arrives
 
@@ -104,7 +105,7 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
         var read = ++_reads;
         if (!string.Equals(Slug, slug, StringComparison.Ordinal))
         {
-            (_all, StatusFilter, DateFilter) = ([], string.Empty, string.Empty);
+            (_all, _more, StatusFilter, DateFilter) = ([], false, string.Empty, string.Empty);
             _ticked.Clear();
             Rows.Clear();   // another workflow: none of the old runs stay
             ClearStarting();
@@ -184,6 +185,7 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
     {
         (IsFailed, FailedText, CanRun) = (false, string.Empty, true);
         _all = [.. list.Runs.Select(run => new RunRowViewModel(run, clock) { IsSelected = _ticked.Contains(run.Id) })];
+        _more = list.More;
         foreach (var id in _starting.Where(s => list.Runs.Any(r => string.Equals(r.Id, s, StringComparison.Ordinal))).ToList())
         {
             _ = _starting.Remove(id);   // the real row is here: it replaces the placeholder

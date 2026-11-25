@@ -15,9 +15,7 @@ internal sealed partial class RunsViewModel
     public bool HasNoMatch => HasFilter && _all.Count > 0 && Rows.Count == 0;
 
     /// <summary>The line when a filter leaves no run.</summary>
-#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
-    public string NoMatchText => Labels.WfRunsNoMatch;
-#pragma warning restore CA1822, MA0041
+    public string NoMatchText => Labels.WfRunsNoMatch(_more ? _all.Count : null);
 
     /// <summary>How many runs are ticked.</summary>
     public int SelectedCount => _all.Count(r => r.IsSelected);
@@ -109,7 +107,8 @@ internal sealed partial class RunsViewModel
         var kept = _all.Where(r => (StatusFilter.Length == 0 || string.Equals(r.Status, StatusFilter, StringComparison.Ordinal)) && (since == TimeSpan.Zero || now - r.StartedAt <= since)).ToList();
         var starting = _starting.Select(id => Rows.FirstOrDefault(r => string.Equals(r.Id, id, StringComparison.Ordinal) && string.Equals(r.Status, "starting", StringComparison.Ordinal)) ?? Placeholder(id));   // a Starting placeholder is not a served run: it stays above the served rows, whatever the filters say
         Patch.To(Rows, [.. starting, .. kept]);
-        CountText = HasFilter ? Labels.WfRunsCountOf(kept.Count, _all.Count) : Labels.WfRunsCount(_all.Count);
+        CountText = HasFilter ? Labels.WfRunsCountOf(kept.Count, _all.Count, _more) : Labels.WfRunsCount(_all.Count, _more);
+        OnChanged(nameof(NoMatchText));
         OnChanged(nameof(HasFilter));
         OnChanged(nameof(HasNoMatch));
         OnChanged(nameof(StatusFilter));
