@@ -33,6 +33,13 @@ internal static partial class Labels
         ? string.Create(CultureInfo.InvariantCulture, $"{Math.Round(seconds, MidpointRounding.AwayFromZero)} s")
         : string.Create(CultureInfo.InvariantCulture, $"{(int)(seconds / 60)}m {(int)Math.Round(seconds % 60, MidpointRounding.AwayFromZero)}s");
 
+    /// <summary>A moment as the Workflows pages write it: "Wed 31 Dec 2025 · 23:43" (the run row's tip, a run bar's tip and the Compare head all use it).</summary>
+    /// <param name="local">The moment, in the viewer's zone.</param>
+    /// <param name="seconds">True to add the seconds.</param>
+    /// <returns>The words.</returns>
+    internal static string WfDayTime(DateTimeOffset local, bool seconds = false) =>
+        local.ToString("ddd d MMM yyyy", CultureInfo.InvariantCulture) + " \u00b7 " + local.ToString(seconds ? "HH:mm:ss" : "HH:mm", CultureInfo.InvariantCulture);
+
     /// <summary>The runs table's count: "500 runs".</summary>
     /// <param name="total">The runs.</param>
     /// <param name="more">True when older runs exist that were not read: "50+ runs".</param>
