@@ -215,7 +215,7 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
             ? Labels.JobWhen(running: true, clock.GetUtcNow() - run.StartedAt)
             : Labels.JobWhen(running: false, clock.GetUtcNow() - (run.EndedAt ?? run.StartedAt));
         ErrorText = run.Error ?? string.Empty;
-        var failedNode = run.Nodes.LastOrDefault(static n => n.Failure is not null);
+        var failedNode = FailedNode(run);
         Failure = failedNode?.Failure is { } failed ? new RunFailureViewModel(failed, run.Error ?? failed.Detail, clipboard, clock, failedNode.Node) : null;
         OutputsText = WorkflowJson.Pretty(run.Outputs);
         Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode))];
@@ -265,4 +265,17 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
         trigger is { ValueKind: JsonValueKind.Object } t && t.TryGetProperty("kind", out var kind) && kind.ValueKind == JsonValueKind.String && kind.GetString() is { Length: > 0 } text
             ? text
             : null;
+
+    // The callout is for a run that failed: a step that failed and went on (onFailure 'continue' or 'skip-item') leaves a failed row in a run that succeeded or is still going.
+    // When several rows failed, the one the run's own error names ("node 'check' failed: ...") is the step the run stopped at, else the last.
+    private static NodeRunView? FailedNode(WorkflowRunView run)
+    {
+        if (string.IsNullOrEmpty(run.Error))
+        {
+            return null;
+        }
+
+        var failed = run.Nodes.Where(static n => n.Failure is not null).ToList();
+        return failed.LastOrDefault(n => run.Error.Contains($"node '{n.Node}'", StringComparison.Ordinal)) ?? failed.LastOrDefault();
+    }
 }
