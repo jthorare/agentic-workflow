@@ -81,7 +81,7 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
     public ObservableCollection<TodoGroupViewModel> Groups { get; } = [];
 
     /// <summary>True when more than five are open and the panel is collapsed.</summary>
-    public bool ShowsShowAll { get; private set => Set(ref field, value); }
+    public bool ShowsShowAll { get; private set { Set(ref field, value); RaiseSlots(); } }
 
     /// <summary>"Show all 11".</summary>
     public string ShowAllText { get; private set => Set(ref field, value); } = string.Empty;

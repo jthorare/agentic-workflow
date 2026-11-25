@@ -172,6 +172,20 @@ public sealed class TodoPanelTests
     }
 
     [Fact]
+    public async Task The_Show_all_slot_takes_height_only_when_Show_all_or_the_error_shows()
+    {
+        _f.ServeTodos([.. Enumerable.Range(1, 5).Select(i => Open(string.Create(CultureInfo.InvariantCulture, $"td_{i}"), "a todo"))]);
+        var few = await _f.Read(Token);
+        Assert.False(few.HasFootSlot);
+        Assert.Equal(5, few.CollapsedSlots);
+
+        _f.ServeTodos([.. Enumerable.Range(1, 7).Select(i => Open(string.Create(CultureInfo.InvariantCulture, $"td_{i}"), "a todo"))]);
+        var many = await _f.Read(Token);
+        Assert.True(many.HasFootSlot);
+        Assert.Equal(6, many.CollapsedSlots);
+    }
+
+    [Fact]
     public async Task A_list_with_open_todos_is_not_empty()
     {
         var panel = await _f.Read(Token);
