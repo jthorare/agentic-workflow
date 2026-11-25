@@ -141,4 +141,99 @@ public sealed class WorkflowsDoneAsksTests
         page.KeepEditing();
         Assert.True(page.ShowsEditorButtons);
     }
+
+    [Fact]
+    public async Task Save_in_the_question_with_a_required_field_empty_sends_nothing_and_keeps_edit_mode_the_sheet_and_the_question()
+    {
+        var page = await WithATypedField();
+        page.Editor.Fields[0].Text = string.Empty;   // the required prompt cleared: changed, so Done asks, and Save is off
+        page.RequestDone();
+        Assert.True(page.AsksSaveFirst);
+
+        await page.SaveAndLeave(Token);
+
+        Assert.Empty(_f.Server.AppliedWorkflowOps);
+        Assert.Equal((true, true, true), (page.IsEditing, page.IsSettingsOpen, page.AsksSaveFirst));
+    }
+
+    [Fact]
+    public async Task The_question_is_forgotten_when_the_sheet_closes_by_its_own_Close()
+    {
+        var page = await WithATypedField();
+        page.RequestDone();
+
+        page.CloseSettings();
+
+        Assert.False(page.AsksSaveFirst);
+    }
+
+    [Fact]
+    public async Task The_question_is_forgotten_when_the_sheet_opens_on_a_step()
+    {
+        var page = await WithATypedField();
+        page.RequestDone();
+
+        await page.OpenSettings(Token);
+
+        Assert.False(page.AsksSaveFirst);
+    }
+
+    [Fact]
+    public async Task The_question_is_forgotten_when_another_workflow_opens()
+    {
+        var page = await WithATypedField();
+        page.RequestDone();
+
+        await page.OpenWorkflow(Slug, Token);
+
+        Assert.False(page.AsksSaveFirst);
+    }
+
+    [Fact]
+    public async Task Escape_with_the_sheet_open_and_a_changed_field_asks_like_Done()
+    {
+        var page = await WithATypedField();
+
+        page.RequestCloseSheet();
+
+        Assert.Equal((true, true, "Check twice"), (page.AsksSaveFirst, page.IsSettingsOpen, page.Editor.Fields[0].Text));
+    }
+
+    [Fact]
+    public async Task Escape_with_the_sheet_open_and_nothing_changed_closes_the_sheet_and_stays_in_edit_mode()
+    {
+        var page = await WithATypedField();
+        page.Editor.Fields[0].Text = "Look for drift";   // typed back to what it was
+
+        page.RequestCloseSheet();
+
+        Assert.Equal((false, false, true), (page.AsksSaveFirst, page.IsSettingsOpen, page.IsEditing));
+    }
+
+    [Fact]
+    public async Task A_second_Done_while_the_question_shows_changes_nothing()
+    {
+        var page = await WithATypedField();
+        page.RequestDone();
+
+        page.RequestDone();
+
+        Assert.Equal((true, true, true, "Check twice"), (page.AsksSaveFirst, page.IsEditing, page.IsSettingsOpen, page.Editor.Fields[0].Text));
+    }
+
+    [Fact]
+    public async Task Done_while_a_save_is_on_the_way_waits_for_it_and_leaves_when_it_worked()
+    {
+        var page = await WithATypedField();
+        _f.Server.ApplyWorkflowOpsGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var saving = page.Save(Token);
+
+        page.RequestDone();
+        Assert.Equal((true, false), (page.IsEditing, page.AsksSaveFirst));   // not asked, not left yet: the save decides
+
+        _f.Server.ApplyWorkflowOpsGate.SetResult();
+        await saving;
+
+        Assert.False(page.IsEditing);
+    }
 }

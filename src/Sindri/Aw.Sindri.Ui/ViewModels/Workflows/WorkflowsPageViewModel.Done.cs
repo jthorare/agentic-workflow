@@ -40,6 +40,9 @@ internal sealed partial class WorkflowsPageViewModel
         CloseEditor();
     }
 
+    /// <summary>Escape with the sheet open: asks like Done when a field changed, else closes the sheet (edit mode stays on).</summary>
+    internal void RequestCloseSheet() => CloseSettings();   // red stub: the old Escape, which drops typed text
+
     /// <summary>The question's Discard: leaves edit mode and drops the typed fields.</summary>
     internal void DiscardAndLeave()
     {
