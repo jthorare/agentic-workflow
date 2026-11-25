@@ -20,7 +20,7 @@ public sealed class RunNotificationCardTests
         workflow["spec"]!["nodes"]![1]!["type"] = "notify";   // the node "agent" is a notification now
         _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, workflow.ToJsonString());
         var served = Golden("workflow-runs-run", "finished");
-        var node = served["nodes"]![0]!;
+        var node = served["nodes"]!.AsArray().Single(n => string.Equals((string?)n!["node"], "agent", StringComparison.Ordinal))!;   // the served nodes follow graph order: start, then agent
         node["status"] = status;
         node["input"] = new JsonObject { ["title"] = "Drifted", ["body"] = "3 repos drifted" };
         node["output"] = new JsonObject();
@@ -28,12 +28,14 @@ public sealed class RunNotificationCardTests
         return await _f.OpenedRun(Token);
     }
 
+    private static NodeRunViewModel Of(RunDetailViewModel run, string node) => run.Groups.Single(g => string.Equals(g.Node, node, StringComparison.Ordinal)).Runs[0];
+
     [Fact]
     public async Task A_sent_notification_shows_its_title_its_message_and_where_it_went_and_no_empty_output()
     {
         var run = await Opened();
 
-        var card = run.Groups[0].Runs[0];
+        var card = Of(run, "agent");
         Assert.Equal((true, "Drifted", "3 repos drifted", "Sent to the Sindri inbox", false), (card.IsNotification, card.SentTitle, card.SentBody, card.SentTarget, card.HasOutput));
     }
 
@@ -42,7 +44,7 @@ public sealed class RunNotificationCardTests
     {
         var run = await Opened("failed");
 
-        var card = run.Groups[0].Runs[0];
+        var card = Of(run, "agent");
         Assert.Equal((false, string.Empty), (card.IsNotification, card.SentTarget));
     }
 
@@ -51,7 +53,7 @@ public sealed class RunNotificationCardTests
     {
         var run = await Opened();
 
-        var start = run.Groups[1].Runs[0];
+        var start = Of(run, "start");
         Assert.Equal((false, true), (start.IsNotification, start.HasOutput));
     }
 }

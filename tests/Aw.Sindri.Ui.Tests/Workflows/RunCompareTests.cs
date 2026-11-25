@@ -51,8 +51,8 @@ public sealed class RunCompareTests
         {
             ["slug"] = Slug,
             ["runs"] = new JsonArray(
-                new JsonObject { ["id"] = RunA, ["revision"] = 2, ["status"] = "failed", ["trigger"] = "cli", ["startedAt"] = a["startedAt"]!.DeepClone(), ["endedAt"] = a["endedAt"]!.DeepClone(), ["error"] = "x" },
-                new JsonObject { ["id"] = RunB, ["revision"] = 1, ["status"] = "failed", ["trigger"] = "manual", ["startedAt"] = b["startedAt"]!.DeepClone(), ["endedAt"] = b["endedAt"]!.DeepClone(), ["error"] = "x" }),
+                new JsonObject { ["id"] = RunA, ["revision"] = 2, ["status"] = "failed", ["trigger"] = "cli", ["startedAt"] = a["startedAt"]!.DeepClone(), ["endedAt"] = a["endedAt"]?.DeepClone(), ["error"] = "x" },
+                new JsonObject { ["id"] = RunB, ["revision"] = 1, ["status"] = "failed", ["trigger"] = "manual", ["startedAt"] = b["startedAt"]!.DeepClone(), ["endedAt"] = b["endedAt"]?.DeepClone(), ["error"] = "x" }),
         }.ToJsonString());
         _f.Server.WorkflowRunAnswers[RunA] = new RouteAnswer(System.Net.HttpStatusCode.OK, a.ToJsonString());
         _f.Server.WorkflowRunAnswers[RunB] = new RouteAnswer(System.Net.HttpStatusCode.OK, b.ToJsonString());

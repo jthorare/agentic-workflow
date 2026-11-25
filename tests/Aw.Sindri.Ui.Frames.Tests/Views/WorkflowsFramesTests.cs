@@ -171,7 +171,9 @@ public sealed class WorkflowsFramesTests : FrameHost
         var list = Named<ItemsControl>(window, "WorkflowRows");
         var row = list.GetVisualDescendants().OfType<Border>().First(b => b.Classes.Contains("item-row"));
         var title = row.GetVisualDescendants().OfType<Button>().First(b => b.Classes.Contains("row-title"));
-        Assert.True(title.TranslatePoint(default, row)!.Value.Y >= 8, "the title is at least 8 px below the row's top");
+        // #3683: the list row is one compact line (Row.Height.Default, 32 px), so the 24 px title sits centred at y=5, not 8 as in the old two-line row.
+        var y = title.TranslatePoint(default, row)!.Value.Y;
+        Assert.True(y >= 4, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the title is at least 4 px below the row's top: y={y} row={row.Bounds.Height} title={title.Bounds.Height}"));
         Assert.False(title.Focusable, "the row draws the focus ring, not the title");
     });
 

@@ -29,8 +29,9 @@ public sealed class RunEditFailedStepTests
     {
         var served = Golden("workflow-runs-run", "finished");
         served["status"] = "failed";
-        served["nodes"]![0]!["status"] = "failed";
-        served["nodes"]![0]!["error"] = "boom";
+        var agent = served["nodes"]!.AsArray().Single(n => string.Equals((string?)n!["node"], "agent", StringComparison.Ordinal))!;
+        agent["status"] = "failed";
+        agent["error"] = "boom";
         _f.ServeRun(served);
         _f.Server.WorkflowBlocksAnswer = new RouteAnswer(HttpStatusCode.OK, Blocks);
         var page = await _f.Shown(Token);
@@ -39,13 +40,15 @@ public sealed class RunEditFailedStepTests
         return page;
     }
 
+    private static NodeRunViewModel Of(WorkflowsPageViewModel page, string node) => page.Run.Groups.Single(g => string.Equals(g.Node, node, StringComparison.Ordinal)).Runs[0];
+
     [Fact]
     public async Task Only_a_failed_step_offers_Edit_step()
     {
         var page = await OnAFailedRun();
 
-        var failed = page.Run.Groups[0].Runs[0];
-        var fine = page.Run.Groups[1].Runs[0];
+        var failed = Of(page, "agent");
+        var fine = Of(page, "start");
         Assert.Equal(("agent", true, "Edit step"), (failed.Node, failed.CanEditStep, failed.EditStepText));
         Assert.Equal(("start", false), (fine.Node, fine.CanEditStep));
     }
@@ -55,7 +58,7 @@ public sealed class RunEditFailedStepTests
     {
         var page = await OnAFailedRun();
 
-        await page.Run.Groups[0].Runs[0].EditStep(Token);
+        await Of(page, "agent").EditStep(Token);
 
         Assert.True(page.IsRuns, "the page did not go back up to the workflow");
         Assert.Equal(("agent", true), (page.Runs.Graph!.SelectedId, page.IsSettingsOpen));

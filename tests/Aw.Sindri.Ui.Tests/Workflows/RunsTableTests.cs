@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels.Workflows;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Workflows;
@@ -31,7 +32,7 @@ public sealed class RunsTableTests
         ["result"] = result,
     };
 
-    private async Task<Aw.Sindri.Ui.ViewModels.Workflows.WorkflowsPageViewModel> Open(params JsonObject[] runs)
+    private async Task<WorkflowsPageViewModel> Open(params JsonObject[] runs)
     {
         _f.Server.WorkflowRunsAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, new JsonObject { ["slug"] = Slug, ["runs"] = new JsonArray([.. runs.Cast<JsonNode?>()]) }.ToJsonString());
         var page = await _f.Shown(Token);

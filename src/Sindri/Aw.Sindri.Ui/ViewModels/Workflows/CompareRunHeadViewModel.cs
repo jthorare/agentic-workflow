@@ -15,7 +15,7 @@ internal sealed class CompareRunHeadViewModel
     internal CompareRunHeadViewModel(string letter, WorkflowRunView run, TimeProvider clock)
     {
         var local = TimeZoneInfo.ConvertTime(run.StartedAt, clock.LocalTimeZone);
-        Title = $"Run {letter} \u00b7 " + local.ToString("ddd d MMM, HH:mm", CultureInfo.InvariantCulture);
+        Title = $"Run {letter} \u00b7 " + local.ToString("ddd d MMM yyyy", CultureInfo.InvariantCulture) + " \u00b7 " + local.ToString("HH:mm", CultureInfo.InvariantCulture);
         var parts = new List<string> { string.Create(CultureInfo.InvariantCulture, $"r{run.Revision}") };
         if (run.EndedAt is { } ended)
         {

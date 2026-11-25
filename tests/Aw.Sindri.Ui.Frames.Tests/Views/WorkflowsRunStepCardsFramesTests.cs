@@ -23,10 +23,11 @@ public sealed class WorkflowsRunStepCardsFramesTests : FrameHost
         Server.WorkflowRunsAnswers[Slug] = RouteAnswer.Api("workflows-slug-runs", "list-three");
         Server.WorkflowBlocksAnswer = RouteAnswer.Api("workflows-blocks", "listed");
         var run = Golden("workflow-runs-run", "finished");
-        run["nodes"]![0]!["status"] = "failed";
-        run["nodes"]![0]!["error"] = "boom";
-        run["nodes"]![1]!["input"] = new JsonObject { ["title"] = "Drifted", ["body"] = "3 repos drifted" };
-        run["nodes"]![1]!["output"] = new JsonObject();
+        JsonNode Served(string node) => run["nodes"]!.AsArray().Single(n => string.Equals((string?)n!["node"], node, StringComparison.Ordinal))!;   // the served nodes follow graph order (start, agent): find them by name
+        Served("agent")["status"] = "failed";
+        Served("agent")["error"] = "boom";
+        Served("start")["input"] = new JsonObject { ["title"] = "Drifted", ["body"] = "3 repos drifted" };
+        Served("start")["output"] = new JsonObject();
         Server.WorkflowRunAnswers[RunId] = new RouteAnswer(System.Net.HttpStatusCode.OK, run.ToJsonString());
         var (window, shell) = await Connected(width: 1280, height: 1400);
         shell.GoTo(PageId.Workflows);
@@ -39,7 +40,7 @@ public sealed class WorkflowsRunStepCardsFramesTests : FrameHost
 
         // every step card has a NotificationSent panel (hidden unless it is a notification): one of them must show
         Assert.Contains(window.GetVisualDescendants().OfType<Control>(), c => c.Name == "NotificationSent" && c.IsEffectivelyVisible);
-        var edit = Named<Button>(window, "EditFailedStep");
+        var edit = window.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "EditFailedStep" && b.IsEffectivelyVisible);   // every step card has one: only the failed step's shows
         Assert.True(edit.IsEffectivelyVisible);
         Assert.Equal("Edit step", edit.Content);
         await shell.Workflows.Run.Groups.Single(g => g.Node == "agent").Runs[0].EditStep(CancellationToken.None);

@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.ViewModels.Workflows;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Workflows;
@@ -40,7 +41,7 @@ public sealed class WorkflowListRowTests
         return row;
     }
 
-    private async Task<Aw.Sindri.Ui.ViewModels.Workflows.WorkflowsPageViewModel> Serve(params JsonObject[] rows)
+    private async Task<WorkflowsPageViewModel> Serve(params JsonObject[] rows)
     {
         _f.ServeList(new JsonObject { ["workflows"] = new JsonArray([.. rows.Cast<JsonNode?>()]) });
         return await _f.Shown(Token);
