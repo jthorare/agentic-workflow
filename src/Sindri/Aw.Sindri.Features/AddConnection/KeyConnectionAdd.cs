@@ -7,7 +7,7 @@ namespace Aw.Sindri.Features.AddConnection;
 
 /// <summary>
 /// The key half of <see cref="AddConnectionService"/>: a rest, cli or keyed mcp connection. It takes the key the CLI sent (read from the CLI's own environment) or, for an agent, the variable named by --key-env
-/// in serve's environment. The key is trimmed of whitespace (a paste's trailing newline). A rest key for a preset is checked with its service first (#4357, <see cref="IKeyCheck"/>: SND-CONN-018 refused, SND-CONN-019 not reached); only then is it stored and the row
+/// in serve's environment. The key is trimmed of whitespace (a paste's trailing newline). A rest key for a preset is checked with its service first (#4357, <see cref="IKeyCheck"/>: SND-CONN-018 refused, SND-CONN-019 not reached, SND-CONN-020 rate limited); only then is it stored and the row
 /// written as connected. A failed insert deletes the stored secret again.
 /// </summary>
 /// <param name="store">The connections.</param>

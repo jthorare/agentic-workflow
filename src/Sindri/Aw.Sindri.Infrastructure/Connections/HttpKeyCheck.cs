@@ -12,7 +12,7 @@ namespace Aw.Sindri.Infrastructure.Connections;
 /// <summary>
 /// IKeyCheck over one HTTPS call per service (#4357). Linear: a POST of `{ viewer { id } }` to its GraphQL endpoint with the key as it is in the Authorization header (a personal API key takes no
 /// 'Bearer'). Slack: a GET of the preset's probe URL (auth.test), which answers 200 with `"ok": false` for a bad token. Any other preset with a probe URL: a GET with a Bearer header, the status decides.
-/// A preset with neither is not checked. The call waits 15 s at most; a 429, or a 403 that carries Retry-After or `x-ratelimit-remaining: 0` (GitHub's secondary rate limit), is SND-CONN-019 "rate limiting", not a refused key. The key goes only into the Authorization header; no error holds it or the body.
+/// A preset with neither is not checked. The call waits 15 s at most; a 429, or a 403 that carries Retry-After or `x-ratelimit-remaining: 0` (GitHub's secondary rate limit), is SND-CONN-020 "rate limiting", not a refused key. The key goes only into the Authorization header; no error holds it or the body.
 /// </summary>
 /// <param name="http">The HTTP client (no redirects followed).</param>
 /// <param name="timeout">How long the check waits for the service (default 15 s).</param>
@@ -130,7 +130,7 @@ internal sealed class HttpKeyCheck(HttpClient http, TimeSpan? timeout = null) : 
         SindriErrors.ConnectionKeyRefused.With($"{preset.DisplayName} refused the key; nothing was stored (fix: check it was copied whole and has not expired or been revoked, then paste it again)");
 
     private static Error Limited(ConnectionPreset preset) =>
-        SindriErrors.ConnectionKeyUnchecked.With($"{preset.DisplayName} is rate limiting Sindri, so the key was not checked; nothing was stored (fix: wait a minute and try again)");
+        SindriErrors.ConnectionKeyRateLimited.With($"{preset.DisplayName} is rate limiting Sindri, so the key was not checked; nothing was stored (fix: wait a minute and try again)");
 
     private static Error Unchecked(ConnectionPreset preset) =>
         SindriErrors.ConnectionKeyUnchecked.With($"Sindri could not reach {preset.DisplayName} to check the key; nothing was stored (fix: check the network and try again)");
