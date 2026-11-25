@@ -36,7 +36,7 @@ public sealed class FileMapNarrowColumnsTests : FrameHost
     {
         var (window, _) = await OpenFiles();
 
-        var status = window.GetVisualDescendants().OfType<TextBlock>().First(t => string.Equals(t.Text, Labels.ContextFilesSuggested, StringComparison.Ordinal));
+        var status = window.GetVisualDescendants().OfType<TextBlock>().First(t => string.Equals(t.Text, Labels.ContextPagesSuggested, StringComparison.Ordinal));
         var row = status.GetVisualAncestors().OfType<Border>().First(b => b.Classes.Contains("file-row"));
         var columnRight = Margin + ((row.Bounds.Width - (2 * Margin)) * FileColumnShare);
         var right = status.TranslatePoint(default, row)!.Value.X + status.Bounds.Width;

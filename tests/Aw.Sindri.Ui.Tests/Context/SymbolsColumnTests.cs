@@ -111,13 +111,13 @@ public sealed class SymbolsColumnTests
         var map = new FileMapViewModel(new ContextPorts(api, () => new Uri("http://127.0.0.1:1/"), clipboard, clock, new CatalogViewModel(clipboard, clock), _ => { }));
 
         await map.Load("src/tabs/", TestContext.Current.CancellationToken);
-        Assert.Equal("symbols", map.SymbolsHeading);
+        Assert.Equal("Symbols", map.SymbolsHeading);
 
         var body = GoldenFiles.Node("context-filemap", "src-tabs");
         body["symbols"] = System.Text.Json.Nodes.JsonNode.Parse("""{"state":"stale","reason":null,"items":[],"commit":"7c3e1a2","files":[]}""");
         api.FileMapAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, body.ToJsonString());
         await map.Load("src/tabs/", TestContext.Current.CancellationToken);
-        Assert.Equal("symbols · from 7c3e1a2, stale", map.SymbolsHeading);
+        Assert.Equal("Symbols · from 7c3e1a2, stale", map.SymbolsHeading);
     }
 
     [Fact]

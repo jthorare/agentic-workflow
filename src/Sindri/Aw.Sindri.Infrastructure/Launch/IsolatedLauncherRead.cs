@@ -91,8 +91,9 @@ internal static class IsolatedLauncherRead
             return null;
         }
 
+        // "scope": null deserializes like an absent key, which is 'all': it goes to the fallback with a typo instead, so it fails closed to 'own' (#4252).
         var section = Section<SessionsSection>(element);
-        if (section is not null && LauncherConfigFile.Sessions(section) is null)
+        if (section is not null && LauncherConfigFile.Sessions(section) is null && WrittenScope(element) is not (true, null))
         {
             return section;
         }

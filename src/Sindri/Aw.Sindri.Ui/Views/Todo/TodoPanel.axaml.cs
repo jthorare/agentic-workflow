@@ -61,16 +61,27 @@ internal sealed partial class TodoPanel : UserControl
         }
     }
 
-    // The collapsed body is five row slots and the Show all slot tall in every state (D13): one row height, Row.Height.Default, the one the
-    // skeleton bars and the rows already use.
+    // The collapsed panel is five row slots and the Show all slot tall in every state (D13): one row height, Row.Height.Default, the one the
+    // skeleton bars and the rows already use. The body takes the slots its rows fill (all six with Show all, the error line or the skeleton), so
+    // the From elsewhere line sits right under the last todo; the spare slot under the line takes the rest and the card keeps its height (#2908).
     private void FixCollapsedHeight()
     {
-        var row = this.TryFindResource("Row.Height.Default", ActualThemeVariant, out var found) && found is double height ? height : DefaultRowHeight;
+        var row = RowHeight();
+        var open = Panel is { IsAttentionOpen: true };
         if (this.FindControl<Grid>("TodoCollapsed") is { } collapsed)
         {
-            collapsed.Height = Panel is { IsAttentionOpen: true } ? double.NaN : row * (Panel?.CollapsedSlots ?? CollapsedSlots);   // five rows and the Show all slot, or one line when the list is empty
+            collapsed.Height = open ? double.NaN : row * (Panel?.BodySlots ?? CollapsedSlots);   // the rows' slots, or one line when the list is empty
+        }
+
+        if (this.FindControl<Border>("TodoSpareSlot") is { } slot)
+        {
+            slot.Height = open ? 0 : row * (Panel?.SpareSlots ?? 0);
         }
     }
+
+    // Row.Height.Default from the theme, the height the skeleton bars and the rows already use.
+    private double RowHeight() =>
+        this.TryFindResource("Row.Height.Default", ActualThemeVariant, out var found) && found is double height ? height : DefaultRowHeight;
 
     // An open attention row is drawn at its full height, which grows the panel on the owner's key (D13); folded, the body is five slots again.
     private void OnDataContext(object? sender, EventArgs e)
@@ -83,7 +94,8 @@ internal sealed partial class TodoPanel : UserControl
 
     private void OnPanelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (string.Equals(e.PropertyName, nameof(TodoPanelViewModel.IsAttentionOpen), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(TodoPanelViewModel.CollapsedSlots), StringComparison.Ordinal))
+        if (string.Equals(e.PropertyName, nameof(TodoPanelViewModel.IsAttentionOpen), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(TodoPanelViewModel.CollapsedSlots), StringComparison.Ordinal)
+            || string.Equals(e.PropertyName, nameof(TodoPanelViewModel.BodySlots), StringComparison.Ordinal))
         {
             FixCollapsedHeight();
         }

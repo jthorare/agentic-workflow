@@ -29,7 +29,7 @@ internal sealed class SessionDiscovery(IProcessTable processes, IClaudeSessionRe
 
         if (settings.ConfigProblem is not null)
         {
-            problems.Add(SessionProblems.Launcher);
+            problems.Add(SessionProblems.Launcher(settings.Scope));
         }
 
         return problems;

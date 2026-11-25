@@ -1,7 +1,10 @@
+using System.Text.Json.Serialization;
+
 namespace Aw.Sindri.Core.Evolve;
 
 /// <summary>What a proposal changes (issue 3787). A proposal is a typed record; nothing edits the repo directly.</summary>
-internal enum ProposalKind
+[JsonConverter(typeof(JsonStringEnumConverter<ProposalKind>))]
+public enum ProposalKind
 {
     /// <summary>An edit to one skill's files under skills/&lt;name&gt;/.</summary>
     SkillEdit,
