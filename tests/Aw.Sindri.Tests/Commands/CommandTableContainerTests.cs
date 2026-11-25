@@ -1,8 +1,10 @@
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Host.Commands;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Ledger;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Aw.Sindri.Tests.Commands;
 
@@ -53,6 +55,42 @@ public sealed class CommandTableContainerTests : IDisposable
         Assert.Equal(1, code);   // no endpoint file in the home: not running
         Assert.NotNull(_built);
         Assert.Contains(_built, static d => d.ServiceType == typeof(IControlPlaneProbe));
+        Assert.DoesNotContain(_built, static d => d.ServiceType == typeof(ILedgerStore));
+    }
+
+    /// <summary>One command line per Dispatch arm (and sub-arm) that CliCompositions sends to the client container.</summary>
+    public static TheoryData<string> ClientArms => [
+        "", "--headless", "status", "status --follow", "stop", "views rebuild --no-start", "handoff", "open", "ledger",
+        "queue", "items", "item add title", "project list", "projects", "connections", "memories", "resources", "toolkits",
+        "requests", "decisions", "decide r1 yes", "needs-you", "services", "jobs", "index embed", "index status",
+        "agents", "skills", "code-index status", "library sync", "setup --apply", "repo add /nowhere", "repo onboard",
+        "launch probe", "launch picks",
+        "context sources sync", "context map build", "context map refresh", "context show x", "context eval backtest",
+        "context filemap accept l1", "context page list", "context search words", "context subgraph x", "context code x",
+        "context lenses", "context map whole", "context map", "context query words",
+        "wf create w --template t", "wf edit w --base 1 --ops []", "wf activate w", "wf pause w", "wf delete w",
+        "wf validate --slug w", "wf run w", "wf cancel r1", "wf rerun r1", "wf seen r1", "wf takeover r1 n1",
+        "wf handback r1 n1", "wf list", "wf blocks", "wf docs", "wf show w", "wf runs w", "wf run-show r1", "answer r1 yes"];
+
+    /// <summary>
+    /// Every Client arm resolves only what ComposeClient registers: a GetRequiredService of a full-only type under a client
+    /// prefix throws "No service for type" here. Serve is down and a start fails at once, so the exit code doesn't matter.
+    /// </summary>
+    [Theory, Trait("Lane", "integration")]
+    [MemberData(nameof(ClientArms))]
+    public async Task A_client_verb_resolves_nothing_the_client_container_lacks(string line)
+    {
+        var args = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(CliComposition.Client, CliCompositions.For(args));
+
+        _ = await CommandTable.Run(args, Environment, TimeProvider.System, services =>
+        {
+            _built = services;
+            _ = services.Replace(ServiceDescriptor.Singleton<IControlPlaneLauncher>(FakeControlPlaneLauncher.ExitingWith("SND-CLI-002 no serve in this test")));
+        });
+
+        Assert.DoesNotContain("No service for type", _out + _error.ToString(), StringComparison.Ordinal);
+        Assert.NotNull(_built);
         Assert.DoesNotContain(_built, static d => d.ServiceType == typeof(ILedgerStore));
     }
 
