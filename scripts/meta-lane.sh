@@ -313,6 +313,8 @@ else
       [ -n "$fg" ] && [ "$fg" -gt 0 ] 2> /dev/null && [ "$fg" != "$own_pg" ] || continue
       shown="$(ps -o args= -p "$fg" 2> /dev/null)"; shown="${shown%% *}"; shown="${shown##*/}"
       case "$shown" in ''|bash|sh|dash|zsh|ksh|fish|env) continue ;; esac   # a shell (or env) stands for "the agent is down" (the pane's fallback): never record it
+      # A zombie leader has no name to record: macOS ps prints "<defunct>", Linux "[name] <defunct>". Wait for a live one (#4354).
+      case "$shown" in '<defunct>'|'(defunct)'|\[*\]) continue ;; esac
       if [ "$shown" != "$(jq -r .processName "$ids/$lane.agent" 2> /dev/null)" ]; then
         tmpf="$ids/$lane.agent.tmp.$$.$RANDOM"
         jq -c --arg n "$shown" '.processName = $n' "$ids/$lane.agent" > "$tmpf" && mv "$tmpf" "$ids/$lane.agent"
