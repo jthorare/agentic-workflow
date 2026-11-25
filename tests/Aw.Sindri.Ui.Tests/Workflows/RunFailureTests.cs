@@ -142,6 +142,35 @@ public sealed class RunFailureTests
         Assert.Equal((true, false), (run.Failure!.HasCopyFix, run.Failure.HasOpenFix));
     }
 
+    [Fact]
+    public async Task A_run_that_succeeded_shows_no_failure_callout_even_when_a_continued_step_failed()
+    {
+        var served = Golden("workflow-runs-run", "finished");
+        var continued = Golden("workflow-runs-run", "failed")["nodes"]!.AsArray().Single(n => (string?)n!["node"] == "agent")!.DeepClone();   // a step with onFailure 'continue' that failed: its row keeps a failure
+        served["nodes"]!.AsArray().Add(continued);
+        _f.ServeRun(served);
+
+        var run = await _f.OpenedRun(Token);
+
+        Assert.Equal((false, null), (run.HasFailure, run.Failure));
+    }
+
+    [Fact]
+    public async Task A_failed_run_names_the_step_its_error_names_not_another_step_that_failed_and_continued()
+    {
+        var served = Golden("workflow-runs-run", "failed");   // the run's error names 'agent'
+        var other = AgentNode(served).DeepClone();
+        other["node"] = "later";
+        other["failure"]!["step"] = "Later step";
+        served["nodes"]!.AsArray().Add(other);   // listed after 'agent', failed too, and continued
+        _f.ServeRun(served);
+
+        var run = await _f.OpenedRun(Token);
+
+        Assert.Equal("Failed at Check the repos", run.Failure!.HeadingText);
+        Assert.Equal("agent", run.Failure.Node);
+    }
+
     // The run answer lists nodes in step order, so the failed agent node is found by name, not by index.
     private static JsonObject AgentNode(JsonNode served) =>
         served["nodes"]!.AsArray().Single(n => (string?)n!["node"] == "agent")!.AsObject();
