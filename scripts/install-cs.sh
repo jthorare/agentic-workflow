@@ -36,7 +36,7 @@
 #
 # Binaries (all published from a copy of the sources, under the box-wide heavy slot when it exists, so the checkout's lock
 # files never change):
-#   sindri       src/Sindri/Aw.Sindri.Host        framework-dependent (the Temporal worker cannot be trimmed)
+#   sindri       src/Sindri/Aw.Sindri.Host        framework-dependent (the Temporal worker cannot be trimmed), ReadyToRun
 #   sindri-ui    src/Sindri/Aw.Sindri.Ui.Desktop  NativeAOT, with its native libraries
 #   sindri-code-runner  src/Sindri/Aw.Sindri.CodeRunner  framework-dependent (it loads an assembly the control plane compiled); no wrapper: sindri starts it from beside itself
 #   judge        src/Judge/Aw.Judge.Host          NativeAOT, with libe_sqlite3.* beside it
@@ -537,7 +537,9 @@ publish() {
     if [ -f "$src/inputs/$name.rev" ]; then cp "$src/inputs/$name.rev" "$stage/inputs/"; fi
   }
   local aot=(-r "$platform" -p:RestoreLockedMode=false)
-  pub sindri src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj --no-self-contained
+  # sindri stays framework-dependent (the Temporal worker can't be trimmed) but is ReadyToRun-compiled, so a CLI call skips most of the
+  # JIT at start (#3727). ReadyToRun needs a runtime id, and its crossgen pack is restored outside the lock files, as for NativeAOT.
+  pub sindri src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj --no-self-contained "${aot[@]}" -p:PublishReadyToRun=true
   pub sindri-code-runner src/Sindri/Aw.Sindri.CodeRunner/Aw.Sindri.CodeRunner.csproj --no-self-contained
   pub ui-evidence src/Evidence/Aw.Evidence.Host/Aw.Evidence.Host.csproj --no-self-contained
   # Keep sindri-ui BEFORE judge: pub() keeps the first file of a name, so the staged libSkiaSharp.so is sindri-ui's (SkiaSharp.NativeAssets.Linux,
