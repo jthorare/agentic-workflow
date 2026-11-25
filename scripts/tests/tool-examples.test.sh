@@ -165,6 +165,14 @@ printf '# Demo\n\nAsk `mcp: sindri/t_query` first.\nThen look at the node.\nThen
 run --root "$D"
 expect_rc "a call repeated in its skill fails" 1
 expect_out "...the hint lists the lines" 'skills/demo/SKILL.md names mcp: sindri/t_node on lines 5, 6: set "source" in config/tool-examples/sindri-mcp.json to the one this example shows'
+# a source past the end of a file that got shorter still says where the call went
+D="$(tree pastend)"
+examples "$D" \
+  '{"tool": "t_query", "args": {"q": "x"}, "source": "skills/demo/SKILL.md:3"}' \
+  '{"tool": "t_node", "args": {"key": "k"}, "source": "skills/demo/SKILL.md:40"}'
+run --root "$D"
+expect_rc "a source past the end of the file fails" 1
+expect_out "...and says where the call is" 'examples[1] (t_node, from skills/demo/SKILL.md:40): the source line does not exist; the call moved to skills/demo/SKILL.md:4: set "source" to that line in config/tool-examples/sindri-mcp.json'
 
 # --- a missing golden is unknown ------------------------------------------------------------------------------------------
 D="$(tree nogolden)"
