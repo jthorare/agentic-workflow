@@ -43,7 +43,7 @@ public sealed class WorkflowFindingWordsTests
     {
         var (sentence, fix) = WorkflowFindingWords.Say("GRAPH-PROMPT-001", "Prompt", "config.prompt");
 
-        Assert.Equal(("Prompt has nothing to read: no step before it fetches data.", "Add a step before it, then use that step's output in the question."), (sentence, fix));
+        Assert.Equal(("Prompt has nothing to read: no step before it fetches data.", "Add a step before it, then use the output of that step in the question."), (sentence, fix));
     }
 
     [Fact]

@@ -11,8 +11,8 @@ internal static class WorkflowFindingWords
     // {T} is the card title; {F} is ": <field>" when the finding names a field, else empty.
     private static readonly Dictionary<string, (string Sentence, string Fix)> _rows = new(StringComparer.Ordinal)
     {
-        ["GRAPH-PROMPT-001"] = ("{T} has nothing to read: no step before it fetches data.", "Add a step before it, then use that step's output in the question."),
-        ["GRAPH-CONFIG-001"] = ("{T} has a setting that isn't filled in right{F}.", "Open the step and correct that setting."),
+        ["GRAPH-PROMPT-001"] = ("{T} has nothing to read: no step before it fetches data.", "Add a step before it, then use the output of that step in the question."),
+        ["GRAPH-CONFIG-001"] = ("{T} has a setting that is not filled in right{F}.", "Open the step and correct that setting."),
         ["GRAPH-TRIGGER-001"] = ("{T} is one of several starting steps, and a workflow has only one.", "Keep one starting step and delete the others."),
         ["GRAPH-TRIGGER-002"] = ("{T} has no starting step.", "Add a step that starts it, such as a schedule."),
         ["GRAPH-WIRING-001"] = ("{T} is not connected to the steps that run first.", "Connect it after another step, or delete it."),
@@ -21,13 +21,13 @@ internal static class WorkflowFindingWords
         ["GRAPH-NODE-001"] = ("{T} has the same internal name as another step.", "Give each step its own name."),
         ["GRAPH-NODE-002"] = ("{T} uses a name that Sindri keeps for itself.", "Rename the step."),
         ["GRAPH-NODE-003"] = ("{T} has a failure setting Sindri does not know.", "Choose stop, continue or skip item."),
-        ["GRAPH-NODE-004"] = ("{T} can't carry on after a failure, because it has two ways out.", "Turn off carrying on after failure, or add a step after both ways out."),
-        ["GRAPH-NODE-005"] = ("{T} can't skip an item: it is not inside a loop.", "Put it between a loop and its collect step, or choose stop or continue."),
+        ["GRAPH-NODE-004"] = ("{T} cannot carry on after a failure, because it has two ways out.", "Turn off carrying on after failure, or add a step after both ways out."),
+        ["GRAPH-NODE-005"] = ("{T} cannot skip an item: it is not inside a loop.", "Put it between a loop and its collect step, or choose stop or continue."),
         ["GRAPH-BLOCK-001"] = ("{T} is a kind of step this Sindri does not have.", "Replace it with another kind of step."),
         ["GRAPH-EDGE-001"] = ("{T} has a connection to a step that is not there.", "Remove the connection, or add the step."),
-        ["GRAPH-EDGE-002"] = ("{T} has a connection from an exit it does not have.", "Reconnect it from one of the step's own exits."),
+        ["GRAPH-EDGE-002"] = ("{T} has a connection from an exit it does not have.", "Reconnect it from one of its own exits."),
         ["GRAPH-CODE-001"] = ("{T} has code that does not compile.", "Open the step and fix the code at the line it names."),
-        ["GRAPH-COND-001"] = ("{T} has a condition Sindri can't read.", "Rewrite it with comparisons, and, or, not."),
+        ["GRAPH-COND-001"] = ("{T} has a condition Sindri cannot read.", "Rewrite it with comparisons, and, or, not."),
         ["GRAPH-CRON-001"] = ("{T} has a schedule that is not valid.", "Write five fields (minute, hour, day, month, weekday) and a timezone name such as America/Los_Angeles."),
         ["GRAPH-AGENT-001"] = ("{T} has no agent to run.", "Choose an agent on the step, or set a default agent in the profile."),
         ["GRAPH-AGENT-002"] = ("Sindri could not check yet which agent {T} runs on.", "Check that the step names an agent, or that a default agent is set."),
