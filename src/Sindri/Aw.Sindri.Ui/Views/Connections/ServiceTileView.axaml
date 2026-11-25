@@ -10,6 +10,9 @@
   <UserControl.Styles>
     <Style Selector="TextBlock.tile-chip.ok"><Setter Property="Foreground" Value="{DynamicResource Brush.Success}" /></Style>
     <Style Selector="TextBlock.step-detail"><Setter Property="Margin" Value="12,0,0,0" /></Style>
+    <Style Selector="TextBlock.tile-error"><Setter Property="Foreground" Value="{DynamicResource Brush.Error}" /></Style>
+    <!-- #4428: a check that never judged the token (not reached, rate limited) is not the person's mistake: amber, not red. -->
+    <Style Selector="TextBlock.tile-error.caution"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
     <Style Selector="TextBlock.tile-chip.attention"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
   </UserControl.Styles>
   <Border x:Name="ServiceTileFrame" Classes="card clickable" Width="260" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
@@ -73,7 +76,7 @@
       </StackPanel>
 
       <TextBlock x:Name="ServiceTileStatus" Classes="caption" Text="{Binding StatusText}" IsVisible="{Binding HasStatus}" TextWrapping="Wrap" />
-      <TextBlock x:Name="ServiceTileError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" />
+      <TextBlock x:Name="ServiceTileError" Classes="caption tile-error" Classes.caution="{Binding ErrorIsCaution}" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" />
 
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
         <Button x:Name="ServiceTilePrimary" Classes="command-control primary" Content="{Binding PrimaryText}" IsVisible="{Binding HasPrimary}" IsEnabled="{Binding CanPress}" Click="OnPrimary" ToolTip.Tip="{Binding BlockedReason}" />
