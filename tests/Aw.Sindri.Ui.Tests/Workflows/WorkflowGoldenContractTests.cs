@@ -75,12 +75,13 @@ public sealed class WorkflowGoldenContractTests
     {
         var run = Read<WorkflowRunView>("workflow-runs-run", "failed");
 
-        var failure = run.Nodes[0].Failure;
+        var agent = run.Nodes.Single(n => n.Node == "agent");
+        var failure = agent.Failure;
         Assert.NotNull(failure);
         Assert.Equal(("SND-LAUNCH-003", "Check the repos", "Choose an agent", "sindri profile set workflow.agent.target <id>"), (failure.Code, failure.Step, failure.FixLabel, failure.FixCommand));
         Assert.StartsWith("The agent for step Check the repos", failure.Sentence, StringComparison.Ordinal);
-        Assert.Equal((null, run.Nodes[0].Error), (failure.SecondaryLabel, failure.Detail));
-        Assert.Null(run.Nodes[1].Failure);
+        Assert.Equal((null, agent.Error), (failure.SecondaryLabel, failure.Detail));
+        Assert.Null(run.Nodes.Single(n => n.Node == "start").Failure);
     }
 
     [Fact]

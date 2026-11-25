@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
@@ -62,7 +63,7 @@ public sealed class RunFailureTests
     public async Task A_fix_with_no_command_shows_no_copy_button()
     {
         var served = Golden("workflow-runs-run", "failed");
-        served["nodes"]![0]!["failure"]!["fixCommand"] = null;
+        AgentNode(served)["failure"]!["fixCommand"] = null;
         _f.ServeRun(served);
 
         var run = await _f.OpenedRun(Token);
@@ -74,7 +75,7 @@ public sealed class RunFailureTests
     public async Task A_failed_run_whose_node_carries_no_failure_keeps_the_engine_text_in_the_header()
     {
         var served = Golden("workflow-runs-run", "failed");
-        _ = served["nodes"]![0]!.AsObject().Remove("failure");
+        _ = AgentNode(served).Remove("failure");
         _f.ServeRun(served);
 
         var run = await _f.OpenedRun(Token);
@@ -91,7 +92,7 @@ public sealed class RunFailureTests
 
         var run = await _f.OpenedRun(Token);
 
-        var agent = Assert.Single(run.Groups[0].Runs);
+        var agent = Assert.Single(run.Groups.Single(g => g.Node == "agent").Runs);
         Assert.StartsWith("The agent for step Check the repos", agent.ErrorText, StringComparison.Ordinal);
         Assert.DoesNotContain("SND-", agent.ErrorText, StringComparison.Ordinal);
     }
@@ -111,4 +112,8 @@ public sealed class RunFailureTests
         Assert.Equal(("Check stopped: repo is 812 MB.", true), (failed.ErrorText, failed.HasError));
         Assert.DoesNotContain("node '", failed.Name, StringComparison.Ordinal);
     }
+
+    // The run answer lists nodes in step order, so the failed agent node is found by name, not by index.
+    private static JsonObject AgentNode(JsonNode served) =>
+        served["nodes"]!.AsArray().Single(n => (string?)n!["node"] == "agent")!.AsObject();
 }
