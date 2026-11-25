@@ -25,27 +25,42 @@ internal sealed class WorkflowFindingsViewModel : ObservableObject
 
     /// <summary>Shows what the server found.</summary>
     /// <param name="validated">The validate answer.</param>
-    internal void Show(WorkflowValidated validated) => All = [.. validated.Findings.Select(f => new WorkflowFindingViewModel(f))];
+    internal void Show(WorkflowValidated validated)
+    {
+        FailedText = string.Empty;
+        All = [.. validated.Findings.Select(f => new WorkflowFindingViewModel(f))];
+        WholeWorkflow = [.. All.Where(static f => f.Node is null)];
+    }
 
-    /// <summary>The findings about the whole workflow, not one step (they have no node), in the server's order. Not listed yet.</summary>
-    public IReadOnlyList<WorkflowFindingViewModel> WholeWorkflow { get; private set; } = [];
+    /// <summary>The findings about the whole workflow, not one step (they have no node), in the server's order.</summary>
+    public IReadOnlyList<WorkflowFindingViewModel> WholeWorkflow { get; private set { Set(ref field, value); OnChanged(nameof(HasWholeWorkflow)); } } = [];
 
     /// <summary>True when some finding is about the whole workflow.</summary>
     public bool HasWholeWorkflow => WholeWorkflow.Count > 0;
 
-    /// <summary>The line that says the last check failed; empty when it did not. Not shown yet.</summary>
-    public string FailedText { get; private set; } = string.Empty;
+    /// <summary>The line that says the last check failed; empty when it did not.</summary>
+    public string FailedText { get; private set { Set(ref field, value); OnChanged(nameof(HasFailed)); } } = string.Empty;
 
     /// <summary>True when the last check failed.</summary>
     public bool HasFailed => FailedText.Length > 0;
 
+    /// <summary>The last check failed: no findings, and a line that says so (never an older revision's findings).</summary>
+    internal void Fail()
+    {
+        Clear();
+        FailedText = Labels.WfFindingsFailed;
+    }
+
     /// <summary>Forgets the findings (another workflow opened, or none is).</summary>
     internal void Clear()
     {
+        FailedText = string.Empty;
         if (All.Count > 0)
         {
             All = [];
         }
+
+        WholeWorkflow = [];
     }
 
     /// <summary>Marks each card of a graph with the findings that name it, and clears the marks of the rest.</summary>
