@@ -87,9 +87,43 @@ public sealed class WorkflowFindingsTests
         _ = page.Runs.Graph!.SelectNode("agent");
 
         var finding = Assert.Single(page.StepFindings);
-        Assert.StartsWith("prompt node 'agent' reads no data: its question has no {{...}} reference", finding.Sentence, StringComparison.Ordinal);
-        Assert.StartsWith("add a step before 'agent' that fetches the data", finding.FixLine, StringComparison.Ordinal);
         Assert.Equal((true, false, "attention"), (finding.HasFix, finding.IsError, finding.ToneWord));
+    }
+
+    [Fact]
+    public async Task Finding_names_the_step_by_its_card_title()
+    {
+        var page = await OnRuns(RouteAnswer.SpecShaped("workflows-validate", "prompt-reads-no-data"));
+        _ = page.Runs.Graph!.SelectNode("agent");
+
+        var finding = Assert.Single(page.StepFindings);
+
+        Assert.StartsWith(Node(page, "agent").Title + " has nothing to read", finding.Sentence, StringComparison.Ordinal);
+        Assert.DoesNotContain("'agent'", finding.Sentence + finding.FixLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("{{", finding.Sentence + finding.FixLine + finding.Name, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Finding_tag_and_header_use_one_term()
+    {
+        var page = await OnRuns(new RouteAnswer(HttpStatusCode.OK, Many));
+        _ = page.Runs.Graph!.SelectNode("agent");
+
+        Assert.Equal("3 things to fix", page.Findings.HeaderText);
+        Assert.All(page.StepFindings, f => Assert.Equal("To fix", f.Word));
+        Assert.All(page.StepFindings, f => Assert.DoesNotContain("Warning", f.Name, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task An_unmapped_finding_shows_a_product_sentence_never_the_raw_text()
+    {
+        var page = await OnRuns(new RouteAnswer(HttpStatusCode.OK, Many));
+        _ = page.Runs.Graph!.SelectNode("agent");
+
+        var configFinding = page.StepFindings.Single(f => string.Equals(f.Code, "GRAPH-CONFIG-001", StringComparison.Ordinal));
+
+        Assert.DoesNotContain("'agent'", configFinding.Sentence + configFinding.FixLine, StringComparison.Ordinal);
+        Assert.Contains(Node(page, "agent").Title, configFinding.Sentence, StringComparison.Ordinal);
     }
 
     [Fact]

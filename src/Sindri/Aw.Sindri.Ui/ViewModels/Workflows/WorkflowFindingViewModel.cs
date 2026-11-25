@@ -22,6 +22,9 @@ internal sealed class WorkflowFindingViewModel
             : null;
     }
 
+    /// <summary>The step's card title the finding's words name (the whole workflow when it has no step).</summary>
+    internal string StepTitle { get; set; } = WorkflowFindingWords.Workflow;
+
     /// <summary>The finding's id: code, node and field.</summary>
     public string Id { get; }
 
