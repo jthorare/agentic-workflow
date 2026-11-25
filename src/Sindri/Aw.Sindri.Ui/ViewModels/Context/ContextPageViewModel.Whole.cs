@@ -34,6 +34,8 @@ internal sealed partial class ContextPageViewModel
     private void InitWhole()
     {
         Whole.AreaOpenRequested += (_, e) => _ = OpenWholeArea(e.Value, CancellationToken.None);
+        Whole.AreaPageRequested += (_, e) => _ = OpenWholeAreaPage(Whole.AreaKey, e.Value, CancellationToken.None);
+        Whole.ConceptListRequested += (_, e) => _ = OpenConceptList(e.Value.Tab, e.Value.Page, CancellationToken.None);
         Whole.HomeRequested += (_, _) => MapHome();
         Whole.Panel.Launcher = Ports.Launcher ?? NullLauncher.Instance;
         Whole.Panel.Clipboard = Ports.Clipboard;
@@ -80,11 +82,12 @@ internal sealed partial class ContextPageViewModel
         }
 
         var generation = _openGeneration;   // a first read or a repo switch that begins while this one is in flight makes its answer stale (#3697)
+        _listRead++;   // an area page or concept list still being read is for the map being replaced
         Whole.Loading();
         ChangedWhole();
         try
         {
-            var read = await Ports.Api.WholeMap(api, new WholeMapQuery("auto", Area: null, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId), cancellationToken).ConfigureAwait(true);
+            var read = await Ports.Api.WholeMap(api, new WholeMapQuery("auto", Area: null, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId, Page: OpenedConceptId is null ? 1 : Whole.ConceptPage, ConceptTab: OpenedConceptId is null ? null : Whole.ConceptTab), cancellationToken).ConfigureAwait(true);
             if (generation == _openGeneration)
             {
                 await DrawRead(api, read, followed, cancellationToken).ConfigureAwait(true);
@@ -162,32 +165,12 @@ internal sealed partial class ContextPageViewModel
     /// <param name="area">The area's key.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>When the answer is drawn.</returns>
-    internal async Task OpenWholeArea(string area, CancellationToken cancellationToken = default)
-    {
-        if (Ports.ApiUrl() is not { } api)
-        {
-            return;
-        }
-
-        var read = await Ports.Api.WholeMap(api, new WholeMapQuery("nodes", area, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId), cancellationToken).ConfigureAwait(true);
-        if (read.IsSuccess)
-        {
-            Whole.ShowArea(read.Value);
-            SetProblem(string.Empty);
-        }
-        else
-        {
-            ShowProblem(read.Error);
-        }
-
-        OnChanged(nameof(Problem));
-        OnChanged(nameof(HasProblem));
-        ChangedWhole();
-    }
+    internal Task OpenWholeArea(string area, CancellationToken cancellationToken = default) => OpenWholeAreaPage(area, 1, cancellationToken);
 
     /// <summary>"~" on the map: back to the whole map from a query's answer, or from one open feature to all of them.</summary>
     internal void MapHome()
     {
+        _listRead++;   // a page still being read is for the place being left
         if (!BackToWholeMap())
         {
             Whole.CloseArea();

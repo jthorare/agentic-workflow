@@ -6,42 +6,21 @@
   "repo": "aw-split-panes",
   "detail": "nodes",
   "counts": {
-    "nodes": 11,
-    "edges": 12,
+    "nodes": 7,
+    "edges": 7,
     "byKind": {
-      "feature": 4,
+      "feature": 2,
       "surface": 1,
       "action": 1,
       "thing": 0,
       "flow": 0,
       "decision": 0,
       "record": 0,
-      "code": 3,
-      "concept": 2
+      "code": 2,
+      "concept": 1
     }
   },
   "areas": [
-    {
-      "key": "feature:invoices",
-      "label": "Invoices",
-      "trust": "trusted",
-      "members": 2,
-      "byKind": {
-        "feature": 1,
-        "code": 1
-      },
-      "unassigned": false
-    },
-    {
-      "key": "feature:lone",
-      "label": "Loose end",
-      "trust": "trusted",
-      "members": 1,
-      "byKind": {
-        "feature": 1
-      },
-      "unassigned": false
-    },
     {
       "key": "feature:shifts",
       "label": "Shifts",
@@ -67,27 +46,6 @@
     }
   ],
   "areaEdges": [
-    {
-      "from": "feature:invoices",
-      "to": "feature:shifts",
-      "type": "depends-on",
-      "count": 1,
-      "confirmed": 1
-    },
-    {
-      "from": "feature:lone",
-      "to": "feature:shifts",
-      "type": "depends-on",
-      "count": 1,
-      "confirmed": 1
-    },
-    {
-      "from": "feature:swaps",
-      "to": "feature:invoices",
-      "type": "depends-on",
-      "count": 1,
-      "confirmed": 1
-    },
     {
       "from": "feature:shifts",
       "to": "feature:swaps",

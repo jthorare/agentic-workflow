@@ -16,12 +16,72 @@ internal static partial class Labels
     /// <summary>The map breadcrumb's accessible name.</summary>
     internal const string ContextMapCrumbsName = "Where you are on the map";
 
-    /// <summary>What a feature cut at the cap shows.</summary>
-    /// <param name="shown">How many items are drawn.</param>
-    /// <param name="total">How many the feature holds.</param>
-    /// <returns>"Showing 500 of 640 items; the rest are not shown."</returns>
-    internal static string ContextWholeAreaTruncated(int shown, int total) =>
-        string.Create(CultureInfo.InvariantCulture, $"Showing {shown} of {total} items; the rest are not shown.");
+    /// <summary>The paging line over an open area's list.</summary>
+    /// <param name="page">The page on screen.</param>
+    /// <param name="pages">How many pages there are.</param>
+    /// <param name="shown">How many items the page holds.</param>
+    /// <param name="total">How many the area holds.</param>
+    /// <returns>"Page 2 of 3 · 50 of 121 items".</returns>
+    internal static string ContextWholeAreaPage(int page, int pages, int shown, int total) =>
+        string.Create(CultureInfo.InvariantCulture, $"Page {page} of {pages} · {shown} of {total} items");
+
+    /// <summary>The button to the previous page of an open area.</summary>
+    internal const string ContextWholePreviousPage = "Previous page";
+
+    /// <summary>The button to the next page of an open area.</summary>
+    internal const string ContextWholeNextPage = "Next page";
+
+    /// <summary>The accessible name of an open area's ranked list.</summary>
+    internal const string ContextWholeAreaList = "Items of this feature, most linked first";
+
+    /// <summary>The counts on an area tile of the whole-repo overview.</summary>
+    /// <param name="code">How many code files.</param>
+    /// <param name="features">How many features.</param>
+    /// <param name="records">How many records and decisions.</param>
+    /// <returns>"1980 code files · 71 features · 96 records".</returns>
+    internal static string ContextWholeTileCounts(int code, int features, int records) => string.Create(
+        CultureInfo.InvariantCulture,
+        $"{code} {(code == 1 ? "code file" : "code files")} · {features} {(features == 1 ? "feature" : "features")} · {records} {(records == 1 ? "record" : "records")}");
+
+    /// <summary>The accessible name of one area tile of the overview.</summary>
+    /// <param name="label">The area's name.</param>
+    /// <param name="counts">The tile's counts line.</param>
+    /// <returns>"Billing, 12 code files · 2 features · 1 record. Press Enter to open."</returns>
+    internal static string ContextWholeAreaCardName(string label, string counts) => $"{label}, {counts}. Press Enter to open.";
+
+    /// <summary>The line over the overview's tiles.</summary>
+    /// <param name="areas">How many areas.</param>
+    /// <param name="items">How many items they hold in all.</param>
+    /// <returns>"57 areas · 12171 items".</returns>
+    internal static string ContextWholeTilesHead(int areas, int items) => string.Create(CultureInfo.InvariantCulture, $"{areas} {(areas == 1 ? "area" : "areas")} · {items} {(items == 1 ? "item" : "items")}");
+
+    /// <summary>The accessible name of the overview's tiles.</summary>
+    internal const string ContextWholeTilesName = "Areas of the repo, largest first";
+
+    /// <summary>The accessible name of the skeleton rows while a list is read.</summary>
+    internal const string ContextWholeListLoading = "Reading the list…";
+
+    /// <summary>The line when a list could not be read.</summary>
+    internal const string ContextWholeListFailed = "Couldn't read this list";
+
+    /// <summary>The accessible name of an opened concept's list.</summary>
+    internal const string ContextWholeConceptList = "Files, features and records of this concept, most linked first";
+
+    /// <summary>The accessible name of the row of tabs over a concept's list.</summary>
+    internal const string ContextWholeConceptTabs = "Kinds in this concept";
+
+    /// <summary>The line when a concept holds nothing.</summary>
+    internal const string ContextWholeConceptEmpty = "No files in this concept yet.";
+
+    /// <summary>One tab over a concept's list.</summary>
+    /// <param name="tab">all, code, feature or record.</param>
+    /// <param name="count">How many items the tab holds.</param>
+    /// <returns>"Code 1980".</returns>
+    internal static string ContextWholeConceptTab(string tab, int count)
+    {
+        var name = tab switch { "code" => "Code", "feature" => "Features", "record" => "Records", _ => "All" };
+        return string.Create(CultureInfo.InvariantCulture, $"{name} {count}");
+    }
 
     /// <summary>The note by the search box when nothing on the map matches.</summary>
     internal const string ContextSearchNoMatches = "No matches";
@@ -126,4 +186,51 @@ internal static partial class Labels
     /// <param name="what">The kind, or how many items a feature holds.</param>
     /// <returns>"Tab groups, feature".</returns>
     internal static string ContextMapItemName(string label, string what) => $"{label}, {what}";
+
+    /// <summary>The heading of the entry band of an opened area.</summary>
+    internal const string ContextAreaEntry = "Entry points";
+
+    /// <summary>What the entry band holds.</summary>
+    internal const string ContextAreaEntryWhat = "routes, jobs, middleware";
+
+    /// <summary>The heading of the core band.</summary>
+    internal const string ContextAreaCore = "Core";
+
+    /// <summary>What the core band holds.</summary>
+    internal const string ContextAreaCoreWhat = "services and domain logic";
+
+    /// <summary>The heading of the data band.</summary>
+    internal const string ContextAreaData = "Data and effects";
+
+    /// <summary>What the data band holds.</summary>
+    internal const string ContextAreaDataWhat = "tables, events";
+
+    /// <summary>What an empty band says.</summary>
+    internal const string ContextAreaNone = "none in this area";
+
+    /// <summary>The Core band's Requests sub-group.</summary>
+    internal const string ContextAreaGroupRequests = "Requests";
+
+    /// <summary>The Core band's Services sub-group.</summary>
+    internal const string ContextAreaGroupServices = "Services and rules";
+
+    /// <summary>The Core band's Responses sub-group.</summary>
+    internal const string ContextAreaGroupResponses = "Responses";
+
+    /// <summary>The bar over an area's canvas.</summary>
+    /// <param name="nodes">How many nodes the area draws.</param>
+    /// <param name="inView">How many of them are on screen.</param>
+    /// <returns>"40 nodes · 38 in view".</returns>
+    internal static string ContextAreaBar(int nodes, int inView) => string.Create(CultureInfo.InvariantCulture, $"{nodes} nodes · {inView} in view");
+
+    /// <summary>The fade at the foot of an area's canvas.</summary>
+    /// <param name="count">How many nodes lie below the screen.</param>
+    /// <returns>"2 more out of view".</returns>
+    internal static string ContextAreaMoreOutOfView(int count) => string.Create(CultureInfo.InvariantCulture, $"{count} more out of view");
+
+    /// <summary>The tooltip of a link.</summary>
+    /// <param name="from">The first node's label.</param>
+    /// <param name="to">The second node's label.</param>
+    /// <returns>"A → B".</returns>
+    internal static string ContextLinkTip(string from, string to) => $"{from} → {to}";
 }
