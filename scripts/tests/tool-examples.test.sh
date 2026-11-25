@@ -149,6 +149,23 @@ run --root "$D"
 expect_rc "a source line that doesn't name the tool fails" 1
 expect_out "...naming the line" "examples[1] (t_node, from skills/demo/SKILL.md:1): the source line does not name t_node"
 
+D="$(tree moved)"
+printf '# Demo\n\nA new line.\nAsk `mcp: sindri/t_query` first.\nThen `mcp: sindri/t_node` for the node.\n' > "$D/skills/demo/SKILL.md"
+run --root "$D"
+expect_rc "a call that moved down a line fails" 1
+expect_out "...t_node hint names its new line" 'the call moved to skills/demo/SKILL.md:5: set "source" to that line in config/tool-examples/sindri-mcp.json'
+expect_out "...t_query hint names its new line" 'the call moved to skills/demo/SKILL.md:4: set "source" to that line in config/tool-examples/sindri-mcp.json'
+D="$(tree gone)"
+printf '# Demo\n\nAsk `mcp: sindri/t_query` first.\nThe node call was removed.\n' > "$D/skills/demo/SKILL.md"
+run --root "$D"
+expect_rc "a call removed from its skill fails" 1
+expect_out "...the hint says to fix or remove the example" 'skills/demo/SKILL.md has no mcp: sindri/t_node line now: fix or remove the example in config/tool-examples/sindri-mcp.json'
+D="$(tree several)"
+printf '# Demo\n\nAsk `mcp: sindri/t_query` first.\nThen look at the node.\nThen `mcp: sindri/t_node` for the node.\nAgain `mcp: sindri/t_node` for more.\n' > "$D/skills/demo/SKILL.md"
+run --root "$D"
+expect_rc "a call repeated in its skill fails" 1
+expect_out "...the hint lists the lines" 'skills/demo/SKILL.md names mcp: sindri/t_node on lines 5, 6: set "source" in config/tool-examples/sindri-mcp.json to the one this example shows'
+
 # --- a missing golden is unknown ------------------------------------------------------------------------------------------
 D="$(tree nogolden)"
 rm "$D/$GOLDEN_REL"
