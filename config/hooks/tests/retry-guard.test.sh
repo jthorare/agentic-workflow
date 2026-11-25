@@ -341,6 +341,93 @@ OUT="$(printf '%s' "$(pre s-adv Bash "$CALL")" | env -u AW_POLICY_RETRY_GUARD_1_
 check "advisory: a would-be deny that later clears counts as cleared after change" "$(st s-adv '"\(.counters.cleared) \(.counters.clearedAfterChange)"')" "1 1"
 unlink "$BIN/aw-nosuch-tool"
 
+# --- #4304 red rows ----------------------------------------------------------------------------------------------------------
+bash_in_d() { jq -nc --arg c "$1" --arg d "$2" '{command:$c, description:$d}'; }
+# cfail / cpre: PostToolUseFailure / PreToolUse with a caller-chosen cwd (the helpers above hardcode $WORK)
+cfail() { jq -nc --arg s "$1" --arg t "$2" --argjson i "$3" --arg e "$4" --arg cwd "$5" \
+  '{session_id:$s, hook_event_name:"PostToolUseFailure", cwd:$cwd, tool_name:$t, tool_input:$i, tool_use_id:"toolu_x", error:$e, is_interrupt:false, duration_ms:5}'; }
+cpre() { jq -nc --arg s "$1" --arg t "$2" --argjson i "$3" --arg cwd "$4" \
+  '{session_id:$s, hook_event_name:"PreToolUse", cwd:$cwd, tool_name:$t, tool_input:$i, tool_use_id:"toolu_x"}'; }
+bump() { touch -d '+5 seconds' "$1" 2> /dev/null || touch -t "$(date -v+5S +%Y%m%d%H%M.%S 2> /dev/null)" "$1"; }
+
+# #4304 item 1: Bash description must not be part of the call hash.
+reset
+record "$(failure s-desc Bash "$(bash_in_d 'aw-nosuch-tool x' 'first')" 'aw-nosuch-tool: command not found')"
+gate "$(pre s-desc Bash "$(bash_in_d 'aw-nosuch-tool x' 'second')")"
+check "#4304 item 1, description: a reworded description is still the same call (denied)" "$RC" "2"
+record "$(success s-desc Bash "$(bash_in_d 'aw-nosuch-tool x' 'third')")"
+check "#4304 item 1, description: a success under another description clears the row" "$(st s-desc '.problems | length')" "0"
+reset
+record "$(failure s-desc2 Agent '{"prompt":"p","description":"a"}' 'agent failed: invalid argument')"
+gate "$(pre s-desc2 Agent '{"prompt":"p","description":"b"}')"
+check "#4304 item 1, description: an Agent description still changes the hash (guard)" "$RC" "0"
+
+# #4304 item 2: a bad-args row clears when a file the call depends on changed since the failure.
+PROJ="$WORK/proj"; mkdir -p "$PROJ"; echo 'test:' > "$PROJ/Makefile"
+reset
+record "$(cfail s-ba Bash '{"command":"make test"}' 'make: invalid option -- x' "$PROJ")"
+gate "$(cpre s-ba Bash '{"command":"make test"}' "$PROJ")"
+check "#4304 item 2, bad-args: unchanged build file, the repeat is denied (guard)" "$RC" "2"
+bump "$PROJ/Makefile"
+gate "$(cpre s-ba Bash '{"command":"make test"}' "$PROJ")"
+check "#4304 item 2, bad-args: a changed Makefile lets the repeat through" "$RC" "0"
+check "#4304 item 2, bad-args: ...and clears the row" "$(st s-ba '.problems | length')" "0"
+EMPTYD="$WORK/emptyproj"; mkdir -p "$EMPTYD"
+reset
+record "$(cfail s-ba2 Bash '{"command":"frobnicate --bogus"}' 'frobnicate: invalid option -- bogus' "$EMPTYD")"
+gate "$(cpre s-ba2 Bash '{"command":"frobnicate --bogus"}' "$EMPTYD")"
+check "#4304 item 2, bad-args: no stamped file, the repeat stays denied (guard)" "$RC" "2"
+printf '#!/bin/sh\necho hi\n' > "$PROJ/run.sh"
+reset
+record "$(cfail s-ba3 Bash '{"command":"./run.sh --bogus"}' 'run.sh: unknown option --bogus' "$PROJ")"
+bump "$PROJ/run.sh"
+gate "$(cpre s-ba3 Bash '{"command":"./run.sh --bogus"}' "$PROJ")"
+check "#4304 item 2, bad-args: an edited script named by the command lets the repeat through" "$RC" "0"
+# (item 2, missing-path half: already pinned by "missing-path: once it exists, the call passes" above.)
+
+# #4304 item 3: the Cursor adapter puts session_id first, so a nested "session_id" in tool_input never wins.
+NEST='{"conversation_id":"cursor-sid-1","hook_event_name":"postToolUseFailure","cwd":"/tmp","tool_name":"Shell","tool_input":{"command":"echo hi","session_id":"evil-sid"},"error_message":"x: command not found"}'  # an unescaped nested key, as an MCP argument or a tool_response object carries
+NESTPRE="$(printf '%s' "$NEST" | jq -c '.hook_event_name = "preToolUse"')"
+reset
+printf '%s' "$NEST" | bash "$HOOKS/adapters/cursor.sh" "$RECORD" > /dev/null 2>&1
+check "#4304 item 3, retry-record: the real conversation id names the state file" "$([ -e "$RG/cursor-sid-1.json" ] && echo yes || echo no)" "yes"
+check "#4304 item 3, retry-record: the nested id names no state file" "$([ -e "$RG/evil-sid.json" ] && echo yes || echo no)" "no"
+FLEETD="$WORK/fleet4304"
+printf '%s' "$NESTPRE" | AW_FLEET_DIR="$FLEETD" bash "$HOOKS/adapters/cursor.sh" "$HOOKS/fleet-state.sh" > /dev/null 2>&1
+check "#4304 item 3, fleet-state: the real id names the file" "$([ -e "$FLEETD/cursor/cursor-sid-1.json" ] && echo yes || echo no)" "yes"
+check "#4304 item 3, fleet-state: the nested id names no file" "$([ -e "$FLEETD/cursor/evil-sid.json" ] && echo yes || echo no)" "no"
+reset
+DUPCMD="cat > /tmp/watch-pr.sh <<'EOF'
+#!/usr/bin/env bash
+while true; do
+  gh pr checks 7 --repo acme/app
+  gh pr view 7 --repo acme/app --json state -q .state | grep -q MERGED && break
+  sleep 60
+done
+EOF
+true"
+jq -nc --arg c "$DUPCMD" '{conversation_id:"cursor-sid-1",hook_event_name:"preToolUse",cwd:"/tmp",tool_name:"Shell",tool_input:{command:$c,session_id:"evil-sid"}}' \
+  | bash "$HOOKS/adapters/cursor.sh" "$HOOKS/dup-script-gate.sh" > /dev/null 2>&1
+check "#4304 item 3, dup-script: the nested id names no state file" "$([ -e "$AW_STATE_DIR/duplicate-script/evil-sid.json" ] && echo yes || echo no)" "no"
+export CAPTURE_FILE="$WORK/capture4304.json"
+printf '%s' "$NESTPRE" | bash "$HOOKS/adapters/cursor.sh" "$DIR/fixtures/capture-hook.sh" > /dev/null 2>&1
+check "#4304 item 3, adapter: session_id and hook_event_name are the first two keys" "$(jq -c '[keys_unsorted[0:2][]]' "$CAPTURE_FILE")" '["session_id","hook_event_name"]'
+
+# #4304 item 4: a redundant working_directory in the pre payload must not change the call hash.
+reset
+bash "$HOOKS/adapters/cursor.sh" "$RECORD" < "$FIX/cursor/post-tool-use-failure-shell.json" > /dev/null 2>&1
+OUT="$(jq -c '.tool_input.working_directory = "/tmp"' "$FIX/cursor/pretooluse-shell-nosuch.json" | bash "$HOOKS/adapters/cursor.sh" "$GATE" 2> /dev/null)"
+check "#4304 item 4, cursor: working_directory in pre but not in the failure still matches (deny)" "$(printf '%s' "$OUT" | jq -r .permission)" "deny"
+OUT="$(jq -c '.tool_input.working_directory = "/elsewhere"' "$FIX/cursor/pretooluse-shell-nosuch.json" | bash "$HOOKS/adapters/cursor.sh" "$GATE" 2> /dev/null)"
+check "#4304 item 4, cursor: a working_directory that differs from cwd is a different call (allow, guard)" "$(printf '%s' "$OUT" | jq -r .permission)" "allow"
+
+# #4304 item 5a: an override comment followed by a trailing newline is still an override.
+reset
+record "$(failure s-nl Bash "$(bash_in 'aw-nosuch-tool y')" 'aw-nosuch-tool: command not found')"
+gate "$(pre s-nl Bash "$(bash_in $'aw-nosuch-tool y # aw-retry: why\n')")"
+check "#4304 item 5a, override: a trailing newline does not make the call a different one (guard: exit 0)" "$RC" "0"
+check "#4304 item 5a, override: ...recorded with its reason" "$(st s-nl '.overrides[0].reason')" "why"
+
 # --- latency of the empty path ----------------------------------------------------------------------------------------------
 reset
 EMPTY="$(pre s-fast Bash "$(bash_in 'ls -la')")"

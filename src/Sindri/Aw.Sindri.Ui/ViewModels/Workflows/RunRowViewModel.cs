@@ -8,7 +8,7 @@ internal sealed class RunRowViewModel : ObservableObject
 {
     internal RunRowViewModel(WorkflowRunRowView row, TimeProvider clock)
     {
-        Id = row.Id;
+        (Id, Status) = (row.Id, row.Status);
         var (glyph, word) = Labels.WfChip(row.Status);
         Tone = RunStatus.Tone(row.Status);
         (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(row.Status));
@@ -22,8 +22,35 @@ internal sealed class RunRowViewModel : ObservableObject
         Name = Labels.WfRunRowName(Id, word.ToLowerInvariant(), TriggerText.ToLowerInvariant(), WhenText, ErrorText);
     }
 
+    /// <summary>True when this Starting placeholder waited 10 s and no run row came: it says the run did not start and offers Retry.</summary>
+    public bool DidNotStart { get; private set { Set(ref field, value); OnChanged(nameof(IsShownStatus)); } }
+
+    /// <summary>True when the status chip and the age show: everything but a placeholder that did not start.</summary>
+    public bool IsShownStatus => !DidNotStart;
+
+    /// <summary>"The run didn't start."</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string DidNotStartText => Labels.WfRunDidNotStart;
+
+    /// <summary>The Retry button's words.</summary>
+    public string RetryText => Labels.WfRunStartRetry;
+
+    /// <summary>What to do about a run that did not start.</summary>
+    public string DidNotStartHint => Labels.WfRunDidNotStartHint;
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>Turns a Starting placeholder into the "didn't start" row.</summary>
+    internal void MarkDidNotStart()
+    {
+        DidNotStart = true;
+        Name = Labels.WfRunRowName(Id, Labels.WfRunDidNotStart.TrimEnd('.').ToLowerInvariant(), string.Empty, string.Empty, string.Empty);
+    }
+
     /// <summary>The run's id.</summary>
     public string Id { get; }
+
+    /// <summary>The served status: starting (a Run now placeholder), running, waiting, queued, succeeded, failed, skipped or cancelled.</summary>
+    public string Status { get; }
 
     /// <summary>The chip's tone; the glyph and word carry the status too.</summary>
     public ChipTone Tone { get; }
@@ -56,5 +83,5 @@ internal sealed class RunRowViewModel : ObservableObject
     public bool HasError => ErrorText.Length > 0;
 
     /// <summary>The row's accessible name.</summary>
-    public string Name { get; }
+    public string Name { get; private set => Set(ref field, value); }
 }

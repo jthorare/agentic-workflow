@@ -26,10 +26,12 @@ public static class RecycleGiveUps
 
     /// <summary>The status line for the stored give-ups.</summary>
     /// <param name="stored">The stored text; null when the key was never set.</param>
-    /// <returns>An "ATTENTION" line naming each lane and when its waiter gave up; null when none is stored.</returns>
-    public static string? Line(string? stored)
+    /// <param name="teamLanes">The team's lanes; a give-up of a lane no longer in the team is dropped (#4311).</param>
+    /// <returns>An "ATTENTION" line naming each lane and when its waiter gave up; null when none is left.</returns>
+    public static string? Line(string? stored, IReadOnlyCollection<string> teamLanes)
     {
-        var lanes = Lines(stored).Select(Describe).ToList();
+        ArgumentNullException.ThrowIfNull(teamLanes);
+        var lanes = Lines(stored).Where(l => teamLanes.Contains(l.Split(Separator)[0], StringComparer.Ordinal)).Select(Describe).ToList();
         return lanes.Count == 0
             ? null
             : "ATTENTION recycle gave up: " + string.Join(", ", lanes) + "; no turn ended within 30 min and nothing was typed. Recycle by hand (aw-meta lane-recycle <lane> --digest <abs> --detach)";

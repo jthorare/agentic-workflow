@@ -40,7 +40,15 @@
 set -u
 # The cap and reserve readers live next to locks.sh; this script may run through a link (~/.agentic-workflow/bin-r1b/heavy).
 # In a build folder it sits beside this script; in the repo it is ../config/lib.
-_hd="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+# Resolve links without readlink -f (macOS before 12.3 has none), at most 40 hops.
+_hs="${BASH_SOURCE[0]}"; _hn=0
+while [ -L "$_hs" ]; do
+  _hn=$((_hn + 1)); [ "$_hn" -le 40 ] || { echo "heavy: too many links resolving $0" >&2; exit 2; }
+  _hl="$(readlink "$_hs")"
+  case "$_hl" in /*) _hs="$_hl" ;; *) _hs="$(cd "$(dirname "$_hs")" && pwd -P)/$_hl" ;; esac
+done
+_hd="$(cd "$(dirname "$_hs")" && pwd -P)"
+unset _hs _hn _hl
 if [ -f "$_hd/heavy-config.sh" ]; then . "$_hd/heavy-config.sh"
 elif [ -f "$_hd/../config/lib/heavy-config.sh" ]; then . "$_hd/../config/lib/heavy-config.sh"
 else echo "heavy: heavy-config.sh not found next to $_hd or in ../config/lib" >&2; exit 2; fi

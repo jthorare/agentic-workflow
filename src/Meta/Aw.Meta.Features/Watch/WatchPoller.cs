@@ -43,7 +43,7 @@ internal sealed class WatchPoller(RepoCommands repo, IHostResources resources, I
             return kept.Error;
         }
 
-        var remembered = await Remember(kept.Value, cancellationToken).ConfigureAwait(false);
+        var remembered = await Remember(team, kept.Value, follow, cancellationToken).ConfigureAwait(false);
         if (remembered.IsError)
         {
             return remembered.Error;
@@ -61,13 +61,22 @@ internal sealed class WatchPoller(RepoCommands repo, IHostResources resources, I
         prs.IsError ? prs.Error : main.IsError ? main.Error : disk.IsError ? disk.Error : counts.IsError ? counts.Error : null;
 
     // Keeps the pull requests GitHub shows merged or closed, so the merge queue can drop them; returns the ones not seen ended before.
-    private async ValueTask<Result<IReadOnlyList<int>>> Remember(IReadOnlyList<PrView> prs, CancellationToken cancellationToken)
+    // Also those a lane said were ready that the listing no longer holds (#3738).
+    private async ValueTask<Result<IReadOnlyList<int>>> Remember(TeamConfig team, IReadOnlyList<PrView> listed, PollFollowUps follow, CancellationToken cancellationToken)
     {
         var kept = await values.Get(KvKeys.EndedPrs, cancellationToken).ConfigureAwait(false);
         if (kept.IsError)
         {
             return kept.Error;
         }
+
+        var outside = await follow.EndedOutsideListing(team, listed, EndedPrs.Parse(kept.Value), cancellationToken).ConfigureAwait(false);
+        if (outside.IsError)
+        {
+            return outside.Error;
+        }
+
+        IReadOnlyList<PrView> prs = [.. listed, .. outside.Value];
 
         var added = EndedPrs.Added(kept.Value, prs);
         var stored = EndedPrs.Merge(kept.Value, prs) is { } ended ? await values.Set(KvKeys.EndedPrs, ended, cancellationToken).ConfigureAwait(false) : Results.Ok();

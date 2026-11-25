@@ -32,6 +32,9 @@ internal static partial class Labels
     /// <summary>A source on its first pass (phase recent or backfill) that is pulling or between pulls (#4035).</summary>
     internal const string ContextSourceFirstSync = "first sync";
 
+    /// <summary>A source reading its stored records again (the server's reReading, #4084) that is pulling or between pulls.</summary>
+    internal const string ContextSourceReReading = "reading again";
+
     /// <summary>A source between pulls.</summary>
     internal const string ContextSourceIdle = "idle";
 

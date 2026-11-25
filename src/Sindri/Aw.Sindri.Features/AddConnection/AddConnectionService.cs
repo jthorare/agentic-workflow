@@ -7,28 +7,26 @@ using Aw.Sindri.Core.Connections;
 namespace Aw.Sindri.Features.AddConnection;
 
 /// <summary>
-/// Adds a connection. A bad name is SND-CONN-008, an existing one SND-CONN-010 (the insert itself refuses a duplicate, so two adds racing cannot both win), a preset
+/// Adds a connection. With no --kind, a preset whose first way to connect is a key (<see cref="ConnectionPreset.KeyFirst"/>: github, linear, slack) makes a rest connection, the others the preset's kind (#4357). A bad name is SND-CONN-008, an existing one SND-CONN-010 (the insert itself refuses a duplicate, so two adds racing cannot both win), a preset
 /// without a client id SND-CONN-007, and a preset that cannot take a loopback sign-in is refused with its sign-in note before any listener opens. An oauth connection
 /// runs <see cref="OAuthSignInFlow"/>. A rest or cli connection stores the key the CLI sent (read from the CLI's own environment) or, for an agent, the variable named by
-/// --key-env in serve's environment. An error shows its code and fixed title only (<see cref="ConnectionFailures"/>).
+/// --key-env in serve's environment; a rest key for a preset is checked with its service first (<see cref="IKeyCheck"/>: SND-CONN-018 refused, SND-CONN-019 not reached, nothing stored). An error shows its code and fixed title only (<see cref="ConnectionFailures"/>).
 /// </summary>
 /// <param name="store">The connections.</param>
-/// <param name="secrets">Stores the tokens.</param>
 /// <param name="presets">The shipped presets.</param>
-/// <param name="environment">Reads --key-env and --client-secret-env when the caller sent only the names (serve's environment).</param>
-/// <param name="time">The clock.</param>
+/// <param name="environment">Reads the OAuth client's variable when the caller sent only its name (serve's environment).</param>
 /// <param name="callers">Who is adding.</param>
 /// <param name="oauth">The oauth sign-in.</param>
-internal sealed class AddConnectionService(IConnectionStore store, IConnectionSecrets secrets, IConnectionPresetCatalog presets, IEnvironmentReader environment, TimeProvider time, ICallerContextAccessor callers, OAuthSignInFlow oauth)
+/// <param name="keys">The key add (rest, cli and a keyed mcp).</param>
+internal sealed class AddConnectionService(IConnectionStore store, IConnectionPresetCatalog presets, IEnvironmentReader environment, ICallerContextAccessor callers, OAuthSignInFlow oauth, KeyConnectionAdd keys)
     : IService<AddConnectionRequest, AddConnectionResponse>
 {
     private readonly IConnectionStore _store = store;
-    private readonly IConnectionSecrets _secrets = secrets;
     private readonly IConnectionPresetCatalog _presets = presets;
     private readonly IEnvironmentReader _environment = environment;
-    private readonly TimeProvider _time = time;
     private readonly ICallerContextAccessor _callers = callers;
     private readonly OAuthSignInFlow _oauth = oauth;
+    private readonly KeyConnectionAdd _keys = keys;
 
     public async ValueTask<Result<AddConnectionResponse>> Handle(AddConnectionRequest request, CancellationToken cancellationToken)
     {
@@ -65,7 +63,7 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
         return kind.Value switch
         {
             ConnectionKind.OAuth => await AddOAuth(name.Value, request, preset.Value, cancellationToken).ConfigureAwait(false),
-            ConnectionKind.Rest or ConnectionKind.Cli => await AddKey(name.Value, kind.Value, request, preset.Value, cancellationToken).ConfigureAwait(false),
+            ConnectionKind.Rest or ConnectionKind.Cli => await _keys.Run(name.Value, kind.Value, request, preset.Value, cancellationToken).ConfigureAwait(false),
             ConnectionKind.Mcp => await AddMcp(name.Value, request, cancellationToken).ConfigureAwait(false),
             _ => SindriErrors.InvalidInput.With($"cannot add a connection of kind {ConnectionWire.Name(kind.Value)} (fix: use oauth, mcp, rest or cli)"),
         };
@@ -96,9 +94,10 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
             return ConnectionWire.ParseKind(wire);
         }
 
-        return preset is not null
-            ? preset.Kind
-            : SindriErrors.InvalidInput.With("name a --preset or a --kind (oauth, rest or cli)");
+        // #4357: a preset whose first way to connect is a key (github, linear, slack) stores a key unless --kind oauth asks for the browser sign-in
+        return preset is null ? SindriErrors.InvalidInput.With("name a --preset or a --kind (oauth, rest or cli)")
+            : preset.KeyFirst ? ConnectionKind.Rest
+            : preset.Kind;
     }
 
     private async ValueTask<Result<AddConnectionResponse>> AddOAuth(ConnectionName name, AddConnectionRequest request, ConnectionPreset? preset, CancellationToken cancellationToken)
@@ -119,7 +118,7 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
             return SindriErrors.ConnectionNeedsClientId.With($"the {preset.Key} preset ships no client id (fix: register an OAuth app with {preset.DisplayName} and pass --client-id; {preset.SignInNote})");
         }
 
-        var secret = Secret(request.ClientSecret, request.ClientSecretEnv, "--client-secret-env");
+        var secret = KeyConnectionAdd.Secret(_environment, request.ClientSecret, request.ClientSecretEnv, "--client-secret-env");
         if (secret.IsError)
         {
             return secret.Error;
@@ -140,75 +139,9 @@ internal sealed class AddConnectionService(IConnectionStore store, IConnectionSe
 
         if (request.Key is { Length: > 0 } || !string.IsNullOrWhiteSpace(request.KeyEnv))
         {
-            return await AddKey(name, ConnectionKind.Mcp, request, preset: null, cancellationToken).ConfigureAwait(false);
+            return await _keys.Run(name, ConnectionKind.Mcp, request, preset: null, cancellationToken).ConfigureAwait(false);
         }
 
         return await _oauth.RunMcp(new McpAdd(name, server, _callers.Current?.Actor ?? "unknown", request.Wait), cancellationToken).ConfigureAwait(false);
-    }
-
-    private async ValueTask<Result<AddConnectionResponse>> AddKey(ConnectionName name, ConnectionKind kind, AddConnectionRequest request, ConnectionPreset? preset, CancellationToken cancellationToken)
-    {
-        var key = Secret(request.Key, request.KeyEnv, "--key-env");
-        if (key.IsError)
-        {
-            return key.Error;
-        }
-
-        if (key.Value is null)
-        {
-            return SindriErrors.InvalidInput.With($"a {ConnectionWire.Name(kind)} connection needs --key-env NAME (the environment variable that holds the key)");
-        }
-
-        var pointer = _secrets.Store(name, new TokenSet(key.Value, RefreshToken: null, ExpiresAt: null));
-        if (pointer.IsError)
-        {
-            return ConnectionFailures.Safe(pointer.Error);
-        }
-
-        var now = _time.GetUtcNow();
-        var row = new Connection(name, kind, preset?.Key, KeyConfig(kind, preset, request), pointer.Value, ConnectionStatus.Connected, StatusReason: null, _callers.Current?.Actor ?? "unknown", now, now, LastRefreshedAt: null);
-        var written = await _store.Insert(row, cancellationToken).ConfigureAwait(false);
-        if (written.IsError)
-        {
-            _ = _secrets.Delete(pointer.Value);
-            return ConnectionFailures.Safe(written.Error);
-        }
-
-        return new AddConnectionResponse(ConnectionView.From(row), ConsentUrl: null);
-    }
-
-    // A probe URL from the preset, and for an mcp connection the server's address (AddMcp checked that it parses).
-    private static Dictionary<string, string> KeyConfig(ConnectionKind kind, ConnectionPreset? preset, AddConnectionRequest request)
-    {
-        var config = new Dictionary<string, string>(StringComparer.Ordinal);
-        if (preset?.ProbeUrl is { } probe)
-        {
-            config["probeUrl"] = probe;
-        }
-
-        if (kind == ConnectionKind.Mcp && request.Url is { } server)
-        {
-            config["serverUrl"] = new Uri(server).ToString();
-        }
-
-        return config;
-    }
-
-    // The value the CLI sent wins; otherwise the variable named by the flag is read from serve's environment (an agent has no other way). Neither given is no secret; a name that is unset is an error that says whose environment.
-    private Result<string?> Secret(string? sent, string? variable, string flag)
-    {
-        if (sent is { Length: > 0 })
-        {
-            return sent;
-        }
-
-        if (string.IsNullOrWhiteSpace(variable))
-        {
-            return Results.Success<string?>(value: null);
-        }
-
-        return _environment.Get(variable) is { } read
-            ? read
-            : SindriErrors.InvalidInput.With($"the environment variable {variable} is not set or is empty in the environment of the running Sindri (fix: export it where `sindri` runs, or run `sindri connection add ... {flag} {variable}` from a terminal, which sends its own value)");
     }
 }

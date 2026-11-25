@@ -99,17 +99,38 @@ public sealed class ConnectionsFramesTests : FrameHost
         Frame(window, "add-key", Prefix);
     });
 
+    // #4357: GitHub asks for a token first, under its three steps, with the swap to an OAuth app below; the swap shows the client id and secret and the way back.
     [Fact]
-    public Task A_tile_for_a_sign_in_provider_asks_for_a_client_id_and_says_why_Connect_waits() => OnUi(async () =>
+    public Task A_tile_with_a_key_asks_for_a_token_first_under_its_steps_alone() => OnUi(async () =>
     {
         var (window, shell) = await OnConnections(1440);
-        var tile = shell.Connections.Tiles.Single(t => string.Equals(t.Id, "linear", StringComparison.Ordinal));
+        var tile = shell.Connections.Tiles.Single(t => string.Equals(t.Id, "github", StringComparison.Ordinal));
         await tile.Connect(CancellationToken.None);
         Settle(window);
 
-        Assert.True(VisibleIn(window, tile, "ServiceTileClientId"));
-        Assert.True(VisibleIn(window, tile, "ServiceTileReason"));
+        Assert.True(VisibleIn(window, tile, "ServiceTileSteps"));
+        Assert.True(VisibleIn(window, tile, "ServiceTileToken"));
+        Assert.True(VisibleIn(window, tile, "ServiceTileUseOAuth"));
+        Assert.False(VisibleIn(window, tile, "ServiceTileClientId"));
+        Assert.False(VisibleIn(window, tile, "ServiceTileReason"));   // #4368: step 3 says to paste; no second "Paste a GitHub token" line
         Frame(window, "tile-asks", Prefix);
+    });
+
+    [Fact]
+    public Task The_OAuth_swap_shows_the_client_id_and_secret_and_the_way_back_to_a_token() => OnUi(async () =>
+    {
+        var (window, shell) = await OnConnections(1440);
+        var tile = shell.Connections.Tiles.Single(t => string.Equals(t.Id, "github", StringComparison.Ordinal));
+        await tile.Connect(CancellationToken.None);
+        tile.UseOAuth();
+        Settle(window);
+
+        Assert.True(VisibleIn(window, tile, "ServiceTileClientId"));
+        Assert.True(VisibleIn(window, tile, "ServiceTileClientSecret"));
+        Assert.True(VisibleIn(window, tile, "ServiceTileUseToken"));
+        Assert.False(VisibleIn(window, tile, "ServiceTileToken"));
+        Assert.False(VisibleIn(window, tile, "ServiceTileSteps"));
+        Frame(window, "tile-oauth", Prefix);
     });
 
     // 1000 px is the narrowest the window goes (Size.WindowMinWidth): at 900 the layout stays 1000 wide and every frame "clips".

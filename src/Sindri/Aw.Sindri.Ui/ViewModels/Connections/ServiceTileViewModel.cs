@@ -1,8 +1,8 @@
 namespace Aw.Sindri.Ui.ViewModels.Connections;
 
 /// <summary>
-/// One service tile on the Connections page (#2537): a service with a real sign-in path. Connect runs it and names the connection itself ('github:work'). A service whose
-/// provider needs a client id asks for it on the tile; Slack has no browser sign-in, so its tile takes a pasted token. Once connected the tile shows the account, last use,
+/// One service tile on the Connections page (#2537): a service with a real sign-in path. Connect runs it and names the connection itself ('github:work'). GitHub, Linear and
+/// Slack take a pasted token first (#4357), with three steps that say where to make it; GitHub and Linear can swap to their own OAuth app, whose client id the tile then asks for. Once connected the tile shows the account, last use,
 /// a status chip and a menu with Reconnect and Disconnect. A failed or cancelled sign-in shows on the tile with Try again. A pasted token goes into one request and is gone.
 /// </summary>
 internal sealed partial class ServiceTileViewModel : ObservableObject
@@ -17,8 +17,8 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     internal ServiceTileViewModel(ServiceTile service, ConnectionActions actions, Func<Task> changed, TimeProvider clock)
     {
         (Service, _actions, _changed, _clock) = (service, actions, changed, clock);
-        Token.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress));
-        ClientSecret.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress));
+        Token.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress), nameof(PrimaryText), nameof(HasPrimary));
+        ClientSecret.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress), nameof(PrimaryText), nameof(HasPrimary));
     }
 
     /// <summary>The service this tile is for.</summary>
@@ -49,18 +49,18 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
         set
         {
             field = value ?? string.Empty;
-            Raise(nameof(ClientId), nameof(CanSend), nameof(BlockedReason), nameof(CanPress));
+            Raise(nameof(ClientId), nameof(CanSend), nameof(BlockedReason), nameof(CanPress), nameof(PrimaryText), nameof(HasPrimary));
         }
     } = string.Empty;
 
     /// <summary>True when the sign-in needs a client id.</summary>
-    public bool NeedsClientId => Service.Mode is ServiceTileMode.ClientId or ServiceTileMode.ClientIdAndSecret;
+    public bool NeedsClientId => UsesOAuth && Service.Mode is ServiceTileMode.ClientId or ServiceTileMode.ClientIdAndSecret;
 
     /// <summary>True when the sign-in also needs the OAuth app's client secret.</summary>
-    public bool NeedsSecret => Service.Mode == ServiceTileMode.ClientIdAndSecret;
+    public bool NeedsSecret => UsesOAuth && Service.Mode == ServiceTileMode.ClientIdAndSecret;
 
-    /// <summary>True when the sign-in takes a pasted token.</summary>
-    public bool TakesToken => Service.Mode == ServiceTileMode.Token;
+    /// <summary>True when the tile takes a pasted token: a service with a key, until the OAuth app is picked.</summary>
+    public bool TakesToken => !UsesOAuth;
 
     /// <summary>True while the tile has no connection.</summary>
     public bool IsOffered => _row is null;
@@ -99,8 +99,8 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
         : NeedsSecret && !ClientSecret.HasValue ? Labels.ConnectNeedsClientSecret(Service.Title)
         : TakesToken && !Token.HasValue ? Labels.ConnectNeedsToken(Service.Title) : string.Empty;
 
-    /// <summary>True when the inline line explains a disabled send.</summary>
-    public bool HasBlockedReason => IsAsking && BlockedReason.Length > 0;
+    /// <summary>True when the inline line explains a disabled send; not under the token steps, whose step 3 already says to paste (#4368). The button's tooltip still says it.</summary>
+    public bool HasBlockedReason => IsAsking && BlockedReason.Length > 0 && !ShowTokenSteps;
 
     /// <summary>True when the input is complete and nothing runs.</summary>
     public bool CanSend => !IsWorking && BlockedReason.Length == 0;
@@ -112,12 +112,12 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     public bool HasStatus => StatusText.Length > 0;
 
     /// <summary>Why the last try failed, in words; empty otherwise.</summary>
-    public string ErrorText { get; private set { Set(ref field, value); Raise(nameof(HasError)); RaiseState(); } } = string.Empty;
+    public string ErrorText { get; private set { Set(ref field, value); CanRetry = value.Length > 0 && BlockedReason.Length == 0; Raise(nameof(HasError)); RaiseState(); } } = string.Empty;
 
     /// <summary>True when the last try failed or was cancelled.</summary>
     public bool HasError => ErrorText.Length > 0;
 
-    /// <summary>The label on the Connect button: "Connect", or "Add token" for Slack.</summary>
+    /// <summary>The label on the Connect button: "Add token" while the tile takes a token, "Connect" for a browser sign-in.</summary>
     public string ConnectText => TakesToken ? Labels.ConnectAddToken : Labels.ConnectTile;
 
     /// <summary>The tile's accessible name.</summary>
@@ -136,7 +136,7 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     public bool HasReason => ReasonText.Length > 0;
 
     /// <summary>The label of the tile's one primary button; empty when it has none (a connected tile, or a sign-in running).</summary>
-    public string PrimaryText => IsWorking ? string.Empty : NeedsAttention ? Labels.TileReconnect : IsOffered ? (HasError ? Labels.TryAgain : ConnectText) : string.Empty;
+    public string PrimaryText => IsWorking ? string.Empty : NeedsAttention ? Labels.TileReconnect : IsOffered ? (HasError && CanRetry && BlockedReason.Length == 0 ? Labels.TryAgain : ConnectText) : string.Empty;
 
     /// <summary>True when the tile has a primary button.</summary>
     public bool HasPrimary => PrimaryText.Length > 0;
@@ -145,13 +145,13 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     public bool CanPress => !IsWorking && (!IsAsking || CanSend);
 
     /// <summary>The one help line under the input: where the client id or the token comes from.</summary>
-    public string HelpText => Labels.TileHelp(Id).Line;
+    public string HelpText => Labels.TileHelp(Id, TakesToken).Line;
 
     /// <summary>The help link's words; empty when the tile has none.</summary>
-    public string HelpLinkText => Labels.TileHelp(Id).LinkText;
+    public string HelpLinkText => Labels.TileHelp(Id, TakesToken).LinkText;
 
     /// <summary>The provider page the help link opens; empty when the tile has none.</summary>
-    public string HelpUrl => Labels.TileHelp(Id).Url;
+    public string HelpUrl => Labels.TileHelp(Id, TakesToken).Url;
 
     /// <summary>True when the help link shows.</summary>
     public bool HasHelpLink => IsAsking && HelpUrl.Length > 0;
@@ -176,7 +176,11 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     internal Task Primary(CancellationToken cancellationToken) => NeedsAttention ? SignInAgain(cancellationToken) : Connect(cancellationToken);
 
     // Everything the chip, the primary button and the menu read from the connection and the input.
-    private void RaiseState() => Raise(nameof(StatusChip), nameof(ReasonText), nameof(ReasonTip), nameof(HasReason), nameof(PrimaryText), nameof(HasPrimary), nameof(CanPress), nameof(CanReconnect), nameof(CanRename), nameof(HasHelpLink));
+    private void RaiseState()
+    {
+        Raise(nameof(StatusChip), nameof(ReasonText), nameof(ReasonTip), nameof(HasReason), nameof(PrimaryText), nameof(HasPrimary), nameof(CanPress), nameof(CanReconnect), nameof(CanRename), nameof(HasHelpLink));
+        RaiseAuth();
+    }
 
     /// <summary>Connect or Try again was pressed: asks for the input first when the service needs one, then signs in.</summary>
     /// <param name="cancellationToken">Cancels the wait.</param>
@@ -225,7 +229,7 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
         var added = await _actions.Add(Body(), cancellationToken).ConfigureAwait(true);
         if (added.IsError)
         {
-            ErrorText = Labels.ConnectTileFailed(added.Error);
+            ErrorText = Labels.ConnectTileFailed(added.Error, Service.Title);
             return;
         }
 
@@ -252,6 +256,7 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
         _ = Token.Take();
         _ = ClientSecret.Take();
         (IsAsking, ErrorText) = (false, string.Empty);
+        Pick(oauth: false);
         OnChanged(nameof(HasBlockedReason));
     }
 

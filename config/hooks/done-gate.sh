@@ -221,10 +221,10 @@ fi
 # claim must then mention UI evidence. stop_hook_active already exited above,
 # so this can block at most once per stop, never loop. SESSION_ID is only used
 # as a file name when it matches the same character set the sorter enforces.
-if printf '%s' "$SESSION_ID" | grep -qE '^[A-Za-z0-9._-]{1,80}$' && [ "${SESSION_ID#*..}" = "$SESSION_ID" ]; then
+if grep -qE '^[A-Za-z0-9._-]{1,80}$' <<<"$SESSION_ID" && [ "${SESSION_ID#*..}" = "$SESSION_ID" ]; then
   SORT_FILE="$SESSIONS_DIR/$SESSION_ID.sort.json"
   if [ -f "$SORT_FILE" ] && [ "$(jq -r '.requirements.uiEvidence // false' "$SORT_FILE" 2>/dev/null)" = "true" ]; then
-    if ! printf '%s' "$CLAIM_TEXT" | grep -qiE '(screenshot|ui-evidence|playwright|verify-web|verify-ios|snapshot_ui|\.png\b)'; then
+    if ! grep -qiE '(screenshot|ui-evidence|playwright|verify-web|verify-ios|snapshot_ui|\.png\b)' <<<"$CLAIM_TEXT"; then
       echo "This session changes the UI (judged from your prompt). Show UI evidence (a screenshot, a Playwright/ui-evidence run or an iOS snapshot) before claiming done." >&2
       exit 2
     fi
@@ -254,7 +254,7 @@ fi
 
 if [ -z "$BRIEF_JSON" ]; then
   # RF-2: no brief at all — only check that SOME evidence is mentioned.
-  if printf '%s' "$CLAIM_TEXT" | grep -qiE '(https?://|npm (run|test)|pytest|vitest|PR #[0-9]+|dotnet (test|build|run)|cargo (test|build|nextest)|go (test|build|vet)|xunit|[0-9]+ passed|passed!)'; then
+  if grep -qiE '(https?://|npm (run|test)|pytest|vitest|PR #[0-9]+|dotnet (test|build|run)|cargo (test|build|nextest)|go (test|build|vet)|xunit|[0-9]+ passed|passed!)' <<<"$CLAIM_TEXT"; then
     exit 0
   fi
   echo "Claiming done with no evidence mentioned (no command output, no PR link, no test run). Show the proof." >&2
