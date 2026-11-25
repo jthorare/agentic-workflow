@@ -263,6 +263,7 @@ internal static partial class Labels
         "SND-CONN-006" => "Couldn't save the sign-in to your keychain. Unlock it, then try again.",
         "SND-CONN-018" => $"{service} refused the token. Check it was copied whole and hasn't expired, then paste it again.",
         "SND-CONN-019" => $"Couldn't reach {service} to check the token. Check your network, then try again.",
+        "SND-CONN-020" => $"{service} is limiting requests right now, so the token wasn't checked. Wait a minute, then try again.",
         _ => "Couldn't connect. " + InstanceRefused(error),
     };
 

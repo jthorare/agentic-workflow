@@ -10,7 +10,7 @@ namespace Aw.Sindri.Features.TestConnection;
 /// Tests a connection: reads its secret and tries it (<see cref="KeyedCredentialCheck"/>: a key with a preset is asked of its service as on add, #4361; anything else calls the probe URL, the connection's Config
 /// 'probeUrl', else its preset's). An unknown name is SND-CONN-001.
 /// A rejected credential sets status 'error' (or 'needs-sign-in' for an oauth connection) and a reason; the answer is Ok false, not a failed call.
-/// A key check that could not reach its service (SND-CONN-019: no answer, or rate limited) answers Ok false and writes nothing: the row keeps its status.
+/// A key check that could not reach its service (SND-CONN-019 no answer, SND-CONN-020 rate limited) answers Ok false and writes nothing: the row keeps its status.
 /// The reason is the failure's code and fixed title: a provider's refusal text is never shown, because it can repeat the token.
 /// The secret read and the probe run outside the command gate (the command is registered with AddUngatedCommand); only the status write takes it (#2349).
 /// </summary>
@@ -69,7 +69,7 @@ internal sealed partial class TestConnectionService(IConnectionStore store, ICon
             return await Record(connection, ConnectionStatus.Connected, "the stored secret was read; this connection has no probe URL to try it against", cancellationToken, ok: true).ConfigureAwait(false);
         }
 
-        if (tried.IsError && tried.Error.Code == SindriErrors.ConnectionKeyUnchecked.Code)
+        if (tried.IsError && (tried.Error.Code == SindriErrors.ConnectionKeyUnchecked.Code || tried.Error.Code == SindriErrors.ConnectionKeyRateLimited.Code))
         {
             // the service was out of reach or rate limiting: that says nothing about the key, so the row keeps its status
             return new TestConnectionResponse(ConnectionView.From(connection), Ok: false, ConnectionFailures.Reason(tried.Error));
