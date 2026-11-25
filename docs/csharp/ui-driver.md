@@ -64,7 +64,7 @@ elements are in its own popup window, not the main window. A popup leaves the tr
 |---|---|---|
 | `tree` | `{from?: selector, depth?: 6}` | the element and its children to the depth: id, type, automationId, name, text, visible, enabled, bounds (window coordinates) |
 | `search` | `{selector, limit?: 50}` | `{matches: [node...], total}` (matches without children, in tree order) |
-| `props` | `{selector}` | the node and its registered Avalonia properties as text (read through the property registry, no reflection) |
+| `props` | `{selector}` | the node and its registered Avalonia properties as text (read through the property registry, no reflection); a collection value is its items joined with ", ", the first 20 and then `+N more` |
 | `click` | `{selector}` | acts through the element's automation peer: invoke (a button's command), else toggle, select, expand/collapse; a disabled element or one with none of these is `AW-UIDRIVER-003` |
 | `action` | `{selector, action}` | one named action: `invoke`, `toggle`, `select`, `expand`, `collapse`, `focus` |
 | `type` | `{text, selector?, replace?}` | sets a text box (appends unless `replace`); the focused element when no selector |

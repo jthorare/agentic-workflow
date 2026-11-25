@@ -40,6 +40,28 @@ public sealed class PropsCollectionTests
         Assert.Equal("alpha, beta", tags["Tags"]);
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task Props_prints_the_first_items_of_a_long_list_and_how_many_more_there_are()
+    {
+        var screen = await TestScreen.OpenAsync();
+        _ = await TestScreen.OnUi(() =>
+        {
+            var tagged = new Tagged { Tags = [.. Enumerable.Range(0, PropertyValues.MaxItems + 5).Select(static i => "t" + i.ToString(System.Globalization.CultureInfo.InvariantCulture))] };
+            AutomationProperties.SetAutomationId(tagged, "long");
+            if (screen.Window.Content is StackPanel form)
+            {
+                form.Children.Add(tagged);
+            }
+
+            return true;
+        });
+        var host = new DriverHost(() => screen.Window, TimeProvider.System);
+
+        var tags = (await host.Props(new PropsRequest(new Selector(AutomationId: "long")))).Value.Properties["Tags"];
+
+        Assert.Equal(("t0, t1, ", ", t19, +5 more"), (tags[..8], tags[^14..]));
+    }
+
     /// <summary>A control with a list-valued styled property.</summary>
     private sealed class Tagged : Control
     {
