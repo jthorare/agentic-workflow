@@ -24,6 +24,7 @@ internal sealed class ConceptIndex
 
         JoinMembers(edges);
         JoinOther();
+        SortLists();
         IndexImplementers(edges);
     }
 
@@ -95,8 +96,20 @@ internal sealed class ConceptIndex
 
         Append(_conceptsOf, member, concept);
         Append(_membersOf, concept, member);
-        _conceptsOf[member].Sort(StringComparer.Ordinal);
-        _membersOf[concept].Sort((a, b) => Compare(Known[a].Key, Known[b].Key));
+    }
+
+    // One sort per list after every join: sorting on each append made 'concept:other' quadratic (#4363).
+    private void SortLists()
+    {
+        foreach (var list in _conceptsOf.Values)
+        {
+            list.Sort(StringComparer.Ordinal);
+        }
+
+        foreach (var list in _membersOf.Values)
+        {
+            list.Sort((a, b) => Compare(Known[a].Key, Known[b].Key));
+        }
     }
 
     private static int Compare(NodeKey a, NodeKey b)
