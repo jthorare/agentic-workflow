@@ -8,6 +8,15 @@ internal sealed partial class OpsEditor
     /// <summary>The graph of the revision the form was made from: what Undo puts back after the next save.</summary>
     internal JsonElement SpecRead { get; private set; }
 
+    /// <summary>The revision the last save's own answer said it made. The reload after it may find a newer one (another session saved in between), so Undo asks for this, not for the base the reload read.</summary>
+    internal int SavedRevision { get; private set; }
+
+    private async Task ReloadAfterSave(int saved, Uri url, CancellationToken cancellationToken)
+    {
+        SavedRevision = saved;
+        await Load(url, Slug, afterSave: true, cancellationToken).ConfigureAwait(true);
+    }
+
     private static JsonElement Kept(JsonElement spec) => spec.ValueKind == JsonValueKind.Undefined ? spec : spec.Clone();   // a copy outlives the answer's document
 
     /// <summary>Saves an older graph as a new revision on the revision read; never a rewind. A stale base holds further edits and asks for a reload, like any save.</summary>

@@ -258,7 +258,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
                 return false;
             }
 
-            await Load(url, Slug, afterSave: true, cancellationToken).ConfigureAwait(true);
+            await ReloadAfterSave(applied.Value.Revision, url, cancellationToken).ConfigureAwait(true);
             return true;
         }
         finally
