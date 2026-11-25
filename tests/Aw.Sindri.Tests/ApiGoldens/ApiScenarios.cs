@@ -53,6 +53,7 @@ internal static class ApiScenarios
         ["Resources"] = ResourceScenarios.All,
         ["AgentStarts"] = AgentStartScenarios.All,
         ["Toolkits"] = ToolkitScenarios.All,
+        ["Proposals"] = ProposalScenarios.All,
         ["Home"] = HomeScenarios.All,
         ["WorkflowWrites"] = WorkflowWriteScenarios.All,
         ["Messages"] = MessageScenarios.Built,
@@ -207,6 +208,7 @@ internal static class ApiScenarios
         : AgentStartScenarios.Handles(slug, scenario) ? () => AgentStartScenarios.Body(host, slug, scenario)
         : ResourceScenarios.Handles(slug, scenario) ? () => ResourceScenarios.Body(host, slug, scenario, ct)
         : ToolkitScenarios.Handles(slug, scenario) ? () => ToolkitScenarios.Body(host, slug, scenario, ct)
+        : ProposalScenarios.Handles(slug, scenario) ? () => ProposalScenarios.Body(host, slug, scenario, ct)
         : MessageScenarios.Handles(slug, scenario) ? () => MessageScenarios.Body(host, slug, scenario, ct)
         : HomeScenarios.Handles(slug, scenario) ? () => HomeScenarios.Body(host, slug, scenario, ct)
         : WorkflowWriteScenarios.Handles(slug, scenario) ? () => WorkflowWriteScenarios.Body(host, slug, scenario, ct)

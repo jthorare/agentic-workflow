@@ -286,6 +286,7 @@ public static partial class SindriErrors
         GraphCallDepth, GraphSelfStart, GraphHttpRefused, GraphHttpFailed, GraphOnlyTriggerReplaceable, GraphNotBuilt,
         CodeCompileFailed, CodeTimeout, CodeMemory, CodeFailed, CodeRunnerUnavailable,
         ToolkitNotBuilt, ToolkitTestsFailed, ToolkitManifestInvalid, ToolkitProcessDied, ToolkitPaused, ToolkitCallTimedOut, ToolkitToolUnknown, ToolkitSandboxUnavailable, ToolkitNotFound, ToolkitNameInvalid, ToolkitToolFailed, ToolkitExists, ToolkitCreateFailed,
+        ProposalNotFound, ProposalNotRejectable,
         .. EveryTodo(),
         .. EveryHome(),
         .. EveryMessages(),
