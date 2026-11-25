@@ -11,4 +11,7 @@ public sealed record SessionStatus(int Live, int Asking, int Problems, int Runni
 {
     /// <summary>The problems the count counts, each with its code and sentence, for the System page's Agents card (#4012).</summary>
     public IReadOnlyList<SessionProblem> ProblemRows { get; init; } = [];
+
+    /// <summary>"off" while the owner turned session watching off in launcher.json, "on" otherwise (#4316); a turned-off collector is no problem.</summary>
+    public string Watching { get; init; } = "on";
 }

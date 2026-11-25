@@ -73,6 +73,12 @@ internal sealed partial class WholeMapViewModel
     private void ResetSearch()
     {
         (SearchActive, NoMatches, _searchSet) = (false, false, null);
+        if (_hits is not null)
+        {
+            (_hits, AreaPage, AreaPages) = (null, 1, 1);   // the tiles are back
+            Changed();
+        }
+
         Refocus();
         OnChanged(nameof(NoMatches));
         OnChanged(nameof(Shown));

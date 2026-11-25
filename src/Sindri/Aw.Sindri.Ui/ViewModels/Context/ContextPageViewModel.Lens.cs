@@ -119,7 +119,7 @@ internal sealed partial class ContextPageViewModel
             // A miss is said in plain words and the map that was on the page stays: nothing is cleared or dimmed for it.
             ShowAnswerFiles(fromQuestion);
             Choices = Suggestions(result.Error) is { Count: > 0 } own ? own : suggested;
-            ShowProblem(result.Error, Labels.ContextRefusal(result.Error.Code, result.Error.Message, AnchorText.Trim()));
+            ShowProblem(result.Error, Labels.ContextRefusal(result.Error.Code, result.Error.Message, AnchorText.Trim(), hasChoices: Choices.Count > 0));
             await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
         }
 

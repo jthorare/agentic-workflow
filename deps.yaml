@@ -584,6 +584,11 @@ edges:
     status: current
     note: "the desktop head (sindri-ui) starts Kernel telemetry and hands the app its logger: a failed start-up logs SND-UI-004 as a JSON line on standard error"
   - from: SindriUi
+    to: Launcher
+    kind: file
+    status: current
+    note: "display text only: the System page's and the Agents page's watching-off line (Labels.AgentsWatchingOff, #4316) tells the owner to set sessions.enabled in launcher.json; the app never opens the file"
+  - from: SindriUi
     to: Sindri
     kind: file
     status: current

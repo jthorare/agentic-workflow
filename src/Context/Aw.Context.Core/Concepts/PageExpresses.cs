@@ -24,8 +24,9 @@ public static class PageExpresses
         var edges = graph.Edges.Where(e => e.Type == EdgeType.Implements).ToList();
         var nodeByKey = graph.Nodes.GroupBy(n => n.Key.Value, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
         var existing = graph.Edges.Where(e => e.Type == EdgeType.Expresses).Select(e => (e.From.Value, e.To.Value)).ToHashSet();
+        var components = PageKinds.ComponentImplemented(edges);
         var made = new List<GraphEdge>();
-        foreach (var node in graph.Nodes.Where(n => n.Key.Kind == NodeKind.Action || (n.Key.Kind == NodeKind.Surface && PageKinds.IsPage(n, edges))).OrderBy(n => n.Key.Value, StringComparer.Ordinal))
+        foreach (var node in graph.Nodes.Where(n => n.Key.Kind == NodeKind.Action || (n.Key.Kind == NodeKind.Surface && PageKinds.IsPageIn(n, components))).OrderBy(n => n.Key.Value, StringComparer.Ordinal))
         {
             var counts = files[node.Key.Value].Distinct(StringComparer.Ordinal)
                 .SelectMany(file => homes[file].SelectMany(feature => concepts[feature]).Distinct(StringComparer.Ordinal))

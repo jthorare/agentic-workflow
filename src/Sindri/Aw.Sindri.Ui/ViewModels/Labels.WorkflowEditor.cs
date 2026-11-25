@@ -79,4 +79,10 @@ internal static partial class Labels
     /// <param name="names">The group's captions, joined with "and" ("Wait for and Wait until").</param>
     /// <returns>The words.</returns>
     internal static string WfFieldOnlyOne(string names) => $"Fill in only one of {names}.";
+
+    /// <summary>What the toast says after Save step; its Undo button follows it.</summary>
+    internal const string WfStepSavedToast = "Step saved.";
+
+    /// <summary>Why Undo did nothing: an edit or an Activate is on the way, the workflow changed elsewhere, or another workflow is open.</summary>
+    internal const string WfUndoNotNow = "Not while a change is on its way, or after the workflow changed elsewhere. Reload it first.";
 }

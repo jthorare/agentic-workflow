@@ -14,6 +14,12 @@ internal sealed partial class HealthViewModel
     /// <summary>True while the Agents card counts a problem: its lines and the link to the Agents page show (#4012).</summary>
     public bool HasAgentsProblems { get; private set => Set(ref field, value); }
 
+    /// <summary>True while the owner turned session watching off: the card shows <see cref="AgentsWatchingOffText"/> in place of problems (#4316).</summary>
+    public bool IsAgentsWatchingOff { get; private set => Set(ref field, value); }
+
+    /// <summary>The Agents card's line while session watching is off.</summary>
+    public string AgentsWatchingOffText { get; } = Labels.AgentsWatchingOff;
+
     /// <summary>The Agents card's link to the Agents page.</summary>
     public string AgentsLinkText { get; } = Labels.AgentsOpen;
 

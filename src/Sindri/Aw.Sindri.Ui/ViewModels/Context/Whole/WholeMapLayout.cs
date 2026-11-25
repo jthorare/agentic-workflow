@@ -16,7 +16,7 @@ internal static partial class WholeMapLayout
     internal const double NodeHeight = 28;
 
     /// <summary>The space between nodes.</summary>
-    internal const double NodeGap = 6;
+    internal const double NodeGap = 16;
 
     /// <summary>How many nodes sit side by side in a band of one column.</summary>
     internal const int Across = 2;
@@ -45,6 +45,9 @@ internal static partial class WholeMapLayout
     /// <summary>The space between the overview's columns and the open columns beside them.</summary>
     internal const double TileGap = 32;
 
+    /// <summary>The window width taken when none is given: wide enough for the three Core groups side by side.</summary>
+    internal const double DefaultWidth = 1440;
+
     /// <summary>The margin around the world.</summary>
     internal const double Margin = 24;
 
@@ -60,12 +63,20 @@ internal static partial class WholeMapLayout
 
     /// <summary>Places an answer.</summary>
     /// <param name="map">The answer.</param>
+    /// <param name="width">The window width in px, which gives an opened area's stage when that is not known.</param>
+    /// <param name="stageWidth">The width in px the canvas fits a map into, or 0.</param>
+    /// <param name="stageHeight">The height in px the canvas fits a map into, or 0.</param>
     /// <returns>Where everything sits.</returns>
-    internal static WholeMapGeometry Place(WholeMapView map)
+    internal static WholeMapGeometry Place(WholeMapView map, double width = DefaultWidth, double stageWidth = 0, double stageHeight = 0)
     {
         ArgumentNullException.ThrowIfNull(map);
         if (map.Area is { } opened)
         {
+            if (map.Nodes is { Count: > 0 and <= WholeDrillIn.CanvasNodeCap } own && map.Detail is not "areas")
+            {
+                return AreaCanvasLayout.Place(own, map.Edges ?? [], width, stageWidth, stageHeight);   // #3674: an opened area is bands, not a column
+            }
+
             // One feature opened in full: its nodes alone, in one column (the others stay tiles in the overview it came from).
             map = map with { Areas = [.. map.Areas.Where(a => string.Equals(a.Key, opened.Key, StringComparison.Ordinal))], AreaEdges = [], Nodes = map.Nodes?.Where(n => string.Equals(n.Area, opened.Key, StringComparison.Ordinal)).ToList() };
         }

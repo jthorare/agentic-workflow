@@ -27,6 +27,7 @@ export AW_PROVIDER="codex"
 aw_adapter_parse_args "$@" || { aw_adapter_failopen codex args-invalid; exit 0; }
 
 RAW_INPUT="$(cat 2>/dev/null || true)"
+aw_adapter_capture codex "$RAW_INPUT"
 # An empty or unreadable host payload becomes {} below, which the canonical
 # hook can't check: log it here, where the raw payload is still visible.
 aw_adapter_failopen codex input "$RAW_INPUT"

@@ -1,4 +1,3 @@
-using System.Globalization;
 using Avalonia;
 using Avalonia.Media;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
@@ -13,6 +12,7 @@ internal sealed partial class WholeMapCanvas
     private const double LaneTitleSize = 13;
 
     // A lane per band across the whole world, under the columns' contents: its title and what it holds on the strip over its rows.
+    // In dots mode the heading is the title alone (#4305): the counts would be drawn up to 4x larger in the same world room and cut.
     private void DrawLanes(DrawingContext context, WholeMapGeometry geometry, WholeRect view, bool dots)
     {
         var fill = Brush("Brush.LaneFill");
@@ -25,7 +25,7 @@ internal sealed partial class WholeMapCanvas
             var size = LaneSize(dots);
             var title = LaneTitle(band, size, Brush(BandAccent(band.Band)));
             context.DrawText(title, new Point(WholeMapLayout.Margin / 2, band.LaneTop + 3));
-            if (band.Meta.Length > 0)
+            if (!dots && band.Meta.Length > 0)
             {
                 context.DrawText(LaneMeta(geometry, band, title, size, muted), new Point(LaneMetaX(title), band.LaneTop + 3));
             }
@@ -106,29 +106,5 @@ internal sealed partial class WholeMapCanvas
         }
 
         return geometry;
-    }
-
-    // An area's column on the overview: its name on top, then a line per kind counted in the band the kind belongs to (the lanes run behind it).
-    private void DrawTileColumn(DrawingContext context, PlacedTile placed, bool focused)
-    {
-        var (colour, pattern) = WholePalette.For(placed.AreaIndex);
-        var area = Brush(PaletteKey(colour));
-        var rect = new Rect(placed.Rect.X, placed.Rect.Y, placed.Rect.Width, placed.Rect.Height);
-        context.DrawRectangle(Brush("Brush.Surface1"), new Pen(area, focused ? 3.2 : 1.6), rect, radiusX: 10, radiusY: 10);
-        DrawSwatch(context, rect, area, pattern);
-        context.DrawText(Text(placed.Label, 13, Brush("Brush.Ink"), rect.Width - 40, bold: true), new Point(rect.X + 32, rect.Y + 6));
-        foreach (var cell in placed.BandCells)
-        {
-            var fit = Math.Max(1, (int)(cell.Rect.Height / WholeMapLayout.KindLine));
-            for (var i = 0; i < Math.Min(fit, cell.Kinds.Count); i++)
-            {
-                var (kind, count) = (cell.Kinds[i].Key, cell.Kinds[i].Value);
-                var style = NodeBands.StyleOf(kind);
-                var y = cell.Rect.Y + (i * WholeMapLayout.KindLine);
-                DrawMark(context, style.Mark, Brush(style.Accent), new Point(cell.Rect.X + MarkInset, y + (WholeMapLayout.KindLine / 2)));
-                var words = i == fit - 1 && cell.Kinds.Count > fit ? string.Create(CultureInfo.InvariantCulture, $"+{cell.Kinds.Count - i} more kinds") : ViewModels.Labels.ContextWholeKindCount(kind, count);
-                context.DrawText(Text(words, TextSize, Brush("Brush.Ink"), cell.Rect.Width - MarkInset - MarkSize - 14), new Point(cell.Rect.X + MarkInset + MarkSize + 4, y + 2));
-            }
-        }
     }
 }
