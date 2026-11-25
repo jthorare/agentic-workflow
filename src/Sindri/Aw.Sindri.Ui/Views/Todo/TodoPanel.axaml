@@ -37,7 +37,7 @@
   <Border x:Name="TodoPanelFrame" Classes="panel" Classes.region-focus="{Binding HasFocus}" Focusable="True" IsTabStop="False" FocusAdorner="{x:Null}" AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
     <!-- Header on top, the body (collapsed or expanded) in the rest: the frame is capped at half the window (TodoPanel.axaml.cs), so
          the expanded list's own scroll gets what the header and the foot leave. -->
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="Auto,*,Auto,Auto">
       <Border Classes="phead">
         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
           <TextBlock x:Name="TodoTitle" Classes="body-strong" Classes.region-focus="{Binding HasFocus}" Text="{Binding Title}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Title}" />
@@ -65,7 +65,9 @@
 
       <!-- Collapsed: one body of a fixed height in every state (spec D13, §3.4): five row slots on top, the Show all slot below
            (Show all on the left, the error line on the right). The rows, the skeleton and the empty sentence draw in the slots;
-           none of them changes the height, so Needs you below never moves. TodoPanel.axaml.cs sets the height from Row.Height.Default. -->
+           none of them changes the height, so Needs you below never moves. TodoPanel.axaml.cs sets the height from Row.Height.Default.
+           With nothing to show in the Show all slot, the body drops it and the From elsewhere line moves up under the last row; the
+           spare slot under the line (TodoSpareSlot) keeps the card's height (#2908). -->
       <Grid x:Name="TodoCollapsed" Grid.Row="1" RowDefinitions="*,Auto" ClipToBounds="True" IsVisible="{Binding !IsExpanded}">
         <StackPanel>
           <!-- The attention rows (a conflict or the hold, todo spec §3.1, D13) take the first slots, inside the five. -->
@@ -195,6 +197,10 @@
       <Border x:Name="TodoElsewhereSlot" Grid.Row="2" Height="{StaticResource Row.Height.Default}" ClipToBounds="True" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">
         <tv:FromElsewhereLine x:Name="TodoElsewhere" VerticalAlignment="Center" DataContext="{Binding $parent[Window].((shell:ShellViewModel)DataContext).Elsewhere}" />
       </Border>
+
+      <!-- The empty Show all slot's row, moved under the From elsewhere line (#2908): the collapsed card keeps one height (D13) and the
+           line sits right under the last todo. TodoPanel.axaml.cs sets its height: one row, or 0 while the Show all slot holds something. -->
+      <Border x:Name="TodoSpareSlot" Grid.Row="3" Height="0" IsVisible="{Binding !IsExpanded}" AutomationProperties.AccessibilityView="Raw" />
     </Grid>
   </Border>
 </UserControl>

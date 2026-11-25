@@ -172,16 +172,18 @@ public sealed class TodoPanelTests
     }
 
     [Fact]
-    public async Task The_Show_all_slot_takes_height_only_when_Show_all_or_the_error_shows()
+    public async Task An_empty_Show_all_slot_becomes_the_spare_slot_and_the_panel_keeps_six_slots()
     {
         _f.ServeTodos([.. Enumerable.Range(1, 5).Select(i => Open(string.Create(CultureInfo.InvariantCulture, $"td_{i}"), "a todo"))]);
         var few = await _f.Read(Token);
         Assert.False(few.HasFootSlot);
-        Assert.Equal(5, few.CollapsedSlots);
+        Assert.True(few.HasSpareSlot);   // #2908: the From elsewhere line moves up, the spare row goes under it
+        Assert.Equal(6, few.CollapsedSlots);   // D13: the same height as with Show all
 
         _f.ServeTodos([.. Enumerable.Range(1, 7).Select(i => Open(string.Create(CultureInfo.InvariantCulture, $"td_{i}"), "a todo"))]);
         var many = await _f.Read(Token);
         Assert.True(many.HasFootSlot);
+        Assert.False(many.HasSpareSlot);
         Assert.Equal(6, many.CollapsedSlots);
     }
 
