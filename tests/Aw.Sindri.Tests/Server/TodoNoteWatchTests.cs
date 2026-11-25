@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Aw.Sindri.Tests.Server;
 
 /// <summary>The todo note watch on the fake clock (todo spec §4.5 "Reading"): a pass at start and every 60 s, one on a file change, one after another writer's todo event, one when a pick's window closes; nothing without the lease.</summary>
-public sealed class TodoNoteWatchTests
+public sealed partial class TodoNoteWatchTests
 {
     private readonly TodoHarness _todos = new();
     private readonly FakeSync _sync = new();
@@ -66,6 +66,38 @@ public sealed class TodoNoteWatchTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_todo_event_whose_pass_and_next_wait_finish_before_the_step_still_counts()
+    {
+        var grant = await Slice.HoldLease();
+
+        await using var run = await Start();
+        await run.Next(TimeSpan.Zero, async () =>
+        {
+            var arms = run.Clock.Arms;
+            await Append(grant, "human:ui", 1);
+            await LoopDone(run, arms);
+        });
+
+        Assert.Equal(2, _sync.Passes);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_file_change_whose_pass_and_next_wait_finish_before_the_step_still_counts()
+    {
+        _ = await Slice.HoldLease();
+
+        await using var run = await Start();
+        await run.Next(TimeSpan.Zero, async () =>
+        {
+            var arms = run.Clock.Arms;
+            _folders.Fire();
+            await LoopDone(run, arms);
+        });
+
+        Assert.Equal(2, _sync.Passes);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_pass_runs_when_a_pick_s_window_closes()
     {
         _ = await Slice.HoldLease();
@@ -105,6 +137,16 @@ public sealed class TodoNoteWatchTests
         _ = Assert.Single(_folders.Started);
     }
 
+    /// <summary>Waits until the loop ran its second pass and armed the wait after it: the order a busy box gives when the loop beats the test to its step (#2449).</summary>
+    private async Task LoopDone(Run run, int armsBefore)
+    {
+        for (var waited = 0; _sync.Passes < 2 || run.Clock.Arms <= armsBefore; waited += 2)
+        {
+            Assert.True(waited < 5000, "the loop didn't run its pass and arm its next wait within 5 s");
+            await Task.Delay(2, Token);
+        }
+    }
+
     private async Task Append(Core.Lease.LeaseGrant grant, string by, long version)
     {
         var entry = Slice.Events.Entry(EventTypes.TodoDone, new TodoDone(TodoHarness.First, version, by), string.Create(CultureInfo.InvariantCulture, $"todo.done:{by}:{version}"));
@@ -122,38 +164,6 @@ public sealed class TodoNoteWatchTests
         var run = new Run(watch, clock, _sync);
         await clock.Armed();
         return run;
-    }
-
-    private sealed class Run(TodoNoteWatch watch, SteppedClock clock, FakeSync sync) : IAsyncDisposable
-    {
-        /// <summary>Runs <paramref name="act"/>, steps the clock and waits for the loop to arm its next wait.</summary>
-        internal async Task Next(TimeSpan by, Func<Task>? act = null, bool expectPass = true)
-        {
-            var before = sync.Passes;
-            if (act is not null)
-            {
-                await act();
-            }
-
-            await clock.Step(by);
-            if (expectPass)
-            {
-                await clock.Armed(() => sync.Passes > before);
-                await clock.Armed();
-            }
-        }
-
-        internal Task Next(TimeSpan by, Action act) => Next(by, () =>
-        {
-            act();
-            return Task.CompletedTask;
-        });
-
-        public async ValueTask DisposeAsync()
-        {
-            await watch.StopAsync(Token);
-            watch.Dispose();
-        }
     }
 
     private sealed class FakeSync : ITodoNoteSync
