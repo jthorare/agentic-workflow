@@ -28,6 +28,9 @@ internal sealed class NodeRunViewModel : ObservableObject
         (Node, ItemIndex, Agent) = (run.Node, run.ItemIndex, run.Agent);
     }
 
+    /// <summary>How long the step ran ("&lt;1 s", "7 s", "1m 15s"); empty while it runs and for a row with no times.</summary>
+    public string DurationText { get; } = string.Empty;
+
     /// <summary>True on a notification step that sent: its card shows what was sent.</summary>
     public bool IsNotification { get; }
 

@@ -120,4 +120,12 @@ public sealed class RunsTableTests
         rows[2].IsSelected = true;
         Assert.Equal((false, 3), (page.Runs.CanCompare, page.Runs.SelectedCount));
     }
+
+    [Fact]
+    public async Task A_run_that_took_under_a_second_reads_under_1_s_not_0_s()
+    {
+        var page = await Open(Run(1, "succeeded", TimeSpan.FromMinutes(5), seconds: 0.4));
+
+        Assert.Equal("<1 s", page.Runs.Rows.Single().DurationText);
+    }
 }
