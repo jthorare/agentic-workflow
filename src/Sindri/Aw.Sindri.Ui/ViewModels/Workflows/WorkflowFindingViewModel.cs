@@ -6,7 +6,7 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// One finding of the server's validation (#3803), in product words (WorkflowFindingWords): what is wrong and how to fix it. The app's only logic is which codes it has a fix button for:
 /// GRAPH-PROMPT-001 opens the step's question field (the field the finding names, without "config.").
 /// </summary>
-internal sealed class WorkflowFindingViewModel
+internal sealed class WorkflowFindingViewModel : ObservableObject
 {
     private const string ConfigPrefix = "config.";
     private readonly string? _field;
@@ -25,6 +25,12 @@ internal sealed class WorkflowFindingViewModel
 
     /// <summary>The step's card title the finding's words name (the whole workflow when it has no step).</summary>
     internal string StepTitle { get; set; } = WorkflowFindingWords.Workflow;
+
+    /// <summary>The server's own message, for the codes whose product words cannot say what is wrong (a compiler error, a cron, a condition, a value): shown under Details. Empty otherwise.</summary>
+    public string Details => Code.Length > 1000 ? Code : string.Empty;   // red stub
+
+    /// <summary>True when Details has text.</summary>
+    public bool HasDetails => Details.Length > 0;
 
     /// <summary>The finding's id: code, node and field.</summary>
     public string Id { get; }

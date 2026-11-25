@@ -41,6 +41,11 @@ internal static class WorkflowFindingWords
         ["GRAPH-REF-005"] = ("{T} reads data of the wrong type for this field.", "Pick data of the right type, or type the value in."),
     };
 
+    /// <summary>True when a code has its own row (a code without one gets the generic sentence).</summary>
+    /// <param name="code">The finding's code.</param>
+    /// <returns>Whether there is a row.</returns>
+    internal static bool Knows(string code) => _rows.ContainsKey(code);
+
     /// <summary>Says a finding in product words.</summary>
     /// <param name="code">The finding's code, such as GRAPH-PROMPT-001.</param>
     /// <param name="title">The step's card title, or <see cref="Workflow"/>.</param>

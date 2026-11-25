@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 
@@ -5,7 +6,7 @@ namespace Aw.Sindri.Ui.Tests.Workflows;
 
 /// <summary>A validation finding reads in product words (#4397): the step by its card title, no node ids, no code words, one term for "to fix".</summary>
 [Lane(TestLane.Unit)]
-public sealed class WorkflowFindingWordsTests
+public sealed partial class WorkflowFindingWordsTests
 {
     private static readonly string[] _codes =
     [
@@ -60,5 +61,83 @@ public sealed class WorkflowFindingWordsTests
         var (sentence, _) = WorkflowFindingWords.Say("GRAPH-TRIGGER-002", WorkflowFindingWords.Workflow, field: null);
 
         Assert.StartsWith("This workflow", sentence, StringComparison.Ordinal);
+    }
+
+    [GeneratedRegex("\"(?<code>GRAPH-[A-Z]+-[0-9]{3})\"", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex FullCode { get; }
+
+    [GeneratedRegex("\"(?<code>GRAPH-[A-Z]+)\"", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex Prefix { get; }
+
+    // The codes the validator can emit: every literal in its source, and the REPO and NAME prefixes it completes with -001 and -002 (GraphValidator.Nodes.cs, Unanswered). A new code that reaches the app with no row fails here.
+    private static IReadOnlyList<string> ValidatorCodes()
+    {
+        var root = AppContext.BaseDirectory;
+        while (!File.Exists(Path.Combine(root, "AgenticWorkflow.slnx")))
+        {
+            root = Path.GetDirectoryName(root) ?? throw new InvalidOperationException("no AgenticWorkflow.slnx above the test binaries");
+        }
+
+        var codes = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (var file in Directory.EnumerateFiles(Path.Combine(root, "src", "Sindri", "Aw.Sindri.Core", "Graph", "Validation"), "*.cs"))
+        {
+            var text = File.ReadAllText(file);
+            foreach (Match m in FullCode.Matches(text))
+            {
+                _ = codes.Add(m.Groups["code"].Value);
+            }
+
+            foreach (Match m in Prefix.Matches(text))
+            {
+                _ = codes.Add(m.Groups["code"].Value + "-001");
+                _ = codes.Add(m.Groups["code"].Value + "-002");
+            }
+        }
+
+        return [.. codes];
+    }
+
+    [Fact]
+    public void Every_code_the_validator_can_emit_has_a_row()
+    {
+        var missing = ValidatorCodes().Where(static c => !WorkflowFindingWords.Knows(c)).ToList();
+
+        Assert.Empty(missing);
+    }
+
+    [Fact]
+    public void The_fallback_fix_for_a_finding_about_the_whole_workflow_does_not_send_the_person_to_a_step()
+    {
+        var (_, fix) = WorkflowFindingWords.Say("GRAPH-NEW-999", WorkflowFindingWords.Workflow, field: null);
+
+        Assert.DoesNotContain("step", fix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("GRAPH-TRIGGER-002")]
+    [InlineData("GRAPH-RESULT-001")]
+    public void A_whole_workflow_finding_reads_as_a_sentence_about_the_workflow(string code)
+    {
+        var (sentence, _) = WorkflowFindingWords.Say(code, WorkflowFindingWords.Workflow, field: null);
+
+        Assert.False(sentence.StartsWith("This workflow is ", StringComparison.Ordinal));
+        Assert.StartsWith("This workflow ", sentence, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_setting_that_is_wrong_names_which_setting()
+    {
+        var (sentence, fix) = WorkflowFindingWords.Say("GRAPH-CONFIG-001", "Wait", "config.duration");
+
+        Assert.Equal(("Wait has a wrong duration setting.", "Open the step and correct the duration setting."), (sentence, fix));
+    }
+
+    [Fact]
+    public void The_words_say_exit_and_never_way_out()
+    {
+        var all = string.Join(' ', ValidatorCodes().Select(static c => WorkflowFindingWords.Say(c, "Step", field: null).Sentence + " " + WorkflowFindingWords.Say(c, "Step", field: null).Fix));
+
+        Assert.DoesNotContain("way out", all, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("ways out", all, StringComparison.OrdinalIgnoreCase);
     }
 }
