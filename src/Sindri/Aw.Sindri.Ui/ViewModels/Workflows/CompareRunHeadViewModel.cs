@@ -19,7 +19,7 @@ internal sealed class CompareRunHeadViewModel
         var parts = new List<string> { string.Create(CultureInfo.InvariantCulture, $"r{run.Revision}") };
         if (run.EndedAt is { } ended)
         {
-            parts.Add(Labels.WfDuration((ended - run.StartedAt).TotalSeconds));
+            parts.Add(Labels.WfDuration(Math.Max(0, (ended - run.StartedAt).TotalSeconds)));   // a clock that stepped back never reads "-3 s"
         }
 
         parts.Add(Labels.WfRunTriggerWords(run.TriggerKind is { Length: > 0 } served ? served : KindOf(run.Trigger)));   // a CLI start is stored as manual: the served word tells it apart (#3683)
