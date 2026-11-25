@@ -1773,7 +1773,13 @@
                 "to": "tell"
               }
             ]
-          }
+          },
+          "oneOf": [
+            [
+              "duration",
+              "until"
+            ]
+          ]
         }
       ]
     },
