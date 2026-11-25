@@ -19,7 +19,7 @@ public sealed class SymbolsGraphNoteWholeFolderTests
     {
         var map = await Loaded("graph-off", ["A.cs", "B.cs"]);
 
-        Assert.Equal("Symbols · from 7c3e1a2 · none in these files", map.Note);
+        Assert.Equal("Symbols · none in these files", map.Note);
     }
 
     [Fact]
