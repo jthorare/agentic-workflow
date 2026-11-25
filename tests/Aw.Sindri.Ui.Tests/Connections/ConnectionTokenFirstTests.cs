@@ -28,14 +28,17 @@ public sealed class ConnectionTokenFirstTests
     }
 
     [Fact]
-    public async Task The_GitHub_token_has_three_steps_naming_the_fine_grained_set_and_a_link_to_the_token_page()
+    public async Task The_GitHub_token_has_three_steps_with_one_permission_per_line_and_a_link_to_the_token_page()
     {
         var tile = await Tile("github");
         await tile.Connect(Token);
 
         Assert.True(tile.ShowTokenSteps);
-        Assert.Equal(3, tile.TokenSteps.Count);
-        Assert.Contains("Pull requests: read and write, Contents: read and write, Checks: read, Issues: read, Metadata: read", tile.TokenSteps[1], StringComparison.Ordinal);
+        Assert.Equal(["1. ", "2. ", "3. "], tile.TokenSteps.Where(s => !s.IsDetail).Select(s => s.Text[..3]), StringComparer.Ordinal);
+        Assert.Equal(
+            ["Pull requests: read and write", "Contents: read and write", "Checks: read", "Issues: read", "Metadata: read"],
+            tile.TokenSteps.Skip(2).Take(5).Where(s => s.IsDetail).Select(s => s.Text),
+            StringComparer.Ordinal);
         Assert.Equal(("Add token", "https://github.com/settings/personal-access-tokens/new"), (tile.PrimaryText, tile.HelpUrl));
         Assert.False(tile.HasHelpText);
     }
@@ -102,9 +105,9 @@ public sealed class ConnectionTokenFirstTests
     }
 
     [Theory]
-    [InlineData("SND-CONN-018", "The service refused that token.")]
-    [InlineData("SND-CONN-019", "Couldn't reach the service to check the token.")]
-    public async Task A_refused_or_unchecked_token_says_so_in_words_and_no_code(string code, string words)
+    [InlineData("SND-CONN-018", "Linear refused the token.")]
+    [InlineData("SND-CONN-019", "Couldn't reach Linear to check the token.")]
+    public async Task A_refused_or_unchecked_token_names_the_service_in_words_and_no_code(string code, string words)
     {
         var tile = await Tile("linear");
         await tile.Connect(Token);
@@ -116,5 +119,45 @@ public sealed class ConnectionTokenFirstTests
         Assert.StartsWith(words, tile.ErrorText, StringComparison.Ordinal);
         Assert.DoesNotContain("SND-", tile.ErrorText, StringComparison.Ordinal);
         Assert.False(tile.Token.HasValue);
+    }
+
+    [Fact]
+    public async Task After_a_refused_token_the_button_reads_Add_token_until_a_new_token_is_pasted_never_a_greyed_Try_again()
+    {
+        var tile = await Tile("github");
+        await tile.Connect(Token);
+        tile.Token.Text = "github_pat_test_0001";
+        _f.Server.ConnectionWriteError = new Kernel.Error("SND-CONN-018", Kernel.ErrorKind.Invalid, "GitHub refused the key");
+
+        await tile.Connect(Token);
+
+        Assert.Equal(("Add token", false), (tile.PrimaryText, tile.CanPress));
+        tile.Token.Text = "github_pat_test_0002";
+        Assert.Equal(("Add token", true), (tile.PrimaryText, tile.CanPress));
+    }
+
+    // #4368: step 3 already says to paste, so the waiting line under the links stays hidden; the button's tooltip still says why it waits.
+    [Theory]
+    [InlineData("github")]
+    [InlineData("linear")]
+    [InlineData("slack")]
+    public async Task Under_the_token_steps_the_waiting_line_is_hidden_and_the_tooltip_keeps_it(string id)
+    {
+        var tile = await Tile(id);
+        await tile.Connect(Token);
+
+        Assert.False(tile.HasBlockedReason);
+        Assert.StartsWith("Paste a ", tile.BlockedReason, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task The_OAuth_fields_say_client_ID_and_keep_their_waiting_line()
+    {
+        var tile = await Tile("linear");
+        await tile.Connect(Token);
+        tile.UseOAuth();
+
+        Assert.Equal(("Client ID", "Enter your Linear app's client ID", true), (tile.Text.TileClientLabel, tile.BlockedReason, tile.HasBlockedReason));
+        Assert.Contains("client ID", tile.HelpText, StringComparison.Ordinal);
     }
 }

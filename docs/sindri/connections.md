@@ -122,7 +122,7 @@ The row in `ledger.db` (table `connection`) has the name, kind, preset, non-secr
 
 ## In the app
 
-The app's Connections tab (`G O`) lists the same connections with their status, and offers Test, Sign in again, Remove and Add, the same actions as the commands above. The GitHub, Linear and Slack tiles ask for a token first, with three steps that say where to make it; GitHub and Linear also offer "Use an OAuth app instead", which shows the client id fields. The Google and Spotify tiles sign in through the browser. A key you paste there is sent once and is never stored by the app. See `docs/csharp/sindri-ui.md` "PR 18a".
+The app's Connections tab (`G O`) lists the same connections with their status, and offers Test, Sign in again, Remove and Add, the same actions as the commands above. The GitHub, Linear and Slack tiles ask for a token first, with three steps that say where to make it; GitHub and Linear also offer "Use an OAuth app instead", which shows the client ID fields. The Google and Spotify tiles sign in through the browser. A key you paste there is sent once and is never stored by the app. See `docs/csharp/sindri-ui.md` "PR 18a".
 
 ## Events that start workflows
 

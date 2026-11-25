@@ -101,7 +101,7 @@ public sealed class ConnectionsFramesTests : FrameHost
 
     // #4357: GitHub asks for a token first, under its three steps, with the swap to an OAuth app below; the swap shows the client id and secret and the way back.
     [Fact]
-    public Task A_tile_with_a_key_asks_for_a_token_first_and_says_why_Connect_waits() => OnUi(async () =>
+    public Task A_tile_with_a_key_asks_for_a_token_first_under_its_steps_alone() => OnUi(async () =>
     {
         var (window, shell) = await OnConnections(1440);
         var tile = shell.Connections.Tiles.Single(t => string.Equals(t.Id, "github", StringComparison.Ordinal));
@@ -112,7 +112,7 @@ public sealed class ConnectionsFramesTests : FrameHost
         Assert.True(VisibleIn(window, tile, "ServiceTileToken"));
         Assert.True(VisibleIn(window, tile, "ServiceTileUseOAuth"));
         Assert.False(VisibleIn(window, tile, "ServiceTileClientId"));
-        Assert.True(VisibleIn(window, tile, "ServiceTileReason"));
+        Assert.False(VisibleIn(window, tile, "ServiceTileReason"));   // #4368: step 3 says to paste; no second "Paste a GitHub token" line
         Frame(window, "tile-asks", Prefix);
     });
 
