@@ -11,7 +11,8 @@ namespace Aw.Sindri.Tests.GetStatus;
 /// <summary>
 /// The System page's Agents card names its problems (#4012): GET /status lists each counted session problem with its code and sentence, a failed source or a
 /// collector that can't run makes the health degraded through the same rows a flagged card uses (#4010), a pass that overran its budget is listed but leaves
-/// the health healthy (slow is not broken), and a test override is neither counted nor listed.
+/// the health healthy (slow is not broken), and a test override is neither counted nor listed. A collector the owner turned off is neither: the status
+/// reads watching off instead (#4316).
 /// </summary>
 public sealed class StatusSessionProblemsTests
 {
@@ -68,14 +69,24 @@ public sealed class StatusSessionProblemsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_collector_the_owner_turned_off_is_listed_but_not_a_health_problem()
+    public async Task A_collector_the_owner_turned_off_is_not_a_problem_and_reads_watching_off()
     {
-        var off = new SessionProblem("collector", "SND-SESSION-002", "Sindri can't see agent sessions on this system: launcher.json turned it off") { Reason = UnavailableReason.Disabled };
+        var status = await Status(SessionProblems.Disabled);
 
-        var status = await Status(off);
-
-        Assert.Equal([off], status.Sessions!.ProblemRows);
+        Assert.Equal((0, "off"), (status.Sessions!.Problems, status.Sessions.Watching));
+        Assert.Empty(status.Sessions.ProblemRows);
         Assert.Equal(HealthWord.Healthy, status.Health!.Word);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_collector_that_cannot_run_stays_a_problem_and_reads_watching_on()
+    {
+        var unsupported = new SessionProblem("processes", "SND-SESSION-002", "Sindri can't see agent sessions on this system: unsupported-platform") { Reason = UnavailableReason.UnsupportedPlatform };
+
+        var status = await Status(unsupported);
+
+        Assert.Equal((1, "on"), (status.Sessions!.Problems, status.Sessions.Watching));
+        Assert.Equal([unsupported], status.Sessions.ProblemRows);
     }
 
     [Fact, Trait("Lane", "unit")]
