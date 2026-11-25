@@ -128,4 +128,17 @@ public sealed class WorkflowsDoneAsksTests
         Assert.Equal(("Archived", "\u25cb", "neutral"), (page.DetailChipWord, page.DetailChipGlyph, page.DetailChipTone));
         Assert.False(page.Runs.ShowsRunNow);
     }
+
+    [Fact]
+    public async Task While_the_question_shows_the_sheets_own_Save_and_Close_row_is_hidden_and_it_returns_after()
+    {
+        var page = await WithATypedField();
+        Assert.True(page.ShowsEditorButtons);
+
+        page.RequestDone();
+        Assert.Equal((true, false), (page.AsksSaveFirst, page.ShowsEditorButtons));   // the question has its own Save: a second one 60 px below is the same word for the same job
+
+        page.KeepEditing();
+        Assert.True(page.ShowsEditorButtons);
+    }
 }
