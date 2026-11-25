@@ -17,8 +17,8 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     internal ServiceTileViewModel(ServiceTile service, ConnectionActions actions, Func<Task> changed, TimeProvider clock)
     {
         (Service, _actions, _changed, _clock) = (service, actions, changed, clock);
-        Token.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress));
-        ClientSecret.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress));
+        Token.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress), nameof(PrimaryText), nameof(HasPrimary));
+        ClientSecret.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress), nameof(PrimaryText), nameof(HasPrimary));
     }
 
     /// <summary>The service this tile is for.</summary>
@@ -49,7 +49,7 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
         set
         {
             field = value ?? string.Empty;
-            Raise(nameof(ClientId), nameof(CanSend), nameof(BlockedReason), nameof(CanPress));
+            Raise(nameof(ClientId), nameof(CanSend), nameof(BlockedReason), nameof(CanPress), nameof(PrimaryText), nameof(HasPrimary));
         }
     } = string.Empty;
 
@@ -99,8 +99,8 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
         : NeedsSecret && !ClientSecret.HasValue ? Labels.ConnectNeedsClientSecret(Service.Title)
         : TakesToken && !Token.HasValue ? Labels.ConnectNeedsToken(Service.Title) : string.Empty;
 
-    /// <summary>True when the inline line explains a disabled send.</summary>
-    public bool HasBlockedReason => IsAsking && BlockedReason.Length > 0;
+    /// <summary>True when the inline line explains a disabled send; not under the token steps, whose step 3 already says to paste (#4368). The button's tooltip still says it.</summary>
+    public bool HasBlockedReason => IsAsking && BlockedReason.Length > 0 && !ShowTokenSteps;
 
     /// <summary>True when the input is complete and nothing runs.</summary>
     public bool CanSend => !IsWorking && BlockedReason.Length == 0;
@@ -112,7 +112,7 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     public bool HasStatus => StatusText.Length > 0;
 
     /// <summary>Why the last try failed, in words; empty otherwise.</summary>
-    public string ErrorText { get; private set { Set(ref field, value); Raise(nameof(HasError)); RaiseState(); } } = string.Empty;
+    public string ErrorText { get; private set { Set(ref field, value); CanRetry = value.Length > 0 && BlockedReason.Length == 0; Raise(nameof(HasError)); RaiseState(); } } = string.Empty;
 
     /// <summary>True when the last try failed or was cancelled.</summary>
     public bool HasError => ErrorText.Length > 0;
@@ -136,7 +136,7 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     public bool HasReason => ReasonText.Length > 0;
 
     /// <summary>The label of the tile's one primary button; empty when it has none (a connected tile, or a sign-in running).</summary>
-    public string PrimaryText => IsWorking ? string.Empty : NeedsAttention ? Labels.TileReconnect : IsOffered ? (HasError ? Labels.TryAgain : ConnectText) : string.Empty;
+    public string PrimaryText => IsWorking ? string.Empty : NeedsAttention ? Labels.TileReconnect : IsOffered ? (HasError && CanRetry && BlockedReason.Length == 0 ? Labels.TryAgain : ConnectText) : string.Empty;
 
     /// <summary>True when the tile has a primary button.</summary>
     public bool HasPrimary => PrimaryText.Length > 0;
@@ -229,7 +229,7 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
         var added = await _actions.Add(Body(), cancellationToken).ConfigureAwait(true);
         if (added.IsError)
         {
-            ErrorText = Labels.ConnectTileFailed(added.Error);
+            ErrorText = Labels.ConnectTileFailed(added.Error, Service.Title);
             return;
         }
 
