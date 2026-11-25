@@ -991,6 +991,37 @@ alias_row zsh "alias fakeagent='fakeagent --from-alias'"
 alias_row bash "alias fakeagent='fakeagent --from-alias'"
 alias_row fish "alias fakeagent 'fakeagent --from-alias'"
 alias_row zsh-function "fakeagent() { command fakeagent --from-alias \"\$@\"; }" zsh
+# 5e. An alias that already carries a switch the launch adds (#4353): `alias codex='codex --dangerously-bypass-approvals-and-sandbox'`
+# plus a codex-yolo open of `codex --yolo ...` gave Codex the switch twice (--yolo is its short name), and Codex exits on that. The
+# agent gets it once. The fake is named codex, in its own bin dir, because the switch table is keyed on the agent's name.
+# It skips --help: the launcher's --no-daemon probe runs the agent with --help first.
+mkdir -p "$WORK/codexbin"
+printf '#!/usr/bin/env bash\n[ "$1" != --help ] || exit 0\nprintf "%%s\\n" "$*" > "%s"\n' "$WORK/alias-args" > "$WORK/codexbin/codex"
+chmod +x "$WORK/codexbin/codex"
+dedupe_row() { # name rc-line want [shell]: the bypass switches codex got, in order, when the launch adds --yolo
+  local n="$1" rcline="$2" want="$3" sh; sh="$(command -v "${4:-$1}" 2> /dev/null)"
+  if [ -z "$sh" ]; then echo "ok - SKIP $n not installed"; return; fi
+  local cfg="$WORK/dedupe-$n"; mkdir -p "$cfg/fish"
+  case "$n" in
+    zsh*) printf '%s\n' "$rcline" > "$cfg/.zshrc" ;;
+    bash*) printf '%s\n' "$rcline" > "$cfg/.bashrc" ;;
+    fish*) printf '%s\n' "$rcline" > "$cfg/fish/config.fish" ;;
+  esac
+  fresh_server; tmux set-environment -g AW_META_CLAUDE codex; tmux set-environment -g AW_META_CLAUDE_ARGS --yolo
+  tmux set-environment -g ZDOTDIR "$cfg"; tmux set-environment -g XDG_CONFIG_HOME "$cfg"
+  case "$n" in bash*) tmux set-environment -g HOME "$cfg" ;; esac
+  rm -f "$WORK/alias-args"
+  env ZDOTDIR="$cfg" XDG_CONFIG_HOME="$cfg" PATH="$WORK/codexbin:$WORK/callerbin:$ORIG_PATH" SHELL="$sh" bash "$DIR/meta-launch.sh" --no-open --lanes api > /dev/null 2>&1
+  waitfor '[ -s "$WORK/alias-args" ]'
+  check "$n: codex gets the bypass switch once ($want)" "$(grep -oE -- '--(yolo|dangerously-bypass-approvals-and-sandbox)' "$WORK/alias-args" 2> /dev/null | paste -sd' ' -)" "$want"
+  tmux kill-session -t t1-api 2> /dev/null
+}
+dedupe_row zsh "alias codex='codex --dangerously-bypass-approvals-and-sandbox'" "--dangerously-bypass-approvals-and-sandbox"
+dedupe_row bash "alias codex='codex --dangerously-bypass-approvals-and-sandbox'" "--dangerously-bypass-approvals-and-sandbox"
+dedupe_row fish "alias codex 'codex --dangerously-bypass-approvals-and-sandbox'" "--dangerously-bypass-approvals-and-sandbox"
+dedupe_row zsh-yolo "alias codex='codex --yolo'" "--yolo" zsh
+dedupe_row bash-other "alias codex='codex --search'" "--yolo" bash
+dedupe_row zsh-none "" "--yolo" zsh
 tmux kill-server 2> /dev/null
 
 # 6. Quoting does not depend on the bash version (#2281): bash 3.2 (macOS) read the backslashes in ${s//\'/...} differently from bash 5.
