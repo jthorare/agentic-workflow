@@ -20,7 +20,7 @@ internal static class SessionProblems
 
     /// <summary>The launcher.json row. A bad sessions section can still hold 'own' (a typo'd scope fails closed), and then the row says so instead of "default settings" (#4252).</summary>
     internal static SessionProblem Launcher(SessionScope scope) => scope == SessionScope.Own
-        ? new("launcher.json", SindriErrors.LauncherInvalid.Code, "launcher.json isn't valid; sessions.scope stays 'own', and the built-in agents and defaults are used for the rest")
+        ? new("launcher.json", SindriErrors.LauncherInvalid.Code, "launcher.json isn't valid; sessions.scope is read as 'own', and the built-in agents and defaults are used for the rest")
         : new("launcher.json", SindriErrors.LauncherInvalid.Code, "launcher.json isn't valid; the built-in agents and default settings are used");
 
     internal static SessionProblem Source(string source) => new(source, SindriErrors.SessionSourceFailed.Code, $"The {source} source couldn't be read in the last pass");

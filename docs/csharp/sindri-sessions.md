@@ -91,7 +91,7 @@ stays hidden until its first report.
 
 An unknown value fails closed. `"scope": "onw"`, `"scope": null`, or any value but `"all"` in a `sessions` section that is
 otherwise invalid, is read as `own` and shows a problem row (`SND-LAUNCH-011`, 'sessions.scope is 'all' or 'own''). The
-launcher.json row then says the scope stays `own`. A launcher.json
+launcher.json row then says sessions.scope is read as `own`. A launcher.json
 that is not valid JSON or has no `"schema": 1` still gives the defaults (`all`).
 
 The bash reader (`scripts/launcher-lib.sh`) refuses unknown keys, so CO-0 adds `sessions` to `x-aw-keys.root` and the
