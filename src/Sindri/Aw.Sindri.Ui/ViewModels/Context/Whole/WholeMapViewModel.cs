@@ -85,7 +85,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
     public string LoadingText { get; } = Labels.ContextWholeLoading;
 
     /// <summary>The failure line.</summary>
-    public string FailedText { get; } = Labels.ContextWholeFailed;
+    public string FailedText { get; private set; } = Labels.ContextWholeFailed;
 
     /// <summary>The Retry button's words.</summary>
     public string RetryText { get; } = Labels.ContextWholeRetry;
@@ -145,9 +145,11 @@ internal sealed partial class WholeMapViewModel : ObservableObject
     }
 
     /// <summary>A read failed: the failure line with Retry, keeping what was drawn.</summary>
-    internal void Failed()
+    /// <param name="timedOut">Whether the read passed the app's deadline: the line says so.</param>
+    internal void Failed(bool timedOut = false)
     {
         (IsLoading, IsFailed) = (false, true);
+        FailedText = timedOut ? Labels.ContextWholeTimedOut : Labels.ContextWholeFailed;
         PagesFollow(answer: null, failed: true);
         Changed();
     }
@@ -235,7 +237,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(ShowCrumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled), nameof(ShowPages)])
+        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(FailedText), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(ShowCrumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled), nameof(ShowPages)])
         {
             OnChanged(name);
         }
