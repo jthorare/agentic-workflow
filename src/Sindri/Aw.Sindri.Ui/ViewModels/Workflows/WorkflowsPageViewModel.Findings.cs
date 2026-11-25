@@ -64,12 +64,13 @@ internal sealed partial class WorkflowsPageViewModel
         }
     }
 
-    /// <summary>Asks validate again for the revision the page shows (the failed-check line's Retry). Stub: asks nothing yet.</summary>
+    /// <summary>Asks validate again for the revision the page shows (the failed-check line's Retry).</summary>
     /// <returns>A task that completes when the answer is shown.</returns>
     internal Task RetryFindings()
     {
-        _ = Findings;
-        return Task.CompletedTask;
+        _findingsOf = null;   // the same revision is asked about again
+        AskFindings();
+        return FindingsRead;
     }
 
     private void WatchFindings()
@@ -84,8 +85,20 @@ internal sealed partial class WorkflowsPageViewModel
                 AllowFixes();
             }
         };
+        Editor.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(OpsEditor.IsSending), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(OpsEditor.NeedsReload), StringComparison.Ordinal))
+            {
+                AllowFixes();   // the editor's own state: a fix is offered whenever the page can edit, so it follows
+            }
+        };
         PropertyChanged += (_, e) =>
         {
+            if (string.Equals(e.PropertyName, nameof(IsRuns), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(IsSettingsOpen), StringComparison.Ordinal))
+            {
+                AllowFixes();   // back on the workflow (or the sheet shut): findings that came in meanwhile get their fix
+            }
+
             if (string.Equals(e.PropertyName, nameof(IsSettingsOpen), StringComparison.Ordinal))
             {
                 OnChanged(nameof(ShowsStepFindingsUnderGraph));

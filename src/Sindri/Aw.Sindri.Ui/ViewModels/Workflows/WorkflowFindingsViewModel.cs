@@ -41,6 +41,11 @@ internal sealed class WorkflowFindingsViewModel : ObservableObject
     /// <summary>The line that says the last check failed; empty when it did not.</summary>
     public string FailedText { get; private set { Set(ref field, value); OnChanged(nameof(HasFailed)); } } = string.Empty;
 
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    /// <summary>The Retry button's words.</summary>
+    public string RetryText => Labels.WfFindingsRetry;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>True when the last check failed.</summary>
     public bool HasFailed => FailedText.Length > 0;
 

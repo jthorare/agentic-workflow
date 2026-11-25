@@ -156,9 +156,14 @@
         <Border x:Name="FindingsHead" IsVisible="{Binding Findings.HasFindings}" AutomationProperties.Name="{Binding Findings.HeaderText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption" Text="{Binding Findings.HeaderText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <!-- A check that could not answer says so; the next open asks again (#4380). -->
-        <Border x:Name="FindingsFailed" IsVisible="{Binding Findings.HasFailed}" AutomationProperties.Name="{Binding Findings.FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-          <TextBlock Classes="caption subtle" Text="{Binding Findings.FailedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        <!-- A check that could not answer says so, as a failure (its own class: the amber callout would win), and Retry asks again (#4380). -->
+        <Border x:Name="FindingsFailed" Classes="findings-failed" IsVisible="{Binding Findings.HasFailed}" AutomationProperties.Name="{Binding Findings.FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+          <StackPanel Orientation="Horizontal" Spacing="12">
+            <TextBlock Classes="body" Text="{Binding Findings.FailedText}" VerticalAlignment="Center" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            <Button x:Name="FindingsRetry" Classes="copy" Click="OnRetryFindings" IsVisible="{Binding Findings.HasFailed}" AutomationProperties.Name="{Binding Findings.RetryText}">
+              <TextBlock Classes="caption" Text="{Binding Findings.RetryText}" AutomationProperties.AccessibilityView="Raw" />
+            </Button>
+          </StackPanel>
         </Border>
         <!-- The findings about the whole workflow, which no step's card carries (#4380). -->
         <wv:WorkflowLevelFindingsList x:Name="WorkflowLevelFindings" IsVisible="{Binding Findings.HasWholeWorkflow}" />
