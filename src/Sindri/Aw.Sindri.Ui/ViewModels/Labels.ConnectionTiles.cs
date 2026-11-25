@@ -22,16 +22,27 @@ internal static partial class Labels
     /// <summary>The swap back to a pasted token, under the client id fields.</summary>
     internal const string TileUseToken = "Use a token instead";
 
-    /// <summary>The three numbered steps above a tile's token field: where to make the token and what to give it (first-run spec decision 15a's fine-grained set for GitHub).</summary>
+    /// <summary>
+    /// The three numbered steps above a tile's token field: where to make the token and what to give it (first-run spec decision 15a's fine-grained set for GitHub). GitHub's five permissions
+    /// sit under step 2, one per line in the muted style (#4368), so they don't run together in the 260 px tile.
+    /// </summary>
     /// <param name="id">The tile's service id.</param>
     /// <returns>The steps; empty for a service with no token.</returns>
-    internal static IReadOnlyList<string> TileTokenSteps(string id) => id switch
+    internal static IReadOnlyList<TokenStep> TileTokenSteps(string id) => id switch
     {
-        "github" => ["1. Open GitHub's new fine-grained token page.", "2. Pick your repos and give it Pull requests: read and write, Contents: read and write, Checks: read, Issues: read, Metadata: read.", "3. Paste the token here."],
-        "linear" => ["1. Open Linear, Settings, API, Personal API keys.", "2. Create a key named Sindri.", "3. Paste the key here."],
-        "slack" => ["1. Open your Slack app's OAuth & Permissions page.", "2. Copy the User OAuth Token (it starts with xoxp-).", "3. Paste the token here."],
+        "github" =>
+        [
+            new("1. Open GitHub's new fine-grained token page."), new("2. Pick your repos and give it these five permissions:"),
+            Detail("Pull requests: read and write"), Detail("Contents: read and write"), Detail("Checks: read"), Detail("Issues: read"), Detail("Metadata: read"),
+            new("3. Paste the token here."),
+        ],
+        "linear" => [new("1. Open Linear, Settings, API, Personal API keys."), new("2. Create a key named Sindri."), new("3. Paste the key here.")],
+        "slack" => [new("1. Open your Slack app's OAuth & Permissions page."), new("2. Copy the User OAuth Token (it starts with xoxp-)."), new("3. Paste the token here.")],
         _ => [],
     };
+
+    // One line under a step: a permission the token needs.
+    private static TokenStep Detail(string text) => new(text, IsDetail: true);
 
     /// <summary>The tile menu's Rename.</summary>
     internal const string TileRename = "Rename";
@@ -95,9 +106,9 @@ internal static partial class Labels
     private static (string Line, string LinkText, string Url) TileOAuthHelp(string id) => id switch
     {
         "github" => ("Paste the client ID and secret from your GitHub OAuth app.", "Open GitHub's OAuth apps", "https://github.com/settings/developers"),
-        "linear" => ("Create an OAuth app in Linear, then paste its client id here.", "Open Linear's API settings", "https://linear.app/settings/api"),
+        "linear" => ("Create an OAuth app in Linear, then paste its client ID here.", "Open Linear's API settings", "https://linear.app/settings/api"),
         "google" => ("Paste the client ID and secret from your Google OAuth client.", "Open Google's credentials page", "https://console.cloud.google.com/apis/credentials"),
-        "spotify" => ("Create an app in Spotify, then paste its client id here.", "Open Spotify's developer dashboard", "https://developer.spotify.com/dashboard"),
+        "spotify" => ("Create an app in Spotify, then paste its client ID here.", "Open Spotify's developer dashboard", "https://developer.spotify.com/dashboard"),
         _ => (string.Empty, string.Empty, string.Empty),
     };
 
