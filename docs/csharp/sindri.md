@@ -632,6 +632,17 @@ API P6. A job is work a command starts and does not wait for: the command is acc
 - **`job-probe`.** An opt-in diagnostic service, not a built-in: it runs only when a profile names it (`services: job-probe: {every: 24h}`), and the long job to start by hand (`sindri services run job-probe`, about 62 s). It reports 250 lines, one every 250 ms, and ends `ok: 250 lines`; line 5 holds an OSC-8 hyperlink, line 6 a credential-shaped fake and line 7 is 300 characters, so a run shows the escaping, the scrubbing, the cut at 200 characters and the 200-line window (the view keeps lines 51 to 250). Cancelling stops it within one line.
 - **Goldens.** `services-name-run/`, `services-name-pause/`, `services-name-resume/`, `jobs-id/`, `jobs-id-cancel/`, `jobs/`, plus `services/` (`paused`, `running-job`, `manual-ok`: a manual run leaves the next slot where the scheduled one put it), `needs-you/after-manual-run` (the failure row is gone) and `events/job-lifecycle` (started, two lines, finished, the manual `service.ran`).
 
+## Proposals
+
+Issue 3787, piece 3. A proposal is a typed request to change the toolkit (a skill edit, a style rule, docs or code), mined from local agent sessions. It lives in the ledger file (migration 24) and nothing here edits a repo.
+
+- **Tables.** `proposal` (the model's draft as JSON in `body`, `state`, `tier`, gate `attempts`, `held_by`, `origin`, and the optional `draft_branch` and `draft_commit`), `proposal_source` (the turns behind it, per session, recorded by code) and `proposal_public` (the generalized text that passed the leak gate: the only text that may leave the box). A ledger older than 22 reads as no proposals.
+- **Save.** `IProposalStore.Save` inserts a `proposed` row, or merges into the open row with the same target and normalized title: the evidence is joined (the newest 20 kept), the sessions and their turns are added, and a non-null draft replaces the stored one (a save without a draft keeps it). A target and title the owner rejected is never saved again (`PreviouslyRejected`).
+- **Draft.** A skill-edit proposal's real edit lives only on the local branch the workflow's agent step left, `wf/<slug>/<run>/work`. The row points at it by branch and commit; the store never reads the branch.
+- **Reads.** `GET /sindri/proposals[?state=]` lists summaries, newest change first; `GET /sindri/proposals/{id}` adds the rationale, change, files, evidence refs, session refs, origin and `draft {branch, commit}` (null when absent). The source turns are in no response. A bad id or state is 400 `SND-CLI-003`; an unknown id is 404 `SND-PROP-001`.
+- **Reject.** `POST /sindri/proposals/{id}/reject` is the owner's desk command (a session gets `SND-AUTH-002`), so no agent decides which of its own proposals live. A proposal that is published, merged or rejected is 409 `SND-PROP-002`.
+- **CLI.** `sindri proposals [--state S]`, `sindri proposal show <id>` and `sindri proposal reject <id>`, each with `--json`. The reads never start the control plane; reject may. A proposal's text is model output over transcript text: it is escaped always and fenced as untrusted when stdout isn't a terminal (override with `--fence` or `--no-fence`). Exit 0 ok, 1 not running, 2 refused or invalid.
+
 ## Session collector (collector spec; CO-2a)
 
 `SessionCollectorHost` (a hosted service under `sindri serve`, the `ProfileWatch` pattern: it runs only while the process holds the lease) runs one

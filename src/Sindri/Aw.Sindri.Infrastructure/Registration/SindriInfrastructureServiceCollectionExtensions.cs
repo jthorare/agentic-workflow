@@ -10,6 +10,7 @@ using Aw.Sindri.Core.Connections.Polling;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.EngineReads;
+using Aw.Sindri.Core.Evolve;
 using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
@@ -50,6 +51,7 @@ using Aw.Sindri.Infrastructure.Connections.Polling;
 using Aw.Sindri.Infrastructure.Control;
 using Aw.Sindri.Infrastructure.Deploy;
 using Aw.Sindri.Infrastructure.Evidence;
+using Aw.Sindri.Infrastructure.Evolve;
 using Aw.Sindri.Infrastructure.Forge;
 using Aw.Sindri.Infrastructure.Judge;
 using Aw.Sindri.Infrastructure.Launch;
@@ -198,7 +200,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IChallenges, ProcessChallenges>()
             .AddSingleton(sp => HeavyLockSettings.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))
             .AddSingleton<IHeavySlots, DirectoryHeavySlots>()
-            .AddToolkitInfrastructure(environment)
+            .AddToolkitInfrastructure(environment).AddSingleton<IProposalStore, SqliteProposalStore>()   // issue 3787: the evolve proposals in the ledger
             .AddSingleton<IHarnessVersions, CommandHarnessVersions>()
             .AddSingleton<IOsNotifier, OsascriptNotifier>()          // engine P6 unit (c): the only OS notifier (README X5, X50)
             .AddSingleton<IDeskNotices, FileDeskNotices>()           // engine P6 unit (c): notifications.jsonl
