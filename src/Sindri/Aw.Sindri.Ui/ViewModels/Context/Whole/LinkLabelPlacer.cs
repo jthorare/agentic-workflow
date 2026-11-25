@@ -1,6 +1,6 @@
 namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 
-/// <summary>Where a link's label goes (#3678): whole on a free stretch between the two nodes, or not at all, never under a node.</summary>
+/// <summary>Where a link's label goes (#3678): whole on a free stretch between the two nodes, or not at all, never under a node or a heading.</summary>
 internal static class LinkLabelPlacer
 {
     /// <summary>The room a label keeps beyond its own size: 8 px on each side.</summary>
@@ -11,7 +11,7 @@ internal static class LinkLabelPlacer
     /// <param name="to">The link's second node.</param>
     /// <param name="width">The label's width.</param>
     /// <param name="height">The label's height.</param>
-    /// <param name="nodes">Every node on the canvas.</param>
+    /// <param name="nodes">Every obstacle on the canvas: each node and each heading strip (#4442).</param>
     /// <returns>The label's rectangle, centred on the stretch, or null when no stretch is free.</returns>
     internal static WholeRect? Place(WholeRect from, WholeRect to, double width, double height, IReadOnlyList<WholeRect> nodes)
     {

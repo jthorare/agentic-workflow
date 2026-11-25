@@ -25,8 +25,9 @@ internal static class WholePillPlacer
     /// <summary>Places the labels in the order given; earlier ones keep their place.</summary>
     /// <param name="pills">The labels, each at the middle of its edge.</param>
     /// <param name="scale">The zoom.</param>
+    /// <param name="obstacles">Nodes and heading strips a moved label must not land on (#4442); null for none.</param>
     /// <returns>The labels that have a place, at it.</returns>
-    internal static IReadOnlyList<WholePill> Place(IReadOnlyList<WholePill> pills, double scale)
+    internal static IReadOnlyList<WholePill> Place(IReadOnlyList<WholePill> pills, double scale, IReadOnlyList<WholeRect>? obstacles = null)
     {
         ArgumentNullException.ThrowIfNull(pills);
         var placed = new List<WholePill>(pills.Count);
@@ -36,6 +37,12 @@ internal static class WholePillPlacer
             foreach (var step in OffsetSteps())
             {
                 var moved = pill with { Y = pill.Y + (step * height) };
+                var box = new WholeRect(moved.X - (width / 2), moved.Y - (height / 2), width, height);
+                if (step != 0 && obstacles is not null && obstacles.Any(box.Intersects))
+                {
+                    continue;
+                }
+
                 if (!placed.Exists(other => Overlaps(moved, width, height, other, scale)))
                 {
                     placed.Add(moved);

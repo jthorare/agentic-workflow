@@ -15,7 +15,10 @@ internal static class WholePillLayout
         ArgumentNullException.ThrowIfNull(geometry);
         ArgumentNullException.ThrowIfNull(drawn);
         ArgumentNullException.ThrowIfNull(box);
+        // Obstacles (#4442): every node and every heading strip, so a label never covers a layer's title.
         var rects = geometry.Nodes.Select(n => n.Rect).ToList();
+        rects.AddRange(geometry.Bands.Select(b => new WholeRect(0, b.LaneTop, geometry.World.Width, WholeMapLayout.LaneLabel)));
+        rects.AddRange((geometry.AreaBands ?? []).Where(b => !b.Sub).Select(b => b.Rect));
         var byKey = new Dictionary<string, WholeRect>(StringComparer.Ordinal);
         foreach (var node in geometry.Nodes)
         {
@@ -33,6 +36,6 @@ internal static class WholePillLayout
             }
         }
 
-        return WholePillPlacer.Place(pills, scale);
+        return WholePillPlacer.Place(pills, scale, rects);
     }
 }
