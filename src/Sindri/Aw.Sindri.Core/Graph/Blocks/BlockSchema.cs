@@ -5,7 +5,8 @@ namespace Aw.Sindri.Core.Graph.Blocks;
 
 /// <summary>A block's config schema: the fields it takes. Anything else in the config is a finding.</summary>
 /// <param name="Fields">The fields.</param>
-public sealed record BlockSchema(IReadOnlyList<BlockField> Fields)
+/// <param name="OneOf">Groups of field names of which a config fills exactly one ("duration" and "until" of a wait); null for a block with no such rule. The editor keeps Save off until each group has exactly one field filled (#4359); the block's own check says why a config breaks it.</param>
+public sealed record BlockSchema(IReadOnlyList<BlockField> Fields, IReadOnlyList<IReadOnlyList<string>>? OneOf = null)
 {
     /// <summary>Checks <paramref name="config"/> against the fields.</summary>
     /// <param name="config">The node's config.</param>

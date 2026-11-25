@@ -43,6 +43,7 @@ public sealed class ConnectionTileStatesTests
     {
         var tile = await Tile("github");
         await tile.Connect(Token);
+        tile.UseOAuth();
         tile.ClientId = "client-123";
         tile.ClientSecret.Text = "secret-456";
         _f.Server.ConnectionWriteError = new Kernel.Error("SND-CONN-006", Kernel.ErrorKind.Unavailable, "The connection's secret store is not available");
@@ -62,6 +63,8 @@ public sealed class ConnectionTileStatesTests
 
         Assert.True(tile.IsAsking);
         Assert.False(tile.CanPress);
+        Assert.Equal("Paste a GitHub token", tile.BlockedReason);
+        tile.UseOAuth();
         Assert.Equal("Enter your GitHub app's client id", tile.BlockedReason);
         tile.ClientId = "client-123";
         Assert.False(tile.CanPress);
@@ -75,6 +78,8 @@ public sealed class ConnectionTileStatesTests
     public async Task A_client_id_input_has_one_help_line_and_a_link_to_the_providers_OAuth_apps()
     {
         var tile = await Tile("linear");
+        await tile.Connect(Token);
+        tile.UseOAuth();
 
         Assert.DoesNotContain('\n', tile.HelpText);
         Assert.Equal("Create an OAuth app in Linear, then paste its client id here.", tile.HelpText);
@@ -92,19 +97,21 @@ public sealed class ConnectionTileStatesTests
     public async Task Every_sign_in_tile_links_to_where_its_client_id_is_made(string id, string url)
     {
         var tile = await Tile(id);
+        await tile.Connect(Token);
+        tile.UseOAuth();   // GitHub opens on a token (#4357); Google and Spotify have no token, so this keeps their sign-in
 
         Assert.Equal(url, tile.HelpUrl);
         Assert.NotEmpty(tile.HelpText);
     }
 
     [Fact]
-    public async Task The_Slack_tile_is_Add_token_with_an_inline_field_and_one_line_on_where_the_token_comes_from()
+    public async Task The_Slack_tile_is_Add_token_with_an_inline_field_and_steps_on_where_the_token_comes_from()
     {
         var tile = await Tile("slack");
 
         Assert.Equal("Add token", tile.PrimaryText);
-        Assert.Equal("In Slack, open your app's OAuth & Permissions page and copy the user token.", tile.HelpText);
-        Assert.Equal(string.Empty, tile.HelpUrl);
+        Assert.Equal("2. Copy the User OAuth Token (it starts with xoxp-).", tile.TokenSteps[1]);
+        Assert.Equal("https://api.slack.com/apps", tile.HelpUrl);
 
         await tile.Primary(Token);
 
@@ -174,6 +181,7 @@ public sealed class ConnectionTileStatesTests
         var page = await _f.Shown();
         var tile = page.Tiles.Single(t => string.Equals(t.Id, "github", StringComparison.Ordinal));
         await tile.Connect(Token);
+        tile.UseOAuth();
         Assert.True(tile.NeedsSecret);
         Assert.Equal("Paste the client ID and secret from your GitHub OAuth app.", tile.HelpText);
         tile.ClientId = "client-123";
@@ -188,11 +196,15 @@ public sealed class ConnectionTileStatesTests
     }
 
     [Fact]
-    public async Task A_Google_tile_also_asks_for_the_secret_and_Linear_and_Spotify_do_not()
+    public async Task A_Google_tile_asks_for_the_secret_and_GitHub_only_once_its_OAuth_app_is_picked()
     {
         var page = await _f.Shown();
 
-        Assert.Equal(["github", "google"], page.Tiles.Where(t => t.NeedsSecret).Select(t => t.Id), StringComparer.Ordinal);
+        Assert.Equal(["google"], page.Tiles.Where(t => t.NeedsSecret).Select(t => t.Id), StringComparer.Ordinal);   // GitHub opens on a token (#4357)
+        var github = page.Tiles.Single(t => string.Equals(t.Id, "github", StringComparison.Ordinal));
+        await github.Connect(Token);
+        github.UseOAuth();
+        Assert.True(github.NeedsSecret);
     }
 
     [Fact]
@@ -201,6 +213,7 @@ public sealed class ConnectionTileStatesTests
         var page = await _f.Shown();
         var tile = page.Tiles.Single(t => string.Equals(t.Id, "linear", StringComparison.Ordinal));
         await tile.Connect(Token);
+        tile.UseOAuth();
         tile.ClientId = "client-123";
         Assert.True(tile.CanPress);
 
@@ -215,6 +228,7 @@ public sealed class ConnectionTileStatesTests
         var page = await _f.Shown();
         var tile = page.Tiles.Single(t => string.Equals(t.Id, "github", StringComparison.Ordinal));
         await tile.Connect(Token);
+        tile.UseOAuth();
         tile.ClientId = "client-123";
         tile.ClientSecret.Text = "secret-9f3a7c21";
         _f.Server.ConnectionWriteError = new Kernel.Error("SND-CONN-010", Kernel.ErrorKind.Conflict, "A connection named github:work already exists.");

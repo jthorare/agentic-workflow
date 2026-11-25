@@ -11,7 +11,7 @@ namespace Aw.Meta.Features.StopCheck;
 /// The Stop hook's question. Any session but the registered meta may stop. For the meta: sync the transcript, refresh the lane
 /// map, evaluate what is owed, and block while anything is open, except that the identical open set blocks at most
 /// MaxBlocks times in a row (a continuation is then let through with a warning and an incident in the log). While a live recycle waiter
-/// is recorded for the meta lane, a blocked stop is let through too, so the waiter sees the turn end and types /clear (#4264); the open
+/// is confirmed running for the meta lane (a liveness error counts as not running), a stop with obligations open is let through without asking the loop guard, so the waiter sees the turn end and types /clear (#4264); the open
 /// obligations stay in the store and the next session's stop-check sees them again.
 /// </summary>
 /// <param name="session">Tells the meta session from the rest.</param>
@@ -61,17 +61,17 @@ internal sealed class StopCheckService(MetaSession session, MetaSweep sweep, Sto
         return new StopCheckResponse(IsMeta: true, outcome.Value.Block, open.Value, outcome.Value.Warning);
     }
 
-    // The meta nearly always owes something, so a waiter that waits for a turn end gave up every time (#4264). A dead waiter pid or no
-    // waiter changes nothing.
+    // The meta nearly always owes something, so a waiter that waits for a turn end gave up every time (#4264). A dead waiter pid, no
+    // waiter or a liveness read that fails changes nothing (fail-closed, #4311). The waiter is read first: a stop it lets through never
+    // reaches the loop guard, so the overridden block is not saved into the guard's count or fingerprint.
     private async ValueTask<Result<StopOutcome>> Decide(TeamConfig config, StopCheckRequest request, IReadOnlyList<Obligation> open, DateTimeOffset now, CancellationToken cancellationToken)
     {
-        var outcome = await guard.Decide(open, request.HookActive, request.MaxBlocks, now, cancellationToken).ConfigureAwait(false);
-        if (outcome.IsError || !outcome.Value.Block || !await sweep.RecycleWaiterRunning(config.MetaLane, cancellationToken).ConfigureAwait(false))
+        if (open.Count > 0 && await sweep.RecycleWaiterRunning(config.MetaLane, cancellationToken).ConfigureAwait(false))
         {
-            return outcome;
+            return new StopOutcome(Block: false, CarryOver(open));
         }
 
-        return new StopOutcome(Block: false, CarryOver(open));
+        return await guard.Decide(open, request.HookActive, request.MaxBlocks, now, cancellationToken).ConfigureAwait(false);
     }
 
     private static string CarryOver(IReadOnlyList<Obligation> open)

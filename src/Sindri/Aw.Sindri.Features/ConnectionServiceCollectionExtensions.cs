@@ -39,6 +39,7 @@ internal static class ConnectionServiceCollectionExtensions
             .AddScoped<ConnectionStatusWriter>()
             .AddSingleton<SignInOutcomes>()
             .AddScoped<OAuthSignInFlow>()
+            .AddScoped<KeyConnectionAdd>()
             .AddScoped<IValidator<AddConnectionRequest>, AcceptAllValidator<AddConnectionRequest>>().AddCommand<AddConnectionRequest, AddConnectionResponse, AddConnectionService>()
             .AddScoped<IValidator<TestConnectionRequest>, AcceptAllValidator<TestConnectionRequest>>().AddUngatedCommand<TestConnectionRequest, TestConnectionResponse, TestConnectionService>()
             .AddScoped<IValidator<RemoveConnectionRequest>, AcceptAllValidator<RemoveConnectionRequest>>().AddCommand<RemoveConnectionRequest, RemoveConnectionResponse, RemoveConnectionService>()

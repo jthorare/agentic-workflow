@@ -242,6 +242,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IConnectionPresetCatalog, EmbeddedConnectionPresets>()
             .AddSingleton<IEnvironmentReader, ProcessEnvironmentReader>()
             .AddSingleton<IConnectionProbe>(static _ => new HttpConnectionProbe(new HttpClient()))
+            .AddSingleton<IKeyCheck>(static _ => new HttpKeyCheck(NoRedirectClient()))   // #4357: a pasted key is checked with its service before it is stored
             .AddSingleton<IOAuthClient>(static sp => new HttpOAuthClient(new HttpClient(), sp.GetRequiredService<TimeProvider>())).AddSingleton<IDeviceSignIn>(static sp => new GitHubDeviceSignIn(NoRedirectClient(), sp.GetRequiredService<TimeProvider>()))   // first-run decision 13: GitHub's device flow
             .AddSingleton<IMcpConnectionClient>(static _ => new McpConnectionClient(new HttpClient()))
             .AddSingleton<IConnectionToolPort>(static sp => new ConnectionToolAdapter(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<IMcpConnectionClient>(), NoRedirectClient(), sp.GetRequiredService<ITextScrubber>()))
