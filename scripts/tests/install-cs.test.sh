@@ -36,7 +36,7 @@ export DOTNET_ROOT="$WORK/dotnet-root" AW_SINDRI_HOME="$WORK/sindri-home"
 unset AW_SINDRI_JUDGE AW_PACKETS_BIN AW_UI_EVIDENCE_BIN AW_JUDGE_PROVIDERS
 mkdir -p "$TMPDIR" "$CLAUDE_LOCAL_BIN" "$WORK/fakebin" "$DOTNET_ROOT"
 export FAKE_SDK="10.0.100" FAKE_LOG="$WORK/publishes.log" FAKE_CALLS="$WORK/calls.log" FAKE_BIN="$WORK/fake-bin.sh"
-: > "$FAKE_LOG"; : > "$FAKE_CALLS"
+: > "$FAKE_LOG"; : > "$FAKE_LOG.args"; : > "$FAKE_CALLS"
 
 # What every published fake binary does (the generated stubs set FAKE_NAME, FAKE_REV and FAKE_SELF, then run this).
 cat > "$FAKE_BIN" <<'FB'
@@ -77,6 +77,7 @@ case "${1:-}" in
   *) exit 0 ;;
 esac
 proj="$2"; shift 2
+argv="$*"
 out="" rev=""
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -91,6 +92,7 @@ case "$proj" in
   *Aw.Readiness.App*) name=aw-readiness ;; *Aw.Sindri.CodeRunner*) name=sindri-code-runner ;; *) exit 3 ;;
 esac
 echo "$name rev=$rev" >> "$FAKE_LOG"
+echo "$name $argv" >> "$FAKE_LOG.args"
 [ "${FAKE_FAIL:-}" != "$name" ] || { echo "boom publishing $name" >&2; exit 1; }
 # FAKE_SLOW_SECS: each publish takes this long, so a holder keeps its lock while a test moves another run.
 [ -z "${FAKE_SLOW_SECS:-}" ] || sleep "$FAKE_SLOW_SECS"
@@ -203,6 +205,13 @@ for f in sindri sindri-code-runner sindri-ui judge aw-packets bugfix-state ui-ev
 done
 check "the build keeps ui-evidence's Playwright driver (a dot folder)" "$(cat "$B/$S1/.playwright/package/cli.js" 2>/dev/null)" "driver"
 check "eight publishes, each stamped with the commit" "$(grep -c "rev=$(g rev-parse HEAD)$" "$FAKE_LOG")" "8"
+# #3727: sindri is framework-dependent but ReadyToRun-compiled, so the CLI skips most JIT at start. ReadyToRun needs a runtime id:
+# the same -r the NativeAOT binaries get.
+sindri_args="$(grep '^sindri ' "$FAKE_LOG.args" | tail -1)"
+judge_rid="$(grep '^judge ' "$FAKE_LOG.args" | tail -1 | sed -n 's/.* -r \([^ ]*\).*/\1/p')"
+has "sindri is published ReadyToRun" "$sindri_args" "-p:PublishReadyToRun=true"
+has "sindri is published for this platform's runtime id" "$sindri_args" "-r $judge_rid "
+has "sindri stays framework-dependent" "$sindri_args" "--no-self-contained"
 check "the build carries heavy, executable" "$([ -x "$B/$S1/heavy" ] && echo yes || echo no)" "yes"
 check "the build's heavy is scripts/heavy.sh" "$(cmp -s "$B/$S1/heavy" "$REPO/scripts/heavy.sh" && echo same || echo differs)" "same"
 check "the build carries meta-gate-reserve, executable" "$([ -x "$B/$S1/meta-gate-reserve" ] && echo yes || echo no)" "yes"
