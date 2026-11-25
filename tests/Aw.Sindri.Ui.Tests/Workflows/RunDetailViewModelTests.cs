@@ -33,7 +33,7 @@ public sealed class RunDetailViewModelTests
     {
         var served = Golden("workflow-runs-run", "finished");
         served["trigger"] = new JsonObject { ["kind"] = kind };
-        served.AsObject().Remove("triggerKind");   // an older Sindri: the stored object's kind is all there is
+        _ = served.AsObject().Remove("triggerKind");   // an older Sindri: the stored object's kind is all there is
         _f.ServeRun(served);
 
         var run = await _f.OpenedRun(Token);

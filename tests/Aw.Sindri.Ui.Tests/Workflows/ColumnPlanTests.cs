@@ -51,6 +51,6 @@ public sealed class ColumnPlanTests
         var strip = plan.StripSlots == 10 ? 140d : 70d;
         var shown = new[] { 24d, plan.Name, plan.Trigger, plan.LastRun, plan.NextRun, strip, 72 }.Where(w => w > 0).ToList();
         var needed = shown.Sum() + (16 * (shown.Count - 1)) + 32;
-        Assert.True(needed <= width, $"a row needs {needed} px at {width}");
+        Assert.True(needed <= width, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"a row needs {needed} px at {width}"));
     }
 }

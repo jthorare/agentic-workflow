@@ -25,9 +25,18 @@ public sealed class RunCompareTests
 
     private static JsonObject Run(string id, int revision, string status, string trigger, TimeSpan ago, double seconds, string? error, params JsonObject[] nodes) => new()
     {
-        ["id"] = id, ["slug"] = Slug, ["revision"] = revision, ["status"] = status, ["trigger"] = new JsonObject { ["kind"] = string.Equals(trigger, "cli", StringComparison.Ordinal) || string.Equals(trigger, "agent", StringComparison.Ordinal) ? "manual" : trigger }, ["triggerKind"] = trigger, ["outputs"] = null, ["error"] = error, ["itemId"] = null,
-        ["startedAt"] = (Now - ago).ToString("O", System.Globalization.CultureInfo.InvariantCulture), ["endedAt"] = status == "running" ? null : (Now - ago + TimeSpan.FromSeconds(seconds)).ToString("O", System.Globalization.CultureInfo.InvariantCulture),
-        ["nodes"] = new JsonArray([.. nodes.Select(n => (JsonNode?)n)]),
+        ["id"] = id,
+        ["slug"] = Slug,
+        ["revision"] = revision,
+        ["status"] = status,
+        ["trigger"] = new JsonObject { ["kind"] = string.Equals(trigger, "cli", StringComparison.Ordinal) || string.Equals(trigger, "agent", StringComparison.Ordinal) ? "manual" : trigger },
+        ["triggerKind"] = trigger,
+        ["outputs"] = null,
+        ["error"] = error,
+        ["itemId"] = null,
+        ["startedAt"] = (Now - ago).ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+        ["endedAt"] = status == "running" ? null : (Now - ago + TimeSpan.FromSeconds(seconds)).ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+        ["nodes"] = new JsonArray([.. nodes.Cast<JsonNode?>()]),
     };
 
     private async Task<WorkflowsPageViewModel> TwoRuns(JsonObject a, JsonObject b)
@@ -84,8 +93,8 @@ public sealed class RunCompareTests
         var page = await TwoRuns(a, b);
 
         var start = page.Compare.Steps[0];
-        Assert.Equal(["\"by\": \"human:cli\""], start.A.Lines.Where(l => l.Differs).Select(l => l.Text.Trim()));
-        Assert.Equal(["\"by\": \"human:ui\""], start.B.Lines.Where(l => l.Differs).Select(l => l.Text.Trim()));
+        Assert.Equal(["\"by\": \"human:cli\""], start.A.Lines.Where(l => l.Differs).Select(l => l.Text.Trim()), StringComparer.Ordinal);
+        Assert.Equal(["\"by\": \"human:ui\""], start.B.Lines.Where(l => l.Differs).Select(l => l.Text.Trim()), StringComparer.Ordinal);
         Assert.Contains(start.A.Lines, l => !l.Differs && l.Text.Contains("\"kind\": \"manual\"", StringComparison.Ordinal));
         Assert.Equal(("differs in 1 of 3 steps", false, false), (page.Compare.SummaryText, page.Compare.Steps[1].Differs, page.Compare.Steps[2].Differs));
     }
@@ -107,7 +116,7 @@ public sealed class RunCompareTests
     [Fact]
     public async Task Two_identical_runs_say_they_match_and_mark_nothing()
     {
-        JsonObject Same(string id, int hours) => Run(id, 1, "succeeded", "manual", TimeSpan.FromHours(hours), 10, null, Manual("human:ui"), Step("sum", "succeeded", new JsonObject { ["result"] = 3 }), Step("tell", "succeeded", new JsonObject()));
+        static JsonObject Same(string id, int hours) => Run(id, 1, "succeeded", "manual", TimeSpan.FromHours(hours), 10, error: null, Manual("human:ui"), Step("sum", "succeeded", new JsonObject { ["result"] = 3 }), Step("tell", "succeeded", new JsonObject()));
 
         var page = await TwoRuns(Same(RunA, 2), Same(RunB, 3));
 
@@ -118,8 +127,8 @@ public sealed class RunCompareTests
     [Fact]
     public async Task A_step_only_one_run_reached_says_so_in_the_other_and_differs()
     {
-        var a = Run(RunA, 2, "succeeded", "manual", TimeSpan.FromHours(2), 10, null, Manual("x"), Step("sum", "succeeded", new JsonObject { ["result"] = 3 }), Step("tell", "succeeded", new JsonObject()));
-        var b = Run(RunB, 1, "succeeded", "manual", TimeSpan.FromHours(3), 10, null, Manual("x"), Step("sum", "succeeded", new JsonObject { ["result"] = 3 }));
+        var a = Run(RunA, 2, "succeeded", "manual", TimeSpan.FromHours(2), 10, error: null, Manual("x"), Step("sum", "succeeded", new JsonObject { ["result"] = 3 }), Step("tell", "succeeded", new JsonObject()));
+        var b = Run(RunB, 1, "succeeded", "manual", TimeSpan.FromHours(3), 10, error: null, Manual("x"), Step("sum", "succeeded", new JsonObject { ["result"] = 3 }));
 
         var page = await TwoRuns(a, b);
 
@@ -130,8 +139,8 @@ public sealed class RunCompareTests
     [Fact]
     public async Task A_run_still_running_is_named_in_the_summary_line()
     {
-        var a = Run(RunA, 1, "running", "manual", TimeSpan.FromMinutes(1), 0, null, Manual("x"));
-        var b = Run(RunB, 1, "succeeded", "manual", TimeSpan.FromHours(3), 10, null, Manual("x"), Step("sum", "succeeded", new JsonObject { ["result"] = 3 }));
+        var a = Run(RunA, 1, "running", "manual", TimeSpan.FromMinutes(1), 0, error: null, Manual("x"));
+        var b = Run(RunB, 1, "succeeded", "manual", TimeSpan.FromHours(3), 10, error: null, Manual("x"), Step("sum", "succeeded", new JsonObject { ["result"] = 3 }));
 
         var page = await TwoRuns(a, b);
 
@@ -158,8 +167,8 @@ public sealed class RunCompareTests
     [Fact]
     public async Task Back_from_Compare_returns_to_the_runs_with_the_two_ticks_kept()
     {
-        var a = Run(RunA, 1, "succeeded", "manual", TimeSpan.FromHours(2), 10, null, Manual("x"));
-        var b = Run(RunB, 1, "succeeded", "manual", TimeSpan.FromHours(3), 10, null, Manual("x"));
+        var a = Run(RunA, 1, "succeeded", "manual", TimeSpan.FromHours(2), 10, error: null, Manual("x"));
+        var b = Run(RunB, 1, "succeeded", "manual", TimeSpan.FromHours(3), 10, error: null, Manual("x"));
         var page = await TwoRuns(a, b);
 
         page.Back();

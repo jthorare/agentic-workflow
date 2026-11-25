@@ -28,9 +28,12 @@ internal sealed class RunRowViewModel : ObservableObject
         RevisionShort = string.Create(culture, $"r{row.Revision}");
         var seconds = row.Seconds ?? (row.EndedAt is { } ended && !live ? (ended - row.StartedAt).TotalSeconds : (double?)null);
         DurationText = seconds is { } s and >= 0 ? Labels.WfDuration(s) : string.Empty;
-        ResultText = row.Result ?? row.Error ?? (string.Equals(row.Status, "starting", StringComparison.Ordinal) ? word : string.Empty);   // a Starting placeholder has no result yet: the column says what it is
+        ResultText = ResultOf(row, word);
         Name = Labels.WfRunRowName(Id, word.ToLowerInvariant(), TriggerText.ToLowerInvariant(), WhenText, ErrorText);
     }
+
+    // A Starting placeholder has no result yet: the Result column says what it is.
+    private static string ResultOf(WorkflowRunRowView row, string word) => row.Result ?? row.Error ?? (string.Equals(row.Status, "starting", StringComparison.Ordinal) ? word : string.Empty);
 
     /// <summary>True when this Starting placeholder waited 10 s and no run row came: it says the run did not start and offers Retry.</summary>
     public bool DidNotStart { get; private set { Set(ref field, value); OnChanged(nameof(IsShownStatus)); } }

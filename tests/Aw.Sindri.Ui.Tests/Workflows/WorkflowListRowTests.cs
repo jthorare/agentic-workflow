@@ -42,7 +42,7 @@ public sealed class WorkflowListRowTests
 
     private async Task<Aw.Sindri.Ui.ViewModels.Workflows.WorkflowsPageViewModel> Serve(params JsonObject[] rows)
     {
-        _f.ServeList(new JsonObject { ["workflows"] = new JsonArray([.. rows.Select(r => (JsonNode?)r)]) });
+        _f.ServeList(new JsonObject { ["workflows"] = new JsonArray([.. rows.Cast<JsonNode?>()]) });
         return await _f.Shown(Token);
     }
 

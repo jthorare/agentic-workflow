@@ -20,20 +20,20 @@ public sealed class RunsTableTests
 
     private static JsonObject Run(int n, string status, TimeSpan ago, string trigger = "schedule", int revision = 2, double? seconds = 10, string? result = null) => new()
     {
-        ["id"] = $"morning-check@{revision}:{n}",
+        ["id"] = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"morning-check@{revision}:{n}"),
         ["revision"] = revision,
         ["status"] = status,
         ["trigger"] = trigger,
         ["startedAt"] = At(ago),
-        ["endedAt"] = status is "running" ? null : At(ago - TimeSpan.FromSeconds(seconds ?? 0)),
+        ["endedAt"] = string.Equals(status, "running", StringComparison.Ordinal) ? null : At(ago - TimeSpan.FromSeconds(seconds ?? 0)),
         ["error"] = status == "failed" ? "boom" : null,
-        ["seconds"] = status is "running" ? null : seconds,
+        ["seconds"] = string.Equals(status, "running", StringComparison.Ordinal) ? null : seconds,
         ["result"] = result,
     };
 
     private async Task<Aw.Sindri.Ui.ViewModels.Workflows.WorkflowsPageViewModel> Open(params JsonObject[] runs)
     {
-        _f.Server.WorkflowRunsAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, new JsonObject { ["slug"] = Slug, ["runs"] = new JsonArray([.. runs.Select(r => (JsonNode?)r)]) }.ToJsonString());
+        _f.Server.WorkflowRunsAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, new JsonObject { ["slug"] = Slug, ["runs"] = new JsonArray([.. runs.Cast<JsonNode?>()]) }.ToJsonString());
         var page = await _f.Shown(Token);
         await page.OpenWorkflow(Slug, Token);
         return page;
@@ -90,7 +90,7 @@ public sealed class RunsTableTests
         Assert.Equal(2, page.Runs.Rows.Count);
 
         page.Runs.SetDateFilter("24h");
-        Assert.Equal(1, page.Runs.Rows.Count);
+        _ = Assert.Single(page.Runs.Rows);
 
         page.Runs.ClearFilters();
         Assert.Equal((3, false, "3 runs"), (page.Runs.Rows.Count, page.Runs.HasFilter, page.Runs.CountText));

@@ -1,6 +1,5 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
-using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Workflows;
 
@@ -18,7 +17,7 @@ public sealed class WorkflowsHeadCountsTests
     [Fact]
     public async Task The_header_counts_active_and_paused_separately_and_leaves_off_out()
     {
-        _f.ServeList(new JsonObject { ["workflows"] = new JsonArray(Row("a", 1), Row("b", 1), Row("gate", 1, paused: true), Row("off", null)) });
+        _f.ServeList(new JsonObject { ["workflows"] = new JsonArray(Row("a", 1), Row("b", 1), Row("gate", 1, paused: true), Row("off", active: null)) });
 
         var page = await _f.Shown(Token);
 
@@ -28,7 +27,7 @@ public sealed class WorkflowsHeadCountsTests
     [Fact]
     public async Task With_nothing_paused_the_header_is_as_before()
     {
-        _f.ServeList(new JsonObject { ["workflows"] = new JsonArray(Row("a", 1), Row("off", null)) });
+        _f.ServeList(new JsonObject { ["workflows"] = new JsonArray(Row("a", 1), Row("off", active: null)) });
 
         var page = await _f.Shown(Token);
 
