@@ -40,7 +40,7 @@ public sealed class WorkflowsCompareFramesTests : FrameHost
 
     private async Task<(Window Window, ShellViewModel Shell)> Compared(double width)
     {
-        var row = (string id, int rev, TimeSpan ago) => new JsonObject { ["id"] = id, ["revision"] = rev, ["status"] = "succeeded", ["trigger"] = "manual", ["startedAt"] = (Clock.GetUtcNow() - ago).ToString("O", System.Globalization.CultureInfo.InvariantCulture), ["endedAt"] = (Clock.GetUtcNow() - ago).ToString("O", System.Globalization.CultureInfo.InvariantCulture), ["error"] = null };
+        JsonObject row(string id, int rev, TimeSpan ago) => new() { ["id"] = id, ["revision"] = rev, ["status"] = "succeeded", ["trigger"] = "manual", ["startedAt"] = (Clock.GetUtcNow() - ago).ToString("O", System.Globalization.CultureInfo.InvariantCulture), ["endedAt"] = (Clock.GetUtcNow() - ago).ToString("O", System.Globalization.CultureInfo.InvariantCulture), ["error"] = null };
         Server.WorkflowRunsAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, new JsonObject { ["slug"] = Slug, ["runs"] = new JsonArray(row(RunA, 2, TimeSpan.FromHours(2)), row(RunB, 1, TimeSpan.FromHours(30))) }.ToJsonString());
         Server.WorkflowRunAnswers[RunA] = new RouteAnswer(System.Net.HttpStatusCode.OK, Run(RunA, 2, TimeSpan.FromHours(2), "human:cli", "succeeded").ToJsonString());
         Server.WorkflowRunAnswers[RunB] = new RouteAnswer(System.Net.HttpStatusCode.OK, Run(RunB, 1, TimeSpan.FromHours(30), "human:ui", "succeeded").ToJsonString());

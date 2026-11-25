@@ -20,9 +20,15 @@ public sealed class WorkflowsRunsTableFramesTests : FrameHost
         var started = Clock.GetUtcNow() - ago;
         return new JsonObject
         {
-            ["id"] = $"morning-check@2:{n}", ["revision"] = 2, ["status"] = status, ["trigger"] = trigger,
-            ["startedAt"] = started.ToString("O", System.Globalization.CultureInfo.InvariantCulture), ["endedAt"] = started.AddSeconds(10).ToString("O", System.Globalization.CultureInfo.InvariantCulture),
-            ["error"] = status == "failed" ? "boom" : null, ["seconds"] = 10, ["result"] = status == "failed" ? "tell failed: the notification was not delivered" : "Sum is 3",
+            ["id"] = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"morning-check@2:{n}"),
+            ["revision"] = 2,
+            ["status"] = status,
+            ["trigger"] = trigger,
+            ["startedAt"] = started.ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+            ["endedAt"] = started.AddSeconds(10).ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+            ["error"] = status == "failed" ? "boom" : null,
+            ["seconds"] = 10,
+            ["result"] = status == "failed" ? "tell failed: the notification was not delivered" : "Sum is 3",
         };
     }
 
@@ -61,7 +67,7 @@ public sealed class WorkflowsRunsTableFramesTests : FrameHost
         Assert.Equal(["On schedule", "From the CLI", "By hand"], Visibles(window, "RunTrigger"), StringComparer.Ordinal);
         Assert.Equal(["r2", "r2", "r2"], Visibles(window, "RunRevision"), StringComparer.Ordinal);
         Assert.Equal(["10 s", "10 s", "10 s"], Visibles(window, "RunDuration"), StringComparer.Ordinal);
-        Assert.Contains("tell failed: the notification was not delivered", Visibles(window, "RunResult"));
+        Assert.Contains("tell failed: the notification was not delivered", Visibles(window, "RunResult"), StringComparer.Ordinal);
         var rows = Named<ItemsControl>(window, "RunRows");
         Assert.DoesNotContain(rows.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && (t.Text ?? string.Empty).Contains("morning-check@", StringComparison.Ordinal));
         Assert.True(rows.Bounds.Width <= window.Bounds.Width, "the table is wider than the window");

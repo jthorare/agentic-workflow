@@ -390,7 +390,7 @@ public sealed class WorkflowsFramesTests : FrameHost
         await Until(window, () => shell.Workflows.Runs.Rows.Count == 2, "the two runs never showed");
         Assert.Equal("waiting running", string.Join(' ', shell.Workflows.Runs.Rows.Select(r => r.ChipToneWord)));
         var glyphs = window.GetVisualDescendants().OfType<Border>().Where(b => b.Name == "RunRow" && b.IsEffectivelyVisible).Select(RunGlyph).ToList();
-        Assert.Equal(shell.Workflows.Runs.Rows.Select(r => r.ChipGlyph), glyphs.Select(g => g.Text ?? string.Empty));   // each live run's own glyph, in the quiet colour (#3683: no chip on a run row)
+        Assert.Equal(shell.Workflows.Runs.Rows.Select(r => r.ChipGlyph), glyphs.Select(g => g.Text ?? string.Empty), StringComparer.Ordinal);   // each live run's own glyph, in the quiet colour (#3683: no chip on a run row)
         Assert.All(glyphs, g => Assert.Equal("RunGlyph", g.Name));
 
         await shell.Workflows.OpenRun(RunId, CancellationToken.None);

@@ -29,7 +29,7 @@ public sealed class WorkflowsListFramesTests : FrameHost
         var recent = new JsonArray();
         for (var i = 0; i < bars; i++)
         {
-            recent.Add(new JsonObject { ["run"] = $"{slug}@1:{bars - i}", ["status"] = i == 0 && last is not null ? last : "succeeded", ["startedAt"] = At(TimeSpan.FromMinutes(20 * (i + 1))), ["seconds"] = 10 });
+            recent.Add(new JsonObject { ["run"] = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{slug}@1:{bars - i}"), ["status"] = i == 0 && last is not null ? last : "succeeded", ["startedAt"] = At(TimeSpan.FromMinutes(20 * (i + 1))), ["seconds"] = 10 });
         }
 
         row["recent"] = recent;
@@ -68,8 +68,8 @@ public sealed class WorkflowsListFramesTests : FrameHost
     {
         var (window, _) = await Shown(1440);
 
-        Assert.Equal(["Name", "Trigger", "Last run", "Next run", "Last 10 runs", "State"], ClassTexts(window, "column-head").ToList(), StringComparer.Ordinal);
-        Assert.Equal(["Needs a look · 2", "Everything else · 3"], Texts(window, "RowGroupHeader").ToList(), StringComparer.Ordinal);
+        Assert.Equal(["Name", "Trigger", "Last run", "Next run", "Last 10 runs", "State"], [.. ClassTexts(window, "column-head")], StringComparer.Ordinal);
+        Assert.Equal(["Needs a look · 2", "Everything else · 3"], [.. Texts(window, "RowGroupHeader")], StringComparer.Ordinal);
         var rows = RowBorders(window);
         Assert.Equal(5, rows.Count);
         Assert.All(rows, row => Assert.Equal(10, row.GetVisualDescendants().OfType<Border>().Count(b => b.Name == "RunBar")));
@@ -85,7 +85,7 @@ public sealed class WorkflowsListFramesTests : FrameHost
     {
         var (window, _) = await Shown(1440);
 
-        Assert.Equal(["hello-sindri", "tpl-hello-sindri"], Texts(window, "RowId").Order(StringComparer.Ordinal).ToList(), StringComparer.Ordinal);
+        Assert.Equal(["hello-sindri", "tpl-hello-sindri"], [.. Texts(window, "RowId").Order(StringComparer.Ordinal)], StringComparer.Ordinal);
     });
 
     [Fact]
