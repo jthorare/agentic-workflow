@@ -110,11 +110,25 @@ public sealed class AreaCanvasLayoutTests
     [Fact]
     public void A_link_runs_from_one_node_s_edge_to_the_other_s_and_a_link_to_a_missing_node_is_left_out()
     {
-        var map = AreaCanvasLayout.Place([Node("InitRequest", "code"), Node("InitService", "code")], [Link("InitRequest", "InitService"), Link("InitRequest", "Gone")], 1440);
+        var map = AreaCanvasLayout.Place([Node("InitRequest", "code"), Node("InitService", "code")], [Link("InitRequest", "InitService"), Link("InitRequest", "Gone")], 1440, 3000, 100);
 
         var edge = Assert.Single(map.Edges);
         var (a, b) = (map.Nodes.Single(n => string.Equals(n.Label, "InitRequest", StringComparison.Ordinal)).Rect, map.Nodes.Single(n => string.Equals(n.Label, "InitService", StringComparison.Ordinal)).Rect);
-        Assert.Equal((a.Right, b.X), (edge.X1, edge.X2));
+        Assert.True(Math.Abs(a.X - b.X) >= 1, "a wide, short stage puts the two groups in two columns");
+        Assert.Equal((a.Right, a.CenterY, b.X, b.CenterY), (edge.X1, edge.Y1, edge.X2, edge.Y2));
+    }
+
+    [Fact]
+    public void A_link_inside_one_column_runs_from_the_lower_edge_of_the_upper_node_to_the_top_of_the_lower()
+    {
+        var map = AreaCanvasLayout.Place([Node("AService", "code"), Node("BService", "code")], [Link("AService", "BService")], 1440, 3000, 3000);
+
+        var edge = Assert.Single(map.Edges);
+        var (a, b) = (map.Nodes.Single(n => string.Equals(n.Label, "AService", StringComparison.Ordinal)).Rect, map.Nodes.Single(n => string.Equals(n.Label, "BService", StringComparison.Ordinal)).Rect);
+        Assert.True(Math.Abs(a.X - b.X) < 1);
+        var (upper, lower) = a.Y < b.Y ? (a, b) : (b, a);
+        Assert.Equal(upper.Bottom, Math.Min(edge.Y1, edge.Y2));
+        Assert.Equal(lower.Y, Math.Max(edge.Y1, edge.Y2));
     }
 
     [Fact]
@@ -144,12 +158,15 @@ public sealed class AreaCanvasLayoutTests
         map.ShowArea(draft with { Nodes = rows, Edges = [], Area = draft.Area! with { Counts = draft.Area.Counts with { Nodes = 30 } } });
         await map.AreaLaidOut;
 
-        map.ViewportChanged(new WholeRect(0, 0, 2000, 150));   // 30 nodes wrap to 4 columns of at most 8 rows: the first 3 rows show
+        var view = new WholeRect(0, 0, 2000, 150);
+        map.ViewportChanged(view);
 
+        var inView = map.Geometry!.Nodes.Count(n => n.Rect.Intersects(view));
+        Assert.InRange(inView, 1, 29);
         Assert.True(map.ShowAreaBar);
-        Assert.Equal("30 nodes · 12 in view", map.AreaBarText);
+        Assert.Equal(string.Create(CultureInfo.InvariantCulture, $"30 nodes · {inView} in view"), map.AreaBarText);
         Assert.True(map.ShowMoreBelow);
-        Assert.Equal("18 more below", map.MoreBelowText);
+        Assert.Equal(string.Create(CultureInfo.InvariantCulture, $"{30 - inView} more below"), map.MoreBelowText);
     }
 }
 
