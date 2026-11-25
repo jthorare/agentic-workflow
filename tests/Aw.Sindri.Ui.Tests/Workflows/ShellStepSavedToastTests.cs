@@ -44,9 +44,9 @@ public sealed class ShellStepSavedToastTests
         Assert.True(shell.Workflows.Runs.Graph!.SelectNode("agent"));
         await shell.Workflows.OpenSettings(Token);
         var newest = Golden("workflows-slug", "found");
-        (newest["revision"], newest["latestRevision"]) = (2, 2);
+        (newest["revision"], newest["latestRevision"]) = (3, 3);   // the found golden is at revision 2: the save makes 3
         _server.WorkflowNewestAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, newest.ToJsonString());
-        shell.Workflows.Editor.Fields[0].Text = "Look twice";
+        shell.Workflows.Editor.Fields.Single(static f => string.Equals(f.Name, "prompt", StringComparison.Ordinal)).Text = "Look twice";
         await shell.Workflows.Save(Token);
         return shell;
     }
@@ -70,7 +70,7 @@ public sealed class ShellStepSavedToastTests
         Assert.True(shell.Toast.PressUndoKey(inTextField: false));
 
         await Until(() => _server.ReplacedWorkflows.Count == 1);
-        Assert.Equal(2, _server.ReplacedWorkflows[0].BaseRevision);
+        Assert.Equal(3, _server.ReplacedWorkflows[0].BaseRevision);
         Assert.False(shell.Toast.IsShown);   // the toast's window ends with the Undo
     }, Token);
 
