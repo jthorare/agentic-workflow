@@ -8,6 +8,7 @@ internal sealed class SymbolsColumnViewModel
     private const int NamesShown = 2;
 
     private readonly Dictionary<string, FileSymbolsEntry> _files;
+    private readonly string? _graphWhy;   // the graph reason sentence, when the graph is off or did not build
     private readonly bool _reasonIsSentence;   // the empty reason is a graph reason: whole sentences, not a "symbols · ..." fragment (#3862)
 
     /// <summary>The column over what the file map served.</summary>
@@ -24,6 +25,7 @@ internal sealed class SymbolsColumnViewModel
         }
 
         var graphWhy = GraphWhy(symbols.Reason);
+        _graphWhy = graphWhy;
         if (string.Equals(symbols.State, "ok", StringComparison.Ordinal) && symbols.Files is { Count: 0 })
         {
             // An index that answers with no rows: say why, on the note line under the table, where a sentence has room (#3996). Graph off or down = only C# files get names (the real app's .ts names come from the graph layer); graph on = the files have no functions.
@@ -57,15 +59,26 @@ internal sealed class SymbolsColumnViewModel
 
     /// <summary>The note line's symbols words: "symbols · from abcdef0, not 1234567 · none in these files"; a graph reason is whole sentences, so it stands alone, after the commits when they differ (#3862).</summary>
     /// <param name="column">The column's heading word.</param>
+    /// <param name="anyDash">Whether some shown file row has a dash cell: with the graph off or down, a mixed folder (some .cs, some .ts) still needs the sentence for its dashes.</param>
     /// <returns>The words, or empty when there is nothing to say.</returns>
-    internal string Note(string column)
+    internal string Note(string column, bool anyDash = false)
     {
-        if (_reasonIsSentence && EmptyReason is { } sentence)
+        var graphSentence = _reasonIsSentence ? EmptyReason : anyDash ? _graphWhy : null;
+        if (graphSentence is { } sentence)
         {
             return AsOfNote is null ? sentence : Labels.Dots(column, AsOfNote) + ". " + sentence;
         }
 
         return AsOfNote is null && EmptyReason is null ? string.Empty : Labels.Dots(column, AsOfNote, EmptyReason);
+    }
+
+    /// <summary>Whether any of these entries is a file whose cell is a dash.</summary>
+    /// <param name="entries">The entries shown.</param>
+    /// <returns>True when a file row would show a dash.</returns>
+    internal bool AnyDash(IEnumerable<FileMapEntry> entries)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+        return !Unavailable && entries.Any(e => !string.Equals(e.Type, "dir", StringComparison.Ordinal) && string.Equals(Cell(e.Path), Labels.ContextSymbolsNoRow, StringComparison.Ordinal));
     }
 
     /// <summary>The cell of one file.</summary>

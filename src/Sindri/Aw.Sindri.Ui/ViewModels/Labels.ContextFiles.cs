@@ -59,7 +59,7 @@ internal static partial class Labels
     internal const string ContextFilesIntentNone = "None";
 
     /// <summary>The word for a file the tool suggests a link for.</summary>
-    internal const string ContextFilesSuggested = "Suggested, not confirmed";
+    internal const string ContextFilesSuggested = "Suggested";
 
     /// <summary>The word for a file with no link.</summary>
     internal const string ContextFilesUnmapped = "Not in the map";
