@@ -101,4 +101,48 @@ public sealed class ShellStepSavedToastTests
 
         Assert.Empty(_server.ReplacedWorkflows);
     }, Token);
+
+    // The button binds IsUndoEnabled: it only repaints when the toast says that property changed, so a newer edit must say so at once, with no 1 s tick of the clock (this one never advances).
+    private static List<string> Watch(ShellViewModel shell)
+    {
+        var changed = new List<string>();
+        shell.Toast.PropertyChanged += (_, e) => changed.Add(e.PropertyName ?? string.Empty);
+        return changed;
+    }
+
+    [Fact]
+    public Task A_canvas_edit_after_the_save_turns_the_toasts_Undo_off_at_once() => UiThread.Run(async () =>
+    {
+        var shell = await SavedStep();
+        var changed = Watch(shell);
+        var newest = Golden("workflows-slug", "found");
+        (newest["revision"], newest["latestRevision"]) = (4, 4);   // the canvas edit makes revision 4
+        _server.WorkflowNewestAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, newest.ToJsonString());
+        var applied = Golden("workflows-slug-ops", "ops-applied");
+        applied["revision"] = 4;
+        _server.ApplyWorkflowOpsAnswer = new RouteAnswer(HttpStatusCode.OK, applied.ToJsonString());
+
+        await shell.Workflows.Editor.RemoveNode("agent", Token);
+
+        Assert.False(shell.Toast.IsUndoEnabled);
+        Assert.Contains("IsUndoEnabled", changed, StringComparer.Ordinal);   // the button repaints now, not at the next tick
+    }, Token);
+
+    [Fact]
+    public Task An_Activate_on_the_way_turns_the_toasts_Undo_off_at_once() => UiThread.Run(async () =>
+    {
+        var shell = await SavedStep();
+        var changed = Watch(shell);
+        _server.WorkflowStateGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var activating = shell.Workflows.Activate(Token);
+
+        Assert.False(shell.Toast.IsUndoEnabled);
+        Assert.Contains("IsUndoEnabled", changed, StringComparer.Ordinal);
+        changed.Clear();
+        _server.WorkflowStateGate.SetResult();
+        await activating;
+        Assert.True(shell.Toast.IsUndoEnabled);   // and on again when it is done
+        Assert.Contains("IsUndoEnabled", changed, StringComparer.Ordinal);
+    }, Token);
 }
