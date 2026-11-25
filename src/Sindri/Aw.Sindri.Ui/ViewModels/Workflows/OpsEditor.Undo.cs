@@ -13,11 +13,12 @@ internal sealed partial class OpsEditor
     /// <summary>Saves an older graph as a new revision on the revision read; never a rewind. A stale base holds further edits and asks for a reload, like any save.</summary>
     /// <param name="slug">The workflow the graph belongs to; another one open now is refused.</param>
     /// <param name="spec">The graph to put back.</param>
+    /// <param name="baseRevision">The revision the save made; the server refuses it when the workflow moved on since.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>Null when it was saved, else the reason it was not.</returns>
-    internal async Task<string?> Restore(string slug, JsonElement spec, CancellationToken cancellationToken)
+    internal async Task<string?> Restore(string slug, JsonElement spec, int baseRevision, CancellationToken cancellationToken)
     {
-        if (IsSending || NeedsReload || _url is not { } url || !string.Equals(Slug, slug, StringComparison.Ordinal))
+        if (IsSending || NeedsReload || _url is not { } url || !string.Equals(Slug, slug, StringComparison.Ordinal) || BaseRevision != baseRevision)
         {
             return Labels.WfUndoNotNow;
         }
@@ -26,7 +27,7 @@ internal sealed partial class OpsEditor
         IsSending = true;
         try
         {
-            var replaced = await api.ReplaceWorkflow(url, Slug, BaseRevision, spec.GetRawText(), cancellationToken).ConfigureAwait(true);
+            var replaced = await api.ReplaceWorkflow(url, Slug, baseRevision, spec.GetRawText(), cancellationToken).ConfigureAwait(true);
             if (replaced.IsError)
             {
                 Refused(replaced.Error);

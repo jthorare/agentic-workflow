@@ -8,26 +8,29 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>Raised after a step was saved: the shell shows the toast with its Undo.</summary>
     internal event EventHandler<WorkflowStepSavedEventArgs>? StepSaved;
 
-    // The toast's Undo puts back the graph the save replaced, as a new revision; it is off while an Activate or Pause or another edit is on the way.
+    // The toast's Undo puts back the graph the save replaced, as a new revision on the revision the save made (the editor's base right after it), so a newer
+    // edit is never overwritten: the server refuses a stale base, and the Undo is off as soon as the editor's base moves on (a canvas edit, a reload that found more).
+    // It is also off while an Activate or Pause or another edit is on the way.
     private void OfferUndo(string slug, JsonElement before)
     {
         if (before.ValueKind == JsonValueKind.Object)   // no graph read, nothing to put back
         {
-            StepSaved?.Invoke(this, new WorkflowStepSavedEventArgs(() => UndoSave(slug, before), () => CanUndoSave(slug)));
+            var saved = Editor.BaseRevision;
+            StepSaved?.Invoke(this, new WorkflowStepSavedEventArgs(() => UndoSave(slug, before, saved), () => CanUndoSave(slug, saved)));
         }
     }
 
-    private bool CanUndoSave(string slug) =>
-        !IsChangingState && !Editor.IsSending && !Editor.NeedsReload && string.Equals(Editor.Slug, slug, StringComparison.Ordinal);
+    private bool CanUndoSave(string slug, int saved) =>
+        !IsChangingState && !Editor.IsSending && !Editor.NeedsReload && string.Equals(Editor.Slug, slug, StringComparison.Ordinal) && Editor.BaseRevision == saved;
 
-    private async Task<string?> UndoSave(string slug, JsonElement before)
+    private async Task<string?> UndoSave(string slug, JsonElement before, int saved)
     {
-        if (!CanUndoSave(slug))
+        if (!CanUndoSave(slug, saved))
         {
             return Labels.WfUndoNotNow;
         }
 
-        var failure = await Editor.Restore(slug, before, CancellationToken.None).ConfigureAwait(true);
+        var failure = await Editor.Restore(slug, before, saved, CancellationToken.None).ConfigureAwait(true);
         await RereadRuns(slug, CancellationToken.None).ConfigureAwait(true);
         return failure;
     }
