@@ -117,14 +117,14 @@ public sealed class HttpKeyCheckTests
     [InlineData(HttpStatusCode.Forbidden, "x-ratelimit-remaining", "0")]
     [InlineData(HttpStatusCode.TooManyRequests, "retry-after", "60")]
     [InlineData(HttpStatusCode.TooManyRequests, null, null)]
-    public async Task A_rate_limit_is_SND_CONN_019_that_says_wait_not_a_refused_key(HttpStatusCode status, string? header, string? value)
+    public async Task A_rate_limit_is_SND_CONN_020_that_says_wait_not_a_refused_key(HttpStatusCode status, string? header, string? value)
     {
         using var handler = new Scripted(status, """{"message":"You have exceeded a secondary rate limit"}""") { Header = header, HeaderValue = value };
         using var http = new HttpClient(handler);
 
         var checkedKey = await new HttpKeyCheck(http).Check(Preset("github"), Key, Token);
 
-        Assert.Equal("SND-CONN-019", checkedKey.Error.Code);
+        Assert.Equal("SND-CONN-020", checkedKey.Error.Code);
         Assert.Contains("rate limiting", checkedKey.Error.Message, StringComparison.Ordinal);
         Assert.DoesNotContain("secondary", checkedKey.Error.Message, StringComparison.Ordinal);
     }

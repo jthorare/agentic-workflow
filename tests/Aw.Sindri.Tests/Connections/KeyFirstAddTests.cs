@@ -114,6 +114,20 @@ public sealed class KeyFirstAddTests
     }
 
     [Fact]
+    public async Task A_rate_limited_key_check_stores_no_secret_and_no_row()
+    {
+        var world = KeyFirst();
+        world.Environment.Set("LINEAR_KEY", "lin-api-test-0001");
+        world.Keys.RateLimited = true;
+
+        var added = await world.Add().Handle(NoKind(), Token);
+
+        Assert.Equal("SND-CONN-020", added.Error.Code);
+        Assert.Empty(world.Store.Rows);
+        Assert.Empty(world.Secrets.Pointers);
+    }
+
+    [Fact]
     public async Task A_key_with_no_preset_is_stored_unchecked()
     {
         var world = new ConnectionHarness();
