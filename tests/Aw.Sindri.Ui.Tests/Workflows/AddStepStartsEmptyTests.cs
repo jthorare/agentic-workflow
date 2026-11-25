@@ -45,11 +45,11 @@ public sealed class AddStepStartsEmptyTests
     [Fact]
     public async Task Send_notification_opens_with_an_empty_title_and_no_agent_in_any_hint()
     {
-        var page = await AddedStep("notify", withAgent: false);   // example {"title":"Drifted","body":"{{agent.summary}}"}
+        var page = await AddedStep("notify", withAgent: false);   // example {"title":"Workflow update","body":"{{agent.summary}}"}
 
         Assert.All(page.Editor.Fields, static f => Assert.Equal(string.Empty, f.Text));
         Assert.All(page.Editor.Fields, static f => Assert.DoesNotContain("agent.", f.Placeholder, StringComparison.Ordinal));
-        Assert.Equal("Drifted", Field(page, "title").Placeholder);
+        Assert.Equal("Workflow update", Field(page, "title").Placeholder);   // a neutral example title (#4330)
         Assert.Equal("{{<step id>.summary}}", Field(page, "body").Placeholder);
         Assert.False(page.CanSave);   // the title is required and nothing is typed
     }

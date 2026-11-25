@@ -73,10 +73,26 @@ internal sealed partial class WatchLoop(TeamConfig team, WatchPoller poller, Fun
     /// <summary>How many lines were emitted.</summary>
     internal int Lines { get; private set; }
 
+    /// <summary>Waits between the retries of a poll that failed on a transient network error.</summary>
+    internal Func<TimeSpan, CancellationToken, ValueTask> Backoff { get; init; } = static (_, _) => ValueTask.CompletedTask;
+
+    // A transient network error (#3735) is retried after a short backoff, up to TransientGhError.Retries times; any other error, or the last one, is the poll's result.
+    private async ValueTask<Result<Polled>> Poll(CancellationToken cancellationToken)
+    {
+        var polled = await poller.Poll(team, AllPrs, cancellationToken).ConfigureAwait(false);
+        for (var retry = 1; retry <= TransientGhError.Retries && polled.IsError && TransientGhError.IsTransient(polled.Error.Message); retry++)
+        {
+            await Backoff(TransientGhError.Backoff(retry), cancellationToken).ConfigureAwait(false);
+            polled = await poller.Poll(team, AllPrs, cancellationToken).ConfigureAwait(false);
+        }
+
+        return polled;
+    }
+
     /// <summary>Takes a snapshot and emits what changed. A failed poll is reported once per streak.</summary>
     internal async ValueTask Tick(CancellationToken cancellationToken)
     {
-        var polled = await poller.Poll(team, AllPrs, cancellationToken).ConfigureAwait(false);
+        var polled = await Poll(cancellationToken).ConfigureAwait(false);
         if (await Supersede(await NewerOwner().ConfigureAwait(false)).ConfigureAwait(false))
         {
             return;

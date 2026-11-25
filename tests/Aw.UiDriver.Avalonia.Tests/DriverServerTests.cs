@@ -131,7 +131,7 @@ public sealed class DriverServerTests : IAsyncLifetime
     {
         var screen = await TestScreen.OpenAsync();
         var calls = 0;
-        var files = DriverFiles.Create(Directory.CreateTempSubdirectory("aw-uidriver-throw-").FullName);
+        var files = DriverFiles.Create(_directory.CreateSubdirectory("throw").FullName);
         var server = DriverServer.Start(
             new DriverHost(() => Interlocked.Increment(ref calls) == 1 ? throw new InvalidOperationException("boom") : screen.Window, TimeProvider.System),
             files.Secret);

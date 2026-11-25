@@ -17645,12 +17645,14 @@ Aw.Sindri.Core.Graph.Blocks.BlockOutputs.Fields.get -> System.Collections.Generi
 Aw.Sindri.Core.Graph.Blocks.BlockOutputs.Fields.init -> void
 Aw.Sindri.Core.Graph.Blocks.BlockSchema
 Aw.Sindri.Core.Graph.Blocks.BlockSchema.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
-Aw.Sindri.Core.Graph.Blocks.BlockSchema.BlockSchema(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.BlockField!>! Fields) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockSchema.BlockSchema(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.BlockField!>! Fields, System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<string!>!>? OneOf = null) -> void
 Aw.Sindri.Core.Graph.Blocks.BlockSchema.Check(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
-Aw.Sindri.Core.Graph.Blocks.BlockSchema.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.BlockField!>! Fields) -> void
+Aw.Sindri.Core.Graph.Blocks.BlockSchema.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.BlockField!>! Fields, out System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<string!>!>? OneOf) -> void
 Aw.Sindri.Core.Graph.Blocks.BlockSchema.Equals(Aw.Sindri.Core.Graph.Blocks.BlockSchema? other) -> bool
 Aw.Sindri.Core.Graph.Blocks.BlockSchema.Fields.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.BlockField!>!
 Aw.Sindri.Core.Graph.Blocks.BlockSchema.Fields.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockSchema.OneOf.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<string!>!>?
+Aw.Sindri.Core.Graph.Blocks.BlockSchema.OneOf.init -> void
 Aw.Sindri.Core.Graph.Blocks.IGraphBlockCatalog
 Aw.Sindri.Core.Graph.Blocks.IGraphBlockCatalog.Types.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Graph.Blocks.IGraphBlockType!>!
 Aw.Sindri.Core.Graph.Blocks.IGraphBlockType
@@ -25303,6 +25305,11 @@ Aw.Sindri.Core.Connections.ConnectionPreset.ShippedClient.get -> string?
 Aw.Sindri.Core.Connections.ConnectionPreset.ShippedClient.init -> void
 Aw.Sindri.Core.Connections.ConnectionPreset.DeviceCodeUrl.get -> string?
 Aw.Sindri.Core.Connections.ConnectionPreset.DeviceCodeUrl.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.Auth.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Connections.ConnectionPreset.Auth.init -> void
+Aw.Sindri.Core.Connections.ConnectionPreset.KeyFirst.get -> bool
+const Aw.Sindri.Core.Connections.ConnectionPreset.KeyAuth = "key" -> string!
+const Aw.Sindri.Core.Connections.ConnectionPreset.OAuthAuth = "oauth" -> string!
 Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization
 Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization.DeviceAuthorization(string! deviceCode, string! userCode, System.Uri! verificationUri, System.DateTimeOffset expiresAt, System.TimeSpan interval) -> void
 Aw.Sindri.Core.Connections.OAuth.DeviceAuthorization.DeviceCode.get -> string!
@@ -25380,3 +25387,7 @@ Aw.Sindri.Core.Messages.IMessagesStore.Window(string! conversation, Aw.Sindri.Co
 Aw.Sindri.Core.Messages.IMessagesStore.Thread(string! conversation, Aw.Sindri.Core.Messages.MessageTs thread, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Messages.StoredThread!>!>
 Aw.Sindri.Core.Commands.MessageReadAccess
 static Aw.Sindri.Core.Commands.MessageReadAccess.ShowsText(Aw.Sindri.Core.Commands.CallerContext? caller) -> bool
+Aw.Sindri.Core.Connections.IKeyCheck
+Aw.Sindri.Core.Connections.IKeyCheck.Check(Aw.Sindri.Core.Connections.ConnectionPreset! preset, string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyRefused -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyUnchecked -> Aw.Kernel.ErrorDefinition!

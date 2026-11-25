@@ -5,7 +5,8 @@
 # and its prerequisite is unchanged, denies it (exit 2, the one fix on stderr) or adds advice (exit 0, additionalContext):
 #   missing-exe   deny while `command -v <exe>` fails; clear once it succeeds
 #   missing-path  deny while the path is missing; clear once it exists
-#   bad-args      deny (Bash) or advise (other tools); a changed argument is a new hash and passes
+#   bad-args      deny (Bash) or advise (other tools); a changed argument is a new hash and passes; a changed file the
+#                 command names or a build file in its folder (inputStamp) clears the row
 #   auth-expired  deny once while the auth file is unchanged and < 10 min passed, then advise; a changed file clears
 #   transient     never deny; advise "wait N s" until retryAfter
 #   unknown       never deny; advise from the 3rd identical failure
@@ -38,14 +39,14 @@ ROW="$(jq -r --arg h "$RG_HASH" --argjson v "$RG_VERSION" --arg p "$RG_POLICY" '
   if type != "object" then error("bad") elif .version != $v or .policy != $p then "old"
   elif (.problems[$h] // null) == null then "none"
   else .problems[$h] | [ "open", .kind, .resource, .exe, (.failures | tostring), (.denies | tostring),
-         (.advisories | tostring), ((.wouldDeny // 0) | tostring), (.lastAt | fromdate | tostring), .retryAfter, .authStamp ] | join("\u001f") end
+         (.advisories | tostring), ((.wouldDeny // 0) | tostring), (.lastAt | fromdate | tostring), .retryAfter, .authStamp, (.inputStamp // "") ] | join("\u001f") end
 ' "$F" 2> /dev/null)" || {
   rm -f "$F"
   rg_failopen retry-gate state-unreadable
   exit 0
 }
 case "$ROW" in old | none) exit 0 ;; esac
-IFS=$'\x1f' read -r _ KIND RES EXE FAILS DENIES ADVS WOULD LAST_EPOCH RETRY_AFTER STAMP <<< "$ROW"
+IFS=$'\x1f' read -r _ KIND RES EXE FAILS DENIES ADVS WOULD LAST_EPOCH RETRY_AFTER STAMP ISTAMP <<< "$ROW"
 
 OVR_HINT=""
 [ "$RG_TOOL" = Bash ] && OVR_HINT=' To repeat it on purpose, end the command with `# aw-retry: <reason>`.'
@@ -70,7 +71,9 @@ case "$KIND" in
   bad-args)
     HELP="the tool's help"; [ -n "$EXE" ] && HELP="\`$EXE --help\`"
     MSG="retry-guard: this exact call already failed with an argument error. Change the arguments (check $HELP) before running it again."
-    if [ "$RG_TOOL" = Bash ]; then ACTION=deny; MSG="$MSG$OVR_HINT"; else ACTION=advise; fi ;;
+    # A file the call names, or a build file in its folder, changed since the failure: the problem may be fixed.
+    if [ "$RG_TOOL" = Bash ] && [ -n "$ISTAMP" ] && [ "$(rg_input_stamp "$RG_CWD" "$RG_CMD")" != "$ISTAMP" ]; then ACTION=clear
+    elif [ "$RG_TOOL" = Bash ]; then ACTION=deny; MSG="$MSG$OVR_HINT"; else ACTION=advise; fi ;;
   auth-expired)
     FIX="refresh the credentials for $RES"
     [ "$RES" = github.com ] && FIX='run `gh auth login` (or refresh GH_TOKEN)'

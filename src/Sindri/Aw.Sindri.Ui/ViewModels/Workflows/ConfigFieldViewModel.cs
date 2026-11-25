@@ -10,7 +10,8 @@ internal sealed class ConfigFieldViewModel : ObservableObject
         Name = field.Name;
         Type = field.Type;
         IsRequired = field.Required;
-        Caption = Labels.WfFieldCaption(field.Caption.Length > 0 ? field.Caption : field.Name, field.Required);
+        Label = field.Caption.Length > 0 ? field.Caption : field.Name;
+        Caption = Labels.WfFieldCaption(Label, field.Required);
         IsClosedList = field.Choices is { Count: > 0 };
         Presets = (IsClosedList ? field.Choices : field.Presets) ?? [];
         HidesRawText = !IsClosedList && Presets.Any(p => !string.Equals(p.Label, p.Value, StringComparison.Ordinal));
@@ -101,4 +102,17 @@ internal sealed class ConfigFieldViewModel : ObservableObject
 
     /// <summary>True when there is a line under the field.</summary>
     public bool HasError => ErrorText.Length > 0;
+
+    /// <summary>The caption without "(required)": what a line about the field names it by.</summary>
+    internal string Label { get; }
+
+    /// <summary>The line that says why a step's Save is off ("Fill in Title to save."), on its first empty required field of a new step, or on the first field of an "exactly one of" group that has none or two; empty otherwise (#4330, #4359).</summary>
+    public string NeedText { get; private set { Set(ref field, value); OnChanged(nameof(HasNeed)); } } = string.Empty;
+
+    /// <summary>True when the field shows <see cref="NeedText"/>.</summary>
+    public bool HasNeed => NeedText.Length > 0;
+
+    /// <summary>Shows or clears the "why Save is off" line.</summary>
+    /// <param name="line">The words to show, or empty to clear the line.</param>
+    internal void MarkNeeded(string line) => NeedText = line;
 }
