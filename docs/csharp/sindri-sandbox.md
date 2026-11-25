@@ -216,6 +216,7 @@ SB-5a's rendered settings put it into effect.
 | `detect-secrets` | PreToolUse Bash | no | no | keep | denies only (exit 2): a guard that tightens |
 | `done-gate` | Stop | no | no | keep | blocks a stop (exit 2) until the brief's proof is shown; answers no permission |
 | `done-gate-annotate` | PostToolUse Agent | no | no | keep | annotates the result; never blocks or answers |
+| `dup-script-gate` | PreToolUse Bash\|Write | no | no | keep | points at a catalog helper as context (advisory) or denies a duplicate script (exit 2, block mode): a guard that tightens; answers no permission |
 | `external-write-guard` | PreToolUse * | allow | no | **drop** | answers 'allow' to every tool call it doesn't match, so with it every tool would pass 'dontAsk'; its external writes stay refused by the deny rule 'gh:*' and by 'dontAsk' for tools outside the Step's list |
 | `git-context` | SessionStart | no | no | keep | prints git context; answers nothing |
 | `judge-health` | SessionStart | no | no | keep | warns when the judge is degraded; answers nothing |
@@ -228,6 +229,8 @@ SB-5a's rendered settings put it into effect.
 | `probe-log` | every event, while the probe is on | no | no | keep | logs the hook input; prints nothing |
 | `prompt-sort` | UserPromptSubmit | no | no | keep | may print a scaffold note; answers nothing |
 | `record-teammate-name` | PreToolUse Agent | allow | no | **drop** | always answers 'allow' to Agent, so every dispatch would pass 'dontAsk'; without it subagent-start-map uses its dispatch-order fallback |
+| `retry-gate` | PreToolUse * | no | no | keep | denies a call that already failed while its cause stands (exit 2) or adds advice: a guard that tightens; answers no permission |
+| `retry-record` | PostToolUse *, PostToolUseFailure * | no | no | keep | records and clears the session's failed calls; prints nothing, answers nothing |
 | `rtk-rewrite` | PreToolUse Bash | allow | yes | **keep, deny the rewritten forms; strict in Steps** | rewrites commands to their 'rtk' form for token savings (the owner keeps it); every denied command is also denied in its 'rtk' form, so 'git push' can't pass as 'rtk git push'; its 'allow' grants nothing inside a Step, which runs only what its own list names (owner, 2026-10-18; enforced in SB-5a) |
 | `scope-gate` | PreToolUse Agent | allow | no | **drop** | answers 'allow' to an Agent dispatch with a good brief, so dispatches would pass 'dontAsk' |
 | `send-gate` | PreToolUse SendMessage | allow | yes | **drop** | answers 'allow' to SendMessage (and rewrites the message), so messages would pass 'dontAsk' |

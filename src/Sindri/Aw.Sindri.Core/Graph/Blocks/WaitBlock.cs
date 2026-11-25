@@ -30,7 +30,7 @@ public sealed class WaitBlock(TimeProvider clock) : IGraphBlock
         new("duration", BlockFieldType.Text, Required: false, Caption: "Wait for"),
         new("until", BlockFieldType.Text, Required: false, Caption: "Wait until"),
         new("timezone", BlockFieldType.Text, Required: false, Caption: "Time zone"),
-    ]);
+    ], OneOf: [["duration", "until"]]);
 
     /// <inheritdoc />
     public string Example => """{"until":"07:00","timezone":"America/Los_Angeles"}""";

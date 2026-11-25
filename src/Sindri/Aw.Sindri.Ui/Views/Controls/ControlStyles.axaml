@@ -85,6 +85,7 @@
     <Setter Property="MaxLength" Value="200" />
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
     <Setter Property="FontFamily" Value="{DynamicResource Font.Mono}" />
+    <Setter Property="FontFeatures" Value="-calt, -liga" />   <!-- #4087: typed as written, no ligatures (Typography.axaml's mono styles) -->
   </Style>
   <Style Selector="TextBox.typed-field.match /template/ Border#PART_BorderElement">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Success}" />

@@ -41,9 +41,11 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         Run = new RunDetailViewModel(api, clock);
         Editor = new OpsEditor(api);
         GraphEdit = new GraphEditViewModel(Editor, Runs, () => _url) { OpenNewStep = BeginNewStep };   // made with the page, not on first read: the canvas's Delete key raises on the graph, and the edit bar must already be listening
+        Runs.StartTimedOut += (_, e) => Run.MarkDidNotStart(e.Value);   // one start deadline, owned by the runs model: the run page reads it, it starts no timer of its own
         Runs.PropertyChanged += (_, e) => { if (string.Equals(e.PropertyName, nameof(Runs.Title), StringComparison.Ordinal)) { NotifyCrumb(); } };
         Run.PropertyChanged += (_, e) => { if (string.Equals(e.PropertyName, nameof(Run.Id), StringComparison.Ordinal)) { NotifyCrumb(); } };
         WatchEditor();
+        WatchFindings();
     }
 
     /// <summary>The API the page reads.</summary>
@@ -179,6 +181,8 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     internal void Leave()
     {
         _reads++;
+        Runs.ForgetStarting();   // the start deadlines stop with the page (#3702)
+        Run.ForgetStarting();
         SetLevel(Level.List);
     }
 
@@ -196,6 +200,11 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         if (_url is not { } url)
         {
             return Task.CompletedTask;
+        }
+
+        if (!string.Equals(Runs.Slug, slug, StringComparison.Ordinal))
+        {
+            Run.ForgetStarting();   // another workflow: the run page no longer awaits the old one's run (Runs.Read clears its own)
         }
 
         var read = Runs.Read(url, slug, name, cancellationToken);   // sets the slug before its first await, so the buttons below read the right row
