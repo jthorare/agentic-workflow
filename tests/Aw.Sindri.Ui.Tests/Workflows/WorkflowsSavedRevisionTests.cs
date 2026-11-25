@@ -175,4 +175,34 @@ public sealed class WorkflowsSavedRevisionTests
 
         Assert.Equal((string.Empty, false, false), (page.SavedLineText, page.HasSavedLine, page.CanMakeLive));
     }
+
+    // Saves the sheet's text, then undoes it: the undo writes one revision more (4), and the page reads it.
+    private async Task<WorkflowsPageViewModel> SavedThenUndone(int? active)
+    {
+        WorkflowStepSavedEventArgs? saved = null;
+        var page = await EditingNode(active);
+        page.StepSaved += (_, e) => saved = e;
+        page.Editor.Fields[0].Text = "Check twice";
+        Serve(active, latest: 3);
+        await page.Save(Token);
+        Serve(active, latest: 4);   // what the undo makes Sindri hold
+        Assert.Null(await saved!.Undo());
+        return page;
+    }
+
+    [Fact]
+    public async Task After_an_undo_on_a_workflow_that_is_off_the_line_says_undone_and_the_revision_the_undo_wrote()
+    {
+        var page = await SavedThenUndone(active: null);
+
+        Assert.Equal("Undone. Saved as revision 4.", page.SavedLineText);
+    }
+
+    [Fact]
+    public async Task After_an_undo_on_a_live_workflow_the_line_says_undone_and_not_live_yet()
+    {
+        var page = await SavedThenUndone(active: 1);
+
+        Assert.Equal("Undone. Saved as revision 4. Not live yet.", page.SavedLineText);
+    }
 }
