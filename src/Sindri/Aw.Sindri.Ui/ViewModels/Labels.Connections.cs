@@ -257,9 +257,13 @@ internal static partial class Labels
     /// <summary>The tile error for a refused connect: the keychain is named, never a code.</summary>
     /// <param name="error">The failure.</param>
     /// <returns>The words.</returns>
-    internal static string ConnectTileFailed(Error error) => string.Equals(error.Code, "SND-CONN-006", StringComparison.Ordinal)
-        ? "Couldn't save the sign-in to your keychain. Unlock it, then try again."
-        : "Couldn't connect. " + InstanceRefused(error);
+    internal static string ConnectTileFailed(Error error) => error.Code switch
+    {
+        "SND-CONN-006" => "Couldn't save the sign-in to your keychain. Unlock it, then try again.",
+        "SND-CONN-018" => "The service refused that token. Check it was copied whole and hasn't expired, then paste it again.",
+        "SND-CONN-019" => "Couldn't reach the service to check the token. Check your network, then try again.",
+        _ => "Couldn't connect. " + InstanceRefused(error),
+    };
 
     /// <summary>A tile's last use.</summary>
     /// <param name="age">How long ago.</param>

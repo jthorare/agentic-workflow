@@ -1773,7 +1773,13 @@
                 "to": "tell"
               }
             ]
-          }
+          },
+          "oneOf": [
+            [
+              "duration",
+              "until"
+            ]
+          ]
         }
       ]
     },
@@ -1987,7 +1993,7 @@
             "out"
           ],
           "exampleConfig": {
-            "title": "Drifted",
+            "title": "Workflow update",
             "body": "{{agent.summary}}"
           },
           "exampleSpec": {
