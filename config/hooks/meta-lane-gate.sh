@@ -125,7 +125,7 @@ UNMARKED=0
 record_reply() { # <text>
   local REPLY SUM RO rrc
   UNMARKED=0
-  if [ -n "$(printf '%s' "$1" | tr -d '[:space:]')" ] && ! printf '%s\n' "$1" | grep -Eq '^[[:space:]>*#_`-]*REPLY TO META:'; then UNMARKED=1; fi
+  if [ -n "$(printf '%s' "$1" | tr -d '[:space:]')" ] && ! grep -Eq '^[[:space:]>*#_`-]*REPLY TO META:' <<<"$1"; then UNMARKED=1; fi
   REPLY="$(printf '%s\n' "$1" | awk '
     { if (match($0, /^[[:space:]>*#_`-]*REPLY TO META:/)) { found = 1; sub(/^[[:space:]>*#_`-]*REPLY TO META:(\*\*|__|`)?[[:space:]]*/, ""); text = $0; next }
       if (found) text = text "\n" $0 }
