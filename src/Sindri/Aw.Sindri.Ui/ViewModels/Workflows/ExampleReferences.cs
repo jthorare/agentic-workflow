@@ -26,13 +26,17 @@ internal static partial class ExampleReferences
     internal static bool NamesStepNotUpstream(string type, string field, string text, IReadOnlySet<string> steps) =>
         ForeignRoots(type, field, text, steps).Any();
 
-    /// <summary>The hint a new step's field shows: the example text, with every step the new one can't read named "&lt;step id&gt;" (#4272), so the hint never teaches a reference the save would refuse.</summary>
+    /// <summary>
+    /// The hint a new step's field shows: the example text, with every step the new one can't read swapped for <paramref name="near"/>, the step it follows (#4330), so the hint
+    /// teaches a reference the save accepts; a field that step's block lacks becomes its first output. With no such step, or one with no outputs, the step shows as "&lt;step id&gt;" (#4272).
+    /// </summary>
     /// <param name="type">The block type.</param>
     /// <param name="field">The field's name.</param>
     /// <param name="text">The example's text for the field.</param>
     /// <param name="steps">The steps the new one may read: the one it follows and every step upstream of that one.</param>
+    /// <param name="near">The step the new one follows, with its block's outputs, or null for none.</param>
     /// <returns>The hint; the text unchanged when every reference is a scope root or one of <paramref name="steps"/>.</returns>
-    internal static string Hint(string type, string field, string text, IReadOnlySet<string> steps)
+    internal static string Hint(string type, string field, string text, IReadOnlySet<string> steps, HintStep? near = null)
     {
         var foreign = ForeignRoots(type, field, text, steps).ToHashSet(StringComparer.Ordinal);
         if (foreign.Count == 0)
@@ -40,8 +44,10 @@ internal static partial class ExampleReferences
             return text;
         }
 
-        var hint = Reference.Replace(text, m => Neutral(m.Value, m.Groups["ref"].Value.Split('.', 2)[0], foreign));
-        return IsCondition(type, field) ? BareRoot.Replace(hint, m => foreign.Contains(m.Value) ? StepPlaceholder : m.Value) : hint;
+        var hint = Reference.Replace(text, m => Braced(m, foreign, near));
+        return IsCondition(type, field)
+            ? BareRef.Replace(hint, m => foreign.Contains(m.Groups["root"].Value) ? Named(m.Groups["field"].Success ? m.Groups["field"].Value : null, near) : m.Value)
+            : hint;
     }
 
     private static IEnumerable<string> ForeignRoots(string type, string field, string text, IReadOnlySet<string> steps) =>
@@ -49,11 +55,34 @@ internal static partial class ExampleReferences
             .Select(static r => r.Split('.', 2)[0])
             .Where(root => !_scopeRoots.Contains(root) && !steps.Contains(root));
 
-    // A braced reference "{{ agent.summary }}" whose root is foreign, with that root replaced; the spacing inside the braces stays.
-    private static string Neutral(string match, string root, HashSet<string> foreign)
+    // A braced reference "{{ agent.summary }}" whose root is foreign, with the reference renamed; the spacing inside the braces stays.
+    private static string Braced(Match match, HashSet<string> foreign, HintStep? near)
     {
-        var at = match.IndexOf(root, StringComparison.Ordinal);
-        return root.Length > 0 && at >= 0 && foreign.Contains(root) ? string.Concat(match.AsSpan(0, at), StepPlaceholder, match.AsSpan(at + root.Length)) : match;
+        var reference = match.Groups["ref"];
+        var parts = reference.Value.Split('.', 2);
+        if (parts[0].Length == 0 || !foreign.Contains(parts[0]))
+        {
+            return match.Value;
+        }
+
+        var at = reference.Index - match.Index;
+        return string.Concat(match.Value.AsSpan(0, at), Named(parts.Length > 1 ? parts[1] : null, near), match.Value.AsSpan(at + reference.Length));
+    }
+
+    // A foreign reference's new text: the step the new one follows and a field its block has, or "<step id>" and the example's field when there is no such step.
+    private static string Named(string? rest, HintStep? near)
+    {
+        if (near is not { Outputs.Count: > 0 })
+        {
+            return rest is null ? StepPlaceholder : StepPlaceholder + "." + rest;
+        }
+
+        if (rest is null)
+        {
+            return near.Id;
+        }
+
+        return near.Outputs.Contains(rest.Split('.', 2)[0], StringComparer.Ordinal) ? near.Id + "." + rest : near.Id + "." + near.Outputs[0];
     }
 
     // why: the validator reads only a condition block's "when" with the condition parser (GraphValidator.IsCondition in Aw.Sindri.Core); change both together
@@ -64,8 +93,8 @@ internal static partial class ExampleReferences
     [GeneratedRegex("\\{\\{\\s*(?<ref>[^{}]*?)\\s*\\}\\}", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Reference { get; }
 
-    // why: a bare condition word as the tokenizer reads one (ExampleReferences.Condition.cs Word), its root before the first dot; a word after a dot is a field, not a root.
+    // why: a bare condition word as the tokenizer reads one (ExampleReferences.Condition.cs Word): its root before the first dot and the field after it; a word after a dot is a field, not a root.
     // Hint swaps only roots ConditionReferences already called foreign, so a quoted literal holding the same word is the one miss, which is fine for a hint
-    [GeneratedRegex("(?<![A-Za-z0-9_.<-])[A-Za-z_][A-Za-z0-9_-]*", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex BareRoot { get; }
+    [GeneratedRegex("(?<![A-Za-z0-9_.<-])(?<root>[A-Za-z_][A-Za-z0-9_-]*)(\\.(?<field>[A-Za-z_][A-Za-z0-9_-]*))?", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex BareRef { get; }
 }
