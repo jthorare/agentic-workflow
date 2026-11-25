@@ -64,6 +64,14 @@ internal sealed partial class WorkflowsPageViewModel
         }
     }
 
+    /// <summary>Asks validate again for the revision the page shows (the failed-check line's Retry). Stub: asks nothing yet.</summary>
+    /// <returns>A task that completes when the answer is shown.</returns>
+    internal Task RetryFindings()
+    {
+        _ = Findings;
+        return Task.CompletedTask;
+    }
+
     private void WatchFindings()
     {
         Runs.PropertyChanged += OnRunsForFindings;

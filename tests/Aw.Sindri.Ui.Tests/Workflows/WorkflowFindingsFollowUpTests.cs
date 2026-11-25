@@ -1,5 +1,6 @@
 using System.Net;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api.Workflows;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
@@ -150,5 +151,36 @@ public sealed class WorkflowFindingsFollowUpTests
         await first;
 
         Assert.Equal((other, false), (page.Runs.Slug, page.Findings.HasFindings));
+    }
+
+    [Fact]
+    public async Task A_failed_check_can_be_retried_and_the_line_no_longer_waits_for_the_next_open()
+    {
+        var page = await OnRuns(RouteAnswer.Problem(HttpStatusCode.BadRequest, "SND-GRAPH-008", "no such workflow"));
+        Assert.True(page.Findings.HasFailed);
+        Assert.DoesNotContain("open", page.Findings.FailedText, StringComparison.OrdinalIgnoreCase);   // the person is on the workflow already: "when you open it" is not something to act on
+
+        _f.Server.ValidateWorkflowAnswer = RouteAnswer.SpecShaped("workflows-validate", "prompt-reads-no-data");
+        await page.RetryFindings();
+
+        Assert.Equal(2, _f.Server.ValidatedWorkflows.Count);
+        Assert.Equal((false, true), (page.Findings.HasFailed, page.Findings.HasFindings));
+        Assert.Equal(page.Runs.Shown!.Revision, _f.Server.ValidatedRevisions[1]);   // the shown revision, not the newest
+    }
+
+    [Fact]
+    public async Task Fix_shows_once_the_page_is_back_on_the_workflow_after_findings_came_in_on_a_run_page()
+    {
+        var page = await OnRuns(RouteAnswer.SpecShaped("workflows-validate", "passed"));
+        await page.OpenRun(RunId, Token);   // the run page: no editor, so a fix cannot be offered while the findings arrive
+        var asked = new WorkflowValidated(
+            Passed: false, Hash: null,
+            [new("GRAPH-PROMPT-001", "warning", ["agent"], "config.prompt", "reads no data", "add a step", "GRAPH-PROMPT-001:agent:config.prompt", "agent", "reads no data")]);
+        page.Findings.Show(asked);
+        Assert.False(Assert.Single(page.Findings.All).HasFix);
+
+        page.Back();
+
+        Assert.True(Assert.Single(page.Findings.All).HasFix);   // the editor is there again: Fix comes back with it
     }
 }
