@@ -48,7 +48,7 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
     public WorkflowGraphViewModel? Graph { get; private set => Set(ref field, value); }
 
     /// <summary>The workflow as last read (the revision it runs, the newest when it is off), or null: run detail draws its graph when the run walked this revision. The graph on the page draws the newest revision.</summary>
-    internal WorkflowView? Shown { get; private set { Set(ref field, value); OnChanged(nameof(RunNowText)); } }
+    internal WorkflowView? Shown { get; private set { Set(ref field, value); OnChanged(nameof(RunNowText)); OnChanged(nameof(IsArchived)); OnChanged(nameof(ShowsRunNow)); } }
 
     /// <summary>The runs, newest first.</summary>
     public ObservableCollection<RunRowViewModel> Rows { get; } = [];

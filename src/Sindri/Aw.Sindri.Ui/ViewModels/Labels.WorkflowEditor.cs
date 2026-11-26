@@ -18,6 +18,15 @@ internal static partial class Labels
     /// <summary>The button that opens the selected step's settings.</summary>
     internal const string WfStepSettings = "Step settings";
 
+    /// <summary>The question Done asks when a field of the step sheet changed.</summary>
+    internal const string WfAskSave = "Save your changes?";
+
+    /// <summary>The question's Discard button.</summary>
+    internal const string WfAskDiscard = "Discard";
+
+    /// <summary>The question's Keep editing button.</summary>
+    internal const string WfAskKeep = "Keep editing";
+
     /// <summary>The editor sheet's Close button.</summary>
     internal const string WfEditClose = "Close";
 
