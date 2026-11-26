@@ -110,6 +110,19 @@ public sealed class GetReviewPageServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task A_later_page_read_of_the_same_red_head_keeps_when_that_head_was_first_seen_red()
+    {
+        await Approve();
+        _ = (await Read()).Value;
+        _h.Clock.Advance(TimeSpan.FromDays(3));
+
+        _ = (await Read()).Value;
+
+        var summary = (await _summaries.Read(new ReviewPullRef("acme", "api", 2071), Head, Token)).Value;
+        Assert.Equal((ReviewCi.Fail, KnownInstants.Epoch), (summary?.Ci, summary?.At));
+    }
+
+    [Fact]
     public async Task A_credential_that_posts_as_the_author_makes_the_pr_one_a_fix_thread_can_be_posted_on()
     {
         await Approve();
