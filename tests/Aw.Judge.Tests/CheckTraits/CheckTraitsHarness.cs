@@ -16,8 +16,10 @@ internal sealed class CheckTraitsHarness : IDisposable
     /// <param name="repo">The repo the traits and the overlay are named for.</param>
     /// <param name="jev">The stub Jev.</param>
     /// <param name="workingDirectory">The directory the check runs in (the agent session's); the repo's root when null.</param>
-    public CheckTraitsHarness(TraitRepo repo, FakeBatchClassifier jev, string? workingDirectory = null)
+    /// <param name="cache">The verdict cache; a fresh in-memory one when null.</param>
+    public CheckTraitsHarness(TraitRepo repo, FakeBatchClassifier jev, string? workingDirectory = null, ITraitVerdictCache? cache = null)
     {
+        Cache = cache ?? new InMemoryTraitVerdictCache();
         Repo = repo;
         Jev = jev;
         Sessions = new FileTraitCheckSessions(Path.Combine(_state.Path, "judge", "trait-check", "sessions"), TimeProvider.System);
@@ -25,10 +27,9 @@ internal sealed class CheckTraitsHarness : IDisposable
             new SystemProcessRunner(Environment.GetEnvironmentVariable),
             new FileTraitStore(Path.Combine(_state.Path, "traits")),
             new FileTraitFiles(workingDirectory ?? repo.Root),
-            new JevTraitJudge(jev, new FakeInputRedactor(), new InMemoryJudgeConfigStore()),
             Log,
             Sessions,
-            new FakeTimeProvider());
+            new TraitAnswers(new JevTraitJudge(jev, new FakeInputRedactor(), new InMemoryJudgeConfigStore()), Cache, Log, new FakeTimeProvider()));
     }
 
     public TraitRepo Repo { get; }
@@ -36,6 +37,9 @@ internal sealed class CheckTraitsHarness : IDisposable
     public FakeBatchClassifier Jev { get; }
 
     public RecordingTraitLog Log { get; } = new();
+
+    /// <summary>The verdicts kept between runs of this harness's service.</summary>
+    public ITraitVerdictCache Cache { get; }
 
     /// <summary>The repos each session edited files in (the real file store, under the harness's state directory).</summary>
     public ITraitCheckSessions Sessions { get; }

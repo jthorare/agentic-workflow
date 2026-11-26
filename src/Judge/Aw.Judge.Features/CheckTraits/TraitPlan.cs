@@ -8,6 +8,9 @@ internal sealed record TraitPlan(string? Home, IReadOnlyList<TraitTask> Tasks)
     /// <summary>Edited image files that were left out before any request (past 4 files or 4 MiB, unreadable), by <see cref="Display(TraitTask)"/> path, with the reason code.</summary>
     public IReadOnlyDictionary<string, string> Skipped { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
 
+    /// <summary>The verdicts reused from the verdict cache; their traits are in no task.</summary>
+    public IReadOnlyList<CachedVerdict> Cached { get; init; } = [];
+
     /// <summary>How a file is named to the agent and in the response: repo-relative in the working directory's repo, absolute in any other.</summary>
     /// <param name="home">The working directory's repo, or null.</param>
     /// <param name="root">The file's repo.</param>
