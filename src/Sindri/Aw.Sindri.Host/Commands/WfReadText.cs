@@ -73,6 +73,11 @@ internal static class WfReadText
             _ = text.Append(CultureInfo.InvariantCulture, $"{r.Id.Value}  {r.Status}  {r.Trigger}  {Time(r.StartedAt)}{(r.Error is null ? string.Empty : "  " + r.Error)}\n");
         }
 
+        if (answer.More && answer.Next is { } next)
+        {
+            _ = text.Append(CultureInfo.InvariantCulture, $"Older runs: sindri wf runs {answer.Slug.Value} --before {next.Value} (with the same filter flags)\n");
+        }
+
         return text.ToString();
     }
 

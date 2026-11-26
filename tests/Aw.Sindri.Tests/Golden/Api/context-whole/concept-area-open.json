@@ -6,18 +6,18 @@
   "repo": "aw-split-panes",
   "detail": "nodes",
   "counts": {
-    "nodes": 11,
-    "edges": 12,
+    "nodes": 5,
+    "edges": 4,
     "byKind": {
-      "feature": 4,
+      "feature": 1,
       "surface": 1,
       "action": 1,
       "thing": 0,
       "flow": 0,
       "decision": 0,
       "record": 0,
-      "code": 3,
-      "concept": 2
+      "code": 2,
+      "concept": 0
     }
   },
   "areas": [
@@ -215,7 +215,9 @@
         "code": 2,
         "concept": 0
       }
-    }
+    },
+    "page": 1,
+    "pages": 1
   },
   "truncated": false,
   "repos": [

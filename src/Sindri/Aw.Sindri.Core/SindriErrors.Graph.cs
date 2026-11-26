@@ -111,6 +111,9 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-131: a node reads a field of a node that failed and continued (onFailure 'continue'); the reader fails instead of reading nothing.</summary>
     public static readonly ErrorDefinition GraphReferenceToContinuedFailure = new("SND-GRAPH-131", ErrorKind.Invalid, "A reference reads a node that failed and continued");
 
+    /// <summary>SND-GRAPH-134: a runs read's filter can't be read (an unknown status, a time that is not an ISO-8601 instant, 'since' after 'until', or a 'before' run of another workflow); #4334.</summary>
+    public static readonly ErrorDefinition GraphRunsFilterInvalid = new("SND-GRAPH-134", ErrorKind.Invalid, "That runs filter can't be read");
+
     /// <summary>SND-GRAPH-125: a re-run from a step needs a run that has ended; this one is still queued, running or waiting (Workflows page spec §7.3, P7).</summary>
     public static readonly ErrorDefinition GraphRerunNotEnded = new("SND-GRAPH-125", ErrorKind.Conflict, "That run has not ended, so it can't be re-run from a step");
 

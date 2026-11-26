@@ -37,13 +37,15 @@ internal sealed partial class OpsEditor
         {
             var boolean = string.Equals(field.Type, "boolean", StringComparison.Ordinal);
             var hint = ExampleReferences.Hint(block.Type, field.Name, EditorFieldText.Of(example, field), steps, near);   // a step the new one can't read shows as the step it follows, else "<step id>" (#3944, #4272, #4330)
-            var form = new ConfigFieldViewModel(field, boolean && field.Required ? "false" : string.Empty) { Placeholder = hint };   // why: a required check box shows a value, and the value it shows is the one sent
+            var form = new ConfigFieldViewModel(field, boolean && field.Required ? "false" : string.Empty, block.Type) { Placeholder = hint };   // why: a required check box shows a value, and the value it shows is the one sent; the block type gives a new Code step its code box (#3682)
             AddWatched(form);
         }
 
         NodeHeading = Labels.WfEditorNewStep(block.Title);
         NodeIdLine = string.Empty;   // a new step has no id until it is saved
-
+        AdvancedOpen = false;   // a new Code step gets the code box and a shut Advanced group, like an existing one (#3682)
+        OnChanged(nameof(HasAdvancedFields));
+        OnChanged(nameof(ShowsAdvanced));
         OnChanged(nameof(HasPendingStep));
     }
 
@@ -136,6 +138,8 @@ internal sealed partial class OpsEditor
         Fields.Clear();
         NodeHeading = string.Empty;
         NodeIdLine = string.Empty;
+        OnChanged(nameof(HasAdvancedFields));
+        OnChanged(nameof(ShowsAdvanced));
         OnChanged(nameof(HasPendingStep));
     }
 
