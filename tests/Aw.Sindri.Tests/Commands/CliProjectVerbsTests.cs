@@ -480,6 +480,58 @@ public sealed class CliProjectVerbsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Cli_project_branch_with_clear_branches_is_a_usage_error()
+    {
+        var api = new RoutedApi();
+
+        var code = await Verbs(api).Run(["project", "edit", Id, "--version", "1", "--branch", "acme/api:feat/x", "--clear-branches"], Token);
+
+        Assert.Equal(2, code);
+        Assert.Contains("--clear-branches with --branch", _error.ToString(), StringComparison.Ordinal);
+        Assert.Empty(api.Calls);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("--branch")]
+    [InlineData("--branch-prefix")]
+    [InlineData("--item")]
+    public async Task Cli_project_a_source_flag_as_the_last_argument_needs_a_value(string flag)
+    {
+        var api = new RoutedApi();
+
+        var code = await Verbs(api).Run(["project", "add", "--name", "K", flag], Token);
+
+        Assert.Equal(2, code);
+        Assert.Contains(flag + " needs a value", _error.ToString(), StringComparison.Ordinal);
+        Assert.Empty(api.Calls);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Cli_project_repeated_branch_and_item_flags_send_every_value_in_order()
+    {
+        var api = new RoutedApi().On("/sindri/projects", HttpStatusCode.OK, Accepted(Id, 1, "Kitchen", 9));
+
+        var code = await Verbs(api).Run(["project", "add", "--name", "Kitchen", "--branch", "acme/api:a", "--branch", "acme/web:b", "--item", ItemA, "--item", "ITM-fedcba9876543210fedcba9876543210"], Token);
+
+        Assert.Equal(0, code);
+        Assert.Contains("\"branches\":[{\"repo\":\"acme/api\",\"name\":\"a\",\"prefix\":false},{\"repo\":\"acme/web\",\"name\":\"b\",\"prefix\":false}]", api.Calls[^1].Body, StringComparison.Ordinal);
+        Assert.Contains($"\"items\":[\"{ItemA}\",\"ITM-fedcba9876543210fedcba9876543210\"]", api.Calls[^1].Body, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Cli_project_edit_of_a_led_project_with_a_branch_sends_it_and_shows_the_servers_refusal()
+    {
+        const string Key = "linear:project/6f2a9c1e-7b34-4d58-9e0a-3c5d8b1f2a47";
+        var api = new RoutedApi().OnRaw($"/sindri/projects/{Uri.EscapeDataString(Key)}/change", HttpStatusCode.BadRequest, """{"type":"about:blank","title":"SND-PROJECT-004","status":400,"detail":"a project you lead only takes notes here; edit it in Linear"}""");
+
+        var code = await Verbs(api).Run(["project", "edit", Key, "--version", "0", "--branch", "acme/api:feat/x"], Token);
+
+        Assert.Equal(2, code);
+        Assert.Contains("\"branches\":[", api.Calls[^1].Body, StringComparison.Ordinal);
+        Assert.Contains("SND-PROJECT-004", _error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Cli_project_show_prints_the_typed_sources()
     {
         var card = Card(Id, "Kitchen", version: 4) with
