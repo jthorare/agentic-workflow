@@ -28,6 +28,20 @@ public sealed class ProjectDecisionsTests
     }
 
     [Fact]
+    public void A_link_may_be_githubs_branch_search_but_no_other_link_may_have_a_query()
+    {
+        var search = Attach(Hand(links: ["https://github.com/acme/api/branches/all?query=feat%2Flogin"]));
+        var other = Attach(Hand(links: ["https://github.com/acme/api/branches/all?query=feat&x=1"]));
+        var elsewhere = Attach(Hand(links: ["https://example.com/branches/all?query=feat"]));
+        var pulls = Attach(Hand(links: ["https://github.com/acme/api/pulls?query=feat"]));
+
+        Expect.True(search.IsSuccess);
+        RefusedOn("links", other.Error);
+        RefusedOn("links", elsewhere.Error);
+        RefusedOn("links", pulls.Error);
+    }
+
+    [Fact]
     public void A_hand_made_project_attaches_with_its_fields()
     {
         var attached = Attach(new ProjectDraft(Linear: null, "  Kitchen  ", ProjectState.InProgress, ["https://example.com/plan"], "one line", new DateOnly(2026, 11, 14))).Value;

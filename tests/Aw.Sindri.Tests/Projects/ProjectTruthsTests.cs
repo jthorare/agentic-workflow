@@ -72,6 +72,38 @@ public sealed class ProjectTruthsTests
         Assert.Equal(_apiAndInfra, sources.Repos.Order(StringComparer.Ordinal).ToArray());
     }
 
+    // #4333: a project names a branch, or a branch prefix, with a real github.com link: its tree page, or the branch search
+    [Fact]
+    public void Sources_read_a_branch_page_and_a_branch_search_as_a_branch_and_a_prefix_and_a_branch_name_may_hold_slashes()
+    {
+        var sources = ProjectTruths.SourcesOf(
+            ["https://github.com/acme/api/tree/feat/login-form", "https://github.com/acme/api/branches/all?query=feat%2Flogin", "https://github.com/acme/web/tree/main/", "https://github.com/acme/web/tree/", "https://github.com/acme/web/branches/all"],
+            linearRepos: [],
+            profileRepos: []);
+
+        Assert.Empty(sources.Repos);
+        Assert.Equal([new BranchSource("acme/api", "feat/login-form", IsPrefix: false), new BranchSource("acme/api", "feat/login", IsPrefix: true), new BranchSource("acme/web", "main", IsPrefix: false)], sources.Branches);
+    }
+
+    [Fact]
+    public void A_pr_counts_for_a_project_that_names_its_head_branch_or_a_prefix_of_it_in_that_repo_only()
+    {
+        BranchSource[] named = [new("acme/api", "feat/login-form", IsPrefix: false), new("acme/api", "fix/crash", IsPrefix: true)];
+        ReviewPull[] pulls =
+        [
+            Pull(1) with { HeadRef = "feat/login-form" },
+            Pull(2) with { HeadRef = "feat/login-form-2" },
+            Pull(3) with { HeadRef = "fix/crash-on-open" },
+            Pull(4) with { HeadRef = null },
+            Pull(5, Web) with { HeadRef = "feat/login-form" },
+            Pull(6) with { HeadRef = "FEAT/login-form" },
+        ];
+
+        var truth = ProjectTruths.Build(Inputs(sources: new ProjectSources([], [], named), pulls: pulls));
+
+        Assert.Equal([1, 3], truth.OpenPrs.Select(static p => p.Number).Order());
+    }
+
     [Fact]
     public void Sources_list_a_repo_once_when_a_link_and_the_profile_both_name_it()
     {
