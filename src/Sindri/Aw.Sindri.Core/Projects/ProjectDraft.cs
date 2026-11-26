@@ -12,5 +12,5 @@ namespace Aw.Sindri.Core.Projects;
 /// <param name="Branches">The typed branch sources (the typed branch and branch-prefix sources (#4499), or null).</param>
 /// <param name="Items">The typed work-item id sources (the typed work-item id sources (#4499), or null).</param>
 public sealed record ProjectDraft(string? Linear = null, string? Name = null, ProjectState? State = null, IReadOnlyList<string>? Links = null, string? Notes = null, DateOnly? Target = null,
-    IReadOnlyList<TruthSources.BranchSource>? Branches = null,
+    IReadOnlyList<Sources.BranchSource>? Branches = null,
     IReadOnlyList<string>? Items = null);

@@ -1,4 +1,5 @@
 using Aw.Kernel.Ids;
+using Aw.Sindri.Core.Projects.Sources;
 using System.Text;
 using Aw.Kernel;
 using Aw.Kernel.Events;
@@ -103,8 +104,10 @@ public sealed class ProjectTypedSourcesTests
         var replaced = ProjectDecisions.Change(_command, ProjectRows.HandMadeId, row, new ProjectEdit(Branches: [Branch("feat/new")], Items: []), seenVersion: 1).Value;
         var kept = ProjectDecisions.Change(_command, ProjectRows.HandMadeId, row, new ProjectEdit(Notes: "later"), seenVersion: 1).Value;
 
-        Assert.Equal(([Branch("feat/new")], (IReadOnlyList<string>)[]), (replaced.Branches, replaced.Items));
-        Assert.Equal((null, null), (kept.Branches, kept.Items));
+        Assert.Equal([Branch("feat/new")], replaced.Branches);
+        Assert.Empty(replaced.Items!);
+        Assert.Null(kept.Branches);
+        Assert.Null(kept.Items);
     }
 
     [Fact]
@@ -116,23 +119,29 @@ public sealed class ProjectTypedSourcesTests
         var row = ProjectsProjection.Fold(attached, recorded);
         var kept = ProjectsProjection.Fold(row, Changed(notes: "n"), recorded);
         var replaced = ProjectsProjection.Fold(row, Changed(branches: [], items: [Other]), recorded);
-        var old = AwJson.Deserialize<ProjectAttachedRow>(Encoding.UTF8.GetBytes("""{"id":"prj_0123456789abcdef0123456789abcdef","linear":null,"name":"Kitchen","state":null,"links":[],"notes":null,"target":null,"version":1,"attachedAt":"2026-11-01T10:00:00+00:00","finishedAt":null,"editedAt":"2026-11-01T10:00:00+00:00","sequence":3}"""), SliceHarness.Json).Value;
+        var old = AwJson.Deserialize<ProjectAttachedRow>(Encoding.UTF8.GetBytes("""{"id":"prj_01J9Z3K5M7Q2R4T6V8WXYZ0123","linear":null,"name":"Kitchen","state":null,"links":[],"notes":null,"target":null,"version":1,"attachedAt":"2026-11-01T10:00:00+00:00","finishedAt":null,"editedAt":"2026-11-01T10:00:00+00:00","sequence":3}"""), SliceHarness.Json).Value;
 
-        Assert.Equal(([Branch("feat/x")], [Item]), (row.Branches, row.Items));
-        Assert.Equal(([Branch("feat/x")], [Item]), (kept.Branches, kept.Items));
-        Assert.Equal(([], [Other]), (replaced.Branches, replaced.Items));
-        Assert.Equal((null, null), (old.Branches, old.Items));
+        Assert.Equal([Branch("feat/x")], row.Branches);
+        Assert.Equal([Item], row.Items);
+        Assert.Equal([Branch("feat/x")], kept.Branches);
+        Assert.Equal([Item], kept.Items);
+        Assert.Empty(replaced.Branches!);
+        Assert.Equal([Other], replaced.Items);
+        Assert.Null(old.Branches);
+        Assert.Null(old.Items);
     }
 
     [Fact]
     public void The_card_shows_the_typed_lists_and_a_card_without_them_has_none()
     {
         var typed = ProjectRows.HandMade() with { Links = [.. _apiLink], Branches = [Branch("feat/x")], Items = [Item] };
-        var plain = ProjectRows.HandMade() with { Id = ProjectId.From("prj_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") };
+        var plain = ProjectRows.HandMade() with { Id = ProjectId.From("prj_01J9Z3K5M7Q2R4T6V8WXYZ0199") };
 
         var page = ProjectCards.Build(new ProjectPageInputs([typed, plain], [], new ProjectFactsSnapshot(Owner: null, [], [], ["ENG"], FirstReadDone: true), Results.Success<IReadOnlyList<ProjectSourceFreshness>>([]), LinearConfigured: true), _now, all: false);
 
-        Assert.Equal(([Branch("feat/x")], [Item]), (page.Projects.Single(c => c.Key == typed.Id.Value).Branches, page.Projects.Single(c => c.Key == typed.Id.Value).Items));
+        var shown = page.Projects.Single(c => c.Key == typed.Id.Value);
+        Assert.Equal([Branch("feat/x")], shown.Branches);
+        Assert.Equal([Item], shown.Items);
         Assert.Null(page.Projects.Single(c => c.Key == plain.Id.Value).Branches);
     }
 

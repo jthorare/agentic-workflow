@@ -22,5 +22,5 @@ public sealed record ProjectEdit(
     bool ClearNotes = false,
     DateOnly? Target = null,
     bool ClearTarget = false,
-    IReadOnlyList<TruthSources.BranchSource>? Branches = null,
+    IReadOnlyList<Sources.BranchSource>? Branches = null,
     IReadOnlyList<string>? Items = null);

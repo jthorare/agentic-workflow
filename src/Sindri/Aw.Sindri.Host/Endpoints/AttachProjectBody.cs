@@ -24,7 +24,7 @@ internal sealed record AttachProjectBody(
     string? Notes = null,
     DateOnly? Target = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Note = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.BranchSource>? Branches = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<Aw.Sindri.Core.Projects.Sources.BranchSource>? Branches = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? Items = null)
 {
     /// <summary>The request; SND-PROJECT-004 when 'notes' and 'note' disagree.</summary>
