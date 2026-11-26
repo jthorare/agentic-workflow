@@ -44,6 +44,9 @@ internal sealed partial class FakeSindriApi
     /// <summary>When true, ReplaceConnectionKey answers that the key was stored unchecked (a cli connection or a preset with no key check).</summary>
     public bool ReplaceKeyUnchecked { get; set; }
 
+    /// <summary>The reason ReplaceConnectionKey gives when <see cref="ReplaceKeyUnchecked"/> is set: the server's own sentence (a cli connection by default).</summary>
+    public string ReplaceKeyUncheckedReason { get; set; } = "a cli connection has no service to check the key against";
+
     /// <summary>Every body ReplaceConnectionKey was given, in order (the key as sent, so a test can check it was sent once).</summary>
     public IReadOnlyList<ReplaceConnectionKeyBody> ReplacedKeys { get { lock (_gate) { return [.. _replacedKeys]; } } }
 
@@ -269,7 +272,7 @@ internal sealed partial class FakeSindriApi
 
             found = found with { Status = "connected", StatusReason = null, HasSecret = true };
             _connections[name] = found;
-            return new ConnectionKeyReplaced(found, Checked: !ReplaceKeyUnchecked, ReplaceKeyUnchecked ? "a cli connection has no service to check the key against" : null);
+            return new ConnectionKeyReplaced(found, Checked: !ReplaceKeyUnchecked, ReplaceKeyUnchecked ? ReplaceKeyUncheckedReason : null);
         }
     }
 

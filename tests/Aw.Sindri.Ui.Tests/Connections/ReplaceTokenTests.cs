@@ -10,6 +10,7 @@ namespace Aw.Sindri.Ui.Tests.Connections;
 public sealed class ReplaceTokenTests
 {
     private const string Fresh = "ghp_new_token_0002";
+    private const string NoteWords = "Token replaced. Sindri can't check this kind of token, so try it once to make sure it works.";
 
     private readonly ConnectionsFixture _f = new();
 
@@ -64,10 +65,31 @@ public sealed class ReplaceTokenTests
 
         await tile.Replace(Token);
 
-        Assert.Equal("Token replaced, not checked: a cli connection has no service to check the key against", tile.ReplaceNote);
+        Assert.Equal(NoteWords, tile.ReplaceNote);
+        Assert.Equal("a cli connection has no service to check the key against", tile.ReplaceNoteTip);
         Assert.True(tile.HasReplaceNote);
         tile.StartReplace();
         Assert.False(tile.HasReplaceNote);
+    }
+
+    [Theory]
+    [InlineData("an mcp connection has no key check")]
+    [InlineData("this connection has no preset, so there is no service to check the key against")]
+    [InlineData("Acme has no key check")]
+    public async Task The_note_is_the_same_product_words_whatever_the_server_said_and_the_reason_is_its_tooltip(string reason)
+    {
+        var tile = await Tile();
+        (_f.Server.ReplaceKeyUnchecked, _f.Server.ReplaceKeyUncheckedReason) = (true, reason);
+        tile.StartReplace();
+        tile.ReplaceToken.Text = Fresh;
+
+        await tile.Replace(Token);
+
+        Assert.Equal(NoteWords, tile.ReplaceNote);
+        Assert.DoesNotContain(reason, tile.ReplaceNote, StringComparison.Ordinal);
+        Assert.DoesNotContain("key", tile.ReplaceNote, StringComparison.Ordinal);
+        Assert.Contains("token", tile.ReplaceNote, StringComparison.Ordinal);
+        Assert.Equal(reason, tile.ReplaceNoteTip);
     }
 
     [Fact]
