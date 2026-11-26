@@ -30,6 +30,8 @@ internal sealed record RunsFilter(IReadOnlyList<WorkflowRunStatus> Statuses, Dat
         ["waiting"] = [WorkflowRunStatus.Waiting],
     };
 
+    private static readonly System.Buffers.SearchValues<char> _timeChars = System.Buffers.SearchValues.Create("0123456789:.");
+
     private static readonly string[] _instants = ["yyyy-MM-dd'T'HH:mm:ss.FFFFFFFK", "yyyy-MM-dd'T'HH:mm:ssK", "yyyy-MM-dd'T'HH:mmK", "yyyy-MM-dd"];
 
     /// <summary>Gets the filter that keeps every run.</summary>
@@ -116,10 +118,27 @@ internal sealed record RunsFilter(IReadOnlyList<WorkflowRunStatus> Statuses, Dat
             return (DateTimeOffset?)null;
         }
 
+        text = RawPlus(text);
         return DateTimeOffset.TryParseExact(text, _instants, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var at)
             ? at.ToUniversalTime()
             : SindriErrors.GraphRunsFilterInvalid.With($"'{name}': '{text}' is not an ISO-8601 instant (such as 2026-11-23T07:00:00Z, or 2026-11-23 for its midnight UTC)");
     }
+
+    // why: a query string reads '+' as a space, so '?since=2026-11-25T10:00:00+01:00' sent raw arrives as '...00:00 01:00' (#4466). A single space right before an hh:mm offset at the end, after a time of day, is that '+'; a space anywhere else stays refused.
+    private static string RawPlus(string text)
+    {
+        const int Tail = 6;   // ' hh:mm'
+        if (text.Length <= Tail || text[^Tail] != ' ' || !IsOffset(text.AsSpan(text.Length - Tail + 1)))
+        {
+            return text;
+        }
+
+        var head = text[..^Tail];
+        var time = head.LastIndexOf('T');
+        return time > 0 && time < head.Length - 1 && head.AsSpan(time + 1).IndexOfAnyExcept(_timeChars) < 0 ? head + "+" + text[^(Tail - 1)..] : text;
+    }
+
+    private static bool IsOffset(ReadOnlySpan<char> hhmm) => hhmm.Length == 5 && char.IsAsciiDigit(hhmm[0]) && char.IsAsciiDigit(hhmm[1]) && hhmm[2] == ':' && char.IsAsciiDigit(hhmm[3]) && char.IsAsciiDigit(hhmm[4]);
 
     private static Result<WorkflowRunId?> Cursor(string? before)
     {

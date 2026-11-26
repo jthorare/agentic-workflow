@@ -156,8 +156,8 @@ An unknown slug is `SND-GRAPH-008` (404), an unknown run `SND-GRAPH-101`, a slug
 
 The runs read takes four optional values, the same on the route's query, the MCP arguments and the CLI flags. The store applies them in its SQL (`IWorkflowRunStore.Find`), before the page cap, so a filter reaches runs older than the newest 50.
 
-- `status`: comma-separated words. `running` keeps queued, running and waiting runs; `ended` and `succeeded` keep succeeded runs; `failed`, `cancelled`, `queued` and `waiting` keep that status.
-- `since` and `until`: ISO-8601 instants on the start time, `since` inclusive and `until` exclusive. A date alone is its midnight UTC.
+- `status`: comma-separated words, or the parameter repeated (`?status=failed&status=cancelled` reads like `failed,cancelled`). `running` keeps queued, running and waiting runs; `ended` and `succeeded` keep succeeded runs; `failed`, `cancelled`, `queued` and `waiting` keep that status.
+- `since` and `until`: ISO-8601 instants on the start time, `since` inclusive and `until` exclusive. A date alone is its midnight UTC. A `+` offset may be sent unencoded (`since=2026-11-25T10:00:00+01:00`): the query string turns it into a space, and a single space right before an `hh:mm` offset at the end is read as the `+`.
 - `before`: a run id. The page holds the runs after it in the list order. The answer's `next` is the last run of the page while `more` is true, so `before=<next>` reads the older page.
 
 A value the read can't parse is `SND-GRAPH-134` (400), and so is a `before` run of another workflow; an unknown `before` run is `SND-GRAPH-101`. `sindri wf runs` sends the flags unchecked and prints the next page's command under a page with `more`.
