@@ -15354,11 +15354,13 @@ Aw.Sindri.Core.Forge.PullCheckRun.App.get -> string?
 Aw.Sindri.Core.Forge.PullCheckRun.App.init -> void
 Aw.Sindri.Core.Forge.PullCheckRun.Conclusion.get -> string!
 Aw.Sindri.Core.Forge.PullCheckRun.Conclusion.init -> void
-Aw.Sindri.Core.Forge.PullCheckRun.Deconstruct(out string! Name, out string? App, out string! Conclusion, out string! Sha) -> void
+Aw.Sindri.Core.Forge.PullCheckRun.Deconstruct(out string! Name, out string? App, out string! Conclusion, out string! Sha, out System.DateTimeOffset? CompletedAt) -> void
 Aw.Sindri.Core.Forge.PullCheckRun.Equals(Aw.Sindri.Core.Forge.PullCheckRun? other) -> bool
 Aw.Sindri.Core.Forge.PullCheckRun.Name.get -> string!
 Aw.Sindri.Core.Forge.PullCheckRun.Name.init -> void
-Aw.Sindri.Core.Forge.PullCheckRun.PullCheckRun(string! Name, string? App, string! Conclusion, string! Sha) -> void
+Aw.Sindri.Core.Forge.PullCheckRun.PullCheckRun(string! Name, string? App, string! Conclusion, string! Sha, System.DateTimeOffset? CompletedAt = null) -> void
+Aw.Sindri.Core.Forge.PullCheckRun.CompletedAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Forge.PullCheckRun.CompletedAt.init -> void
 Aw.Sindri.Core.Forge.PullCheckRun.Sha.get -> string!
 Aw.Sindri.Core.Forge.PullCheckRun.Sha.init -> void
 Aw.Sindri.Core.Forge.PullChecks.Deconstruct(out Aw.Sindri.Core.Forge.PullChecksState State, out string! Sha, out System.Collections.Generic.IReadOnlyList<string!>! Failing, out int Passed, out int Pending, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Forge.PullCheckRun!>? Runs) -> void
@@ -15876,15 +15878,17 @@ Aw.Sindri.Core.Reviews.ReviewStale.Text.init -> void
 Aw.Sindri.Core.Reviews.ReviewSummary
 Aw.Sindri.Core.Reviews.ReviewSummary.At.get -> System.DateTimeOffset
 Aw.Sindri.Core.Reviews.ReviewSummary.At.init -> void
+Aw.Sindri.Core.Reviews.ReviewSummary.FailedAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Reviews.ReviewSummary.FailedAt.init -> void
 Aw.Sindri.Core.Reviews.ReviewSummary.Ci.get -> Aw.Sindri.Core.Reviews.ReviewCi
 Aw.Sindri.Core.Reviews.ReviewSummary.Ci.init -> void
 Aw.Sindri.Core.Reviews.ReviewSummary.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewSummary!
-Aw.Sindri.Core.Reviews.ReviewSummary.Deconstruct(out string! Sha, out Aw.Sindri.Core.Reviews.ReviewCi Ci, out int? RequiredOpen, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Reviews.ReviewSummary.Deconstruct(out string! Sha, out Aw.Sindri.Core.Reviews.ReviewCi Ci, out int? RequiredOpen, out System.DateTimeOffset At, out System.DateTimeOffset? FailedAt) -> void
 Aw.Sindri.Core.Reviews.ReviewSummary.Equals(Aw.Sindri.Core.Reviews.ReviewSummary? other) -> bool
 Aw.Sindri.Core.Reviews.ReviewSummary.RequiredOpen.get -> int?
 Aw.Sindri.Core.Reviews.ReviewSummary.RequiredOpen.init -> void
 Aw.Sindri.Core.Reviews.ReviewSummary.RequiredText.get -> string?
-Aw.Sindri.Core.Reviews.ReviewSummary.ReviewSummary(string! Sha, Aw.Sindri.Core.Reviews.ReviewCi Ci, int? RequiredOpen, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Reviews.ReviewSummary.ReviewSummary(string! Sha, Aw.Sindri.Core.Reviews.ReviewCi Ci, int? RequiredOpen, System.DateTimeOffset At, System.DateTimeOffset? FailedAt = null) -> void
 Aw.Sindri.Core.Reviews.ReviewSummary.Sha.get -> string!
 Aw.Sindri.Core.Reviews.ReviewSummary.Sha.init -> void
 Aw.Sindri.Core.Reviews.ReviewWait
@@ -15956,6 +15960,7 @@ static Aw.Sindri.Core.Reviews.RequiredCheckResult.operator !=(Aw.Sindri.Core.Rev
 static Aw.Sindri.Core.Reviews.RequiredCheckResult.operator ==(Aw.Sindri.Core.Reviews.RequiredCheckResult? left, Aw.Sindri.Core.Reviews.RequiredCheckResult? right) -> bool
 static Aw.Sindri.Core.Reviews.RequiredChecks.Evaluate(Aw.Sindri.Core.Reviews.RequiredCheckInputs! inputs) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.RequiredCheckResult!>!
 static Aw.Sindri.Core.Reviews.RequiredChecks.OpenCount(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.RequiredCheckResult!>! results) -> int
+static Aw.Sindri.Core.Reviews.RequiredChecks.OldestFailure(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Forge.PullCheckRun!>! runs, string! headSha) -> System.DateTimeOffset?
 static Aw.Sindri.Core.Reviews.RequiredChecks.RollUp(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Forge.PullCheckRun!>! runs, string! headSha) -> Aw.Sindri.Core.Reviews.ReviewCi
 static Aw.Sindri.Core.Reviews.ReviewClaim.operator !=(Aw.Sindri.Core.Reviews.ReviewClaim? left, Aw.Sindri.Core.Reviews.ReviewClaim? right) -> bool
 static Aw.Sindri.Core.Reviews.ReviewClaim.operator ==(Aw.Sindri.Core.Reviews.ReviewClaim? left, Aw.Sindri.Core.Reviews.ReviewClaim? right) -> bool

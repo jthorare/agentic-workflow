@@ -44,6 +44,17 @@ public static class RequiredChecks
                 : onHead.Exists(static r => Classify(r.Conclusion) == RequiredCheckStatus.Running) ? ReviewCi.Running : ReviewCi.Pass;
     }
 
+    /// <summary>When the oldest failing check on the head completed (#4506): the earliest completed time among the head's failing runs that carry one.</summary>
+    /// <param name="runs">The runs.</param>
+    /// <param name="headSha">The head commit.</param>
+    /// <returns>The time, or null when no failing run on the head has one.</returns>
+    public static DateTimeOffset? OldestFailure(IReadOnlyList<PullCheckRun> runs, string headSha)
+    {
+        ArgumentNullException.ThrowIfNull(runs);
+        ArgumentNullException.ThrowIfNull(headSha);
+        return default;   // red stub: finds nothing
+    }
+
     private static bool Applies(PrReviewCheck check, IReadOnlyList<string> paths) =>
         check.When is not { Count: > 0 } globs || paths.Any(path => globs.Any(glob => Matches(glob, path)));
 
