@@ -30,9 +30,21 @@ public sealed record ConnectionPreset(
     IReadOnlyList<string> PollableEvents,
     string? ProbeUrl)
 {
+    /// <summary>The "auth" entry for a pasted key.</summary>
+    public const string KeyAuth = "key";
+
+    /// <summary>The "auth" entry for a browser sign-in.</summary>
+    public const string OAuthAuth = "oauth";
+
     /// <summary>Gets the client id of Sindri's own OAuth app for this provider, as this build ships it (first-run spec decision 15a): null or empty until the owner registers the app. The profile's `setup.oauth.*` replaces it (<see cref="OAuthClientIds"/>). Not a secret.</summary>
     public string? ShippedClient { get; init; }
 
     /// <summary>Gets the provider's device authorization endpoint (RFC 8628, https), or null when the provider has no device flow.</summary>
     public string? DeviceCodeUrl { get; init; }
+
+    /// <summary>Gets the ways to connect, the default first (#4357): "key" (a pasted API key or personal access token, a rest connection) and "oauth" (a browser sign-in). A file without "auth" reads as oauth only.</summary>
+    public IReadOnlyList<string> Auth { get; init; } = [OAuthAuth];
+
+    /// <summary>Gets a value indicating whether a key is the default way to connect: an add that names no kind stores a key (a rest connection).</summary>
+    public bool KeyFirst => Auth.Count > 0 && string.Equals(Auth[0], KeyAuth, StringComparison.Ordinal);
 }

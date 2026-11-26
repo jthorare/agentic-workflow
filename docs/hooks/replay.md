@@ -225,7 +225,8 @@ line failed, 1 means a line failed, and 2 means a usage error or a bad fixture.
 
 `tests/fixtures/replay/<provider>/block-destructive/` holds 9 cases that prove the harness before retry-guard lands.
 Each provider has `deny-rm-rf`, `allow-ls` and `malformed-not-json`. The Codex and Cursor deny and allow payloads are
-copies of `config/hooks/tests/fixtures/` and are `captured`. The Claude ones and the malformed ones are `unverified`.
+copies of `config/hooks/tests/fixtures/`, not captures from a real run, so every seed is `unverified` (hand-written;
+`capturedAt` and `reviewedBy` stay `null`).
 
 ## Report
 
@@ -277,7 +278,7 @@ Report exit codes:
 | `research-no-edit` | Many reads and greps, zero edits | `allow` |
 | `verify-no-edit` | Repeated test or build runs, zero edits | `allow` |
 | `scope-exception` | An exception the brief accepts | `allow` |
-| `malformed-payload` | Empty, not JSON, cut short, no `tool_name`, wrong `tool_input` type, bad UTF-8; a valid 2 MB payload | `abstain`; the 2 MB one is read like any other (`allow` for a readable `ls`) |
+| `malformed-payload` | Empty, not JSON, cut short, no `tool_name`, wrong `tool_input` type, bad UTF-8; a valid 2 MB payload (a readable `ls` and a destructive command) | `abstain`; the 2 MB ones are read like any other (`allow` for the `ls`, `deny` for the destructive command) |
 | `unsupported-hook` | An event the host has no mapping for | `allow` or `advise`, `unsupported: true` |
 | `judge-unavailable` | No recorded answer; the shim says unavailable | `abstain`, text "judge unavailable", never `deny` |
 | `redaction` | A planted `ghp_` token in the command and output | The token is absent from state, results and report |

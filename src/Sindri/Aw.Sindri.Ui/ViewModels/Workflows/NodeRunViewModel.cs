@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflows;
 
@@ -7,22 +8,76 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 internal sealed class NodeRunViewModel : ObservableObject
 {
     private readonly Func<NodeRunViewModel, bool, CancellationToken, Task>? _control;
+    private readonly Func<string, CancellationToken, Task>? _edit;
 
-    internal NodeRunViewModel(NodeRunView run, int count, Func<NodeRunViewModel, bool, CancellationToken, Task>? control = null)
+    internal NodeRunViewModel(NodeRunView run, int count, Func<NodeRunViewModel, bool, CancellationToken, Task>? control = null, Func<string, CancellationToken, Task>? edit = null, string nodeType = "")
     {
-        _control = control;
-        HasTitle = count > 1 || run.ItemIndex > 0;
-        TitleText = HasTitle ? Labels.WfItemTitle(run.ItemIndex, count) : string.Empty;   // a node that runs once is named by its group's heading (#3307)
+        (_control, _edit) = (control, edit);
+        HasTitle = run.ItemIndex > 0 || count > 0;   // a node that runs once is named by the group's heading (#3307); a collect's own row reads "Result" (#4341)
+        TitleText = run.ItemIndex > 0 ? Labels.WfItemTitle(run.ItemIndex, count) : HasTitle ? Labels.WfCollectResultTitle : string.Empty;
         var (glyph, word) = Labels.WfChip(run.Status);
         Tone = RunStatus.Tone(run.Status);
         (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, RunStatus.ToneWord(run.Status));
         (CodeText, InputText) = WorkflowJson.CodeAndRest(run.Input);
-        OutputText = WorkflowJson.Pretty(run.Output);
+        var (sentTitle, sentBody) = NotificationSent(nodeType, run);
+        (IsNotification, SentTitle, SentBody, SentTarget) = (sentTitle.Length > 0, sentTitle, sentBody, sentTitle.Length > 0 ? Labels.WfNotifySentTo : string.Empty);
+        OutputText = IsNotification ? string.Empty : WorkflowJson.Pretty(run.Output);   // a notification's output is always empty: the card shows what it sent instead
         IsTruncated = run.Truncated;
-        ErrorText = run.Error ?? string.Empty;
+        ErrorText = ErrorOf(run);
+        DurationText = DurationOf(run);
         Name = Labels.WfNodeRunName(HasTitle ? TitleText : run.Node, word.ToLowerInvariant(), ErrorText);
         (Node, ItemIndex, Agent) = (run.Node, run.ItemIndex, run.Agent);
     }
+
+    // The engine's text stays under the run's Details (#3304): the row says the sentence when there is one.
+    private static string ErrorOf(NodeRunView run) => run.Failure?.Sentence ?? run.Error ?? string.Empty;
+
+    private static string DurationOf(NodeRunView run) => run.Seconds is { } seconds and >= 0 ? Labels.WfDuration(seconds) : string.Empty;
+
+    /// <summary>How long the step ran ("&lt;1 s", "7 s", "1m 15s"); empty while it runs and for a row with no times.</summary>
+    public string DurationText { get; }
+
+    /// <summary>True on a notification step that sent: its card shows what was sent.</summary>
+    public bool IsNotification { get; }
+
+    /// <summary>The title the notification sent.</summary>
+    public string SentTitle { get; }
+
+    /// <summary>The message the notification sent; empty when it had none.</summary>
+    public string SentBody { get; }
+
+    /// <summary>True when the message line shows.</summary>
+    public bool HasSentBody => SentBody.Length > 0;
+
+    /// <summary>Where it went.</summary>
+    public string SentTarget { get; }
+
+    /// <summary>True on a failed step: Edit step shows.</summary>
+    public bool CanEditStep => IsError;
+
+    /// <summary>The Edit step button's words.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string EditStepText => Labels.WfEditStep;
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>Opens the workflow with this step selected and its sheet open.</summary>
+    /// <param name="cancellationToken">Cancels the reads.</param>
+    /// <returns>A task that completes when the sheet is open.</returns>
+    internal Task EditStep(CancellationToken cancellationToken) => _edit?.Invoke(Node, cancellationToken) ?? Task.CompletedTask;
+
+    // The notify block's input is its interpolated title and message; the card shows them only when it sent (a failed one sent nothing).
+    private static (string Title, string Body) NotificationSent(string nodeType, NodeRunView run)
+    {
+        if (!string.Equals(nodeType, "notify", StringComparison.Ordinal) || !string.Equals(run.Status, "succeeded", StringComparison.Ordinal) || run.Input is not { ValueKind: JsonValueKind.Object } input)
+        {
+            return (string.Empty, string.Empty);
+        }
+
+        return (Text(input, "title"), Text(input, "body"));
+    }
+
+    private static string Text(JsonElement input, string name) =>
+        input.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() ?? string.Empty : string.Empty;
 
     /// <summary>The node's id (the take over call names it).</summary>
     public string Node { get; }
@@ -60,10 +115,10 @@ internal sealed class NodeRunViewModel : ObservableObject
     /// <returns>A task that completes when the answer is shown.</returns>
     internal Task HandBack(CancellationToken cancellationToken) => _control?.Invoke(this, false, cancellationToken) ?? Task.CompletedTask;
 
-    /// <summary>"Item 2 of 3" for one item of a for_each node; empty for a node that runs once, which its group's heading names.</summary>
+    /// <summary>"Item 2 of 3" for one item of a for_each node, "Result" for a collect's own row; empty for a node that runs once, which its group's heading names.</summary>
     public string TitleText { get; }
 
-    /// <summary>True when the row shows its own title (an item of a for_each node).</summary>
+    /// <summary>True when the row shows its own title (an item of a for_each node, or a collect's own result).</summary>
     public bool HasTitle { get; }
 
     /// <summary>A code step's body as written, with real line breaks; empty for any other step.</summary>
@@ -91,7 +146,7 @@ internal sealed class NodeRunViewModel : ObservableObject
     public string InputText { get; }
 
     /// <summary>True when the node has an input.</summary>
-    public bool HasInput => InputText.Length > 0;
+    public bool HasInput => InputText.Length > 0 && !IsNotification;
 
     /// <summary>What the block produced, as indented JSON; empty for none.</summary>
     public string OutputText { get; }
@@ -116,7 +171,7 @@ internal sealed class NodeRunViewModel : ObservableObject
     public string OutputHeading => Labels.WfOutputHeading;
 #pragma warning restore CA1822, MA0041
 
-    /// <summary>Why it failed, as served; empty otherwise.</summary>
+    /// <summary>Why it failed: Sindri's sentence, else the error as served; empty otherwise.</summary>
     public string ErrorText { get; }
 
     /// <summary>True when the node failed with a reason.</summary>

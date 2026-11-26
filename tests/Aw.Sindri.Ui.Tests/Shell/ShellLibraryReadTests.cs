@@ -29,11 +29,11 @@ public sealed class ShellLibraryReadTests
         records.Write(A.Record());
         var shell = new ShellViewModel(records, _server, new FakeTimeProvider(A.Noon), new Preferences(new InMemoryPreferencesStore()), new FakeClipboard());
         await shell.Restore(Token);
-        _ = shell.Run(Token);
-        await ShellWait.Until(shell, () => shell.Health.ViewReads > 0, Token);   // why: the connect pass's own refresh is over, so Settings opens after it and reads the library once (#3887)
+        var run = shell.Run(Token);   // why: a view that throws ends the run; the waits then fail with its exception, not a 20 s timeout (#4383)
+        await ShellWait.Until(shell, run, () => shell.Health.ViewReads > 0, Token);   // why: the connect pass's own refresh is over, so Settings opens after it and reads the library once (#3887)
 
         shell.GoTo(PageId.Settings);
-        await ShellWait.Until(shell, () => !shell.LibraryRoots.IsLoading && shell.TodoNoteCard.Stage != TodoNoteCardStage.Reading, Token);
+        await ShellWait.Until(shell, run, () => !shell.LibraryRoots.IsLoading && shell.TodoNoteCard.Stage != TodoNoteCardStage.Reading, Token);
         return shell;
     }
 

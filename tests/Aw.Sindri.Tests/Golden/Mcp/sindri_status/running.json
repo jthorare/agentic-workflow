@@ -137,7 +137,8 @@
       "asking": 0,
       "problems": 0,
       "running": 0,
-      "problemRows": []
+      "problemRows": [],
+      "watching": "on"
     },
     "page": {
       "offset": 0,

@@ -10,11 +10,24 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// One workflow's runs, newest first as the API serves them, under the workflow's name and one line on the revision shown. A workflow with no active revision has no
 /// runs list (Sindri refuses it with SND-GRAPH-105); the page says so in its own words instead of showing an error.
 /// </summary>
-internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
+internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
 {
     /// <summary>The refusal code for a workflow with no active revision.</summary>
     internal const string NotActive = "SND-GRAPH-105";
+    /// <summary>How long a Starting placeholder waits for the server's run row before it says the run did not start.</summary>
+    internal static readonly TimeSpan StartWait = TimeSpan.FromSeconds(10);
+
+    /// <summary>Raised with the run id when a Starting run's 10 s start deadline passes with no run row. The one timer is here; the list row and the run page both read this.</summary>
+    internal event EventHandler<ValueEventArgs<string>>? StartTimedOut;
+
+    private readonly UiContext _ui = new();
+    private readonly Dictionary<string, ITimer> _startTimers = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _didNotStart = new(StringComparer.Ordinal);
     private int _reads;
+    private List<RunRowViewModel> _all = [];
+    private bool _more;   // the server holds runs older than the ones read (it serves the newest 50): the filters and the count only see these
+    private readonly HashSet<string> _ticked = new(StringComparer.Ordinal);   // ticked run ids survive a re-read
+    private readonly List<string> _starting = [];   // runs Run now started whose views row the server has not shown yet: each is drawn as a Starting placeholder until its real row arrives
 
     /// <summary>The workflow's slug.</summary>
     public string Slug { get; private set => Set(ref field, value); } = string.Empty;
@@ -35,7 +48,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     public WorkflowGraphViewModel? Graph { get; private set => Set(ref field, value); }
 
     /// <summary>The workflow as last read (the revision it runs, the newest when it is off), or null: run detail draws its graph when the run walked this revision. The graph on the page draws the newest revision.</summary>
-    internal WorkflowView? Shown { get; private set { Set(ref field, value); OnChanged(nameof(RunNowText)); } }
+    internal WorkflowView? Shown { get; private set { Set(ref field, value); OnChanged(nameof(RunNowText)); OnChanged(nameof(IsArchived)); OnChanged(nameof(ShowsRunNow)); } }
 
     /// <summary>The runs, newest first.</summary>
     public ObservableCollection<RunRowViewModel> Rows { get; } = [];
@@ -67,16 +80,16 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     public bool HasNotice => NoticeText.Length > 0;
 
     /// <summary>True until the answer.</summary>
-    public bool IsReading { get; private set => Set(ref field, value); }
+    public bool IsReading { get; private set { Set(ref field, value); OnChanged(nameof(ShowsRunTable)); } }
 
     /// <summary>True when there are no runs to list.</summary>
-    public bool IsEmpty { get; private set => Set(ref field, value); }
+    public bool IsEmpty { get; private set { Set(ref field, value); OnChanged(nameof(ShowsRunTable)); } }
 
     /// <summary>"No runs yet." or "This workflow is off, so it has no runs."; empty otherwise.</summary>
     public string EmptyText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when the read failed.</summary>
-    public bool IsFailed { get; private set => Set(ref field, value); }
+    public bool IsFailed { get; private set { Set(ref field, value); OnChanged(nameof(ShowsRunTable)); } }
 
     /// <summary>The sentence for a failed read.</summary>
     public string FailedText { get; private set => Set(ref field, value); } = string.Empty;
@@ -92,7 +105,10 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         var read = ++_reads;
         if (!string.Equals(Slug, slug, StringComparison.Ordinal))
         {
+            (_all, _more, StatusFilter, DateFilter) = ([], false, string.Empty, string.Empty);
+            _ticked.Clear();
             Rows.Clear();   // another workflow: none of the old runs stay
+            ClearStarting();
             (Head, DetailText) = (string.Empty, string.Empty);
             (IsFailed, FailedText, IsEmpty, EmptyText) = (false, string.Empty, false, string.Empty);   // nor does the old one's failure or "off" line
             (CanRun, NoticeText) = (false, string.Empty);   // until this one's runs read says it is on
@@ -168,15 +184,32 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     private void Show(WorkflowRunList list)
     {
         (IsFailed, FailedText, CanRun) = (false, string.Empty, true);
-        Rows.Clear();
-        foreach (var run in list.Runs)
+        _all = [.. list.Runs.Select(run => new RunRowViewModel(run, clock) { IsSelected = _ticked.Contains(run.Id) })];
+        _more = list.More;
+        foreach (var id in _starting.Where(s => list.Runs.Any(r => string.Equals(r.Id, s, StringComparison.Ordinal))).ToList())
         {
-            Rows.Add(new RunRowViewModel(run, clock));
+            _ = _starting.Remove(id);   // the real row is here: it replaces the placeholder
+            _ = _didNotStart.Remove(id);
+            StopStartTimer(id);
         }
 
+        foreach (var row in _all)
+        {
+            row.PropertyChanged += (_, e) =>
+            {
+                if (string.Equals(e.PropertyName, nameof(RunRowViewModel.IsSelected), StringComparison.Ordinal))
+                {
+                    _ = row.IsSelected ? _ticked.Add(row.Id) : _ticked.Remove(row.Id);
+                    OnSelectionChanged();
+                }
+            };
+        }
+
+        Apply();
+
         var running = list.Runs.Count(r => string.Equals(r.Status, "running", StringComparison.Ordinal));
-        Head = list.Runs.Count == 0 ? Labels.WfRunsHeadNone : Labels.WfRunsHead(running, list.Runs.Count);
-        (IsEmpty, EmptyText) = list.Runs.Count == 0 ? (true, Labels.WfRunsNone) : (false, string.Empty);
+        Head = list.Runs.Count == 0 ? Labels.WfRunsHeadNone : Labels.WfRunsHead(running, list.Runs.Count, list.More);
+        (IsEmpty, EmptyText) = list.Runs.Count == 0 && _starting.Count == 0 ? (true, Labels.WfRunsNone) : (false, string.Empty);
     }
 
     private static string Detail(WorkflowView workflow)

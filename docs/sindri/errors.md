@@ -90,13 +90,16 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-CONN-008` | The connection name is not `&lt;service&gt;:&lt;label&gt;` in lowercase. | use letters, digits and `-`, 1 to 32 characters per part |
 | `SND-CONN-009` | Consent was denied at the provider. | run the command again and allow access |
 | `SND-CONN-010` | A connection with that name exists. | pick another label, or `sindri connection remove` it first |
-| `SND-CONN-011` | The connection uses a key, so it has no browser sign-in to run again. | `sindri connection remove` it, then add it with a new `--key-env` |
+| `SND-CONN-011` | The connection uses a key, so it has no browser sign-in to run again. | `sindri connection set-key <name> --key-env NAME` to give it a new key (or `sindri connection remove` it and add it again) |
 | `SND-CONN-012` | The provider's answer is not the shape Sindri expects, or a redirect left the preset's host. | run `sindri doctor`; if it repeats, the provider changed its API |
 | `SND-CONN-013` | The provider rejected the saved poll cursor. | ask for a full re-read (the owner's call); Sindri does not re-read on its own |
 | `SND-CONN-014` | The provider is rate limiting this connection (429 or 5xx on a poll). | nothing: the next poll waits for Retry-After, then doubles the wait on each repeat |
 | `SND-CONN-015` | A rename was refused: an active workflow's `connection_event` trigger watches the connection, and the old name would stop it firing. The message names the workflows. | pause those workflows (`sindri wf pause <slug>`), rename, point their triggers at the new name, then activate them again |
 | `SND-CONN-016` | The poller was given a connection with no preset (`slack:messages` has none on purpose), so it made no call. | none; the Messages page reads that connection, not the poller |
 | `SND-CONN-017` | A generic add or a rename used the name `slack:messages` (a rename counts when `slack:messages` is the old name or the new one). | run `sindri messages connect` |
+| `SND-CONN-018` | The service refused the pasted key when Sindri checked it. Nothing was stored. | check that the key was copied whole and has not expired or been revoked, then paste it again |
+| `SND-CONN-019` | Sindri could not reach the service to check the pasted key: no answer in 15 s, no network, or a 5xx. Sindri stored nothing, and a `connection test` keeps the row's status. | check the network and try again |
+| `SND-CONN-020` | The service is rate limiting Sindri, so the pasted key was not checked: a 429, or a 403 with `Retry-After` or `x-ratelimit-remaining: 0` (GitHub's secondary rate limit). Sindri stored nothing, and a `connection test` keeps the row's status. | wait a minute and try again |
 | `SND-CONN-101` | A polled event found its run ids, five in a row, held by runs of other events. | nothing: the cursor stays and the next poll tries again; the event is never dropped |
 | `SND-CONN-201` | The handoff inbox's answer breaks the inbox contract; the message names the field. | fix the inbox so it answers as `schemas/handoff/inbox.openapi.yaml` says (docs/sindri/handoff.md) |
 | `SND-CONN-202` | Another caller claimed the offer first. Informational: nothing starts. | none; the next poll lists what is still open |
@@ -210,7 +213,9 @@ Words from the first-run spec (`docs/superpowers/specs/2026-11-12-sindri-first-r
 | `SND-GRAPH-124` | A `workflow_result` node found no result: the run is not that workflow's, is not finished, or the workflow has no succeeded run |
 | `SND-GRAPH-125` | A re-run from a step was asked of a run that has not ended (queued, running or waiting): wait for it to end or cancel it first |
 | `SND-GRAPH-126` | A re-run from a step was refused: a step before the chosen one failed, never ran, or was skipped only because the run halted, so it has no output to restore; re-run from that step instead |
+| `SND-GRAPH-127` | A re-run from a step was refused: every step the chosen one reads from was skipped in that run, because the branch to it was not taken, so it has no output to read; the message names the skipped step to re-run from instead (the first skipped ancestor whose parent ran), which runs that branch on purpose; with no single such step it says to re-run from a step on the branch that ran |
 | `SND-GRAPH-130` | No question waits at that node |
 | `SND-GRAPH-131` | A reference reads a node that failed and continued |
 | `SND-GRAPH-132` | The setup service ran a workflow other than the hello-sindri one it made, or ran it a second time |
 | `SND-GRAPH-133` | A prompt step's answer said `couldNotAnswer: true`; the message carries the model's `couldNotAnswerWhy` |
+| `SND-GRAPH-134` | A runs read's filter can't be read: a status that is not running, ended, succeeded, failed, cancelled, queued or waiting; a `since` or `until` that is not an ISO-8601 instant; `since` after `until`; or a `before` run of another workflow (#4334) |

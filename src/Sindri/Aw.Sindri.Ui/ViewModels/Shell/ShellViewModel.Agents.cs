@@ -34,7 +34,7 @@ internal sealed partial class ShellViewModel
         InitConnections(launcher);   // Connections and Memory (PR 18a) ride this line for the same reason
         InitMemory();
         InitResources();   // the Resources page (PR 18b), a Memory-shaped page
-        InitWorkflows();   // likewise: the Workflows page reads while shown
+        InitWorkflows(clipboard);   // likewise: the Workflows page reads while shown
         InitJobs();   // the Jobs page is not an Agents page, but it rides the same constructor line: ShellViewModel.cs is at its size cap
     }
 

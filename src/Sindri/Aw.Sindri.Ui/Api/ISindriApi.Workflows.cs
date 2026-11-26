@@ -108,6 +108,15 @@ internal partial interface ISindriApi
     /// <returns>The revision the ops made, SND-GRAPH-007 when the workflow changed since (the current revision is in the message), SND-GRAPH-008 for an unknown one, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowOpsApplied>> ApplyWorkflowOps(Uri api, string slug, int baseRevision, string opsJson, CancellationToken cancellationToken);
 
+    /// <summary>PUT /sindri/workflows/{slug}: saves a whole graph as a new revision (Undo restores the graph a save replaced). A human action, sent once, never retried.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="slug">The workflow.</param>
+    /// <param name="baseRevision">The newest revision the editor read.</param>
+    /// <param name="specJson">The graph to save, a JSON object.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The revision it made, SND-GRAPH-007 when the workflow changed since, SND-GRAPH-008 for an unknown one, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowOpsApplied>> ReplaceWorkflow(Uri api, string slug, int baseRevision, string specJson, CancellationToken cancellationToken);
+
     /// <summary>POST /sindri/workflows/{slug}/activate: turns the newest revision on. Sent once.</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="slug">The workflow.</param>
@@ -121,4 +130,12 @@ internal partial interface ISindriApi
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The newest revision, SND-GRAPH-008 for an unknown workflow, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowPaused>> PauseWorkflow(Uri api, string slug, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/workflows/validate: the checks Activate runs, on one revision of the workflow. A read: it writes nothing (#3803).</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="slug">The workflow.</param>
+    /// <param name="revision">The revision to check (the one the page draws), or null for the newest.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>What the checks found, SND-GRAPH-008 for an unknown workflow, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowValidated>> ValidateWorkflow(Uri api, string slug, int? revision, CancellationToken cancellationToken);
 }

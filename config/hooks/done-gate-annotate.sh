@@ -42,7 +42,7 @@ case "$STATUS" in "" | completed) ;; *) exit 0 ;; esac
 QUOTED="$(printf '%s' "$ACCEPTANCE" | tr '\n' ' ' | cut -c1-120)"
 [ "${#ACCEPTANCE}" -le 120 ] || QUOTED="$QUOTED..."
 
-if printf '%s' "$FINAL_MESSAGE" | grep -qiF "$(printf '%s' "$ACCEPTANCE" | cut -c1-40)"; then
+if grep -qiF "$(printf '%s' "$ACCEPTANCE" | cut -c1-40)" <<<"$FINAL_MESSAGE"; then
   CONTEXT="Brief acceptance criteria plausibly met: \"$QUOTED\"."
 else
   CONTEXT="Brief acceptance criteria NOT clearly addressed in the final message: \"$QUOTED\". Verify before treating this as done."

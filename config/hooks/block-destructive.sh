@@ -35,7 +35,7 @@ fi
 # text as commands, so a command line holding one is judged unblanked. (The same sanitizer is in block-push-main.sh: the
 # hooks ship as single files, with no shared sourced file.)
 # A deny prints its reason on stderr: Claude Code shows only stderr on exit 2 (the adapters join stdout and stderr).
-if printf '%s\n' "$COMMAND" | grep -qE '(^|[^[:alnum:]_])(ba|z|da|k)?sh[[:space:]]+(-[a-zA-Z]+[[:space:]]+)*-[a-zA-Z]*c\b|(^|[^[:alnum:]_])eval\b'; then
+if grep -qE '(^|[^[:alnum:]_])(ba|z|da|k)?sh[[:space:]]+(-[a-zA-Z]+[[:space:]]+)*-[a-zA-Z]*c\b|(^|[^[:alnum:]_])eval\b' <<<"$COMMAND"; then
   SANITIZED="$COMMAND"
 else
   SANITIZED=$(printf '%s\n' "$COMMAND" | awk '
@@ -82,16 +82,16 @@ while IFS= read -r SEG; do
 
   # rm with recursive and force flags in any combination
   # Catches: rm -rf, rm -r -f, rm -r --force, rm --recursive -f, rm -rfd, etc.
-  if printf '%s\n' "$SEG" | grep -qE '\brm\b' && \
-     printf '%s\n' "$SEG" | grep -qE '(\s-[a-zA-Z]*r|\s--recursive)' && \
-     printf '%s\n' "$SEG" | grep -qE '(\s-[a-zA-Z]*f|\s--force)'; then
+  if grep -qE '\brm\b' <<<"$SEG" && \
+     grep -qE '(\s-[a-zA-Z]*r|\s--recursive)' <<<"$SEG" && \
+     grep -qE '(\s-[a-zA-Z]*f|\s--force)' <<<"$SEG"; then
     echo "BLOCKED: rm -rf is destructive and irreversible." >&2
     echo "Suggestion: Use 'trash' or 'mv' to a backup location instead." >&2
     exit 2
   fi
 
   # git reset --hard
-  if printf '%s\n' "$SEG" | grep -qE '\bgit\s+reset\s+--hard\b'; then
+  if grep -qE '\bgit\s+reset\s+--hard\b' <<<"$SEG"; then
     echo "BLOCKED: git reset --hard discards all uncommitted changes." >&2
     echo "Suggestion: Use 'git stash' to save changes, or 'git reset --soft' to unstage." >&2
     exit 2
@@ -99,30 +99,30 @@ while IFS= read -r SEG; do
 
   # git push --force (but NOT --force-with-lease)
   # Match --force followed by whitespace or end-of-string to avoid matching --force-with-lease
-  if printf '%s\n' "$SEG" | grep -qE '\bgit\s+push\s+.*--force(\s|$)' && \
-     ! printf '%s\n' "$SEG" | grep -qE '\bgit\s+push\s+.*--force-with-lease\b'; then
+  if grep -qE '\bgit\s+push\s+.*--force(\s|$)' <<<"$SEG" && \
+     ! grep -qE '\bgit\s+push\s+.*--force-with-lease\b' <<<"$SEG"; then
     echo "BLOCKED: git push --force can overwrite remote history." >&2
     echo "Suggestion: Use 'git push --force-with-lease' for safer force pushes, or create a PR." >&2
     exit 2
   fi
 
   # git checkout . (anchored to end of command to avoid false positive on .gitignore etc.)
-  if printf '%s\n' "$SEG" | grep -qE '\bgit\s+checkout\s+(--\s+)?\.\s*$'; then
+  if grep -qE '\bgit\s+checkout\s+(--\s+)?\.\s*$' <<<"$SEG"; then
     echo "BLOCKED: git checkout . discards all unstaged changes." >&2
     echo "Suggestion: Use 'git stash' to save changes, or checkout specific files." >&2
     exit 2
   fi
 
   # git restore . (modern equivalent of git checkout -- .)
-  if printf '%s\n' "$SEG" | grep -qE '\bgit\s+restore\s+(--\s+)?\.\s*$'; then
+  if grep -qE '\bgit\s+restore\s+(--\s+)?\.\s*$' <<<"$SEG"; then
     echo "BLOCKED: git restore . discards all unstaged changes." >&2
     echo "Suggestion: Use 'git stash' to save changes, or restore specific files." >&2
     exit 2
   fi
 
   # git clean -f (any flag combo containing f, or --force long form)
-  if printf '%s\n' "$SEG" | grep -qE '\bgit\s+clean\b' && \
-     printf '%s\n' "$SEG" | grep -qE '(\s-[a-zA-Z]*f|\s--force)'; then
+  if grep -qE '\bgit\s+clean\b' <<<"$SEG" && \
+     grep -qE '(\s-[a-zA-Z]*f|\s--force)' <<<"$SEG"; then
     echo "BLOCKED: git clean -f permanently deletes untracked files." >&2
     echo "Suggestion: Use 'git clean -n' (dry run) first to preview what would be deleted." >&2
     exit 2

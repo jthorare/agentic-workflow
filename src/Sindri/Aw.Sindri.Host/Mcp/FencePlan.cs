@@ -41,14 +41,14 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("findings[].message"), new("findings[].fix"), new("findings[].field"), new("findings[].nodes[]"),
     ]);
 
-    /// <summary>workflow_runs: each run's failure text and its one-line result (the error's first line or the outputs, which an agent or a service wrote).</summary>
-    internal static FencePlan WorkflowRuns { get; } = new("sindri:workflow-run", [new("runs[].error"), new("runs[].result")]);
+    /// <summary>workflow_runs: each run's failure text, its sentence (which quotes the error) and its one-line result (the error's first line or the outputs, which an agent or a service wrote).</summary>
+    internal static FencePlan WorkflowRuns { get; } = new("sindri:workflow-run", [new("runs[].error"), new("runs[].failureSentence"), new("runs[].result")]);
 
-    /// <summary>workflow_run_get: the failure text, what a trigger carried, the outputs, and each node run's input, output and error (payloads an agent or a service wrote).</summary>
+    /// <summary>workflow_run_get: the failure text, what a trigger carried, the outputs, and each node run's input, output, error and failure sentence (payloads an agent or a service wrote; the sentence quotes the error and the step's title).</summary>
     internal static FencePlan WorkflowRun { get; } = new("sindri:workflow-run",
     [
         new("error"), new("trigger.payload", EveryString: true), new("outputs", EveryString: true),
-        new("nodes[].input", EveryString: true), new("nodes[].output", EveryString: true), new("nodes[].error"),
+        new("nodes[].input", EveryString: true), new("nodes[].output", EveryString: true), new("nodes[].error"), new("nodes[].failure", EveryString: true),
     ]);
 
     /// <summary>sindri_projects: the Linear-sourced text of every card (name, description, lead's name) in the three lists, and the viewer's name; the owner's notes (free text a session reads) and each open PR's title (forge text); the owner's links stay plain.</summary>

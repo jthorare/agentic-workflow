@@ -10,15 +10,16 @@ A connection is a name, like `linear:work`, that workflows, agents and toolkits 
 
 | Kind | What it signs in to | How you add it |
 |---|---|---|
-| `oauth` | A provider's OAuth sign-in (GitHub, Linear, Google, Spotify) | `--preset` and `--client-id`: Sindri opens your browser |
-| `rest` | A REST API reached with a key | `--kind rest --key-env NAME` |
+| `rest` | A REST API reached with a key: an API key or a personal access token (GitHub, Linear, Slack, or any API) | `--preset github --key-env NAME`, or `--kind rest --key-env NAME` for a service with no preset |
+| `oauth` | A provider's OAuth sign-in (Google, Spotify; GitHub and Linear when you ask for it) | `--preset` and `--client-id`: Sindri opens your browser |
 | `cli` | A command-line tool that reads a credential | `--kind cli --key-env NAME` |
 | `mcp` | An MCP server | later release; the kind exists, the verb refuses it for now |
 
 ## Commands
 
 ```
-sindri connection add <service:label> --preset <p> --client-id <id> [--client-secret-env NAME] [--scope <s>]...
+sindri connection add <service:label> --preset github|linear|slack --key-env NAME
+sindri connection add <service:label> --preset <p> [--kind oauth] --client-id <id> [--client-secret-env NAME] [--scope <s>]...
 sindri connection add <service:label> --kind rest --key-env NAME
 sindri connection list
 sindri connection show <service:label>
@@ -30,6 +31,21 @@ sindri connection remove <service:label>
 Every verb takes `--json` and `--no-start`. Agent sessions may run all of them: the MCP tools `connection_list`, `connection_get`, `connection_add`, `connection_test` and `connection_remove` call the same services as the CLI and the HTTP routes under `/sindri/connections`.
 
 `show` and `list` never print a token, a token prefix or where the secret is stored. They say whether one is stored.
+
+## A key first (GitHub, Linear, Slack)
+
+Sindri runs on your machine, on `127.0.0.1`. An OAuth app needs a callback address it can send you back to, and a loopback address is a poor fit for that: GitHub wants the client secret on your box, and Slack refuses a plain-http callback. So for a service that offers a key, the key is the default way to connect (#4357):
+
+| Preset | Without `--kind` | The key | Where you make it |
+|---|---|---|---|
+| `github` | a key (`rest`) | a fine-grained personal access token: Pull requests read and write, Contents read and write, Checks read, Issues read, Metadata read | GitHub, Settings, Developer settings, Personal access tokens, Fine-grained tokens |
+| `linear` | a key (`rest`) | a personal API key | Linear, Settings, API, Personal API keys |
+| `slack` | a key (`rest`) | a user token (`xoxp-`) | your Slack app's OAuth & Permissions page |
+| `google`, `spotify` | the browser sign-in (`oauth`) | no key option for your own data | |
+
+Each preset file lists its ways to connect under `auth`, the default first (`"auth": ["key", "oauth"]`). With no `--kind`, `--preset github`, `--preset linear` and `--preset slack` store a key. Pass `--kind oauth` to sign in through your own OAuth app instead (GitHub and Linear only).
+
+**Sindri checks the key before it stores it.** It makes one call to the service with it: GitHub `GET https://api.github.com/user`, Slack `GET https://slack.com/api/auth.test` (it reads `"ok": true`), Linear a `POST` of `{ viewer { id } }` to `https://api.linear.app/graphql`. A key the service refuses is `SND-CONN-018`, and a service Sindri can't reach is `SND-CONN-019`. In every case nothing is stored and no row is written. A key for a hand-made `--kind rest` connection (no preset) is stored without a check. Sindri trims spaces and newlines from both ends of the key first, so a paste that ends in a newline still works. The check waits 15 s at most. A 429, or a 403 that carries `Retry-After` or `x-ratelimit-remaining: 0` (GitHub's secondary rate limit), is `SND-CONN-020` "rate limiting": wait a minute and try again. A plain 403 is a refused key (`SND-CONN-018`).
 
 ## Signing in (oauth)
 
@@ -47,6 +63,8 @@ What happens when you run `sindri connection add linear:work --preset linear --c
 
 **Signing in again.** `sindri connection signin <name>` (POST `/sindri/connections/{name}/signin`, MCP `connection_signin`) runs the same loopback sign-in for a stored oauth or mcp connection, from the row's own preset, client id, scopes (or server address) and the client secret kept beside its tokens. The row stays (name, creator, creation time); its tokens are replaced when the callback lands, and the Needs-you row clears. A failed try leaves the row and its old secret as they were, and `connection show` reports the failure until the next try: a row that is not connected answers the failure's code instead of the row, and a connected row (it still works on its old tokens) answers the row with the failure beside it as `lastSignInFailure` (`code`, `at`), null otherwise. `connection signin` and the app's "Sign in again" stop waiting on either. `connection signin` waits for its own sign-in (the row's `signedInAt` setting changes), so a background refresh of the same connection does not end the wait early.
 
+**Replacing a key.** `sindri connection set-key <name> --key-env NAME` (PUT `/sindri/connections/{name}/key`, body `{"key": "..."}` from the CLI or `{"keyEnv": "NAME"}` read from serve's environment) gives a stored key connection (rest or cli) a new key without removing it (#4358). The new key is trimmed and, for a rest connection with a preset, checked with its service like an add (`SND-CONN-018` refused, `SND-CONN-019` not reached, `SND-CONN-020` rate limited). Nothing is written until that passes, so a refused key leaves the old key in the keychain and the row as it was. A good key overwrites the connection's keychain entry, and the row ends `connected` with no reason; a row that needed a sign-in clears its Needs-you row. A row whose preset has left the catalog is refused like an add of an unknown preset (`SND-CLI-003`). A keyed mcp connection (added with `--key-env`, so its stored token has no refresh token and no expiry) takes a new key unchecked (`uncheckedReason` "an mcp connection has no key check"). An oauth connection, and an mcp connection that signed in through its server, is refused (`SND-CLI-003`, pointing at `signin`). The row is read again after the check and only the key, status, reason and update time are written, so a write made during a slow check is kept; a row removed or turned into a sign-in connection meanwhile is refused (`SND-CONN-001` or `SND-CLI-003`) before the stored key changes. The answer is `{connection, checked, uncheckedReason}`: a cli connection, a rest one with no preset and a preset with no key check store the key unchecked (`checked` false, with the reason), and the CLI then prints "replaced (not checked: ...)". There is no MCP tool for it yet.
+
 **MCP connections do not refresh on their own.** Only oauth connections are refreshed in the background (the `connection-refresh` service, every 5 minutes, for tokens that end within 10 minutes). An `mcp` connection keeps only its server address, so when its token expires the test shows `needs-sign-in` and you sign in again by hand: `sindri connection signin <name>`.
 
 **An agent's `connection_signin` opens your browser.** The consent address comes from the MCP server's own metadata (or the preset), not from the agent. It is allowed for agent sessions because the sign-in still needs you to approve it in that browser page; the tokens go to the keychain, never to the agent.
@@ -63,7 +81,7 @@ A sign-in that fails leaves **no row and no secret** (for a new connection): den
 | `linear` | Linear, Settings, API, OAuth applications | `http://127.0.0.1` | Not needed | Public client with PKCE |
 | `google` | Google Cloud, Credentials, OAuth client ID of type Desktop app | (a desktop client allows the loopback address by itself) | **Needed** | Google wants the desktop client's secret at the token endpoint: pass `--client-secret-env NAME` |
 | `spotify` | Spotify Developer Dashboard | `http://127.0.0.1` (the IP literal, not `localhost`) | Not needed | Public client with PKCE |
-| `slack` | | | | Slack accepts only https redirect URLs, so the browser sign-in cannot come back to your machine. `connection add --preset slack` is refused with this explanation. Make a REST connection with a user token instead: `sindri connection add slack:work --kind rest --key-env SLACK_TOKEN` |
+| `slack` | | | | Slack accepts only https redirect URLs, so the browser sign-in cannot come back to your machine. `connection add --preset slack --kind oauth` is refused with this explanation. Connect with a user token: `sindri connection add slack:work --preset slack --key-env SLACK_TOKEN` |
 
 If a provider's page rejects the redirect, the preset's note (shown in the error of a failed add) says what to change.
 
@@ -98,15 +116,15 @@ The row in `ledger.db` (table `connection`) has the name, kind, preset, non-secr
 | `needs-sign-in` | The provider refused the credential; sign in again |
 | `error` | The last test failed for another reason (see the reason) |
 
-`sindri connection test <name>` calls the connection's probe URL (a cheap authenticated GET the preset names) with the stored credential and updates the status. The reason it prints is the error's code and fixed title, never the provider's body, which can repeat your token.
+`sindri connection test <name>` calls the connection's probe URL (a cheap authenticated GET the preset names) with the stored credential and updates the status. A key connection with a preset runs the same check as the add. When that check can't reach the service (`SND-CONN-019` no answer, `SND-CONN-020` rate limited), the test answers "not connected" and leaves the status as it was, because a network failure says nothing about the key. The reason it prints is the error's code and fixed title, never the provider's body, which can repeat your token.
 
 ## Errors
 
-`SND-CONN-001` to `SND-CONN-011` are listed in [errors.md](errors.md): not found, needs sign-in, sign-in timeout, state mismatch, refresh failed, secret store unavailable, preset needs a client id, invalid name, consent denied, already exists, key-based (no browser sign-in).
+`SND-CONN-001` to `SND-CONN-011`, `SND-CONN-018` to `SND-CONN-020` are listed in [errors.md](errors.md): not found, needs sign-in, sign-in timeout, state mismatch, refresh failed, secret store unavailable, preset needs a client id, invalid name, consent denied, already exists, key-based (no browser sign-in), the service refused the key, the service could not be reached to check the key, and the service is rate limiting Sindri.
 
 ## In the app
 
-The app's Connections tab (`G O`) lists the same connections with their status, and offers Test, Sign in again, Remove and Add, the same actions as the commands above. A key you paste there is sent once and is never stored by the app. See `docs/csharp/sindri-ui.md` "PR 18a".
+The app's Connections tab (`G O`) lists the same connections with their status, and offers Test, Sign in again, Remove and Add, the same actions as the commands above. The GitHub, Linear and Slack tiles ask for a token first, with three steps that say where to make it; GitHub and Linear also offer "Use an OAuth app instead", which shows the client ID fields. The Google and Spotify tiles sign in through the browser. A key you paste there is sent once and is never stored by the app. See `docs/csharp/sindri-ui.md` "PR 18a".
 
 ## Events that start workflows
 

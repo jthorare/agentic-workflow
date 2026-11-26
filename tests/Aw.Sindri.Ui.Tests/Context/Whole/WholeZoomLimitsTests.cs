@@ -8,12 +8,12 @@ namespace Aw.Sindri.Ui.Tests.Context.Whole;
 public sealed class WholeZoomLimitsTests
 {
     [Theory]
-    [InlineData(5.0, 0.25, 2.0)]
-    [InlineData(1.2, 0.25, 2.0)]
-    [InlineData(0.6, 0.25, 2.0)]
-    [InlineData(0.1, 0.1, 2.0)]
-    [InlineData(0.001, 0.02, 2.0)]
-    public void The_range_reaches_the_fit_or_a_quarter_and_up_to_twice(double fit, double min, double max) =>
+    [InlineData(5.0, 0.5, 2.0)]
+    [InlineData(1.2, 0.5, 2.0)]
+    [InlineData(0.6, 0.5, 2.0)]
+    [InlineData(0.1, 0.5, 2.0)]
+    [InlineData(0.001, 0.5, 2.0)]
+    public void The_range_never_goes_below_half_size_and_reaches_up_to_twice(double fit, double min, double max) =>
         Assert.Equal((min, max), WholeMapViewModel.ZoomLimits(fit));
 
     [Fact]

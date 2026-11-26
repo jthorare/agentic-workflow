@@ -314,5 +314,39 @@ launcher_run_in_shell() {
       flags=-c
       for z in .zshenv .zprofile .zshrc .zlogin; do [ -e "${ZDOTDIR:-$HOME}/$z" ] && { flags=-ic; break; }; done ;;
   esac
+  if [ "$flags" = -ic ] && [ "$#" -gt 1 ] && launcher_drop_alias_switches "$sh_bin" "$@"; then
+    cmd=""; for a in "${LAUNCHER_KEPT[@]}"; do cmd="$cmd $(shq "$a")"; done
+  fi
   "$sh_bin" "$flags" "${cmd# }"
+}
+
+# The switches an agent refuses to get twice, one group per line: the agent's name, then the spellings of one switch. Codex exits with
+# "the argument '--dangerously-bypass-approvals-and-sandbox' cannot be used multiple times", and --yolo is its short name (#4353).
+LAUNCHER_ONCE_SWITCHES='codex --yolo --dangerously-bypass-approvals-and-sandbox'
+
+# launcher_drop_alias_switches <shell> <word...>: when the shell's alias for the first word already adds a switch from
+# LAUNCHER_ONCE_SWITCHES, set LAUNCHER_KEPT to the words without that switch's spellings (the alias brings it back once) and return 0.
+# Return 1 when there is nothing to drop. The probe is one more `<shell> -ic alias`, only for an agent named in the table, so the rc
+# file runs once more. bash prints `alias codex='...'`, zsh `codex='...'`, fish `alias codex '...'`. Functions are not read.
+launcher_drop_alias_switches() {
+  local sh_bin="$1"; shift
+  local name="${1##*/}" groups line expansion drop="" w g a hit
+  groups="$(printf '%s\n' "$LAUNCHER_ONCE_SWITCHES" | awk -v n="$name" '$1 == n { $1 = ""; print substr($0, 2) }')"
+  [ -n "$groups" ] || return 1
+  expansion="$("$sh_bin" -ic alias < /dev/null 2> /dev/null | while IFS= read -r line; do
+    case "$line" in "alias $name="*|"$name="*|"alias $name "*) printf '%s\n' "$line" ;; esac
+  done)"
+  [ -n "$expansion" ] || return 1
+  expansion=" $(printf '%s' "$expansion" | tr "'\"=\n\t" '     ') "
+  while IFS= read -r g; do
+    hit=0
+    for w in $g; do case "$expansion" in *" $w "*) hit=1 ;; esac; done
+    [ "$hit" = 0 ] || drop="$drop $g"
+  done <<< "$groups"
+  [ -n "$drop" ] || return 1
+  LAUNCHER_KEPT=("$1"); shift
+  for a in "$@"; do
+    hit=0; for w in $drop; do [ "$a" != "$w" ] || hit=1; done
+    [ "$hit" = 1 ] || LAUNCHER_KEPT+=("$a")
+  done
 }

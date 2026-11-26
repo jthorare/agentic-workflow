@@ -160,6 +160,9 @@ public sealed class MetaWorld
     /// <summary>The inbox sync.</summary>
     public InboxSync Sync => new(Transcripts, Messages, Owner, Clock, new MetaTranscriptResolver(Messages, Sessions, new InMemoryTranscriptLocator(Transcripts)));
 
+    /// <summary>The merge readiness check merge-check and merge-run share, wired as the host wires it.</summary>
+    public MergeReadiness Readiness => new(Config, Gates, Repo, LogFiles, Messages, new LaneAddress(LaneFiles, LaneSessions, Sessions), Sync);
+
     /// <summary>The lane refresher.</summary>
     public LaneRefresher Refresher => new(Sessions, Messages, Lanes);
 

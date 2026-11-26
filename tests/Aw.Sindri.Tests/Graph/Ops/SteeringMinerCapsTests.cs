@@ -28,7 +28,7 @@ public sealed class SteeringMinerCapsTests : IClassFixture<RoslynWarmup>
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static GraphSpec Spec => GraphTemplates.Find("steering-miner")!.Spec;
+    private static GraphSpec Spec => GraphTemplates.Find("steering-miner-payload")!.Spec;
 
     [Fact]
     public void Each_cap_leaves_room_for_the_step_s_own_code_under_the_engine_s_input_cap()
@@ -41,7 +41,7 @@ public sealed class SteeringMinerCapsTests : IClassFixture<RoslynWarmup>
     [Fact]
     public void Shape_fails_a_batch_whose_json_passes_60000_bytes_and_names_the_cap()
     {
-        JsonArray batch = [new JsonObject { ["ref"] = "transcript:0000000a#1", ["text"] = new string('a', 61_000) }];
+        JsonArray batch = [new JsonObject { ["ref"] = "transcript:00000000000a#1", ["text"] = new string('a', 61_000) }];
 
         var result = Run("shape", new JsonObject { ["item"] = batch });
 
@@ -85,13 +85,37 @@ public sealed class SteeringMinerCapsTests : IClassFixture<RoslynWarmup>
         Assert.True(stored < NodeRunLimits.PayloadBytes, "label's input is " + stored.ToString(CultureInfo.InvariantCulture) + " bytes");
     }
 
+    // why: an 80-character ref of non-ASCII text costs 6 bytes a character in label's input, and shape kept it whole (#4003 item 3); with every turn's text at
+    // the most of '"' shape keeps, 20 such refs used to push label's stored input over the cap while the batch itself stayed under shape's 60,000 bytes
+    [Fact]
+    public void A_batch_of_long_non_ascii_refs_keeps_label_s_input_under_the_cap_by_dropping_those_turns()
+    {
+        var (textKept, beforeKept) = (MostThatFit('"', 2_000), MostThatFit('"', 500));
+        var batch = new JsonArray();
+        for (var line = 1; line <= 20; line++)
+        {
+            var reference = "transcript:" + new string('€', 80 - 11 - 3) + "#" + line.ToString("00", CultureInfo.InvariantCulture);
+            batch.Add((JsonNode)new JsonObject { ["ref"] = reference, ["text"] = new string('"', textKept), ["before"] = new string('"', beforeKept) });
+        }
+
+        var shaped = Run("shape", new JsonObject { ["item"] = batch });
+
+        Assert.True(shaped.IsSuccess, shaped.IsError ? shaped.Error.Message : null);
+        Assert.True(batch.ToJsonString().Length < 60_000, "the batch itself is under shape's cap");
+        Assert.Equal(20, JsonNode.Parse(shaped.Value)!["dropped"]!.GetValue<int>());   // a ref past shape's byte budget drops its turn, as a ref past 80 characters always did
+        var label = (JsonObject)Spec.Nodes.Single(static n => string.Equals(n.Id.Value, "label", StringComparison.Ordinal)).Config.DeepClone();
+        label["prompt"] = Template.Render(label["prompt"]!.GetValue<string>(), reference => Lookup(new JsonObject { ["shape"] = new JsonObject { ["result"] = JsonNode.Parse(shaped.Value) } }, reference));
+        var stored = Encoding.UTF8.GetByteCount(label.ToJsonString());
+        Assert.True(stored < NodeRunLimits.PayloadBytes, "label's input is " + stored.ToString(CultureInfo.InvariantCulture) + " bytes");
+    }
+
     [Fact]
     public void Group_fails_a_run_whose_corrections_pass_45000_bytes_before_the_merge_question_and_names_the_cap()
     {
         var corrections = new JsonArray();
         for (var line = 1; line <= 400; line++)
         {
-            corrections.Add((JsonNode)new JsonObject { ["ref"] = "transcript:0000000a#" + line.ToString(CultureInfo.InvariantCulture), ["label"] = "restate", ["mistake"] = "a phrase of the mistake that is close to the sixty char cap" });
+            corrections.Add((JsonNode)new JsonObject { ["ref"] = "transcript:00000000000a#" + line.ToString(CultureInfo.InvariantCulture), ["label"] = "restate", ["mistake"] = "a phrase of the mistake that is close to the sixty char cap" });
         }
 
         JsonArray gathered = [new JsonObject { ["turns"] = 400, ["labeled"] = 400, ["dropped"] = 0, ["corrections"] = corrections }];
@@ -108,7 +132,7 @@ public sealed class SteeringMinerCapsTests : IClassFixture<RoslynWarmup>
         for (var n = 0; n <= 200; n++)
         {
             var number = n.ToString("000", CultureInfo.InvariantCulture);
-            corrections.Add((JsonNode)new JsonObject { ["ref"] = "transcript:0000000a#" + (n + 1).ToString(CultureInfo.InvariantCulture), ["label"] = "restate", ["mistake"] = "mistake " + number });
+            corrections.Add((JsonNode)new JsonObject { ["ref"] = "transcript:00000000000a#" + (n + 1).ToString(CultureInfo.InvariantCulture), ["label"] = "restate", ["mistake"] = "mistake " + number });
         }
 
         JsonArray gathered = [new JsonObject { ["turns"] = 201, ["labeled"] = 201, ["dropped"] = 0, ["corrections"] = corrections }];
@@ -124,7 +148,7 @@ public sealed class SteeringMinerCapsTests : IClassFixture<RoslynWarmup>
         var batch = new JsonArray();
         for (var line = 1; line <= 20; line++)
         {
-            batch.Add((JsonNode)new JsonObject { ["ref"] = "transcript:0000000a#" + line.ToString(CultureInfo.InvariantCulture), ["text"] = new string(heavy, text), ["before"] = new string(heavy, before) });
+            batch.Add((JsonNode)new JsonObject { ["ref"] = "transcript:00000000000a#" + line.ToString(CultureInfo.InvariantCulture), ["text"] = new string(heavy, text), ["before"] = new string(heavy, before) });
         }
 
         return batch;

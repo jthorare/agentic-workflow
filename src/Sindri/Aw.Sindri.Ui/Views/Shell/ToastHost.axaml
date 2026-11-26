@@ -10,7 +10,7 @@
   <Border x:Name="ToastCard" Classes="card" Padding="14,8">
     <StackPanel Orientation="Horizontal" Spacing="12">
       <TextBlock x:Name="ToastText" Classes="body" Text="{Binding Toast.Text}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-      <Button x:Name="ToastUndo" Classes="copy" IsVisible="{Binding Toast.HasUndo}" Click="OnUndo" AutomationProperties.Name="{Binding Text.ToastUndoName}">
+      <Button x:Name="ToastUndo" Classes="copy" IsVisible="{Binding Toast.HasUndo}" IsEnabled="{Binding Toast.IsUndoEnabled}" Click="OnUndo" AutomationProperties.Name="{Binding Text.ToastUndoName}">
         <TextBlock Classes="caption" Text="{Binding Toast.UndoLabel}" />
       </Button>
     </StackPanel>

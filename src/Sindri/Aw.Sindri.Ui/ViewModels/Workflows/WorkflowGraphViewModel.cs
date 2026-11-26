@@ -59,7 +59,7 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
         Nodes = nodes;
         Unplaced = unplaced;
         Edges = BuildEdges(workflow.Spec, nodes);
-        Ends = GraphEnds.Build(nodes, Edges);
+        Ends = GraphEnds.Build(nodes, Edges, SpecBranches(workflow.Spec));
         Order = [.. nodes.OrderBy(n => n.X).ThenBy(n => n.Y).ThenBy(n => n.Id, StringComparer.Ordinal)];
     }
 
@@ -161,6 +161,26 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
 
         NodeSelected?.Invoke(this, new ValueEventArgs<string>(id));
         return true;
+    }
+
+    /// <summary>The number of the server's findings marked on the cards (#3803): it changes whenever the marks do, so the canvas draws them again.</summary>
+    public int MarkedFindings { get; private set; }
+
+    /// <summary>Marks each card with the findings that name its node; a card none name has no mark. A finding about the whole workflow (no node) marks no card.</summary>
+    /// <param name="findings">The findings, as the server listed them.</param>
+    internal void MarkFindings(IReadOnlyList<WorkflowFindingViewModel> findings)
+    {
+        var marked = 0;
+        foreach (var node in Nodes)
+        {
+            var own = findings.Where(f => string.Equals(f.Node, node.Id, StringComparison.Ordinal)).ToList();
+            own.ForEach(f => f.StepTitle = node.Title);
+            node.MarkFindings(own.Count, own.Exists(f => f.IsError));
+            marked += own.Count;
+        }
+
+        MarkedFindings = marked;
+        OnChanged(nameof(MarkedFindings));   // raised on every call, so the canvas repaints even when the count is the same and only the kinds changed
     }
 
     /// <summary>Selects the next node in position order (the first when none is selected).</summary>

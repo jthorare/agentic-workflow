@@ -15,6 +15,12 @@ internal sealed class CollectorMemory
 
     internal bool PendingOverflowLogged { get; set; }
 
+    /// <summary>Passes in a row whose process-table read overran its budget; a pass that read the table starts it again at 0 (#4244).</summary>
+    internal int OverrunsInARow { get; set; }
+
+    /// <summary>When the last good pass read the list that overrun passes keep showing; null before the first one.</summary>
+    internal DateTimeOffset? ListedAt { get; set; }
+
     internal FleetTrackerState Tracker { get; set; } = FleetTrackerState.Empty;
 
     /// <summary>Changes found but not yet appended to the ledger, oldest first: an append that fails leaves them here for the next pass. Past <see cref="PendingCap"/> the oldest are dropped, which can orphan a 'gone' whose 'appeared' went first.</summary>

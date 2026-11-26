@@ -1,5 +1,6 @@
 using Aw.Kernel.Services;
 using Aw.Kernel.Telemetry;
+using Aw.Meta.Core.Coordination;
 using Aw.Meta.Features.LaneRecycle;
 using Aw.Meta.Host;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,6 +44,21 @@ public sealed class HostTests
         var settler = scope.ServiceProvider.GetRequiredService<RecycleSettler>();
 
         Assert.True(settler.MatchesBySocket);
+    }
+
+    // #4332: InboxSync is an optional constructor parameter, so without it the readiness check would read only the stored
+    // messages and every merge-check test that builds it by hand would stay green.
+    [Fact, Trait("Lane", "unit")]
+    public void The_merge_readiness_from_the_container_syncs_the_meta_transcript()
+    {
+        using var provider = Compose().BuildServiceProvider(
+            new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
+        _ = provider.GetRequiredService<TelemetryRuntime>();
+        using var scope = provider.CreateScope();
+
+        var readiness = scope.ServiceProvider.GetRequiredService<MergeReadiness>();
+
+        Assert.True(readiness.Syncs);
     }
 
     [Fact, Trait("Lane", "unit")]

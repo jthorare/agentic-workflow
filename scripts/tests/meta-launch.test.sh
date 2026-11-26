@@ -576,6 +576,24 @@ tmux new-session -d -s t1-api "env AW_LAUNCHER_CONFIG=$WORK/l6.json AW_META_NO_S
 waitfor '[ "$(jq -r .processName "$AW_STATE_DIR/meta/lane-sessions/api.agent" 2> /dev/null)" = node ]'
 check "an npm-shaped agent (a node wrapper): the .agent record carries the name the pane shows" "$(jq -r .processName "$AW_STATE_DIR/meta/lane-sessions/api.agent"):$(tmux display-message -p -t =t1-api: '#{pane_current_command}')" "node:node"
 tmux kill-session -t =t1-api 2> /dev/null
+# #4354: while the foreground leader is a zombie, ps shows no name (macOS `ps -o args=` prints "<defunct>", Linux "[name] <defunct>").
+# The recorder must wait for a live leader: a recorded "<defunct>" made every wake "lane down: no <defunct> in its pane".
+# The fake ps answers the first three `-o args=` asks with "<defunct>", then hands over to the real ps.
+mkdir -p "$WORK/fakeps"; : > "$WORK/fakeps.calls"
+{
+  echo '#!/usr/bin/env bash'
+  echo "calls=\"$WORK/fakeps.calls\""
+  echo 'case " $* " in *" -o args= "*) if [ "$(wc -l < "$calls")" -lt 3 ]; then echo args >> "$calls"; echo "<defunct>"; exit 0; fi ;; esac'
+  echo "exec $(command -v ps) \"\$@\""
+} > "$WORK/fakeps/ps"
+chmod +x "$WORK/fakeps/ps"
+find "$AW_STATE_DIR/meta/lane-sessions" -mindepth 1 -delete 2> /dev/null
+tmux new-session -d -s t1-api "env PATH=$WORK/fakeps:$PATH AW_LAUNCHER_CONFIG=$WORK/l4.json AW_META_NO_SHELL=1 AW_META_ID_WAIT=1 AW_META_ID_GRACE=1 bash $DIR/meta-lane.sh t1 api"
+waitfor '[ "$(tmux display-message -p -t =t1-api: "#{pane_current_command}")" = codex ] && [ "$(wc -l < "$WORK/fakeps.calls")" -ge 3 ]'
+sleep 1   # the recorder polls every 0.2 s: give it time to write a wrong name
+check "a zombie foreground leader (<defunct>) is never recorded as the lane's processName" "$(jq -r .processName "$AW_STATE_DIR/meta/lane-sessions/api.agent" 2> /dev/null)" "codex"
+tmux kill-session -t =t1-api 2> /dev/null
+waitfor '! pgrep -f "^codex 60$" > /dev/null' || { echo "not ok - the <defunct> case's agent (codex 60) outlived its session"; fail=1; }
 # no processName/transcripts surprises: the pane check uses the catalog's processName.
 mkdir -p "$WORK/fakebin2"; cp "$SLEEPBIN" "$WORK/fakebin2/codex"
 : > "$ids/api.exited"
@@ -973,6 +991,37 @@ alias_row zsh "alias fakeagent='fakeagent --from-alias'"
 alias_row bash "alias fakeagent='fakeagent --from-alias'"
 alias_row fish "alias fakeagent 'fakeagent --from-alias'"
 alias_row zsh-function "fakeagent() { command fakeagent --from-alias \"\$@\"; }" zsh
+# 5e. An alias that already carries a switch the launch adds (#4353): `alias codex='codex --dangerously-bypass-approvals-and-sandbox'`
+# plus a codex-yolo open of `codex --yolo ...` gave Codex the switch twice (--yolo is its short name), and Codex exits on that. The
+# agent gets it once. The fake is named codex, in its own bin dir, because the switch table is keyed on the agent's name.
+# It skips --help: the launcher's --no-daemon probe runs the agent with --help first.
+mkdir -p "$WORK/codexbin"
+printf '#!/usr/bin/env bash\n[ "$1" != --help ] || exit 0\nprintf "%%s\\n" "$*" > "%s"\n' "$WORK/alias-args" > "$WORK/codexbin/codex"
+chmod +x "$WORK/codexbin/codex"
+dedupe_row() { # name rc-line want [shell]: the bypass switches codex got, in order, when the launch adds --yolo
+  local n="$1" rcline="$2" want="$3" sh; sh="$(command -v "${4:-$1}" 2> /dev/null)"
+  if [ -z "$sh" ]; then echo "ok - SKIP $n not installed"; return; fi
+  local cfg="$WORK/dedupe-$n"; mkdir -p "$cfg/fish"
+  case "$n" in
+    zsh*) printf '%s\n' "$rcline" > "$cfg/.zshrc" ;;
+    bash*) printf '%s\n' "$rcline" > "$cfg/.bashrc" ;;
+    fish*) printf '%s\n' "$rcline" > "$cfg/fish/config.fish" ;;
+  esac
+  fresh_server; tmux set-environment -g AW_META_CLAUDE codex; tmux set-environment -g AW_META_CLAUDE_ARGS --yolo
+  tmux set-environment -g ZDOTDIR "$cfg"; tmux set-environment -g XDG_CONFIG_HOME "$cfg"
+  case "$n" in bash*) tmux set-environment -g HOME "$cfg" ;; esac
+  rm -f "$WORK/alias-args"
+  env ZDOTDIR="$cfg" XDG_CONFIG_HOME="$cfg" PATH="$WORK/codexbin:$WORK/callerbin:$ORIG_PATH" SHELL="$sh" bash "$DIR/meta-launch.sh" --no-open --lanes api > /dev/null 2>&1
+  waitfor '[ -s "$WORK/alias-args" ]'
+  check "$n: codex gets the bypass switch once ($want)" "$(grep -oE -- '--(yolo|dangerously-bypass-approvals-and-sandbox)' "$WORK/alias-args" 2> /dev/null | paste -sd' ' -)" "$want"
+  tmux kill-session -t t1-api 2> /dev/null
+}
+dedupe_row zsh "alias codex='codex --dangerously-bypass-approvals-and-sandbox'" "--dangerously-bypass-approvals-and-sandbox"
+dedupe_row bash "alias codex='codex --dangerously-bypass-approvals-and-sandbox'" "--dangerously-bypass-approvals-and-sandbox"
+dedupe_row fish "alias codex 'codex --dangerously-bypass-approvals-and-sandbox'" "--dangerously-bypass-approvals-and-sandbox"
+dedupe_row zsh-yolo "alias codex='codex --yolo'" "--yolo" zsh
+dedupe_row bash-other "alias codex='codex --search'" "--yolo" bash
+dedupe_row zsh-none "" "--yolo" zsh
 tmux kill-server 2> /dev/null
 
 # 6. Quoting does not depend on the bash version (#2281): bash 3.2 (macOS) read the backslashes in ${s//\'/...} differently from bash 5.

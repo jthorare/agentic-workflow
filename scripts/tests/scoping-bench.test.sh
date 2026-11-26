@@ -104,7 +104,10 @@ expect_out "files in answer order: node, path step, cite key, cite ref; map and 
 expect_out "touch recall counts apart from read" "touch 1/2  read 2/2  recall=0.75  P@25=0.60  decoys 1"
 expect_out "the missed touch file is named" "missed touch: src/never.ts"
 expect_out "the decoy is named" "decoys hit: src/decoy.ts"
-expect_no "the map version cite is not a file" "v3"
+# Only the scored rows: the header line prints the questions path, and mktemp's random dir name can hold "v3" (#4403).
+ROWS="$(printf '%s\n' "$OUT" | grep -v '^# scoping-bench ' || true)"
+if printf '%s\n' "$ROWS" | has -F -- "v3"; then fail "the map version cite is not a file: a row has 'v3'"; printf '%s\n' "$OUT" | sed 's/^/      | /'
+else ok "the map version cite is not a file"; fi
 expect_out "an empty answer scores zero" "q2"
 expect_out "totals" "== 2/2 answered · touch recall 0.25 · recall 0.38 · P@25 0.30 · decoys 1"
 if has -Fx -- "context query where is a --json" "$STUB_LOG"; then ok "the plain text is asked, with --json"; else fail "the plain text is asked, with --json"; cat "$STUB_LOG"; fi
