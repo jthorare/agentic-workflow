@@ -45,6 +45,12 @@ internal sealed partial class ProjectAddViewModel(ISindriApi api, Func<Uri?> api
     /// <summary>The links field's label.</summary>
     public string LinksLabel => Labels.ProjectLinksField;
 
+    /// <summary>The branches field's label.</summary>
+    public string BranchesLabel => Labels.ProjectBranchesField;
+
+    /// <summary>The items field's label.</summary>
+    public string ItemsLabel => Labels.ProjectItemsField;
+
     /// <summary>The notes field's label.</summary>
     public string NotesLabel => Labels.ProjectAddNotesField;
 
@@ -89,10 +95,10 @@ internal sealed partial class ProjectAddViewModel(ISindriApi api, Func<Uri?> api
     /// <summary>The links, one per line.</summary>
     public string Links { get; set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The typed branches, one per line (#4499); red stub: not sent yet.</summary>
+    /// <summary>The typed branches, one owner/name:branch per line, a trailing * for a prefix (#4499).</summary>
     public string Branches { get; set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The typed work-item ids, one per line (#4499); red stub: not sent yet.</summary>
+    /// <summary>The typed work-item ids, one per line (#4499).</summary>
     public string Items { get; set => Set(ref field, value); } = string.Empty;
 
     /// <summary>The owner's notes.</summary>
@@ -139,6 +145,7 @@ internal sealed partial class ProjectAddViewModel(ISindriApi api, Func<Uri?> api
     internal void Reset()
     {
         (IsByHand, SelectedState, Name, Links, Notes, Target, SaveError) = (!_linearConnected, Planned, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+        (Branches, Items) = (string.Empty, string.Empty);
         (_linearLoaded, _linearAll, _linearReading, _attaching) = (false, [], false, false);
         _linearGeneration++;   // why: a read still in flight belongs to the last opening
         (LinearError, LinearSearch) = (string.Empty, string.Empty);
@@ -156,13 +163,14 @@ internal sealed partial class ProjectAddViewModel(ISindriApi api, Func<Uri?> api
         }
 
         var target = Target.Trim();
-        if (target.Length > 0 && !DateOnly.TryParseExact(target, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+        var typed = ProjectSourceText.Read(Branches, Items);
+        if (FieldError(target, typed) is { } refused)
         {
-            SaveError = Labels.ProjectAddBadTarget;
+            SaveError = refused;
             return;
         }
 
-        var attach = Body(target);
+        var attach = Body(target) with { Branches = typed.Branches, Items = typed.Items };
         (SaveError, IsSaving) = (string.Empty, true);
         Result<ProjectAcceptedView> answer;
         try
@@ -182,6 +190,10 @@ internal sealed partial class ProjectAddViewModel(ISindriApi api, Func<Uri?> api
 
         Added?.Invoke(this, new ProjectDoneEventArgs(ProjectDone.Added, answer.Value.Project, Labels.ProjectAdded(attach.Name!), wentToFinished: false));   // why: Body always sets the name
     }
+
+    // Why the fields can't be sent: a target that is not a date, or a typed line that is not a branch or an item id; null when they fit.
+    private static string? FieldError(string target, ProjectSourceText.Typed typed) =>
+        target.Length > 0 && !DateOnly.TryParseExact(target, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _) ? Labels.ProjectAddBadTarget : typed.Problem;
 
     // The fields as the API takes them: an empty links, notes or target is left out.
     private ProjectAttach Body(string target)

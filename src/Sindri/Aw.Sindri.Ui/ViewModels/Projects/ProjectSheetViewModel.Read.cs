@@ -57,6 +57,7 @@ internal sealed partial class ProjectSheetViewModel
         Description = string.IsNullOrWhiteSpace(card.Description) ? null : card.Description;
         Notes = string.IsNullOrWhiteSpace(card.Notes) ? null : card.Notes;
         Links = [.. card.Links.Select(Link)];
+        Sources = ProjectSourceText.Chips(card.Branches, card.Items);
         Repos = [.. card.Repos.Select(Repo)];
         if (!keepPick || SelectedState is null)
         {
@@ -149,7 +150,7 @@ internal sealed partial class ProjectSheetViewModel
         _one = null;
         (Heading, StateText, ProblemText, Note, SaveError, RemoveQuestion, Announcement) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         (OriginChip, HealthWord, LeadText, TargetText, IssuesText, PrsText, ActivityText, FinishedText, Description, Notes) = (null, null, null, null, null, null, null, null, null, null);
-        (Links, Repos, SelectedState) = ([], [], null);
+        (Links, Repos, Sources, SelectedState) = ([], [], [], null);
         (CanEdit, CanEditName, CanSetState, CanClearState, CanRemove, CanHide, CanUnhide) = (false, false, false, false, false, false, false);
         (IsEditing, IsConflict, IsConfirmingRemove) = (false, false, false);
     }

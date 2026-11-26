@@ -18,7 +18,14 @@ internal sealed partial class ProjectSheetViewModel
         }
 
         var card = one.Project;
-        var change = EditedChange(card);
+        var (branches, items) = (ProjectSourceText.Branches(EditBranches), ProjectSourceText.Items(EditItems));
+        if ((branches.Problem ?? items.Problem) is { } problem)
+        {
+            SaveError = problem;
+            return;
+        }
+
+        var change = EditedChange(card) with { Branches = ChangedBranches(card, branches.Value), Items = items.Value.SequenceEqual(card.Items ?? [], StringComparer.Ordinal) ? null : items.Value };
         if (await Send((url, ct) => Api.ChangeProject(url, card.Id, change, ct), cancellationToken).ConfigureAwait(true))
         {
             await Saved(cancellationToken).ConfigureAwait(true);
@@ -40,6 +47,10 @@ internal sealed partial class ProjectSheetViewModel
             Notes: NewText(notes, card.Notes),
             ClearNotes: notes.Length == 0 && !string.IsNullOrEmpty(card.Notes));
     }
+
+    // The typed branches when they differ from the card's (an emptied field is an empty list), else null.
+    private static IReadOnlyList<ProjectBranchView>? ChangedBranches(ProjectCardView card, IReadOnlyList<ProjectBranchView> typed) =>
+        typed.SequenceEqual(card.Branches ?? []) ? null : typed;
 
     // The edited name when the name can be edited and differs, else null.
     private string? EditedName(ProjectCardView card) =>

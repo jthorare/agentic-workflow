@@ -86,6 +86,21 @@
         </ItemsControl>
       </StackPanel>
 
+      <StackPanel x:Name="ProjectSourcesRow" Spacing="4" IsVisible="{Binding Sources.Count}">
+        <TextBlock Classes="eyebrow" Text="{Binding SourcesHeading}" AutomationProperties.AccessibilityView="Raw" />
+        <ItemsControl x:Name="ProjectSourcesList" ItemsSource="{Binding Sources}">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="x:String">
+              <Border Name="ProjectSourceChip" BorderThickness="1" BorderBrush="{DynamicResource Brush.HairlineStrong}" CornerRadius="{StaticResource Radius.XS}" Padding="6,1" Margin="0,0,6,6"
+                      AutomationProperties.Name="{Binding}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                <TextBlock Classes="caption" Text="{Binding}" AutomationProperties.AccessibilityView="Raw" />
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
       <StackPanel x:Name="ProjectReposRow" Spacing="4" IsVisible="{Binding Repos.Count}">
         <TextBlock Classes="eyebrow" Text="{Binding ReposHeading}" AutomationProperties.AccessibilityView="Raw" />
         <ItemsControl x:Name="ProjectReposList" ItemsSource="{Binding Repos}">
@@ -154,6 +169,14 @@
         <StackPanel Spacing="2">
           <TextBlock Classes="caption subtle" Text="{Binding LinksLabel}" AutomationProperties.AccessibilityView="Raw" />
           <TextBox x:Name="ProjectEditLinks" Text="{Binding EditLinks, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding LinksLabel}" />
+        </StackPanel>
+        <StackPanel Spacing="2">
+          <TextBlock Classes="caption subtle" Text="{Binding BranchesLabel}" AutomationProperties.AccessibilityView="Raw" />
+          <TextBox x:Name="ProjectEditBranches" Text="{Binding EditBranches, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding BranchesLabel}" />
+        </StackPanel>
+        <StackPanel Spacing="2">
+          <TextBlock Classes="caption subtle" Text="{Binding ItemsLabel}" AutomationProperties.AccessibilityView="Raw" />
+          <TextBox x:Name="ProjectEditItems" Text="{Binding EditItems, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding ItemsLabel}" />
         </StackPanel>
         <StackPanel Spacing="2">
           <TextBlock Classes="caption subtle" Text="{Binding EditNotesLabel}" AutomationProperties.AccessibilityView="Raw" />

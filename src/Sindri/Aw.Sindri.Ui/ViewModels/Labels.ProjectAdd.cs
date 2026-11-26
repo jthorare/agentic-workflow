@@ -42,6 +42,24 @@ internal static partial class Labels
     /// <summary>The line under Save when the target date does not read as a date.</summary>
     internal const string ProjectAddBadTarget = "Target date must look like 2026-01-31.";
 
+    /// <summary>The branches field (#4499).</summary>
+    internal const string ProjectBranchesField = "Branches (one owner/name:branch per line, end with * for a prefix)";
+
+    /// <summary>The items field (#4499).</summary>
+    internal const string ProjectItemsField = "Work items (one ITM- id per line)";
+
+    /// <summary>The sheet heading of the typed sources (#4499).</summary>
+    internal const string ProjectSourcesHeading = "Branches and items";
+
+    /// <summary>The line under Save when a branches line is not owner/name:branch.</summary>
+    internal static string ProjectBranchLineBad(string line) => $"'{line}' isn't a branch: write owner/name:branch, like acme/api:feat/login (end with * for a prefix).";
+
+    /// <summary>The line under Save when an items line is not an item id.</summary>
+    internal static string ProjectItemLineBad(string line) => $"'{line}' isn't a work item id: it looks like ITM- and 32 lowercase hex digits.";
+
+    /// <summary>The line under Save when a list has too many lines.</summary>
+    internal static string ProjectSourcesTooMany(int count) => count.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + " lines is too many: a project takes at most 20 branches and 20 items.";
+
     /// <summary>A row's Attach button's accessible name.</summary>
     internal static string ProjectAddAttachName(string name) => "Attach " + name;
 

@@ -100,9 +100,11 @@ internal sealed partial class ProjectCardViewModel : ObservableObject
 
     // Records compare their list members by reference, so a new serving of the same project is never equal; compare the lists by their items.
     private static bool Same(ProjectCardView kept, ProjectCardView served) =>
-        kept == (served with { Repos = kept.Repos, Links = kept.Links, Truth = kept.Truth })
+        kept == (served with { Repos = kept.Repos, Links = kept.Links, Truth = kept.Truth, Branches = kept.Branches, Items = kept.Items })
         && kept.Repos.SequenceEqual(served.Repos, StringComparer.Ordinal)
         && kept.Links.SequenceEqual(served.Links)
+        && (kept.Branches ?? []).SequenceEqual(served.Branches ?? [])
+        && (kept.Items ?? []).SequenceEqual(served.Items ?? [], StringComparer.Ordinal)
         && SameTruth(kept.Truth, served.Truth);
 
     private static bool SameTruth(ProjectTruthView? kept, ProjectTruthView? served) =>

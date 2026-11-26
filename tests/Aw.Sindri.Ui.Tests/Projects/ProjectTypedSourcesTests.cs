@@ -87,7 +87,7 @@ public sealed class ProjectTypedSourcesTests
         await sheet.Save(Token);
 
         Assert.Empty(_f.Server.ProjectWrites);
-        Assert.Contains("owner/name:branch", sheet.ProblemText, StringComparison.Ordinal);
+        Assert.Contains("owner/name:branch", sheet.SaveError, StringComparison.Ordinal);
         Assert.True(sheet.IsEditing);
     }
 
@@ -99,14 +99,14 @@ public sealed class ProjectTypedSourcesTests
 
         sheet.EditItems = "itm-1";
         await sheet.Save(Token);
-        var badItem = sheet.ProblemText;
+        var badItem = sheet.SaveError;
         sheet.EditItems = string.Empty;
         sheet.EditBranches = string.Join('\n', Enumerable.Range(1, 21).Select(static n => "acme/api:feat/" + n.ToString(System.Globalization.CultureInfo.InvariantCulture)));
         await sheet.Save(Token);
 
         Assert.Empty(_f.Server.ProjectWrites);
         Assert.Contains("ITM-", badItem, StringComparison.Ordinal);
-        Assert.Contains("20", sheet.ProblemText, StringComparison.Ordinal);
+        Assert.Contains("20", sheet.SaveError, StringComparison.Ordinal);
     }
 
     [Fact]

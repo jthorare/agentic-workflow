@@ -244,6 +244,7 @@ internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher la
         }
 
         (EditName, EditTarget, EditLinks, EditNotes) = (one.Project.Name, one.Project.Target ?? string.Empty, string.Join('\n', OwnerLinks(one.Project)), one.Project.Notes ?? string.Empty);
+        (EditBranches, EditItems) = (string.Join('\n', ProjectSourceText.Lines(one.Project.Branches)), string.Join('\n', one.Project.Items ?? []));
         (SaveError, IsConflict, IsEditing) = (string.Empty, false, true);
     }
 

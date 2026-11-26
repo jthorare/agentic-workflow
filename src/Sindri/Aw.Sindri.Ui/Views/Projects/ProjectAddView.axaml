@@ -74,6 +74,14 @@
         <TextBox x:Name="ProjectAddLinks" Text="{Binding Links, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding LinksLabel}" />
       </StackPanel>
       <StackPanel Spacing="2">
+        <TextBlock Classes="caption subtle" Text="{Binding BranchesLabel}" AutomationProperties.AccessibilityView="Raw" />
+        <TextBox x:Name="ProjectAddBranches" Text="{Binding Branches, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding BranchesLabel}" />
+      </StackPanel>
+      <StackPanel Spacing="2">
+        <TextBlock Classes="caption subtle" Text="{Binding ItemsLabel}" AutomationProperties.AccessibilityView="Raw" />
+        <TextBox x:Name="ProjectAddItems" Text="{Binding Items, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding ItemsLabel}" />
+      </StackPanel>
+      <StackPanel Spacing="2">
         <TextBlock Classes="caption subtle" Text="{Binding NotesLabel}" AutomationProperties.AccessibilityView="Raw" />
         <TextBox x:Name="ProjectAddNotes" Text="{Binding Notes, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding NotesLabel}" />
       </StackPanel>
