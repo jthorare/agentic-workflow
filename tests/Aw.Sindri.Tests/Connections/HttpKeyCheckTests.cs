@@ -24,7 +24,7 @@ public sealed class HttpKeyCheckTests
 
         var checkedKey = await new HttpKeyCheck(http).Check(Preset("github"), Key, Token);
 
-        Assert.True(checkedKey.IsSuccess);
+        Assert.Equal(KeyCheckOutcome.Checked, checkedKey.Value);
         Assert.Equal(("GET", "https://api.github.com/user", "Bearer " + Key), (handler.Method, handler.Url, handler.Authorization));
         Assert.True(handler.HasUserAgent);
     }
@@ -37,7 +37,7 @@ public sealed class HttpKeyCheckTests
 
         var checkedKey = await new HttpKeyCheck(http).Check(Preset("linear"), Key, Token);
 
-        Assert.True(checkedKey.IsSuccess);
+        Assert.Equal(KeyCheckOutcome.Checked, checkedKey.Value);
         Assert.Equal(("POST", HttpKeyCheck.LinearGraphQl, Key), (handler.Method, handler.Url, handler.Authorization));
         Assert.Contains("viewer", handler.Body, StringComparison.Ordinal);
     }
@@ -68,7 +68,7 @@ public sealed class HttpKeyCheckTests
 
         var checkedKey = await new HttpKeyCheck(http).Check(Preset("slack"), Key, Token);
 
-        Assert.True(checkedKey.IsSuccess);
+        Assert.Equal(KeyCheckOutcome.Checked, checkedKey.Value);
         Assert.Equal(("GET", "https://slack.com/api/auth.test", "Bearer " + Key), (handler.Method, handler.Url, handler.Authorization));
     }
 
@@ -93,7 +93,7 @@ public sealed class HttpKeyCheckTests
 
         var checkedKey = await new HttpKeyCheck(http).Check(bare, Key, Token);
 
-        Assert.True(checkedKey.IsSuccess);
+        Assert.Equal(KeyCheckOutcome.NotApplicable, checkedKey.Value);
         Assert.Null(handler.Method);
     }
 
