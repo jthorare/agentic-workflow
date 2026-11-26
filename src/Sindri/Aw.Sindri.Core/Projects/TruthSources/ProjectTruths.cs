@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Sindri.Core.Health;
 using Aw.Sindri.Core.Projects.Truth;
 using Aw.Sindri.Core.Reviews;
 
@@ -81,7 +82,7 @@ public static class ProjectTruths
         var prUrls = prs.Select(static p => p.Url).Concat(named).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var items = facts.Items.Where(i => i.LinkUrls.Any(u => prUrls.Contains(u.TrimEnd('/')))).ToList();
         var agents = facts.Agents.Count(a => a.Running && a.Repo is { } repo && sources.Repos.Contains(repo, StringComparer.OrdinalIgnoreCase));
-        return new ProjectTruth(prs, items.Count(static i => !i.Done), items.Count(static i => i.Done), items.Count, agents, HealthOf(prs, uncheckedCount), prs.Exists(static p => p.WaitsOnYou));
+        return new ProjectTruth(prs, items.Count(static i => !i.Done), items.Count(static i => i.Done), items.Count, agents, HealthOf(prs, uncheckedCount, inputs.Now), prs.Exists(static p => p.WaitsOnYou));
     }
 
     private static string UrlOf(ReviewPull pull) => (pull.Url ?? string.Create(CultureInfo.InvariantCulture, $"https://github.com/{pull.Repo}/pull/{pull.Number}")).TrimEnd('/');
@@ -105,9 +106,17 @@ public static class ProjectTruths
         return (new ProjectTruthPr(url, pull.Repo, pull.Number, pull.Title, state, decidedAt, waitingOn, waitsOnYou), summary?.Ci is ReviewCi.Pass or ReviewCi.Fail);
     }
 
+    // " for 3 d": how long the oldest red PR has been red, from its CI summary's time and the page's clock; empty without a clock or a red PR with a time
+    private static string RedFor(List<ProjectTruthPr> open, DateTimeOffset? now)
+    {
+        var times = open.Where(static p => p.State == ProjectPrState.CiRed && p.DecidedAt is not null).Select(static p => p.DecidedAt!.Value).ToList();   // why: the filter keeps only PRs with a time
+        return now is { } at && times.Count > 0 ? " for " + AgeWords.For(at - times.Min()) : string.Empty;
+    }
+
     // null when no PR is open (drafts are not open); every count and the sentence read the same open set; offTrack at half red or more, atRisk at any red,
-    // unknown when none is red but some have no CI result on their current head, whatever their state ('unknown' counts those, drafts left out)
-    private static ProjectTruthHealth? HealthOf(List<ProjectTruthPr> prs, int unknown)
+    // unknown when none is red but some have no CI result on their current head, whatever their state ('unknown' counts those, drafts left out). A red project adds how long its oldest red PR
+    // has been red ("red for 3 d", #4333) from the CI summary's own time and the page's clock; no clock, or no red PR with a time, leaves it out.
+    private static ProjectTruthHealth? HealthOf(List<ProjectTruthPr> prs, int unknown, DateTimeOffset? now)
     {
         var open = prs.Where(static p => p.State != ProjectPrState.Draft).ToList();
         if (open.Count == 0)
@@ -118,11 +127,12 @@ public static class ProjectTruths
         var red = open.Count(static p => p.State == ProjectPrState.CiRed);
         var total = open.Count;
         var noun = total == 1 ? "PR" : "PRs";
+        var age = RedFor(open, now);
         var tail = unknown > 0 ? string.Create(CultureInfo.InvariantCulture, $", {unknown} not checked yet") : string.Empty;
         return red > 0 && red * 2 >= total
-            ? new ProjectTruthHealth(ProjectTruthLevel.OffTrack, string.Create(CultureInfo.InvariantCulture, $"Off track: {red} of {total} {noun} red{tail}"))
+            ? new ProjectTruthHealth(ProjectTruthLevel.OffTrack, string.Create(CultureInfo.InvariantCulture, $"Off track: {red} of {total} {noun} red{age}{tail}"))
             : red > 0
-                ? new ProjectTruthHealth(ProjectTruthLevel.AtRisk, string.Create(CultureInfo.InvariantCulture, $"At risk: {red} of {total} {noun} red{tail}"))
+                ? new ProjectTruthHealth(ProjectTruthLevel.AtRisk, string.Create(CultureInfo.InvariantCulture, $"At risk: {red} of {total} {noun} red{age}{tail}"))
                 : unknown > 0
                     ? new ProjectTruthHealth(ProjectTruthLevel.Unknown, string.Create(CultureInfo.InvariantCulture, $"CI not checked yet for {unknown} of {total} {noun}"))
                     : new ProjectTruthHealth(ProjectTruthLevel.OnTrack, string.Create(CultureInfo.InvariantCulture, $"On track: {total} open {noun}, none red"));
