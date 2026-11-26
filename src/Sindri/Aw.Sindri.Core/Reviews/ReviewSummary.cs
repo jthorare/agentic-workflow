@@ -4,7 +4,7 @@ namespace Aw.Sindri.Core.Reviews;
 /// <param name="Sha">The head commit it was decided on.</param>
 /// <param name="Ci">The CI roll-up on that head.</param>
 /// <param name="RequiredOpen">The open required checks; null when the PR's settings name no checks (a row then says noneNamed; a row with no summary says notRead).</param>
-/// <param name="At">When it was decided.</param>
+/// <param name="At">When it was first decided; a later write for the same head and the same CI roll-up keeps it (#4333).</param>
 public sealed record ReviewSummary(string Sha, ReviewCi Ci, int? RequiredOpen, DateTimeOffset At)
 {
     /// <summary>"none open", "2 open"; null when <see cref="RequiredOpen"/> is.</summary>
