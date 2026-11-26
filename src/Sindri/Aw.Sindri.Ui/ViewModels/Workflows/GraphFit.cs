@@ -90,6 +90,48 @@ internal static class GraphFit
         return [new GraphPoint(down.X, start.Y), new GraphPoint(down.X, across.Y), new GraphPoint(across.X, across.Y), new GraphPoint(across.X, end.Y)];
     }
 
+    /// <summary>Where the <paramref name="slot"/>-th of <paramref name="slots"/> wrapped edges of one fork leaves its card: the first takes the lowest exit, so the later ones pass above its way down and nothing crosses at the card (#4470).</summary>
+    /// <param name="start">The card's right middle.</param>
+    /// <param name="slot">This edge's place among the fork's wrapped edges, from 0 (true before false).</param>
+    /// <param name="slots">How many wrapped edges the fork has.</param>
+    /// <param name="u">The text scale.</param>
+    /// <returns>The exit point; the right middle itself for a fork with one wrapped edge.</returns>
+    internal static GraphPoint Exit(GraphPoint start, int slot, int slots, double u) => slots <= 1 ? start : new GraphPoint(start.X, start.Y + ((((slots - 1) / 2.0) - slot) * 10 * u));
+
+    /// <summary>The corners of one of the wrapped edges that leave one fork (#4470): each takes its own lane, nested like the arms of a U: the first is innermost (its way down nearest the cards, its
+    /// lane highest, its way into the left pad rightmost) and the later ones run outside it, so no two share a horizontal run and the lines cross at most once.</summary>
+    /// <param name="fit">The layout.</param>
+    /// <param name="edge">The edge: its source, target, exit (already moved by <see cref="Exit"/>) and landing.</param>
+    /// <param name="place">This edge's place from 0 and how many wrapped edges the fork has.</param>
+    /// <param name="u">The text scale.</param>
+    /// <returns>The four corners, or none when the edge does not wrap.</returns>
+    internal static IReadOnlyList<GraphPoint> Route(GraphFitResult fit, GraphEdgeViewModel edge, (int Slot, int Slots) place, double u)
+    {
+        ArgumentNullException.ThrowIfNull(fit);
+        ArgumentNullException.ThrowIfNull(edge);
+        var (slot, slots) = place;
+        if (slots <= 1 || !fit.RowOf.TryGetValue(edge.From, out var row) || !fit.RowOf.TryGetValue(edge.To, out var next) || next != row + 1 || fit.ReturnLanes.Count < (3 * row) + 3)
+        {
+            return Route(fit, edge.From, edge.To, edge.Start, edge.End);
+        }
+
+        var (down, across) = (fit.ReturnLanes[3 * row], fit.ReturnLanes[(3 * row) + 1]);
+        var downX = down.X - (4 * u) + (slot * Math.Min(10 * u, 16 * u / (slots - 1)));
+        var laneY = across.Y + ((slot - ((slots - 1) / 2.0)) * Math.Min(28 * u, 48 * u / (slots - 1)));
+        var leftX = across.X + ((slots - 1 - slot) * 5);
+        return [new GraphPoint(downX, edge.Start.Y), new GraphPoint(downX, laneY), new GraphPoint(leftX, laneY), new GraphPoint(leftX, edge.End.Y)];
+    }
+
+    /// <summary>Where a wrapped branch edge's pill sits: just above its own lane, left of its way down, clear of the cards above and of every other line.</summary>
+    /// <param name="route">The edge's corners (the second is where it turns onto its lane).</param>
+    /// <param name="u">The text scale.</param>
+    /// <returns>The pill's centre.</returns>
+    internal static GraphPoint LabelBeside(IReadOnlyList<GraphPoint> route, double u)
+    {
+        ArgumentNullException.ThrowIfNull(route);
+        return new GraphPoint(route[1].X - (36 * u), route[1].Y - (12 * u));
+    }
+
     // A fork's arms stay in the fork's row: a layout that wraps them onto the next row is not a fit, so Fit tries a smaller zoom.
     private static bool ArmsBeside(GraphFitInput input, GraphFitResult result) =>
         input.Forks.All(fork => input.Edges.Where(e => string.Equals(e.From, fork, StringComparison.Ordinal)).All(e => result.RowOf[e.To] == result.RowOf[fork]));
