@@ -32,8 +32,11 @@ internal sealed class RunRowViewModel : ObservableObject
         Name = Labels.WfRunRowName(Id, word.ToLowerInvariant(), TriggerText.ToLowerInvariant(), WhenText, ErrorText);
     }
 
-    // A Starting placeholder has no result yet: the Result column says what it is.
-    private static string ResultOf(WorkflowRunRowView row, string word) => row.Result ?? row.Error ?? (string.Equals(row.Status, "starting", StringComparison.Ordinal) ? word : string.Empty);
+    // A failed row with Sindri's sentence reads it in the Result cell, never "node 'check' failed: SND-..." (#3304); a Starting placeholder has no result yet: the column says what it is.
+    private static string ResultOf(WorkflowRunRowView row, string word) =>
+        string.Equals(row.Status, "failed", StringComparison.Ordinal) && row.FailureSentence is { Length: > 0 } sentence
+            ? sentence
+            : row.Result ?? row.Error ?? (string.Equals(row.Status, "starting", StringComparison.Ordinal) ? word : string.Empty);
 
     /// <summary>True when this Starting placeholder waited 10 s and no run row came: it says the run did not start and offers Retry.</summary>
     public bool DidNotStart { get; private set { Set(ref field, value); OnChanged(nameof(IsShownStatus)); } }
