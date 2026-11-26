@@ -112,7 +112,38 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
             return null;
         }
 
-        return SindriErrors.GraphRerunBranchNotTaken.With($"'{parents[0].Value}' was skipped in that run, because the branch to it was not taken, so '{from.Value}' would run with nothing from it; re-run from a step on the branch that ran");
+        // why: the way out is the skipped step whose own parent ran: re-running from it opens that edge on purpose and runs the branch down to the chosen step (#4495)
+        var instead = FirstSkippedWithParentThatRan(spec, parents, rows);
+        return instead is { } step
+            ? SindriErrors.GraphRerunBranchNotTaken.With($"'{step.Value}' was skipped in that run, because the branch to it was not taken, so '{from.Value}' would run with nothing from it; re-run from '{step.Value}' instead, which runs that branch on purpose")
+            : SindriErrors.GraphRerunBranchNotTaken.With($"'{parents[0].Value}' was skipped in that run, because the branch to it was not taken, so '{from.Value}' would run with nothing from it; re-run from a step on the branch that ran");
+    }
+
+    // Climbs from the chosen step's parents through steps that did not succeed; the one step with a parent that succeeded is where to re-run from. Null when there is none or more than one.
+    private static NodeId? FirstSkippedWithParentThatRan(GraphSpec spec, IReadOnlyList<NodeId> parents, IReadOnlyList<NodeRun> rows)
+    {
+        var ran = rows.Where(static r => r.Status == NodeRunStatus.Succeeded).Select(static r => r.NodeId).ToHashSet();
+        var (seen, queue, found) = (new HashSet<NodeId>(), new Queue<NodeId>(parents), new List<NodeId>());
+        while (queue.Count > 0)
+        {
+            var node = queue.Dequeue();
+            if (ran.Contains(node) || !seen.Add(node))
+            {
+                continue;
+            }
+
+            var above = spec.Edges.Where(e => e.To == node).Select(static e => e.From).Distinct().ToList();
+            if (above.Exists(ran.Contains))
+            {
+                found.Add(node);
+            }
+            else
+            {
+                above.ForEach(queue.Enqueue);
+            }
+        }
+
+        return found.Count == 1 ? found[0] : null;
     }
 
     private static Result<Plan> Split(WorkflowRecord record, GraphSpec spec, NodeId from, IReadOnlyList<NodeId> restored, IReadOnlyList<NodeRun> rows)
