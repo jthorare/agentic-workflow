@@ -10,12 +10,16 @@ namespace Aw.Judge.Features.CheckTraits;
 /// <param name="log">The trait-check log.</param>
 internal sealed class TraitVerdicts(ITraitCheckLog log)
 {
+    // The excerpt's hash in an assessment line: enough to group repeats, short enough for a 1 GB log.
+    private const int HashLength = 16;
+
     internal CheckTraitsResponse Read(CheckTraitsRequest request, double minimum, TraitPlan plan, IReadOnlyList<ProviderResult> answers)
     {
         var mode = request.Mode.ToString().ToLowerInvariant();
         List<TraitFinding> findings = [];
         List<string> failures = [];
         var skipped = new Dictionary<string, string>(plan.Skipped, StringComparer.Ordinal);
+        var reading = new Reading(request.Mode, minimum, plan);
         var left = 0;
         for (var i = 0; i < answers.Count; i++)
         {
@@ -35,19 +39,30 @@ internal sealed class TraitVerdicts(ITraitCheckLog log)
                 continue;
             }
 
-            findings.AddRange(Assess(request.Mode, minimum, plan, plan.Tasks[i], decided));
+            findings.AddRange(Assess(reading, plan.Tasks[i], decided.Answers, cached: false));
         }
 
-        return failures.Count > 0 && failures.Count == answers.Count - left
-            ? new CheckTraitsResponse([], JevUnavailable: true, Reason: failures[0], Requests: answers.Count) { Skipped = skipped.Count == 0 ? CheckTraitsResponse.NoSkips : skipped }
-            : new CheckTraitsResponse([.. findings.OrderByDescending(finding => finding.Probability)], Requests: answers.Count) { Skipped = skipped.Count == 0 ? CheckTraitsResponse.NoSkips : skipped };
+        findings.AddRange(plan.Cached.SelectMany(verdict => Assess(reading, verdict.Task, Single(verdict), cached: true)));
+
+        // Jev is unavailable only when nothing was judged: a cached verdict counts as judged.
+        var unavailable = plan.Cached.Count == 0 && failures.Count > 0 && failures.Count == answers.Count - left;
+        return Response(unavailable ? [] : findings, unavailable ? failures[0] : null, answers.Count, skipped);
     }
 
-    private IEnumerable<TraitFinding> Assess(TraitCheckMode mode, double minimum, TraitPlan plan, TraitTask task, BatchDecided decided)
+    private static CheckTraitsResponse Response(List<TraitFinding> findings, string? unavailable, int requests, Dictionary<string, string> skipped) =>
+        new([.. findings.OrderByDescending(finding => finding.Probability)], JevUnavailable: unavailable is not null, Reason: unavailable, Requests: requests)
+        {
+            Skipped = skipped.Count == 0 ? CheckTraitsResponse.NoSkips : skipped,
+        };
+
+    private static Dictionary<string, BatchAnswer> Single(CachedVerdict verdict) => new(StringComparer.Ordinal) { [verdict.Trait.Name] = verdict.Answer };
+
+    private IEnumerable<TraitFinding> Assess(Reading reading, TraitTask task, IReadOnlyDictionary<string, BatchAnswer> answers, bool cached)
     {
+        var (mode, minimum, plan) = reading;
         foreach (var trait in task.Batch)
         {
-            if (!decided.Answers.TryGetValue(trait.Name, out var raw) || raw is not ChoiceBatchAnswer choice)
+            if (!answers.TryGetValue(trait.Name, out var raw) || raw is not ChoiceBatchAnswer choice)
             {
                 continue;
             }
@@ -66,9 +81,11 @@ internal sealed class TraitVerdicts(ITraitCheckLog log)
                     ["repo"] = task.Root,
                     ["path"] = task.Source.Path,
                     ["lines"] = new JsonArray(task.Source.StartLine, task.Source.EndLine),
+                    ["hash"] = task.Hash.Length > HashLength ? task.Hash[..HashLength] : task.Hash,
                     ["choice"] = choice.Choice,
                     ["p"] = p,
                     ["reported"] = reported,
+                    ["cached"] = cached,
                 });
             }
 
@@ -96,4 +113,7 @@ internal sealed class TraitVerdicts(ITraitCheckLog log)
         task.Source.EndLine,
         trait.Guidance?.Trim(),
         string.Equals(task.Root, plan.Home, StringComparison.Ordinal) && trait.File.StartsWith(task.Root, StringComparison.Ordinal) ? Path.GetRelativePath(task.Root, trait.File) : trait.File);
+
+    // What every assessment of one check shares.
+    private sealed record Reading(TraitCheckMode Mode, double Minimum, TraitPlan Plan);
 }

@@ -2205,3 +2205,11 @@ Aw.Judge.Core.Providers.ProviderDecided.SentImages.init -> void
 Aw.Judge.Core.Images.JevLimits.Fits(Aw.Judge.Core.Images.ImageAttachment! image) -> bool
 Aw.Judge.Core.Decisions.DecisionDetails.SentImages.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Images.ImageSize?>?
 Aw.Judge.Core.Decisions.DecisionDetails.SentImages.init -> void
+Aw.Judge.Core.Ports.ITraitJudge.Included(System.Collections.Generic.IReadOnlyCollection<Aw.Judge.Core.Providers.ProviderName>? allowed, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Judge.Core.Ports.ITraitVerdictCache
+Aw.Judge.Core.Ports.ITraitVerdictCache.Get(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Judge.Core.Batching.ChoiceBatchAnswer!>!>
+Aw.Judge.Core.Ports.ITraitVerdictCache.Put(System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Judge.Core.Batching.ChoiceBatchAnswer!>! verdicts, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Judge.Core.Traits.Trait.Trigger.get -> string?
+Aw.Judge.Core.Traits.Trait.Trigger.init -> void
+Aw.Judge.Core.Traits.Trait.FileHash.get -> string!
+Aw.Judge.Core.Traits.Trait.FileHash.init -> void
