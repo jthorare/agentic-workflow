@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Toast;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 
@@ -30,9 +31,9 @@ internal sealed partial class ShellViewModel
     }
 
     [MemberNotNull(nameof(Workflows))]
-    private void InitWorkflows()
+    private void InitWorkflows(IClipboard clipboard)
     {
-        Workflows = new WorkflowsPageViewModel(_api, _clock);
+        Workflows = new WorkflowsPageViewModel(_api, _clock, clipboard);
         Workflows.StepSaved += (_, saved) => ShowToast(new ToastMessage(Labels.WfStepSavedToast, saved.Undo, UndoAllowed: saved.CanUndo));   // "Step saved. Undo (Ctrl+Z)"
         Workflows.Editor.PropertyChanged += (_, e) => RefreshToastUndo(e.PropertyName);   // a canvas edit moves the editor's revision; a send or a reload holds Undo off meanwhile
         Workflows.PropertyChanged += (_, e) => RefreshToastUndo(e.PropertyName);   // an Activate or Pause on the way

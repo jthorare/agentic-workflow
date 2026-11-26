@@ -205,6 +205,17 @@
         <Border x:Name="FindingsHead" IsVisible="{Binding Findings.HasFindings}" AutomationProperties.Name="{Binding Findings.HeaderText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption" Text="{Binding Findings.HeaderText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
+        <!-- A check that could not answer says so, as a failure (its own class: the amber callout would win), and Retry asks again (#4380). -->
+        <Border x:Name="FindingsFailed" Classes="findings-failed" IsVisible="{Binding Findings.HasFailed}" AutomationProperties.Name="{Binding Findings.FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+          <StackPanel Orientation="Horizontal" Spacing="12">
+            <TextBlock Classes="body" Text="{Binding Findings.FailedText}" VerticalAlignment="Center" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            <Button x:Name="FindingsRetry" Classes="copy" Click="OnRetryFindings" IsVisible="{Binding Findings.HasFailed}" AutomationProperties.Name="{Binding Findings.RetryText}">
+              <TextBlock Classes="caption" Text="{Binding Findings.RetryText}" AutomationProperties.AccessibilityView="Raw" />
+            </Button>
+          </StackPanel>
+        </Border>
+        <!-- The findings about the whole workflow, which no step's card carries (#4380). -->
+        <wv:WorkflowLevelFindingsList x:Name="WorkflowLevelFindings" IsVisible="{Binding Findings.HasWholeWorkflow}" />
         <Border x:Name="RunsStagePanel" Classes="panel" Height="320">
           <wv:GraphStage x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" TextScale="{Binding TextScale}" />
         </Border>
@@ -416,6 +427,21 @@
         </Border>
         <Button x:Name="RunRetry" Content="{Binding Run.RetryText}" Click="OnRetryRun" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Run.RetryText}" />
       </StackPanel>
+      <Border x:Name="RunFailureName" Classes="run-failure" IsVisible="{Binding Run.HasFailure}" AutomationProperties.Name="{Binding Run.Failure.Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="body-strong" Text="{Binding Run.Failure.HeadingText}" AutomationProperties.AccessibilityView="Raw" />
+          <SelectableTextBlock Classes="body" Text="{Binding Run.Failure.SentenceText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          <Button x:Name="RunFailureFix" Classes="copy" Click="OnCopyRunFix" HorizontalAlignment="Left" IsVisible="{Binding Run.Failure.HasCopyFix, FallbackValue=False}" AutomationProperties.Name="{Binding Run.Failure.Fix.Announcement}">
+            <TextBlock Classes="caption" Text="{Binding Run.Failure.Fix.Label}" AutomationProperties.AccessibilityView="Raw" />
+          </Button>
+          <Button x:Name="RunFailureOpen" Classes="copy" Click="OnOpenFailedStep" HorizontalAlignment="Left" IsVisible="{Binding Run.Failure.HasOpenFix, FallbackValue=False}" AutomationProperties.Name="{Binding Run.Failure.OpenText}">
+            <TextBlock Classes="caption" Text="{Binding Run.Failure.OpenText}" AutomationProperties.AccessibilityView="Raw" />
+          </Button>
+          <Expander x:Name="RunFailureDetails" Header="{Binding Run.Failure.DetailsHeading}" AutomationProperties.Name="{Binding Run.Failure.DetailsHeading}">
+            <SelectableTextBlock Classes="caption mono" Text="{Binding Run.Failure.DetailText}" TextWrapping="Wrap" />
+          </Expander>
+        </StackPanel>
+      </Border>
       <Border x:Name="RunErrorName" IsVisible="{Binding Run.HasError}" AutomationProperties.Name="{Binding Run.ErrorText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <SelectableTextBlock Classes="caption" Text="{Binding Run.ErrorText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>

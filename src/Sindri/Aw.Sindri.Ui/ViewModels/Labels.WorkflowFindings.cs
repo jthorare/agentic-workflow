@@ -2,9 +2,12 @@ using System.Globalization;
 
 namespace Aw.Sindri.Ui.ViewModels;
 
-/// <summary>The app's own copy (<see cref="Labels"/>, continued): the server's validation findings in the Workflows editor (#3803). The finding's own sentence and fix line are the server's words, never rewritten here.</summary>
+/// <summary>The app's own copy (<see cref="Labels"/>, continued): the server's validation findings in the Workflows editor (#3803). The finding's sentence and fix line come from WorkflowFindingWords (#4397); the chip and the header use one term, "to fix".</summary>
 internal static partial class Labels
 {
+    /// <summary>The expander under a finding that holds the server's own message.</summary>
+    internal const string WfFindingDetails = "Details";
+
     /// <summary>The fix button of a finding the app can fix (GRAPH-PROMPT-001: open the step's question).</summary>
     internal const string WfFindingFix = "Fix this";
 
@@ -31,15 +34,12 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string WfFindingNodeName(string name, int count) => name + ", " + WfFindingsHead(count);
 
-    /// <summary>A finding's accessible name: its kind, the server's sentence and its fix line.</summary>
-    /// <param name="error">True for an error.</param>
+    /// <summary>A finding's accessible name: its tag, the sentence and its fix line.</summary>
     /// <param name="sentence">What is wrong, as the server says it.</param>
     /// <param name="fix">How to fix it, as the server says it.</param>
     /// <returns>The words.</returns>
-    internal static string WfFindingName(bool error, string sentence, string fix) => (error ? "Error: " : "Warning: ") + sentence + ". " + fix;
+    internal static string WfFindingName(string sentence, string fix) => WfFindingWord + ": " + sentence + " " + fix;
 
-    /// <summary>The chip word of a finding.</summary>
-    /// <param name="error">True for an error.</param>
-    /// <returns>"Error" or "Warning".</returns>
-    internal static string WfFindingWord(bool error) => error ? "Error" : "Warning";
+    /// <summary>The chip word of a finding, error or warning: "To fix". The glyph and the tone tell the two apart, and the header says "things to fix".</summary>
+    internal const string WfFindingWord = "To fix";
 }
