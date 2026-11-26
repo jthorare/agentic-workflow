@@ -92,6 +92,10 @@ internal sealed class ConnectionHarness
     public AddConnectionService Add(ISignInSession? signIn = null)
         => new(Store, Presets, Environment, Callers, new OAuthSignInFlow(Store, Secrets, signIn ?? SignIn, new CommandGateAccess(Gate, Clock), Outcomes, Events(), new TypedLog<OAuthSignInFlow>(Logs)), new KeyConnectionAdd(Store, Secrets, Environment, Clock, Callers, Keys));
 
+    /// <summary>The key replacement slice over the harness's ports (#4358).</summary>
+    /// <returns>The service.</returns>
+    public ReplaceConnectionKeyService ReplaceKey() => new(Store, Secrets, Presets, Environment, Events(), Keys);
+
     /// <summary>Gets the lease the connection events are fenced by; empty until <see cref="Hold"/>.</summary>
     public HeldLease Held { get; } = new();
 

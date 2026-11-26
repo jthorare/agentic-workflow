@@ -27,6 +27,7 @@ internal static class ConnectionScenarios
         ("connections", "list"), ("connections", "added-key"), ("connections", "added-oauth"), ("connections", "refused"),
         ("connections-id", "one"), ("connections-id", "not-found"), ("connections-id", "removed"), ("connections-id", "signin-failed"),
         ("connections-id-test", "ok"), ("connections-id-test", "failed"), ("connections-id-rename", "renamed"),
+        ("connections-id-key", "replaced"), ("connections-id-key", "refused"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -56,6 +57,7 @@ internal static class ConnectionScenarios
 
             _ = services.Replace(ServiceDescriptor.Singleton(outcomes));
             _ = services.Replace(ServiceDescriptor.Singleton<IConnectionProbe>(new FakeConnectionProbe { Refuses = scenario == "failed" }));
+            _ = services.Replace(ServiceDescriptor.Singleton<IKeyCheck>(new FakeKeyCheck { Refuses = scenario == "refused" }));   // #4358: the new key is asked of the fake service
         });
 
     /// <summary>Runs the scenario against <paramref name="host"/> and returns the body to compare.</summary>
@@ -74,6 +76,7 @@ internal static class ConnectionScenarios
             ("connections-id", "not-found") => Get($"/sindri/connections/{Uri.EscapeDataString("acme:nobody")}", owner),
             ("connections-id", "removed") => Delete($"/sindri/connections/{Uri.EscapeDataString(Linear)}", owner),
             ("connections-id-rename", "renamed") => Post($"/sindri/connections/{Uri.EscapeDataString(Linear)}/rename", """{"label":"home"}""", owner),
+            ("connections-id-key", _) => Put($"/sindri/connections/{Uri.EscapeDataString(Acme)}/key", """{"key":"lin-api-new-0002"}""", owner),
             ("connections-id-test", _) => Post($"/sindri/connections/{Uri.EscapeDataString(Acme)}/test", json: null, owner),
             _ => throw new ArgumentOutOfRangeException(nameof(scenario), scenario, "no such connection scenario"),
         };
@@ -89,6 +92,7 @@ internal static class ConnectionScenarios
         ("connections-id", "one" or "removed" or "signin-failed") => [Linear0()],
         ("connections-id-rename", "renamed") => [ConnectionSamples.Oauth(status: ConnectionStatus.NeedsSignIn)],   // a row that needs a sign-in: the rename moves its Needs-you row, so it appends events
         ("connections-id-test", _) => [Acme0(ConnectionStatus.NeedsSignIn)],
+        ("connections-id-key", _) => [Acme0(ConnectionStatus.NeedsSignIn) with { Preset = "linear" }],   // a key row that needs a sign-in: a good key clears its Needs-you row, so it appends an event
         _ => [],
     };
 

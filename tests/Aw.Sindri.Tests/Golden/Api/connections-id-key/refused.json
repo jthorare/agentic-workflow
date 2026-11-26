@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-CONN-018",
+  "status": 400,
+  "detail": "Linear refused the key",
+  "traceId": "<trace>"
+}

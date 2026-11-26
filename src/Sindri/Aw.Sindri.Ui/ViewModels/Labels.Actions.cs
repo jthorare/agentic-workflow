@@ -25,6 +25,7 @@ internal static partial class Labels
         ["RenameConnection"] = "Rename connection",
         ["TestConnection"] = "Test connection",
         ["SignInConnection"] = "Sign in to connection",
+        ["ReplaceConnectionKey"] = "Replace connection key",
         ["CreateMemory"] = "Create memory",
         ["WriteMemoryFact"] = "Write memory fact",
         ["ForgetMemoryFact"] = "Forget memory facts",
