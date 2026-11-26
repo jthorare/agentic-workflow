@@ -8,6 +8,7 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Host.Commands.Probe;
+using Aw.Sindri.Infrastructure.Control;
 
 namespace Aw.Sindri.Host.Commands;
 
@@ -80,7 +81,7 @@ internal static partial class CommandTable
         var probe = services.GetRequiredService<IControlPlaneProbe>();
         var output = new Output(Console.Out, Console.Error, options);
         var cap = CliTimeout.Read(environment);   // a malformed value refuses the calls, not the verbs that make none
-        using var client = new ControlPlaneClient(probe, options, Headers(args, session, services), cap.IsError ? null : cap.Value, refusal: cap.IsError ? cap.Error : null);
+        using var client = new ControlPlaneClient(probe, options, Headers(args, session, services), cap.IsError ? null : cap.Value, handler: ControlPlaneHandler.Shared, refusal: cap.IsError ? cap.Error : null);   // the ping and this client share one handler (#3727)
         StartCommand Start(bool headless) => new(probe, services.GetRequiredService<IControlPlaneLauncher>(), client, output, services.GetRequiredService<TimeProvider>(), UiOpener(headless, environment));
         var start = Start(headless: true);   // 'sindri --headless', and the start a human 'profile approve' may need
         var verbs = new Verbs(client, probe, output, services);
