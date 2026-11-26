@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
-  "title": "SND-API-005",
-  "status": 500,
-  "detail": "POST /sindri/todos/note/set failed with TypeInitializationException; the control plane logged it",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-TODO-409",
+  "status": 409,
+  "detail": "the profile changed since you read it (fix: reload the settings and try again)",
   "traceId": "<trace>"
 }

@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
-  "title": "SND-API-005",
-  "status": 500,
-  "detail": "POST /sindri/linear/connection failed with TypeInitializationException; the control plane logged it",
+  "type": "https://tools.ietf.org/html/rfc4918#section-11.2",
+  "title": "SND-LINEAR-014",
+  "status": 422,
+  "detail": "No keychain to keep the write key in (fix: unlock your login keyring, or put the key in 1Password and set writeToken to op://…)",
   "traceId": "<trace>"
 }

@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
-  "title": "SND-API-005",
-  "status": 500,
-  "detail": "POST /sindri/sessions failed with TypeInitializationException; the control plane logged it",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-AGENT-017",
+  "status": 400,
+  "detail": "the prompt is 8001 characters; the most is 8000",
   "traceId": "<trace>"
 }

@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
-  "title": "SND-API-005",
-  "status": 500,
-  "detail": "POST /sindri/workflow-runs/morning-check@1:2/nodes/agent/handback failed with TypeInitializationException; the control plane logged it",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-GRAPH-111",
+  "status": 409,
+  "detail": "node 'agent' of run 'morning-check@1:2' is not taken over, so there is nothing to hand back",
   "traceId": "<trace>"
 }

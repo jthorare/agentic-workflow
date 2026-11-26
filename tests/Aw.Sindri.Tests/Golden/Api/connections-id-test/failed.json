@@ -1,7 +1,17 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
-  "title": "SND-API-005",
-  "status": 500,
-  "detail": "POST /sindri/connections/acme:key/test failed with TypeInitializationException; the control plane logged it",
-  "traceId": "<trace>"
+  "connection": {
+    "name": "acme:key",
+    "kind": "rest",
+    "preset": null,
+    "status": "error",
+    "statusReason": "The connection needs a new sign-in (SND-CONN-002)",
+    "config": {
+      "probeUrl": "https://api.acme.example.test/ping"
+    },
+    "lastRefreshedAt": null,
+    "hasSecret": true
+  },
+  "ok": false,
+  "reason": "The connection needs a new sign-in (SND-CONN-002)",
+  "tools": null
 }
