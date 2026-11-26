@@ -1,7 +1,9 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api.Workflows;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels.Workflows;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Workflows;
@@ -169,6 +171,26 @@ public sealed class RunFailureTests
 
         Assert.Equal("Failed at Check the repos", run.Failure!.HeadingText);
         Assert.Equal("agent", run.Failure.Node);
+    }
+
+    private RunRowViewModel FailedRow(string? sentence) =>
+        new(new WorkflowRunRowView("feed-check@1:1", 1, "failed", "manual", Now.AddMinutes(-2), Now.AddMinutes(-1), "node 'check' failed: SND-CODE-004: InvalidOperationException: the feed is down",
+            Seconds: 1, Result: "node 'check' failed: SND-CODE-004: InvalidOperationException: the feed is down", FailureSentence: sentence), _f.Clock);
+
+    [Fact]
+    public void A_failed_rows_result_cell_reads_the_sentence_not_the_engine_text()
+    {
+        var row = FailedRow("Check stopped: the feed is down.");
+
+        Assert.Equal(("Check stopped: the feed is down.", "Check stopped: the feed is down."), (row.ResultText, row.ErrorText));
+    }
+
+    [Fact]
+    public void A_failed_row_with_no_sentence_keeps_the_raw_result()
+    {
+        var row = FailedRow(sentence: null);
+
+        Assert.Equal("node 'check' failed: SND-CODE-004: InvalidOperationException: the feed is down", row.ResultText);
     }
 
     // The run answer lists nodes in step order, so the failed agent node is found by name, not by index.
