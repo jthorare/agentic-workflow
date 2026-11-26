@@ -6,8 +6,8 @@ using Aw.Sindri.Core.Projects.Sources;
 namespace Aw.Sindri.Core.Projects;
 
 /// <summary>
-/// The rules for a project's typed sources (#4499): at most 20 branches (or prefixes) and 20 work items, a branch name git's own check-ref-format would take, a repo the project covers, an item id of the existing id shape.
-/// A repo only has to have the owner/name shape (a project may cover it through Linear or the profile). Every refusal is SND-PROJECT-004 naming the field ('branches' or 'items').
+/// The rules for a project's typed sources (#4499): at most 20 branches (or prefixes) and 20 work items, a branch name git's own check-ref-format would take, a repo in the owner/name shape, an item id of the existing id shape.
+/// A repo does not need a GitHub link on the project (it may be covered through Linear or the profile); a null entry, or '.' or '..' as owner or name, is refused. Every refusal is SND-PROJECT-004 naming the field ('branches' or 'items').
 /// </summary>
 internal static class ProjectSourceRules
 {
@@ -24,11 +24,11 @@ internal static class ProjectSourceRules
     internal static Error? Check(IReadOnlyList<BranchSource>? branches, IReadOnlyList<string>? items) =>
         BranchesError(branches) ?? ItemsError(items);
 
-    /// <summary>The branches as stored: the repo trimmed, none twice.</summary>
+    /// <summary>The branches as stored: the repo trimmed, none twice (a repo's case does not tell two apart; the first spelling stays).</summary>
     /// <param name="branches">The typed branches, or null.</param>
     /// <returns>The cleaned list, or null.</returns>
     internal static IReadOnlyList<BranchSource>? Clean(IReadOnlyList<BranchSource>? branches) =>
-        branches?.Select(static b => b with { Repo = b.Repo.Trim() }).Distinct().ToList();
+        branches?.Select(static b => b with { Repo = b.Repo.Trim() }).DistinctBy(static b => (b.Repo.ToUpperInvariant(), b.Name, b.IsPrefix)).ToList();
 
     /// <summary>The item ids as stored: trimmed, none twice.</summary>
     /// <param name="items">The typed item ids, or null.</param>
@@ -46,6 +46,11 @@ internal static class ProjectSourceRules
         if (branches.Count > Max)
         {
             return Invalid("branches", string.Create(CultureInfo.InvariantCulture, $"{branches.Count} entries (at most {Max})"));
+        }
+
+        if (branches.Any(static b => b is null || b.Repo is null || b.Name is null))
+        {
+            return Invalid("branches", "an entry is null");
         }
 
         return branches.Select(One).FirstOrDefault(static error => error is not null);
@@ -71,13 +76,20 @@ internal static class ProjectSourceRules
             return Invalid("items", string.Create(CultureInfo.InvariantCulture, $"{items.Count} entries (at most {Max})"));
         }
 
+        if (items.Any(static i => i is null))
+        {
+            return Invalid("items", "an entry is null");
+        }
+
         return items.Select(static i => i.Trim()).FirstOrDefault(static i => !ItemId.TryFrom(i, out _)) is { } bad
             ? Invalid("items", $"'{bad}' isn't an item id (ITM- and 32 lowercase hex digits)")
             : null;
     }
 
     private static bool IsRepo(string repo) =>
-        repo.Split('/') is [{ Length: > 0 } owner, { Length: > 0 } name] && owner.All(IsRepoChar) && name.All(IsRepoChar);
+        repo.Split('/') is [{ Length: > 0 } owner, { Length: > 0 } name] && IsRepoPart(owner) && IsRepoPart(name);
+
+    private static bool IsRepoPart(string part) => part is not ("." or "..") && part.All(IsRepoChar);
 
     private static bool IsRepoChar(char c) => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.';
 

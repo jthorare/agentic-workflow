@@ -9,8 +9,8 @@ namespace Aw.Sindri.Core.Projects;
 /// <param name="Links">The links, or null for none.</param>
 /// <param name="Notes">The free-form notes (at most 16,384 characters, line breaks allowed), or null.</param>
 /// <param name="Target">The target date, or null.</param>
-/// <param name="Branches">The typed branch sources (the typed branch and branch-prefix sources (#4499), or null).</param>
-/// <param name="Items">The typed work-item id sources (the typed work-item id sources (#4499), or null).</param>
+/// <param name="Branches">The typed branch and branch-prefix sources (#4499), or null.</param>
+/// <param name="Items">The typed work-item id sources (#4499), or null.</param>
 public sealed record ProjectDraft(string? Linear = null, string? Name = null, ProjectState? State = null, IReadOnlyList<string>? Links = null, string? Notes = null, DateOnly? Target = null,
     IReadOnlyList<Sources.BranchSource>? Branches = null,
     IReadOnlyList<string>? Items = null);
