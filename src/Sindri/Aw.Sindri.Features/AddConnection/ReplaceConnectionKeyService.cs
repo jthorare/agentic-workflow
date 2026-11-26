@@ -64,14 +64,18 @@ internal sealed class ReplaceConnectionKeyService(IConnectionStore store, IConne
         return verdict.IsError ? verdict.Error : await Replace(row, key.Value, verdict.Value, cancellationToken).ConfigureAwait(false);
     }
 
-    // The refusal for a connection that holds no key to replace, or null when it does: a rest or cli connection, or an mcp one added with --key-env. A keyed mcp connection stores a bare access token (no refresh
-    // token, no expiry, as KeyConnectionAdd.Save writes it); an oauth mcp connection's tokens come from its server's own sign-in and carry a refresh token or an expiry, so it keeps the sign-in refusal.
+    // The refusal for a connection that holds no key to replace, or null when it does: a rest or cli connection, or an mcp one added with --key-env. An mcp row says which at add (Config "auth": "key" or "signin",
+    // #4482) and that mark wins. Only a row added before the mark (no "auth") falls back to the stored token: a keyed one is a bare access token (no refresh token, no expiry, as KeyConnectionAdd.Save writes it), while
+    // a token from the server's own sign-in usually carries a refresh token or an expiry. The re-read in Fresh calls this again, so a mark written during the check counts too.
     private Error? NoKey(Connection row)
     {
-        var keyed = row.Kind is ConnectionKind.Rest or ConnectionKind.Cli
-            || (row.Kind == ConnectionKind.Mcp && row.SecretPointer is { } pointer && _secrets.Read(pointer) is { IsSuccess: true } read && read.Value.RefreshToken is null && read.Value.ExpiresAt is null);
+        var keyed = row.Kind is ConnectionKind.Rest or ConnectionKind.Cli || (row.Kind == ConnectionKind.Mcp && McpHoldsKey(row));
         return keyed ? null : SindriErrors.InvalidInput.With($"{row.Name} signs in through the browser and holds no key (fix: sindri connection signin {row.Name})");
     }
+
+    private bool McpHoldsKey(Connection row) => row.Config.TryGetValue(ConnectionAuth.Key, out var auth)
+        ? string.Equals(auth, ConnectionAuth.Keyed, StringComparison.Ordinal)
+        : row.SecretPointer is { } pointer && _secrets.Read(pointer) is { IsSuccess: true } read && read.Value.RefreshToken is null && read.Value.ExpiresAt is null;
 
     // Asks the service before anything is written (a refused or unreachable key leaves the old key and the row alone). Null when the key passed a real check, else why it went unchecked.
     // why: a preset with no key check answers Unit without calling anything, so "passed" would be a claim nobody made.
