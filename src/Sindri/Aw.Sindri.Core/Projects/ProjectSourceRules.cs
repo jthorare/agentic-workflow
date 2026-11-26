@@ -7,7 +7,7 @@ namespace Aw.Sindri.Core.Projects;
 
 /// <summary>
 /// The rules for a project's typed sources (#4499): at most 20 branches (or prefixes) and 20 work items, a branch name git's own check-ref-format would take, a repo the project covers, an item id of the existing id shape.
-/// A repo is covered when one of the project's links names it: the repo, one of its PRs, or one of its branches. Every refusal is SND-PROJECT-004 naming the field ('branches' or 'items').
+/// A repo only has to have the owner/name shape (a project may cover it through Linear or the profile). Every refusal is SND-PROJECT-004 naming the field ('branches' or 'items').
 /// </summary>
 internal static class ProjectSourceRules
 {
@@ -17,13 +17,12 @@ internal static class ProjectSourceRules
     private const int NameMax = 255;
     private const string Unsafe = " ~^:?*[\\";
 
-    /// <summary>Checks both lists against the links the project will have.</summary>
+    /// <summary>Checks both typed lists.</summary>
     /// <param name="branches">The typed branches, or null for none.</param>
     /// <param name="items">The typed item ids, or null for none.</param>
-    /// <param name="links">The project's links after the write.</param>
     /// <returns>The refusal, or null.</returns>
-    internal static Error? Check(IReadOnlyList<BranchSource>? branches, IReadOnlyList<string>? items, IReadOnlyList<string> links) =>
-        BranchesError(branches, links) ?? ItemsError(items);
+    internal static Error? Check(IReadOnlyList<BranchSource>? branches, IReadOnlyList<string>? items) =>
+        BranchesError(branches) ?? ItemsError(items);
 
     /// <summary>The branches as stored: the repo trimmed, none twice.</summary>
     /// <param name="branches">The typed branches, or null.</param>
@@ -37,7 +36,7 @@ internal static class ProjectSourceRules
     internal static IReadOnlyList<string>? Clean(IReadOnlyList<string>? items) =>
         items?.Select(static i => i.Trim()).Distinct(StringComparer.Ordinal).ToList();
 
-    private static Error? BranchesError(IReadOnlyList<BranchSource>? branches, IReadOnlyList<string> links)
+    private static Error? BranchesError(IReadOnlyList<BranchSource>? branches)
     {
         if (branches is null)
         {
@@ -49,15 +48,13 @@ internal static class ProjectSourceRules
             return Invalid("branches", string.Create(CultureInfo.InvariantCulture, $"{branches.Count} entries (at most {Max})"));
         }
 
-        var covered = Covered(links);
-        return branches.Select(b => One(b, covered)).FirstOrDefault(static error => error is not null);
+        return branches.Select(One).FirstOrDefault(static error => error is not null);
     }
 
-    private static Error? One(BranchSource branch, HashSet<string> covered)
+    private static Error? One(BranchSource branch)
     {
         var repo = branch.Repo.Trim();
         return !IsRepo(repo) ? Invalid("branches", $"'{repo}' isn't a GitHub repo (owner/name)")
-            : !covered.Contains(repo) ? Invalid("branches", $"'{repo}' isn't one of the project's repos (name it in a link first: its repo, a PR or a branch)")
             : IsRef(branch.Name, branch.IsPrefix) ? null
             : Invalid("branches", $"'{branch.Name}' isn't {(branch.IsPrefix ? "the start of a branch name" : "a branch name")} git accepts (git check-ref-format --branch)");
     }
@@ -77,15 +74,6 @@ internal static class ProjectSourceRules
         return items.Select(static i => i.Trim()).FirstOrDefault(static i => !ItemId.TryFrom(i, out _)) is { } bad
             ? Invalid("items", $"'{bad}' isn't an item id (ITM- and 32 lowercase hex digits)")
             : null;
-    }
-
-    private static HashSet<string> Covered(IReadOnlyList<string> links)
-    {
-        var sources = ProjectTruths.SourcesOf(links, [], []);
-        var repos = new HashSet<string>(sources.Repos, StringComparer.OrdinalIgnoreCase);
-        repos.UnionWith(sources.PullUrls.Select(static u => u["https://github.com/".Length..].Split('/') is [var owner, var name, ..] ? owner + "/" + name : string.Empty));
-        repos.UnionWith((sources.Branches ?? []).Select(static b => b.Repo));
-        return repos;
     }
 
     private static bool IsRepo(string repo) =>

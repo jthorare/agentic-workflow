@@ -184,7 +184,7 @@ public static partial class ProjectDecisions
         RenameError(project, edit.Name)
         ?? ClearAndSetError(edit)
         ?? FieldError(edit.State, edit.Links, edit.Notes)
-        ?? TypedSourcesError(project, edit)
+        ?? TypedSourcesError(edit)
         ?? (IsEmpty(edit) ? Invalid("change", "nothing to change (give a name, state, links, notes or target)") : null);
 
     private static Result<ProjectAttached> Event(CommandId command, ProjectId id, ProjectDraft draft, string? name)
@@ -195,16 +195,13 @@ public static partial class ProjectDecisions
             return fields.Error;
         }
 
-        return ProjectSourceRules.Check(draft.Branches, draft.Items, fields.Value) is { } refused
+        return ProjectSourceRules.Check(draft.Branches, draft.Items) is { } refused
             ? refused
             : new ProjectAttached(command, id, draft.Linear, name, draft.State, fields.Value, draft.Target, draft.Notes, Branches: ProjectSourceRules.Clean(draft.Branches), Items: ProjectSourceRules.Clean(draft.Items));
     }
 
-    // #4499: the typed lists are checked against the links the project has after the change, so dropping the link that named a repo refuses the branches still held for it
-    private static Error? TypedSourcesError(ProjectAttachedRow project, ProjectEdit edit) =>
-        edit.Branches is null && edit.Items is null && edit.Links is null
-            ? null
-            : ProjectSourceRules.Check(edit.Branches ?? project.Branches, edit.Items, [.. (edit.Links ?? project.Links).Select(static l => l.Trim())]);
+    // #4499: only a list the edit sends is checked; a project keeps the typed sources it already holds
+    private static Error? TypedSourcesError(ProjectEdit edit) => ProjectSourceRules.Check(edit.Branches, edit.Items);
 
     private static Error? RenameError(ProjectAttachedRow project, string? name) =>
         name is null ? null

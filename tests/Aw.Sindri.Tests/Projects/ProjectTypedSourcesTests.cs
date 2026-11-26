@@ -79,12 +79,15 @@ public sealed class ProjectTypedSourcesTests
     }
 
     [Fact]
-    public void A_branch_in_a_repo_the_project_does_not_cover_is_refused()
-    {
-        RefusedOn("branches", Attach([Branch("feat/x", repo: "acme/other")]).Error);
-        RefusedOn("branches", Attach([Branch("feat/x")], links: []).Error);
-        Assert.True(Attach([Branch("feat/x", repo: "acme/other")], links: ["https://github.com/acme/other/pull/7"]).IsSuccess);
-    }
+    public void A_typed_branch_for_a_repo_with_no_github_link_is_accepted() =>
+        Assert.True(Attach([Branch("feat/x", repo: "acme/other")], links: []).IsSuccess);
+
+    [Theory]
+    [InlineData("acme")]
+    [InlineData("acme/")]
+    [InlineData("acme/a/b")]
+    [InlineData("ac me/api")]
+    public void A_repo_without_the_owner_name_shape_is_refused_naming_branches(string repo) => RefusedOn("branches", Attach([Branch("feat/x", repo: repo)]).Error);
 
     [Theory]
     [InlineData("itm-123")]
@@ -93,17 +96,15 @@ public sealed class ProjectTypedSourcesTests
     public void An_item_id_without_the_id_shape_is_refused_naming_items(string id) => RefusedOn("items", Attach(items: [id]).Error);
 
     [Fact]
-    public void A_change_replaces_the_typed_lists_a_missing_list_keeps_them_and_the_repo_check_reads_the_links_after_the_change()
+    public void A_change_replaces_the_typed_lists_a_missing_list_keeps_them()
     {
         var row = ProjectRows.HandMade(version: 1) with { Links = [.. _apiLink], Branches = [Branch("feat/old")], Items = [Item] };
 
         var replaced = ProjectDecisions.Change(_command, ProjectRows.HandMadeId, row, new ProjectEdit(Branches: [Branch("feat/new")], Items: []), seenVersion: 1).Value;
         var kept = ProjectDecisions.Change(_command, ProjectRows.HandMadeId, row, new ProjectEdit(Notes: "later"), seenVersion: 1).Value;
-        var dropped = ProjectDecisions.Change(_command, ProjectRows.HandMadeId, row, new ProjectEdit(Links: []), seenVersion: 1);
 
         Assert.Equal(([Branch("feat/new")], (IReadOnlyList<string>)[]), (replaced.Branches, replaced.Items));
         Assert.Equal((null, null), (kept.Branches, kept.Items));
-        RefusedOn("branches", dropped.Error);   // the new links no longer name acme/api
     }
 
     [Fact]
