@@ -13,5 +13,5 @@ namespace Aw.Sindri.Features.AttachProject;
 /// <param name="Target">The target date, or null.</param>
 /// <param name="Branches">The typed branch and branch-prefix sources (#4499), or null.</param>
 /// <param name="Items">The typed work-item id sources (#4499), or null.</param>
-public sealed record AttachProjectRequest(string? Linear = null, string? Name = null, ProjectState? State = null, IReadOnlyList<string>? Links = null, string? Notes = null, DateOnly? Target = null, IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.BranchSource>? Branches = null, IReadOnlyList<string>? Items = null)
+public sealed record AttachProjectRequest(string? Linear = null, string? Name = null, ProjectState? State = null, IReadOnlyList<string>? Links = null, string? Notes = null, DateOnly? Target = null, IReadOnlyList<Aw.Sindri.Core.Projects.Sources.BranchSource>? Branches = null, IReadOnlyList<string>? Items = null)
     : ICommand<ProjectAccepted>;

@@ -1,3 +1,5 @@
+using Aw.Sindri.Core.Projects.Sources;
+
 namespace Aw.Sindri.Core.Projects.TruthSources;
 
 /// <summary>What a project's truth is derived from (issue 3718).</summary>

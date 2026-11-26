@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Aw.Sindri.Core.Projects.TruthSources;
+namespace Aw.Sindri.Core.Projects.Sources;
 
 /// <summary>A branch, or a branch-name prefix, that makes a repo's PRs count for a project (#4333): the PR's head branch equals the name, or starts with it for a prefix.</summary>
 /// <param name="Repo">owner/name of the repo the branch is in.</param>

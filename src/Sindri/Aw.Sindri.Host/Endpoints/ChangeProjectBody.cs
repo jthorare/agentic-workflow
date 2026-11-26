@@ -32,7 +32,7 @@ internal sealed record ChangeProjectBody(
     bool ClearNotes = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Note = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool ClearNote = false,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.BranchSource>? Branches = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<Aw.Sindri.Core.Projects.Sources.BranchSource>? Branches = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? Items = null)
 {
     /// <summary>The request for <paramref name="project"/>.</summary>

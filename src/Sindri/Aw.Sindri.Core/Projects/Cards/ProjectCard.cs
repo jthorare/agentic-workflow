@@ -1,6 +1,6 @@
+using Aw.Sindri.Core.Projects.Sources;
 using System.Text.Json.Serialization;
 using Aw.Sindri.Core.Projects.Truth;
-using Aw.Sindri.Core.Projects.TruthSources;
 using Aw.Sindri.Core.Projects.Vocabulary;
 
 namespace Aw.Sindri.Core.Projects.Cards;
