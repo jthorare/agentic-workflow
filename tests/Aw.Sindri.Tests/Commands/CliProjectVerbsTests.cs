@@ -424,8 +424,8 @@ public sealed class CliProjectVerbsTests : IDisposable
 
         _ = await Verbs(api).Run(["project", "add", "--name", "Kitchen"], Token);
 
-        Assert.DoesNotContain("branches", api.Calls[^1].Body, StringComparison.Ordinal);
-        Assert.DoesNotContain("items", api.Calls[^1].Body, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"branches\":[", api.Calls[^1].Body, StringComparison.Ordinal);   // a null list is "keep" (and none on attach); what matters is that no list is sent
+        Assert.DoesNotContain("\"items\":[", api.Calls[^1].Body, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -437,7 +437,7 @@ public sealed class CliProjectVerbsTests : IDisposable
 
         Assert.Equal(0, code);
         Assert.Contains("\"branches\":[{\"repo\":\"acme/api\",\"name\":\"fix/x\",\"prefix\":false}]", api.Calls[^1].Body, StringComparison.Ordinal);
-        Assert.DoesNotContain("items", api.Calls[^1].Body, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"items\":[", api.Calls[^1].Body, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -80,6 +80,28 @@ public sealed class ProjectTypedSourcesTests
     }
 
     [Fact]
+    public void A_null_element_in_either_list_is_refused_not_a_crash()
+    {
+        RefusedOn("branches", Attach([Branch("feat/x"), null!]).Error);
+        RefusedOn("items", Attach(items: [Item, null!]).Error);
+    }
+
+    [Fact]
+    public void A_repo_given_in_two_cases_is_one_repo_and_a_branch_named_twice_is_stored_once()
+    {
+        var attached = Attach([Branch("feat/x", repo: "acme/api"), Branch("feat/x", repo: "Acme/API")]).Value;
+
+        Assert.Equal([Branch("feat/x", repo: "acme/api")], attached.Branches);
+    }
+
+    [Theory]
+    [InlineData("./api")]
+    [InlineData("acme/..")]
+    [InlineData("../api")]
+    [InlineData("acme/.")]
+    public void A_dot_or_dot_dot_as_owner_or_name_is_refused(string repo) => RefusedOn("branches", Attach([Branch("feat/x", repo: repo)]).Error);
+
+    [Fact]
     public void A_typed_branch_for_a_repo_with_no_github_link_is_accepted() =>
         Assert.True(Attach([Branch("feat/x", repo: "acme/other")], links: []).IsSuccess);
 
