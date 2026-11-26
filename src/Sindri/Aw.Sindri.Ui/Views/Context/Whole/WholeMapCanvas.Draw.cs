@@ -27,14 +27,14 @@ internal sealed partial class WholeMapCanvas
         var view = Viewport.Width > 0 ? new WholeRect(Viewport.X, Viewport.Y, Viewport.Width, Viewport.Height) : geometry.World;
         var dots = WholeMapViewModel.UsesDots(Scale);
         DrawLanes(context, geometry, view, dots);
-        if (geometry.Tiles.Count > 0)
-        {
-            DrawTiles(context, geometry, view);
-        }
-
         if (geometry.Nodes.Count > 0 || geometry.Columns.Count > 0)
         {
             DrawNodeEdges(context, geometry, view);
+            if (geometry.IsAreaCanvas)
+            {
+                DrawAreaBands(context, geometry, view);   // after the links, so no line runs through a heading
+            }
+
             DrawHeaders(context, geometry, view, dots);
             DrawNodes(context, geometry, view, dots);
         }
@@ -92,37 +92,6 @@ internal sealed partial class WholeMapCanvas
         else if (pattern == WholePattern.Hatched)
         {
             context.DrawLine(new Pen(Brushes.Black, 1), new Point(centre.X - DotRadius, centre.Y + DotRadius), new Point(centre.X + DotRadius, centre.Y - DotRadius));
-        }
-    }
-
-    private void DrawTiles(DrawingContext context, WholeMapGeometry geometry, WholeRect view)
-    {
-        var muted = Brush("Brush.InkSubtle");
-        DrawAreaBundles(context, geometry);
-
-        foreach (var placed in geometry.Tiles.Where(t => t.Rect.Intersects(view)))
-        {
-            using (context.PushOpacity(Strength(placed.Key)))
-            {
-                DrawTileColumn(context, placed, string.Equals(placed.Key, _focus, StringComparison.Ordinal));
-            }
-        }
-
-        DrawBundlePills(context, geometry);
-    }
-
-    // The mark that tells an area apart beyond its colour: a solid bar, a hatched one, or a ringed one.
-    private static void DrawSwatch(DrawingContext context, Rect tile, IBrush area, WholePattern pattern)
-    {
-        var mark = new Rect(tile.X + 10, tile.Y + 12, 18, 18);
-        context.DrawRectangle(area, pen: null, mark, radiusX: 4, radiusY: 4);
-        if (pattern == WholePattern.Hatched)
-        {
-            context.DrawLine(new Pen(Brushes.Black, 1.5), mark.BottomLeft, mark.TopRight);
-        }
-        else if (pattern == WholePattern.Ringed)
-        {
-            context.DrawEllipse(Brushes.Black, pen: null, mark.Center, radiusX: 4, radiusY: 4);
         }
     }
 

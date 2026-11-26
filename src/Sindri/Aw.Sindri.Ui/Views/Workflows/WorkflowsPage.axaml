@@ -116,9 +116,10 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:WorkflowRowViewModel">
                 <StackPanel>
+                  <Border Name="GroupRule" Height="1" Background="{DynamicResource Brush.Hairline}" IsVisible="{Binding HasGroupRule}" />
                   <Grid ColumnDefinitions="*,Auto" Margin="16,12,16,4" IsVisible="{Binding HasGroupHeader}">
                     <TextBlock Name="RowGroupHeader" Classes="caption subtle" Text="{Binding GroupHeader}" />
-                    <TextBlock Grid.Column="1" Classes="caption quiet" Text="{Binding GroupHint}" />
+                    <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding GroupHint}" HorizontalAlignment="Right" />
                   </Grid>
                   <Border Name="WorkflowRow" Classes="item-row clickable" Focusable="True" KeyDown="OnWorkflowRowKey" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
                     <StackPanel Orientation="Horizontal" Spacing="16" Margin="16,0" MinHeight="{StaticResource Row.Height.Default}" VerticalAlignment="Center">
@@ -235,7 +236,7 @@
             <TextBlock Classes="caption quiet" Text="{Binding Runs.EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
           <!-- The runs table (frame wf-runs): filters and the count, then Time, Trigger, Revision, Duration and Result. The run id is not shown (#3360). -->
-          <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto" Margin="16,8" ColumnSpacing="8" IsVisible="{Binding !Runs.IsReading}">
+          <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto" Margin="16,8" ColumnSpacing="8" IsVisible="{Binding Runs.ShowsRunTable}">
             <TextBlock Classes="caption subtle" Text="Status" VerticalAlignment="Center" />
             <ComboBox x:Name="RunsStatusFilter" Grid.Column="1" ItemsSource="{Binding Runs.StatusChoices}" SelectedItem="{Binding Runs.SelectedStatus, Mode=TwoWay}" AutomationProperties.Name="Status">
               <ComboBox.ItemTemplate><DataTemplate x:DataType="wf:RunFilterChoice"><TextBlock Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate>
@@ -254,7 +255,7 @@
           <Border x:Name="RunsNoMatchName" Margin="16,8" IsVisible="{Binding Runs.HasNoMatch}" AutomationProperties.Name="{Binding Runs.NoMatchText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="caption quiet" Text="{Binding Runs.NoMatchText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
-          <Grid ColumnSpacing="16" Margin="16,0" Height="28" IsVisible="{Binding !Runs.IsReading}">
+          <Grid ColumnSpacing="16" Margin="16,0" Height="28" IsVisible="{Binding Runs.ShowsRunTable}">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="{StaticResource Wf.Run.Col.Tick}" />
               <ColumnDefinition Width="{StaticResource Wf.Run.Col.Time}" />
@@ -415,6 +416,7 @@
                           <StackPanel Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
                             <TextBlock Classes="body-strong" Text="{Binding TitleText}" IsVisible="{Binding HasTitle}" />
                             <controls:StateChipView Word="{Binding ChipWord}" Tone="{Binding ChipToneWord}" Glyph="{Binding ChipGlyph}" />
+                            <TextBlock Name="StepDuration" Classes="caption subtle" Text="{Binding DurationText}" IsVisible="{Binding DurationText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" VerticalAlignment="Center" />
                           </StackPanel>
                           <Button HorizontalAlignment="Left" Content="{Binding TakeOverText}" Click="OnTakeOverNode" IsVisible="{Binding CanTakeOver}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding TakeOverText}" />
                           <Button HorizontalAlignment="Left" Content="{Binding HandBackText}" Click="OnHandBackNode" IsVisible="{Binding CanHandBack}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding HandBackText}" />

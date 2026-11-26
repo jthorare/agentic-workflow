@@ -196,13 +196,13 @@ public sealed class RunCompareTests
     }
 
     [Fact]
-    public async Task A_run_whose_end_reads_before_its_start_shows_a_duration_of_0_s()
+    public async Task A_run_whose_end_reads_before_its_start_shows_a_duration_under_1_s()
     {
         var a = Run(RunA, 2, "failed", "cli", TimeSpan.FromHours(2), -3, "e", Manual("x"));
         var b = Run(RunB, 1, "succeeded", "manual", TimeSpan.FromHours(3), 10, error: null, Manual("x"));
 
         var page = await TwoRuns(a, b);
 
-        Assert.Equal("r2 \u00b7 0 s \u00b7 From the CLI", page.Compare.A.Facts);
+        Assert.Equal("r2 \u00b7 <1 s \u00b7 From the CLI", page.Compare.A.Facts);
     }
 }

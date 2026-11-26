@@ -8,6 +8,9 @@ internal sealed partial class RunsViewModel
     /// <summary>"23 of 500 runs" with a filter on, "500 runs" without.</summary>
     public string CountText { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>True when the filter bar and the column heads show: there are runs to filter and read, so not while reading, nor for "No runs yet.", "This workflow is off" or a failed read.</summary>
+    public bool ShowsRunTable => !IsReading && !IsEmpty && !IsFailed;
+
     /// <summary>True when a status or date filter is on.</summary>
     public bool HasFilter => !string.IsNullOrEmpty(StatusFilter) || !string.IsNullOrEmpty(DateFilter);
 

@@ -10,7 +10,7 @@ namespace Aw.Sindri.Features.AddConnection;
 /// Adds a connection. With no --kind, a preset whose first way to connect is a key (<see cref="ConnectionPreset.KeyFirst"/>: github, linear, slack) makes a rest connection, the others the preset's kind (#4357). A bad name is SND-CONN-008, an existing one SND-CONN-010 (the insert itself refuses a duplicate, so two adds racing cannot both win), a preset
 /// without a client id SND-CONN-007, and a preset that cannot take a loopback sign-in is refused with its sign-in note before any listener opens. An oauth connection
 /// runs <see cref="OAuthSignInFlow"/>. A rest or cli connection stores the key the CLI sent (read from the CLI's own environment) or, for an agent, the variable named by
-/// --key-env in serve's environment; a rest key for a preset is checked with its service first (<see cref="IKeyCheck"/>: SND-CONN-018 refused, SND-CONN-019 not reached, nothing stored). An error shows its code and fixed title only (<see cref="ConnectionFailures"/>).
+/// --key-env in serve's environment; a rest key for a preset is checked with its service first (<see cref="IKeyCheck"/>: SND-CONN-018 refused, SND-CONN-019 not reached, SND-CONN-020 rate limited, nothing stored). An error shows its code and fixed title only (<see cref="ConnectionFailures"/>).
 /// </summary>
 /// <param name="store">The connections.</param>
 /// <param name="presets">The shipped presets.</param>

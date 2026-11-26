@@ -40,6 +40,7 @@ internal sealed partial class WorkflowsPageViewModel
         if (look < ordered.Count)
         {
             ordered[look].GroupHeader = "Everything else \u00b7 " + (ordered.Count - look).ToString(CultureInfo.InvariantCulture);
+            ordered[look].HasGroupRule = look > 0;
         }
 
         return ordered;

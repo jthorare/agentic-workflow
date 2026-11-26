@@ -8,6 +8,7 @@ internal sealed class SymbolsColumnViewModel
     private const int NamesShown = 2;
 
     private readonly Dictionary<string, FileSymbolsEntry> _files;
+    private readonly string? _graphWhy;   // the graph reason sentence, when the graph is off or did not build
     private readonly bool _reasonIsSentence;   // the empty reason is a graph reason: whole sentences, not a "symbols · ..." fragment (#3862)
 
     /// <summary>The column over what the file map served.</summary>
@@ -24,6 +25,7 @@ internal sealed class SymbolsColumnViewModel
         }
 
         var graphWhy = GraphWhy(symbols.Reason);
+        _graphWhy = graphWhy;
         if (string.Equals(symbols.State, "ok", StringComparison.Ordinal) && symbols.Files is { Count: 0 })
         {
             // An index that answers with no rows: say why, on the note line under the table, where a sentence has room (#3996). Graph off or down = only C# files get names (the real app's .ts names come from the graph layer); graph on = the files have no functions.
@@ -55,17 +57,57 @@ internal sealed class SymbolsColumnViewModel
     /// <summary>Whether the index cannot answer: every cell says the caption instead of names.</summary>
     internal bool Unavailable { get; }
 
-    /// <summary>The note line's symbols words: "symbols · from abcdef0, not 1234567 · none in these files"; a graph reason is whole sentences, so it stands alone, after the commits when they differ (#3862).</summary>
-    /// <param name="column">The column's heading word.</param>
-    /// <returns>The words, or empty when there is nothing to say.</returns>
-    internal string Note(string column)
+    /// <summary>Whether a file needs the code graph for names: true for every path the C# parser does not read (not a .cs file). A .cs dash means the parser read the file and found no functions (#4418).</summary>
+    /// <param name="path">The repo-relative path.</param>
+    /// <returns>True when only the code graph could name this file's functions.</returns>
+    internal static bool NeedsGraph(string path)
     {
-        if (_reasonIsSentence && EmptyReason is { } sentence)
+        ArgumentNullException.ThrowIfNull(path);
+        return !path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>The hover text of the dash cell of one file: the graph sentence only when the file needs the code graph, else null (#4418).</summary>
+    /// <param name="path">The repo-relative path.</param>
+    /// <returns>The graph reason, or null.</returns>
+    internal string? NoRowTipFor(string path) => NeedsGraph(path) ? NoRowTip : null;
+
+    /// <summary>The note line's symbols words: "symbols · from abcdef0, not 1234567 · none in these files"; a graph reason is whole sentences, so it stands alone, after the commits when they differ (#3862). The graph sentence shows only for a dash on a file the C# parser does not read (#4418).</summary>
+    /// <param name="column">The column's heading word.</param>
+    /// <param name="entries">The entries shown: with the graph off or down, a mixed folder (some .cs, some .ts) needs the sentence for its non-.cs dashes, and a folder of only .cs files never does.</param>
+    /// <returns>The words, or empty when there is nothing to say.</returns>
+    internal string Note(string column, IEnumerable<FileMapEntry> entries)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+        var graphSentence = GraphSentence(entries as IReadOnlyCollection<FileMapEntry> ?? [.. entries]);
+        if (graphSentence is { } sentence)
         {
             return AsOfNote is null ? sentence : Labels.Dots(column, AsOfNote) + ". " + sentence;
         }
 
-        return AsOfNote is null && EmptyReason is null ? string.Empty : Labels.Dots(column, AsOfNote, EmptyReason);
+        var none = _reasonIsSentence ? Labels.ContextSymbolsNoneIndexed : EmptyReason;
+        return AsOfNote is null && none is null ? string.Empty : Labels.Dots(column, AsOfNote, none);
+    }
+
+    // The graph sentence for these entries, or null when nothing shown needs the graph (#4418).
+    private string? GraphSentence(IReadOnlyCollection<FileMapEntry> list)
+    {
+        if (!_reasonIsSentence)
+        {
+            return AnyDash(list) ? _graphWhy : null;
+        }
+
+        // Whole-folder empty: the sentence stands unless the folder holds files and every one is .cs. No file entries to judge by (folders only): keep it.
+        var files = list.Where(static e => !string.Equals(e.Type, "dir", StringComparison.Ordinal)).ToList();
+        return files.Count == 0 || files.Exists(static e => NeedsGraph(e.Path)) ? EmptyReason : null;
+    }
+
+    /// <summary>Whether any of these entries is a file whose cell is a dash and that needs the code graph (a .cs dash is not one).</summary>
+    /// <param name="entries">The entries shown.</param>
+    /// <returns>True when a file row would show a dash the graph sentence explains.</returns>
+    internal bool AnyDash(IEnumerable<FileMapEntry> entries)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+        return !Unavailable && entries.Any(e => !string.Equals(e.Type, "dir", StringComparison.Ordinal) && NeedsGraph(e.Path) && string.Equals(Cell(e.Path), Labels.ContextSymbolsNoRow, StringComparison.Ordinal));
     }
 
     /// <summary>The cell of one file.</summary>

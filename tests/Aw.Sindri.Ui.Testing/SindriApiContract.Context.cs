@@ -199,6 +199,18 @@ public abstract partial class SindriApiContract
     }
 
     [Fact]
+    public async Task WholeMap_sends_the_concept_tab_and_the_page_of_its_list()
+    {
+        var server = new FakeSindriApi();
+        var api = Reach(server);
+
+        _ = await api.WholeMap(_api, new WholeMapQuery("nodes", Area: null, [], MapVersion: null, Draft: false, Concept: "concept:billing", Page: 3, ConceptTab: "code"), Token);
+
+        var asked = server.WholeMapAsked[^1];
+        Expect.Equal(("concept:billing", "code", 3), (asked.Concept, asked.ConceptTab, asked.Page));
+    }
+
+    [Fact]
     public async Task WholeMap_answers_an_over_budget_map_by_area_with_the_reason_and_no_nodes()
     {
         var api = Reach(new FakeSindriApi { WholeMapAnswer = _ => new RouteAnswer(System.Net.HttpStatusCode.OK, GoldenFiles.Api("context-whole", "areas-over-budget")) });

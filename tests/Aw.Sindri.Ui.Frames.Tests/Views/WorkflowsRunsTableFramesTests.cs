@@ -117,4 +117,19 @@ public sealed class WorkflowsRunsTableFramesTests : FrameHost
             return Task.CompletedTask;
         });
     });
+
+    [Fact]
+    public Task A_workflow_with_no_runs_shows_only_the_empty_line() => OnUi(async () =>
+    {
+        Server.WorkflowRunsAnswers[Slug] = RouteAnswer.Api("workflows-slug-runs", "list-empty");
+        var (window, shell) = await Connected(width: 1280, height: 900);
+        shell.GoTo(PageId.Workflows);
+        await Until(window, () => shell.Workflows.Rows.Count > 0, "the Workflows page never read the list");
+        await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
+        await Until(window, () => Visible(window, "RunsEmptyName"), "the empty line never showed");
+        Settle(window);
+
+        Assert.False(Visible(window, "RunsCount"), "the filter bar shows over an empty runs list");
+        Assert.Empty(ClassVisibles(window, "run-column-head"));
+    });
 }
