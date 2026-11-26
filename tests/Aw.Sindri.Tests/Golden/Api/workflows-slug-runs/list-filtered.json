@@ -1,0 +1,29 @@
+{
+  "slug": "morning-check",
+  "runs": [
+    {
+      "id": "morning-check@1:4",
+      "revision": 1,
+      "status": "cancelled",
+      "trigger": "manual",
+      "startedAt": "2026-01-01T00:04:00.0000000Z",
+      "endedAt": null,
+      "error": "cancelled by owner",
+      "seconds": null,
+      "result": "cancelled by owner"
+    },
+    {
+      "id": "morning-check@1:2",
+      "revision": 1,
+      "status": "failed",
+      "trigger": "schedule",
+      "startedAt": "2026-01-01T00:02:00.0000000Z",
+      "endedAt": null,
+      "error": "node 'agent' failed",
+      "seconds": null,
+      "result": "node 'agent' failed"
+    }
+  ],
+  "more": false,
+  "next": null
+}

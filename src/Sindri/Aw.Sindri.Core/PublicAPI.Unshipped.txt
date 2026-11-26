@@ -25684,3 +25684,24 @@ Aw.Sindri.Core.Connections.IKeyCheck.Check(Aw.Sindri.Core.Connections.Connection
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyRateLimited -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyUnchecked -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.<Clone>$() -> Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery!
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Before.get -> Aw.Sindri.Core.Graph.Runs.WorkflowRun?
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Before.init -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRunStatus>! Statuses, out System.DateTimeOffset? Since, out System.DateTimeOffset? Until, out Aw.Sindri.Core.Graph.Runs.WorkflowRun? Before) -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Equals(Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery? other) -> bool
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Since.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Since.init -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Statuses.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRunStatus>!
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Statuses.init -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Until.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Until.init -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.WorkflowRunQuery(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRunStatus>! Statuses, System.DateTimeOffset? Since, System.DateTimeOffset? Until, Aw.Sindri.Core.Graph.Runs.WorkflowRun? Before) -> void
+override Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.ToString() -> string!
+static Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.All.get -> Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery!
+static Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.operator !=(Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery? left, Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery? right) -> bool
+static Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.operator ==(Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery? left, Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery? right) -> bool
+Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Find(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery! query, int offset, int limit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>!>
+static readonly Aw.Sindri.Core.SindriErrors.GraphRunsFilterInvalid -> Aw.Kernel.ErrorDefinition!
