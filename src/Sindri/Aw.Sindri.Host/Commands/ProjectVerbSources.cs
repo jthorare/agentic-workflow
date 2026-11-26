@@ -2,7 +2,7 @@ using System.Text;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Projects.Cards;
-using Aw.Sindri.Core.Projects.TruthSources;
+using Aw.Sindri.Core.Projects.Sources;
 
 namespace Aw.Sindri.Host.Commands;
 
