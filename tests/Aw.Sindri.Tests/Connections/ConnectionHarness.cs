@@ -94,9 +94,7 @@ internal sealed class ConnectionHarness
 
     /// <summary>The key replacement slice over the harness's ports (#4358).</summary>
     /// <returns>The service.</returns>
-#pragma warning disable CA1822 // red commit: the stub takes no ports yet
-    public ReplaceConnectionKeyService ReplaceKey() => new();
-#pragma warning restore CA1822
+    public ReplaceConnectionKeyService ReplaceKey() => new(Store, Secrets, Presets, Environment, Events(), Keys);
 
     /// <summary>Gets the lease the connection events are fenced by; empty until <see cref="Hold"/>.</summary>
     public HeldLease Held { get; } = new();

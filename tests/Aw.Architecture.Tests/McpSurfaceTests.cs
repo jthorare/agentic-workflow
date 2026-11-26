@@ -40,6 +40,7 @@ public sealed class McpSurfaceTests
         typeof(TestConnectionRequest).FullName!,
         typeof(RemoveConnectionRequest).FullName!,
         typeof(SignInConnectionRequest).FullName!,
+        typeof(ReplaceConnectionKeyRequest).FullName!,   // #4358: the key swap is reached by PUT /sindri/connections/{name}/key and the CLI; no MCP tool yet
         typeof(CreateMemoryRequest).FullName!,
         typeof(WriteMemoryFactRequest).FullName!,
         typeof(ForgetMemoryFactRequest).FullName!,
