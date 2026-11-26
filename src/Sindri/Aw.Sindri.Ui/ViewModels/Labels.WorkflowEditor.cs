@@ -45,7 +45,7 @@ internal static partial class Labels
     /// <param name="title">The step's own title, or its block's title when it has none.</param>
     /// <param name="kind"><see cref="WfEditorTriggerKind"/>, or the block's title.</param>
     /// <returns>The words.</returns>
-    internal static string WfEditorStep(string title, string kind) => title + " \u00b7 " + kind;
+    internal static string WfEditorStep(string title, string kind) => string.Equals(title, kind, StringComparison.Ordinal) ? title : title + " \u00b7 " + kind;
 
     /// <summary>The selected step's id, shown only in the sheet's Advanced group (#3684): the card and the heading never show it.</summary>
     /// <param name="id">The node's id.</param>

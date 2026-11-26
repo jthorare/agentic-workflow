@@ -28,10 +28,11 @@ internal static partial class Labels
 
     /// <summary>The list's head: "2 workflows · 1 active".</summary>
     /// <param name="total">Workflows listed.</param>
-    /// <param name="active">Workflows with an active revision.</param>
+    /// <param name="active">Workflows with an active revision that are not paused.</param>
+    /// <param name="paused">Workflows with a schedule that are held; named only when there are some.</param>
     /// <returns>The words.</returns>
-    internal static string WfHead(int total, int active) =>
-        string.Create(CultureInfo.InvariantCulture, $"{total} {(total == 1 ? "workflow" : "workflows")} · {active} active");
+    internal static string WfHead(int total, int active, int paused = 0) =>
+        string.Create(CultureInfo.InvariantCulture, $"{total} {(total == 1 ? "workflow" : "workflows")} · {active} active") + (paused > 0 ? string.Create(CultureInfo.InvariantCulture, $" · {paused} paused") : string.Empty);
 
     /// <summary>A workflow's state: a glyph and a word, never colour alone.</summary>
     /// <param name="active">True when triggers run a revision.</param>
@@ -85,9 +86,10 @@ internal static partial class Labels
     /// <summary>The runs list's head: "1 running · 3 runs".</summary>
     /// <param name="running">Runs running.</param>
     /// <param name="total">Runs listed.</param>
+    /// <param name="more">True when older runs exist that were not listed: "0 running · 50+ runs".</param>
     /// <returns>The words.</returns>
-    internal static string WfRunsHead(int running, int total) =>
-        string.Create(CultureInfo.InvariantCulture, $"{running} running · {total} {(total == 1 ? "run" : "runs")}");
+    internal static string WfRunsHead(int running, int total, bool more = false) =>
+        string.Create(CultureInfo.InvariantCulture, $"{running} running · {total}{(more ? "+" : string.Empty)} {(total == 1 && !more ? "run" : "runs")}");
 
     /// <summary>The line under a workflow's name: which revision, how big, who made it.</summary>
     /// <param name="shown">The revision shown.</param>
@@ -255,42 +257,4 @@ internal static partial class Labels
     /// <param name="error">The failure.</param>
     /// <returns>The words.</returns>
     internal static string WfStateUnsure(Error error) => "Sindri didn't answer, so the change may have applied; check the state before you press again. " + InstanceRefused(error);
-
-    /// <summary>The editor's command that reads the workflow again after it changed elsewhere.</summary>
-    internal const string WfReload = "Reload";
-
-    /// <summary>The editor's prompt when the workflow changed elsewhere: the edit was not saved and nothing is retried.</summary>
-    internal const string WfEditChangedElsewhere = "This workflow changed elsewhere, so your edit was not saved. Reload to see the new version, then make the edit again.";
-
-    /// <summary>The editor's note when an edit was refused or failed: the reason follows.</summary>
-    /// <param name="error">The failure.</param>
-    /// <returns>The words.</returns>
-    internal static string WfEditRefused(Error error) => "Couldn't save the edit. " + InstanceRefused(error);
-
-    /// <summary>The editor's note when Sindri did not answer an edit: it may have been saved.</summary>
-    /// <param name="error">The failure.</param>
-    /// <returns>The words.</returns>
-    internal static string WfEditUnsure(Error error) => "Sindri didn't answer, so the edit may have been saved. Reload to check before you edit again. " + InstanceRefused(error);
-
-    /// <summary>The editor's note when the workflow or the block list can't be read: the reason follows.</summary>
-    /// <param name="error">The failure.</param>
-    /// <returns>The words.</returns>
-    internal static string WfEditLoadFailed(Error error) => "Couldn't read the workflow to edit. " + InstanceRefused(error);
-
-    /// <summary>The editor's note when an edit was saved but the workflow can't be read again: the reason follows.</summary>
-    /// <param name="error">The failure.</param>
-    /// <returns>The words.</returns>
-    internal static string WfEditSavedReloadFailed(Error error) => "The edit was saved, but the workflow couldn't be read again. Reload to see it. " + InstanceRefused(error);
-
-    /// <summary>The line under a required field left empty.</summary>
-    internal const string WfFieldNeeded = "This field is required.";
-
-    /// <summary>The line under a number field that isn't a number.</summary>
-    internal const string WfFieldNotNumber = "Enter a number.";
-
-    /// <summary>The line under a boolean field that isn't true or false.</summary>
-    internal const string WfFieldNotBoolean = "Enter true or false.";
-
-    /// <summary>The line under an object field that isn't a JSON object.</summary>
-    internal const string WfFieldNotObject = "Enter a JSON object, such as {\"key\": \"value\"}.";
 }

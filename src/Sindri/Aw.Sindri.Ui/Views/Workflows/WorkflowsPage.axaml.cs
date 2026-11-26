@@ -15,6 +15,7 @@ internal sealed partial class WorkflowsPage : UserControl
     public WorkflowsPage()
     {
         InitializeComponent();
+        WatchListWidth();
     }
 
     /// <inheritdoc/>
