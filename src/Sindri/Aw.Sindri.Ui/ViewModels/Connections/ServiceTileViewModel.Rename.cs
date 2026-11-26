@@ -196,6 +196,11 @@ internal sealed partial class ServiceTileViewModel
 
         Raise(nameof(IsOffered), nameof(IsConnected), nameof(NeedsAttention), nameof(ConnectionName), nameof(Account), nameof(LastUsedText), nameof(Subtitle), nameof(AccessibleName), nameof(HasMany));
         RaiseState();
+        if (IsReplacing && !CanReplace)
+        {
+            _replaceBusy = false;
+            CancelReplace();   // the connection is gone, or no longer connected: the box has nothing to replace
+        }
     }
 
     /// <summary>True when the service has more than one connection: the tile then lists each with its own Rename.</summary>

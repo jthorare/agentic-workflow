@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:wf="using:Aw.Sindri.Ui.ViewModels.Workflows"
+             xmlns:controls="using:Aw.Sindri.Ui.Views.Controls"
+             x:Class="Aw.Sindri.Ui.Views.Workflows.WorkflowLevelFindingsList"
+             x:DataType="wf:WorkflowsPageViewModel">
+  <!-- The findings about the whole workflow, not one step (#4380), in the server's words like the step lists: a kind chip, what is wrong, how to fix it. No fix button: a
+       finding with no step has none. Each finding is one named text for a screen reader. -->
+  <ItemsControl x:Name="WorkflowFindingsList" ItemsSource="{Binding Findings.WholeWorkflow}">
+    <ItemsControl.ItemsPanel>
+      <ItemsPanelTemplate>
+        <StackPanel Spacing="{StaticResource Space.XS}" />
+      </ItemsPanelTemplate>
+    </ItemsControl.ItemsPanel>
+    <ItemsControl.ItemTemplate>
+      <DataTemplate x:DataType="wf:WorkflowFindingViewModel">
+        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto">
+          <controls:StateChipView Grid.RowSpan="2" VerticalAlignment="Top" Margin="0,0,8,0" Word="{Binding Word}" Tone="{Binding ToneWord}" />
+          <Border Name="WorkflowFindingText" Grid.Column="1" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <TextBlock Classes="body" Text="{Binding Sentence}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+          <TextBlock Grid.Row="1" Grid.Column="1" Classes="caption subtle" Text="{Binding FixLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Grid>
+      </DataTemplate>
+    </ItemsControl.ItemTemplate>
+  </ItemsControl>
+</UserControl>
