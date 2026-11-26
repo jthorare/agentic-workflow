@@ -26,14 +26,14 @@ internal sealed class HttpKeyCheck(HttpClient http, TimeSpan? timeout = null) : 
 
     private const string ViewerQuery = """{"query":"{ viewer { id } }"}""";
 
-    public async ValueTask<Result<Unit>> Check(ConnectionPreset preset, string key, CancellationToken cancellationToken)
+    public async ValueTask<Result<KeyCheckOutcome>> Check(ConnectionPreset preset, string key, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(preset);
         ArgumentException.ThrowIfNullOrEmpty(key);
         using var request = Request(preset, key);
         if (request is null)
         {
-            return Unit.Value;
+            return KeyCheckOutcome.NotApplicable;
         }
 
         using var timer = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -57,7 +57,7 @@ internal sealed class HttpKeyCheck(HttpClient http, TimeSpan? timeout = null) : 
             }
 
             var body = await response.Content.ReadAsStringAsync(timer.Token).ConfigureAwait(false);
-            return Accepted(preset.Key, body) ? Unit.Value : Refused(preset);
+            return Accepted(preset.Key, body) ? KeyCheckOutcome.Checked : Refused(preset);
         }
         catch (HttpRequestException)
         {

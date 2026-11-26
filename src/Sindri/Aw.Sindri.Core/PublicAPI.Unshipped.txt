@@ -25709,7 +25709,10 @@ Aw.Sindri.Core.Messages.IMessagesStore.Thread(string! conversation, Aw.Sindri.Co
 Aw.Sindri.Core.Commands.MessageReadAccess
 static Aw.Sindri.Core.Commands.MessageReadAccess.ShowsText(Aw.Sindri.Core.Commands.CallerContext? caller) -> bool
 Aw.Sindri.Core.Connections.IKeyCheck
-Aw.Sindri.Core.Connections.IKeyCheck.Check(Aw.Sindri.Core.Connections.ConnectionPreset! preset, string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Connections.IKeyCheck.Check(Aw.Sindri.Core.Connections.ConnectionPreset! preset, string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.KeyCheckOutcome>!>
+Aw.Sindri.Core.Connections.KeyCheckOutcome
+Aw.Sindri.Core.Connections.KeyCheckOutcome.Checked = 0 -> Aw.Sindri.Core.Connections.KeyCheckOutcome
+Aw.Sindri.Core.Connections.KeyCheckOutcome.NotApplicable = 1 -> Aw.Sindri.Core.Connections.KeyCheckOutcome
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyRateLimited -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyUnchecked -> Aw.Kernel.ErrorDefinition!

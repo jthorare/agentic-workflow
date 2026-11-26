@@ -26,12 +26,14 @@ internal sealed class KeyedCredentialCheck(IConnectionPresetCatalog presets, ICo
         {
             return string.IsNullOrWhiteSpace(tokens.AccessToken)
                 ? SindriErrors.ConnectionKeyRefused.With("the stored key is empty (fix: remove the connection and add it again with the key)")
-                : await keys.Check(preset, tokens.AccessToken, cancellationToken).ConfigureAwait(false);
+                                : Unit(await keys.Check(preset, tokens.AccessToken, cancellationToken).ConfigureAwait(false));
         }
 
         var url = connection.Config.GetValueOrDefault("probeUrl") ?? preset?.ProbeUrl;
         return url is null ? null : await probe.Probe(url, tokens, cancellationToken).ConfigureAwait(false);
     }
+
+    private static Result<Unit> Unit(Result<KeyCheckOutcome> outcome) => outcome.IsError ? outcome.Error : Aw.Kernel.Unit.Value;
 
     // The presets IKeyCheck asks a service about (HttpKeyCheck's rule): Linear's viewer query, or any preset's probe URL. For any other preset the check calls nothing and answers Unit, so the
     // test must say it tried nothing rather than "connected".

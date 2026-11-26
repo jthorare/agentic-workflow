@@ -22,10 +22,10 @@ public sealed class ReplaceConnectionKeyRaceAndMcpTests
     /// <summary>A key check that runs a write against the store while it "waits for the service", as a poller finishing during the 15 s check would.</summary>
     private sealed class DuringCheck(Func<Task> write) : IKeyCheck
     {
-        public async ValueTask<Result<Unit>> Check(ConnectionPreset preset, string key, CancellationToken cancellationToken)
+        public async ValueTask<Result<KeyCheckOutcome>> Check(ConnectionPreset preset, string key, CancellationToken cancellationToken)
         {
             await write().ConfigureAwait(false);
-            return Unit.Value;
+            return KeyCheckOutcome.Checked;
         }
     }
 

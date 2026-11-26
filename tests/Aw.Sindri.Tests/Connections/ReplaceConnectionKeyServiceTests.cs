@@ -134,6 +134,22 @@ public sealed class ReplaceConnectionKeyServiceTests
     }
 
     [Fact]
+    public async Task Replace_is_checked_when_the_key_check_says_it_checked_even_without_a_probe_url()
+    {
+        var (world, _) = await Holding();
+        var plain = ConnectionHarness.Linear with { Key = "acme", DisplayName = "Acme", ProbeUrl = null };
+        world.Presets = new FakeConnectionPresets(plain);
+        _ = await world.Store.Upsert(Assert.Single(world.Store.Rows) with { Preset = "acme" }, Token);
+
+        var replaced = await world.ReplaceKey().Handle(new ReplaceConnectionKeyRequest("linear:work", KeyEnv: null, Key: Fresh), Token);
+
+        Assert.True(replaced.IsSuccess);
+        _ = Assert.Single(world.Keys.Calls);
+        Assert.True(replaced.Value.Checked);
+        Assert.Null(replaced.Value.UncheckedReason);
+    }
+
+    [Fact]
     public async Task A_row_whose_preset_left_the_catalog_is_refused_like_an_unknown_preset_and_nothing_is_checked_or_written()
     {
         var (world, row) = await Holding(preset: "gone");
