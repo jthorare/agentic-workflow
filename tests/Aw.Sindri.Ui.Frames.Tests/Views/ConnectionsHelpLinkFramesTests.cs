@@ -10,7 +10,7 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
 /// <summary>
 /// #4485: a tile's help link ("Open Spotify's developer dashboard") was wider than the 260 px tile and its label was cut off ("...dashb") with no wrap and no ellipsis. Every help link of every tile, as a token link and as an OAuth link,
-/// shows its whole label inside the tile: the label is laid out at the width it asked for (wrapped, if need be) and the button stays inside the tile's frame.
+/// shows its whole label inside the tile: the label's text fits the label's width (wrapped, if need be) and the button stays inside the tile's frame.
 /// </summary>
 [Lane(TestLane.Integration)]
 [Collection(HeadlessWindows.Name)]
@@ -42,8 +42,10 @@ public sealed class ConnectionsHelpLinkFramesTests : FrameHost
         var frame = Assert.Single(inTile.OfType<Border>(), b => string.Equals(b.Name, "ServiceTileFrame", StringComparison.Ordinal));
         var label = Assert.Single(link.GetVisualDescendants().OfType<TextBlock>());
 
-        // the label is laid out as wide as it asked for: a clipped one is arranged narrower than its desired width
-        Assert.True(label.Bounds.Width >= label.DesiredSize.Width - 0.5, string.Create(CultureInfo.InvariantCulture, $"{id} (oauth {oauth}): the label '{label.Text}' wants {label.DesiredSize.Width:0} px but is laid out {label.Bounds.Width:0} px wide"));
+        // why: Measure clamps DesiredSize to the space offered, so a cut-off NoWrap label still has Bounds.Width == DesiredSize.Width; the cut shows only in the text's own layout, which must fit the label and collapse no line
+        var text = label.TextLayout;
+        Assert.True(text.WidthIncludingTrailingWhitespace <= label.Bounds.Width + 0.5, string.Create(CultureInfo.InvariantCulture, $"{id} (oauth {oauth}): the label '{label.Text}' needs {text.WidthIncludingTrailingWhitespace:0} px of text but is laid out {label.Bounds.Width:0} px wide"));
+        Assert.False(text.TextLines.Any(l => l.HasCollapsed), $"{id} (oauth {oauth}): the label '{label.Text}' is trimmed");
         var linkRight = link.TranslatePoint(new Point(link.Bounds.Width, 0), frame)!.Value.X;
         Assert.True(linkRight <= frame.Bounds.Width + 0.5, string.Create(CultureInfo.InvariantCulture, $"{id} (oauth {oauth}): the link ends at {linkRight:0} px, past the tile's {frame.Bounds.Width:0} px"));
         FrameFile.Save(window, $"connections-help-link-{id}-{(oauth ? "oauth" : "token")}");
