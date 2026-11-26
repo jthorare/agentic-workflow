@@ -45,6 +45,7 @@ internal static class ConnectionServiceCollectionExtensions
             .AddScoped<IValidator<TestConnectionRequest>, AcceptAllValidator<TestConnectionRequest>>().AddUngatedCommand<TestConnectionRequest, TestConnectionResponse, TestConnectionService>()
             .AddScoped<IValidator<RemoveConnectionRequest>, AcceptAllValidator<RemoveConnectionRequest>>().AddCommand<RemoveConnectionRequest, RemoveConnectionResponse, RemoveConnectionService>()
             .AddScoped<IValidator<RenameConnectionRequest>, AcceptAllValidator<RenameConnectionRequest>>().AddCommand<RenameConnectionRequest, RenameConnectionResponse, RenameConnectionService>()
+            .AddScoped<IValidator<ReplaceConnectionKeyRequest>, AcceptAllValidator<ReplaceConnectionKeyRequest>>().AddCommand<ReplaceConnectionKeyRequest, AddConnectionResponse, ReplaceConnectionKeyService>()
             .AddScoped<IValidator<SignInConnectionRequest>, AcceptAllValidator<SignInConnectionRequest>>().AddUngatedCommand<SignInConnectionRequest, AddConnectionResponse, SignInConnectionService>()
             .AddScoped<IValidator<ListConnectionsRequest>, AcceptAllValidator<ListConnectionsRequest>>().AddQuery<ListConnectionsRequest, ListConnectionsResponse, ListConnectionsService>()
             .AddScoped<IValidator<GetConnectionRequest>, AcceptAllValidator<GetConnectionRequest>>().AddQuery<GetConnectionRequest, GetConnectionResponse, GetConnectionService>();
