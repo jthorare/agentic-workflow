@@ -80,7 +80,7 @@ internal static partial class CommandTable
         var probe = services.GetRequiredService<IControlPlaneProbe>();
         var output = new Output(Console.Out, Console.Error, options);
         var cap = CliTimeout.Read(environment);   // a malformed value refuses the calls, not the verbs that make none
-        using var client = new ControlPlaneClient(probe, options, Headers(session, services), cap.IsError ? null : cap.Value, refusal: cap.IsError ? cap.Error : null);
+        using var client = new ControlPlaneClient(probe, options, Headers(args, session, services), cap.IsError ? null : cap.Value, refusal: cap.IsError ? cap.Error : null);
         StartCommand Start(bool headless) => new(probe, services.GetRequiredService<IControlPlaneLauncher>(), client, output, services.GetRequiredService<TimeProvider>(), UiOpener(headless, environment));
         var start = Start(headless: true);   // 'sindri --headless', and the start a human 'profile approve' may need
         var verbs = new Verbs(client, probe, output, services);
@@ -93,7 +93,7 @@ internal static partial class CommandTable
             ["status", .. var rest] when Json(rest) is { } json => await verbs.Status(json, ct).ConfigureAwait(false),
             ["scrub", .. var rest] => await new ScrubCommand(services, output, Console.In).Run(rest, ct).ConfigureAwait(false),
             ["stop"] or ["restart", ..] => await StopOrRestart(args, verbs, (client, probe, output), (services, start), ct).ConfigureAwait(false),
-            ["profile", ..] => await Profile(args, verbs, a => new Verbs(client, probe, output, services, c => start.EnsureRunning(!a.NoStart, c)), (output, Headers(session, services)), ct).ConfigureAwait(false),
+            ["profile", ..] => await Profile(args, verbs, a => new Verbs(client, probe, output, services, c => start.EnsureRunning(!a.NoStart, c)), (output, Headers(args, session, services)), ct).ConfigureAwait(false),
             ["views", "rebuild", .. var rest] when NoStart(rest) is { } noStart => await new Verbs(client, probe, output, services, c => start.EnsureRunning(!noStart, c))
                 .RebuildViews(ct).ConfigureAwait(false),
             ["handoff", .. var rest] => await new HandoffVerbs(client, output, start.EnsureRunning).Run(rest, ct).ConfigureAwait(false),
@@ -215,9 +215,16 @@ internal static partial class CommandTable
     /// call carries no token and the API refuses it (SND-AUTH-001). The repo is looked up at the first call, from the
     /// working directory.
     /// </summary>
-    private static CallerHeaders Headers(AgentSession session, IServiceProvider services) =>
-        CallerHeaders.For(session, services.GetRequiredService<IHumanTokenStore>(),
+    /// <param name="args">The command line (the repo lookup follows the verb: #3727).</param>
+    /// <param name="session">How the CLI classes itself.</param>
+    /// <param name="services">The container.</param>
+    /// <returns>The headers.</returns>
+    internal static CallerHeaders Headers(string[] args, AgentSession session, IServiceProvider services)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+        return CallerHeaders.For(session, services.GetRequiredService<IHumanTokenStore>(),
             ct => CallerHeaders.RepoOf(services.GetRequiredService<IApprovedProfile>(), services.GetRequiredService<IRepoLocator>(), Environment.CurrentDirectory, ct));
+    }
 
     /// <summary>What bare 'sindri' does to open the app; 'sindri --headless' opens nothing.</summary>
     internal static Func<string>? UiOpener(bool headless, Func<string, string?> environment) =>
