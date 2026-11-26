@@ -7,4 +7,8 @@ namespace Aw.Sindri.Features.ListWorkflowRuns;
 /// <param name="Slug">The workflow.</param>
 /// <param name="Offset">How many of the newest runs to skip (0 when the call pages no further).</param>
 /// <param name="Limit">How many runs to return, at most; <see cref="ListWorkflowRunsService.Newest"/> when the call names none.</param>
-internal sealed record ListWorkflowRunsRequest(WorkflowSlug Slug, int Offset = 0, int Limit = ListWorkflowRunsService.Newest) : IQuery<ListWorkflowRunsResponse>;
+internal sealed record ListWorkflowRunsRequest(WorkflowSlug Slug, int Offset = 0, int Limit = ListWorkflowRunsService.Newest) : IQuery<ListWorkflowRunsResponse>
+{
+    /// <summary>Gets which runs to keep: statuses, a start-time window and the 'before' cursor (#4334); <see cref="RunsFilter.None"/> keeps every run.</summary>
+    public RunsFilter Filter { get; init; } = RunsFilter.None;
+}

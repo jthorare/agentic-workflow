@@ -171,7 +171,9 @@ CO-2a (discovery): `Aw.Sindri.Core/Sessions/` (the records, the pure rules `Sess
 `FleetChangeRules.Diff`/`Restore`, `EnvironmentAllowlist`, the ports), `Aw.Sindri.Core/Launch/` and `Infrastructure/Launch/` (the minimal launcher reader and agent
 catalog, CA-0), `Infrastructure/Sessions/` (`ProcProcessTable`, `ClaudeSessionRecords`, `FleetStateFiles`, `TranscriptFiles`, `SessionSnapshotStore`),
 `Features/Sessions/` (the pass, `RecordFleetChanges`, `RestoreFleetHistory`) and `Host/Server/SessionCollectorHost`. Host detection landed in CO-2b (the previous section); the routes and the CLI are CO-3 (the section below). The event is `fleet.changed`; the codes are `SND-SESSION-001`
-(a source failed), `-002` (`unsupported-platform`, `proc-unreadable`, `disabled`) and `-003` (a test override) in `docs/csharp/sindri.md`. The snapshot over
+(a source failed), `-002` (`unsupported-platform`, `proc-unreadable`, `disabled`) and `-003` (a test override) in `docs/csharp/sindri.md`. A pass whose process-table read
+overruns its budget keeps the last list and its `observedAt`. From the third overrun in a row, the `collector` row (`SND-SESSION-001`) says how old that list is, or that
+there is no list yet (#4244). The Agents card and the Agents page show that row as served. The snapshot over
 `tests/fixtures/sessions/` is pinned by `tests/Aw.Sindri.Tests/Sessions/Golden/snapshot-discovery.json`. `LaunchId` (the launcher's, `Core/Launch/LaunchId.cs`, `LCH-` and 32 hex) is the
 typed id of `AW_SINDRI_LAUNCH`; a value of another shape is dropped.
 

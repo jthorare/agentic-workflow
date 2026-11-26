@@ -18,7 +18,7 @@ public sealed class RunDetailViewModelTests
     {
         var run = await _f.OpenedRun(Token);
 
-        Assert.Equal(("Run morning-check@1:1", "✓ Succeeded", "Started by hand", "Revision 1"), (run.TitleText, run.ChipGlyph + " " + run.ChipWord, run.TriggerText, run.RevisionText));
+        Assert.Equal(("✓ Succeeded", "Started by hand", "Revision 1"), (run.ChipGlyph + " " + run.ChipWord, run.TriggerText, run.RevisionText));
         Assert.Contains("\"summary\": \"no drift\"", run.OutputsText, StringComparison.Ordinal);
         Assert.Equal((true, false), (run.HasOutputs, run.HasError));
     }
@@ -33,6 +33,23 @@ public sealed class RunDetailViewModelTests
     {
         var served = Golden("workflow-runs-run", "finished");
         served["trigger"] = new JsonObject { ["kind"] = kind };
+        _ = served.AsObject().Remove("triggerKind");   // an older Sindri: the stored object's kind is all there is
+        _f.ServeRun(served);
+
+        var run = await _f.OpenedRun(Token);
+
+        Assert.Equal(expected, run.TriggerText);
+    }
+
+    [Theory]
+    [InlineData("cli", "Started from the CLI")]
+    [InlineData("agent", "Started by an agent")]
+    [InlineData("schedule", "Started on a schedule")]
+    public async Task A_run_says_how_it_started_from_the_served_trigger_word(string word, string expected)
+    {
+        var served = Golden("workflow-runs-run", "finished");
+        served["trigger"] = new JsonObject { ["kind"] = "manual", ["by"] = "human:cli" };   // a CLI start is stored as manual: only the served word tells it apart (#3683)
+        served["triggerKind"] = word;
         _f.ServeRun(served);
 
         var run = await _f.OpenedRun(Token);
