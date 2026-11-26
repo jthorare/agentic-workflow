@@ -2,7 +2,7 @@ using System.Globalization;
 using Aw.Kernel;
 using Aw.Kernel.Dates;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Projects.TruthSources;
+using Aw.Sindri.Core.Projects.Sources;
 using Aw.Sindri.Core.Projects.Vocabulary;
 
 namespace Aw.Sindri.Host.Commands;

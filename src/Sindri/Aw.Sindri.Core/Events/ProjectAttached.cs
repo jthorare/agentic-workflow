@@ -26,5 +26,5 @@ public sealed record ProjectAttached(
     DateOnly? Target,
     string? Notes = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Note = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<Projects.TruthSources.BranchSource>? Branches = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<Projects.Sources.BranchSource>? Branches = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? Items = null);

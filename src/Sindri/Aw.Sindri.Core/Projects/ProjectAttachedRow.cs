@@ -31,5 +31,5 @@ public sealed record ProjectAttachedRow(
     DateTimeOffset? FinishedAt,
     DateTimeOffset EditedAt,
     long Sequence,
-    IReadOnlyList<TruthSources.BranchSource>? Branches = null,
+    IReadOnlyList<Sources.BranchSource>? Branches = null,
     IReadOnlyList<string>? Items = null);
