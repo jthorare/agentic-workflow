@@ -49,7 +49,7 @@ internal sealed class SindriProjectTruthFacts(IReviewFacts reviews, IReviewSumma
             }
         }
 
-        var items = await Items(cancellationToken).ConfigureAwait(false);
+        var items = await Items(union, cancellationToken).ConfigureAwait(false);
         return items.IsError
             ? items.Error
             : new ProjectTruthFacts(inScope, found, items.Value, Agents(union), inScope.Count == 0 ? null : await Owner(read.Value.Github?.LastCode, cancellationToken).ConfigureAwait(false));
@@ -71,7 +71,7 @@ internal sealed class SindriProjectTruthFacts(IReviewFacts reviews, IReviewSumma
         return string.IsNullOrWhiteSpace(login) ? null : login;
     }
 
-    private async ValueTask<Result<IReadOnlyList<ProjectTruthItem>>> Items(CancellationToken cancellationToken)
+    private async ValueTask<Result<IReadOnlyList<ProjectTruthItem>>> Items(ProjectSources union, CancellationToken cancellationToken)
     {
         var rows = await views.List<ItemRow>(ViewNames.Items, cancellationToken).ConfigureAwait(false);
         if (rows.IsError)
@@ -88,10 +88,14 @@ internal sealed class SindriProjectTruthFacts(IReviewFacts reviews, IReviewSumma
         var byItem = links.Value.Where(static l => l.Kind == ItemLinkKind.Pr && l.Url is not null).ToLookup(static l => l.Item, static l => l.Url ?? string.Empty);
         IReadOnlyList<ProjectTruthItem> items = [.. rows.Value
             .Where(static r => r.State != ItemState.Cancelled)
-            .Select(r => new ProjectTruthItem(r.Repo?.Value, r.State == ItemState.Done, [.. byItem[r.Id]]))
-            .Where(static i => i.LinkUrls.Count > 0)];
+            .Select(r => new ProjectTruthItem(r.Repo?.Value, r.State == ItemState.Done, [.. byItem[r.Id]], r.Id))
+            .Where(i => Wanted(i, union))];
         return Results.Success(items);
     }
+
+    // a PR-linked item, or one a project names by id (#4499)
+    private static bool Wanted(ProjectTruthItem item, ProjectSources union) =>
+        item.LinkUrls.Count > 0 || (item.Item is { } id && (union.Items?.Contains(id.Value, StringComparer.Ordinal) ?? false));
 
     private IReadOnlyList<ProjectTruthAgent> Agents(ProjectSources union) =>
         sessions.Current is not { } current

@@ -64,7 +64,7 @@ internal sealed class AttachProjectService(AttachProjectLookup lookup, ILedgerSt
 
     /// <summary>What the owner typed, with the Linear title as the name and the led notes as the notes when none were typed.</summary>
     private static (ProjectDraft Draft, bool Led, IReadOnlyList<ProjectAttachedRow> Attached) Draft(AttachProjectRequest request, AttachContext found) =>
-        (new ProjectDraft(found.Key, request.Name ?? found.Title, request.State, request.Links, request.Notes ?? found.LedNotes, request.Target), found.Led, found.Attached);
+        (new ProjectDraft(found.Key, request.Name ?? found.Title, request.State, request.Links, request.Notes ?? found.LedNotes, request.Target, request.Branches, request.Items), found.Led, found.Attached);
 
     /// <summary>What a typed Linear project names; null when none was typed.</summary>
     private static Result<LinearProjectRef?> Linear(string? typed)

@@ -85,9 +85,12 @@ public static class ProjectTruths
     /// <returns>The sources, each list without duplicates.</returns>
     public static ProjectSources SourcesOf(IReadOnlyList<string> linkUrls, IReadOnlyList<string> linearRepos, IReadOnlyList<string> profileRepos, IReadOnlyList<BranchSource>? typedBranches, IReadOnlyList<string>? typedItems)
     {
-        ArgumentNullException.ThrowIfNull(linkUrls);
-        _ = (typedBranches, typedItems);   // red stub: typed sources are not read yet
-        return SourcesOf(linkUrls, linearRepos, profileRepos);
+        var linked = SourcesOf(linkUrls, linearRepos, profileRepos);
+        return linked with
+        {
+            Branches = [.. (linked.Branches ?? []).Concat(typedBranches ?? []).Distinct()],
+            Items = typedItems is { Count: > 0 } ? [.. typedItems.Distinct(StringComparer.Ordinal)] : null,
+        };
     }
 
     // "https://github.com/o/n/pull/N" is a PR of o/n, "https://github.com/o/n" is the repo; anything else is no source
@@ -132,10 +135,14 @@ public static class ProjectTruths
         }
 
         var prUrls = prs.Select(static p => p.Url).Concat(named).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var items = facts.Items.Where(i => i.LinkUrls.Any(u => prUrls.Contains(u.TrimEnd('/')))).ToList();
+        var items = facts.Items.Where(i => CountsItem(i, sources, prUrls)).ToList();
         var agents = facts.Agents.Count(a => a.Running && a.Repo is { } repo && sources.Repos.Contains(repo, StringComparer.OrdinalIgnoreCase));
         return new ProjectTruth(prs, items.Count(static i => !i.Done), items.Count(static i => i.Done), items.Count, agents, HealthOf(prs, uncheckedCount, inputs.Now, blockers), prs.Exists(static p => p.WaitsOnYou));
     }
+
+    // #4499: an item counts through a PR link the project covers, or when the project names its id
+    private static bool CountsItem(ProjectTruthItem item, ProjectSources sources, HashSet<string> prUrls) =>
+        item.LinkUrls.Any(u => prUrls.Contains(u.TrimEnd('/'))) || (item.Item is { } id && (sources.Items?.Contains(id.Value, StringComparer.Ordinal) ?? false));
 
     private static string UrlOf(ReviewPull pull) => (pull.Url ?? string.Create(CultureInfo.InvariantCulture, $"https://github.com/{pull.Repo}/pull/{pull.Number}")).TrimEnd('/');
 

@@ -22,11 +22,9 @@ internal static class ProjectTruthPage
         ArgumentNullException.ThrowIfNull(profileRepos);
         ArgumentNullException.ThrowIfNull(facts);
         var cards = page.Projects.Concat(page.Finished).Concat(page.Hidden).ToList();
-        var sources = cards.ToDictionary(static c => c.Key, c => ProjectTruths.SourcesOf([.. c.Links.Select(static l => l.Url)], c.Repos, profileRepos.GetValueOrDefault(c.Key) ?? []), StringComparer.Ordinal);
-        var union = new ProjectSources(
-            [.. sources.Values.SelectMany(static s => s.Repos.Concat((s.Branches ?? []).Select(static b => b.Repo))).Distinct(StringComparer.OrdinalIgnoreCase)],   // why: a branch source reads its repo's PRs; each project then keeps only the PRs on its own branches
-            [.. sources.Values.SelectMany(static s => s.PullUrls).Distinct(StringComparer.OrdinalIgnoreCase)]);
-        if (union.Repos.Count == 0 && union.PullUrls.Count == 0)
+        var sources = cards.ToDictionary(static c => c.Key, c => ProjectTruths.SourcesOf([.. c.Links.Select(static l => l.Url)], c.Repos, profileRepos.GetValueOrDefault(c.Key) ?? [], c.Branches, c.Items), StringComparer.Ordinal);
+        var union = Union(sources.Values);
+        if (union.Repos.Count == 0 && union.PullUrls.Count == 0 && (union.Items?.Count ?? 0) == 0)
         {
             return page;
         }
@@ -40,5 +38,16 @@ internal static class ProjectTruthPage
 
         ProjectCard With(ProjectCard card) => card with { Truth = ProjectTruths.Build(new ProjectTruthInputs(sources[card.Key], read.Value, now)) };
         return page with { Projects = [.. page.Projects.Select(With)], Finished = [.. page.Finished.Select(With)], Hidden = [.. page.Hidden.Select(With)], Freshness = read.Value.Owner is null && read.Value.Pulls.Count > 0 ? [.. page.Freshness, NoLogin] : page.Freshness };
+    }
+
+    // why: a branch source reads its repo's PRs; each project then keeps only its own branch's PRs (#4333); a typed item id is read from the items view (#4499)
+    private static ProjectSources Union(IEnumerable<ProjectSources> all)
+    {
+        var list = all.ToList();
+        return new ProjectSources(
+            [.. list.SelectMany(static s => s.Repos.Concat((s.Branches ?? []).Select(static b => b.Repo))).Distinct(StringComparer.OrdinalIgnoreCase)],
+            [.. list.SelectMany(static s => s.PullUrls).Distinct(StringComparer.OrdinalIgnoreCase)],
+            Branches: null,
+            Items: [.. list.SelectMany(static s => s.Items ?? []).Distinct(StringComparer.Ordinal)]);
     }
 }

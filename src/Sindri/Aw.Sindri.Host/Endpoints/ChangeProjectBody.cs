@@ -18,6 +18,8 @@ namespace Aw.Sindri.Host.Endpoints;
 /// <param name="ClearNotes">Drops the notes.</param>
 /// <param name="Note">Alias of <paramref name="Notes"/>; removed one release after notes ships (owner q158).</param>
 /// <param name="ClearNote">Alias of <paramref name="ClearNotes"/>; removed with <paramref name="Note"/>.</param>
+/// <param name="Branches">The typed branch and branch-prefix sources (#4499), or null.</param>
+/// <param name="Items">The typed work-item id sources (#4499), or null.</param>
 internal sealed record ChangeProjectBody(
     long Version,
     string? Name = null,
@@ -29,7 +31,9 @@ internal sealed record ChangeProjectBody(
     string? Notes = null,
     bool ClearNotes = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Note = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool ClearNote = false)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool ClearNote = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.BranchSource>? Branches = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? Items = null)
 {
     /// <summary>The request for <paramref name="project"/>.</summary>
     /// <param name="project">The route's project: a prj_ id, or a led project's Linear key.</param>
@@ -39,5 +43,5 @@ internal sealed record ChangeProjectBody(
             ? conflict
             : new ChangeProjectRequest(project, Version, Edit());
 
-    private ProjectEdit Edit() => new(Name, State, ClearState, Links, Notes ?? Note, ClearNotes || ClearNote, Target, ClearTarget);
+    private ProjectEdit Edit() => new(Name, State, ClearState, Links, Notes ?? Note, ClearNotes || ClearNote, Target, ClearTarget, Branches, Items);
 }

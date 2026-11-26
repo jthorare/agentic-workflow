@@ -48,7 +48,7 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
         var at = recorded.Envelope.OccurredAt;
         return new ProjectAttachedRow(
             attached.Id, attached.Linear, attached.Name, attached.State, attached.Links, attached.Notes ?? attached.Note, attached.Target,
-            Version: 1, at, IsFinished(attached.State) ? at : default(DateTimeOffset?), at, recorded.Sequence);
+            Version: 1, at, IsFinished(attached.State) ? at : default(DateTimeOffset?), at, recorded.Sequence, attached.Branches, attached.Items);
     }
 
     /// <summary>The row after a 'project.changed': the asked fields set, the cleared ones dropped, the version moved, and the finish time set when the state newly became Done or Canceled and dropped when it left them.</summary>
@@ -68,6 +68,8 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
             Name = changed.Name ?? row.Name,
             State = state,
             Links = changed.Links ?? row.Links,
+            Branches = changed.Branches ?? row.Branches,
+            Items = changed.Items ?? row.Items,
             Notes = NotesAfter(row, changed),
             Target = changed.ClearTarget ? null : changed.Target ?? row.Target,
             Version = changed.Version,

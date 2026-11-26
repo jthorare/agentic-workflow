@@ -56,10 +56,7 @@ public static partial class ProjectDecisions
             name = (draft.Name ?? string.Empty).Trim();
         }
 
-        var fields = Fields(draft.State, draft.Links, draft.Notes);
-        return fields.IsError
-            ? fields.Error
-            : new ProjectAttached(command, id, draft.Linear, name, draft.State, fields.Value, draft.Target, draft.Notes);
+        return Event(command, id, draft, name);
     }
 
     /// <summary>Changes an attached or hand-made project that is still at the version the owner saw.</summary>
@@ -81,7 +78,8 @@ public static partial class ProjectDecisions
         var refused = Refuse(found.Value, edit);
         return refused is not null
             ? refused
-            : new ProjectChanged(command, id, found.Value.Version + 1, edit.Name?.Trim(), edit.State, edit.ClearState, edit.Links?.Select(static l => l.Trim()).ToList(), edit.Target, edit.ClearTarget, edit.Notes, edit.ClearNotes);
+            : new ProjectChanged(command, id, found.Value.Version + 1, edit.Name?.Trim(), edit.State, edit.ClearState, edit.Links?.Select(static l => l.Trim()).ToList(), edit.Target, edit.ClearTarget, edit.Notes, edit.ClearNotes,
+                Branches: ProjectSourceRules.Clean(edit.Branches), Items: ProjectSourceRules.Clean(edit.Items));
     }
 
     /// <summary>Removes an attached or hand-made project that is still at the version the owner saw.</summary>
@@ -150,7 +148,7 @@ public static partial class ProjectDecisions
 
     // a project the owner leads keeps Linear's name, state, links and target: only the notes are the owner's
     private static Error? LedEditError(ProjectEdit edit) =>
-        edit is { Name: not null } or { State: not null } or { ClearState: true } or { Links: not null } or { Target: not null } or { ClearTarget: true }
+        edit is { Name: not null } or { State: not null } or { ClearState: true } or { Links: not null } or { Target: not null } or { ClearTarget: true } or { Branches: not null } or { Items: not null }
             ? SindriErrors.ProjectInvalid.With("a project you lead only takes notes here; edit it in Linear")
             : edit.Notes is not null && edit.ClearNotes ? Invalid("notes", "can't be set and cleared in one change")
             : NotesError(edit.Notes) ?? (edit is { Notes: null, ClearNotes: false } ? Invalid("change", "nothing to change (give notes or clear them)") : null);
@@ -186,7 +184,27 @@ public static partial class ProjectDecisions
         RenameError(project, edit.Name)
         ?? ClearAndSetError(edit)
         ?? FieldError(edit.State, edit.Links, edit.Notes)
+        ?? TypedSourcesError(project, edit)
         ?? (IsEmpty(edit) ? Invalid("change", "nothing to change (give a name, state, links, notes or target)") : null);
+
+    private static Result<ProjectAttached> Event(CommandId command, ProjectId id, ProjectDraft draft, string? name)
+    {
+        var fields = Fields(draft.State, draft.Links, draft.Notes);
+        if (fields.IsError)
+        {
+            return fields.Error;
+        }
+
+        return ProjectSourceRules.Check(draft.Branches, draft.Items, fields.Value) is { } refused
+            ? refused
+            : new ProjectAttached(command, id, draft.Linear, name, draft.State, fields.Value, draft.Target, draft.Notes, Branches: ProjectSourceRules.Clean(draft.Branches), Items: ProjectSourceRules.Clean(draft.Items));
+    }
+
+    // #4499: the typed lists are checked against the links the project has after the change, so dropping the link that named a repo refuses the branches still held for it
+    private static Error? TypedSourcesError(ProjectAttachedRow project, ProjectEdit edit) =>
+        edit.Branches is null && edit.Items is null && edit.Links is null
+            ? null
+            : ProjectSourceRules.Check(edit.Branches ?? project.Branches, edit.Items, [.. (edit.Links ?? project.Links).Select(static l => l.Trim())]);
 
     private static Error? RenameError(ProjectAttachedRow project, string? name) =>
         name is null ? null
@@ -200,7 +218,7 @@ public static partial class ProjectDecisions
         : null;
 
     private static bool IsEmpty(ProjectEdit edit) =>
-        edit is { Name: null, State: null, ClearState: false, Links: null, Notes: null, ClearNotes: false, Target: null, ClearTarget: false };
+        edit is { Name: null, State: null, ClearState: false, Links: null, Notes: null, ClearNotes: false, Target: null, ClearTarget: false, Branches: null, Items: null };
 
     private static Result<string> Name(string? name) => NameError(name) is { } error ? error : (name ?? string.Empty).Trim();
 
