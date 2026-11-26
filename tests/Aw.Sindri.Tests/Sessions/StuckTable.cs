@@ -21,6 +21,9 @@ internal sealed class StuckTable(FakeProcessTable inner) : IProcessTable, IDispo
 
     public void Release() => _gate.Set();
 
+    /// <summary>Makes released reads wait again, for a test that blocks the table a second time.</summary>
+    public void Rearm() => _gate.Reset();
+
     public Result<IReadOnlyList<ProcessEntry>> Read(CancellationToken cancellationToken)
     {
         Tables.Increment();
