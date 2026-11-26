@@ -8,13 +8,13 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// </summary>
 internal sealed class NodeGroupViewModel : ObservableObject
 {
-    internal NodeGroupViewModel(string node, IReadOnlyList<NodeRunView> runs, Func<NodeRunViewModel, bool, CancellationToken, Task>? control = null)
+    internal NodeGroupViewModel(string node, IReadOnlyList<NodeRunView> runs, Func<NodeRunViewModel, bool, CancellationToken, Task>? control = null, Func<string, CancellationToken, Task>? edit = null, string nodeType = "")
     {
         Node = node;
         var items = runs.Count(static r => r.ItemIndex > 0);
         IsForEach = items > 0;
         HeaderText = IsForEach ? Labels.WfNodeItems(node, items) : node;
-        Runs = [.. runs.OrderBy(r => r.ItemIndex).Select(r => new NodeRunViewModel(r, items, control))];
+        Runs = [.. runs.OrderBy(r => r.ItemIndex).Select(r => new NodeRunViewModel(r, items, control, edit, nodeType))];
     }
 
     /// <summary>The node's id.</summary>

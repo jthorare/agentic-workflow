@@ -10,7 +10,7 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// One workflow's runs, newest first as the API serves them, under the workflow's name and one line on the revision shown. A workflow with no active revision has no
 /// runs list (Sindri refuses it with SND-GRAPH-105); the page says so in its own words instead of showing an error.
 /// </summary>
-internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
+internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
 {
     /// <summary>The refusal code for a workflow with no active revision.</summary>
     internal const string NotActive = "SND-GRAPH-105";
@@ -24,6 +24,9 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     private readonly Dictionary<string, ITimer> _startTimers = new(StringComparer.Ordinal);
     private readonly HashSet<string> _didNotStart = new(StringComparer.Ordinal);
     private int _reads;
+    private List<RunRowViewModel> _all = [];
+    private bool _more;   // the server holds runs older than the ones read (it serves the newest 50): the filters and the count only see these
+    private readonly HashSet<string> _ticked = new(StringComparer.Ordinal);   // ticked run ids survive a re-read
     private readonly List<string> _starting = [];   // runs Run now started whose views row the server has not shown yet: each is drawn as a Starting placeholder until its real row arrives
 
     /// <summary>The workflow's slug.</summary>
@@ -77,16 +80,16 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     public bool HasNotice => NoticeText.Length > 0;
 
     /// <summary>True until the answer.</summary>
-    public bool IsReading { get; private set => Set(ref field, value); }
+    public bool IsReading { get; private set { Set(ref field, value); OnChanged(nameof(ShowsRunTable)); } }
 
     /// <summary>True when there are no runs to list.</summary>
-    public bool IsEmpty { get; private set => Set(ref field, value); }
+    public bool IsEmpty { get; private set { Set(ref field, value); OnChanged(nameof(ShowsRunTable)); } }
 
     /// <summary>"No runs yet." or "This workflow is off, so it has no runs."; empty otherwise.</summary>
     public string EmptyText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when the read failed.</summary>
-    public bool IsFailed { get; private set => Set(ref field, value); }
+    public bool IsFailed { get; private set { Set(ref field, value); OnChanged(nameof(ShowsRunTable)); } }
 
     /// <summary>The sentence for a failed read.</summary>
     public string FailedText { get; private set => Set(ref field, value); } = string.Empty;
@@ -102,6 +105,8 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         var read = ++_reads;
         if (!string.Equals(Slug, slug, StringComparison.Ordinal))
         {
+            (_all, _more, StatusFilter, DateFilter) = ([], false, string.Empty, string.Empty);
+            _ticked.Clear();
             Rows.Clear();   // another workflow: none of the old runs stay
             ClearStarting();
             (Head, DetailText) = (string.Empty, string.Empty);
@@ -165,91 +170,6 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
         }
     }
 
-    /// <summary>Shows a run Run now just started as Starting at the top of the list, from the start call's reply, before the server's row exists. Reads keep it until the real row arrives, which replaces it.</summary>
-    /// <param name="runId">The new run's id.</param>
-    internal void AddStarting(string runId)
-    {
-        if (_starting.Contains(runId, StringComparer.Ordinal) || Rows.Any(r => string.Equals(r.Id, runId, StringComparison.Ordinal)))
-        {
-            return;
-        }
-
-        _starting.Add(runId);
-        _startTimers[runId] = clock.CreateTimer(_ => _ui.PostOrInline(() => StartDeadlinePassed(runId)), state: null, StartWait, Timeout.InfiniteTimeSpan);   // no run row by then: the placeholder says so
-        Rows.Insert(0, Placeholder(runId));
-        (IsEmpty, EmptyText) = (false, string.Empty);
-    }
-
-    private RunRowViewModel Placeholder(string runId)
-    {
-        var row = new RunRowViewModel(new WorkflowRunRowView(runId, Shown?.Revision ?? 0, "starting", "manual", clock.GetUtcNow(), EndedAt: null, Error: null), clock);
-        if (_didNotStart.Contains(runId))
-        {
-            row.MarkDidNotStart();
-        }
-
-        return row;
-    }
-
-    // The timer ran out: the placeholder stays in the list (a late row still replaces it) and says the run did not start.
-    private void StartDeadlinePassed(string runId)
-    {
-        StopStartTimer(runId);
-        if (!_starting.Contains(runId, StringComparer.Ordinal))
-        {
-            return;
-        }
-
-        _ = _didNotStart.Add(runId);
-        Rows.FirstOrDefault(r => string.Equals(r.Id, runId, StringComparison.Ordinal) && string.Equals(r.Status, "starting", StringComparison.Ordinal))?.MarkDidNotStart();
-        StartTimedOut?.Invoke(this, new ValueEventArgs<string>(runId));
-    }
-
-    private void StopStartTimer(string runId)
-    {
-        if (_startTimers.Remove(runId, out var timer))
-        {
-            timer.Dispose();
-        }
-    }
-
-    private void ClearStarting()
-    {
-        foreach (var timer in _startTimers.Values)
-        {
-            timer.Dispose();
-        }
-
-        _starting.Clear();
-        _startTimers.Clear();
-        _didNotStart.Clear();
-    }
-
-    /// <summary>The page was left: every Starting placeholder goes and its deadline stops, so no timer outlives the page and no row waits on a timer that is gone.</summary>
-    internal void ForgetStarting()
-    {
-        foreach (var id in _starting.ToList())
-        {
-            DropStarting(id);
-        }
-
-        ClearStarting();
-    }
-
-    /// <summary>Drops a Starting placeholder (Retry on a run that did not start): its row goes and its timer stops.</summary>
-    /// <param name="runId">The placeholder's run id.</param>
-    internal void DropStarting(string runId)
-    {
-        _ = _starting.Remove(runId);
-        _ = _didNotStart.Remove(runId);
-        StopStartTimer(runId);
-        var row = Rows.FirstOrDefault(r => string.Equals(r.Id, runId, StringComparison.Ordinal) && string.Equals(r.Status, "starting", StringComparison.Ordinal));
-        if (row is not null)
-        {
-            _ = Rows.Remove(row);
-        }
-    }
-
     /// <summary>Turns Run now off: Sindri said the workflow has no active revision.</summary>
     internal void TurnOff() => CanRun = false;
 
@@ -264,7 +184,8 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     private void Show(WorkflowRunList list)
     {
         (IsFailed, FailedText, CanRun) = (false, string.Empty, true);
-        Rows.Clear();
+        _all = [.. list.Runs.Select(run => new RunRowViewModel(run, clock) { IsSelected = _ticked.Contains(run.Id) })];
+        _more = list.More;
         foreach (var id in _starting.Where(s => list.Runs.Any(r => string.Equals(r.Id, s, StringComparison.Ordinal))).ToList())
         {
             _ = _starting.Remove(id);   // the real row is here: it replaces the placeholder
@@ -272,18 +193,22 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
             StopStartTimer(id);
         }
 
-        foreach (var id in _starting)
+        foreach (var row in _all)
         {
-            Rows.Add(Placeholder(id));   // still not shown by the server: keep the placeholder, in the order they started (oldest first), above the server's rows
+            row.PropertyChanged += (_, e) =>
+            {
+                if (string.Equals(e.PropertyName, nameof(RunRowViewModel.IsSelected), StringComparison.Ordinal))
+                {
+                    _ = row.IsSelected ? _ticked.Add(row.Id) : _ticked.Remove(row.Id);
+                    OnSelectionChanged();
+                }
+            };
         }
 
-        foreach (var run in list.Runs)
-        {
-            Rows.Add(new RunRowViewModel(run, clock));
-        }
+        Apply();
 
         var running = list.Runs.Count(r => string.Equals(r.Status, "running", StringComparison.Ordinal));
-        Head = list.Runs.Count == 0 ? Labels.WfRunsHeadNone : Labels.WfRunsHead(running, list.Runs.Count);
+        Head = list.Runs.Count == 0 ? Labels.WfRunsHeadNone : Labels.WfRunsHead(running, list.Runs.Count, list.More);
         (IsEmpty, EmptyText) = list.Runs.Count == 0 && _starting.Count == 0 ? (true, Labels.WfRunsNone) : (false, string.Empty);
     }
 

@@ -200,7 +200,7 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
         (ChipWord, ChipGlyph) = (word, glyph);
         (Status, Tone) = (run.Status, RunStatus.Tone(run.Status));
         ChipToneWord = RunStatus.ToneWord(run.Status);
-        TriggerText = Labels.WfStartedBy(KindOf(run.Trigger));
+        TriggerText = Labels.WfStartedBy(run.TriggerKind is { Length: > 0 } served ? served : KindOf(run.Trigger));   // the served word tells a CLI or agent start from one by hand (#3683)
         RevisionText = Labels.WfRunRevision(run.Revision);
         var live = RunStatus.IsLive(run.Status);
         WhenText = live
@@ -208,7 +208,8 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
             : Labels.JobWhen(running: false, clock.GetUtcNow() - (run.EndedAt ?? run.StartedAt));
         ErrorText = run.Error ?? string.Empty;
         OutputsText = WorkflowJson.Pretty(run.Outputs);
-        Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode))];
+        var types = NodeTypes(Shape);
+        Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode, (node, token) => EditStep?.Invoke(node, token) ?? Task.CompletedTask, types.GetValueOrDefault(g.Key, string.Empty)))];
         // No next-run time on purpose (#4188): this page shows a past run, so its Schedule card carries no "next ..." chip.
         Graph = Shape is { } shape && shape.Revision == run.Revision ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(shape, Statuses(run))) : null;
         Changed();
@@ -216,6 +217,9 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
 
     /// <summary>The run's graph with each node's status, or null when the run walked another revision than the one read (positions belong to a revision).</summary>
     public WorkflowGraphViewModel? Graph { get; private set => Set(ref field, value); }
+
+    /// <summary>What a failed step's Edit step button calls with the step's id: the page opens the workflow on it.</summary>
+    internal Func<string, CancellationToken, Task>? EditStep { get; set; }
 
     /// <summary>The workflow revision the page read, set before <see cref="Read"/>; null draws no graph.</summary>
     internal WorkflowView? Shape { get; set; }
@@ -227,6 +231,24 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
     /// <summary>Shows what Cancel said, in words.</summary>
     /// <param name="text">The note; empty clears it.</param>
     internal void Note(string text) => NoticeText = text;
+
+    // The block type of each node of the revision the page read; a run of another revision may name a node by another type, so only the read revision's types are used.
+    private static Dictionary<string, string> NodeTypes(WorkflowView? shape)
+    {
+        var types = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (shape?.Spec is { ValueKind: JsonValueKind.Object } spec && spec.TryGetProperty("nodes", out var nodes) && nodes.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var node in nodes.EnumerateArray())
+            {
+                if (node.TryGetProperty("id", out var id) && node.TryGetProperty("type", out var type) && id.GetString() is { } key && type.GetString() is { } kind)
+                {
+                    types[key] = kind;
+                }
+            }
+        }
+
+        return types;
+    }
 
     // a node run per item of a for_each: the last one served speaks for the node
     private static Dictionary<string, string> Statuses(WorkflowRunView run)
