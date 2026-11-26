@@ -20,6 +20,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         List,
         Runs,
         Run,
+        Compare,
     }
 
     private const string RunAlreadyEnded = "SND-GRAPH-107";
@@ -40,7 +41,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     {
         (Api, _clock) = (api, clock);
         Runs = new RunsViewModel(api, clock);
-        Run = new RunDetailViewModel(api, clock, clipboard);
+        Run = new RunDetailViewModel(api, clock, clipboard) { EditStep = EditFailedStep };
         Editor = new OpsEditor(api);
         GraphEdit = new GraphEditViewModel(Editor, Runs, () => _url) { OpenNewStep = BeginNewStep };   // made with the page, not on first read: the canvas's Delete key raises on the graph, and the edit bar must already be listening
         Runs.StartTimedOut += (_, e) => Run.MarkDidNotStart(e.Value);   // one start deadline, owned by the runs model: the run page reads it, it starts no timer of its own
@@ -70,10 +71,10 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     public string RetryText => Labels.WfTryAgain;
 
     /// <summary>The header's big title: the page on the list, the workflow's name on its runs, the run's id on a run.</summary>
-    public string PageTitle => _level switch { Level.Runs => Runs.Title, Level.Run => Run.Id, Level.List => Labels.Workflows, _ => Labels.Workflows };
+    public string PageTitle => _level switch { Level.Runs => Runs.Title, Level.Run => Run.Id, Level.Compare => Runs.Title, Level.List => Labels.Workflows, _ => Labels.Workflows };
 
     /// <summary>The crumb above the title: "Workflows" from a workflow's runs, the workflow's name from a run.</summary>
-    public string CrumbText => _level == Level.Run ? Runs.Title : Labels.Workflows;
+    public string CrumbText => _level is Level.Run or Level.Compare ? Runs.Title : Labels.Workflows;
 
     private void NotifyCrumb()
     {
@@ -224,7 +225,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>Goes up one level: a run to its workflow's runs, runs to the list.</summary>
     internal void Back()
     {
-        SetLevel(_level == Level.Run ? Level.Runs : Level.List);
+        SetLevel(_level is Level.Run or Level.Compare ? Level.Runs : Level.List);
         if (_listBehind && _url is { } url)
         {
             // An event came while one run was open: the rows (and the buttons they decide) catch up. The read is not awaited, so until it
@@ -247,6 +248,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         NotifyCrumb();
         OnChanged(nameof(IsRuns));
         OnChanged(nameof(IsRun));
+        OnChanged(nameof(IsCompare));
         OnChanged(nameof(ShowsListHead));
         OnChanged(nameof(ShowsDetailState));
         OnChanged(nameof(DetailStateText));
@@ -280,18 +282,5 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         var unreadable = string.Equals(error.Code, SindriUiErrors.BadAnswer.Code, StringComparison.Ordinal);
         (IsReading, IsUnreadable) = (false, unreadable);
         (IsFailed, FailedText) = unreadable ? (false, string.Empty) : (true, Labels.WfFailed(error));
-    }
-
-    private void ShowList(WorkflowList list)
-    {
-        (IsReading, IsUnreadable, IsFailed, FailedText) = (false, false, false, string.Empty);
-        var rows = list.Workflows.Select(w => new WorkflowRowViewModel(w, _clock)).ToList();
-        Patch.To(Rows, rows);
-        (HasHead, Head) = rows.Count == 0 ? (false, string.Empty) : (true, Labels.WfHead(rows.Count, rows.Count(r => r.IsActive)));
-        (IsEmpty, EmptyText) = rows.Count == 0 ? (true, Labels.WfNone) : (false, string.Empty);
-        OnChanged(nameof(ShowsEmpty));
-        OnChanged(nameof(ShowsHeaderNew));
-        NotifyCreate();   // a short id the list now holds is taken
-        NotifyStateButtons();
     }
 }

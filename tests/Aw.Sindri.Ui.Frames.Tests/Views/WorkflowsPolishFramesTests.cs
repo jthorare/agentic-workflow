@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
@@ -135,7 +134,8 @@ public sealed class WorkflowsPolishFramesTests : FrameHost
         var (window, shell) = await OnList(Clock.GetUtcNow().ToString("o", CultureInfo.InvariantCulture));
 
         Assert.Equal("Changed by owner, just now", shell.Workflows.Rows[0].ChangedText);
-        Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && string.Equals(t.Text, "Changed by owner, just now", StringComparison.Ordinal));
+        // #3683: the list row has no "Changed by" line any more (Name, Trigger, Last run, Next run, strip and State are its cells), so only the words the row reads aloud carry it.
+        Assert.Contains("changed by owner, just now", shell.Workflows.Rows[0].Name, StringComparison.Ordinal);
     });
 
     [Fact]
