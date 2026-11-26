@@ -6,7 +6,7 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// One finding of the server's validation (#3803), in the server's own words: what is wrong and how to fix it. The app's only logic is which codes it has a fix button for:
 /// GRAPH-PROMPT-001 opens the step's question field (the field the finding names, without "config.").
 /// </summary>
-internal sealed class WorkflowFindingViewModel
+internal sealed class WorkflowFindingViewModel : ObservableObject
 {
     private const string ConfigPrefix = "config.";
     private const string PromptReadsNoData = "GRAPH-PROMPT-001";
@@ -52,8 +52,21 @@ internal sealed class WorkflowFindingViewModel
     /// <summary>The config field the fix opens (such as "prompt"), or null when the app has no fix for this finding.</summary>
     public string? FixField { get; }
 
-    /// <summary>True when the app has a fix button for this finding.</summary>
-    public bool HasFix => FixField is not null;
+    /// <summary>True when the app has a fix button for this finding and the editor can change the workflow (an archived one is read-only: no button, #4380).</summary>
+    public bool HasFix => FixField is not null && CanFix;
+
+    private bool CanFix { get; set; } = true;
+
+    /// <summary>Turns the fix button on or off with the editor: a read-only workflow has none.</summary>
+    /// <param name="canEdit">True when the editor can change the workflow.</param>
+    internal void AllowFix(bool canEdit)
+    {
+        if (CanFix != canEdit)
+        {
+            CanFix = canEdit;
+            OnChanged(nameof(HasFix));
+        }
+    }
 
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     /// <summary>The fix button's words.</summary>
