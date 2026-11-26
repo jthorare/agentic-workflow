@@ -17,6 +17,7 @@ internal sealed partial class TodoPanel : UserControl
     private const double DefaultRowHeight = 32;   // Row.Height.Default, should the resource be missing
 
     private IDisposable? _height;
+    private IDisposable? _rowHeight;
     private TodoPanelViewModel? _watched;
 
     public TodoPanel()
@@ -37,6 +38,7 @@ internal sealed partial class TodoPanel : UserControl
         }
 
         _height = TopLevel.GetTopLevel(this)?.GetObservable(TopLevel.ClientSizeProperty).Subscribe(new HeightObserver(this));
+        _rowHeight = this.GetResourceObservable("Row.Height.Default").Subscribe(new RowHeightObserver(this));   // #4402: a live text-scale change rewrites the resource, so the card follows it
         FixCollapsedHeight();
         Cap();
     }
@@ -46,6 +48,8 @@ internal sealed partial class TodoPanel : UserControl
     {
         _height?.Dispose();
         _height = null;
+        _rowHeight?.Dispose();
+        _rowHeight = null;
         _watched?.PropertyChanged -= OnPanelChanged;   // Home may build the panel again: a view that is gone must not stay on the view model
         _watched = null;
         base.OnDetachedFromVisualTree(e);
@@ -118,6 +122,19 @@ internal sealed partial class TodoPanel : UserControl
         }
 
         public void OnNext(Size value) => panel.Cap();
+    }
+
+    private sealed class RowHeightObserver(TodoPanel panel) : IObserver<object?>
+    {
+        public void OnCompleted()
+        {
+        }
+
+        public void OnError(Exception error)
+        {
+        }
+
+        public void OnNext(object? value) => panel.FixCollapsedHeight();
     }
 }
 #pragma warning restore MA0182
