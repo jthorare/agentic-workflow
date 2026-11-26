@@ -56,4 +56,25 @@ public sealed class ConnectionClientIdOnceTests
         Assert.True(tile.HasBlockedReason);
         Assert.Equal("Paste your GitHub app's client secret", tile.BlockedReason);
     }
+
+    [Theory]
+    [InlineData("github")]
+    [InlineData("linear")]
+    [InlineData("google")]
+    [InlineData("spotify")]
+    public void Every_OAuth_help_line_the_catalog_has_asks_for_the_client_ID(string id)
+    {
+        var line = Labels.TileHelp(id, token: false).Line;
+
+        Assert.NotEmpty(line);
+        Assert.True(Labels.HelpAsksForClientId(line), $"the {id} help line '{line}' no longer says to paste the client ID, so its tile would show the inline line twice");
+    }
+
+    [Theory]
+    [InlineData("Create an OAuth app in Linear, then paste its client ID here.", true)]
+    [InlineData("Paste the client ID and secret from your GitHub OAuth app.", true)]
+    [InlineData("paste your CLIENT id", true)]
+    [InlineData("Sign in with your company account.", false)]
+    [InlineData("", false)]
+    public void The_helper_matches_the_wording_not_just_a_non_empty_line(string line, bool asks) => Assert.Equal(asks, Labels.HelpAsksForClientId(line));
 }

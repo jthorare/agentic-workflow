@@ -15,9 +15,7 @@ internal static partial class Labels
     internal const string TileReplaceSend = "Replace";
 
     /// <summary>The note on a tile whose new token the service did not check.</summary>
-    /// <param name="reason">Why it was not checked, as the server said it (a fixed sentence, never the token).</param>
-    /// <returns>The words.</returns>
-    internal static string TileReplacedUnchecked(string? reason) => string.IsNullOrWhiteSpace(reason) ? "Token replaced, not checked" : "Token replaced, not checked: " + reason;
+    internal const string TileReplacedUnchecked = "Token replaced. Sindri can't check this kind of token, so try it once to make sure it works.";
 
     /// <summary>The line shown while the new token is checked.</summary>
     internal const string TileReplaceChecking = "Checking the new token...";

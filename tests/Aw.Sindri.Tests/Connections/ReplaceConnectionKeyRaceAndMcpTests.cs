@@ -29,7 +29,7 @@ public sealed class ReplaceConnectionKeyRaceAndMcpTests
         }
     }
 
-    private static async Task<(ConnectionHarness World, Connection Row)> Holding(ConnectionKind kind = ConnectionKind.Rest, TokenSet? tokens = null, string? preset = "linear", ConnectionStatus status = ConnectionStatus.Connected)
+    private static async Task<(ConnectionHarness World, Connection Row)> Holding(ConnectionKind kind = ConnectionKind.Rest, TokenSet? tokens = null, string? preset = "linear", ConnectionStatus status = ConnectionStatus.Connected, string? auth = null)
     {
         var world = new ConnectionHarness();
         await world.Hold();
@@ -37,6 +37,11 @@ public sealed class ReplaceConnectionKeyRaceAndMcpTests
         if (kind == ConnectionKind.Mcp)
         {
             config["serverUrl"] = "https://mcp.example.test/";
+        }
+
+        if (auth is not null)
+        {
+            config["auth"] = auth;
         }
 
         var row = ConnectionSamples.Oauth(ConnectionSamples.Name("linear", "work"), status) with { Kind = kind, Preset = preset, Config = config };
@@ -119,5 +124,54 @@ public sealed class ReplaceConnectionKeyRaceAndMcpTests
         Assert.Equal("SND-CLI-003", replaced.Error.Code);
         Assert.Contains("signin", replaced.Error.Message, StringComparison.Ordinal);
         Assert.Equal(Old, world.Secrets.Read(row.SecretPointer!).Value.AccessToken);
+    }
+
+    // #4482: the row says how the connection signs in, so a server whose own sign-in returns a bare token is not mistaken for a key.
+    [Fact]
+    public async Task An_mcp_row_marked_signin_is_refused_even_when_its_token_is_bare()
+    {
+        var (world, row) = await Holding(ConnectionKind.Mcp, new TokenSet(Old, RefreshToken: null, ExpiresAt: null), preset: null, auth: "signin");
+
+        var replaced = await world.ReplaceKey().Handle(new ReplaceConnectionKeyRequest("linear:work", KeyEnv: null, Key: Fresh), Token);
+
+        Assert.Equal("SND-CLI-003", replaced.Error.Code);
+        Assert.Contains("signin", replaced.Error.Message, StringComparison.Ordinal);
+        Assert.Equal(Old, world.Secrets.Read(row.SecretPointer!).Value.AccessToken);
+    }
+
+    [Fact]
+    public async Task An_mcp_row_marked_key_takes_the_new_key_even_when_its_token_has_a_refresh_token()
+    {
+        var (world, _) = await Holding(ConnectionKind.Mcp, new TokenSet(Old, "odd-refresh", KnownInstants.Epoch.AddHours(1)), preset: null, auth: "key");
+
+        var replaced = await world.ReplaceKey().Handle(new ReplaceConnectionKeyRequest("linear:work", KeyEnv: null, Key: Fresh), Token);
+
+        Assert.True(replaced.IsSuccess);
+        Assert.Equal(Fresh, StoredKey(world));
+    }
+
+    [Fact]
+    public async Task An_mcp_add_with_a_key_records_auth_key_on_its_row()
+    {
+        var world = new ConnectionHarness();
+        world.Environment.Set("MCP_KEY", Fresh);
+
+        var added = await world.Add().Handle(new AddConnectionRequest("acme:tools", Preset: null, Kind: "mcp", Client: null, KeyEnv: "MCP_KEY", Scopes: [], Wait: true, Url: "https://mcp.example.test/"), Token);
+
+        Assert.True(added.IsSuccess);
+        Assert.Equal("key", Assert.Single(world.Store.Rows).Config["auth"]);
+    }
+
+    [Fact]
+    public async Task An_mcp_add_through_the_servers_own_sign_in_records_auth_signin_on_its_row()
+    {
+        var world = new ConnectionHarness();
+        var pending = world.Add().Handle(new AddConnectionRequest("acme:tools", Preset: null, Kind: "mcp", Client: null, KeyEnv: null, Scopes: [], Wait: true, Url: "http://127.0.0.1:1/mcp"), Token).AsTask();
+        world.SignIn.Succeed(new TokenSet("access-1", RefreshToken: null, ExpiresAt: null));
+
+        var added = await pending;
+
+        Assert.True(added.IsSuccess);
+        Assert.Equal("signin", Assert.Single(world.Store.Rows).Config["auth"]);
     }
 }
