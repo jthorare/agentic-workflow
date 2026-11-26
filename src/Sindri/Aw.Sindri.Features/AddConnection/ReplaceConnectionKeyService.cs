@@ -74,7 +74,7 @@ internal sealed class ReplaceConnectionKeyService(IConnectionStore store, IConne
     }
 
     // Asks the service before anything is written (a refused or unreachable key leaves the old key and the row alone). Null when the key passed a real check, else why it went unchecked.
-    // why: a preset with no key check answers Unit without calling anything, so "passed" would be a claim nobody made.
+    // why: a preset with no key check answers NotApplicable without calling anything, so "passed" would be a claim nobody made.
     private async ValueTask<Result<string?>> Verdict(Connection row, ConnectionPreset? preset, string key, CancellationToken cancellationToken)
     {
         if (row.Kind != ConnectionKind.Rest || preset is null)
@@ -82,12 +82,13 @@ internal sealed class ReplaceConnectionKeyService(IConnectionStore store, IConne
             return UncheckedReason(row, preset);
         }
 
-        if (await _keys.Check(preset, key, cancellationToken).ConfigureAwait(false) is { IsError: true } refused)
+        var outcome = await _keys.Check(preset, key, cancellationToken).ConfigureAwait(false);
+        if (outcome.IsError)
         {
-            return refused.Error;
+            return outcome.Error;
         }
 
-        return HasKeyCheck(preset) ? Results.Success<string?>(value: null) : UncheckedReason(row, preset);
+        return outcome.Value == KeyCheckOutcome.Checked ? Results.Success<string?>(value: null) : UncheckedReason(row, preset);
     }
 
     // The row's preset; a preset that left the catalog is refused as an add refuses an unknown one, so the key never goes unchecked by accident.
@@ -108,9 +109,6 @@ internal sealed class ReplaceConnectionKeyService(IConnectionStore store, IConne
         var names = shipped.IsSuccess ? string.Join(", ", shipped.Value.Select(static p => p.Key)) : "none";
         return SindriErrors.InvalidInput.With($"no connection preset named '{key}' (shipped: {names})");
     }
-
-    // The presets IKeyCheck asks a service about (HttpKeyCheck's rule, as TestConnection's KeyedCredentialCheck has it): Linear's viewer query, or any preset's probe URL.
-    private static bool HasKeyCheck(ConnectionPreset preset) => string.Equals(preset.Key, "linear", StringComparison.Ordinal) || preset.ProbeUrl is not null;
 
     private static string UncheckedReason(Connection row, ConnectionPreset? preset) => row.Kind == ConnectionKind.Cli
         ? "a cli connection has no service to check the key against"

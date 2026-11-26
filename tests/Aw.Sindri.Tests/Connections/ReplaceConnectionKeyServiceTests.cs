@@ -124,6 +124,7 @@ public sealed class ReplaceConnectionKeyServiceTests
         var plain = ConnectionHarness.Linear with { Key = "acme", DisplayName = "Acme", ProbeUrl = null };
         world.Presets = new FakeConnectionPresets(plain);
         _ = await world.Store.Upsert(Assert.Single(world.Store.Rows) with { Preset = "acme" }, Token);
+        world.Keys.NotApplicable = true;
 
         var replaced = await world.ReplaceKey().Handle(new ReplaceConnectionKeyRequest("linear:work", KeyEnv: null, Key: Fresh), Token);
 

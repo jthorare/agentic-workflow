@@ -118,6 +118,7 @@ public sealed class TestKeyConnectionTests
     public async Task A_rest_connection_whose_preset_has_no_check_tries_the_probe_url_in_its_config()
     {
         var world = await World(Unchecked);
+        world.Keys.NotApplicable = true;
         var row = Assert.Single(world.Store.Rows);
         var config = new Dictionary<string, string>(StringComparer.Ordinal) { ["probeUrl"] = "https://acme.example.test/me" };
         _ = await world.Store.Upsert(row with { Config = config }, Token);
@@ -127,7 +128,7 @@ public sealed class TestKeyConnectionTests
         Assert.True(tested.Value.Ok);
         Assert.Null(tested.Value.Reason);
         Assert.Equal([("https://acme.example.test/me", Key)], world.Probe.Calls);
-        Assert.Empty(world.Keys.Calls);
+        _ = Assert.Single(world.Keys.Calls);
     }
 
     [Fact]
@@ -143,6 +144,22 @@ public sealed class TestKeyConnectionTests
         Assert.False(tested.Value.Ok);
         Assert.EndsWith("(SND-CONN-018)", tested.Value.Reason, StringComparison.Ordinal);
         Assert.Empty(world.Keys.Calls);
+    }
+
+    [Fact]
+    public async Task An_empty_stored_key_on_a_preset_with_no_check_is_refused_without_a_probe()
+    {
+        var world = await World(Unchecked);
+        world.Keys.NotApplicable = true;
+        var row = Assert.Single(world.Store.Rows);
+        _ = world.Secrets.Store(row.Name, new TokenSet(string.Empty, RefreshToken: null, ExpiresAt: null));
+
+        var tested = await world.Test().Handle(new TestConnectionRequest("acme:work"), Token);
+
+        Assert.False(tested.Value.Ok);
+        Assert.EndsWith("(SND-CONN-018)", tested.Value.Reason, StringComparison.Ordinal);
+        Assert.Empty(world.Keys.Calls);
+        Assert.Empty(world.Probe.Calls);
     }
 
     [Fact]
@@ -163,12 +180,13 @@ public sealed class TestKeyConnectionTests
     public async Task A_key_preset_with_no_check_and_no_probe_url_says_it_tried_nothing()
     {
         var world = await World(Unchecked);
+        world.Keys.NotApplicable = true;
 
         var tested = await world.Test().Handle(new TestConnectionRequest("acme:work"), Token);
 
         Assert.True(tested.Value.Ok);
         Assert.Equal("the stored secret was read; this connection has no probe URL to try it against", tested.Value.Reason);
-        Assert.Empty(world.Keys.Calls);
+        _ = Assert.Single(world.Keys.Calls);
         Assert.Empty(world.Probe.Calls);
     }
 }
