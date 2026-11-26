@@ -267,7 +267,7 @@ public sealed class ProjectTruthsTests
 
         var truth = ProjectTruths.Build(open with { Facts = facts });
 
-        Assert.Equal((ProjectTruthLevel.AtRisk, "At risk: 4 of 9 PRs red for 3 d, 2 with conflicts, 1 changes requested, 1 not checked yet"), (truth.Health!.Level, truth.Health.Reason));
+        Assert.Equal((ProjectTruthLevel.AtRisk, "At risk: 1 of 9 PRs red for 3 d, 2 with conflicts, 1 changes requested, 1 not checked yet"), (truth.Health!.Level, truth.Health.Reason));
     }
 
     [Fact]

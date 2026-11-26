@@ -60,12 +60,12 @@ internal static partial class GitHubWire
 
     /// <summary>Reads the merge state of a single pull request.</summary>
     public static GitHubPullDetail ReadPull(JsonElement e, IReadOnlyList<string> paths)
-        => new(Flag(e, "merged"), Flag(e, "draft"), Date(e, "merged_at"), paths, RequestedLogins(e), e.TryGetProperty("head", out var head) && head.ValueKind == JsonValueKind.Object ? Text(head, "sha") : null);
+        => new(Flag(e, "merged"), Flag(e, "draft"), Date(e, "merged_at"), paths, RequestedLogins(e), e.TryGetProperty("head", out var head) && head.ValueKind == JsonValueKind.Object ? Text(head, "sha") : null, NullableFlag(e, "mergeable"));
 
     /// <summary>Reduces a pull request's review list to each login's latest review: the one with the newest 'submitted_at' (the later entry on a tie), pending and dismissed reviews (GitHub voided the latter) and ones without a login or commit skipped. A later COMMENTED review replaces an earlier APPROVED one: spec §5.6 counts the latest review whatever its state. Ordered by login.</summary>
-    public static IReadOnlyList<(string Login, string Commit)> LatestReviews(IEnumerable<JsonElement> reviews)
+    public static IReadOnlyList<(string Login, string Commit, string? State)> LatestReviewStates(IEnumerable<JsonElement> reviews)
     {
-        Dictionary<string, (string Commit, DateTimeOffset At)> latest = new(StringComparer.Ordinal);
+        Dictionary<string, (string Commit, DateTimeOffset At, string? State)> latest = new(StringComparer.Ordinal);
         foreach (var review in reviews)
         {
             if (review.ValueKind != JsonValueKind.Object || IsSkippedState(Text(review, "state"))
@@ -77,12 +77,18 @@ internal static partial class GitHubWire
             var at = Date(review, "submitted_at") ?? DateTimeOffset.MinValue;
             if (!latest.TryGetValue(login, out var seen) || at >= seen.At)
             {
-                latest[login] = (commit, at);
+                latest[login] = (commit, at, Text(review, "state"));
             }
         }
 
-        return [.. latest.OrderBy(static kv => kv.Key, StringComparer.Ordinal).Select(static kv => (kv.Key, kv.Value.Commit))];
+        return [.. latest.OrderBy(static kv => kv.Key, StringComparer.Ordinal).Select(static kv => (kv.Key, kv.Value.Commit, kv.Value.State))];
     }
+
+    /// <summary>The same reduction as <see cref="LatestReviewStates"/> without each review's state.</summary>
+    /// <param name="reviews">The review list.</param>
+    /// <returns>Each login's latest review's commit, ordered by login.</returns>
+    public static IReadOnlyList<(string Login, string Commit)> LatestReviews(IEnumerable<JsonElement> reviews)
+        => [.. LatestReviewStates(reviews).Select(static r => (r.Login, r.Commit))];
 
     /// <summary>Reads 'ahead_by' from a compare reply, or null when it has none.</summary>
     public static int? AheadBy(JsonElement e)
@@ -96,6 +102,10 @@ internal static partial class GitHubWire
         => e.TryGetProperty("requested_reviewers", out var people) && people.ValueKind == JsonValueKind.Array
             ? [.. people.EnumerateArray().Select(static p => p.ValueKind == JsonValueKind.Object ? Text(p, "login") : null).OfType<string>().Where(static l => l.Length > 0)]
             : [];
+
+    // 'mergeable' is true, false (a conflict) or null while GitHub works it out: null stays unknown, never "can merge"
+    private static bool? NullableFlag(JsonElement e, string name)
+        => e.TryGetProperty(name, out var p) && p.ValueKind is JsonValueKind.True or JsonValueKind.False ? p.ValueKind == JsonValueKind.True : null;
 
     private static bool Flag(JsonElement e, string name)
         => e.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.True;

@@ -68,6 +68,7 @@ public static class ProjectTruths
         var named = sources.PullUrls.Select(static u => u.TrimEnd('/')).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var prs = new List<ProjectTruthPr>();
         var uncheckedCount = 0;
+        var blockers = new Blockers([], []);
         foreach (var pull in facts.Pulls)
         {
             var url = UrlOf(pull);
@@ -75,6 +76,7 @@ public static class ProjectTruths
             {
                 var (pr, ciChecked) = Pr(pull, url, facts.Summaries, facts.Owner);
                 prs.Add(pr);
+                blockers.Note(pull, url);
                 uncheckedCount += pr.State != ProjectPrState.Draft && !ciChecked ? 1 : 0;
             }
         }
@@ -82,7 +84,7 @@ public static class ProjectTruths
         var prUrls = prs.Select(static p => p.Url).Concat(named).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var items = facts.Items.Where(i => i.LinkUrls.Any(u => prUrls.Contains(u.TrimEnd('/')))).ToList();
         var agents = facts.Agents.Count(a => a.Running && a.Repo is { } repo && sources.Repos.Contains(repo, StringComparer.OrdinalIgnoreCase));
-        return new ProjectTruth(prs, items.Count(static i => !i.Done), items.Count(static i => i.Done), items.Count, agents, HealthOf(prs, uncheckedCount, inputs.Now), prs.Exists(static p => p.WaitsOnYou));
+        return new ProjectTruth(prs, items.Count(static i => !i.Done), items.Count(static i => i.Done), items.Count, agents, HealthOf(prs, uncheckedCount, inputs.Now, blockers), prs.Exists(static p => p.WaitsOnYou));
     }
 
     private static string UrlOf(ReviewPull pull) => (pull.Url ?? string.Create(CultureInfo.InvariantCulture, $"https://github.com/{pull.Repo}/pull/{pull.Number}")).TrimEnd('/');
@@ -113,10 +115,35 @@ public static class ProjectTruths
         return now is { } at && times.Count > 0 ? " for " + AgeWords.For(at - times.Min()) : string.Empty;
     }
 
-    // null when no PR is open (drafts are not open); every count and the sentence read the same open set; offTrack at half red or more, atRisk at any red,
-    // unknown when none is red but some have no CI result on their current head, whatever their state ('unknown' counts those, drafts left out). A red project adds how long its oldest red PR
-    // has been red ("red for 3 d", #4333) from the CI summary's own time and the page's clock; no clock, or no red PR with a time, leaves it out.
-    private static ProjectTruthHealth? HealthOf(List<ProjectTruthPr> prs, int unknown, DateTimeOffset? now)
+    // PRs the forge says cannot merge (Mergeable false) and PRs where a reviewer's latest review is CHANGES_REQUESTED, by url (#4333). A null Mergeable or a review with no state (a record stored before
+    // they were kept, or GitHub had not worked the merge out) is unknown and counts for neither.
+    private sealed record Blockers(HashSet<string> Conflicts, HashSet<string> Changes)
+    {
+        internal void Note(ReviewPull pull, string url)
+        {
+            if (pull.Mergeable == false)
+            {
+                _ = Conflicts.Add(url);
+            }
+
+            if (pull.Reviews.Any(static r => string.Equals(r.State, "CHANGES_REQUESTED", StringComparison.OrdinalIgnoreCase)))
+            {
+                _ = Changes.Add(url);
+            }
+        }
+    }
+
+    // " red for 3 d, 2 with conflicts, 1 changes requested": red PRs keep their count and age, then the other causes; with no red PR the number is every blocked PR and the causes follow "blocked:"
+    private static string Causes(int red, string age, int conflicts, int changes)
+    {
+        var extra = (conflicts > 0 ? string.Create(CultureInfo.InvariantCulture, $", {conflicts} with conflicts") : string.Empty) + (changes > 0 ? string.Create(CultureInfo.InvariantCulture, $", {changes} changes requested") : string.Empty);
+        return red > 0 ? $" red{age}{extra}" : $" blocked:{extra[1..]}";   // why: no red PR and a blocked one means a cause is set, so extra starts with ", "
+    }
+
+    // null when no PR is open (drafts are not open); every count and the sentence read the same open set. A PR is blocked when its CI is red, it cannot merge or a reviewer asks for changes (#4333); offTrack at half blocked or more,
+    // atRisk at any, unknown when none is blocked but some have no CI result on their current head, whatever their state ('unknown' counts those, drafts left out). The sentence keeps the red count and adds how long the oldest red
+    // PR has been red ("red for 3 d") from the CI summary's own time and the page's clock, then the conflicts and changes requested, then the unchecked tail.
+    private static ProjectTruthHealth? HealthOf(List<ProjectTruthPr> prs, int unknown, DateTimeOffset? now, Blockers blockers)
     {
         var open = prs.Where(static p => p.State != ProjectPrState.Draft).ToList();
         if (open.Count == 0)
@@ -125,16 +152,21 @@ public static class ProjectTruths
         }
 
         var red = open.Count(static p => p.State == ProjectPrState.CiRed);
+        var conflicts = open.Count(p => blockers.Conflicts.Contains(p.Url));
+        var changes = open.Count(p => blockers.Changes.Contains(p.Url));
+        var blocked = open.Count(p => p.State == ProjectPrState.CiRed || blockers.Conflicts.Contains(p.Url) || blockers.Changes.Contains(p.Url));
         var total = open.Count;
         var noun = total == 1 ? "PR" : "PRs";
-        var age = RedFor(open, now);
         var tail = unknown > 0 ? string.Create(CultureInfo.InvariantCulture, $", {unknown} not checked yet") : string.Empty;
-        return red > 0 && red * 2 >= total
-            ? new ProjectTruthHealth(ProjectTruthLevel.OffTrack, string.Create(CultureInfo.InvariantCulture, $"Off track: {red} of {total} {noun} red{age}{tail}"))
-            : red > 0
-                ? new ProjectTruthHealth(ProjectTruthLevel.AtRisk, string.Create(CultureInfo.InvariantCulture, $"At risk: {red} of {total} {noun} red{age}{tail}"))
-                : unknown > 0
-                    ? new ProjectTruthHealth(ProjectTruthLevel.Unknown, string.Create(CultureInfo.InvariantCulture, $"CI not checked yet for {unknown} of {total} {noun}"))
-                    : new ProjectTruthHealth(ProjectTruthLevel.OnTrack, string.Create(CultureInfo.InvariantCulture, $"On track: {total} open {noun}, none red"));
+        if (blocked == 0)
+        {
+            return unknown > 0
+                ? new ProjectTruthHealth(ProjectTruthLevel.Unknown, string.Create(CultureInfo.InvariantCulture, $"CI not checked yet for {unknown} of {total} {noun}"))
+                : new ProjectTruthHealth(ProjectTruthLevel.OnTrack, string.Create(CultureInfo.InvariantCulture, $"On track: {total} open {noun}, none red"));
+        }
+
+        var lead = red > 0 ? red : blocked;
+        var (level, word) = blocked * 2 >= total ? (ProjectTruthLevel.OffTrack, "Off track") : (ProjectTruthLevel.AtRisk, "At risk");
+        return new ProjectTruthHealth(level, string.Create(CultureInfo.InvariantCulture, $"{word}: {lead} of {total} {noun}{Causes(red, RedFor(open, now), conflicts, changes)}{tail}"));
     }
 }

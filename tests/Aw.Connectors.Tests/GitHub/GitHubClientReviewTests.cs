@@ -29,7 +29,7 @@ public sealed class GitHubClientReviewTests : IDisposable
 
         var read = (await Client().PullReviews(Repo, 12, "ccc", Ct)).Value;
 
-        Assert.Equal([new ConnectorReview("bob", "aaa", 2)], read.Reviews);
+        Assert.Equal([new ConnectorReview("bob", "aaa", 2, "APPROVED")], read.Reviews);
         Assert.Equal(["/repos/acme/widgets/pulls/12/reviews", "/repos/acme/widgets/compare/aaa...ccc"], Paths(), StringComparer.Ordinal);
     }
 
@@ -40,7 +40,7 @@ public sealed class GitHubClientReviewTests : IDisposable
 
         var read = (await Client().PullReviews(Repo, 12, "ccc", Ct)).Value;
 
-        Assert.Equal([new ConnectorReview("bob", "ccc", 0)], read.Reviews);
+        Assert.Equal([new ConnectorReview("bob", "ccc", 0, "APPROVED")], read.Reviews);
         Assert.Equal(["/repos/acme/widgets/pulls/12/reviews"], Paths(), StringComparer.Ordinal);
     }
 
@@ -51,7 +51,7 @@ public sealed class GitHubClientReviewTests : IDisposable
 
         var read = (await Client().PullReviews(Repo, 12, "ccc", Ct)).Value;
 
-        Assert.Equal([new ConnectorReview("bob", "gone", NewCommits: null)], read.Reviews);
+        Assert.Equal([new ConnectorReview("bob", "gone", NewCommits: null, "APPROVED")], read.Reviews);
         Assert.Null(read.RateLimitedUntil);
     }
 
@@ -62,7 +62,7 @@ public sealed class GitHubClientReviewTests : IDisposable
 
         var read = (await Client().PullReviews(Repo, 12, "ccc", Ct)).Value;
 
-        Assert.Equal([new ConnectorReview("ada", "aaa", 3), new ConnectorReview("bob", "aaa", 3)], read.Reviews);
+        Assert.Equal([new ConnectorReview("ada", "aaa", 3, "COMMENTED"), new ConnectorReview("bob", "aaa", 3, "APPROVED")], read.Reviews);
         _ = Assert.Single(Paths(), static p => p.Contains("/compare/", StringComparison.Ordinal));
     }
 
@@ -74,7 +74,7 @@ public sealed class GitHubClientReviewTests : IDisposable
 
         var read = (await Client().PullReviews(Repo, 12, "ccc", Ct)).Value;
 
-        Assert.Equal([new ConnectorReview("bob", "aaa", 4)], read.Reviews);
+        Assert.Equal([new ConnectorReview("bob", "aaa", 4, "APPROVED")], read.Reviews);
     }
 
     [Fact, Trait("Lane", "unit")]
