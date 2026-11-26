@@ -25,7 +25,7 @@ internal static class RerunWorkflowRunEndpoint
             }
 
             var by = callers.Current?.Actor ?? "owner";
-            return (await service.Handle(new RerunWorkflowRunRequest(parsed, body.FromNode, body.Input, by), ct).ConfigureAwait(false)).ToHttpResult();
+            return (await service.Handle(new RerunWorkflowRunRequest(parsed, body.FromNode, body.Input?.ToJsonString(), by), ct).ConfigureAwait(false)).ToHttpResult();
         });
         return group;
     }

@@ -26,7 +26,7 @@
       <Grid x:Name="WorkflowsHeadRegion" ColumnDefinitions="Auto,Auto,*,Auto" VerticalAlignment="Center">
         <!-- The crumb and the slash are top-aligned and WorkflowsPage.AlignCrumb sets their top margin from the measured baselines: Avalonia has no baseline
              alignment, and 13 px text centred beside the 24 px title sits 4 px above its baseline (6 px at text scale 1.3), too far for the equal line box trick below. -->
-        <Button x:Name="WorkflowsBack" Classes="link" Content="{Binding CrumbText}" Click="OnBack" IsVisible="{Binding !IsList}" VerticalAlignment="Top" Margin="0,0,12,0" AutomationProperties.Name="{Binding CrumbText}" />
+        <Button x:Name="WorkflowsBack" Classes="link" Content="{Binding CrumbText}" Click="OnBack" IsVisible="{Binding !IsList}" VerticalAlignment="Top" Margin="0,0,12,0" AutomationProperties.Name="{Binding CrumbName}" />
         <TextBlock x:Name="WorkflowsCrumbSep" Grid.Column="1" Classes="caption subtle" Text="›" IsVisible="{Binding !IsList}" VerticalAlignment="Top" Margin="0,0,12,0" AutomationProperties.AccessibilityView="Raw" />
         <!-- The state sits right after the title, not at the far edge; the title column is a star, so the title trims to what the state leaves. -->
         <Grid Grid.Column="2" ColumnDefinitions="*,Auto" HorizontalAlignment="Left">
@@ -175,7 +175,7 @@
            its baseline lands within a pixel of the title's and the buttons' text, at any text scale. -->
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock x:Name="RunsHead" Classes="caption subtle" LineHeight="{DynamicResource Type.BodyStrong.LineHeight}" Text="{Binding Runs.Head}" VerticalAlignment="Center" />
-        <Button x:Name="RunNow" VerticalAlignment="Center" Content="{Binding Runs.RunNowText}" Click="OnRunNow" IsEnabled="{Binding Runs.CanPressRunNow}" AutomationProperties.Name="{Binding Runs.RunNowText}" />
+        <Button x:Name="RunNow" VerticalAlignment="Center" IsVisible="{Binding Runs.ShowsRunNow}" Content="{Binding Runs.RunNowText}" Click="OnRunNow" IsEnabled="{Binding Runs.CanPressRunNow}" AutomationProperties.Name="{Binding Runs.RunNowText}" />
         <Button x:Name="WorkflowEdit" VerticalAlignment="Center" IsVisible="{Binding ShowsEdit}" Content="{Binding EditText}" Click="OnEdit" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding EditText}" />
         <Button x:Name="WorkflowActivate" VerticalAlignment="Center" IsVisible="{Binding ShowActivateButton}" Content="{Binding ActivateText}" Click="OnActivate" AutomationProperties.AutomationId="WorkflowActivate" AutomationProperties.Name="{Binding ActivateText}" />
         <Button x:Name="WorkflowPause" VerticalAlignment="Center" IsVisible="{Binding CanPause}" Content="{Binding PauseText}" Click="OnPause" AutomationProperties.AutomationId="WorkflowPause" AutomationProperties.Name="{Binding PauseText}" />
@@ -205,6 +205,17 @@
         <Border x:Name="FindingsHead" IsVisible="{Binding Findings.HasFindings}" AutomationProperties.Name="{Binding Findings.HeaderText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption" Text="{Binding Findings.HeaderText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
+        <!-- A check that could not answer says so, as a failure (its own class: the amber callout would win), and Retry asks again (#4380). -->
+        <Border x:Name="FindingsFailed" Classes="findings-failed" IsVisible="{Binding Findings.HasFailed}" AutomationProperties.Name="{Binding Findings.FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+          <StackPanel Orientation="Horizontal" Spacing="12">
+            <TextBlock Classes="body" Text="{Binding Findings.FailedText}" VerticalAlignment="Center" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            <Button x:Name="FindingsRetry" Classes="copy" Click="OnRetryFindings" IsVisible="{Binding Findings.HasFailed}" AutomationProperties.Name="{Binding Findings.RetryText}">
+              <TextBlock Classes="caption" Text="{Binding Findings.RetryText}" AutomationProperties.AccessibilityView="Raw" />
+            </Button>
+          </StackPanel>
+        </Border>
+        <!-- The findings about the whole workflow, which no step's card carries (#4380). -->
+        <wv:WorkflowLevelFindingsList x:Name="WorkflowLevelFindings" IsVisible="{Binding Findings.HasWholeWorkflow}" />
         <Border x:Name="RunsStagePanel" Classes="panel" Height="320">
           <wv:GraphStage x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" TextScale="{Binding TextScale}" />
         </Border>
@@ -386,6 +397,21 @@
         </Border>
         <Button x:Name="RunRetry" Content="{Binding Run.RetryText}" Click="OnRetryRun" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Run.RetryText}" />
       </StackPanel>
+      <Border x:Name="RunFailureName" Classes="run-failure" IsVisible="{Binding Run.HasFailure}" AutomationProperties.Name="{Binding Run.Failure.Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="body-strong" Text="{Binding Run.Failure.HeadingText}" AutomationProperties.AccessibilityView="Raw" />
+          <SelectableTextBlock Classes="body" Text="{Binding Run.Failure.SentenceText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          <Button x:Name="RunFailureFix" Classes="copy" Click="OnCopyRunFix" HorizontalAlignment="Left" IsVisible="{Binding Run.Failure.HasCopyFix, FallbackValue=False}" AutomationProperties.Name="{Binding Run.Failure.Fix.Announcement}">
+            <TextBlock Classes="caption" Text="{Binding Run.Failure.Fix.Label}" AutomationProperties.AccessibilityView="Raw" />
+          </Button>
+          <Button x:Name="RunFailureOpen" Classes="copy" Click="OnOpenFailedStep" HorizontalAlignment="Left" IsVisible="{Binding Run.Failure.HasOpenFix, FallbackValue=False}" AutomationProperties.Name="{Binding Run.Failure.OpenText}">
+            <TextBlock Classes="caption" Text="{Binding Run.Failure.OpenText}" AutomationProperties.AccessibilityView="Raw" />
+          </Button>
+          <Expander x:Name="RunFailureDetails" Header="{Binding Run.Failure.DetailsHeading}" AutomationProperties.Name="{Binding Run.Failure.DetailsHeading}">
+            <SelectableTextBlock Classes="caption mono" Text="{Binding Run.Failure.DetailText}" TextWrapping="Wrap" />
+          </Expander>
+        </StackPanel>
+      </Border>
       <Border x:Name="RunErrorName" IsVisible="{Binding Run.HasError}" AutomationProperties.Name="{Binding Run.ErrorText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <SelectableTextBlock Classes="caption" Text="{Binding Run.ErrorText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>

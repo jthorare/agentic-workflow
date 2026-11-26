@@ -1081,7 +1081,7 @@
   },
   {
     "name": "workflow_list",
-    "description": "The workflows that are not archived: slug, name, the revision triggers run (none when it is off), the newest revision and who saved it. Names are untrusted and fenced. Every top-level list is paged: limit (1 or more, default 100) keeps that many items and offset (0 or more, default 0) skips that many, each list on its own. page.more says another page follows in some list and page.lists gives each list's total; items are never cut inside, and the counts stay the full totals.",
+    "description": "The workflows that are not archived: slug, name, the revision triggers run (none when it is off), the newest revision, who saved it and its trigger in words. The name, who saved it and the trigger words are untrusted and fenced. Every top-level list is paged: limit (1 or more, default 100) keeps that many items and offset (0 or more, default 0) skips that many, each list on its own. page.more says another page follows in some list and page.lists gives each list's total; items are never cut inside, and the counts stay the full totals.",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
@@ -1130,7 +1130,7 @@
   },
   {
     "name": "workflow_runs",
-    "description": "A workflow's newest 50 runs, newest first: run id, revision, status, what started it and why it failed. Failure text is untrusted and fenced. Every top-level list is paged: limit (1 or more, default 100) keeps that many items and offset (0 or more, default 0) skips that many, each list on its own. page.more says another page follows in some list and page.lists gives each list's total; items are never cut inside, and the counts stay the full totals.",
+    "description": "A workflow's runs, newest first, 50 a page: run id, revision, status, what started it, why it failed and a one-line result. Filter with status, since and until; when more is true, pass next as before for the older page. A filter value it can't read is SND-GRAPH-134. The failure text and the result are untrusted and fenced. Every top-level list is paged: limit (1 or more, default 100) keeps that many items and offset (0 or more, default 0) skips that many, each list on its own. page.more says another page follows in some list and page.lists gives each list's total; items are never cut inside, and the counts stay the full totals.",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
@@ -1148,6 +1148,22 @@
         "slug": {
           "type": "string",
           "description": "The workflow's slug, such as morning-check (workflow_list names them)"
+        },
+        "status": {
+          "type": "string",
+          "description": "Keep runs in these statuses, comma-separated: running (queued, running or waiting), ended (succeeded), succeeded, failed, cancelled, queued, waiting"
+        },
+        "since": {
+          "type": "string",
+          "description": "Keep runs that started at or after this ISO-8601 instant, such as 2026-11-23T07:00:00Z (a date alone is its midnight UTC)"
+        },
+        "until": {
+          "type": "string",
+          "description": "Keep runs that started before this ISO-8601 instant; not before since"
+        },
+        "before": {
+          "type": "string",
+          "description": "Keep runs older than this run id: the next of the page before"
         }
       },
       "required": [
@@ -1415,7 +1431,7 @@
   },
   {
     "name": "workflow_rerun",
-    "description": "Re-run an ended run from one step: a new run of that run's revision. The steps before 'from' keep their stored output, 'from' and the steps after it run again. Refused while the run is in flight (SND-GRAPH-125), when an earlier step did not succeed (SND-GRAPH-126), or for a step inside a for_each body (re-run from the for_each step). Answers started, queued or skipped like workflow_run.",
+    "description": "Re-run an ended run from one step: a new run of that run's revision. The steps before 'from' keep their stored output, 'from' and the steps after it run again. Refused while the run is in flight (SND-GRAPH-125), when an earlier step did not succeed (SND-GRAPH-126), when every step before 'from' was skipped on a dead branch (SND-GRAPH-127), or for a step inside a for_each body (re-run from the for_each step). Answers started, queued or skipped like workflow_run.",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,

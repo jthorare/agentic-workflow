@@ -70,7 +70,7 @@ internal sealed partial class GraphCanvas
         DrawArrowHead(context, wire, from, end);
         if (edge.Label is { } label)
         {
-            DrawEdgeLabel(context, label, new Point((start.X + (3 * c1.X) + (3 * from.X) + end.X) / 8, (start.Y + (3 * c1.Y) + (3 * from.Y) + end.Y) / 8));
+            DrawEdgeLabel(context, label, edge.LabelAt is { } beside ? new Point(beside.X, beside.Y) : new Point((start.X + (3 * c1.X) + (3 * from.X) + end.X) / 8, (start.Y + (3 * c1.Y) + (3 * from.Y) + end.Y) / 8));   // a wrapped branch edge's pill sits beside its own lane (#4470)
         }
     }
 
