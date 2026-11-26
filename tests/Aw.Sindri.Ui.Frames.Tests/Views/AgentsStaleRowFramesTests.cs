@@ -20,10 +20,13 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 public sealed class AgentsStaleRowFramesTests : FrameHost
 {
     private const string Aged = "The agent list is from 2 min ago: the last 3 passes took longer than their 500 ms budget";
+    private const string Plain = "A pass took longer than its 500 ms budget";
     private const string NoList = "No agent list yet: the last 3 passes took longer than their 500 ms budget";
 
+    // "plain" is the row main serves today (the Ui code is the same): the before frame.
     public static TheoryData<string, string, int> Cases => new()
     {
+        { "plain", Plain, 1000 },
         { "aged", Aged, 1000 },
         { "aged", Aged, 1440 },
         { "no-list", NoList, 1000 },

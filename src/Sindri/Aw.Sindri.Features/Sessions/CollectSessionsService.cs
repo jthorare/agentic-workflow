@@ -20,6 +20,7 @@ internal sealed partial class CollectSessionsService(SessionDiscovery discovery,
         {
             memory.History = new Dictionary<SessionRef, IReadOnlyList<SessionStateEntry>>();
             memory.ListedAt = null;
+            memory.OverrunsInARow = 0;
             Publish([], [], [SessionProblems.Disabled], now);
             return new CollectSessionsResponse(memory.Pending, Good: false, Sessions: 0, Pruned: 0);
         }
