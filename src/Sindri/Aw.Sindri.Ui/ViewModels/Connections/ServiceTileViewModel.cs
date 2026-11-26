@@ -100,8 +100,8 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
         : NeedsSecret && !ClientSecret.HasValue ? Labels.ConnectNeedsClientSecret(Service.Title)
         : TakesToken && !Token.HasValue ? Labels.ConnectNeedsToken(Service.Title) : string.Empty;
 
-    /// <summary>True when the inline line explains a disabled send; not under the token steps, whose step 3 already says to paste (#4368). The button's tooltip still says it.</summary>
-    public bool HasBlockedReason => IsAsking && BlockedReason.Length > 0 && !ShowTokenSteps;
+    /// <summary>True when the inline line explains a disabled send; not under the token steps (#4368) and not when the help line already says to paste the client ID (#4396). The button's tooltip still says it.</summary>
+    public bool HasBlockedReason => IsAsking && BlockedReason.Length > 0 && !ShowTokenSteps && !HelpSaysClientId;
 
     /// <summary>True when the input is complete and nothing runs.</summary>
     public bool CanSend => !IsWorking && BlockedReason.Length == 0;
