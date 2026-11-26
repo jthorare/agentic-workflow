@@ -52,7 +52,8 @@ public static class RequiredChecks
     {
         ArgumentNullException.ThrowIfNull(runs);
         ArgumentNullException.ThrowIfNull(headSha);
-        return default;   // red stub: finds nothing
+        var times = runs.Where(r => SameSha(r.Sha, headSha) && Classify(r.Conclusion) == RequiredCheckStatus.Fail && r.CompletedAt is not null).Select(static r => r.CompletedAt!.Value).ToList();   // why: the filter keeps only runs with a time
+        return times.Count == 0 ? null : times.Min();
     }
 
     private static bool Applies(PrReviewCheck check, IReadOnlyList<string> paths) =>
