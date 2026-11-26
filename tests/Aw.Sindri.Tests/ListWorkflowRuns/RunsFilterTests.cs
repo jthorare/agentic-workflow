@@ -46,10 +46,10 @@ public sealed class RunsFilterTests
     [Fact]
     public void A_plus_offset_sent_raw_in_a_query_string_arrives_as_a_space_and_is_read_as_the_plus()
     {
-        var filter = RunsFilter.Parse(status: null, since: "2026-11-25T10:00:00 01:00", until: "2026-11-25T10:00:00.5 02:30", before: null);
+        var filter = RunsFilter.Parse(status: null, since: "2026-11-25T10:00:00.5 02:30", until: "2026-11-25T10:00:00 01:00", before: null);
 
-        Assert.Equal(new DateTimeOffset(2026, 11, 25, 9, 0, 0, TimeSpan.Zero), filter.Value.Since);
-        Assert.Equal(new DateTimeOffset(2026, 11, 25, 7, 30, 0, 500, TimeSpan.Zero), filter.Value.Until);
+        Assert.Equal(new DateTimeOffset(2026, 11, 25, 7, 30, 0, 500, TimeSpan.Zero), filter.Value.Since);
+        Assert.Equal(new DateTimeOffset(2026, 11, 25, 9, 0, 0, TimeSpan.Zero), filter.Value.Until);
     }
 
     [Theory]
