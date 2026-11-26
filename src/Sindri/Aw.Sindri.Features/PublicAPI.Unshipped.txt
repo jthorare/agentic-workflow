@@ -3925,8 +3925,12 @@ override Aw.Sindri.Features.ResumeJob.ResumeJobRequest.GetHashCode() -> int
 override Aw.Sindri.Features.ResumeJob.ResumeJobRequest.ToString() -> string!
 static Aw.Sindri.Features.ResumeJob.ResumeJobRequest.operator !=(Aw.Sindri.Features.ResumeJob.ResumeJobRequest? left, Aw.Sindri.Features.ResumeJob.ResumeJobRequest? right) -> bool
 static Aw.Sindri.Features.ResumeJob.ResumeJobRequest.operator ==(Aw.Sindri.Features.ResumeJob.ResumeJobRequest? left, Aw.Sindri.Features.ResumeJob.ResumeJobRequest? right) -> bool
-Aw.Sindri.Features.AttachProject.AttachProjectRequest.AttachProjectRequest(string? Linear = null, string? Name = null, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State = null, System.Collections.Generic.IReadOnlyList<string!>? Links = null, string? Notes = null, System.DateOnly? Target = null) -> void
-Aw.Sindri.Features.AttachProject.AttachProjectRequest.Deconstruct(out string? Linear, out string? Name, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out System.Collections.Generic.IReadOnlyList<string!>? Links, out string? Notes, out System.DateOnly? Target) -> void
+Aw.Sindri.Features.AttachProject.AttachProjectRequest.AttachProjectRequest(string? Linear = null, string? Name = null, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State = null, System.Collections.Generic.IReadOnlyList<string!>? Links = null, string? Notes = null, System.DateOnly? Target = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.BranchSource!>? Branches = null, System.Collections.Generic.IReadOnlyList<string!>? Items = null) -> void
+Aw.Sindri.Features.AttachProject.AttachProjectRequest.Deconstruct(out string? Linear, out string? Name, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out System.Collections.Generic.IReadOnlyList<string!>? Links, out string? Notes, out System.DateOnly? Target, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.BranchSource!>? Branches, out System.Collections.Generic.IReadOnlyList<string!>? Items) -> void
+Aw.Sindri.Features.AttachProject.AttachProjectRequest.Branches.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.BranchSource!>?
+Aw.Sindri.Features.AttachProject.AttachProjectRequest.Branches.init -> void
+Aw.Sindri.Features.AttachProject.AttachProjectRequest.Items.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Features.AttachProject.AttachProjectRequest.Items.init -> void
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Notes.get -> string?
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Notes.init -> void
 Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.ChangeProjectRequest(string! Project, long Version, Aw.Sindri.Core.Projects.ProjectEdit! Edit) -> void

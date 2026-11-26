@@ -76,6 +76,20 @@ public static class ProjectTruths
     private static bool OnNamedBranch(ProjectSources sources, ReviewPull pull) =>
         pull.HeadRef is { } head && (sources.Branches ?? []).Any(b => string.Equals(b.Repo, pull.Repo, StringComparison.OrdinalIgnoreCase) && (b.IsPrefix ? head.StartsWith(b.Name, StringComparison.Ordinal) : string.Equals(head, b.Name, StringComparison.Ordinal)));
 
+    /// <summary>The sources of <see cref="SourcesOf(IReadOnlyList{string}, IReadOnlyList{string}, IReadOnlyList{string})"/> plus the project's typed branches and work-item ids (#4499).</summary>
+    /// <param name="linkUrls">The urls of the card's links.</param>
+    /// <param name="linearRepos">The Linear card's repos.</param>
+    /// <param name="profileRepos">The repos 'review.projects' names for this project.</param>
+    /// <param name="typedBranches">The typed branch and branch-prefix sources, or null.</param>
+    /// <param name="typedItems">The typed work-item ids, or null.</param>
+    /// <returns>The sources, each list without duplicates.</returns>
+    public static ProjectSources SourcesOf(IReadOnlyList<string> linkUrls, IReadOnlyList<string> linearRepos, IReadOnlyList<string> profileRepos, IReadOnlyList<BranchSource>? typedBranches, IReadOnlyList<string>? typedItems)
+    {
+        ArgumentNullException.ThrowIfNull(linkUrls);
+        _ = (typedBranches, typedItems);   // red stub: typed sources are not read yet
+        return SourcesOf(linkUrls, linearRepos, profileRepos);
+    }
+
     // "https://github.com/o/n/pull/N" is a PR of o/n, "https://github.com/o/n" is the repo; anything else is no source
     private static (string Repo, bool IsPull)? GithubLink(string url)
     {
