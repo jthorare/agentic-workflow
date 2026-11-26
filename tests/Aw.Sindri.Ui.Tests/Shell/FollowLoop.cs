@@ -1,3 +1,5 @@
+using Aw.Kernel.Testing;
+
 namespace Aw.Sindri.Ui.Tests.Shell;
 
 /// <summary>
@@ -6,8 +8,9 @@ namespace Aw.Sindri.Ui.Tests.Shell;
 internal sealed class FollowLoop : IAsyncDisposable
 {
     private readonly CancellationTokenSource _stop = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-    // Real time, not a test of speed: a starved thread pool (heavy runs the lane 4-wide) can take seconds to resume Run.
-    private static readonly TimeSpan _endBound = TimeSpan.FromSeconds(30);
+    // The only real-time limit is the one every unit test already has (LANE-TEST-001): a starved thread pool (heavy runs the lane 4-wide) can
+    // take seconds to resume Run, and a teardown that fails sooner would fail a test the lane cap lets pass.
+    private static readonly TimeSpan _endBound = Lanes.BudgetOf(TestLane.Unit);
 
     private Task _run = Task.CompletedTask;
 
@@ -23,7 +26,7 @@ internal sealed class FollowLoop : IAsyncDisposable
         var ended = true;
         try
         {
-            await _run.WaitAsync(_endBound, TimeProvider.System, CancellationToken.None).ConfigureAwait(false);
+            await _run.WaitAsync(_endBound, RealTime.Clock, CancellationToken.None).ConfigureAwait(false);
         }
         catch (TimeoutException)
         {
