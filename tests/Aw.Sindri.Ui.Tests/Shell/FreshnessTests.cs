@@ -16,15 +16,14 @@ namespace Aw.Sindri.Ui.Tests.Shell;
 /// rebuilding banners from the services view, the catalog read on connect, and every view re-read on an event.
 /// </summary>
 [Lane(TestLane.Unit)]
-public sealed partial class FreshnessTests : IDisposable
+public sealed partial class FreshnessTests : IAsyncDisposable
 {
     private readonly InMemoryEndpointRecords _records = new();
     private readonly FakeSindriApi _server = new();
     private readonly FakeTimeProvider _clock = new(A.Noon);
-    private readonly CancellationTokenSource _stop = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+    private readonly FollowLoop _follow = new();
     private readonly HealthViewModel _vm;
     private readonly InlineUiContext _ui = new();
-    private Task _run = Task.CompletedTask;
 
     public FreshnessTests()
     {
@@ -32,17 +31,15 @@ public sealed partial class FreshnessTests : IDisposable
         _vm = new HealthViewModel(_records, _server, _clock, new FakeClipboard());
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        _stop.Cancel();
-        Assert.True(_run.Wait(TimeSpan.FromSeconds(2), CancellationToken.None), "Run ended when cancelled");
-        _stop.Dispose();
+        await _follow.DisposeAsync();
         _ui.Dispose();
     }
 
     private async Task Connected(Func<bool>? also = null)
     {
-        _run = _vm.Run(_stop.Token);
+        _follow.Start(_vm.Run);
         await Poll(() => _vm.State == ShellState.Normal && (also?.Invoke() ?? true));
 
         Assert.Equal(ShellState.Normal, _vm.State);

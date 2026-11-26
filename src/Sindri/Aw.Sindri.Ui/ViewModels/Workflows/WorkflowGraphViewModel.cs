@@ -59,7 +59,7 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
         Nodes = nodes;
         Unplaced = unplaced;
         Edges = BuildEdges(workflow.Spec, nodes);
-        Ends = GraphEnds.Build(nodes, Edges);
+        Ends = GraphEnds.Build(nodes, Edges, SpecBranches(workflow.Spec));
         Order = [.. nodes.OrderBy(n => n.X).ThenBy(n => n.Y).ThenBy(n => n.Id, StringComparer.Ordinal)];
     }
 

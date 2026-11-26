@@ -120,11 +120,29 @@ public sealed class GetWorkflowServiceTests
     [Fact]
     public async Task A_schedule_node_on_a_preset_cron_reads_as_that_preset()
     {
+        _clock.SetLocalTimeZone(TimeZoneInfo.FindSystemTimeZoneById("America/Los_Angeles"));   // the box is in the cron's own zone: the card keeps the zone's words
         await CreateWith(Schedule("""{"cron":"0 7 * * 1-5","timezone":"America/Los_Angeles"}"""));
 
         var line = await SummaryOfStart();
 
         Assert.Equal(("Runs every weekday at 7:00, America/Los_Angeles", null), (line.Summary, line.SummaryProblem));
+    }
+
+    // The card reads a schedule in the box's zone as the list row does, days shifted with the clock time; where the zones agree it keeps its own words and the zone's name.
+    [Theory]
+    [InlineData("0 7 * * 1-5", -8, "Runs Sun\u2013Thu at 23:00")]
+    [InlineData("0 7 * * 1-5", 2, "Runs every weekday at 9:00")]
+    [InlineData("30 22 * * 1-5", 3, "Runs Tue\u2013Sat at 1:30")]
+    [InlineData("0 7 * * 4", -8, "Runs every Wednesday at 23:00")]
+    [InlineData("0 7 * * 1-5", 0, "Runs every weekday at 7:00, UTC")]
+    public async Task A_schedule_node_is_worded_in_the_local_zone_with_its_days_shifted(string cron, int localHours, string words)
+    {
+        _clock.SetLocalTimeZone(TimeZoneInfo.CreateCustomTimeZone("local", TimeSpan.FromHours(localHours), "local", "local"));
+        await CreateWith(Schedule("{\"cron\":\"" + cron + "\",\"timezone\":\"UTC\"}"));
+
+        var line = await SummaryOfStart();
+
+        Assert.Equal(words, line.Summary);
     }
 
     [Fact]

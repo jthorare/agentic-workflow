@@ -15,6 +15,7 @@ internal sealed partial class WorkflowsPage : UserControl
     public WorkflowsPage()
     {
         InitializeComponent();
+        WatchListWidth();
     }
 
     /// <inheritdoc/>
@@ -33,33 +34,6 @@ internal sealed partial class WorkflowsPage : UserControl
         _pages?.PropertyChanged -= OnPagesProperty;
         _pages = null;
         base.OnDetachedFromVisualTree(e);
-    }
-
-    private void OnLayoutUpdated(object? sender, EventArgs e)
-    {
-        SizeStages();
-        if (WorkflowsBack.IsVisible)
-        {
-            AlignCrumb(WorkflowsBack, WorkflowsBack.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault());
-            AlignCrumb(WorkflowsCrumbSep, WorkflowsCrumbSep);
-        }
-    }
-
-    // Moves a top-aligned crumb part down by the gap between its text's baseline and the page title's (#2807).
-    // Under half a pixel is left alone, so the layout it causes settles on the next pass.
-    private void AlignCrumb(Control part, TextBlock? text)
-    {
-        if (text is null || text.TranslatePoint(default, this) is not { } at || WorkflowsTitle.TranslatePoint(default, this) is not { } title)
-        {
-            return;
-        }
-
-        var gap = title.Y + WorkflowsTitle.TextLayout.Baseline - (at.Y + text.TextLayout.Baseline);
-        if (Math.Abs(gap) >= 0.5)
-        {
-            var m = part.Margin;
-            part.Margin = new Thickness(m.Left, m.Top + gap, m.Right, m.Bottom);
-        }
     }
 
 #pragma warning disable MA0155 // why: an Avalonia RoutedEvent handler returns void, so it can only be async void
@@ -92,12 +66,41 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
+    // Escape in edit mode with the sheet shut does what Done does, the question included (#3655); with the sheet open the sheet takes Escape first. On Compare, Escape goes back to the runs.
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None && DataContext is WorkflowsPageViewModel { IsEditing: true, IsSettingsOpen: false } page)
+        {
+            page.RequestDone();
+            if (!page.IsEditing)
+            {
+                FocusEdit();
+            }
+
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Escape && DataContext is WorkflowsPageViewModel { IsCompare: true } compare)
+        {
+            compare.Back();   // Compare goes back to the runs with its two ticks kept
+            e.Handled = true;
+            return;
+        }
+
+        base.OnKeyDown(e);
+    }
+
     private void OnDone(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)
         {
-            page.CloseEditor();
-            FocusEdit();
+            page.RequestDone();
+            if (!page.IsEditing)
+            {
+                FocusEdit();
+            }
         }
     }
 

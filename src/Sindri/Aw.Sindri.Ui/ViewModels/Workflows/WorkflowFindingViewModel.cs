@@ -76,8 +76,21 @@ internal sealed class WorkflowFindingViewModel : ObservableObject
     /// <summary>The config field the fix opens (such as "prompt"), or null when the app has no fix for this finding.</summary>
     public string? FixField { get; }
 
-    /// <summary>True when the app has a fix button for this finding.</summary>
-    public bool HasFix => FixField is not null;
+    /// <summary>True when the app has a fix button for this finding and the editor can change the workflow (an archived one is read-only: no button, #4380).</summary>
+    public bool HasFix => FixField is not null && CanFix;
+
+    private bool CanFix { get; set; } = true;
+
+    /// <summary>Turns the fix button on or off with the editor: a read-only workflow has none.</summary>
+    /// <param name="canEdit">True when the editor can change the workflow.</param>
+    internal void AllowFix(bool canEdit)
+    {
+        if (CanFix != canEdit)
+        {
+            CanFix = canEdit;
+            OnChanged(nameof(HasFix));
+        }
+    }
 
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     /// <summary>The chip word: "To fix" for both kinds.</summary>
