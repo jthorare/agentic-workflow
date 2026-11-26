@@ -216,5 +216,5 @@ Words from the first-run spec (`docs/superpowers/specs/2026-11-12-sindri-first-r
 | `SND-GRAPH-130` | No question waits at that node |
 | `SND-GRAPH-131` | A reference reads a node that failed and continued |
 | `SND-GRAPH-132` | The setup service ran a workflow other than the hello-sindri one it made, or ran it a second time |
-| `SND-GRAPH-134` | A runs read's filter can't be read: a status that is not running, ended, succeeded, failed, cancelled, queued or waiting; a `since` or `until` that is not an ISO-8601 instant; `since` after `until`; or a `before` run of another workflow (#4334) |
 | `SND-GRAPH-133` | A prompt step's answer said `couldNotAnswer: true`; the message carries the model's `couldNotAnswerWhy` |
+| `SND-GRAPH-134` | A runs read's filter can't be read: a status that is not running, ended, succeeded, failed, cancelled, queued or waiting; a `since` or `until` that is not an ISO-8601 instant; `since` after `until`; or a `before` run of another workflow (#4334) |
