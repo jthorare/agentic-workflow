@@ -5,4 +5,5 @@ namespace Aw.Connectors.Core;
 /// <param name="HeadSha">The head commit, or null when unknown.</param>
 /// <param name="Reviews">Each reviewer's latest review (open pull requests only; empty otherwise).</param>
 /// <param name="Mergeable">Whether GitHub says the pull request can merge ('mergeable'; false is a conflict), or null when it said nothing yet.</param>
-public sealed record ConnectorPullFacts(IReadOnlyList<string> RequestedReviewers, string? HeadSha, IReadOnlyList<ConnectorReview> Reviews, bool? Mergeable = null);
+/// <param name="HeadRef">The head branch name, or null when unknown.</param>
+public sealed record ConnectorPullFacts(IReadOnlyList<string> RequestedReviewers, string? HeadSha, IReadOnlyList<ConnectorReview> Reviews, bool? Mergeable = null, string? HeadRef = null);

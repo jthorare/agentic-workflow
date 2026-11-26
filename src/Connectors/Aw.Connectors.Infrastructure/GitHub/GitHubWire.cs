@@ -60,7 +60,7 @@ internal static partial class GitHubWire
 
     /// <summary>Reads the merge state of a single pull request.</summary>
     public static GitHubPullDetail ReadPull(JsonElement e, IReadOnlyList<string> paths)
-        => new(Flag(e, "merged"), Flag(e, "draft"), Date(e, "merged_at"), paths, RequestedLogins(e), e.TryGetProperty("head", out var head) && head.ValueKind == JsonValueKind.Object ? Text(head, "sha") : null, NullableFlag(e, "mergeable"));
+        => new(Flag(e, "merged"), Flag(e, "draft"), Date(e, "merged_at"), paths, RequestedLogins(e), e.TryGetProperty("head", out var head) && head.ValueKind == JsonValueKind.Object ? Text(head, "sha") : null, NullableFlag(e, "mergeable"), e.TryGetProperty("head", out var headRef) && headRef.ValueKind == JsonValueKind.Object ? Text(headRef, "ref") : null);
 
     /// <summary>Reduces a pull request's review list to each login's latest review: the one with the newest 'submitted_at' (the later entry on a tie), pending and dismissed reviews (GitHub voided the latter) and ones without a login or commit skipped. A later COMMENTED review replaces an earlier APPROVED one: spec §5.6 counts the latest review whatever its state. Ordered by login.</summary>
     public static IReadOnlyList<(string Login, string Commit, string? State)> LatestReviewStates(IEnumerable<JsonElement> reviews)

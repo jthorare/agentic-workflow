@@ -20,8 +20,15 @@ public static class ProjectTruths
         ArgumentNullException.ThrowIfNull(profileRepos);
         var repos = new List<string>();
         var pulls = new List<string>();
+        var branches = new List<BranchSource>();
         foreach (var link in linkUrls)
         {
+            if (BranchLink(link) is { } branch)
+            {
+                branches.Add(branch);
+                continue;
+            }
+
             switch (GithubLink(link))
             {
                 case (_, true):
@@ -37,8 +44,37 @@ public static class ProjectTruths
 
         repos.AddRange(linearRepos);
         repos.AddRange(profileRepos);
-        return new ProjectSources([.. repos.Distinct(StringComparer.OrdinalIgnoreCase)], [.. pulls.Distinct(StringComparer.OrdinalIgnoreCase)]);
+        return new ProjectSources([.. repos.Distinct(StringComparer.OrdinalIgnoreCase)], [.. pulls.Distinct(StringComparer.OrdinalIgnoreCase)], [.. branches.Distinct()]);
     }
+
+    // "https://github.com/o/n/tree/<branch>" is a branch (its name may hold '/'), "https://github.com/o/n/branches/all?query=<prefix>" is GitHub's own branch search, read as a prefix (#4333)
+    private static BranchSource? BranchLink(string url)
+    {
+        if (!url.StartsWith("https://github.com/", StringComparison.OrdinalIgnoreCase) || !Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Fragment.Length > 0)
+        {
+            return null;
+        }
+
+        var parts = uri.AbsolutePath.Trim('/').Split('/').Select(Uri.UnescapeDataString).ToArray();
+        return parts is [{ Length: > 0 } owner, { Length: > 0 } name, ..] ? BranchOf(owner + "/" + name, parts[2..], uri.Query) : null;
+    }
+
+    // what follows owner/repo: "tree/<branch...>" with no query, or "branches/all" with exactly "?query=<prefix>"
+    private static BranchSource? BranchOf(string repo, string[] rest, string query)
+    {
+        const string Query = "?query=";
+        if (query.Length == 0)
+        {
+            return rest is ["tree", _, ..] ? new BranchSource(repo, string.Join('/', rest[1..]), IsPrefix: false) : null;
+        }
+
+        var prefix = query.StartsWith(Query, StringComparison.Ordinal) && !query.Contains('&', StringComparison.Ordinal) ? Uri.UnescapeDataString(query[Query.Length..]) : string.Empty;
+        return rest is ["branches", "all"] && prefix.Length > 0 ? new BranchSource(repo, prefix, IsPrefix: true) : null;
+    }
+
+    // a PR counts for a project that names its head branch, or a prefix of it, in the PR's repo
+    private static bool OnNamedBranch(ProjectSources sources, ReviewPull pull) =>
+        pull.HeadRef is { } head && (sources.Branches ?? []).Any(b => string.Equals(b.Repo, pull.Repo, StringComparison.OrdinalIgnoreCase) && (b.IsPrefix ? head.StartsWith(b.Name, StringComparison.Ordinal) : string.Equals(head, b.Name, StringComparison.Ordinal)));
 
     // "https://github.com/o/n/pull/N" is a PR of o/n, "https://github.com/o/n" is the repo; anything else is no source
     private static (string Repo, bool IsPull)? GithubLink(string url)
@@ -72,7 +108,7 @@ public static class ProjectTruths
         foreach (var pull in facts.Pulls)
         {
             var url = UrlOf(pull);
-            if (named.Contains(url) || sources.Repos.Contains(pull.Repo, StringComparer.OrdinalIgnoreCase))
+            if (named.Contains(url) || sources.Repos.Contains(pull.Repo, StringComparer.OrdinalIgnoreCase) || OnNamedBranch(sources, pull))
             {
                 var (pr, ciChecked) = Pr(pull, url, facts.Summaries, facts.Owner);
                 prs.Add(pr);

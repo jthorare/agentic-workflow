@@ -88,7 +88,7 @@ internal sealed class ContextReviewFacts(IApprovedProfile approvals, ICallerCont
         var (head, requested, reviews) = Reviewers(record.Pull);
         return new ReviewPull(
             repo, number, record.Title, record.Author ?? string.Empty, record.State == RecordState.Draft, record.CreatedAt ?? record.SyncedAt, record.UpdatedAt ?? record.CreatedAt ?? record.SyncedAt,
-            head, requested, reviews, ReviewersRead: record.Pull is not null, Claims: [], record.Url, record.Pull?.Mergeable);
+            head, requested, reviews, ReviewersRead: record.Pull is not null, Claims: [], record.Url, record.Pull?.Mergeable, record.Pull?.HeadRef);
     }
 
     private static (string? Head, IReadOnlyList<string> Requested, IReadOnlyList<ReviewedAt> Reviews) Reviewers(PullFacts? facts) =>
