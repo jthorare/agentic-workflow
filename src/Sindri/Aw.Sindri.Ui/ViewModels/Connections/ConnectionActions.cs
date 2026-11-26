@@ -74,6 +74,13 @@ internal sealed class ConnectionActions(ISindriApi api, Func<Uri?> url, ILaunche
     /// <returns>The connection and its consent address, or why not.</returns>
     internal Task<Result<ConnectionAdded>> SignIn(string name, CancellationToken cancellationToken) => With(u => api.SignInConnection(u, name, cancellationToken));
 
+    /// <summary>Gives a key connection a new key (PUT /sindri/connections/{name}/key, #4358). The body is sent once.</summary>
+    /// <param name="name">The connection's name.</param>
+    /// <param name="body">The new key.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The connection, or why the key was refused.</returns>
+    internal Task<Result<ConnectionKeyReplaced>> ReplaceKey(string name, ReplaceConnectionKeyBody body, CancellationToken cancellationToken) => With(u => api.ReplaceConnectionKey(u, name, body, cancellationToken));
+
     /// <summary>Removes a connection (connection_remove).</summary>
     /// <param name="name">The connection's name.</param>
     /// <param name="cancellationToken">Cancels the call.</param>

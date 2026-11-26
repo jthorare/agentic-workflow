@@ -59,7 +59,7 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
         Nodes = nodes;
         Unplaced = unplaced;
         Edges = BuildEdges(workflow.Spec, nodes);
-        Ends = GraphEnds.Build(nodes, Edges);
+        Ends = GraphEnds.Build(nodes, Edges, SpecBranches(workflow.Spec));
         Order = [.. nodes.OrderBy(n => n.X).ThenBy(n => n.Y).ThenBy(n => n.Id, StringComparer.Ordinal)];
     }
 
@@ -174,6 +174,7 @@ internal sealed partial class WorkflowGraphViewModel : ObservableObject
         foreach (var node in Nodes)
         {
             var own = findings.Where(f => string.Equals(f.Node, node.Id, StringComparison.Ordinal)).ToList();
+            own.ForEach(f => f.StepTitle = node.Title);
             node.MarkFindings(own.Count, own.Exists(f => f.IsError));
             marked += own.Count;
         }

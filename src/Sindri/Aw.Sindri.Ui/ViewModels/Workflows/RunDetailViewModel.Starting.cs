@@ -52,7 +52,7 @@ internal sealed partial class RunDetailViewModel
     private void ShowStarting(string runId)
     {
         var (glyph, word) = Labels.WfChip("starting");
-        (Id, TitleText, Status, Tone) = (runId, Labels.WfRunTitle(runId), "starting", ChipTone.Neutral);
+        (Id, Status, Tone) = (runId, "starting", ChipTone.Neutral);
         (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, "neutral");
         (IsFailed, FailedText) = (false, string.Empty);
         DidNotStart = string.Equals(_timedOutId, runId, StringComparison.Ordinal);
