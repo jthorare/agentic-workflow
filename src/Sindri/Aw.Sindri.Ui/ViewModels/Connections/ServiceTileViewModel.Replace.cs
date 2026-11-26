@@ -41,11 +41,11 @@ internal sealed partial class ServiceTileViewModel
     /// <summary>True when the check never judged the token (not reached, rate limited): amber, not red.</summary>
     public bool ReplaceErrorIsCaution { get; private set => Set(ref field, value); }
 
-    /// <summary>"Token replaced, not checked" after a replacement the service did not check (a cli connection, or a preset with no key check); empty otherwise.</summary>
+    /// <summary>The note after a replacement the service did not check (a cli connection, or a preset with no key check); empty otherwise.</summary>
     public string ReplaceNote { get; private set { Set(ref field, value); Raise(nameof(HasReplaceNote)); } } = string.Empty;
 
     /// <summary>The server's reason the token was not checked, for the note's tooltip; null when there is none (so no empty tooltip opens).</summary>
-    public string? ReplaceNoteTip { get; private set; }
+    public string? ReplaceNoteTip { get; private set => Set(ref field, value); }
 
     /// <summary>True when the note shows: only on a tile that can be replaced again, and not while the box is open.</summary>
     public bool HasReplaceNote => ReplaceNote.Length > 0 && ShowReplaceLink;
@@ -59,7 +59,7 @@ internal sealed partial class ServiceTileViewModel
         if (CanReplace)
         {
             _ = ReplaceToken.Take();
-            (ReplaceError, ReplaceNote) = (string.Empty, string.Empty);
+            (ReplaceError, ReplaceNote, ReplaceNoteTip) = (string.Empty, string.Empty, null);
             IsReplacing = true;
         }
     }
@@ -123,7 +123,7 @@ internal sealed partial class ServiceTileViewModel
         }
 
         _ = ReplaceToken.Take();
-        ReplaceNote = replaced.Value.Checked ? string.Empty : Labels.TileReplacedUnchecked(replaced.Value.UncheckedReason);
+        (ReplaceNote, ReplaceNoteTip) = replaced.Value.Checked ? (string.Empty, null) : (Labels.TileReplacedUnchecked, replaced.Value.UncheckedReason);
         IsReplacing = false;
         await _changed().ConfigureAwait(true);
     }
