@@ -8,5 +8,3 @@ Aw.Sindri.Infrastructure.Sandbox.Launch.PlatformSandboxServiceCollectionExtensio
 static Aw.Sindri.Infrastructure.Sandbox.Launch.PlatformSandboxServiceCollectionExtensions.AddSindriPlatformSandbox(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 Aw.Sindri.Infrastructure.Registration.SindriClientServiceCollectionExtensions
 static Aw.Sindri.Infrastructure.Registration.SindriClientServiceCollectionExtensions.AddSindriClientInfrastructure(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-Aw.Sindri.Infrastructure.Control.ControlPlaneHandler
-static Aw.Sindri.Infrastructure.Control.ControlPlaneHandler.Shared.get -> System.Net.Http.SocketsHttpHandler!

@@ -30,7 +30,8 @@ public static class SindriClientServiceCollectionExtensions
     internal static IServiceCollection AddClientAdapters(this IServiceCollection services, Func<string, string?> environment) => services
         .AddSingleton<IProfileSource>(sp => new YamlProfileSource(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory)))
         .AddSingleton(static sp => new LiveApprovedProfile(sp.GetRequiredService<IProfileSource>(), sp.GetRequiredService<SindriSettings>().ProfilePath)).AddSingleton<IApprovedProfile>(static sp => sp.GetRequiredService<LiveApprovedProfile>()).AddSingleton<IProfileCache>(static sp => sp.GetRequiredService<LiveApprovedProfile>())
-        .AddSingleton<IEndpointFile, FileEndpoint>().AddSingleton<IControlPlaneProbe>(static sp => new HttpControlPlaneProbe(sp.GetRequiredService<IEndpointFile>(), sp.GetRequiredService<JsonSerializerOptions>(), handler: ControlPlaneHandler.Shared))   // the CLI's ping and its request share one handler (#3727)
+        .AddSingleton<IEndpointFile, FileEndpoint>().AddSingleton<HttpMessageHandler>(static _ => ControlPlaneHandler.Create())   // the CLI's ping and its request share this one handler; the container owns and disposes it (#3727)
+        .AddSingleton<IControlPlaneProbe>(static sp => new HttpControlPlaneProbe(sp.GetRequiredService<IEndpointFile>(), sp.GetRequiredService<JsonSerializerOptions>(), handler: sp.GetRequiredService<HttpMessageHandler>()))
         .AddSingleton<IControlPlaneLauncher, ServeLauncher>()
         .AddSingleton<IHumanTokenStore, FileHumanToken>()
         .AddSingleton<IRepoLocator, GitRepoLocator>();

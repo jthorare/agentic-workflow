@@ -62,7 +62,7 @@ public sealed class CliCompositionsTests
         using var provider = ComposeClient().BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
         using var scope = provider.CreateScope();
 
-        Type[] dispatch = [typeof(JsonSerializerOptions), typeof(TimeProvider), typeof(IControlPlaneProbe), typeof(IControlPlaneLauncher), typeof(IHumanTokenStore), typeof(IApprovedProfile), typeof(IRepoLocator)];
+        Type[] dispatch = [typeof(JsonSerializerOptions), typeof(TimeProvider), typeof(IControlPlaneProbe), typeof(IControlPlaneLauncher), typeof(IHumanTokenStore), typeof(IApprovedProfile), typeof(IRepoLocator), typeof(HttpMessageHandler)];
 
         Assert.All(dispatch, t => Assert.NotNull(scope.ServiceProvider.GetRequiredService(t)));
     }
@@ -72,7 +72,7 @@ public sealed class CliCompositionsTests
     {
         using var provider = ComposeClient().BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
         using var scope = provider.CreateScope();
-        Type[] dispatch = [typeof(JsonSerializerOptions), typeof(TimeProvider), typeof(IControlPlaneProbe), typeof(IControlPlaneLauncher), typeof(IHumanTokenStore), typeof(IApprovedProfile), typeof(IRepoLocator)];
+        Type[] dispatch = [typeof(JsonSerializerOptions), typeof(TimeProvider), typeof(IControlPlaneProbe), typeof(IControlPlaneLauncher), typeof(IHumanTokenStore), typeof(IApprovedProfile), typeof(IRepoLocator), typeof(HttpMessageHandler)];
 
         Assert.All(dispatch, t => Assert.NotNull(scope.ServiceProvider.GetRequiredService(t)));
 

@@ -14,7 +14,7 @@ namespace Aw.Sindri.Infrastructure.Control;
 /// <param name="endpoints">Reads the endpoint record.</param>
 /// <param name="options">The JSON options for the ping.</param>
 /// <param name="answer">The cap on the whole ping call; null means <see cref="Answer"/>.</param>
-/// <param name="handler">A handler the caller shares with its other requests (the CLI's <see cref="ControlPlaneHandler.Shared"/>); the probe never disposes it. Null: its own handler.</param>
+/// <param name="handler">A handler the caller shares with its other requests (the CLI client container's one handler); the probe never disposes it. Null: its own handler.</param>
 internal sealed class HttpControlPlaneProbe(IEndpointFile endpoints, JsonSerializerOptions options, TimeSpan? answer = null, HttpMessageHandler? handler = null) : IControlPlaneProbe, IDisposable
 {
     /// <summary>How long the probe waits to connect to the recorded port.</summary>
