@@ -251,7 +251,7 @@ internal sealed partial class FakeSindriApi
     /// <summary>The ops sent, in order.</summary>
     internal IReadOnlyList<AppliedOps> AppliedWorkflowOps { get { lock (_gate) { return [.. _appliedOps]; } } }
 
-    public Task<Result<WorkflowValidated>> ValidateWorkflow(Uri api, string slug, int? revision, CancellationToken cancellationToken)
+    public async Task<Result<WorkflowValidated>> ValidateWorkflow(Uri api, string slug, int? revision, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
@@ -259,7 +259,9 @@ internal sealed partial class FakeSindriApi
             _validatedRevisions.Add(revision);
         }
 
-        return Task.FromResult(Answer<WorkflowValidated>(api, WorkflowRoutes.Validate(), ValidateWorkflowAnswer));
+        var answer = ValidateWorkflowAnswer;   // what was served when the call was made: a held call answers with it late
+        await HoldValidate(cancellationToken).ConfigureAwait(false);
+        return Answer<WorkflowValidated>(api, WorkflowRoutes.Validate(), answer);
     }
 
     public Task<Result<WorkflowBlockList>> WorkflowBlocks(Uri api, CancellationToken cancellationToken) =>

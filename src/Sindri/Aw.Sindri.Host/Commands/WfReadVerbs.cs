@@ -10,7 +10,7 @@ using Aw.Sindri.Features.SearchWorkflowDocs;
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// 'sindri wf list', 'wf show &lt;slug&gt; [--revision &lt;n|latest&gt;]', 'wf runs &lt;slug&gt;' and 'wf run-show &lt;run&gt;' (each with --json): clients of GET /sindri/workflows, /sindri/workflows/{slug}, /sindri/workflows/{slug}/runs and
+/// 'sindri wf list', 'wf show &lt;slug&gt; [--revision &lt;n|latest&gt;]', 'wf runs &lt;slug&gt; [--status S] [--since T] [--until T] [--before R]' and 'wf run-show &lt;run&gt;' (each with --json): clients of GET /sindri/workflows, /sindri/workflows/{slug}, /sindri/workflows/{slug}/runs and
 /// /sindri/workflow-runs/{run}. They read the routes and never start the control plane. Exit 0 ok (an empty list included), 1 when Sindri isn't running, 2 on usage or any other error.
 /// </summary>
 /// <param name="client">The API client.</param>
@@ -19,10 +19,12 @@ internal sealed class WfReadVerbs(ControlPlaneClient client, Output output)
 {
     internal const string ListUsage = "usage: sindri wf list [--json]";
     internal const string ShowUsage = "usage: sindri wf show <slug> [--revision <n|latest>] [--json]";
-    internal const string RunsUsage = "usage: sindri wf runs <slug> [--json]";
+    internal const string RunsUsage = "usage: sindri wf runs <slug> [--status S] [--since T] [--until T] [--before R] [--json]";
     internal const string BlocksUsage = "usage: sindri wf blocks [--json]";
     internal const string DocsUsage = "usage: sindri wf docs [<question words>] [--page <slug>] [--json]";
     internal const string RunShowUsage = "usage: sindri wf run-show <run> [--json]";
+
+    private static readonly string[] _runsFlags = ["--status", "--since", "--until", "--before"];
 
     internal async Task<int> List(string[] args, CancellationToken ct)
     {
@@ -55,13 +57,13 @@ internal sealed class WfReadVerbs(ControlPlaneClient client, Output output)
     internal async Task<int> Runs(string[] args, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(args);
-        var slug = One(args, 1, "wf runs", RunsUsage);
-        if (slug.IsError)
+        var read = RunsArgs(args);
+        if (read.IsError)
         {
-            return await output.Error(slug.Error).ConfigureAwait(false);
+            return await output.Error(read.Error).ConfigureAwait(false);
         }
 
-        var answer = await client.Get<ListWorkflowRunsResponse>("/sindri/workflows/" + Uri.EscapeDataString(slug.Value) + "/runs", ct).ConfigureAwait(false);
+        var answer = await client.Get<ListWorkflowRunsResponse>("/sindri/workflows/" + Uri.EscapeDataString(read.Value.Slug) + "/runs" + read.Value.Query, ct).ConfigureAwait(false);
         return await Print(answer, args, WfReadText.Runs, ct).ConfigureAwait(false);
     }
 
@@ -156,6 +158,39 @@ internal sealed class WfReadVerbs(ControlPlaneClient client, Output output)
 
         string[] rest = [.. args[..at], .. args[(at + 2)..]];
         return (rest, args[at + 1], null);
+    }
+
+    // why: the four filter flags (#4334) take a value each and go to the route as its query values unchecked; the server refuses what it can't read (SND-GRAPH-134), so the CLI and MCP refuse alike
+    private static Result<(string Slug, string Query)> RunsArgs(string[] args)
+    {
+        var values = new string?[_runsFlags.Length];
+        var rest = new List<string>();
+        for (var i = 0; i < args.Length; i++)
+        {
+            var flag = args[i];
+            var at = Array.FindIndex(_runsFlags, f => string.Equals(f, flag, StringComparison.Ordinal));
+            if (at < 0)
+            {
+                rest.Add(flag);
+                continue;
+            }
+
+            if (i + 1 >= args.Length)
+            {
+                return SindriErrors.InvalidInput.With($"'{flag}' needs a value ({RunsUsage})");
+            }
+
+            values[at] = args[++i];
+        }
+
+        var slug = One([.. rest], 1, "wf runs", RunsUsage);
+        if (slug.IsError)
+        {
+            return slug.Error;
+        }
+
+        (string Slug, string Query) read = (slug.Value, UrlQuery.Of([("status", values[0]), ("since", values[1]), ("until", values[2]), ("before", values[3])]));
+        return read;
     }
 
     /// <summary>The verb's positional arguments: exactly <paramref name="count"/> and the optional --json.</summary>

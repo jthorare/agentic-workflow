@@ -145,7 +145,7 @@ Four reads, each one slice (`Features/ListWorkflows`, `GetWorkflow`, `ListWorkfl
 |---|---|---|---|
 | The workflows that are not archived, each with its trigger in words and `nextRunAt` | `GET /sindri/workflows` | `workflow_list` | `sindri wf list [--json]` |
 | One workflow: the revision it runs (the newest when off), the spec, the spec hash, who saved the newest revision, node positions, the next run time of an active schedule (`nextRunAt`) | `GET /sindri/workflows/{slug}[?revision=N\|latest]` | `workflow_get` (`slug`, `revision`) | `sindri wf show <slug> [--revision <n\|latest>] [--json]` |
-| A workflow's newest 50 runs, newest first, any status | `GET /sindri/workflows/{slug}/runs` | `workflow_runs` (`slug`) | `sindri wf runs <slug> [--json]` |
+| A workflow's runs, newest first, 50 a page, filtered by status and start time, paged by `before` | `GET /sindri/workflows/{slug}/runs[?status=&since=&until=&before=]` | `workflow_runs` (`slug`, `status`, `since`, `until`, `before`) | `sindri wf runs <slug> [--status S] [--since T] [--until T] [--before R] [--json]` |
 | One run with its trigger, outputs and node runs | `GET /sindri/workflow-runs/{run}` | `workflow_run_get` (`run`) | `sindri wf run-show <run> [--json]` |
 
 `revision` (#3303, #3693) reads a saved revision instead of the one the workflow runs: a whole number, or `latest` for the newest saved. The route, the MCP tool and the CLI build the same `GetWorkflowRequest`; the MCP tool takes the number as a JSON number or text. A number the workflow has no revision for is `SND-GRAPH-008` (404), any other value invalid input (`SND-CLI-003`, 400).
@@ -153,6 +153,16 @@ Four reads, each one slice (`Features/ListWorkflows`, `GetWorkflow`, `ListWorkfl
 `nextRunAt` is the soonest tick of the active revision's schedule trigger after now, computed by one Core helper (`Core/Graph/Schedule/WorkflowNextRun.cs`), so the list row and the single read always agree. It is null when the workflow is off, archived, run by hand or by an event, or when its schedule has no tick (#3756); `sindri wf show` prints a `next run` line only when it is set.
 
 An unknown slug is `SND-GRAPH-008` (404), an unknown run `SND-GRAPH-101`, a slug or run id of the wrong shape invalid input. "Who changed it last" is the `createdBy` of the newest revision (`owner` or `session:<id>`). Node payloads the store cut at its size limit come back as a string. `truncated: true` on the node run means its output was cut; a cut input alone leaves it false. Over MCP, names, descriptions, node titles and every string of a node config (prompts), failure text, trigger payloads, outputs and node inputs and outputs are fenced as untrusted. `IWorkflowRunStore.Recent` is the new store read behind the run list.
+
+### Filtering and paging the runs read (#4334)
+
+The runs read takes four optional values, the same on the route's query, the MCP arguments and the CLI flags. The store applies them in its SQL (`IWorkflowRunStore.Find`), before the page cap, so a filter reaches runs older than the newest 50.
+
+- `status`: comma-separated words. `running` keeps queued, running and waiting runs; `ended` and `succeeded` keep succeeded runs; `failed`, `cancelled`, `queued` and `waiting` keep that status.
+- `since` and `until`: ISO-8601 instants on the start time, `since` inclusive and `until` exclusive. A date alone is its midnight UTC.
+- `before`: a run id. The page holds the runs after it in the list order. The answer's `next` is the last run of the page while `more` is true, so `before=<next>` reads the older page.
+
+A value the read can't parse is `SND-GRAPH-134` (400), and so is a `before` run of another workflow; an unknown `before` run is `SND-GRAPH-101`. `sindri wf runs` sends the flags unchecked and prints the next page's command under a page with `more`.
 
 ### The fields the list row and the runs table read (#3683, #3756)
 

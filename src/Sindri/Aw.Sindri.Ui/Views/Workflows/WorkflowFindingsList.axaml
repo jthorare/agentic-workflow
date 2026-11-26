@@ -14,12 +14,15 @@
     </ItemsControl.ItemsPanel>
     <ItemsControl.ItemTemplate>
       <DataTemplate x:DataType="wf:WorkflowFindingViewModel">
-        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto">
+        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto">
           <controls:StateChipView Grid.RowSpan="3" VerticalAlignment="Top" Margin="0,0,8,0" Word="{Binding Word}" Tone="{Binding ToneWord}" />
           <Border Name="StepFindingText" Grid.Column="1" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="body" Text="{Binding Sentence}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
           <TextBlock Grid.Row="1" Grid.Column="1" Classes="caption subtle" Text="{Binding FixLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          <Expander Name="StepFindingDetails" Grid.Row="3" Grid.Column="1" Margin="0,4,0,0" HorizontalAlignment="Stretch" IsVisible="{Binding HasDetails}" Header="{Binding DetailsHeader}" AutomationProperties.Name="{Binding DetailsHeader}">
+            <SelectableTextBlock Classes="caption mono" Text="{Binding Details}" TextWrapping="Wrap" />
+          </Expander>
           <Button Name="StepFindingFix" Grid.Row="2" Grid.Column="1" Margin="0,4,0,0" HorizontalAlignment="Left" IsVisible="{Binding HasFix}" Content="{Binding FixText}" Click="OnFix" AutomationProperties.Name="{Binding FixText}" />
         </Grid>
       </DataTemplate>

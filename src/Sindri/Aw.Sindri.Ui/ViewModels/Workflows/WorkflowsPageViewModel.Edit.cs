@@ -86,6 +86,7 @@ internal sealed partial class WorkflowsPageViewModel
             return;
         }
 
+        AsksSaveFirst = false;   // a question asked on another step's sheet does not carry over
         Editor.ClearPendingStep();   // Step settings on a node leaves a new step that was being filled in
         Editor.ClearRefusal();   // an earlier refusal (a graph edit, or the new step just left) is not shown on this sheet, not even while it reads (#3999)
         OnChanged(nameof(IsNewStep));
@@ -100,6 +101,17 @@ internal sealed partial class WorkflowsPageViewModel
         }
 
         Editor.Select(node);
+    }
+
+    /// <summary>Edit step on a failed step of a run: goes up to the workflow, selects the step on its graph and opens its sheet. A step the current revision no longer has opens the sheet on the workflow.</summary>
+    /// <param name="nodeId">The failed step's id.</param>
+    /// <param name="cancellationToken">Cancels the reads.</param>
+    /// <returns>A task that completes when the form is made.</returns>
+    internal Task EditFailedStep(string nodeId, CancellationToken cancellationToken)
+    {
+        Back();
+        _ = Runs.Graph?.SelectNode(nodeId);
+        return OpenSettings(cancellationToken);
     }
 
     /// <summary>Sends every changed field in ONE call on the revision read: all are saved or none, and a refusal or a stale answer keeps every edit in the form. A field with a problem stops the save before anything is sent.</summary>
@@ -136,6 +148,7 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>Closes the sheet; edit mode stays on. A new step being filled in is dropped: nothing was sent, nothing is added.</summary>
     internal void CloseSettings()
     {
+        AsksSaveFirst = false;   // the question belongs to the sheet it was asked on
         Editor.ClearPendingStep();
         Editor.ClearRefusal();   // the sheet's refusal is not left on the page line once the sheet is gone (#3944)
         (IsSettingsOpen, GraphEdit.SheetOpen) = (false, false);
@@ -167,7 +180,6 @@ internal sealed partial class WorkflowsPageViewModel
                 OnChanged(nameof(DetailChipTone));
                 OnChanged(nameof(ShowsDetailState));
                 OnChanged(nameof(CanOpenSettings));
-                OnChanged(nameof(ShowsStepRow));
                 OnChanged(nameof(CanSave));
                 OnChanged(nameof(EditorHeading));
                 OnChanged(nameof(StepSummaryText));
@@ -220,6 +232,11 @@ internal sealed partial class WorkflowsPageViewModel
         {
             OnChanged(nameof(SaveText));
             OnChanged(nameof(CanSave));
+            if (!Editor.IsSending && _leaveWhenSaved)
+            {
+                _leaveWhenSaved = false;   // Done was pressed during the save: its result decides
+                LeaveIfSaved();
+            }
         }
         else if (string.Equals(e.PropertyName, nameof(OpsEditor.NeedsReload), StringComparison.Ordinal))
         {

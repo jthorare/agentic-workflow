@@ -77,6 +77,32 @@ internal sealed partial class ServiceTileView : UserControl
         }
     }
 
+    // The paste box opens focused, so the token can be pasted at once.
+    private void OnReplaceToken(object? sender, RoutedEventArgs e)
+    {
+        Tile?.StartReplace();
+        Dispatcher.UIThread.Post(() => _ = ServiceTileReplaceField.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
+    }
+
+    private void OnReplaceSend(object? sender, RoutedEventArgs e) => _ = Tile?.Replace(CancellationToken.None);
+
+    private void OnReplaceCancel(object? sender, RoutedEventArgs e) => Tile?.CancelReplace();
+
+    // Enter sends and Escape cancels, as in every inline field of the app.
+    private void OnReplaceKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            e.Handled = true;
+            _ = Tile?.Replace(CancellationToken.None);
+        }
+        else if (e.Key == Key.Escape)
+        {
+            e.Handled = true;
+            Tile?.CancelReplace();
+        }
+    }
+
     private void OnDisconnect(object? sender, RoutedEventArgs e) => _ = Tile?.Disconnect(CancellationToken.None);
 }
 #pragma warning restore MA0182

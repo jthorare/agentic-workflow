@@ -69,6 +69,18 @@ public sealed class ScheduleBlock : IGraphBlock
         return new BlockSummary(runs is not null ? $"Runs {runs}, {zone}" : $"Runs on schedule {cron.Trim()}, {zone}");
     }
 
+    /// <summary>The same line worded in <paramref name="local"/> (the zone the list and the next run use): "Runs Sun–Thu at 23:00" for 7:00 UTC weekdays in Pacific winter time. A cron of another shape, a zone this box cannot read, or two zones that agree keep <see cref="Summarize(JsonObject)"/>.</summary>
+    /// <param name="config">The node's config.</param>
+    /// <param name="local">The zone to word the time in.</param>
+    /// <param name="now">When the offsets are read.</param>
+    /// <returns>The line.</returns>
+    public BlockSummary Summarize(JsonObject config, TimeZoneInfo local, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentNullException.ThrowIfNull(local);
+        return Text(config["cron"]) is { } cron && ScheduleWords.Local(cron, Text(config["timezone"]), local, now) is { } words ? new BlockSummary($"Runs {words}") : Summarize(config);
+    }
+
     /// <inheritdoc />
     public ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
     {

@@ -23172,6 +23172,7 @@ Aw.Sindri.Core.Graph.Blocks.BlockSummary.Text.get -> string!
 Aw.Sindri.Core.Graph.Blocks.BlockSummary.Text.init -> void
 Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.Summarize(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockSummary!
 Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Summarize(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockSummary!
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Summarize(System.Text.Json.Nodes.JsonObject! config, System.TimeZoneInfo! local, System.DateTimeOffset now) -> Aw.Sindri.Core.Graph.Blocks.BlockSummary!
 override Aw.Sindri.Core.Graph.Blocks.BlockChoice.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Graph.Blocks.BlockChoice.GetHashCode() -> int
 override Aw.Sindri.Core.Graph.Blocks.BlockChoice.ToString() -> string!
@@ -23923,6 +23924,35 @@ static Aw.Sindri.Core.Graph.Blocks.GraphFence.Calls(Aw.Sindri.Core.Graph.Blocks.
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.ConnectionTools(Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort! live) -> Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort!
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.Toolkits(Aw.Sindri.Core.Toolkits.IRunningToolkits! live) -> Aw.Sindri.Core.Toolkits.IRunningToolkits!
 static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
+Aw.Sindri.Core.Graph.Failures.StepFailure
+Aw.Sindri.Core.Graph.Failures.StepFailure.<Clone>$() -> Aw.Sindri.Core.Graph.Failures.StepFailure!
+Aw.Sindri.Core.Graph.Failures.StepFailure.Code.get -> string!
+Aw.Sindri.Core.Graph.Failures.StepFailure.Code.init -> void
+Aw.Sindri.Core.Graph.Failures.StepFailure.Deconstruct(out string! Code, out string! Step, out string! Sentence, out string? FixLabel, out string? FixCommand, out string? SecondaryLabel, out string! Detail) -> void
+Aw.Sindri.Core.Graph.Failures.StepFailure.Detail.get -> string!
+Aw.Sindri.Core.Graph.Failures.StepFailure.Detail.init -> void
+Aw.Sindri.Core.Graph.Failures.StepFailure.Equals(Aw.Sindri.Core.Graph.Failures.StepFailure? other) -> bool
+Aw.Sindri.Core.Graph.Failures.StepFailure.FixCommand.get -> string?
+Aw.Sindri.Core.Graph.Failures.StepFailure.FixCommand.init -> void
+Aw.Sindri.Core.Graph.Failures.StepFailure.FixLabel.get -> string?
+Aw.Sindri.Core.Graph.Failures.StepFailure.FixLabel.init -> void
+Aw.Sindri.Core.Graph.Failures.StepFailure.SecondaryLabel.get -> string?
+Aw.Sindri.Core.Graph.Failures.StepFailure.SecondaryLabel.init -> void
+Aw.Sindri.Core.Graph.Failures.StepFailure.Sentence.get -> string!
+Aw.Sindri.Core.Graph.Failures.StepFailure.Sentence.init -> void
+Aw.Sindri.Core.Graph.Failures.StepFailure.Step.get -> string!
+Aw.Sindri.Core.Graph.Failures.StepFailure.Step.init -> void
+Aw.Sindri.Core.Graph.Failures.StepFailure.StepFailure(string! Code, string! Step, string! Sentence, string? FixLabel, string? FixCommand, string? SecondaryLabel, string! Detail) -> void
+override Aw.Sindri.Core.Graph.Failures.StepFailure.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Failures.StepFailure.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Failures.StepFailure.ToString() -> string!
+static Aw.Sindri.Core.Graph.Failures.StepFailure.operator !=(Aw.Sindri.Core.Graph.Failures.StepFailure? left, Aw.Sindri.Core.Graph.Failures.StepFailure? right) -> bool
+static Aw.Sindri.Core.Graph.Failures.StepFailure.operator ==(Aw.Sindri.Core.Graph.Failures.StepFailure? left, Aw.Sindri.Core.Graph.Failures.StepFailure? right) -> bool
+Aw.Sindri.Core.Graph.Failures.StepFailures
+static Aw.Sindri.Core.Graph.Failures.StepFailures.ForRun(string! error, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! titles) -> Aw.Sindri.Core.Graph.Failures.StepFailure?
+static Aw.Sindri.Core.Graph.Failures.StepFailures.Describe(string! step, string! error, string? raw = null) -> Aw.Sindri.Core.Graph.Failures.StepFailure?
+Aw.Sindri.Core.Graph.Failures.StepTitle
+static Aw.Sindri.Core.Graph.Failures.StepTitle.Of(Aw.Sindri.Core.Graph.GraphNode! node) -> string!
 Aw.Sindri.Core.Graph.Blocks.HumanTurnRef
 Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.At.get -> System.DateTimeOffset
 Aw.Sindri.Core.Graph.Blocks.HumanTurnRef.At.init -> void
@@ -25683,3 +25713,24 @@ Aw.Sindri.Core.Connections.IKeyCheck.Check(Aw.Sindri.Core.Connections.Connection
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyRateLimited -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionKeyUnchecked -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.<Clone>$() -> Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery!
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Before.get -> Aw.Sindri.Core.Graph.Runs.WorkflowRun?
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Before.init -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRunStatus>! Statuses, out System.DateTimeOffset? Since, out System.DateTimeOffset? Until, out Aw.Sindri.Core.Graph.Runs.WorkflowRun? Before) -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Equals(Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery? other) -> bool
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Since.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Since.init -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Statuses.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRunStatus>!
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Statuses.init -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Until.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Until.init -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.WorkflowRunQuery(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRunStatus>! Statuses, System.DateTimeOffset? Since, System.DateTimeOffset? Until, Aw.Sindri.Core.Graph.Runs.WorkflowRun? Before) -> void
+override Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.ToString() -> string!
+static Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.All.get -> Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery!
+static Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.operator !=(Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery? left, Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery? right) -> bool
+static Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery.operator ==(Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery? left, Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery? right) -> bool
+Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Find(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, Aw.Sindri.Core.Graph.Runs.WorkflowRunQuery! query, int offset, int limit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>!>
+static readonly Aw.Sindri.Core.SindriErrors.GraphRunsFilterInvalid -> Aw.Kernel.ErrorDefinition!

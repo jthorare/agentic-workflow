@@ -73,25 +73,14 @@ write_plist "$MOVER/Contents/Info.plist" "dev.agentic-workflow.warp-screen-layou
 write_plist "$KEYS/Contents/Info.plist" "dev.agentic-workflow.warp-screen-layout.keys" "Warp Screen Layout Keys"
 swiftc -O -framework AppKit -framework Carbon -o "$MOVER/Contents/MacOS/$BIN_NAME" "$SRC"
 cp "$MOVER/Contents/MacOS/$BIN_NAME" "$KEYS/Contents/MacOS/$BIN_NAME"
-codesign --force --sign - "$MOVER"
-codesign --force --sign - "$KEYS"
+codesign --force --sign - --identifier "dev.agentic-workflow.warp-screen-layout" -r='designated => identifier "dev.agentic-workflow.warp-screen-layout"' "$MOVER"
+codesign --force --sign - --identifier "dev.agentic-workflow.warp-screen-layout.keys" -r='designated => identifier "dev.agentic-workflow.warp-screen-layout.keys"' "$KEYS"
 
 if ! pgrep -f "Warp Screen Layout.app/Contents/MacOS/${BIN_NAME} --worker" >/dev/null 2>&1; then
   log="$HOME/Library/Logs/warp-screen-layout.log"
   mkdir -p "$(dirname "$log")"
-  python3 - "$MOVER/Contents/MacOS/$BIN_NAME" "$log" <<'PY'
-import os, sys
-binary, log_path = sys.argv[1], sys.argv[2]
-log = open(log_path, "ab")
-if os.fork():
-    raise SystemExit(0)
-os.setsid()
-if os.fork():
-    raise SystemExit(0)
-os.dup2(log.fileno(), 1)
-os.dup2(log.fileno(), 2)
-os.execv(binary, [binary, "--worker"])
-PY
+  "$MOVER/Contents/MacOS/$BIN_NAME" --worker >>"$log" 2>&1 &
+  disown
 fi
 
 open -g -a "$KEYS"

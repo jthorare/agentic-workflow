@@ -15,24 +15,23 @@ public sealed class WorkflowsRowWordsTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task The_second_line_leads_with_the_short_id_when_it_differs_from_the_title()
+    public async Task A_name_no_other_workflow_has_shows_no_short_id_beside_it()
     {
         var page = await _f.Shown(Token);
 
-        var row = page.Rows[0];   // "morning-check" is titled "Morning check"
-        Assert.Equal(("morning-check", true), (row.IdText, row.HasIdText));
+        Assert.All(page.Rows, row => Assert.False(row.ShowsId));   // "Morning check" and "Weekly report": the short id waits for a duplicate name
     }
 
     [Fact]
-    public async Task A_title_that_is_the_short_id_shows_no_id_line()
+    public async Task Two_workflows_with_one_name_show_the_short_id_beside_it()
     {
         var list = Golden("workflows", "list-two");
-        list["workflows"]![0]!["name"] = "morning-check";
+        list["workflows"]![1]!["name"] = "Morning check";
         _f.ServeList(list);
 
         var page = await _f.Shown(Token);
 
-        Assert.Equal((string.Empty, false), (page.Rows[0].IdText, page.Rows[0].HasIdText));
+        Assert.All(page.Rows, row => Assert.True(row.ShowsId));
     }
 
     [Theory]

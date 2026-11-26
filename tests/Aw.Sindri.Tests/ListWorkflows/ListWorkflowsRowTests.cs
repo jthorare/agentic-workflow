@@ -42,6 +42,24 @@ public sealed class ListWorkflowsRowTests
         Assert.Equal(words, row.Trigger);
     }
 
+    // The list says a schedule in the box's own zone, as the next run does: the cron's words are read in its zone and shifted into the local one, the days with them.
+    [Theory]
+    [InlineData("0 7 * * 1-5", "UTC", -8, "Sun\u2013Thu 23:00")]   // 7:00 UTC is 23:00 the evening before: every weekday becomes Sunday to Thursday
+    [InlineData("0 7 * * 1-5", "UTC", 2, "Every weekday 9:00")]   // no midnight crossed: the words stay
+    [InlineData("30 22 * * 1-5", "UTC", 3, "Tue\u2013Sat 1:30")]   // 22:30 UTC is 1:30 the next morning: Tuesday to Saturday
+    [InlineData("0 7 * * *", "UTC", -8, "Every day 23:00")]
+    [InlineData("*/20 * * * *", "UTC", -8, "Every 20 min")]   // an interval has no clock time to move
+    [InlineData("0 7 * * 1-5", "Mars/Base", -8, "Every weekday 7:00 Mars/Base")]   // a zone it cannot read: the words keep their own zone's name
+    public async Task A_schedule_is_worded_in_the_local_zone_with_its_days_shifted(string cron, string zone, int localHours, string words)
+    {
+        _clock.SetLocalTimeZone(TimeZoneInfo.CreateCustomTimeZone("local", TimeSpan.FromHours(localHours), "local", "local"));
+        _ = await Create(1, "w", "schedule", cron, zone);
+
+        var row = (await _service.Handle(new ListWorkflowsRequest(), Token)).Value.Workflows.Single();
+
+        Assert.Equal(words, row.Trigger);
+    }
+
     [Fact]
     public async Task A_workflow_that_never_ran_has_no_last_run_and_an_empty_strip()
     {

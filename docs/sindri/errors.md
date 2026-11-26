@@ -90,7 +90,7 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-CONN-008` | The connection name is not `&lt;service&gt;:&lt;label&gt;` in lowercase. | use letters, digits and `-`, 1 to 32 characters per part |
 | `SND-CONN-009` | Consent was denied at the provider. | run the command again and allow access |
 | `SND-CONN-010` | A connection with that name exists. | pick another label, or `sindri connection remove` it first |
-| `SND-CONN-011` | The connection uses a key, so it has no browser sign-in to run again. | `sindri connection remove` it, then add it with a new `--key-env` |
+| `SND-CONN-011` | The connection uses a key, so it has no browser sign-in to run again. | `sindri connection set-key <name> --key-env NAME` to give it a new key (or `sindri connection remove` it and add it again) |
 | `SND-CONN-012` | The provider's answer is not the shape Sindri expects, or a redirect left the preset's host. | run `sindri doctor`; if it repeats, the provider changed its API |
 | `SND-CONN-013` | The provider rejected the saved poll cursor. | ask for a full re-read (the owner's call); Sindri does not re-read on its own |
 | `SND-CONN-014` | The provider is rate limiting this connection (429 or 5xx on a poll). | nothing: the next poll waits for Retry-After, then doubles the wait on each repeat |
@@ -216,4 +216,5 @@ Words from the first-run spec (`docs/superpowers/specs/2026-11-12-sindri-first-r
 | `SND-GRAPH-130` | No question waits at that node |
 | `SND-GRAPH-131` | A reference reads a node that failed and continued |
 | `SND-GRAPH-132` | The setup service ran a workflow other than the hello-sindri one it made, or ran it a second time |
+| `SND-GRAPH-134` | A runs read's filter can't be read: a status that is not running, ended, succeeded, failed, cancelled, queued or waiting; a `since` or `until` that is not an ISO-8601 instant; `since` after `until`; or a `before` run of another workflow (#4334) |
 | `SND-GRAPH-133` | A prompt step's answer said `couldNotAnswer: true`; the message carries the model's `couldNotAnswerWhy` |
