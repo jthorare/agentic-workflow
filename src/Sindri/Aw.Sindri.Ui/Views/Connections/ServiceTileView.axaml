@@ -56,6 +56,7 @@
       <TextBlock x:Name="ServiceTileLastUsed" Classes="caption subtle" Text="{Binding LastUsedText}" IsVisible="{Binding IsConnected}" AutomationProperties.AccessibilityView="Raw" />
       <!-- #4358: a connected key tile (rest or cli) takes a new token. Sindri checks it like a new one and keeps the old key until it passes. -->
       <Button x:Name="ServiceTileReplaceToken" Classes="link accent-link" Content="{Binding Text.ReplaceToken}" IsVisible="{Binding ShowReplaceLink}" Click="OnReplaceToken" HorizontalAlignment="Left" />
+      <TextBlock x:Name="ServiceTileReplaceNote" Classes="caption subtle" Text="{Binding ReplaceNote}" IsVisible="{Binding HasReplaceNote}" TextWrapping="Wrap" />
       <StackPanel x:Name="ServiceTileReplaceBox" Spacing="{StaticResource Space.XS}" IsVisible="{Binding IsReplacing}">
         <TextBox x:Name="ServiceTileReplaceField" PasswordChar="●" Text="{Binding ReplaceToken.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.ReplaceTokenLabel}" KeyDown="OnReplaceKey" AutomationProperties.Name="{Binding Text.ReplaceTokenLabel}" />
         <TextBlock x:Name="ServiceTileReplaceStatus" Classes="caption subtle" Text="{Binding ReplaceStatus}" IsVisible="{Binding HasReplaceStatus}" TextWrapping="Wrap" />

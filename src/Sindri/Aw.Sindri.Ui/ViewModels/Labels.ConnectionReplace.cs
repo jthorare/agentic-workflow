@@ -14,6 +14,9 @@ internal static partial class Labels
     /// <summary>The paste box's send button.</summary>
     internal const string TileReplaceSend = "Replace";
 
+    /// <summary>The note on a tile whose new token the service did not check.</summary>
+    internal const string TileReplacedUnchecked = "Token replaced, not checked";
+
     /// <summary>The line shown while the new token is checked.</summary>
     internal const string TileReplaceChecking = "Checking the new token...";
 

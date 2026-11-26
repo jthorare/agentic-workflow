@@ -55,6 +55,34 @@ public sealed class ReplaceTokenTests
     }
 
     [Fact]
+    public async Task A_token_stored_unchecked_says_so_on_the_tile_until_the_box_opens_again()
+    {
+        var tile = await Tile(kind: "cli");
+        _f.Server.ReplaceKeyUnchecked = true;
+        tile.StartReplace();
+        tile.ReplaceToken.Text = Fresh;
+
+        await tile.Replace(Token);
+
+        Assert.Equal("Token replaced, not checked", tile.ReplaceNote);
+        Assert.True(tile.HasReplaceNote);
+        tile.StartReplace();
+        Assert.False(tile.HasReplaceNote);
+    }
+
+    [Fact]
+    public async Task A_checked_token_leaves_no_note()
+    {
+        var tile = await Tile();
+        tile.StartReplace();
+        tile.ReplaceToken.Text = Fresh;
+
+        await tile.Replace(Token);
+
+        Assert.False(tile.HasReplaceNote);
+    }
+
+    [Fact]
     public async Task A_refused_token_keeps_the_box_open_the_tile_connected_and_says_the_old_token_is_in_use()
     {
         var tile = await Tile();

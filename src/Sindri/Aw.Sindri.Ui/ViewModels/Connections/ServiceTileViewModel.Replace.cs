@@ -41,6 +41,12 @@ internal sealed partial class ServiceTileViewModel
     /// <summary>True when the check never judged the token (not reached, rate limited): amber, not red.</summary>
     public bool ReplaceErrorIsCaution { get; private set => Set(ref field, value); }
 
+    /// <summary>"Token replaced, not checked" after a replacement the service did not check (a cli connection, or a preset with no key check); empty otherwise.</summary>
+    public string ReplaceNote { get; private set { Set(ref field, value); Raise(nameof(HasReplaceNote)); } } = string.Empty;
+
+    /// <summary>True when the note shows: only on a tile that can be replaced again, and not while the box is open.</summary>
+    public bool HasReplaceNote => ReplaceNote.Length > 0 && ShowReplaceLink;
+
     /// <summary>True when Replace does something: a token is pasted and no check runs.</summary>
     public bool CanSendReplace => IsReplacing && !IsReplaceChecking && ReplaceToken.HasValue;
 
@@ -50,7 +56,7 @@ internal sealed partial class ServiceTileViewModel
         if (CanReplace)
         {
             _ = ReplaceToken.Take();
-            ReplaceError = string.Empty;
+            (ReplaceError, ReplaceNote) = (string.Empty, string.Empty);
             IsReplacing = true;
         }
     }
@@ -114,9 +120,10 @@ internal sealed partial class ServiceTileViewModel
         }
 
         _ = ReplaceToken.Take();
+        ReplaceNote = replaced.Value.Checked ? string.Empty : Labels.TileReplacedUnchecked;
         IsReplacing = false;
         await _changed().ConfigureAwait(true);
     }
 
-    private void RaiseReplace() => Raise(nameof(CanReplace), nameof(ShowReplaceLink), nameof(CanSendReplace), nameof(ReplaceStatus), nameof(HasReplaceStatus));
+    private void RaiseReplace() => Raise(nameof(CanReplace), nameof(ShowReplaceLink), nameof(HasReplaceNote), nameof(CanSendReplace), nameof(ReplaceStatus), nameof(HasReplaceStatus));
 }
