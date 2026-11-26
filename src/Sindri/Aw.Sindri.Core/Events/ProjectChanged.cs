@@ -20,8 +20,8 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="ClearTarget">Whether the target date is dropped.</param>
 /// <param name="Notes">New notes, or null.</param>
 /// <param name="ClearNotes">Whether the notes are dropped.</param>
-/// <param name="Branches">The typed branch sources (the typed branch and branch-prefix sources (#4499), or null); null on events written before it, which read as none.</param>
-/// <param name="Items">The typed work-item id sources (the typed work-item id sources (#4499), or null).</param>
+/// <param name="Branches">The typed branch and branch-prefix sources (#4499), or null; null on events written before it, which read as none.</param>
+/// <param name="Items">The typed work-item id sources (#4499), or null.</param>
 /// <param name="Note">Read only: the one-line note older events carry (renamed to notes, owner q158); never written.</param>
 /// <param name="ClearNote">Read only: older events' flag for dropping the note; never written.</param>
 public sealed record ProjectChanged(

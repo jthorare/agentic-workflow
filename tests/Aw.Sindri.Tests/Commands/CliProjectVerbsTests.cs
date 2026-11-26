@@ -484,7 +484,7 @@ public sealed class CliProjectVerbsTests : IDisposable
     {
         var card = Card(Id, "Kitchen", version: 4) with
         {
-            Branches = [new Aw.Sindri.Core.Projects.Sources.BranchSource("acme/api", "feat/login", IsPrefix: false), new Aw.Sindri.Core.Projects.Sources.BranchSource("acme/api", "feat/", IsPrefix: true)],
+            Branches = [new Core.Projects.Sources.BranchSource("acme/api", "feat/login", IsPrefix: false), new Core.Projects.Sources.BranchSource("acme/api", "feat/", IsPrefix: true)],
             Items = [ItemA],
         };
         var api = new RoutedApi().On($"/sindri/projects/{Id}", HttpStatusCode.OK, Shown(card, hidden: false));
