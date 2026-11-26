@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
+using Aw.Sindri.Ui.Platform;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
@@ -34,11 +35,12 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>The page over its ports.</summary>
     /// <param name="api">The API.</param>
     /// <param name="clock">The clock the ages run on.</param>
-    internal WorkflowsPageViewModel(ISindriApi api, TimeProvider clock)
+    /// <param name="clipboard">Where a failed run's fix copies its command; null shows no copy button.</param>
+    internal WorkflowsPageViewModel(ISindriApi api, TimeProvider clock, IClipboard? clipboard = null)
     {
         (Api, _clock) = (api, clock);
         Runs = new RunsViewModel(api, clock);
-        Run = new RunDetailViewModel(api, clock) { EditStep = EditFailedStep };
+        Run = new RunDetailViewModel(api, clock, clipboard) { EditStep = EditFailedStep };
         Editor = new OpsEditor(api);
         GraphEdit = new GraphEditViewModel(Editor, Runs, () => _url) { OpenNewStep = BeginNewStep };   // made with the page, not on first read: the canvas's Delete key raises on the graph, and the edit bar must already be listening
         Runs.StartTimedOut += (_, e) => Run.MarkDidNotStart(e.Value);   // one start deadline, owned by the runs model: the run page reads it, it starts no timer of its own
