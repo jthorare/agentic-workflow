@@ -14,9 +14,6 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
     /// <summary>The run's id.</summary>
     public string Id { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>"Run morning-check@1:1".</summary>
-    public string TitleText { get; private set => Set(ref field, value); } = string.Empty;
-
     /// <summary>The served status word; empty before the first answer.</summary>
     public string Status { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -179,7 +176,7 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
         (Status, Tone, NoticeText) = (string.Empty, ChipTone.Neutral, string.Empty);
         (ChipWord, ChipGlyph, ChipToneWord) = (string.Empty, string.Empty, "neutral");
         (IsFailed, FailedText) = (false, string.Empty);
-        (TitleText, TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (Labels.WfRunTitle(runId), string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+        (TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         Failure = null;
         Changed();
     }
@@ -203,7 +200,6 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
     private void Show(WorkflowRunView run)
     {
         var (glyph, word) = Labels.WfChip(run.Status);
-        TitleText = Labels.WfRunTitle(run.Id);
         (ChipWord, ChipGlyph) = (word, glyph);
         (Status, Tone) = (run.Status, RunStatus.Tone(run.Status));
         ChipToneWord = RunStatus.ToneWord(run.Status);
