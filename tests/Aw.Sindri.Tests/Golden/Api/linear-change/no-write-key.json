@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
-  "title": "SND-API-005",
-  "status": 500,
-  "detail": "POST /sindri/linear/issues/ENG-12/change failed with TypeInitializationException; the control plane logged it",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+  "title": "SND-LINEAR-002",
+  "status": 403,
+  "detail": "Sindri has no Linear write key (fix: Settings, Connections, Linear, add a write key)",
   "traceId": "<trace>"
 }

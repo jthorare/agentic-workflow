@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
-  "title": "SND-API-005",
-  "status": 500,
-  "detail": "POST /sindri/toolkits/missing/stop failed with TypeInitializationException; the control plane logged it",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+  "title": "SND-TK-009",
+  "status": 404,
+  "detail": "'missing' (fix: sindri toolkit list)",
   "traceId": "<trace>"
 }

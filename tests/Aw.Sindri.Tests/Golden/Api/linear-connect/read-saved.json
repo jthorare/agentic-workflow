@@ -1,7 +1,5 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
-  "title": "SND-API-005",
-  "status": 500,
-  "detail": "POST /sindri/linear/connection failed with TypeInitializationException; the control plane logged it",
-  "traceId": "<trace>"
+  "saved": true,
+  "profileHash": "221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd",
+  "write": null
 }

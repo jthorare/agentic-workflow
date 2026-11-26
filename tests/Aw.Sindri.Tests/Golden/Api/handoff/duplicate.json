@@ -1,7 +1,8 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
-  "title": "SND-API-005",
-  "status": 500,
-  "detail": "POST /sindri/handoff failed with TypeInitializationException; the control plane logged it",
-  "traceId": "<trace>"
+  "accepted": {
+    "commandId": "00000000-0000-0000-0000-00000000000a",
+    "sequence": 3
+  },
+  "itemId": "ITM-00000000000000000000000000000006",
+  "offerKey": "offer-7"
 }

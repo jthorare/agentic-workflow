@@ -1,7 +1,16 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
-  "title": "SND-API-005",
-  "status": 500,
-  "detail": "PUT /sindri/connections/acme:key/key failed with TypeInitializationException; the control plane logged it",
-  "traceId": "<trace>"
+  "connection": {
+    "name": "acme:key",
+    "kind": "rest",
+    "preset": "linear",
+    "status": "connected",
+    "statusReason": null,
+    "config": {
+      "probeUrl": "https://api.acme.example.test/ping"
+    },
+    "lastRefreshedAt": null,
+    "hasSecret": true
+  },
+  "checked": true,
+  "uncheckedReason": null
 }

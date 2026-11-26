@@ -1,7 +1,6 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
-  "title": "SND-API-005",
-  "status": 500,
-  "detail": "POST /sindri/workflows failed with TypeInitializationException; the control plane logged it",
-  "traceId": "<trace>"
+  "id": "WF-00000000000000000000000000000006",
+  "slug": "morning-check",
+  "revision": 1,
+  "specHash": "sha256:869417c9f8a071faaab288654058880d5e924c8e29967cc2cb672665bed7b1e9"
 }
