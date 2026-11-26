@@ -185,13 +185,13 @@ public sealed class ConnectionTokenFirstTests
     }
 
     [Fact]
-    public async Task The_OAuth_fields_say_client_ID_and_keep_their_waiting_line()
+    public async Task The_OAuth_fields_say_client_ID_and_the_help_line_says_to_paste_it_once()
     {
         var tile = await Tile("linear");
         await tile.Connect(Token);
         tile.UseOAuth();
 
-        Assert.Equal(("Client ID", "Enter your Linear app's client ID", true), (tile.Text.TileClientLabel, tile.BlockedReason, tile.HasBlockedReason));
+        Assert.Equal(("Client ID", "Enter your Linear app's client ID", false), (tile.Text.TileClientLabel, tile.BlockedReason, tile.HasBlockedReason));   // #4396: the help line says to paste the client ID, so the inline reason stays quiet
         Assert.Contains("client ID", tile.HelpText, StringComparison.Ordinal);
     }
 }
