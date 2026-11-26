@@ -11,13 +11,16 @@ namespace Aw.Sindri.Ui.Tests.Workflows;
 /// to the runs route, opens the run like Run now, shows a refusal where Run now's shows, and leaves the live revision alone. The found golden is live at 1 with 2 saved.
 /// </summary>
 [Lane(TestLane.Unit)]
-public sealed class WorkflowsRunRevisionOnceTests
+public sealed class WorkflowsRunRevisionOnceTests : IDisposable
 {
     private const string RevisionRun = "morning-check@2:1";
 
+    private readonly InlineUiContext _ui = new();   // the start deadline's timer callback runs on the thread that advances the fake clock
     private readonly WorkflowsFixture _f = new();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
+
+    public void Dispose() => _ui.Dispose();
 
     private async Task<WorkflowsPageViewModel> OnRuns(int? active = 1)
     {
@@ -90,6 +93,35 @@ public sealed class WorkflowsRunRevisionOnceTests
         await page.RunNow(Token);
 
         Assert.Equal([Slug], _f.Server.StartedWorkflows);
+        Assert.Empty(_f.Server.StartedRevisionRuns);
+    }
+
+    [Fact]
+    public async Task Retry_on_a_revision_run_that_got_no_row_runs_that_revision_again()
+    {
+        _f.Server.StartWorkflowRunAnswer = new RouteAnswer(HttpStatusCode.OK, "{\"run\":\"" + RevisionRun + "\",\"status\":\"started\",\"reason\":null}");
+        _f.Server.WorkflowRunAnswers[RevisionRun] = RouteAnswer.Api("workflow-runs-run", "running");
+        var page = await OnRuns();
+        await page.RunRevisionOnce(Token);
+        _f.Clock.Advance(TimeSpan.FromSeconds(10));   // no run row came: the placeholder says the run did not start
+
+        await page.RetryStart(RevisionRun, Token);
+
+        Assert.Equal([(Slug, 2), (Slug, 2)], _f.Server.StartedRevisionRuns);   // revision 2 again, never the live revision 1
+        Assert.Empty(_f.Server.StartedWorkflows);
+    }
+
+    [Fact]
+    public async Task Retry_on_a_plain_Run_now_still_sends_no_revision()
+    {
+        var page = await OnRuns();
+        await page.RunNow(Token);
+        var placeholder = Assert.Single(page.Runs.Rows, static r => r.Status == "starting");
+        _f.Clock.Advance(TimeSpan.FromSeconds(10));
+
+        await page.RetryStart(placeholder.Id, Token);
+
+        Assert.Equal([Slug, Slug], _f.Server.StartedWorkflows);
         Assert.Empty(_f.Server.StartedRevisionRuns);
     }
 }
