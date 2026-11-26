@@ -22,7 +22,7 @@ internal sealed class GraphEdgeViewModel
     public string? Label { get; }
 
     /// <summary>Where the arrow leaves.</summary>
-    public GraphPoint Start { get; }
+    public GraphPoint Start { get; internal set; }
 
     /// <summary>Where the arrow head lands.</summary>
     public GraphPoint End { get; }
