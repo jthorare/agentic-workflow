@@ -54,6 +54,17 @@
         </StackPanel>
       </StackPanel>
       <TextBlock x:Name="ServiceTileLastUsed" Classes="caption subtle" Text="{Binding LastUsedText}" IsVisible="{Binding IsConnected}" AutomationProperties.AccessibilityView="Raw" />
+      <!-- #4358: a connected key tile (rest or cli) takes a new token. Sindri checks it like a new one and keeps the old key until it passes. -->
+      <Button x:Name="ServiceTileReplaceToken" Classes="link accent-link" Content="{Binding Text.ReplaceToken}" IsVisible="{Binding ShowReplaceLink}" Click="OnReplaceToken" HorizontalAlignment="Left" />
+      <StackPanel x:Name="ServiceTileReplaceBox" Spacing="{StaticResource Space.XS}" IsVisible="{Binding IsReplacing}">
+        <TextBox x:Name="ServiceTileReplaceField" PasswordChar="●" Text="{Binding ReplaceToken.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.ReplaceTokenLabel}" KeyDown="OnReplaceKey" AutomationProperties.Name="{Binding Text.ReplaceTokenLabel}" />
+        <TextBlock x:Name="ServiceTileReplaceStatus" Classes="caption subtle" Text="{Binding ReplaceStatus}" IsVisible="{Binding HasReplaceStatus}" TextWrapping="Wrap" />
+        <TextBlock x:Name="ServiceTileReplaceError" Classes="caption tile-error" Classes.caution="{Binding ReplaceErrorIsCaution}" Text="{Binding ReplaceError}" IsVisible="{Binding HasReplaceError}" TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+          <Button x:Name="ServiceTileReplaceSend" Classes="command-control primary" Content="{Binding Text.ReplaceSend}" IsEnabled="{Binding CanSendReplace}" Click="OnReplaceSend" />
+          <Button x:Name="ServiceTileReplaceCancel" Content="{Binding Text.Cancel}" IsEnabled="{Binding !IsReplaceChecking}" Click="OnReplaceCancel" />
+        </StackPanel>
+      </StackPanel>
       <TextBlock x:Name="ServiceTileAttention" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding ReasonText}" IsVisible="{Binding HasReason}" TextWrapping="Wrap" ToolTip.Tip="{Binding ReasonTip}" />
 
       <!-- #4357: a service with a key asks for a token first, under three numbered steps; GitHub and Linear swap to their own OAuth app's fields with the link under the input. -->

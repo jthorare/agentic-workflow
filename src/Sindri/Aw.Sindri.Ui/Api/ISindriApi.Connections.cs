@@ -48,6 +48,14 @@ internal partial interface ISindriApi
     /// <returns>The new and the old name, the API's refusal (SND-CONN-001, -008, -010 or SND-CLI-003), or SND-UI-002/003.</returns>
     public Task<Result<ConnectionRenamed>> RenameConnection(Uri api, string name, RenameConnectionBody body, CancellationToken cancellationToken);
 
+    /// <summary>PUT /sindri/connections/{name}/key: gives a key connection a new key. The server checks it first and keeps the old key until it passes (#4358).</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="name">The connection.</param>
+    /// <param name="body">The new key; sent once.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The connection as it stands, the API's refusal (SND-CONN-018, -019, -020, SND-CONN-001 or SND-CLI-003), or SND-UI-002/003.</returns>
+    public Task<Result<ConnectionAdded>> ReplaceConnectionKey(Uri api, string name, ReplaceConnectionKeyBody body, CancellationToken cancellationToken);
+
     /// <summary>DELETE /sindri/connections/{name}.</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="name">The connection.</param>

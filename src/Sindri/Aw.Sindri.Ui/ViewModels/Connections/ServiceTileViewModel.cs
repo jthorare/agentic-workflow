@@ -18,6 +18,7 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     {
         (Service, _actions, _changed, _clock) = (service, actions, changed, clock);
         Token.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress), nameof(PrimaryText), nameof(HasPrimary));
+        ReplaceToken.PropertyChanged += (_, _) => Raise(nameof(CanSendReplace));
         ClientSecret.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress), nameof(PrimaryText), nameof(HasPrimary));
     }
 
@@ -181,7 +182,7 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     // Everything the chip, the primary button and the menu read from the connection and the input.
     private void RaiseState()
     {
-        Raise(nameof(StatusChip), nameof(ReasonText), nameof(ReasonTip), nameof(HasReason), nameof(PrimaryText), nameof(HasPrimary), nameof(CanPress), nameof(CanReconnect), nameof(CanRename), nameof(HasHelpLink));
+        Raise(nameof(StatusChip), nameof(ReasonText), nameof(ReasonTip), nameof(HasReason), nameof(PrimaryText), nameof(HasPrimary), nameof(CanPress), nameof(CanReconnect), nameof(CanRename), nameof(HasHelpLink), nameof(CanReplace), nameof(ShowReplaceLink));
         RaiseAuth();
     }
 
