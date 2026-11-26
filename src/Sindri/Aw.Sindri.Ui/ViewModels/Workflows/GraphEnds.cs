@@ -3,11 +3,12 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <summary>Where a condition's missing branches draw their dotted stub and "→ done" words.</summary>
 internal static class GraphEnds
 {
-    /// <summary>Builds the ends of every condition branch that has no edge.</summary>
+    /// <summary>Builds the ends of every condition branch that has no edge, and the "done" word of every other step with no out edge. An edge the spec has counts even when its target is not drawn.</summary>
     /// <param name="nodes">The step cards.</param>
-    /// <param name="edges">The edges.</param>
+    /// <param name="edges">The edges that are drawn.</param>
+    /// <param name="specBranches">Every (from, output) the spec has an edge for, drawn or not.</param>
     /// <returns>One end per missing branch.</returns>
-    internal static List<GraphEnd> Build(List<GraphNodeViewModel> nodes, IReadOnlyList<GraphEdgeViewModel> edges)
+    internal static List<GraphEnd> Build(List<GraphNodeViewModel> nodes, IReadOnlyList<GraphEdgeViewModel> edges, IReadOnlySet<(string From, string Branch)> specBranches)
     {
         var ends = new List<GraphEnd>();
         var cards = nodes.Select(n => new GraphBox(n.X, n.Y, n.Width, n.Height)).ToList();
@@ -15,14 +16,14 @@ internal static class GraphEnds
         {
             foreach (var (branch, across) in new[] { ("true", 50 * node.Scale), ("false", node.Width - (50 * node.Scale)) })
             {
-                if (!edges.Any(e => string.Equals(e.From, node.Id, StringComparison.Ordinal) && string.Equals(e.Label, branch, StringComparison.Ordinal)))
+                if (!specBranches.Contains((node.Id, branch)) && !edges.Any(e => string.Equals(e.From, node.Id, StringComparison.Ordinal) && string.Equals(e.Label, branch, StringComparison.Ordinal)))
                 {
                     ends.Add(PlaceEnd(node, branch + " \u2192 done", across, cards));
                 }
             }
         }
 
-        foreach (var node in nodes.Where(n => !string.Equals(n.Type, "condition", StringComparison.Ordinal) && !edges.Any(e => string.Equals(e.From, n.Id, StringComparison.Ordinal))))
+        foreach (var node in nodes.Where(n => !string.Equals(n.Type, "condition", StringComparison.Ordinal) && !edges.Any(e => string.Equals(e.From, n.Id, StringComparison.Ordinal)) && !specBranches.Any(b => string.Equals(b.From, n.Id, StringComparison.Ordinal))))
         {
             // a step with no out port ends the path: the word sits right of the card, clear of it, with no stub; sizes at the card's text scale (#3231)
             var (k, at) = (node.Scale, new GraphPoint(node.X + node.Width, node.Y + (node.Height / 2)));

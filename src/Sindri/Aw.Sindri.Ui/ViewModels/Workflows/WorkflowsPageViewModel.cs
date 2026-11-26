@@ -42,8 +42,8 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         Editor = new OpsEditor(api);
         GraphEdit = new GraphEditViewModel(Editor, Runs, () => _url) { OpenNewStep = BeginNewStep };   // made with the page, not on first read: the canvas's Delete key raises on the graph, and the edit bar must already be listening
         Runs.StartTimedOut += (_, e) => Run.MarkDidNotStart(e.Value);   // one start deadline, owned by the runs model: the run page reads it, it starts no timer of its own
-        Runs.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Runs.Title)) { NotifyCrumb(); } };
-        Run.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Run.Id)) { NotifyCrumb(); } };
+        Runs.PropertyChanged += (_, e) => { if (string.Equals(e.PropertyName, nameof(Runs.Title), StringComparison.Ordinal)) { NotifyCrumb(); } };
+        Run.PropertyChanged += (_, e) => { if (string.Equals(e.PropertyName, nameof(Run.Id), StringComparison.Ordinal)) { NotifyCrumb(); } };
         WatchEditor();
         WatchFindings();
     }
@@ -70,6 +70,9 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>The header's big title: the page on the list, the workflow's name on its runs, the run's id on a run.</summary>
     public string PageTitle => _level switch { Level.Runs => Runs.Title, Level.Run => Run.Id, Level.Compare => Runs.Title, Level.List => Labels.Workflows, _ => Labels.Workflows };
 
+    /// <summary>The crumb's accessible name: where it goes ("Back to Workflows").</summary>
+    public string CrumbName => Labels.WfBackTo(CrumbText);
+
     /// <summary>The crumb above the title: "Workflows" from a workflow's runs, the workflow's name from a run.</summary>
     public string CrumbText => _level is Level.Run or Level.Compare ? Runs.Title : Labels.Workflows;
 
@@ -77,6 +80,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     {
         OnChanged(nameof(PageTitle));
         OnChanged(nameof(CrumbText));
+        OnChanged(nameof(CrumbName));
     }
 
 #pragma warning restore CA1822, MA0041

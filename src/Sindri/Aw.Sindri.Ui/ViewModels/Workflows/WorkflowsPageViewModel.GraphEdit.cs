@@ -17,6 +17,7 @@ internal sealed partial class WorkflowsPageViewModel
     // Add step picked a kind: the sheet opens on that kind's settings, nothing is sent.
     private void BeginNewStep(WorkflowBlock block, string id, string? after)
     {
+        AsksSaveFirst = false;
         _edits++;   // an Edit read still on the way must not select a node over this form
         Editor.BeginNewStep(block, id, after);
         (IsEditing, IsSettingsOpen, GraphEdit.SheetOpen) = (true, true, true);

@@ -11,14 +11,15 @@ internal sealed class WorkflowRowViewModel : ObservableObject
         NextRunAt = row.NextRunAt;
         NameText = row.Name;
         IsActive = row.ActiveRevision is not null;
+        IsArchived = row.Archived == true;
         HasNewerRevision = row.ActiveRevision is { } active && active < row.LatestRevision;
-        var (glyph, word) = Labels.WfState(IsActive);
-        (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, IsActive ? "ok" : "neutral");
+        var (glyph, word) = Labels.WfState(IsActive, IsArchived);
+        (ChipWord, ChipGlyph, ChipToneWord) = (word, glyph, IsActive && !IsArchived ? "ok" : "neutral");
         RevisionText = Labels.WfRevision(row.ActiveRevision, row.LatestRevision);
         ChangedText = Labels.WfChangedBy(row.ChangedBy, clock.GetUtcNow() - row.ChangedAt);
         TriggerText = row.Trigger ?? string.Empty;
         IsPaused = row.Paused == true;
-        StateText = StateOf(IsPaused, IsActive);
+        StateText = IsArchived ? "Archived" : StateOf(IsPaused, IsActive);
         NeedsLook = NeedsLookOf(row, IsPaused, TriggerText);
         (LastRunText, LastRunToneWord) = LastRunOf(row, IsPaused, clock);
         NextRunText = NextRunOf(row, IsPaused, clock);
@@ -26,6 +27,9 @@ internal sealed class WorkflowRowViewModel : ObservableObject
         Strip = StripOf(row, clock);
         Name = Labels.WfRowName(NameText, word.ToLowerInvariant(), RevisionText.ToLowerInvariant(), ChangedText.ToLowerInvariant());
     }
+
+    /// <summary>True for an archived workflow: its chip says "Archived", never "Off".</summary>
+    public bool IsArchived { get; }
 
     /// <summary>The trigger in words.</summary>
     public string TriggerText { get; }
