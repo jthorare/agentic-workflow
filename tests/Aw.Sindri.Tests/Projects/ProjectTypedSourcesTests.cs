@@ -169,6 +169,17 @@ public sealed class ProjectTypedSourcesTests
     }
 
     [Fact]
+    public void A_prefix_matches_the_whole_name_or_a_slash_boundary_and_not_a_longer_word()
+    {
+        var sources = ProjectTruths.SourcesOf([], [], [], [Branch("feat", prefix: true), Branch("fix/", prefix: true)], typedItems: null);
+        ReviewPull[] pulls = [Pull(1, "feat"), Pull(2, "feat/x"), Pull(3, "feature-x"), Pull(4, "fix"), Pull(5, "fix/y"), Pull(6, "fixture")];
+
+        var truth = ProjectTruths.Build(Inputs(sources, pulls));
+
+        Assert.Equal([1, 2, 4, 5], truth.OpenPrs.Select(static p => p.Number).Order());
+    }
+
+    [Fact]
     public void The_same_branch_given_as_a_link_and_typed_counts_once()
     {
         var sources = ProjectTruths.SourcesOf(["https://github.com/acme/api/tree/feat/login-form"], [], [], [Branch("feat/login-form")], typedItems: null);
