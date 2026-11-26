@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
-using Aw.Sindri.Ui.Api.Workflows;
 using Aw.Sindri.Ui.Platform;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;

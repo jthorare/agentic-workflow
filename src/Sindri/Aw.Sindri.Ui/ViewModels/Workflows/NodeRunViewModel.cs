@@ -23,11 +23,16 @@ internal sealed class NodeRunViewModel : ObservableObject
         (IsNotification, SentTitle, SentBody, SentTarget) = (sentTitle.Length > 0, sentTitle, sentBody, sentTitle.Length > 0 ? Labels.WfNotifySentTo : string.Empty);
         OutputText = IsNotification ? string.Empty : WorkflowJson.Pretty(run.Output);   // a notification's output is always empty: the card shows what it sent instead
         IsTruncated = run.Truncated;
-        ErrorText = run.Failure?.Sentence ?? run.Error ?? string.Empty;   // why: the engine's text stays under the run's Details (#3304)
-        DurationText = run.Seconds is { } seconds and >= 0 ? Labels.WfDuration(seconds) : string.Empty;
+        ErrorText = ErrorOf(run);
+        DurationText = DurationOf(run);
         Name = Labels.WfNodeRunName(HasTitle ? TitleText : run.Node, word.ToLowerInvariant(), ErrorText);
         (Node, ItemIndex, Agent) = (run.Node, run.ItemIndex, run.Agent);
     }
+
+    // The engine's text stays under the run's Details (#3304): the row says the sentence when there is one.
+    private static string ErrorOf(NodeRunView run) => run.Failure?.Sentence ?? run.Error ?? string.Empty;
+
+    private static string DurationOf(NodeRunView run) => run.Seconds is { } seconds and >= 0 ? Labels.WfDuration(seconds) : string.Empty;
 
     /// <summary>How long the step ran ("&lt;1 s", "7 s", "1m 15s"); empty while it runs and for a row with no times.</summary>
     public string DurationText { get; }

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflows;
 using Aw.Sindri.Ui.Platform;
@@ -208,15 +207,14 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
         (ChipWord, ChipGlyph) = (word, glyph);
         (Status, Tone) = (run.Status, RunStatus.Tone(run.Status));
         ChipToneWord = RunStatus.ToneWord(run.Status);
-        TriggerText = Labels.WfStartedBy(run.TriggerKind is { Length: > 0 } served ? served : KindOf(run.Trigger));   // the served word tells a CLI or agent start from one by hand (#3683)
+        TriggerText = Labels.WfStartedBy(TriggerKindOf(run));
         RevisionText = Labels.WfRunRevision(run.Revision);
         var live = RunStatus.IsLive(run.Status);
         WhenText = live
             ? Labels.JobWhen(running: true, clock.GetUtcNow() - run.StartedAt)
             : Labels.JobWhen(running: false, clock.GetUtcNow() - (run.EndedAt ?? run.StartedAt));
         ErrorText = run.Error ?? string.Empty;
-        var failedNode = FailedNode(run);
-        Failure = failedNode?.Failure is { } failed ? new RunFailureViewModel(failed, run.Error ?? failed.Detail, clipboard, clock, failedNode.Node) : null;
+        Failure = FailureOf(run);
         OutputsText = WorkflowJson.Pretty(run.Outputs);
         var types = NodeTypes(Shape);
         Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode, (node, token) => EditStep?.Invoke(node, token) ?? Task.CompletedTask, types.GetValueOrDefault(g.Key, string.Empty)))];
@@ -242,36 +240,6 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
     /// <param name="text">The note; empty clears it.</param>
     internal void Note(string text) => NoticeText = text;
 
-    // The block type of each node of the revision the page read; a run of another revision may name a node by another type, so only the read revision's types are used.
-    private static Dictionary<string, string> NodeTypes(WorkflowView? shape)
-    {
-        var types = new Dictionary<string, string>(StringComparer.Ordinal);
-        if (shape?.Spec is { ValueKind: JsonValueKind.Object } spec && spec.TryGetProperty("nodes", out var nodes) && nodes.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var node in nodes.EnumerateArray())
-            {
-                if (node.TryGetProperty("id", out var id) && node.TryGetProperty("type", out var type) && id.GetString() is { } key && type.GetString() is { } kind)
-                {
-                    types[key] = kind;
-                }
-            }
-        }
-
-        return types;
-    }
-
-    // a node run per item of a for_each: the last one served speaks for the node
-    private static Dictionary<string, string> Statuses(WorkflowRunView run)
-    {
-        var statuses = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var node in run.Nodes)
-        {
-            statuses[node.Node] = node.Status;
-        }
-
-        return statuses;
-    }
-
     private void Changed()
     {
         OnChanged(nameof(HasError));
@@ -280,24 +248,5 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
         OnChanged(nameof(IsError));
         OnChanged(nameof(CanCancel));
         OnChanged(nameof(CanPressCancel));
-    }
-
-    // The trigger is the stored object; its "kind" names it. One without a kind reads as "an unknown trigger" rather than failing the run.
-    private static string? KindOf(JsonElement? trigger) =>
-        trigger is { ValueKind: JsonValueKind.Object } t && t.TryGetProperty("kind", out var kind) && kind.ValueKind == JsonValueKind.String && kind.GetString() is { Length: > 0 } text
-            ? text
-            : null;
-
-    // The callout is for a run that failed: a step that failed and went on (onFailure 'continue' or 'skip-item') leaves a failed row in a run that succeeded or is still going.
-    // When several rows failed, the one the run's own error names ("node 'check' failed: ...") is the step the run stopped at, else the last.
-    private static NodeRunView? FailedNode(WorkflowRunView run)
-    {
-        if (string.IsNullOrEmpty(run.Error))
-        {
-            return null;
-        }
-
-        var failed = run.Nodes.Where(static n => n.Failure is not null).ToList();
-        return failed.LastOrDefault(n => run.Error.Contains($"node '{n.Node}'", StringComparison.Ordinal)) ?? failed.LastOrDefault();
     }
 }
