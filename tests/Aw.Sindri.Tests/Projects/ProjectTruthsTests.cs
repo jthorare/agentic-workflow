@@ -33,7 +33,8 @@ public sealed class ProjectTruthsTests
         IReadOnlyList<ProjectTruthItem>? items = null,
         IReadOnlyList<ProjectTruthAgent>? agents = null,
         bool noSummaries = false,
-        string? owner = null)
+        string? owner = null,
+        DateTimeOffset? now = null)
     {
         var all = new Dictionary<string, ReviewSummary>(StringComparer.Ordinal);
         foreach (var pull in pulls ?? [])
@@ -49,7 +50,7 @@ public sealed class ProjectTruthsTests
             all[key] = summary;
         }
 
-        return new(sources ?? _apiOnly, new ProjectTruthFacts(pulls ?? [], all, items ?? [], agents ?? [], owner));
+        return new(sources ?? _apiOnly, new ProjectTruthFacts(pulls ?? [], all, items ?? [], agents ?? [], owner), now);
     }
 
     private static ReviewSummary Red(DateTimeOffset at) => new("abc", ReviewCi.Fail, RequiredOpen: null, at);
@@ -208,6 +209,47 @@ public sealed class ProjectTruthsTests
         var truth = ProjectTruths.Build(Inputs(pulls: pulls, summaries: summaries));
 
         Assert.Equal((ProjectTruthLevel.AtRisk, "At risk: 3 of 9 PRs red"), (truth.Health!.Level, truth.Health.Reason));
+    }
+
+    // #4333: the reason says how long the oldest red PR has been red, from the CI summary's own time and the page's clock
+    [Theory]
+    [InlineData(259_200, "At risk: 3 of 9 PRs red for 3 d")]
+    [InlineData(18_000, "At risk: 3 of 9 PRs red for 5 h")]
+    [InlineData(900, "At risk: 3 of 9 PRs red for 15 min")]
+    [InlineData(20, "At risk: 3 of 9 PRs red for under 1 min")]
+    public void Health_names_how_long_the_oldest_red_pr_has_been_red(int oldestSeconds, string reason)
+    {
+        ReviewPull[] pulls = [.. Enumerable.Range(1, 9).Select(static n => Pull(n))];
+        var oldest = _now.AddSeconds(-oldestSeconds);
+        var summaries = new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = Red(_now), [Key(2)] = Red(oldest), [Key(3)] = Red(_now.AddSeconds(-oldestSeconds / 2)) };
+
+        var truth = ProjectTruths.Build(Inputs(pulls: pulls, summaries: summaries, now: _now));
+
+        Assert.Equal((ProjectTruthLevel.AtRisk, reason), (truth.Health!.Level, truth.Health.Reason));
+    }
+
+    [Fact]
+    public void Health_age_comes_before_the_unchecked_tail_and_also_reads_on_an_off_track_project()
+    {
+        ReviewPull[] pulls = [.. Enumerable.Range(1, 3).Select(static n => Pull(n))];
+        var summaries = new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = Red(_now.AddDays(-2)), [Key(2)] = Red(_now.AddDays(-4)) };
+        var open = Inputs(pulls: pulls, summaries: summaries, now: _now);
+        var facts = open.Facts with { Summaries = open.Facts.Summaries.Where(static e => e.Key != Key(3)).ToDictionary(static e => e.Key, static e => e.Value, StringComparer.Ordinal) };
+
+        var truth = ProjectTruths.Build(open with { Facts = facts });
+
+        Assert.Equal((ProjectTruthLevel.OffTrack, "Off track: 2 of 3 PRs red for 4 d, 1 not checked yet"), (truth.Health!.Level, truth.Health.Reason));
+    }
+
+    [Fact]
+    public void Health_age_is_left_out_when_the_page_gave_no_clock_or_no_red_pr_has_a_time()
+    {
+        ReviewPull[] pulls = [.. Enumerable.Range(1, 9).Select(static n => Pull(n))];
+        var summaries = Enumerable.Range(1, 3).ToDictionary(static n => Key(n), _ => Red(_now.AddDays(-2)), StringComparer.Ordinal);
+
+        var without = ProjectTruths.Build(Inputs(pulls: pulls, summaries: summaries));
+
+        Assert.Equal("At risk: 3 of 9 PRs red", without.Health!.Reason);
     }
 
     [Fact]

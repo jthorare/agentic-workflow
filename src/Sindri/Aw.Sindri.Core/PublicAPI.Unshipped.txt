@@ -24495,9 +24495,9 @@ Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel.OffTrack = 2 -> Aw.Sindri.Core.P
 Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel.Unknown = 3 -> Aw.Sindri.Core.Projects.Truth.ProjectTruthLevel
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs.<Clone>$() -> Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs!
-Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs.Deconstruct(out Aw.Sindri.Core.Projects.TruthSources.ProjectSources! Sources, out Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts! Facts) -> void
+Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs.Deconstruct(out Aw.Sindri.Core.Projects.TruthSources.ProjectSources! Sources, out Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts! Facts, out System.DateTimeOffset? Now) -> void
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs.Equals(Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs? other) -> bool
-Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs.ProjectTruthInputs(Aw.Sindri.Core.Projects.TruthSources.ProjectSources! Sources, Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts! Facts) -> void
+Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs.ProjectTruthInputs(Aw.Sindri.Core.Projects.TruthSources.ProjectSources! Sources, Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts! Facts, System.DateTimeOffset? Now = null) -> void
 override Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs.GetHashCode() -> int
 override Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs.ToString() -> string!
@@ -24507,6 +24507,8 @@ Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs.Sources.get -> Aw.Sindri
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs.Sources.init -> void
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs.Facts.get -> Aw.Sindri.Core.Projects.TruthSources.ProjectTruthFacts!
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs.Facts.init -> void
+Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs.Now.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs.Now.init -> void
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruths
 static Aw.Sindri.Core.Projects.TruthSources.ProjectTruths.Build(Aw.Sindri.Core.Projects.TruthSources.ProjectTruthInputs! inputs) -> Aw.Sindri.Core.Projects.Truth.ProjectTruth!
 static Aw.Sindri.Core.Projects.TruthSources.ProjectTruths.SourcesOf(System.Collections.Generic.IReadOnlyList<string!>! linkUrls, System.Collections.Generic.IReadOnlyList<string!>! linearRepos, System.Collections.Generic.IReadOnlyList<string!>! profileRepos) -> Aw.Sindri.Core.Projects.TruthSources.ProjectSources!
