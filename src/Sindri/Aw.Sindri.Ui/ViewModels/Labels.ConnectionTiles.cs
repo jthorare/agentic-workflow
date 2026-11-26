@@ -102,6 +102,11 @@ internal static partial class Labels
         _ => TileOAuthHelp(id),
     };
 
+    /// <summary>Whether a tile's help line already tells the person to paste the client ID, so the inline "Enter your X app's client ID" line would say it twice (#4396, #4486). Keyed on the wording, so a help line that says something else keeps the inline line.</summary>
+    /// <param name="line">The help line (<see cref="TileHelp"/>'s first part).</param>
+    /// <returns>True when the line names the client ID.</returns>
+    internal static bool HelpAsksForClientId(string line) => line is not null && line.Contains("client ID", StringComparison.OrdinalIgnoreCase);
+
     // The OAuth app's help: where the client id (and secret) come from.
     private static (string Line, string LinkText, string Url) TileOAuthHelp(string id) => id switch
     {

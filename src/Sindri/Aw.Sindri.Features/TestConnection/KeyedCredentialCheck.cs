@@ -22,18 +22,26 @@ internal sealed class KeyedCredentialCheck(IConnectionPresetCatalog presets, ICo
     {
         ArgumentNullException.ThrowIfNull(tokens);
         var preset = connection.Preset is { } key ? presets.Find(key) : null;
-        if (connection.Kind == ConnectionKind.Rest && preset is not null && HasKeyCheck(preset))
+        if (connection.Kind == ConnectionKind.Rest && preset is not null)
         {
-            return string.IsNullOrWhiteSpace(tokens.AccessToken)
-                ? SindriErrors.ConnectionKeyRefused.With("the stored key is empty (fix: remove the connection and add it again with the key)")
-                : await keys.Check(preset, tokens.AccessToken, cancellationToken).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(tokens.AccessToken))
+            {
+                return SindriErrors.ConnectionKeyRefused.With("the stored key is empty (fix: remove the connection and add it again with the key)");
+            }
+
+            var outcome = await keys.Check(preset, tokens.AccessToken, cancellationToken).ConfigureAwait(false);
+            if (outcome.IsError)
+            {
+                return outcome.Error;
+            }
+
+            if (outcome.Value == KeyCheckOutcome.Checked)
+            {
+                return Unit.Value;
+            }
         }
 
         var url = connection.Config.GetValueOrDefault("probeUrl") ?? preset?.ProbeUrl;
         return url is null ? null : await probe.Probe(url, tokens, cancellationToken).ConfigureAwait(false);
     }
-
-    // The presets IKeyCheck asks a service about (HttpKeyCheck's rule): Linear's viewer query, or any preset's probe URL. For any other preset the check calls nothing and answers Unit, so the
-    // test must say it tried nothing rather than "connected".
-    private static bool HasKeyCheck(ConnectionPreset preset) => string.Equals(preset.Key, "linear", StringComparison.Ordinal) || preset.ProbeUrl is not null;
 }

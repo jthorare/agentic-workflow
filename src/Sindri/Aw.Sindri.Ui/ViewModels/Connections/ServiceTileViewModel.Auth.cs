@@ -24,8 +24,9 @@ internal sealed partial class ServiceTileViewModel
     /// <summary>True when "Use a token instead" shows: the tile asks for the OAuth app of a service that takes a token.</summary>
     public bool ShowUseToken => IsAsking && CanUseOAuth && UsesOAuth;
 
-    // True when the client ID is what is missing and the help line under the field already says to paste it (every OAuth help line does, #4396), so the inline reason would say it twice.
-    private bool HelpSaysClientId => NeedsClientId && ClientId.Trim().Length == 0 && HasHelpText;
+    // True when the client ID is what is missing and the help line under the field already asks for it (#4396), so the inline reason would say it twice. Keyed on the help line's wording (Labels.HelpAsksForClientId, #4486):
+    // a help line that says something else leaves the inline line, the only one saying what is missing.
+    private bool HelpSaysClientId => NeedsClientId && ClientId.Trim().Length == 0 && Labels.HelpAsksForClientId(HelpText);
 
     /// <summary>The numbered steps above the token field.</summary>
     public IReadOnlyList<TokenStep> TokenSteps => Labels.TileTokenSteps(Id);
