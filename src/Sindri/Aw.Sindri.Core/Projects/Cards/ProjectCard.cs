@@ -1,5 +1,5 @@
-using Aw.Sindri.Core.Projects.Sources;
 using System.Text.Json.Serialization;
+using Aw.Sindri.Core.Projects.Sources;
 using Aw.Sindri.Core.Projects.Truth;
 using Aw.Sindri.Core.Projects.Vocabulary;
 
