@@ -114,6 +114,11 @@ internal sealed class KeyConnectionAdd(IConnectionStore store, IConnectionSecret
             config["serverUrl"] = new Uri(server).ToString();
         }
 
+        if (kind == ConnectionKind.Mcp)
+        {
+            config[ConnectionAuth.Key] = ConnectionAuth.Keyed;   // #4482: the row says how it signs in, so a replace never guesses from the stored token
+        }
+
         return config;
     }
 }
