@@ -5231,6 +5231,22 @@ override Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.GetHashCod
 override Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.ToString() -> string!
 static Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.operator !=(Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest? left, Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest? right) -> bool
 static Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.operator ==(Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest? left, Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest? right) -> bool
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.<Clone>$() -> Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse!
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.Checked.get -> bool
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.Checked.init -> void
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.Connection.get -> Aw.Sindri.Core.Connections.ConnectionView!
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.Connection.init -> void
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionView! Connection, out bool Checked, out string? UncheckedReason) -> void
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.Equals(Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse? other) -> bool
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.ReplaceConnectionKeyResponse(Aw.Sindri.Core.Connections.ConnectionView! Connection, bool Checked, string? UncheckedReason) -> void
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.UncheckedReason.get -> string?
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.UncheckedReason.init -> void
+override Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.GetHashCode() -> int
+override Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.ToString() -> string!
+static Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.operator !=(Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse? left, Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse? right) -> bool
+static Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.operator ==(Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse? left, Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse? right) -> bool
 Aw.Sindri.Features.AddConnection.SignInConnectionRequest
 Aw.Sindri.Features.AddConnection.SignInConnectionRequest.<Clone>$() -> Aw.Sindri.Features.AddConnection.SignInConnectionRequest!
 Aw.Sindri.Features.AddConnection.SignInConnectionRequest.Deconstruct(out string! Name, out bool Wait) -> void

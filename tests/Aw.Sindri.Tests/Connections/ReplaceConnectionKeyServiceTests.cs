@@ -38,7 +38,7 @@ public sealed class ReplaceConnectionKeyServiceTests
         var replaced = await world.ReplaceKey().Handle(new ReplaceConnectionKeyRequest("linear:work", KeyEnv: null, Key: Fresh), Token);
 
         Assert.True(replaced.IsSuccess);
-        Assert.Null(replaced.Value.ConsentUrl);
+        Assert.Equal((true, null), (replaced.Value.Checked, replaced.Value.UncheckedReason));
         Assert.Equal(("linear", Fresh), Assert.Single(world.Keys.Calls));
         Assert.Equal(Fresh, StoredKey(world));
         var stored = Assert.Single(world.Store.Rows);
@@ -99,6 +99,52 @@ public sealed class ReplaceConnectionKeyServiceTests
         Assert.True(replaced.IsSuccess);
         Assert.Empty(world.Keys.Calls);
         Assert.Equal(Fresh, StoredKey(world));
+        Assert.False(replaced.Value.Checked);
+        Assert.Contains("no preset", replaced.Value.UncheckedReason, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_cli_connection_takes_the_new_key_unchecked_and_the_answer_says_so()
+    {
+        var (world, _) = await Holding(kind: ConnectionKind.Cli);
+
+        var replaced = await world.ReplaceKey().Handle(new ReplaceConnectionKeyRequest("linear:work", KeyEnv: null, Key: Fresh), Token);
+
+        Assert.True(replaced.IsSuccess);
+        Assert.Empty(world.Keys.Calls);
+        Assert.Equal(Fresh, StoredKey(world));
+        Assert.False(replaced.Value.Checked);
+        Assert.Contains("cli connection", replaced.Value.UncheckedReason, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_preset_with_no_key_check_stores_the_key_and_says_it_was_not_checked()
+    {
+        var (world, _) = await Holding();
+        var plain = ConnectionHarness.Linear with { Key = "acme", DisplayName = "Acme", ProbeUrl = null };
+        world.Presets = new FakeConnectionPresets(plain);
+        _ = await world.Store.Upsert(Assert.Single(world.Store.Rows) with { Preset = "acme" }, Token);
+
+        var replaced = await world.ReplaceKey().Handle(new ReplaceConnectionKeyRequest("linear:work", KeyEnv: null, Key: Fresh), Token);
+
+        Assert.True(replaced.IsSuccess);
+        Assert.False(replaced.Value.Checked);
+        Assert.Equal("Acme has no key check", replaced.Value.UncheckedReason);
+        Assert.Equal(Fresh, StoredKey(world));
+    }
+
+    [Fact]
+    public async Task A_row_whose_preset_left_the_catalog_is_refused_like_an_unknown_preset_and_nothing_is_checked_or_written()
+    {
+        var (world, row) = await Holding(preset: "gone");
+
+        var replaced = await world.ReplaceKey().Handle(new ReplaceConnectionKeyRequest("linear:work", KeyEnv: null, Key: Fresh), Token);
+
+        Assert.Equal("SND-CLI-003", replaced.Error.Code);
+        Assert.Contains("no connection preset named 'gone'", replaced.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(world.Keys.Calls);
+        Assert.Equal(Old, StoredKey(world));
+        Assert.Equal(row, Assert.Single(world.Store.Rows));
     }
 
     [Fact]
