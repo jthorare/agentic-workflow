@@ -120,7 +120,7 @@ internal sealed partial class ServiceTileViewModel
         }
 
         _ = ReplaceToken.Take();
-        ReplaceNote = replaced.Value.Checked ? string.Empty : Labels.TileReplacedUnchecked;
+        ReplaceNote = replaced.Value.Checked ? string.Empty : Labels.TileReplacedUnchecked(replaced.Value.UncheckedReason);
         IsReplacing = false;
         await _changed().ConfigureAwait(true);
     }

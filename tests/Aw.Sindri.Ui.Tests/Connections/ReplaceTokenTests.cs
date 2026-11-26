@@ -64,7 +64,7 @@ public sealed class ReplaceTokenTests
 
         await tile.Replace(Token);
 
-        Assert.Equal("Token replaced, not checked", tile.ReplaceNote);
+        Assert.Equal("Token replaced, not checked: a cli connection has no service to check the key against", tile.ReplaceNote);
         Assert.True(tile.HasReplaceNote);
         tile.StartReplace();
         Assert.False(tile.HasReplaceNote);
