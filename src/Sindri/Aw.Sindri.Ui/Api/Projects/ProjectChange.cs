@@ -12,6 +12,8 @@ namespace Aw.Sindri.Ui.Api.Projects;
 /// <param name="ClearTarget">Drops the target date.</param>
 /// <param name="Notes">New notes, or null.</param>
 /// <param name="ClearNotes">Drops the notes.</param>
+/// <param name="Branches">The whole list of typed branch sources (#4499), or null to leave it as it is.</param>
+/// <param name="Items">The whole list of typed item id sources (#4499), or null to leave it as it is.</param>
 internal sealed record ProjectChange(
     long Version,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Name = null,
@@ -21,4 +23,6 @@ internal sealed record ProjectChange(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Target = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool ClearTarget = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Notes = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool ClearNotes = false);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool ClearNotes = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<ProjectBranchView>? Branches = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? Items = null);

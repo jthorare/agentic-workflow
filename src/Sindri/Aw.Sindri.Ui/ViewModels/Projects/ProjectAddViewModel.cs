@@ -89,6 +89,12 @@ internal sealed partial class ProjectAddViewModel(ISindriApi api, Func<Uri?> api
     /// <summary>The links, one per line.</summary>
     public string Links { get; set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The typed branches, one per line (#4499); red stub: not sent yet.</summary>
+    public string Branches { get; set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The typed work-item ids, one per line (#4499); red stub: not sent yet.</summary>
+    public string Items { get; set => Set(ref field, value); } = string.Empty;
+
     /// <summary>The owner's notes.</summary>
     public string Notes { get; set => Set(ref field, value); } = string.Empty;
 

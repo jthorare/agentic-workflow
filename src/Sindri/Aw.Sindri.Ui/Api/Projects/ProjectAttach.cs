@@ -9,10 +9,14 @@ namespace Aw.Sindri.Ui.Api.Projects;
 /// <param name="Links">The links, or null.</param>
 /// <param name="Notes">The owner's notes, or null.</param>
 /// <param name="Target">The target date (yyyy-MM-dd), or null.</param>
+/// <param name="Branches">The whole list of typed branch sources (#4499), or null to leave it as it is.</param>
+/// <param name="Items">The whole list of typed item id sources (#4499), or null to leave it as it is.</param>
 internal sealed record ProjectAttach(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Linear = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Name = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? State = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? Links = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Notes = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Target = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Target = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<ProjectBranchView>? Branches = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? Items = null);

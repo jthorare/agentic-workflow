@@ -21,6 +21,8 @@ namespace Aw.Sindri.Ui.Api.Projects;
 /// <param name="Notes">The owner's notes (free text, line breaks kept), or null.</param>
 /// <param name="Synced">False for an attached project the store no longer holds.</param>
 /// <param name="Version">The version a write sends.</param>
+/// <param name="Branches">The typed branch and branch-prefix sources the owner set (#4499); null when none.</param>
+/// <param name="Items">The typed work-item id sources the owner set (#4499); null when none.</param>
 /// <param name="Truth">What Sindri's own PR, item and agent data says about the project; null from a server that doesn't serve it yet.</param>
 internal sealed record ProjectCardView(
     string Id,
@@ -43,4 +45,6 @@ internal sealed record ProjectCardView(
     string? Notes,
     bool Synced,
     long Version,
-    ProjectTruthView? Truth = null);
+    ProjectTruthView? Truth = null,
+    IReadOnlyList<ProjectBranchView>? Branches = null,
+    IReadOnlyList<string>? Items = null);
