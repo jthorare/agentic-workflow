@@ -66,7 +66,7 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
-    // Escape in edit mode with the sheet shut does what Done does, the question included (#3655); with the sheet open the sheet takes Escape first.
+    // Escape in edit mode with the sheet shut does what Done does, the question included (#3655); with the sheet open the sheet takes Escape first. On Compare, Escape goes back to the runs.
     /// <inheritdoc />
     protected override void OnKeyDown(KeyEventArgs e)
     {
@@ -78,6 +78,13 @@ internal sealed partial class WorkflowsPage : UserControl
                 FocusEdit();
             }
 
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Escape && DataContext is WorkflowsPageViewModel { IsCompare: true } compare)
+        {
+            compare.Back();   // Compare goes back to the runs with its two ticks kept
             e.Handled = true;
             return;
         }
