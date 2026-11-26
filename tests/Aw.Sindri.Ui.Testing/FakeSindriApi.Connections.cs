@@ -232,7 +232,7 @@ internal sealed partial class FakeSindriApi
         }
     }
 
-    public async Task<Result<ConnectionAdded>> ReplaceConnectionKey(Uri api, string name, ReplaceConnectionKeyBody body, CancellationToken cancellationToken)
+    public async Task<Result<ConnectionKeyReplaced>> ReplaceConnectionKey(Uri api, string name, ReplaceConnectionKeyBody body, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(body);
         lock (_gate)
@@ -246,7 +246,7 @@ internal sealed partial class FakeSindriApi
             await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        if (NotReceived<ConnectionAdded>(api) is { } unanswered)
+        if (NotReceived<ConnectionKeyReplaced>(api) is { } unanswered)
         {
             return unanswered;
         }
@@ -266,7 +266,7 @@ internal sealed partial class FakeSindriApi
 
             found = found with { Status = "connected", StatusReason = null, HasSecret = true };
             _connections[name] = found;
-            return new ConnectionAdded(found, ConsentUrl: null);
+            return new ConnectionKeyReplaced(found, Checked: true, UncheckedReason: null);
         }
     }
 

@@ -98,7 +98,7 @@ internal sealed partial class ServiceTileViewModel
     }
 
     // The answer: a refusal keeps the box and the token (only an unjudged one stays in it for another try); a success forgets the token and closes the box.
-    private async Task Land(Result<ConnectionAdded> replaced)
+    private async Task Land(Result<ConnectionKeyReplaced> replaced)
     {
         if (replaced.IsError)
         {

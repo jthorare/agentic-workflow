@@ -54,7 +54,7 @@ internal partial interface ISindriApi
     /// <param name="body">The new key; sent once.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The connection as it stands, the API's refusal (SND-CONN-018, -019, -020, SND-CONN-001 or SND-CLI-003), or SND-UI-002/003.</returns>
-    public Task<Result<ConnectionAdded>> ReplaceConnectionKey(Uri api, string name, ReplaceConnectionKeyBody body, CancellationToken cancellationToken);
+    public Task<Result<ConnectionKeyReplaced>> ReplaceConnectionKey(Uri api, string name, ReplaceConnectionKeyBody body, CancellationToken cancellationToken);
 
     /// <summary>DELETE /sindri/connections/{name}.</summary>
     /// <param name="api">The base URL.</param>
