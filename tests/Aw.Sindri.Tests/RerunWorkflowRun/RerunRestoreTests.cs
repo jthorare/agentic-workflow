@@ -133,6 +133,45 @@ public sealed class RerunRestoreTests
         Assert.Equal(["q", "b", "s"], result.Value.Rerun);
     }
 
+    [Fact]
+    public async Task A_rerun_from_a_step_whose_every_parent_was_skipped_on_a_dead_branch_is_SND_GRAPH_127()
+    {
+        // t -> c, c -(true)-> a, c -(false)-> p, p -> x: c said true, so p and x were skipped; a re-run from x would run it with nothing from p
+        await Source(Fork(), WorkflowRunStatus.Succeeded, ("t", 0, NodeRunStatus.Succeeded), ("c", 0, NodeRunStatus.Succeeded), ("a", 0, NodeRunStatus.Succeeded),
+            ("p", 0, NodeRunStatus.Skipped), ("x", 0, NodeRunStatus.Skipped));
+
+        var result = await _service.Handle(new RerunWorkflowRunRequest(_source, "x", Input: null, "owner"), Token);
+
+        Assert.True(result.IsError);
+        Assert.Equal(SindriErrors.GraphRerunBranchNotTaken.Code, result.Error.Code);
+        Assert.Contains("'p'", result.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(_started);
+    }
+
+    [Fact]
+    public async Task A_rerun_from_a_step_with_one_parent_that_ran_is_allowed_even_when_another_was_skipped()
+    {
+        // t -> c, c -(true)-> a, c -(false)-> p, a -> y, p -> y: y reads a, which ran
+        await Source(Join(), WorkflowRunStatus.Succeeded, ("t", 0, NodeRunStatus.Succeeded), ("c", 0, NodeRunStatus.Succeeded), ("a", 0, NodeRunStatus.Succeeded),
+            ("p", 0, NodeRunStatus.Skipped), ("y", 0, NodeRunStatus.Succeeded));
+
+        var result = await _service.Handle(new RerunWorkflowRunRequest(_source, "y", Input: null, "owner"), Token);
+
+        Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task A_rerun_from_a_skipped_step_whose_parent_ran_is_allowed()
+    {
+        // the Branch graph: a said true, d (the false branch) was skipped; re-running d on purpose is allowed because its parent ran
+        await Source(Branch(), WorkflowRunStatus.Succeeded, ("t", 0, NodeRunStatus.Succeeded), ("a", 0, NodeRunStatus.Succeeded), ("b", 0, NodeRunStatus.Succeeded),
+            ("c", 0, NodeRunStatus.Succeeded), ("d", 0, NodeRunStatus.Skipped));
+
+        var result = await _service.Handle(new RerunWorkflowRunRequest(_source, "d", Input: null, "owner"), Token);
+
+        Assert.True(result.IsSuccess);
+    }
+
     private static GraphNode Node(string id, string type = "http") => new(N(id), type, Title: null, []);
 
     private static GraphEdge Edge(string from, string to, string? output = null) => new(N(from), output, N(to));
@@ -143,6 +182,12 @@ public sealed class RerunRestoreTests
 
     private static GraphSpec Branch() => Spec([Node("t", "manual"), Node("a", "condition"), Node("b"), Node("c"), Node("d")],
         [Edge("t", "a"), Edge("a", "b", "true"), Edge("b", "c"), Edge("a", "d", "false")]);
+
+    private static GraphSpec Fork() => Spec([Node("t", "manual"), Node("c", "condition"), Node("a"), Node("p"), Node("x")],
+        [Edge("t", "c"), Edge("c", "a", "true"), Edge("c", "p", "false"), Edge("p", "x")]);
+
+    private static GraphSpec Join() => Spec([Node("t", "manual"), Node("c", "condition"), Node("a"), Node("p"), Node("y")],
+        [Edge("t", "c"), Edge("c", "a", "true"), Edge("c", "p", "false"), Edge("a", "y"), Edge("p", "y")]);
 
     private static GraphSpec Ask() => Spec([Node("t", "manual"), Node("q", "ask_owner"), Node("b"), Node("s")], [Edge("t", "q"), Edge("q", "b", "answered"), Edge("t", "s")]);
 

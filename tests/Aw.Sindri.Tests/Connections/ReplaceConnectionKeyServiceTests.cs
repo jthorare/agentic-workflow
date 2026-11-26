@@ -124,6 +124,7 @@ public sealed class ReplaceConnectionKeyServiceTests
         var plain = ConnectionHarness.Linear with { Key = "acme", DisplayName = "Acme", ProbeUrl = null };
         world.Presets = new FakeConnectionPresets(plain);
         _ = await world.Store.Upsert(Assert.Single(world.Store.Rows) with { Preset = "acme" }, Token);
+        world.Keys.NotApplicable = true;
 
         var replaced = await world.ReplaceKey().Handle(new ReplaceConnectionKeyRequest("linear:work", KeyEnv: null, Key: Fresh), Token);
 
@@ -131,6 +132,22 @@ public sealed class ReplaceConnectionKeyServiceTests
         Assert.False(replaced.Value.Checked);
         Assert.Equal("Acme has no key check", replaced.Value.UncheckedReason);
         Assert.Equal(Fresh, StoredKey(world));
+    }
+
+    [Fact]
+    public async Task Replace_is_checked_when_the_key_check_says_it_checked_even_without_a_probe_url()
+    {
+        var (world, _) = await Holding();
+        var plain = ConnectionHarness.Linear with { Key = "acme", DisplayName = "Acme", ProbeUrl = null };
+        world.Presets = new FakeConnectionPresets(plain);
+        _ = await world.Store.Upsert(Assert.Single(world.Store.Rows) with { Preset = "acme" }, Token);
+
+        var replaced = await world.ReplaceKey().Handle(new ReplaceConnectionKeyRequest("linear:work", KeyEnv: null, Key: Fresh), Token);
+
+        Assert.True(replaced.IsSuccess);
+        _ = Assert.Single(world.Keys.Calls);
+        Assert.True(replaced.Value.Checked);
+        Assert.Null(replaced.Value.UncheckedReason);
     }
 
     [Fact]

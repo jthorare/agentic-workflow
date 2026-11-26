@@ -148,7 +148,7 @@ internal static partial class WorkflowTools
     private static Tool RerunTool { get; } = new()
     {
         Name = Rerun,
-        Description = "Re-run an ended run from one step: a new run of that run's revision. The steps before 'from' keep their stored output, 'from' and the steps after it run again. Refused while the run is in flight (SND-GRAPH-125), when an earlier step did not succeed (SND-GRAPH-126), or for a step inside a for_each body (re-run from the for_each step). Answers started, queued or skipped like workflow_run.",
+        Description = "Re-run an ended run from one step: a new run of that run's revision. The steps before 'from' keep their stored output, 'from' and the steps after it run again. Refused while the run is in flight (SND-GRAPH-125), when an earlier step did not succeed (SND-GRAPH-126), when every step before 'from' was skipped on a dead branch (SND-GRAPH-127), or for a step inside a for_each body (re-run from the for_each step). Answers started, queued or skipped like workflow_run.",
         InputSchema = ContextTools.Schema(new JsonObject
         {
             ["run"] = ContextTools.Property("string", "The ended run to start from, '<slug>@<revision>:<occurrence>'"),
