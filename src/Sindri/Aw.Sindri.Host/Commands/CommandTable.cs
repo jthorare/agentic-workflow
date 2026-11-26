@@ -46,7 +46,11 @@ internal static partial class CommandTable
         var provider = services.BuildServiceProvider();
         await using (provider.ConfigureAwait(false))
         {
-            _ = provider.GetRequiredService<TelemetryRuntime>();
+            if (provider.GetRequiredService<TelemetryStart>().Started)
+            {
+                _ = provider.GetRequiredService<TelemetryRuntime>();   // started (the full container, or an unknown AW_LOG_LEVEL): resolved, so the container disposes it. A client verb that never needed it starts nothing (#3727)
+            }
+
             var scope = provider.CreateAsyncScope();
             await using (scope.ConfigureAwait(false))
             {

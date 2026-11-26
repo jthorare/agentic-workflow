@@ -60,7 +60,6 @@ public sealed class CliCompositionsTests
     public void The_client_composition_validates_and_resolves_what_Dispatch_resolves()
     {
         using var provider = ComposeClient().BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
-        _ = provider.GetRequiredService<TelemetryRuntime>();   // so the container disposes it, as CommandTable does
         using var scope = provider.CreateScope();
 
         Type[] dispatch = [typeof(JsonSerializerOptions), typeof(TimeProvider), typeof(IControlPlaneProbe), typeof(IControlPlaneLauncher), typeof(IHumanTokenStore), typeof(IApprovedProfile), typeof(IRepoLocator)];
