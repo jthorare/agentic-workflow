@@ -31,7 +31,7 @@ internal static class ConnectionEndpoints
             => (await service.Handle(new TestConnectionRequest(name), ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapPost("/connections/{name}/signin", static async (string name, IService<SignInConnectionRequest, AddConnectionResponse> service, CancellationToken ct)
             => (await service.Handle(new SignInConnectionRequest(name), ct).ConfigureAwait(false)).ToHttpResult());
-        _ = group.MapPut("/connections/{name}/key", static async (string name, ReplaceConnectionKeyBody body, IService<ReplaceConnectionKeyRequest, AddConnectionResponse> service, CancellationToken ct)
+        _ = group.MapPut("/connections/{name}/key", static async (string name, ReplaceConnectionKeyBody body, IService<ReplaceConnectionKeyRequest, ReplaceConnectionKeyResponse> service, CancellationToken ct)
             => (await service.Handle(body.ToRequest(name), ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapPost("/connections/{name}/rename", static async (string name, RenameConnectionBody body, IService<RenameConnectionRequest, RenameConnectionResponse> service, CancellationToken ct)
             => (await service.Handle(body.ToRequest(name), ct).ConfigureAwait(false)).ToHttpResult());

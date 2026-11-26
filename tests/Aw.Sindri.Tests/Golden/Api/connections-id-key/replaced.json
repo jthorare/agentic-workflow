@@ -11,5 +11,6 @@
     "lastRefreshedAt": null,
     "hasSecret": true
   },
-  "consentUrl": null
+  "checked": true,
+  "uncheckedReason": null
 }

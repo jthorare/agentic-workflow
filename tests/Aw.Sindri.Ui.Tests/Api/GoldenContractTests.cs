@@ -141,7 +141,7 @@ public sealed class GoldenContractTests
         ["connections-id"] = As<ConnectionOne>,   // GET /sindri/connections/{name}; removed is DELETE's ConnectionRemoved (_readByScenario)
         ["connections-id-test"] = As<ConnectionTested>,   // POST /sindri/connections/{name}/test
         ["connections-id-rename"] = As<ConnectionRenamed>,   // POST /sindri/connections/{name}/rename (the Rename action)
-        ["connections-id-key"] = As<ConnectionAdded>,   // PUT /sindri/connections/{name}/key (replace a key connection's key, #4358: the add's answer)
+        ["connections-id-key"] = As<ConnectionKeyReplaced>,   // PUT /sindri/connections/{name}/key (replace a key connection's key, #4358)
         ["connections-id-signin"] = As<ConnectionAdded>,   // POST /sindri/connections/{name}/signin (the Sign in again action)
         ["home"] = As<HomeView>,   // GET /sindri/home: the Home page's first read (home spec §8, S0)
         ["home-rows-id"] = As<HomeRowOne>,   // GET /sindri/home/rows/{id}: the peek; unknown-row-404 is a ProblemDetails

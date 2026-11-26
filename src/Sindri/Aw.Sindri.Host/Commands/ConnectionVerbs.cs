@@ -138,16 +138,19 @@ internal sealed partial class ConnectionVerbs(ControlPlaneClient client, Output 
             return await _output.Error(key.Error).ConfigureAwait(false);
         }
 
-        var answer = await _client.Put<ReplaceConnectionKeyBody, AddConnectionResponse>(Route(command.Name) + "/key", new ReplaceConnectionKeyBody(key.Value), ct).ConfigureAwait(false);
+        var answer = await _client.Put<ReplaceConnectionKeyBody, ReplaceConnectionKeyResponse>(Route(command.Name) + "/key", new ReplaceConnectionKeyBody(key.Value), ct).ConfigureAwait(false);
         if (answer.IsError)
         {
             return await _output.Error(answer.Error).ConfigureAwait(false);
         }
 
-        var replaced = answer.Value.Value.Connection;
+        var replaced = answer.Value.Value;
+        var line = replaced.Checked
+            ? $"{replaced.Connection.Name}: the new key passed its check and replaced the old one ({replaced.Connection.Status}).\n"
+            : $"{replaced.Connection.Name}: replaced (not checked: {replaced.UncheckedReason}).\n";
         return command.Json
             ? await _output.Raw(answer.Value.Body, 0).ConfigureAwait(false)
-            : await _output.Text($"{replaced.Name}: the new key passed its check and replaced the old one ({replaced.Status}).\n", 0).ConfigureAwait(false);
+            : await _output.Text(line, 0).ConfigureAwait(false);
     }
 
     private async Task<int> Remove(Parsed command, CancellationToken ct)
