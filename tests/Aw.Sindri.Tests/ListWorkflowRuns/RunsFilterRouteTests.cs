@@ -73,6 +73,30 @@ public sealed class RunsFilterRouteTests : IAsyncLifetime
         Assert.Equal(Ids(http), Ids(tool.StructuredContent!.Value), StringComparer.Ordinal);
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_repeated_status_adds_to_the_list_like_a_comma_list()
+    {
+        var window = $"&since={Instant(At(1))}&until={Instant(At(6))}";
+
+        var repeated = await Route($"?status=failed&status=succeeded{window}");
+        var comma = await Route($"?status=failed,succeeded{window}");
+        var one = await Route($"?status=failed{window}");
+
+        Assert.Equal([Id(5).Value], Ids(one), StringComparer.Ordinal);
+        Assert.Equal(Enumerable.Range(1, 5).Reverse().Select(static n => Id(n).Value), Ids(repeated), StringComparer.Ordinal);
+        Assert.Equal(Ids(comma), Ids(repeated), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_plus_offset_sent_raw_is_read_as_the_plus_not_refused()
+    {
+        static string Raw(DateTimeOffset at) => at.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture) + "+00:00";
+
+        var http = await Route($"?status=failed&since={Raw(At(1))}&until={Raw(At(10))}");
+
+        Assert.Equal([Id(5).Value], Ids(http), StringComparer.Ordinal);
+    }
+
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
     public async Task The_route_and_the_tool_page_past_the_cap_with_before_and_next()
     {

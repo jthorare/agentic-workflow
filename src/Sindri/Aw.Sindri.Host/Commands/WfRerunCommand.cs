@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Aw.Sindri.Core;
 using Aw.Sindri.Features.RerunWorkflowRun;
 using Aw.Sindri.Host.Endpoints;
@@ -23,7 +25,17 @@ internal static class WfRerunCommand
             return await output.Error(down).ConfigureAwait(false);
         }
 
-        var started = await desk.Client.Post<RerunWorkflowRunBody, RerunWorkflowRunResponse>("/sindri/workflow-runs/" + Uri.EscapeDataString(run) + "/rerun", new RerunWorkflowRunBody(from, input), ct).ConfigureAwait(false);
+        JsonNode? node;
+        try
+        {
+            node = input is null ? null : JsonNode.Parse(input);
+        }
+        catch (JsonException e)   // boundary: the flag's text is the owner's typing
+        {
+            return await output.Error(SindriErrors.GraphBadPayload.With($"the input is not valid JSON: {e.Message}")).ConfigureAwait(false);
+        }
+
+        var started = await desk.Client.Post<RerunWorkflowRunBody, RerunWorkflowRunResponse>("/sindri/workflow-runs/" + Uri.EscapeDataString(run) + "/rerun", new RerunWorkflowRunBody(from, node), ct).ConfigureAwait(false);
         if (started.IsError)
         {
             return await output.Error(started.Error).ConfigureAwait(false);

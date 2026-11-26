@@ -213,8 +213,9 @@ Words from the first-run spec (`docs/superpowers/specs/2026-11-12-sindri-first-r
 | `SND-GRAPH-124` | A `workflow_result` node found no result: the run is not that workflow's, is not finished, or the workflow has no succeeded run |
 | `SND-GRAPH-125` | A re-run from a step was asked of a run that has not ended (queued, running or waiting): wait for it to end or cancel it first |
 | `SND-GRAPH-126` | A re-run from a step was refused: a step before the chosen one failed, never ran, or was skipped only because the run halted, so it has no output to restore; re-run from that step instead |
+| `SND-GRAPH-127` | A re-run from a step was refused: every step the chosen one reads from was skipped in that run, because the branch to it was not taken, so it has no output to read; the message names the skipped step to re-run from instead (the first skipped ancestor whose parent ran), which runs that branch on purpose; with no single such step it says to re-run from a step on the branch that ran |
 | `SND-GRAPH-130` | No question waits at that node |
 | `SND-GRAPH-131` | A reference reads a node that failed and continued |
 | `SND-GRAPH-132` | The setup service ran a workflow other than the hello-sindri one it made, or ran it a second time |
-| `SND-GRAPH-134` | A runs read's filter can't be read: a status that is not running, ended, succeeded, failed, cancelled, queued or waiting; a `since` or `until` that is not an ISO-8601 instant; `since` after `until`; or a `before` run of another workflow (#4334) |
 | `SND-GRAPH-133` | A prompt step's answer said `couldNotAnswer: true`; the message carries the model's `couldNotAnswerWhy` |
+| `SND-GRAPH-134` | A runs read's filter can't be read: a status that is not running, ended, succeeded, failed, cancelled, queued or waiting; a `since` or `until` that is not an ISO-8601 instant; `since` after `until`; or a `before` run of another workflow (#4334) |

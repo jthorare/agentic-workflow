@@ -56,7 +56,7 @@
       <TextBlock x:Name="ServiceTileLastUsed" Classes="caption subtle" Text="{Binding LastUsedText}" IsVisible="{Binding IsConnected}" AutomationProperties.AccessibilityView="Raw" />
       <!-- #4358: a connected key tile (rest or cli) takes a new token. Sindri checks it like a new one and keeps the old key until it passes. -->
       <Button x:Name="ServiceTileReplaceToken" Classes="link accent-link" Content="{Binding Text.ReplaceToken}" IsVisible="{Binding ShowReplaceLink}" Click="OnReplaceToken" HorizontalAlignment="Left" />
-      <TextBlock x:Name="ServiceTileReplaceNote" Classes="caption subtle" Text="{Binding ReplaceNote}" IsVisible="{Binding HasReplaceNote}" TextWrapping="Wrap" />
+      <TextBlock x:Name="ServiceTileReplaceNote" Classes="caption subtle" Text="{Binding ReplaceNote}" ToolTip.Tip="{Binding ReplaceNoteTip}" IsVisible="{Binding HasReplaceNote}" TextWrapping="Wrap" />
       <StackPanel x:Name="ServiceTileReplaceBox" Spacing="{StaticResource Space.XS}" IsVisible="{Binding IsReplacing}">
         <TextBox x:Name="ServiceTileReplaceField" PasswordChar="●" Text="{Binding ReplaceToken.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.ReplaceTokenLabel}" KeyDown="OnReplaceKey" AutomationProperties.Name="{Binding Text.ReplaceTokenLabel}" />
         <TextBlock x:Name="ServiceTileReplaceStatus" Classes="caption subtle" Text="{Binding ReplaceStatus}" IsVisible="{Binding HasReplaceStatus}" TextWrapping="Wrap" />
@@ -81,7 +81,10 @@
         <TextBox x:Name="ServiceTileClientSecret" PasswordChar="●" Text="{Binding ClientSecret.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.TileSecretLabel}" IsVisible="{Binding NeedsSecret}" AutomationProperties.Name="{Binding Text.TileSecretLabel}" />
         <TextBox x:Name="ServiceTileToken" PasswordChar="●" Text="{Binding Token.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.TileTokenLabel}" IsVisible="{Binding TakesToken}" AutomationProperties.Name="{Binding Text.TileTokenLabel}" />
         <TextBlock x:Name="ServiceTileHelp" Classes="caption subtle" Text="{Binding HelpText}" IsVisible="{Binding HasHelpText}" TextWrapping="Wrap" />
-        <Button x:Name="ServiceTileHelpLink" Content="{Binding HelpLinkText}" IsVisible="{Binding HasHelpLink}" Click="OnHelp" HorizontalAlignment="Left" />
+        <!-- #4485: the label wraps inside the tile, so any label fits (Spotify's "Open Spotify's developer dashboard" was cut off at 260 px). -->
+        <Button x:Name="ServiceTileHelpLink" IsVisible="{Binding HasHelpLink}" Click="OnHelp" HorizontalAlignment="Left" HorizontalContentAlignment="Left" AutomationProperties.Name="{Binding HelpLinkText}">
+          <TextBlock Text="{Binding HelpLinkText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Button>
         <Button x:Name="ServiceTileUseOAuth" Classes="link accent-link" Content="{Binding Text.UseOAuth}" IsVisible="{Binding ShowUseOAuth}" Click="OnUseOAuth" HorizontalAlignment="Left" />
         <Button x:Name="ServiceTileUseToken" Classes="link accent-link" Content="{Binding Text.UseToken}" IsVisible="{Binding ShowUseToken}" Click="OnUseToken" HorizontalAlignment="Left" />
         <TextBlock x:Name="ServiceTileReason" Classes="caption subtle" Text="{Binding BlockedReason}" IsVisible="{Binding HasBlockedReason}" TextWrapping="Wrap" />
