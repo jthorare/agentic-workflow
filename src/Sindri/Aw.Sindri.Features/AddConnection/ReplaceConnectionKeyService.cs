@@ -9,7 +9,7 @@ namespace Aw.Sindri.Features.AddConnection;
 /// Replaces the key of a stored rest or cli connection (#4358). The new key is read like an add reads it (the CLI's value, or the variable named by --key-env in serve's environment), trimmed, and for a rest connection with a
 /// preset checked with its service first (<see cref="IKeyCheck"/>: SND-CONN-018 refused, SND-CONN-019 not reached, SND-CONN-020 rate limited). Until that check passes nothing is written, so a refused key leaves the old key in the keychain and
 /// the row as it was. A good key overwrites the connection's keychain entry, and the row ends connected with no reason, and the answer says whether the key was checked (a cli connection, a rest one with no preset or a preset with no key check is stored unchecked, with the reason); a row that needed a sign-in clears its Needs-you row. A failed row write puts the old key back.
-/// An unknown name is SND-CONN-001; a row whose preset left the catalog is SND-CLI-003 as an add of an unknown preset is (nothing is checked or written); an oauth or mcp connection has a sign-in, not a key (SND-CLI-003 naming 'connection signin'); no key is SND-CLI-003. An error shows its code and fixed title only (<see cref="ConnectionFailures"/>).
+/// An unknown name is SND-CONN-001; a row whose preset left the catalog is SND-CLI-003 as an add of an unknown preset is (nothing is checked or written); an oauth connection, or an mcp one that signed in through its server, has a sign-in, not a key (SND-CLI-003 naming 'connection signin'); a keyed mcp connection (added with --key-env) takes the key unchecked; no key is SND-CLI-003. An error shows its code and fixed title only (<see cref="ConnectionFailures"/>).
 /// </summary>
 /// <param name="store">The connections.</param>
 /// <param name="secrets">Stores the new key.</param>
@@ -43,9 +43,9 @@ internal sealed class ReplaceConnectionKeyService(IConnectionStore store, IConne
         }
 
         var row = found.Value;
-        if (row.Kind is not (ConnectionKind.Rest or ConnectionKind.Cli))
+        if (NoKey(row) is { } signIn)
         {
-            return SindriErrors.InvalidInput.With($"{row.Name} signs in through the browser and holds no key (fix: sindri connection signin {row.Name})");
+            return signIn;
         }
 
         var key = Key(request);
@@ -62,6 +62,15 @@ internal sealed class ReplaceConnectionKeyService(IConnectionStore store, IConne
 
         var verdict = await Verdict(row, preset.Value, key.Value, cancellationToken).ConfigureAwait(false);
         return verdict.IsError ? verdict.Error : await Replace(row, key.Value, verdict.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    // The refusal for a connection that holds no key to replace, or null when it does: a rest or cli connection, or an mcp one added with --key-env. A keyed mcp connection stores a bare access token (no refresh
+    // token, no expiry, as KeyConnectionAdd.Save writes it); an oauth mcp connection's tokens come from its server's own sign-in and carry a refresh token or an expiry, so it keeps the sign-in refusal.
+    private Error? NoKey(Connection row)
+    {
+        var keyed = row.Kind is ConnectionKind.Rest or ConnectionKind.Cli
+            || (row.Kind == ConnectionKind.Mcp && row.SecretPointer is { } pointer && _secrets.Read(pointer) is { IsSuccess: true } read && read.Value.RefreshToken is null && read.Value.ExpiresAt is null);
+        return keyed ? null : SindriErrors.InvalidInput.With($"{row.Name} signs in through the browser and holds no key (fix: sindri connection signin {row.Name})");
     }
 
     // Asks the service before anything is written (a refused or unreachable key leaves the old key and the row alone). Null when the key passed a real check, else why it went unchecked.
@@ -105,6 +114,7 @@ internal sealed class ReplaceConnectionKeyService(IConnectionStore store, IConne
 
     private static string UncheckedReason(Connection row, ConnectionPreset? preset) => row.Kind == ConnectionKind.Cli
         ? "a cli connection has no service to check the key against"
+        : row.Kind == ConnectionKind.Mcp ? "an mcp connection has no key check"
         : preset is null ? "this connection has no preset, so there is no service to check the key against" : $"{preset.DisplayName} has no key check";
 
     // The new key, trimmed; no key or only whitespace is SND-CLI-003.
@@ -121,9 +131,29 @@ internal sealed class ReplaceConnectionKeyService(IConnectionStore store, IConne
             : SindriErrors.InvalidInput.With("a new key is needed: pass --key-env NAME (the environment variable that holds the new key)");
     }
 
-    // Overwrites the keychain entry, then the row; a failed row write puts the old key back.
-    private async ValueTask<Result<ReplaceConnectionKeyResponse>> Replace(Connection row, string key, string? uncheckedReason, CancellationToken cancellationToken)
+    // The row as it is now. The key check can take 15 s, during which a poller, a refresh or a rename may have written the row, so the write below starts from this read and changes only its own fields. The store has no
+    // version to compare and set, so the re-read is the guard; a row that is gone (SND-CONN-001) or that no longer holds a key is refused before the keychain entry is touched, so there is nothing to put back.
+    private async ValueTask<Result<Connection>> Fresh(Connection row, CancellationToken cancellationToken)
     {
+        var again = await _store.Get(row.Name, cancellationToken).ConfigureAwait(false);
+        if (again.IsError)
+        {
+            return ConnectionFailures.Safe(again.Error);
+        }
+
+        return NoKey(again.Value) is { } refused ? refused : again.Value;
+    }
+
+    // Overwrites the keychain entry, then the row; a failed row write puts the old key back.
+    private async ValueTask<Result<ReplaceConnectionKeyResponse>> Replace(Connection checkedRow, string key, string? uncheckedReason, CancellationToken cancellationToken)
+    {
+        var current = await Fresh(checkedRow, cancellationToken).ConfigureAwait(false);
+        if (current.IsError)
+        {
+            return current.Error;
+        }
+
+        var row = current.Value;
         var old = row.SecretPointer is { } pointer && _secrets.Read(pointer) is { IsSuccess: true } read ? read.Value : null;
         var stored = _secrets.Store(row.Name, new TokenSet(key, RefreshToken: null, ExpiresAt: null));
         if (stored.IsError)
