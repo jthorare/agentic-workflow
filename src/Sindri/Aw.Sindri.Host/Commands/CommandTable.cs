@@ -223,8 +223,13 @@ internal static partial class CommandTable
     {
         ArgumentNullException.ThrowIfNull(args);
         return CallerHeaders.For(session, services.GetRequiredService<IHumanTokenStore>(),
-            ct => CallerHeaders.RepoOf(services.GetRequiredService<IApprovedProfile>(), services.GetRequiredService<IRepoLocator>(), Environment.CurrentDirectory, ct));
+            ct => CallerHeaders.RepoOf(services.GetRequiredService<IApprovedProfile>(), services.GetRequiredService<IRepoLocator>(), Environment.CurrentDirectory, ct),
+            withRepo: !ReadsWithoutRepo(args));
     }
+
+    // #3727: the verbs that send no X-Sindri-Repo, and so never read the profile or run git to find it. An allowlist, each entry checked against the server: the workflow reads (GET /sindri/workflows, /sindri/workflows/{slug},
+    // /sindri/workflows/{slug}/runs, /sindri/workflow-runs/{run}, blocks, docs) reach slices that never read the caller's repo. Every other verb, a session caller's included, looks it up as before.
+    private static bool ReadsWithoutRepo(string[] args) => args is ["wf", "list" or "show" or "runs" or "run-show" or "blocks" or "docs", ..];
 
     /// <summary>What bare 'sindri' does to open the app; 'sindri --headless' opens nothing.</summary>
     internal static Func<string>? UiOpener(bool headless, Func<string, string?> environment) =>
