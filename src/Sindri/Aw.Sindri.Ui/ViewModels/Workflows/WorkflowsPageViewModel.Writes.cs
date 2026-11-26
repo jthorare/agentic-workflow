@@ -43,7 +43,7 @@ internal sealed partial class WorkflowsPageViewModel
 
             if (string.Equals(started.Value.Status, "started", StringComparison.Ordinal))
             {
-                Runs.AddStarting(started.Value.Run);   // at once, from the reply: the server's views row comes later
+                Runs.AddStarting(started.Value.Run, revision);   // at once, from the reply: the server's views row comes later
                 Run.ExpectStarting(started.Value.Run);
             }
 
@@ -68,8 +68,9 @@ internal sealed partial class WorkflowsPageViewModel
         }
 
         var fromRunPage = _level == Level.Run;
+        var revision = Runs.StartingRevision(runId);   // a "Run revision N once" placeholder runs that revision again; a plain Run now's has none
         Runs.DropStarting(runId);
-        await Start(revision: null, fromRunPage, cancellationToken).ConfigureAwait(true);
+        await Start(revision, fromRunPage, cancellationToken).ConfigureAwait(true);
     }
 
     // A refusal says why; one that says the workflow is off turns Run now off. When Sindri didn't answer, the run may have started, so the runs are read
