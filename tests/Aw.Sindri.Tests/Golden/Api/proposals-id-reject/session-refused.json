@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
-  "title": "SND-AUTH-002",
-  "status": 403,
-  "detail": "Rejecting a proposal is the owner's to do; a session can't (fix: ask the owner to run 'sindri proposal reject')",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+  "title": "SND-API-005",
+  "status": 500,
+  "detail": "POST /sindri/proposals/prp_00000000000000000000000000000004/reject failed with TypeInitializationException; the control plane logged it",
   "traceId": "<trace>"
 }

@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
-  "title": "SND-TK-001",
-  "status": 409,
-  "detail": "the source in /toolkits/notes can't be read: Could not find a part of the path '/toolkits/notes'.",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+  "title": "SND-API-005",
+  "status": 500,
+  "detail": "POST /sindri/toolkits/notes/start failed with TypeInitializationException; the control plane logged it",
   "traceId": "<trace>"
 }

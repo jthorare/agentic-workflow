@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-  "title": "SND-CLI-003",
-  "status": 400,
-  "detail": "actId is 8 to 32 characters of a-z and 0-9",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+  "title": "SND-API-005",
+  "status": 500,
+  "detail": "POST /sindri/sessions failed with TypeInitializationException; the control plane logged it",
   "traceId": "<trace>"
 }
