@@ -1,5 +1,7 @@
 {
-  "slug": "morning-check",
-  "revision": 2,
-  "specHash": "sha256:86e2384b8c1818e2c276b67db89d76de97c62e0fedcb1eeae7a656f4e8b0a415"
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+  "title": "SND-API-005",
+  "status": 500,
+  "detail": "POST /sindri/workflows/morning-check/ops failed with TypeInitializationException; the control plane logged it",
+  "traceId": "<trace>"
 }

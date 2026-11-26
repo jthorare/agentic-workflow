@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
-  "title": "SND-RES-003",
-  "status": 409,
-  "detail": "the run 'morning-check@1:1' of workflow 'morning-check' is still in flight; let it end or cancel it, then purge workflow:morning-check",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+  "title": "SND-API-005",
+  "status": 500,
+  "detail": "POST /sindri/resources/purge failed with TypeInitializationException; the control plane logged it",
   "traceId": "<trace>"
 }

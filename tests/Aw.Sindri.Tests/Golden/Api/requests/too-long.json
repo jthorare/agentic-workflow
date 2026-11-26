@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-  "title": "SND-REQ-001",
-  "status": 400,
-  "detail": "The text is longer than 65536 characters (fix: shorten it)",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+  "title": "SND-API-005",
+  "status": 500,
+  "detail": "POST /sindri/requests failed with TypeInitializationException; the control plane logged it",
   "traceId": "<trace>"
 }

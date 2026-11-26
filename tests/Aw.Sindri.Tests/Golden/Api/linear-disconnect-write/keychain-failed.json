@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc4918#section-11.2",
-  "title": "SND-LINEAR-014",
-  "status": 422,
-  "detail": "Couldn't remove the write key from your keychain (the OS keychain would not delete the key); nothing changed (fix: unlock your keychain and press Remove again)",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+  "title": "SND-API-005",
+  "status": 500,
+  "detail": "DELETE /sindri/linear/connection/write failed with TypeInitializationException; the control plane logged it",
   "traceId": "<trace>"
 }

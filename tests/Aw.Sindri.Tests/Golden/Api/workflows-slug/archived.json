@@ -1,4 +1,7 @@
 {
-  "slug": "morning-check",
-  "archivedAt": "2026-01-01T00:00:00.0000000Z"
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+  "title": "SND-API-005",
+  "status": 500,
+  "detail": "DELETE /sindri/workflows/morning-check failed with TypeInitializationException; the control plane logged it",
+  "traceId": "<trace>"
 }

@@ -1,6 +1,7 @@
 {
-  "run": "morning-check@1:1",
-  "node": "ask",
-  "answer": "yes",
-  "answeredBy": "human:cli"
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+  "title": "SND-API-005",
+  "status": 500,
+  "detail": "POST /sindri/workflow-runs/morning-check@1:1/nodes/ask/answer failed with TypeInitializationException; the control plane logged it",
+  "traceId": "<trace>"
 }

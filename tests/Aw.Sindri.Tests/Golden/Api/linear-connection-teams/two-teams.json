@@ -1,14 +1,7 @@
 {
-  "teams": [
-    {
-      "id": "00000000-0000-4000-8000-0000000000e1",
-      "key": "ENG",
-      "name": "Engineering"
-    },
-    {
-      "id": "00000000-0000-4000-8000-0000000000e2",
-      "key": "OPS",
-      "name": "Operations"
-    }
-  ]
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+  "title": "SND-API-005",
+  "status": 500,
+  "detail": "POST /sindri/linear/connection/teams failed with TypeInitializationException; the control plane logged it",
+  "traceId": "<trace>"
 }

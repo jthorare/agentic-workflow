@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
-  "title": "SND-GRAPH-110",
-  "status": 409,
-  "detail": "the run 'morning-check@1:2' is not waiting on an agent at node 'agent' item 0",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+  "title": "SND-API-005",
+  "status": 500,
+  "detail": "POST /sindri/workflow-runs/morning-check@1:2/nodes/agent/takeover failed with TypeInitializationException; the control plane logged it",
   "traceId": "<trace>"
 }

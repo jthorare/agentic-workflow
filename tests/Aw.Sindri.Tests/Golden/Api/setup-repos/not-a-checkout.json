@@ -1,7 +1,7 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-  "title": "SND-SETUP-001",
-  "status": 400,
-  "detail": "that folder is not a git checkout (fix: pick the repo's top folder)",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+  "title": "SND-API-005",
+  "status": 500,
+  "detail": "POST /sindri/setup/repos failed with TypeInitializationException; the control plane logged it",
   "traceId": "<trace>"
 }
