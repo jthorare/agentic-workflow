@@ -1,8 +1,7 @@
-using Aw.Kernel.Ids;
-using Aw.Sindri.Core.Projects.Sources;
 using System.Text;
 using Aw.Kernel;
 using Aw.Kernel.Events;
+using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
@@ -12,6 +11,7 @@ using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Projects.Cards;
 using Aw.Sindri.Core.Projects.Facts;
+using Aw.Sindri.Core.Projects.Sources;
 using Aw.Sindri.Core.Projects.TruthSources;
 using Aw.Sindri.Core.Reviews;
 
