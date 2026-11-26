@@ -103,6 +103,15 @@ internal sealed class ConnectionsText
     /// <summary><see cref="Labels.TileRenameSave"/>.</summary>
     public string RenameSave { get; } = Labels.TileRenameSave;
 
+    /// <summary><see cref="Labels.TileReplaceToken"/>.</summary>
+    public string ReplaceToken { get; } = Labels.TileReplaceToken;
+
+    /// <summary><see cref="Labels.TileReplaceTokenLabel"/>.</summary>
+    public string ReplaceTokenLabel { get; } = Labels.TileReplaceTokenLabel;
+
+    /// <summary><see cref="Labels.TileReplaceSend"/>.</summary>
+    public string ReplaceSend { get; } = Labels.TileReplaceSend;
+
     /// <summary><see cref="Labels.TileReconnect"/>.</summary>
     public string Reconnect { get; } = Labels.TileReconnect;
 }

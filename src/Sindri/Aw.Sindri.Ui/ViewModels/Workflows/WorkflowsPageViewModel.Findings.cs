@@ -40,7 +40,7 @@ internal sealed partial class WorkflowsPageViewModel
     /// <returns>A task that completes when the sheet is open on the step.</returns>
     internal async Task FixFinding(WorkflowFindingViewModel finding, CancellationToken cancellationToken)
     {
-        if (finding.FixField is not { } fieldName || finding.Node is not { } node || Runs.Graph is not { } graph)
+        if (!CanEdit || finding.FixField is not { } fieldName || finding.Node is not { } node || Runs.Graph is not { } graph)
         {
             return;
         }
@@ -64,6 +64,15 @@ internal sealed partial class WorkflowsPageViewModel
         }
     }
 
+    /// <summary>Asks validate again for the revision the page shows (the failed-check line's Retry).</summary>
+    /// <returns>A task that completes when the answer is shown.</returns>
+    internal Task RetryFindings()
+    {
+        _findingsOf = null;   // the same revision is asked about again
+        AskFindings();
+        return FindingsRead;
+    }
+
     private void WatchFindings()
     {
         Runs.PropertyChanged += OnRunsForFindings;
@@ -73,10 +82,23 @@ internal sealed partial class WorkflowsPageViewModel
             {
                 Findings.Mark(Runs.Graph);
                 PickStepFindings();
+                AllowFixes();
+            }
+        };
+        Editor.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(OpsEditor.IsSending), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(OpsEditor.NeedsReload), StringComparison.Ordinal))
+            {
+                AllowFixes();   // the editor's own state: a fix is offered whenever the page can edit, so it follows
             }
         };
         PropertyChanged += (_, e) =>
         {
+            if (string.Equals(e.PropertyName, nameof(IsRuns), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(IsSettingsOpen), StringComparison.Ordinal))
+            {
+                AllowFixes();   // back on the workflow (or the sheet shut): findings that came in meanwhile get their fix
+            }
+
             if (string.Equals(e.PropertyName, nameof(IsSettingsOpen), StringComparison.Ordinal))
             {
                 OnChanged(nameof(ShowsStepFindingsUnderGraph));
@@ -90,8 +112,18 @@ internal sealed partial class WorkflowsPageViewModel
         };
     }
 
+    // Fix needs an editor that can change the workflow: an archived one shows no fix button.
+    private void AllowFixes()
+    {
+        foreach (var finding in Findings.All)
+        {
+            finding.AllowFix(CanEdit);
+        }
+    }
+
     private void OnRunsForFindings(object? sender, PropertyChangedEventArgs e)
     {
+        AllowFixes();
         if (string.Equals(e.PropertyName, nameof(RunsViewModel.Shown), StringComparison.Ordinal))
         {
             AskFindings();
@@ -151,7 +183,8 @@ internal sealed partial class WorkflowsPageViewModel
         }
         else
         {
-            Findings.Clear();   // a failed check shows no findings rather than an older revision's
+            Findings.Fail();   // a failed check shows no findings rather than an older revision's, and says so
+            _findingsOf = null;   // the next open asks again
         }
     }
 }

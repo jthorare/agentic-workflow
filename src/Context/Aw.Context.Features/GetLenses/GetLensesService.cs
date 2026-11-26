@@ -96,7 +96,8 @@ internal sealed class GetLensesService(MapReader reader, LensBasisReader bases, 
             }
 
             var links = files.Where(f => f.Implements.Count > 0).Select(f => (f.Path, f.Implements)).ToList();
-            columns.Add(await SymbolColumn.Read(new TrailingCodeSymbolSource(symbols, repoReader, repo), new SymbolColumnReading(repo, version, [.. files.Select(f => f.Path)], links), cancellationToken).ConfigureAwait(false));
+            var read = await SymbolColumn.Read(new TrailingCodeSymbolSource(symbols, repoReader, repo), new SymbolColumnReading(repo, version, [.. files.Select(f => f.Path)], links), cancellationToken).ConfigureAwait(false);
+            columns.Add(repos.Value.Count > 1 ? read with { Repos = [repo.Name.Value] } : read);   // #3861: with several repos the band can say which one has no index
         }
 
         if (columns.Count == 0)

@@ -65,6 +65,15 @@ public interface IWorkflowRunStore
     /// <returns>The runs; none when the workflow has none.</returns>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Recent(WorkflowId workflow, int offset, int limit, CancellationToken cancellationToken);
 
+    /// <summary>A workflow's live runs that <paramref name="query"/> keeps (#4334), in the order of <see cref="Recent"/>, one page; the filter is part of the query, so the page cap never hides a match.</summary>
+    /// <param name="workflow">The workflow.</param>
+    /// <param name="query">The statuses, the start-time window and the cursor.</param>
+    /// <param name="offset">How many of the kept runs to skip, 0 or more.</param>
+    /// <param name="limit">How many runs to keep, 1 or more.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The runs; none when nothing matches.</returns>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Find(WorkflowId workflow, WorkflowRunQuery query, int offset, int limit, CancellationToken cancellationToken);
+
     /// <summary>Every run in 'running', over all workflows, oldest first (serve start reads it to find runs whose Temporal workflow was never started).</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The runs.</returns>

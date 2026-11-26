@@ -29,10 +29,11 @@ internal static partial class Labels
     /// <summary>The sheet when its session is gone.</summary>
     internal const string SessionEnded = "This session has ended.";
 
-    /// <summary>The page when the collector can't run here (SND-SESSION-002); the detail is the served word.</summary>
+    /// <summary>The page when the collector can't run here (SND-SESSION-002); the detail is the served word. Turned off by the owner, it reads as the System page's Agents card does (#4316).</summary>
     /// <param name="detail">The served detail (disabled, proc-unreadable, unsupported-platform).</param>
     /// <returns>The line.</returns>
-    internal static string SessionsUnavailable(string detail) => $"Sindri can't see agent sessions on this system: {detail}";
+    internal static string SessionsUnavailable(string detail) =>
+        string.Equals(detail, "disabled", StringComparison.Ordinal) ? AgentsWatchingOff : $"Sindri can't see agent sessions on this system: {detail}";
 
     /// <summary>The head: "Agents  N live · M asking · K outside a workflow" (the title is the page's own).</summary>
     /// <param name="live">Live sessions.</param>

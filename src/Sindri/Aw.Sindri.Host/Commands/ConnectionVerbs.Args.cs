@@ -6,7 +6,7 @@ namespace Aw.Sindri.Host.Commands;
 /// <summary>The connection verbs' argument parsing: the verb, its flags and its names (split from ConnectionVerbs.cs for the file length limit).</summary>
 internal sealed partial class ConnectionVerbs
 {
-    private static readonly string[] _verbs = ["add", "list", "show", "test", "rename", "remove", "signin"];
+    private static readonly string[] _verbs = ["add", "list", "show", "test", "rename", "remove", "signin", "set-key"];
     private static readonly string[] _switchFlags = ["--json", "--no-start"];
     private static readonly string[] _valueFlags = ["--preset", "--kind", "--client-id", "--client-secret-env", "--key-env", "--scope", "--url"];
 
@@ -16,7 +16,7 @@ internal sealed partial class ConnectionVerbs
         var verb = alias || args.Length < 2 ? "list" : args[1];
         if (!_verbs.Contains(verb, StringComparer.Ordinal))
         {
-            return SindriErrors.InvalidInput.With("usage: sindri connection add|list|show|test|rename|remove|signin (fix: sindri help)");
+            return SindriErrors.InvalidInput.With("usage: sindri connection add|list|show|test|rename|remove|signin|set-key (fix: sindri help)");
         }
 
         var scanned = Scan([.. args.Skip(alias ? 1 : 2)]);

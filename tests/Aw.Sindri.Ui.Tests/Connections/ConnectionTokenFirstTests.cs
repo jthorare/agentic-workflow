@@ -107,6 +107,7 @@ public sealed class ConnectionTokenFirstTests
     [Theory]
     [InlineData("SND-CONN-018", "Linear refused the token.")]
     [InlineData("SND-CONN-019", "Couldn't reach Linear to check the token.")]
+    [InlineData("SND-CONN-020", "Linear is limiting requests right now, so the token wasn't checked. Wait a minute, then try again.")]
     public async Task A_refused_or_unchecked_token_names_the_service_in_words_and_no_code(string code, string words)
     {
         var tile = await Tile("linear");
@@ -118,7 +119,40 @@ public sealed class ConnectionTokenFirstTests
 
         Assert.StartsWith(words, tile.ErrorText, StringComparison.Ordinal);
         Assert.DoesNotContain("SND-", tile.ErrorText, StringComparison.Ordinal);
-        Assert.False(tile.Token.HasValue);
+    }
+
+    // #4428: only a refused key (018) is the token's fault; 019 and 020 never judged it, so the pasted token stays, Try again is live, and the line is amber, not red.
+    [Theory]
+    [InlineData("SND-CONN-018", false, false)]
+    [InlineData("SND-CONN-019", true, true)]
+    [InlineData("SND-CONN-020", true, true)]
+    public async Task A_check_that_never_judged_the_token_keeps_it_and_shows_amber_only_a_refused_token_clears(string code, bool kept, bool caution)
+    {
+        var tile = await Tile("github");
+        await tile.Connect(Token);
+        tile.Token.Text = "github_pat_test_0001";
+        _f.Server.ConnectionWriteError = new Kernel.Error(code, Kernel.ErrorKind.Invalid, "GitHub did not take the key");
+
+        await tile.Connect(Token);
+
+        Assert.Equal((kept, caution), (tile.Token.HasValue, tile.ErrorIsCaution));
+        Assert.Equal(kept ? ("Try again", true) : ("Add token", false), (tile.PrimaryText, tile.CanPress));
+    }
+
+    [Fact]
+    public async Task Try_again_after_a_rate_limit_sends_the_same_token_and_clears_it_once_connected()
+    {
+        var tile = await Tile("github");
+        await tile.Connect(Token);
+        tile.Token.Text = "github_pat_test_0001";
+        _f.Server.ConnectionWriteError = new Kernel.Error("SND-CONN-020", Kernel.ErrorKind.RateLimited, "rate limited");
+        await tile.Connect(Token);
+        _f.Server.ConnectionWriteError = null;
+
+        await tile.Connect(Token);
+
+        Assert.Equal(["github_pat_test_0001", "github_pat_test_0001"], _f.Server.AddedConnections.Select(b => b.Key), StringComparer.Ordinal);
+        Assert.Equal((string.Empty, false, false), (tile.ErrorText, tile.ErrorIsCaution, tile.Token.HasValue));
     }
 
     [Fact]
@@ -151,13 +185,13 @@ public sealed class ConnectionTokenFirstTests
     }
 
     [Fact]
-    public async Task The_OAuth_fields_say_client_ID_and_keep_their_waiting_line()
+    public async Task The_OAuth_fields_say_client_ID_and_the_help_line_says_to_paste_it_once()
     {
         var tile = await Tile("linear");
         await tile.Connect(Token);
         tile.UseOAuth();
 
-        Assert.Equal(("Client ID", "Enter your Linear app's client ID", true), (tile.Text.TileClientLabel, tile.BlockedReason, tile.HasBlockedReason));
+        Assert.Equal(("Client ID", "Enter your Linear app's client ID", false), (tile.Text.TileClientLabel, tile.BlockedReason, tile.HasBlockedReason));   // #4396: the help line says to paste the client ID, so the inline reason stays quiet
         Assert.Contains("client ID", tile.HelpText, StringComparison.Ordinal);
     }
 }

@@ -18,6 +18,15 @@ internal static partial class Labels
     /// <summary>The button that opens the selected step's settings.</summary>
     internal const string WfStepSettings = "Step settings";
 
+    /// <summary>The question Done asks when a field of the step sheet changed.</summary>
+    internal const string WfAskSave = "Save your changes?";
+
+    /// <summary>The question's Discard button.</summary>
+    internal const string WfAskDiscard = "Discard";
+
+    /// <summary>The question's Keep editing button.</summary>
+    internal const string WfAskKeep = "Keep editing";
+
     /// <summary>The editor sheet's Close button.</summary>
     internal const string WfEditClose = "Close";
 
@@ -36,7 +45,7 @@ internal static partial class Labels
     /// <param name="title">The step's own title, or its block's title when it has none.</param>
     /// <param name="kind"><see cref="WfEditorTriggerKind"/>, or the block's title.</param>
     /// <returns>The words.</returns>
-    internal static string WfEditorStep(string title, string kind) => title + " \u00b7 " + kind;
+    internal static string WfEditorStep(string title, string kind) => string.Equals(title, kind, StringComparison.Ordinal) ? title : title + " \u00b7 " + kind;
 
     /// <summary>The selected step's id, shown only in the sheet's Advanced group (#3684): the card and the heading never show it.</summary>
     /// <param name="id">The node's id.</param>
@@ -79,4 +88,10 @@ internal static partial class Labels
     /// <param name="names">The group's captions, joined with "and" ("Wait for and Wait until").</param>
     /// <returns>The words.</returns>
     internal static string WfFieldOnlyOne(string names) => $"Fill in only one of {names}.";
+
+    /// <summary>What the toast says after Save step; its Undo button follows it.</summary>
+    internal const string WfStepSavedToast = "Step saved.";
+
+    /// <summary>Why Undo did nothing: an edit or an Activate is on the way, the workflow changed elsewhere, or another workflow is open.</summary>
+    internal const string WfUndoNotNow = "Not while a change is on its way, or after the workflow changed elsewhere. Reload it first.";
 }

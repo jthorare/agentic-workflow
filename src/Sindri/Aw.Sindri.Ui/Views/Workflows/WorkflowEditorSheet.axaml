@@ -30,7 +30,7 @@
       <ItemsControl x:Name="EditorFields" ItemsSource="{Binding Editor.Fields}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="wf:ConfigFieldViewModel">
-            <StackPanel Spacing="2" Margin="0,0,0,8">
+            <StackPanel Spacing="2" Margin="0,0,0,8" IsVisible="{Binding IsShown}">
               <TextBlock Classes="caption subtle" Text="{Binding Caption}" AutomationProperties.AccessibilityView="Raw" />
               <ComboBox Name="EditorFieldPresets" IsVisible="{Binding HasPresets}" ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Caption}">
                 <ComboBox.ItemTemplate>
@@ -42,7 +42,11 @@
               <ToggleButton Name="EditorFieldAdvanced" IsVisible="{Binding HasAdvanced}" IsChecked="{Binding ShowAdvanced, Mode=TwoWay}" Content="{Binding AdvancedText}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding AdvancedText}" />
               <TextBox Name="EditorFieldText" IsVisible="{Binding IsRawVisible}" Text="{Binding Text, Mode=TwoWay}" PlaceholderText="{Binding Placeholder}" AutomationProperties.Name="{Binding Caption}" />
               <CheckBox Name="EditorFieldCheck" AutomationProperties.AutomationId="{Binding CheckAutomationId}" IsVisible="{Binding IsBoolean}" IsChecked="{Binding IsOn, Mode=TwoWay}" AutomationProperties.Name="{Binding Caption}" />
-              <TextBox Name="EditorFieldLines" IsVisible="{Binding IsMultiline}" Text="{Binding Text, Mode=TwoWay}" PlaceholderText="{Binding Placeholder}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding Caption}" />
+              <TextBox Name="EditorFieldLines" IsVisible="{Binding IsPlainLines}" Text="{Binding Text, Mode=TwoWay}" PlaceholderText="{Binding Placeholder}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding Caption}" />
+              <TextBox Name="EditorFieldCode" IsVisible="{Binding IsCode}" Text="{Binding Text, Mode=TwoWay}" PlaceholderText="{Binding Placeholder}" AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap" FontFamily="{DynamicResource Font.Mono}" MinHeight="240" MaxHeight="600" VerticalContentAlignment="Top" AutomationProperties.Name="{Binding Caption}" />
+              <Border Name="EditorFieldExample" IsVisible="{Binding HasExample}" AutomationProperties.Name="{Binding Example}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                <TextBlock Classes="caption quiet" Text="{Binding Example}" FontFamily="{DynamicResource Font.Mono}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+              </Border>
               <Border Name="EditorFieldNeed" IsVisible="{Binding HasNeed}" AutomationProperties.Name="{Binding NeedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                 <TextBlock Classes="caption subtle" Text="{Binding NeedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
               </Border>
@@ -54,9 +58,9 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
-      <!-- The step's id shows only here (#3684): never on the card or in the heading. -->
-      <Expander x:Name="EditorAdvanced" Header="{Binding Editor.AdvancedText}" IsVisible="{Binding Editor.NodeIdLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Editor.AdvancedText}">
-        <Border x:Name="EditorStepIdName" AutomationProperties.Name="{Binding Editor.NodeIdLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <!-- The step's id shows only here (#3684): never on the card or in the heading. Opening it also shows the Code step's repo, branch, timeout and memory fields above (#3682). -->
+      <Expander x:Name="EditorAdvanced" Header="{Binding Editor.AdvancedText}" IsVisible="{Binding Editor.ShowsAdvanced}" IsExpanded="{Binding Editor.AdvancedOpen, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Editor.AdvancedText}">
+        <Border x:Name="EditorStepIdName" IsVisible="{Binding Editor.NodeIdLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Editor.NodeIdLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption mono" Text="{Binding Editor.NodeIdLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
       </Expander>
@@ -68,7 +72,18 @@
         </Grid>
       </Border>
 
-      <StackPanel Orientation="Horizontal" Spacing="8">
+      <StackPanel x:Name="EditorAsksSave" Spacing="8" IsVisible="{Binding AsksSaveFirst}">
+        <Border x:Name="EditorAskName" AutomationProperties.Name="{Binding AskSaveText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body-strong" Text="{Binding AskSaveText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button x:Name="EditorAskSave" Classes="accent" Content="{Binding SaveText}" IsEnabled="{Binding CanSave}" Click="OnAskSave" AutomationProperties.Name="{Binding SaveText}" />
+          <Button x:Name="EditorAskDiscard" Content="{Binding AskDiscardText}" Click="OnAskDiscard" AutomationProperties.Name="{Binding AskDiscardText}" />
+          <Button x:Name="EditorAskKeep" Content="{Binding AskKeepText}" Click="OnAskKeep" AutomationProperties.Name="{Binding AskKeepText}" />
+        </StackPanel>
+      </StackPanel>
+
+      <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding ShowsEditorButtons}">
         <Button x:Name="EditorSave" Content="{Binding SaveText}" Click="OnSave" IsEnabled="{Binding CanSave}" AutomationProperties.Name="{Binding SaveText}" />
         <Button x:Name="EditorClose" Content="{Binding CloseEditorText}" Click="OnClose" AutomationProperties.Name="{Binding CloseEditorText}" />
       </StackPanel>

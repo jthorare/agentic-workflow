@@ -379,6 +379,7 @@ func installKeyTap() {
     userInfo: nil
   ) else {
     logLine("key tap was not created")
+    showPermissionPromptOnce()
     return
   }
   retainedKeyTap = tap

@@ -387,4 +387,16 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
   </Style>
+  <!-- An in-card action link (#4317): the primary colour Connect Linear uses (#2548), no fill or border, a hand cursor, PrimaryHover under the pointer.
+       The keyboard ring is the app's one (Theme/FluentOverrides.axaml), drawn on :focus-visible only. Put it beside row-title, which keeps the layout. -->
+  <Style Selector="Button.accent-link">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Primary}" />
+  </Style>
+  <Style Selector="Button.accent-link:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.accent-link:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.PrimaryHover}" />
+  </Style>
 </Styles>

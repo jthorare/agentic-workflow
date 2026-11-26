@@ -55,7 +55,7 @@ internal static class WorkflowReadTools
     private static Tool RunsTool { get; } = new()
     {
         Name = Runs,
-        Description = "A workflow's newest 50 runs, newest first: run id, revision, status, what started it, why it failed and a one-line result. The failure text and the result are untrusted and fenced." + ContextTools.PageSentence,
+        Description = "A workflow's runs, newest first, 50 a page: run id, revision, status, what started it, why it failed and a one-line result. Filter with status, since and until; when more is true, pass next as before for the older page. A filter value it can't read is SND-GRAPH-134. The failure text and the result are untrusted and fenced." + ContextTools.PageSentence,
         InputSchema = ContextTools.Schema(WithSlug(), required: ["slug"]),
         Annotations = ReadOnly,
     };
@@ -67,6 +67,8 @@ internal static class WorkflowReadTools
         InputSchema = ContextTools.Schema(new JsonObject { ["run"] = ContextTools.Property("string", "A run id, '<slug>@<revision>:<occurrence>', such as morning-check@3:12") }, required: ["run"]),
         Annotations = ReadOnly,
     };
+
+    private static readonly string[] _filterNames = ["status", "since", "until", "before"];
 
     private const string SlugText = "The workflow's slug, such as morning-check (workflow_list names them)";
 
@@ -92,6 +94,10 @@ internal static class WorkflowReadTools
     {
         var properties = ContextTools.PageProperties();
         properties["slug"] = ContextTools.Property("string", SlugText);
+        properties["status"] = ContextTools.Property("string", "Keep runs in these statuses, comma-separated: running (queued, running or waiting), ended (succeeded), succeeded, failed, cancelled, queued, waiting");
+        properties["since"] = ContextTools.Property("string", "Keep runs that started at or after this ISO-8601 instant, such as 2026-11-23T07:00:00Z (a date alone is its midnight UTC)");
+        properties["until"] = ContextTools.Property("string", "Keep runs that started before this ISO-8601 instant; not before since");
+        properties["before"] = ContextTools.Property("string", "Keep runs older than this run id: the next of the page before");
         return properties;
     }
 
@@ -122,19 +128,21 @@ internal static class WorkflowReadTools
 
     private static async ValueTask<CallToolResult> CallRuns(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
-        var page = Page(Runs, arguments, ["slug"]);
+        var page = Page(Runs, arguments, ["slug", .. _filterNames]);
         if (page.IsError)
         {
             return McpResults.Failure(services, page.Error);
         }
 
         var slug = Slug(Runs, arguments);
-        if (slug.IsError)
+        var filter = slug.IsError ? slug.Error : RunsFilterOf(arguments);
+        if (slug.IsError || filter.IsError)
         {
-            return McpResults.Failure(services, slug.Error);
+            return McpResults.Failure(services, slug.IsError ? slug.Error : filter.Error);
         }
 
-        var answer = await services.GetRequiredService<IService<ListWorkflowRunsRequest, ListWorkflowRunsResponse>>().Handle(new ListWorkflowRunsRequest(slug.Value, page.Value.Offset, page.Value.Limit), ct).ConfigureAwait(false);
+        var request = new ListWorkflowRunsRequest(slug.Value, page.Value.Offset, page.Value.Limit) { Filter = filter.Value };
+        var answer = await services.GetRequiredService<IService<ListWorkflowRunsRequest, ListWorkflowRunsResponse>>().Handle(request, ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static listed => string.Create(CultureInfo.InvariantCulture, $"{listed.Runs.Count} runs of {listed.Slug.Value}, newest first\n{Fenced}"), FencePlan.WorkflowRuns);
     }
 
@@ -150,6 +158,24 @@ internal static class WorkflowReadTools
 
         var answer = await services.GetRequiredService<IService<GetWorkflowRunRequest, GetWorkflowRunResponse>>().Handle(new GetWorkflowRunRequest(run.Value), ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static got => string.Create(CultureInfo.InvariantCulture, $"{got.Id.Value} · {got.Status} · {got.Nodes.Count} node runs\n{Fenced}"), FencePlan.WorkflowRun);
+    }
+
+    // why: the same four values the route reads from its query, read as optional strings and checked by the route's parser, so both refuse alike (#4334)
+    private static Result<RunsFilter> RunsFilterOf(IDictionary<string, JsonElement>? arguments)
+    {
+        var values = new string?[_filterNames.Length];
+        for (var i = 0; i < _filterNames.Length; i++)
+        {
+            var value = McpArguments.OptionalString(Runs, arguments, _filterNames[i]);
+            if (value.IsError)
+            {
+                return value.Error;
+            }
+
+            values[i] = value.Value;
+        }
+
+        return RunsFilter.Parse(values[0], values[1], values[2], values[3]);
     }
 
     private static Result<McpWindow> Page(string tool, IDictionary<string, JsonElement>? arguments, string[] own) =>

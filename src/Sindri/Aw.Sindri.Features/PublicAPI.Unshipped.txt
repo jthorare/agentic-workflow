@@ -2297,6 +2297,8 @@ Aw.Sindri.Features.GetStatus.SessionStatus.Problems.init -> void
 Aw.Sindri.Features.GetStatus.SessionStatus.Running.get -> int
 Aw.Sindri.Features.GetStatus.SessionStatus.Running.init -> void
 Aw.Sindri.Features.GetStatus.SessionStatus.SessionStatus(int Live, int Asking, int Problems, int Running) -> void
+Aw.Sindri.Features.GetStatus.SessionStatus.Watching.get -> string!
+Aw.Sindri.Features.GetStatus.SessionStatus.Watching.init -> void
 Aw.Sindri.Features.ListSessions.EndedSessionRow
 Aw.Sindri.Features.ListSessions.EndedSessionRow.<Clone>$() -> Aw.Sindri.Features.ListSessions.EndedSessionRow!
 Aw.Sindri.Features.ListSessions.EndedSessionRow.Deconstruct(out Aw.Sindri.Core.Sessions.SessionRow! Session, out System.DateTimeOffset EndedAt, out System.Collections.Generic.IReadOnlyList<string!>? Resume) -> void
@@ -4087,6 +4089,10 @@ static Aw.Sindri.Features.PinConcepts.PinWritten.operator !=(Aw.Sindri.Features.
 static Aw.Sindri.Features.PinConcepts.PinWritten.operator ==(Aw.Sindri.Features.PinConcepts.PinWritten? left, Aw.Sindri.Features.PinConcepts.PinWritten? right) -> bool
 Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.PagesInNoConcept.get -> bool
 Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.PagesInNoConcept.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.ConceptTab.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.ConceptTab.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Page.get -> int
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Page.init -> void
 Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult
 Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.<Clone>$() -> Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult!
 Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.AliasesHash.get -> string!
@@ -5209,6 +5215,38 @@ Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest.IfHash.init -> void
 Aw.Sindri.Features.StopTodoNote.StopTodoNoteRequest.StopTodoNoteRequest(string? IfHash = null) -> void
 Aw.Sindri.Features.AddConnection.AddConnectionRequest.AddConnectionRequest(string! Name, string? Preset, string? Kind, string? Client, string? KeyEnv, System.Collections.Generic.IReadOnlyList<string!>! Scopes, bool Wait, string? ClientSecretEnv = null, string? Key = null, string? ClientSecret = null, string? Url = null) -> void
 Aw.Sindri.Features.AddConnection.AddConnectionRequest.Deconstruct(out string! Name, out string? Preset, out string? Kind, out string? Client, out string? KeyEnv, out System.Collections.Generic.IReadOnlyList<string!>! Scopes, out bool Wait, out string? ClientSecretEnv, out string? Key, out string? ClientSecret, out string? Url) -> void
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.<Clone>$() -> Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest!
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.Deconstruct(out string! Name, out string? KeyEnv, out string? Key) -> void
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.Equals(Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest? other) -> bool
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.Key.get -> string?
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.Key.init -> void
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.KeyEnv.get -> string?
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.KeyEnv.init -> void
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.Name.get -> string!
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.Name.init -> void
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.ReplaceConnectionKeyRequest(string! Name, string? KeyEnv = null, string? Key = null) -> void
+override Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.GetHashCode() -> int
+override Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.ToString() -> string!
+static Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.operator !=(Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest? left, Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest? right) -> bool
+static Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest.operator ==(Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest? left, Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyRequest? right) -> bool
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.<Clone>$() -> Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse!
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.Checked.get -> bool
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.Checked.init -> void
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.Connection.get -> Aw.Sindri.Core.Connections.ConnectionView!
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.Connection.init -> void
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionView! Connection, out bool Checked, out string? UncheckedReason) -> void
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.Equals(Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse? other) -> bool
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.ReplaceConnectionKeyResponse(Aw.Sindri.Core.Connections.ConnectionView! Connection, bool Checked, string? UncheckedReason) -> void
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.UncheckedReason.get -> string?
+Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.UncheckedReason.init -> void
+override Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.GetHashCode() -> int
+override Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.ToString() -> string!
+static Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.operator !=(Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse? left, Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse? right) -> bool
+static Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse.operator ==(Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse? left, Aw.Sindri.Features.AddConnection.ReplaceConnectionKeyResponse? right) -> bool
 Aw.Sindri.Features.AddConnection.SignInConnectionRequest
 Aw.Sindri.Features.AddConnection.SignInConnectionRequest.<Clone>$() -> Aw.Sindri.Features.AddConnection.SignInConnectionRequest!
 Aw.Sindri.Features.AddConnection.SignInConnectionRequest.Deconstruct(out string! Name, out bool Wait) -> void

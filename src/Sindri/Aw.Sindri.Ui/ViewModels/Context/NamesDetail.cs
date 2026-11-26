@@ -10,13 +10,21 @@ internal static class NamesDetail
     /// <returns>The words for its reason.</returns>
     internal static string For(SymbolsView symbols) => Known(symbols) ?? Labels.ContextMapNamesDetail;
 
-    /// <summary>The coverage sentence's words for function names that were not searched: the reason's words, else the short "not indexed".</summary>
+    /// <summary>
+    /// The coverage sentence's words for function names that were not searched: the repos with no code index when the answer names them (several repos in scope, #3861),
+    /// else the reason's words, else the short "not indexed".
+    /// </summary>
     /// <param name="symbols">What the lens served.</param>
     /// <returns>The words.</returns>
     internal static string Sentence(SymbolsView symbols)
     {
         ArgumentNullException.ThrowIfNull(symbols);
-        return (string.Equals(symbols.State, "unavailable", StringComparison.Ordinal) ? Known(symbols) : null) ?? Labels.ContextMapNamesNotIndexed;
+        if (!string.Equals(symbols.State, "unavailable", StringComparison.Ordinal))
+        {
+            return Labels.ContextMapNamesNotIndexed;
+        }
+
+        return Known(symbols) ?? (symbols.Repos is { Count: > 0 } repos ? Labels.ContextMapNamesNoIndexFor(repos) : Labels.ContextMapNamesNotIndexed);
     }
 
     // The words for a reason other than "the index isn't built"; null for that one (or no reason), which each caller says its own way.

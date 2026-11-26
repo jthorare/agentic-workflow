@@ -33,7 +33,7 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         return status with { ApiVersion = SindriApi.Version, Views = views, Health = health, Sessions = SessionCounts() };
     }
 
-    /// <summary>The collector's last pass in numbers and its counted problems (#4012: a test override is none); zeros before the first pass (collector spec CA-8).</summary>
+    /// <summary>The collector's last pass in numbers and its counted problems (#4012: a test override is none; #4316: a turned-off collector is none, it reads watching off); zeros before the first pass (collector spec CA-8).</summary>
     private SessionStatus SessionCounts()
     {
         if (sessions.Current is not { } pass)
@@ -42,7 +42,8 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         }
 
         var counted = SessionHealth.Counted(pass.Problems);
-        return new SessionStatus(pass.Sessions.Count, pass.Sessions.Count(static s => s.State == SessionState.Asking), counted.Count, pass.Sessions.Count(static s => s.State == SessionState.Running)) { ProblemRows = counted };
+        var watching = SessionHealth.IsWatchingOff(pass.Problems) ? "off" : "on";   // #4316: the owner's choice, not a problem
+        return new SessionStatus(pass.Sessions.Count, pass.Sessions.Count(static s => s.State == SessionState.Asking), counted.Count, pass.Sessions.Count(static s => s.State == SessionState.Running)) { ProblemRows = counted, Watching = watching };
     }
 
     /// <summary>The projector's status with the ledger's head read fresh, not the projector's last-seen one: cursor below ledgerHead is the real lag.</summary>
