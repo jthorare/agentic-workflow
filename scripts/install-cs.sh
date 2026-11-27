@@ -542,8 +542,10 @@ publish() {
   # sindri stays framework-dependent (the Temporal worker can't be trimmed) but is ReadyToRun-compiled, so a CLI call skips most of the
   # JIT at start (#3727). ReadyToRun needs a runtime id, and its crossgen pack is restored outside the lock files, as for NativeAOT.
   pub sindri src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj --no-self-contained "${aot[@]}" -p:PublishReadyToRun=true
-  pub sindri-code-runner src/Sindri/Aw.Sindri.CodeRunner/Aw.Sindri.CodeRunner.csproj --no-self-contained
-  pub ui-evidence src/Evidence/Aw.Evidence.Host/Aw.Evidence.Host.csproj --no-self-contained
+  # The two without a runtime id restore unlocked too: sindri's restore above wrote linux-x64 (or osx-arm64) into every project it shares
+  # with them (Aw.Analyzers at least), and a locked restore (CI=true) refuses the changed runtime ids with NU1004.
+  pub sindri-code-runner src/Sindri/Aw.Sindri.CodeRunner/Aw.Sindri.CodeRunner.csproj --no-self-contained -p:RestoreLockedMode=false
+  pub ui-evidence src/Evidence/Aw.Evidence.Host/Aw.Evidence.Host.csproj --no-self-contained -p:RestoreLockedMode=false
   # Keep sindri-ui BEFORE judge: pub() keeps the first file of a name, so the staged libSkiaSharp.so is sindri-ui's (SkiaSharp.NativeAssets.Linux,
   # which links fontconfig, so Avalonia finds system fonts), not judge's NoDependencies build. check_skia_fontconfig fails the install if that flips.
   pub sindri-ui src/Sindri/Aw.Sindri.Ui.Desktop/Aw.Sindri.Ui.Desktop.csproj "${aot[@]}"
