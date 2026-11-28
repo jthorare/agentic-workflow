@@ -42,6 +42,7 @@ internal static class WorkflowFindingWords
         ["GRAPH-REF-002"] = ("{T} reads a value that does not exist.", "Pick one of the values the earlier step offers."),
         ["GRAPH-REF-003"] = ("{T} reads from a step that is not there.", "Pick a step that runs before it."),
         ["GRAPH-REF-004"] = ("{T} has a half-written reference to earlier data.", "Pick the data again, or delete the half-written part."),
+        ["GRAPH-BUDGET-001"] = ("{T} has a token limit that is not a whole number above 0.", "Set the most tokens one run may use to a whole number above 0, or clear the limit."),
         ["GRAPH-REF-005"] = ("{T} reads data of the wrong type for this field.", "Pick data of the right type, or type the value in."),
     };
 
