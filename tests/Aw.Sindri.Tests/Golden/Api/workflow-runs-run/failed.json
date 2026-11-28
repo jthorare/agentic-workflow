@@ -50,5 +50,9 @@
       "seconds": 0
     }
   ],
+  "tokens": {
+    "used": 0,
+    "budget": null
+  },
   "triggerKind": "manual"
 }
