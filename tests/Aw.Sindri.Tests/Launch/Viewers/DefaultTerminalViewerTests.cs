@@ -79,6 +79,24 @@ public sealed class DefaultTerminalViewerTests : IDisposable
         _ = await _f.Drive(Wait(viewer.Settled()));
     }
 
+    [Theory(Timeout = 30_000)]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task An_empty_attach_argv_fails_writes_no_file_and_spawns_nothing(bool mac)
+    {
+        await _f.StartSession();
+        _ = RecordArgs("open");
+        _ = RecordArgs("xdg-terminal-exec");
+        var request = _f.Request() with { AttachArgv = [] };
+
+        var outcome = await _f.Drive(Viewer(mac).Open(request, TestContext.Current.CancellationToken));
+
+        Expect.Equal(ViewerOutcomeKind.Failed, outcome.Kind);
+        Expect.Equal(SindriErrors.LaunchViewerFailed.Code, outcome.Code);
+        Expect.True(!File.Exists(Out("open.args")) && !File.Exists(Out("xdg-terminal-exec.args")), "nothing was spawned");
+        Expect.True(Directory.EnumerateFileSystemEntries(_f.Dir).All(static e => !e.Contains("aw-term-", StringComparison.Ordinal)), "no .command folder was made");
+    }
+
     [Fact(Timeout = 30_000)]
     public async Task Mac_removes_the_folder_after_the_grace_even_when_the_file_never_ran()
     {
