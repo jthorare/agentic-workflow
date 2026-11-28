@@ -19,7 +19,7 @@ internal sealed partial class DefaultTerminalViewer(DefaultTerminalOptions optio
     private const string Xdg = "xdg-terminal-exec";
     private const string XTerminal = "x-terminal-emulator";
     private static readonly TimeSpan _step = TimeSpan.FromMilliseconds(100);
-    private readonly ConcurrentBag<Task> _cleanups = new();
+    private readonly ConcurrentBag<Task> _cleanups = [];
 
     /// <inheritdoc/>
     public string Kind => "default-terminal";
