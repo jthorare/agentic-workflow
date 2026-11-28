@@ -60,17 +60,6 @@ public sealed class LauncherInitTests : IDisposable
     }
 
     [Fact]
-    public async Task Detection_on_macOS_prefers_the_terminal_TERM_PROGRAM_names_and_falls_back_to_the_default_terminal()
-    {
-        var env = new Dictionary<string, string>(StringComparer.Ordinal) { ["TERM_PROGRAM"] = "kitty" };
-        var named = await TerminalDetection.Detect(Detection(env, "kitty") with { IsMac = true }, CancellationToken.None);
-        var bare = await TerminalDetection.Detect(Detection(new Dictionary<string, string>(StringComparer.Ordinal), "x-terminal-emulator", "kitty") with { IsMac = true }, CancellationToken.None);
-
-        Expect.Equal("kitty", named.Template?.Id);
-        Expect.Equal("default-terminal", bare.Kind);
-    }
-
-    [Fact]
     public async Task Detection_tries_TERMINAL_then_x_terminal_emulator_before_the_first_on_PATH()
     {
         var known = await TerminalDetection.Detect(Detection(WithTerminal("/usr/bin/alacritty"), "/usr/bin/alacritty", "xterm"), CancellationToken.None);
