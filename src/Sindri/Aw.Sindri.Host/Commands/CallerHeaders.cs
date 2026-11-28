@@ -15,8 +15,11 @@ internal sealed class CallerHeaders
     private (bool Found, RepoName? Repo) _located;
     private string? _reason = NoToken;
 
-    private CallerHeaders(AgentSession? session, IHumanTokenStore? tokens, Func<CancellationToken, ValueTask<RepoName?>> repo)
+    private readonly bool _withRepo;
+
+    private CallerHeaders(AgentSession? session, IHumanTokenStore? tokens, Func<CancellationToken, ValueTask<RepoName?>> repo, bool withRepo = true)
     {
+        _withRepo = withRepo;
         _session = session;
         _tokens = tokens;
         _repo = repo;
@@ -62,9 +65,10 @@ internal sealed class CallerHeaders
     /// <param name="session">How the CLI classed itself.</param>
     /// <param name="tokens">Where the per-start token is read from, at each call; readable: the call is a human's and carries it; none or unreadable: a session's, with no token.</param>
     /// <param name="repo">The X-Sindri-Repo value, found once at the first call.</param>
+    /// <param name="withRepo">False for a verb that never needs the header: the lookup (profile read, git) then never runs (#3727).</param>
     /// <returns>The headers.</returns>
-    internal static CallerHeaders For(AgentSession session, IHumanTokenStore? tokens, Func<CancellationToken, ValueTask<RepoName?>> repo) =>
-        new(session, tokens, repo);
+    internal static CallerHeaders For(AgentSession session, IHumanTokenStore? tokens, Func<CancellationToken, ValueTask<RepoName?>> repo, bool withRepo = true) =>
+        new(session, tokens, repo, withRepo);
 
     /// <summary>Adds the headers to <paramref name="request"/>.</summary>
     /// <param name="request">The API call.</param>
@@ -96,7 +100,7 @@ internal sealed class CallerHeaders
             headers.Add(SindriHeaders.Launch, launch);
         }
 
-        if (await Repo(cancellationToken).ConfigureAwait(false) is { } repo)
+        if (_withRepo && await Repo(cancellationToken).ConfigureAwait(false) is { } repo)
         {
             headers.Add(SindriHeaders.Repo, repo.Value);
         }

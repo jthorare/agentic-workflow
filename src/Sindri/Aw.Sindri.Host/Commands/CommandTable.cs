@@ -45,7 +45,11 @@ internal static partial class CommandTable
         var provider = services.BuildServiceProvider();
         await using (provider.ConfigureAwait(false))
         {
-            _ = provider.GetRequiredService<TelemetryRuntime>();
+            if (provider.GetRequiredService<TelemetryStart>().Started)
+            {
+                _ = provider.GetRequiredService<TelemetryRuntime>();   // started (the full container, or an unknown AW_LOG_LEVEL): resolved, so the container disposes it. A client verb that never needed it starts nothing (#3727)
+            }
+
             var scope = provider.CreateAsyncScope();
             await using (scope.ConfigureAwait(false))
             {
@@ -80,7 +84,7 @@ internal static partial class CommandTable
         var probe = services.GetRequiredService<IControlPlaneProbe>();
         var output = new Output(Console.Out, Console.Error, options);
         var cap = CliTimeout.Read(environment);   // a malformed value refuses the calls, not the verbs that make none
-        using var client = new ControlPlaneClient(probe, options, Headers(session, services), cap.IsError ? null : cap.Value, refusal: cap.IsError ? cap.Error : null);
+        using var client = new ControlPlaneClient(probe, options, Headers(args, session, services), cap.IsError ? null : cap.Value, handler: services.GetRequiredService<HttpMessageHandler>(), refusal: cap.IsError ? cap.Error : null);   // the ping and this client share the container's one handler (#3727)
         StartCommand Start(bool headless) => new(probe, services.GetRequiredService<IControlPlaneLauncher>(), client, output, services.GetRequiredService<TimeProvider>(), UiOpener(headless, environment));
         var start = Start(headless: true);   // 'sindri --headless', and the start a human 'profile approve' may need
         var verbs = new Verbs(client, probe, output, services);
@@ -93,7 +97,7 @@ internal static partial class CommandTable
             ["status", .. var rest] when Json(rest) is { } json => await verbs.Status(json, ct).ConfigureAwait(false),
             ["scrub", .. var rest] => await new ScrubCommand(services, output, Console.In).Run(rest, ct).ConfigureAwait(false),
             ["stop"] or ["restart", ..] => await StopOrRestart(args, verbs, (client, probe, output), (services, start), ct).ConfigureAwait(false),
-            ["profile", ..] => await Profile(args, verbs, a => new Verbs(client, probe, output, services, c => start.EnsureRunning(!a.NoStart, c)), (output, Headers(session, services)), ct).ConfigureAwait(false),
+            ["profile", ..] => await Profile(args, verbs, a => new Verbs(client, probe, output, services, c => start.EnsureRunning(!a.NoStart, c)), (output, Headers(args, session, services)), ct).ConfigureAwait(false),
             ["views", "rebuild", .. var rest] when NoStart(rest) is { } noStart => await new Verbs(client, probe, output, services, c => start.EnsureRunning(!noStart, c))
                 .RebuildViews(ct).ConfigureAwait(false),
             ["handoff", .. var rest] => await new HandoffVerbs(client, output, start.EnsureRunning).Run(rest, ct).ConfigureAwait(false),
@@ -215,9 +219,21 @@ internal static partial class CommandTable
     /// call carries no token and the API refuses it (SND-AUTH-001). The repo is looked up at the first call, from the
     /// working directory.
     /// </summary>
-    private static CallerHeaders Headers(AgentSession session, IServiceProvider services) =>
-        CallerHeaders.For(session, services.GetRequiredService<IHumanTokenStore>(),
-            ct => CallerHeaders.RepoOf(services.GetRequiredService<IApprovedProfile>(), services.GetRequiredService<IRepoLocator>(), Environment.CurrentDirectory, ct));
+    /// <param name="args">The command line (the repo lookup follows the verb: #3727).</param>
+    /// <param name="session">How the CLI classes itself.</param>
+    /// <param name="services">The container.</param>
+    /// <returns>The headers.</returns>
+    internal static CallerHeaders Headers(string[] args, AgentSession session, IServiceProvider services)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+        return CallerHeaders.For(session, services.GetRequiredService<IHumanTokenStore>(),
+            ct => CallerHeaders.RepoOf(services.GetRequiredService<IApprovedProfile>(), services.GetRequiredService<IRepoLocator>(), Environment.CurrentDirectory, ct),
+            withRepo: !ReadsWithoutRepo(args));
+    }
+
+    // #3727: the verbs that send no X-Sindri-Repo, and so never read the profile or run git to find it. An allowlist, each entry checked against the server: the workflow reads (GET /sindri/workflows, /sindri/workflows/{slug},
+    // /sindri/workflows/{slug}/runs, /sindri/workflow-runs/{run}, blocks, docs) reach slices that never read the caller's repo. Every other verb, a session caller's included, looks it up as before.
+    private static bool ReadsWithoutRepo(string[] args) => args is ["wf", "list" or "show" or "runs" or "run-show" or "blocks" or "docs", ..];
 
     /// <summary>What bare 'sindri' does to open the app; 'sindri --headless' opens nothing.</summary>
     internal static Func<string>? UiOpener(bool headless, Func<string, string?> environment) =>

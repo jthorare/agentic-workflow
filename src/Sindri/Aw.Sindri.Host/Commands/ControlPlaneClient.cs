@@ -19,11 +19,11 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="headers">The caller headers; none (read as a session) when null.</param>
 /// <param name="timeout">A hard cap on one call (AW_SINDRI_CLI_TIMEOUT); none by default, so a slow but healthy answer completes. Connecting is bounded by <see cref="CliTimeout.Connect"/> instead.</param>
 /// <param name="refusal">A refusal every call answers with instead of calling (a malformed AW_SINDRI_CLI_TIMEOUT), so verbs that never call the control plane aren't affected by it.</param>
-/// <param name="handler">The HTTP handler (tests); a loopback handler without a proxy when null.</param>
+/// <param name="handler">The HTTP handler the caller owns (the CLI container's shared one, or a test's); this client never disposes it. A loopback handler without a proxy, owned by this client, when null.</param>
 internal sealed partial class ControlPlaneClient(IControlPlaneProbe probe, JsonSerializerOptions options, CallerHeaders? headers = null, TimeSpan? timeout = null,
     HttpMessageHandler? handler = null, Error? refusal = null) : IDisposable
 {
-    private readonly HttpClient _http = new(handler ?? new SocketsHttpHandler { UseProxy = false, ConnectTimeout = CliTimeout.Connect }) { Timeout = timeout ?? Timeout.InfiniteTimeSpan };
+    private readonly HttpClient _http = new(handler ?? new SocketsHttpHandler { UseProxy = false, ConnectTimeout = CliTimeout.Connect }, disposeHandler: handler is null) { Timeout = timeout ?? Timeout.InfiniteTimeSpan };
     private readonly CallerHeaders _headers = headers ?? CallerHeaders.None;
 
     /// <summary>Why this CLI calls as a session ('the per-start human token isn't readable'), or null when it calls as a human.</summary>
