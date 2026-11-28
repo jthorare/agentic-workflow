@@ -31,7 +31,9 @@ export AW_COMMANDS_TOOLKIT="$ROOT/config/commands.toolkit.json"
 unset AW_POLICY_DUPLICATE_SCRIPT_1_MODE AW_JUDGE_CHILD AW_PROVIDER
 for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done
 BIN="$WORK/bin"; mkdir -p "$BIN"
-printf '#!/bin/sh\nexit 0\n' > "$BIN/aw-pr-watch"; chmod +x "$BIN/aw-pr-watch"
+# Stub the argv[0] of every catalog helper a case expects installed, so no case depends on what the box has on PATH. aw-meta
+# (aw-meta-watch's) is opt-in and absent on CI, so 6 took the not-installed path, which never counts a dedup. 12 removes aw-pr-watch.
+for h in aw-pr-watch aw-meta; do printf '#!/bin/sh\nexit 0\n' > "$BIN/$h"; chmod +x "$BIN/$h"; done
 export PATH="$BIN:$PATH"
 REPO="$WORK/repo"; mkdir -p "$REPO/.agentic-workflow" "$REPO/src"
 echo '{"version":1,"entries":[]}' > "$REPO/.agentic-workflow/commands.json"

@@ -187,7 +187,7 @@ Words from the first-run spec (`docs/superpowers/specs/2026-11-12-sindri-first-r
 | `SND-GRAPH-005` | A condition can't be read |
 | `SND-GRAPH-006` | A cron or timezone can't be read |
 | `SND-GRAPH-007` | This workflow changed since you read it. Read it again and retry |
-| `SND-GRAPH-008` | No such workflow |
+| `SND-GRAPH-008` | No such workflow, or (from the run route with a revision) a revision the workflow does not have |
 | `SND-GRAPH-009` | Another workflow already has that short id |
 | `SND-GRAPH-010` | A workflow with that id already exists |
 | `SND-GRAPH-011` | This workflow is archived; it can't be activated, edited or paused. Its slug stays reserved, so a copy needs another slug |

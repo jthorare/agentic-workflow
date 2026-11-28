@@ -192,6 +192,8 @@
           <TextBlock Classes="caption" Text="{Binding SavedLineText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
         <Button x:Name="WorkflowMakeLive" VerticalAlignment="Center" IsVisible="{Binding CanMakeLive}" Content="{Binding MakeLiveText}" Click="OnMakeLive" AutomationProperties.AutomationId="WorkflowMakeLive" AutomationProperties.Name="{Binding MakeLiveText}" />
+        <!-- #3691: one real run of the saved revision; the live one stays. Refusals show in RunsNoticeName, as Run now's do. -->
+        <Button x:Name="WorkflowRunRevisionOnce" VerticalAlignment="Center" IsVisible="{Binding ShowRunRevisionOnce}" IsEnabled="{Binding Runs.CanPressRunNow}" Content="{Binding RunRevisionOnceText}" Click="OnRunRevisionOnce" AutomationProperties.AutomationId="WorkflowRunRevisionOnce" AutomationProperties.Name="{Binding RunRevisionOnceText}" />
       </StackPanel>
       <wv:WorkflowEditorSheet x:Name="WorkflowEditor" IsVisible="{Binding IsSettingsOpen}" />
       <TextBlock x:Name="RunsDetail" Classes="caption subtle" Text="{Binding Runs.DetailText}" TextWrapping="Wrap" />

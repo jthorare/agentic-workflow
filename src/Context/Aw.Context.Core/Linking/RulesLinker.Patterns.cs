@@ -6,9 +6,7 @@ namespace Aw.Context.Core.Linking;
 /// <summary>The linker's patterns.</summary>
 public static partial class RulesLinker
 {
-    // No look-around, so these two run NonBacktracking: one pass over the text and no clock (owner q93), and the callers of Aliases, Matching and Significant, which read whole records, never see a timeout.
-    private static Regex Word { get; } = new(@"[\p{L}\p{N}]+", RegexOptions.CultureInvariant | RegexOptions.NonBacktracking, Regex.InfiniteMatchTimeout);
-
+    // No look-around, so this one runs NonBacktracking: one pass over the text and no clock (owner q93). The word scan that once sat beside it is LowerWords.
     private static Regex LinearUrl { get; } = new(@"https://linear\.app/[^/\s]+/issue/(?<key>" + LinearRecordKeys.TeamKeyPattern + @"-[0-9]+)(?:/[^\s]*)?", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.NonBacktracking, Regex.InfiniteMatchTimeout);
 
     // These need look-around, which NonBacktracking can't run, so they keep a 1 s limit; a timeout costs only its rule (Link's Step).

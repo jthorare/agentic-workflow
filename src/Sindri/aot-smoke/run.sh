@@ -161,6 +161,10 @@ if [ -z "${DOTNET_ROOT:-}" ]; then
 fi
 
 export AW_SINDRI_HOME="$work/home" AW_SINDRI_PORT=0 AW_SINDRI_APP_NO_MCP=1   # no automatic MCP registration: it would write a local-scope entry for the temp repo into the real ~/.claude.json
+# A claude that does nothing: setup's "Connect your agents" step counts Claude Code installed on every box, not only on one with claude on
+# PATH (a CI runner has none, and the step said "Install Claude Code, Codex or Cursor." there). Nothing registers, so it never runs.
+mkdir -p "$work/stub-bin" && printf '#!/bin/sh\nexit 1\n' >"$work/stub-bin/claude" && chmod +x "$work/stub-bin/claude"
+export AW_SINDRI_CLAUDE_BIN="$work/stub-bin/claude"
 export AW_SINDRI_SKILLS_DIR="$work/no-skills"   # a folder that does not exist: the doctor's skills row says so the same way wherever the smoke runs, not by the checkout or toolkit it happens to find
 mkdir -p "$AW_SINDRI_HOME/profile"
 : >"$AW_SINDRI_HOME/.prover-scratch"   # the smoke runs as the prover in a home it created (setup-once spec §4 item 6): the marker lets it confirm, as sindri-prove.sh does

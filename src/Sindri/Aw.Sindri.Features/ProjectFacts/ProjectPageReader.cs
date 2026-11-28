@@ -42,7 +42,7 @@ internal sealed class ProjectPageReader(IViewReader views, IProjectFacts facts, 
         var freshness = await facts.Freshness(cancellationToken).ConfigureAwait(false);
         var (linear, tokenMissing) = await LinearState(cancellationToken).ConfigureAwait(false);
         var page = ProjectCards.Build(new ProjectPageInputs(attached.Value, hidden.Value, snapshot, freshness, linear, tokenMissing), clock.GetUtcNow(), all);
-        return await ProjectTruthPage.Attach(page, await ProfileRepos(cancellationToken).ConfigureAwait(false), truth, cancellationToken).ConfigureAwait(false);
+        return await ProjectTruthPage.Attach(page, await ProfileRepos(cancellationToken).ConfigureAwait(false), truth, cancellationToken, clock.GetUtcNow()).ConfigureAwait(false);
     }
 
     // why: 'review.projects[].repos' says which repos a project's PRs live in; a profile that can't be read just adds none

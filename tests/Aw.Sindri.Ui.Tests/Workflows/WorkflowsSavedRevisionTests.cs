@@ -176,6 +176,14 @@ public sealed class WorkflowsSavedRevisionTests
         Assert.Equal((string.Empty, false, false), (page.SavedLineText, page.HasSavedLine, page.CanMakeLive));
     }
 
+    // What the ops route answers: the revision the edit made (the golden's ops-applied names revision 2).
+    private static RouteAnswer AppliedAs(int revision)
+    {
+        var applied = Golden("workflows-slug-ops", "ops-applied");
+        applied["revision"] = revision;
+        return new RouteAnswer(HttpStatusCode.OK, applied.ToJsonString());
+    }
+
     // Saves the sheet's text, then undoes it: the undo writes one revision more (4), and the page reads it.
     private async Task<WorkflowsPageViewModel> SavedThenUndone(int? active)
     {
@@ -184,6 +192,7 @@ public sealed class WorkflowsSavedRevisionTests
         page.StepSaved += (_, e) => saved = e;
         page.Editor.Fields[0].Text = "Check twice";
         Serve(active, latest: 3);
+        _f.Server.ApplyWorkflowOpsAnswer = AppliedAs(3);   // the save's own answer names the revision it made: Undo is offered on that one (#4398), not on whatever the reload reads
         await page.Save(Token);
         Serve(active, latest: 4);   // what the undo makes Sindri hold
         Assert.Null(await saved!.Undo());
