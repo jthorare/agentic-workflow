@@ -110,7 +110,7 @@ internal sealed partial class RunsViewModel
     private void Apply()
     {
         var since = DateFilter switch { "24h" => TimeSpan.FromHours(24), "7d" => TimeSpan.FromDays(7), "30d" => TimeSpan.FromDays(30), _ => TimeSpan.Zero };
-        var now = clock.GetUtcNow();
+        var now = _clock.GetUtcNow();
         var kept = _all.Where(r => StatusKept(r.Status) && (since == TimeSpan.Zero || now - r.StartedAt <= since)).ToList();
         var starting = _starting.Select(id => Rows.FirstOrDefault(r => string.Equals(r.Id, id, StringComparison.Ordinal) && string.Equals(r.Status, "starting", StringComparison.Ordinal)) ?? Placeholder(id));   // a Starting placeholder is not a served run: it stays above the served rows, whatever the filters say
         Patch.To(Rows, [.. starting, .. kept]);

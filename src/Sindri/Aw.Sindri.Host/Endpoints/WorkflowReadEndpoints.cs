@@ -41,10 +41,10 @@ internal static class WorkflowReadEndpoints
             var parsed = Show(slug, revision);
             return parsed.IsError ? ((Result<GetWorkflowResponse>)parsed.Error).ToHttpResult() : (await service.Handle(parsed.Value, ct).ConfigureAwait(false)).ToHttpResult();
         });
-        _ = group.MapGet("/workflows/{slug}/runs", static async (string slug, string[]? status, string? since, string? until, string? before, IService<ListWorkflowRunsRequest, ListWorkflowRunsResponse> service, CancellationToken ct) =>
+        _ = group.MapGet("/workflows/{slug}/runs", static async (string slug, HttpRequest http, IService<ListWorkflowRunsRequest, ListWorkflowRunsResponse> service, CancellationToken ct) =>
         {
-            var parsed = Runs(slug, status is { Length: > 0 } ? string.Join(',', status) : null, since, until, before);   // #4466: a repeated ?status= adds to the list, like a comma list
-            return parsed.IsError ? ((Result<ListWorkflowRunsResponse>)parsed.Error).ToHttpResult() : (await service.Handle(parsed.Value, ct).ConfigureAwait(false)).ToHttpResult();
+            var request = RunsPage(slug, http.Query);   // offset and limit (#3305), and the filter (#4334; #4466: a repeated ?status= adds to the list, like a comma list)
+            return request.IsError ? ((Result<ListWorkflowRunsResponse>)request.Error).ToHttpResult() : (await service.Handle(request.Value, ct).ConfigureAwait(false)).ToHttpResult();
         });
         _ = group.MapGet("/workflow-runs/{run}", static async (string run, IService<GetWorkflowRunRequest, GetWorkflowRunResponse> service, CancellationToken ct) =>
         {
@@ -69,6 +69,45 @@ internal static class WorkflowReadEndpoints
         }
 
         return new ListTriggerEventsRequest(Text(query, "kind"), Text(query, "connection"), Text(query, "filter"), limit);
+    }
+
+    // The app pages past the newest runs (#3305) with ?offset=, as 'sindri wf runs' and workflow_runs do; a value that is not a whole number is refused here, not read as the first page
+    private static Result<ListWorkflowRunsRequest> RunsPage(string slug, IQueryCollection query)
+    {
+        var parsed = Slug(slug);
+        if (parsed.IsError)
+        {
+            return parsed.Error;
+        }
+
+        var offset = Whole(query, "offset", least: 0, fallback: 0);
+        if (offset.IsError)
+        {
+            return offset.Error;
+        }
+
+        var limit = Whole(query, "limit", least: 1, ListWorkflowRunsService.Newest);
+        if (limit.IsError)
+        {
+            return limit.Error;
+        }
+
+        var statuses = query["status"];
+        var filter = RunsFilter.Parse(statuses.Count > 0 ? string.Join(',', statuses.ToArray()) : null, query["since"].FirstOrDefault(), query["until"].FirstOrDefault(), query["before"].FirstOrDefault());
+        return filter.IsError ? filter.Error : new ListWorkflowRunsRequest(parsed.Value, offset.Value, limit.Value) { Filter = filter.Value };
+    }
+
+    // A whole number query value of at least 'least', or the fallback when the call names none.
+    private static Result<int> Whole(IQueryCollection query, string name, int least, int fallback)
+    {
+        if (Text(query, name) is not { } text)
+        {
+            return fallback;
+        }
+
+        return int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed) && parsed >= least
+            ? parsed
+            : SindriErrors.InvalidInput.With(string.Create(CultureInfo.InvariantCulture, $"'{text}' is not a {name} (a whole number {least} or more)"));
     }
 
     private static string? Text(IQueryCollection query, string name) => query.TryGetValue(name, out var values) && values.Count > 0 ? values[0] : null;

@@ -29,14 +29,14 @@ internal sealed partial class RunsViewModel
             _startRevisions[runId] = asked;
         }
 
-        _startTimers[runId] = clock.CreateTimer(_ => _ui.PostOrInline(() => StartDeadlinePassed(runId)), state: null, StartWait, Timeout.InfiniteTimeSpan);   // no run row by then: the placeholder says so
+        _startTimers[runId] = _clock.CreateTimer(_ => _ui.PostOrInline(() => StartDeadlinePassed(runId)), state: null, StartWait, Timeout.InfiniteTimeSpan);   // no run row by then: the placeholder says so
         Rows.Insert(0, Placeholder(runId));
         (IsEmpty, EmptyText) = (false, string.Empty);
     }
 
     private RunRowViewModel Placeholder(string runId)
     {
-        var row = new RunRowViewModel(new WorkflowRunRowView(runId, StartingRevision(runId) ?? Shown?.Revision ?? 0, "starting", "manual", clock.GetUtcNow(), EndedAt: null, Error: null), clock);
+        var row = new RunRowViewModel(new WorkflowRunRowView(runId, StartingRevision(runId) ?? Shown?.Revision ?? 0, "starting", "manual", _clock.GetUtcNow(), EndedAt: null, Error: null), _clock);
         if (_didNotStart.Contains(runId))
         {
             row.MarkDidNotStart();

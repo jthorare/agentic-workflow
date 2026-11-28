@@ -33,6 +33,10 @@ internal sealed partial class SindriApiClient
         Get<WorkflowRunList>(api, WorkflowRoutes.Runs(slug), cancellationToken);
 
     /// <inheritdoc />
+    public Task<Result<WorkflowRunList>> WorkflowRunsPage(Uri api, string slug, int offset, CancellationToken cancellationToken) =>
+        Get<WorkflowRunList>(api, WorkflowRoutes.Runs(slug, offset), cancellationToken);
+
+    /// <inheritdoc />
     public Task<Result<WorkflowRunView>> WorkflowRun(Uri api, string runId, CancellationToken cancellationToken) =>
         Get<WorkflowRunView>(api, WorkflowRoutes.Run(runId), cancellationToken);
 

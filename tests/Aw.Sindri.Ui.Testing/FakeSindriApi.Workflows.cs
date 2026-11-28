@@ -11,6 +11,7 @@ internal sealed partial class FakeSindriApi
     private int _workflowCalls;
     private int _workflowNewestCalls;
     private int _workflowRunsCalls;
+    private readonly List<(string Slug, int Offset)> _workflowRunsPages = [];
     private int _workflowRunCalls;
     private readonly List<string> _startedWorkflows = [];
     private readonly List<string> _cancelledWorkflowRuns = [];
@@ -65,6 +66,15 @@ internal sealed partial class FakeSindriApi
 
     /// <summary>GET /sindri/workflows/{slug}/runs's answer per slug; a slug not here answers the SND-GRAPH-008 golden.</summary>
     public Dictionary<string, RouteAnswer> WorkflowRunsAnswers { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>GET /sindri/workflows/{slug}/runs?offset=N's answer for a slug and offset (#3305); null, or a null answer, serves the SND-GRAPH-008 golden.</summary>
+    public Func<string, int, RouteAnswer?>? WorkflowRunsPageAnswer { get; set; }
+
+    /// <summary>When set, a page read past the newest waits for it before answering (a test holds Show older runs in flight).</summary>
+    public TaskCompletionSource? WorkflowRunsPageGate { get; set; }
+
+    /// <summary>Every page read past the newest, in order: the slug and the offset sent.</summary>
+    public IReadOnlyList<(string Slug, int Offset)> WorkflowRunsPages { get { lock (_gate) { return [.. _workflowRunsPages]; } } }
 
     /// <summary>GET /sindri/workflow-runs/{run}'s answer per run id; an id not here answers the SND-GRAPH-101 golden.</summary>
     public Dictionary<string, RouteAnswer> WorkflowRunAnswers { get; } = new(StringComparer.Ordinal);
@@ -137,6 +147,18 @@ internal sealed partial class FakeSindriApi
         await WaitFor(WorkflowGates.GetValueOrDefault(slug), cancellationToken).ConfigureAwait(false);
         var answer = WorkflowRunsAnswers.TryGetValue(slug, out var own) ? own : RouteAnswer.Problem("workflows-slug-runs", "unknown-workflow");
         return Answer<WorkflowRunList>(api, WorkflowRoutes.Runs(slug), answer);
+    }
+
+    public async Task<Result<WorkflowRunList>> WorkflowRunsPage(Uri api, string slug, int offset, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _workflowRunsPages.Add((slug, offset));
+        }
+
+        await WaitFor(WorkflowRunsPageGate, cancellationToken).ConfigureAwait(false);
+        var answer = WorkflowRunsPageAnswer?.Invoke(slug, offset) ?? RouteAnswer.Problem("workflows-slug-runs", "unknown-workflow");
+        return Answer<WorkflowRunList>(api, WorkflowRoutes.Runs(slug, offset), answer);
     }
 
     public async Task<Result<WorkflowRunView>> WorkflowRun(Uri api, string runId, CancellationToken cancellationToken)

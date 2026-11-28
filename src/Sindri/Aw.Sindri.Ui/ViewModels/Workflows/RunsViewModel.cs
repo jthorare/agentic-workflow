@@ -23,6 +23,10 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
     private readonly UiContext _ui = new();
     private readonly Dictionary<string, ITimer> _startTimers = new(StringComparer.Ordinal);
     private readonly HashSet<string> _didNotStart = new(StringComparer.Ordinal);
+
+    // The API and the clock, kept as fields so the other parts of this class (RunsViewModel.Paging.cs) read them too.
+    private readonly ISindriApi _api = api;
+    private readonly TimeProvider _clock = clock;
     private int _reads;
     private List<RunRowViewModel> _all = [];
     private bool _more;   // the server holds runs older than the ones read (it serves the newest 50): the filters and the count only see these
@@ -113,6 +117,7 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
             (IsFailed, FailedText, IsEmpty, EmptyText) = (false, string.Empty, false, string.Empty);   // nor does the old one's failure or "off" line
             (CanRun, NoticeText) = (false, string.Empty);   // until this one's runs read says it is on
             (Graph, Shown) = (null, null);
+            ForgetOlder();   // nor its older pages
         }
 
         (Slug, Title) = (slug, name);
@@ -122,8 +127,8 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
             (IsFailed, FailedText) = (false, string.Empty);   // the old failure line hides while this read is on its way
         }
 
-        var detailRead = api.Workflow(url, slug, cancellationToken);
-        var runsRead = api.WorkflowRuns(url, slug, cancellationToken);
+        var detailRead = _api.Workflow(url, slug, cancellationToken);
+        var runsRead = _api.WorkflowRuns(url, slug, cancellationToken);
         await Task.WhenAll(detailRead, runsRead).ConfigureAwait(true);
         var (detail, runs) = (await detailRead.ConfigureAwait(true), await runsRead.ConfigureAwait(true));
         if (read != _reads)
@@ -132,7 +137,7 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
         }
 
         // An edit made a revision newer than the live one: the graph draws that one (#3303), so a second read asks for it.
-        var newest = detail.IsSuccess && detail.Value.ActiveRevision is { } active && active < detail.Value.LatestRevision ? await api.WorkflowNewest(url, slug, cancellationToken).ConfigureAwait(true) : detail;
+        var newest = detail.IsSuccess && detail.Value.ActiveRevision is { } active && active < detail.Value.LatestRevision ? await _api.WorkflowNewest(url, slug, cancellationToken).ConfigureAwait(true) : detail;
         if (read != _reads)
         {
             return;
@@ -152,15 +157,17 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
         DetailText = detail.IsSuccess ? Detail(detail.Value) : string.Empty;
         var drawn = newest.IsSuccess ? newest : detail;   // the newest revision when it was read; else the live one
         NextRunAt = NextFrom(detail);
-        (Shown, Graph) = detail.IsSuccess ? (detail.Value, drawn.IsSuccess ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(drawn.Value) { NextRunAt = NextRunAt, Clock = clock }) : Graph) : (Shown, Graph);
+        (Shown, Graph) = detail.IsSuccess ? (detail.Value, drawn.IsSuccess ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(drawn.Value) { NextRunAt = NextRunAt, Clock = _clock }) : Graph) : (Shown, Graph);
         if (runs.IsSuccess)
         {
             CanRun = true;
             Show(runs.Value);
+            Paged(runs.Value);
         }
         else if (string.Equals(runs.Error.Code, NotActive, StringComparison.Ordinal))
         {
             Rows.Clear();
+            ForgetOlder();
             (IsFailed, FailedText, IsEmpty, EmptyText, Head) = (false, string.Empty, true, Labels.WfRunsOff, string.Empty);
             CanRun = false;
         }
@@ -184,7 +191,7 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
     private void Show(WorkflowRunList list)
     {
         (IsFailed, FailedText, CanRun) = (false, string.Empty, true);
-        _all = [.. list.Runs.Select(run => new RunRowViewModel(run, clock) { IsSelected = _ticked.Contains(run.Id) })];
+        _all = [.. list.Runs.Select(run => new RunRowViewModel(run, _clock) { IsSelected = _ticked.Contains(run.Id) })];
         _more = list.More;
         foreach (var id in _starting.Where(s => list.Runs.Any(r => string.Equals(r.Id, s, StringComparison.Ordinal))).ToList())
         {
@@ -193,24 +200,23 @@ internal sealed partial class RunsViewModel(ISindriApi api, TimeProvider clock) 
             StopStartTimer(id);
         }
 
-        foreach (var row in _all)
-        {
-            row.PropertyChanged += (_, e) =>
-            {
-                if (string.Equals(e.PropertyName, nameof(RunRowViewModel.IsSelected), StringComparison.Ordinal))
-                {
-                    _ = row.IsSelected ? _ticked.Add(row.Id) : _ticked.Remove(row.Id);
-                    OnSelectionChanged();
-                }
-            };
-        }
-
+        _all.ForEach(Watch);
         Apply();
 
         var running = list.Runs.Count(r => string.Equals(r.Status, "running", StringComparison.Ordinal));
         Head = list.Runs.Count == 0 ? Labels.WfRunsHeadNone : Labels.WfRunsHead(running, list.Runs.Count, list.More);
         (IsEmpty, EmptyText) = list.Runs.Count == 0 && _starting.Count == 0 ? (true, Labels.WfRunsNone) : (false, string.Empty);
     }
+
+    // A tick on a row survives a re-read and moves the Compare count.
+    private void Watch(RunRowViewModel row) => row.PropertyChanged += (_, e) =>
+    {
+        if (string.Equals(e.PropertyName, nameof(RunRowViewModel.IsSelected), StringComparison.Ordinal))
+        {
+            _ = row.IsSelected ? _ticked.Add(row.Id) : _ticked.Remove(row.Id);
+            OnSelectionChanged();
+        }
+    };
 
     private static string Detail(WorkflowView workflow)
     {

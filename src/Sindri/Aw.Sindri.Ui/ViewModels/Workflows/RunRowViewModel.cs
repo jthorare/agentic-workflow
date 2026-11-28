@@ -15,14 +15,13 @@ internal sealed class RunRowViewModel : ObservableObject
         TriggerText = Labels.WfTriggerWord(row.Trigger);
         RevisionText = Labels.WfRunRevision(row.Revision);
         var live = RunStatus.IsLive(row.Status);
-        WhenText = live
-            ? Labels.JobWhen(running: true, clock.GetUtcNow() - row.StartedAt)
-            : Labels.JobWhen(running: false, clock.GetUtcNow() - (row.EndedAt ?? row.StartedAt));
+        var at = live ? row.StartedAt : row.EndedAt ?? row.StartedAt;   // past a day the row names the day and time, not "1d ago" (#3305)
+        (WhenText, WhenTip) = (Labels.WfRunWhen(live, at, clock), Labels.WfRunMoment(at, clock));
         ErrorText = row.FailureSentence ?? row.Error ?? string.Empty;   // why: Sindri's sentence when it has one, never "node 'check' failed: SND-..." (#3304)
         var (now, local) = (clock.GetUtcNow(), TimeZoneInfo.ConvertTime(row.StartedAt, clock.LocalTimeZone));
         var culture = System.Globalization.CultureInfo.InvariantCulture;
         StartedAt = row.StartedAt;
-        TimeText = Labels.AgoWords(now - row.StartedAt);
+        TimeText = Labels.WfRunTime(row.StartedAt, clock);   // under a day the age, past it the day and time like WhenText (#3305)
         TimeTip = Labels.WfDayTime(local, seconds: true) + "\n" + Labels.WfExactAge(now - row.StartedAt);
         TriggerWords = Labels.WfRunTriggerWords(row.Trigger);
         RevisionShort = string.Create(culture, $"r{row.Revision}");
@@ -113,8 +112,11 @@ internal sealed class RunRowViewModel : ObservableObject
     /// <summary>"Revision 1".</summary>
     public string RevisionText { get; }
 
-    /// <summary>"Started 2m ago" while it is live, "Ended 5m ago" after.</summary>
+    /// <summary>"Started 2m ago" while it is live, "Ended 5m ago" after; past a day "Ended yesterday 07:00" or "Ended Mar 1 07:00".</summary>
     public string WhenText { get; }
+
+    /// <summary>The exact moment <see cref="WhenText"/> names, in local time: "Mon 9 Mar 2026 · 07:00:00" (the time's tooltip).</summary>
+    public string WhenTip { get; }
 
     /// <summary>Why it failed: Sindri's sentence, else the error as served; empty otherwise.</summary>
     public string ErrorText { get; }

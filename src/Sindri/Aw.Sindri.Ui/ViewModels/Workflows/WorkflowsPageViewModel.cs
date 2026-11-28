@@ -174,6 +174,11 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <returns>A task that completes when the runs are shown or the failure is.</returns>
     internal Task RetryRuns(CancellationToken cancellationToken) => _url is { } url ? Runs.Read(url, Runs.Slug, Runs.Title, cancellationToken) : Task.CompletedTask;
 
+    /// <summary>Reads the open workflow's next page of older runs and appends it (the runs level's Show older runs, #3305).</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>A task that completes when the page is shown or the failure is.</returns>
+    internal Task ShowOlderRuns(CancellationToken cancellationToken) => _url is { } url ? Runs.ShowMore(url, cancellationToken) : Task.CompletedTask;
+
     /// <summary>Reads the open run again (the run level's Try again).</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that completes when the run is shown or the failure is.</returns>

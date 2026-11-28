@@ -47,6 +47,14 @@ internal partial interface ISindriApi
     /// <returns>The runs, SND-GRAPH-008 for an unknown workflow, SND-GRAPH-105 for one that is off, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowRunList>> WorkflowRuns(Uri api, string slug, CancellationToken cancellationToken);
 
+    /// <summary>GET /sindri/workflows/{slug}/runs?offset=N: the runs past the newest <paramref name="offset"/>, newest first (#3305: Show older runs).</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="slug">The workflow.</param>
+    /// <param name="offset">How many of the newest runs to skip.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The page, SND-GRAPH-008 for an unknown workflow, SND-GRAPH-105 for one that is off, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowRunList>> WorkflowRunsPage(Uri api, string slug, int offset, CancellationToken cancellationToken);
+
     /// <summary>GET /sindri/workflow-runs/{run}: one run with every node's input, output and error.</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="runId">The run ("&lt;slug&gt;@&lt;revision&gt;:&lt;occurrence&gt;").</param>
