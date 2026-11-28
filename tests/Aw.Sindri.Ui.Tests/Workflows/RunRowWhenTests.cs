@@ -37,6 +37,14 @@ public sealed class RunRowWhenTests
         Assert.Equal("Ended yesterday 07:00", Ended("2026-03-09T07:00:00Z").WhenText);
 
     [Fact]
+    public void The_tables_time_cell_says_yesterday_and_the_time_for_a_run_that_started_yesterday() =>
+        Assert.Equal("Yesterday 07:00", Running("2026-03-09T07:00:00Z").TimeText);
+
+    [Fact]
+    public void The_tables_time_cell_keeps_the_age_under_a_day_and_names_older_days_like_WhenText() =>
+        Assert.Equal(("5m ago", "Mar 1 07:00", "Nov 10 2025 07:00"), (Running("2026-03-10T08:55:00Z").TimeText, Running("2026-03-01T07:00:00Z").TimeText, Running("2025-11-10T07:00:00Z").TimeText));
+
+    [Fact]
     public void An_older_run_this_year_says_the_day_and_the_time() =>
         Assert.Equal("Ended Mar 1 07:00", Ended("2026-03-01T07:00:00Z").WhenText);
 

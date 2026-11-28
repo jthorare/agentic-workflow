@@ -33,11 +33,35 @@ internal static partial class Labels
             return JobWhen(running, now - at);
         }
 
-        var (local, today) = (TimeZoneInfo.ConvertTime(at, clock.LocalTimeZone), TimeZoneInfo.ConvertTime(now, clock.LocalTimeZone).Date);
+        return (running ? "Started " : "Ended ") + WfRunDay(at, clock);
+    }
+
+    /// <summary>
+    /// The table's time cell: the run's age under a day ("5m ago"), past a day the day and the clock time like <see cref="WfRunWhen"/> ("Yesterday 07:00", "Mar 1 07:00", "Nov 10 2025 07:00").
+    /// </summary>
+    /// <param name="at">When the run started.</param>
+    /// <param name="clock">The clock, with the local time zone.</param>
+    /// <returns>The words.</returns>
+    internal static string WfRunTime(DateTimeOffset at, TimeProvider clock)
+    {
+        var age = clock.GetUtcNow() - at;
+        if (age < TimeSpan.FromDays(1))
+        {
+            return AgoWords(age);
+        }
+
+        var day = WfRunDay(at, clock);
+        return string.Concat(char.ToUpperInvariant(day[0]).ToString(), day.AsSpan(1));
+    }
+
+    // The day and the clock time in local time: "yesterday 07:00", "Mar 1 07:00", "Nov 10 2025 07:00". One wording for the row's name and the table's time cell.
+    private static string WfRunDay(DateTimeOffset at, TimeProvider clock)
+    {
+        var (local, today) = (TimeZoneInfo.ConvertTime(at, clock.LocalTimeZone), TimeZoneInfo.ConvertTime(clock.GetUtcNow(), clock.LocalTimeZone).Date);
         var day = local.Date == today.AddDays(-1) ? "yesterday"
             : local.Year == today.Year ? local.ToString("MMM d", CultureInfo.InvariantCulture)
             : local.ToString("MMM d yyyy", CultureInfo.InvariantCulture);
-        return (running ? "Started " : "Ended ") + day + " " + local.ToString("HH:mm", CultureInfo.InvariantCulture);
+        return day + " " + local.ToString("HH:mm", CultureInfo.InvariantCulture);
     }
 
     /// <summary>The exact moment, in local time, for a time's tip: "Mon 9 Mar 2026 · 07:00:00".</summary>

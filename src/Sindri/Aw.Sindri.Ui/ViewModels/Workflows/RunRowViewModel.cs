@@ -21,7 +21,7 @@ internal sealed class RunRowViewModel : ObservableObject
         var (now, local) = (clock.GetUtcNow(), TimeZoneInfo.ConvertTime(row.StartedAt, clock.LocalTimeZone));
         var culture = System.Globalization.CultureInfo.InvariantCulture;
         StartedAt = row.StartedAt;
-        TimeText = Labels.AgoWords(now - row.StartedAt);
+        TimeText = Labels.WfRunTime(row.StartedAt, clock);   // under a day the age, past it the day and time like WhenText (#3305)
         TimeTip = local.ToString("ddd d MMM yyyy", culture) + " \u00b7 " + local.ToString("HH:mm:ss", culture) + "\n" + Labels.WfExactAge(now - row.StartedAt);
         TriggerWords = Labels.WfRunTriggerWords(row.Trigger);
         RevisionShort = string.Create(culture, $"r{row.Revision}");
