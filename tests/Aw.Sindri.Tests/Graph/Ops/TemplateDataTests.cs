@@ -51,7 +51,7 @@ public sealed class TemplateDataTests
     public async Task Creating_the_template_needs_no_repo_in_the_profile(string name)
     {
         using var rig = new WorkflowWriteRig(realBlocks: true);
-        var service = new CreateWorkflowService(rig.Workflows, rig.Checker, rig.Harness.Ids, rig.Log, new FakeCiSourceLookup());
+        var service = new CreateWorkflowService(rig.Workflows, rig.Checker, rig.Harness.Ids, rig.Log, new FakeCiSourceLookup(), new StartSession.OpenGate());
         _ = await rig.Harness.HoldLease();
 
         var result = await service.Handle(new CreateWorkflowRequest(Slug, name, Spec: null, "session:s1"), Token);
