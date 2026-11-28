@@ -29,35 +29,10 @@ internal sealed partial class WholeMapCanvas
             return;
         }
 
-        var pills = LabelledPills(geometry, drawn.Where(e => WholeEdgeSelection.ShowsPill(e, drawn.Count, _focus)));
-        foreach (var pill in WholePillPlacer.Place(pills, Scale))
+        foreach (var pill in WholePillLayout.Place(geometry, drawn, _focus, Scale, PillBox))
         {
-            DrawPill(context, pill.Style, pill.X, pill.Y);   // no label lies on another
+            DrawPill(context, pill.Style, pill.X, pill.Y);   // no label lies on another, none under a node (#3678)
         }
-    }
-
-    // #3678: a label is drawn whole on the free stretch between its two nodes, never under a node; an edge with no free stretch has none (its tooltip names it).
-    private List<WholePill> LabelledPills(WholeMapGeometry geometry, IEnumerable<PlacedEdge> edges)
-    {
-        var rects = geometry.Nodes.Select(n => n.Rect).ToList();
-        var byKey = new Dictionary<string, WholeRect>(StringComparer.Ordinal);
-        foreach (var node in geometry.Nodes)
-        {
-            _ = byKey.TryAdd(node.Key, node.Rect);
-        }
-
-        var pills = new List<WholePill>();
-        foreach (var edge in edges)
-        {
-            var style = WholeEdgeStyle.Of(edge);
-            var (width, height) = PillBox(style.Pill);
-            if (byKey.TryGetValue(edge.From, out var from) && byKey.TryGetValue(edge.To, out var to) && LinkLabelPlacer.Place(from, to, width, height, rects) is { } at)
-            {
-                pills.Add(new WholePill(style, at.CenterX, at.CenterY));
-            }
-        }
-
-        return pills;
     }
 
     private (double Width, double Height) PillBox(string pill)
