@@ -2,7 +2,6 @@ using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Text;
-using Aw.Sindri.Infrastructure.Control;
 
 namespace Aw.Sindri.Host.Commands;
 
@@ -15,8 +14,8 @@ internal static class CliTimeout
     /// <summary>The variable that names the cap.</summary>
     internal const string Variable = "AW_SINDRI_CLI_TIMEOUT";
 
-    /// <summary>How long the CLI waits to connect to the recorded port before it reports SND-API-002 (the connection, not the answer). The ping's cap: the ping and the request share one handler (#3727), so the error names the cap that handler holds.</summary>
-    internal static readonly TimeSpan Connect = HttpControlPlaneProbe.Connect;
+    /// <summary>How long the CLI waits to connect to the recorded port before it reports SND-API-002 (the connection, not the answer). The ping and the request share one handler (#3727), whose connect cap is the ping's 2 s; CliTimeoutTests keeps this value equal to that handler's, so the error names the cap that applies.</summary>
+    internal static readonly TimeSpan Connect = TimeSpan.FromSeconds(2);
 
     /// <summary>The largest cap HttpClient.Timeout accepts, in whole seconds (int.MaxValue milliseconds, about 24.8 days).</summary>
     internal const int MaxSeconds = int.MaxValue / 1000;
