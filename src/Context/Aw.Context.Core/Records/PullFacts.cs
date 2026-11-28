@@ -4,4 +4,5 @@ namespace Aw.Context.Core.Records;
 /// <param name="RequestedReviewers">The logins whose review is still requested.</param>
 /// <param name="HeadSha">The head commit, or null when the source gave none.</param>
 /// <param name="Reviews">Each reviewer's latest review; read for open pull requests only.</param>
-public sealed record PullFacts(IReadOnlyList<string> RequestedReviewers, string? HeadSha, IReadOnlyList<ReviewedCommit> Reviews);
+/// <param name="Mergeable">Whether the forge said the pull request can merge (false is a conflict); null for a record stored before it was kept, or while the forge had not worked it out, which reads as unknown (#4333).</param>
+public sealed record PullFacts(IReadOnlyList<string> RequestedReviewers, string? HeadSha, IReadOnlyList<ReviewedCommit> Reviews, bool? Mergeable = null);
