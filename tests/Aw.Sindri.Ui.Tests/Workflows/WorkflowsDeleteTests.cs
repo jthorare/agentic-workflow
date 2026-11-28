@@ -147,6 +147,39 @@ public sealed class WorkflowsDeleteTests
     }
 
     [Fact]
+    public async Task A_delete_that_succeeds_still_returns_to_the_list_when_Cancel_came_before_the_answer()
+    {
+        var page = await OpenedOff();
+        var reads = _f.Server.WorkflowsCalls;
+        _f.Server.DeleteWorkflowGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        page.RequestDelete();
+
+        var sent = page.ConfirmDelete(Token);
+        page.CancelDelete();
+        _f.Server.DeleteWorkflowGate.SetResult();
+        await sent;
+
+        Assert.Equal((true, false, true), (page.IsList, page.IsConfirmingDelete, page.HasDeletedNotice));
+        Assert.Equal(reads + 1, _f.Server.WorkflowsCalls);
+    }
+
+    [Theory]
+    [InlineData("SND-GRAPH-008")]
+    [InlineData("SND-GRAPH-011")]
+    public async Task A_delete_of_a_workflow_that_is_already_gone_returns_to_the_list_and_reads_it_again(string code)
+    {
+        var page = await OpenedOff();
+        var reads = _f.Server.WorkflowsCalls;
+        _f.Server.DeleteWorkflowAnswer = RouteAnswer.Problem(HttpStatusCode.NotFound, code, "No such workflow.");
+        page.RequestDelete();
+
+        await page.ConfirmDelete(Token);
+
+        Assert.Equal((true, false, false), (page.IsList, page.IsConfirmingDelete, page.IsDeleting));
+        Assert.Equal(reads + 1, _f.Server.WorkflowsCalls);
+    }
+
+    [Fact]
     public async Task A_run_still_going_turns_the_confirm_into_the_in_flight_form_that_opens_the_run()
     {
         var page = await OpenedOff();
