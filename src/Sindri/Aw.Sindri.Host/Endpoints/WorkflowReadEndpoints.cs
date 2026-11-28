@@ -16,7 +16,7 @@ namespace Aw.Sindri.Host.Endpoints;
 
 /// <summary>
 /// The workflow reads (#2258, PR 8a), the routes behind 'sindri wf list|show|runs|run-show' and the workflow_list, workflow_get, workflow_runs and workflow_run_get tools:
-/// GET /sindri/workflows, /sindri/workflows/{slug}, /sindri/workflows/{slug}/runs and /sindri/workflow-runs/{run}; and GET /sindri/workflows/trigger-events, the trigger step's recent events (#3201). A slug or run id of the wrong shape is invalid input, not a 404.
+/// GET /sindri/workflows, /sindri/workflows/{slug}, /sindri/workflows/{slug}/runs (filtered by ?status, ?since, ?until and paged by ?before, #4334) and /sindri/workflow-runs/{run}; and GET /sindri/workflows/trigger-events, the trigger step's recent events (#3201). A slug or run id of the wrong shape is invalid input, not a 404.
 /// </summary>
 internal static class WorkflowReadEndpoints
 {
@@ -43,7 +43,7 @@ internal static class WorkflowReadEndpoints
         });
         _ = group.MapGet("/workflows/{slug}/runs", static async (string slug, HttpRequest http, IService<ListWorkflowRunsRequest, ListWorkflowRunsResponse> service, CancellationToken ct) =>
         {
-            var request = RunsPage(slug, http.Query);
+            var request = RunsPage(slug, http.Query);   // offset and limit (#3305), and the filter (#4334; #4466: a repeated ?status= adds to the list, like a comma list)
             return request.IsError ? ((Result<ListWorkflowRunsResponse>)request.Error).ToHttpResult() : (await service.Handle(request.Value, ct).ConfigureAwait(false)).ToHttpResult();
         });
         _ = group.MapGet("/workflow-runs/{run}", static async (string run, IService<GetWorkflowRunRequest, GetWorkflowRunResponse> service, CancellationToken ct) =>
@@ -87,7 +87,14 @@ internal static class WorkflowReadEndpoints
         }
 
         var limit = Whole(query, "limit", least: 1, ListWorkflowRunsService.Newest);
-        return limit.IsError ? limit.Error : new ListWorkflowRunsRequest(parsed.Value, offset.Value, limit.Value);
+        if (limit.IsError)
+        {
+            return limit.Error;
+        }
+
+        var statuses = query["status"];
+        var filter = RunsFilter.Parse(statuses.Count > 0 ? string.Join(',', statuses.ToArray()) : null, query["since"].FirstOrDefault(), query["until"].FirstOrDefault(), query["before"].FirstOrDefault());
+        return filter.IsError ? filter.Error : new ListWorkflowRunsRequest(parsed.Value, offset.Value, limit.Value) { Filter = filter.Value };
     }
 
     // A whole number query value of at least 'least', or the fallback when the call names none.
@@ -130,6 +137,25 @@ internal static class WorkflowReadEndpoints
         return int.TryParse(revision, NumberStyles.None, CultureInfo.InvariantCulture, out var number) && number >= 1
             ? new GetWorkflowRequest(parsed.Value, number)
             : SindriErrors.InvalidInput.With($"'{revision}' is not a revision ('latest' or a whole number 1 or more)");
+    }
+
+    /// <summary>Binds a runs read (#4334): the slug and the optional ?status=, ?since=, ?until= and ?before= filter values.</summary>
+    /// <param name="slug">The route value.</param>
+    /// <param name="status">A comma-separated status list, or null.</param>
+    /// <param name="since">An ISO-8601 instant, or null.</param>
+    /// <param name="until">An ISO-8601 instant, or null.</param>
+    /// <param name="before">The run id the page starts after, or null.</param>
+    /// <returns>The request, or SND-API invalid input for the slug and SND-GRAPH-134 for a filter value.</returns>
+    internal static Result<ListWorkflowRunsRequest> Runs(string slug, string? status, string? since, string? until, string? before)
+    {
+        var parsed = Slug(slug);
+        if (parsed.IsError)
+        {
+            return parsed.Error;
+        }
+
+        var filter = RunsFilter.Parse(status, since, until, before);
+        return filter.IsError ? filter.Error : new ListWorkflowRunsRequest(parsed.Value) { Filter = filter.Value };
     }
 
     /// <summary>Binds a workflow slug from a route value.</summary>

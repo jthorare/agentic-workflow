@@ -79,12 +79,13 @@ internal sealed partial class RunsViewModel
             if (shown.Add(run.Id))
             {
                 _older.Add(run);
-                Rows.Add(new RunRowViewModel(run, _clock));
+                Keep(run);
             }
         }
 
-        _olderMore = page.More;
+        (_olderMore, _more) = (page.More, page.More);   // the count and the no-match line say "N+" while older runs are left
         HasMore = page.More;
+        Apply();   // the table's filters and count see the older rows too
         Recount();
     }
 
@@ -96,14 +97,13 @@ internal sealed partial class RunsViewModel
         {
             var onTop = newest.Runs.Select(static r => r.Id).ToHashSet(StringComparer.Ordinal);
             _older = [.. _newest.Concat(_older).Where(r => onTop.Add(r.Id))];
-            foreach (var run in _older)
-            {
-                Rows.Add(new RunRowViewModel(run, _clock));
-            }
+            _older.ForEach(Keep);
+            _more = _olderMore;
         }
 
         _newest = newest.Runs;
         HasMore = _older.Count > 0 ? _olderMore : newest.More;
+        Apply();
         Recount();
     }
 
@@ -112,6 +112,14 @@ internal sealed partial class RunsViewModel
     {
         (_newest, _older, _olderMore) = ([], [], false);
         (HasMore, IsMoreFailed, MoreFailedText) = (false, false, string.Empty);
+    }
+
+    // An older run joins the table's rows (the filters, the count and the ticks work on all of them).
+    private void Keep(WorkflowRunRowView run)
+    {
+        var row = new RunRowViewModel(run, _clock) { IsSelected = _ticked.Contains(run.Id) };
+        Watch(row);
+        _all.Add(row);
     }
 
     private HashSet<string> Known() => new(_newest.Concat(_older).Select(static r => r.Id), StringComparer.Ordinal);
@@ -124,6 +132,6 @@ internal sealed partial class RunsViewModel
         }
 
         var all = _newest.Concat(_older).ToList();
-        Head = Labels.WfRunsHead(all.Count(static r => string.Equals(r.Status, "running", StringComparison.Ordinal)), all.Count);
+        Head = Labels.WfRunsHead(all.Count(static r => string.Equals(r.Status, "running", StringComparison.Ordinal)), all.Count, _olderMore);
     }
 }

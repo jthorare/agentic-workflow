@@ -32,6 +32,10 @@ internal sealed partial class SindriApiClient
         Call<ConnectionRenamed>(api, HttpMethod.Post, ConnectionRoutes.Rename(name), cancellationToken, new CallOptions(Content: AwJson.Serialize(body, Json)));
 
     /// <inheritdoc />
+    public Task<Result<ConnectionKeyReplaced>> ReplaceConnectionKey(Uri api, string name, ReplaceConnectionKeyBody body, CancellationToken cancellationToken) =>
+        Call<ConnectionKeyReplaced>(api, HttpMethod.Put, ConnectionRoutes.Key(name), cancellationToken, new CallOptions(Content: AwJson.Serialize(body, Json)));
+
+    /// <inheritdoc />
     public Task<Result<ConnectionRemoved>> RemoveConnection(Uri api, string name, CancellationToken cancellationToken) =>
         Call<ConnectionRemoved>(api, HttpMethod.Delete, ConnectionRoutes.One(name), cancellationToken);
 }

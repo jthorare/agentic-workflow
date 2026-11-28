@@ -8,9 +8,17 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Forge.Tests;
 
-public sealed class HostTests
+public sealed class HostTests : IDisposable
 {
-    private static readonly string _stateRoot = Path.Combine(Path.GetTempPath(), "aw-forge-di-test");
+    private readonly string _stateRoot = Directory.CreateTempSubdirectory("aw-forge-di-test-").FullName;
+    public void Dispose()
+    {
+        if (Directory.Exists(_stateRoot))
+        {
+            Directory.Delete(_stateRoot, recursive: true);
+        }
+    }
+
 
     [Fact, Trait("Lane", "unit")]
     public void Every_registered_service_resolves_in_a_validated_container()
@@ -83,7 +91,7 @@ public sealed class HostTests
         Assert.True(logger.IsEnabled(LogLevel.Warning));
     }
 
-    private static IServiceCollection Compose(string? logLevel = null, string? adapter = null, string? credential = null, string? hosts = null)
+    private IServiceCollection Compose(string? logLevel = null, string? adapter = null, string? credential = null, string? hosts = null)
         => Composition.Compose(
             new ServiceCollection(),
             name => name switch

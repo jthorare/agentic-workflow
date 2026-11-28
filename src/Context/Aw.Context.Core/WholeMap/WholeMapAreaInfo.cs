@@ -4,4 +4,11 @@ namespace Aw.Context.Core.WholeMap;
 /// <param name="Key">The area's key.</param>
 /// <param name="Truncated">True when the area has more nodes than the cap, so the answer holds the first ones.</param>
 /// <param name="Counts">The area's full counts.</param>
-public sealed record WholeMapAreaInfo(string Key, bool Truncated, WholeMapCounts Counts);
+public sealed record WholeMapAreaInfo(string Key, bool Truncated, WholeMapCounts Counts)
+{
+    /// <summary>The page this answer holds (1-based).</summary>
+    public int Page { get; init; } = 1;
+
+    /// <summary>How many pages the area has.</summary>
+    public int Pages { get; init; } = 1;
+}

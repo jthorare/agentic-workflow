@@ -48,15 +48,49 @@ internal sealed partial class WorkflowEditorSheet : UserControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         // Escape closes the sheet; handled here, in the page, so the shell's own Escape (it closes the shell sheet) never sees it
-        if (e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None && DataContext is WorkflowsPageViewModel { IsSettingsOpen: true })
+        if (e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None && DataContext is WorkflowsPageViewModel { AsksSaveFirst: true } asking)
         {
-            Close();
+            asking.KeepEditing();   // Escape answers the question with Keep editing
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None && DataContext is WorkflowsPageViewModel { IsSettingsOpen: true } open)
+        {
+            open.RequestCloseSheet();   // Escape asks like Done when a field changed (#3655)
+            if (!open.AsksSaveFirst)
+            {
+                this.FindAncestorOfType<WorkflowsPage>()?.FocusEdit();
+            }
+
             e.Handled = true;
             return;
         }
 
         base.OnKeyDown(e);
     }
+
+#pragma warning disable MA0155 // why: an Avalonia RoutedEvent handler returns void, so it can only be async void
+    private async void OnAskSave(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            await page.SaveAndLeave(CancellationToken.None).ConfigureAwait(true);
+            this.FindAncestorOfType<WorkflowsPage>()?.FocusEdit();
+        }
+    }
+#pragma warning restore MA0155
+
+    private void OnAskDiscard(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            page.DiscardAndLeave();
+            this.FindAncestorOfType<WorkflowsPage>()?.FocusEdit();
+        }
+    }
+
+    private void OnAskKeep(object? sender, RoutedEventArgs e) => (DataContext as WorkflowsPageViewModel)?.KeepEditing();
 
     private void OnClose(object? sender, RoutedEventArgs e) => Close();
 

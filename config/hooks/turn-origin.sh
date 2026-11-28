@@ -25,7 +25,7 @@ if [ -n "$INPUT" ]; then
   PROMPT="$(printf '%s' "$INPUT" | jq -r '.prompt // empty' 2>/dev/null)"
   SESSION_ID="$(printf '%s' "$INPUT" | jq -r '.session_id // empty' 2>/dev/null)"
 
-  if printf '%s' "$PROMPT" | grep -qE '^(<teammate-message|Another Claude session sent a message)'; then
+  if grep -qE '^(<teammate-message|Another Claude session sent a message)' <<<"$PROMPT"; then
     sweep_old_sessions
     exit 0
   fi

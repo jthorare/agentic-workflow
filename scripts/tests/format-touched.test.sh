@@ -199,4 +199,24 @@ run "$R" I/Skip/s.cs
 run "$R" J/Any.cs
 { [ "$rc" = 1 ] && printf '%s' "$out" | grep -q 'not checked: J/Any.cs (.*\$(Foo)'; } && ok "an unknown \$(Var) in a pattern: not checked, says so" || bad "unknown var rc=$rc out=$out"
 
+# --- #3711: ../ in a Remove pattern, and EnableDefaultCompileItems set in Directory.Build.props ---
+mkdir -p "$R/L/App/Gen" "$R/N/P" "$R/O/P"
+printf '<Project Sdk="Microsoft.NET.Sdk">\n  <ItemGroup><Compile Remove="../App/Gen/**" /></ItemGroup>\n</Project>\n' > "$R/L/App/App.csproj"
+echo 'class Y { }' > "$R/L/App/Gen/Y.cs"
+printf '<Project>\n  <PropertyGroup><EnableDefaultCompileItems>false</EnableDefaultCompileItems></PropertyGroup>\n</Project>\n' > "$R/N/Directory.Build.props"
+cp "$R/N/Directory.Build.props" "$R/O/Directory.Build.props"
+echo '<Project Sdk="Microsoft.NET.Sdk" />' > "$R/N/P/P.csproj"
+printf '<Project Sdk="Microsoft.NET.Sdk">\n  <PropertyGroup><EnableDefaultCompileItems>true</EnableDefaultCompileItems></PropertyGroup>\n</Project>\n' > "$R/O/P/P.csproj"
+echo 'class Z { }' > "$R/N/P/Z.cs"; echo 'class Z { }' > "$R/O/P/Z.cs"
+# Row 1 uses the fallback shape: a file outside the csproj's dir has no csproj of its own (the lookup walks up from the file),
+# so the ../ pattern is exercised with a file inside the project through a pattern that leaves and re-enters its dir.
+run "$R" L/App/Gen/Y.cs
+{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -qF 'not checked: L/App/Gen/Y.cs (matches <Compile Remove="../App/Gen/**">'; } \
+  && ok "#3711 a ../ Compile Remove pattern is folded: not checked" || bad "#3711 ../ remove rc=$rc out=$out"
+run "$R" N/P/Z.cs
+{ [ "$rc" = 1 ] && printf '%s' "$out" | grep -qF 'not checked: N/P/Z.cs (EnableDefaultCompileItems is false and no <Compile Include> matches)'; } \
+  && ok "#3711 EnableDefaultCompileItems=false in Directory.Build.props: not checked" || bad "#3711 props false rc=$rc out=$out"
+run "$R" O/P/Z.cs
+[ "$rc" = 0 ] && ok "#3711 control: csproj sets EnableDefaultCompileItems back to true: checked" || bad "#3711 props true control rc=$rc out=$out"
+
 [ "$fails" = 0 ] && echo "all passed" || { echo "$fails failed"; exit 1; }

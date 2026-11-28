@@ -47,6 +47,7 @@ default_output() {
 aw_adapter_parse_args "$@" || { aw_adapter_failopen cursor args-invalid; default_output "${AW_ADAPTER_EVENT:-}"; exit 0; }
 
 RAW_INPUT="$(cat 2>/dev/null || true)"
+aw_adapter_capture cursor "$RAW_INPUT"
 # An empty or unreadable host payload becomes {} below, which the canonical
 # hook can't check: log it here, where the raw payload is still visible.
 aw_adapter_failopen cursor input "$RAW_INPUT"
@@ -145,6 +146,9 @@ else
         | .last_assistant_message = (.summary // null)
         | .stop_hook_active = ((.loop_count // 0) > 0)
       else .hook_event_name = $ev end
+    # session_id and hook_event_name first: hooks read the first regex match in the raw text, and a tool_input that
+    # holds those keys must not come before the real ones (#4304).
+    | {session_id: .session_id, hook_event_name: .hook_event_name} + del(.session_id, .hook_event_name)
   ' 2>/dev/null)"
   [ -n "$PAYLOAD" ] || { aw_adapter_failopen cursor payload-unparsable; default_output "$EVENT"; exit 0; }
 fi

@@ -23,6 +23,10 @@ internal sealed partial class ServiceTileView : UserControl
 
     private void OnCancel(object? sender, RoutedEventArgs e) => Tile?.Cancel();
 
+    private void OnUseOAuth(object? sender, RoutedEventArgs e) => Tile?.UseOAuth();
+
+    private void OnUseToken(object? sender, RoutedEventArgs e) => Tile?.UseToken();
+
     private void OnSignIn(object? sender, RoutedEventArgs e) => _ = Tile?.SignInAgain(CancellationToken.None);
 
     // The field opens holding the current label, focused and selected, so typing replaces it.
@@ -70,6 +74,32 @@ internal sealed partial class ServiceTileView : UserControl
         {
             e.Handled = true;
             Tile?.CancelRename();
+        }
+    }
+
+    // The paste box opens focused, so the token can be pasted at once.
+    private void OnReplaceToken(object? sender, RoutedEventArgs e)
+    {
+        Tile?.StartReplace();
+        Dispatcher.UIThread.Post(() => _ = ServiceTileReplaceField.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
+    }
+
+    private void OnReplaceSend(object? sender, RoutedEventArgs e) => _ = Tile?.Replace(CancellationToken.None);
+
+    private void OnReplaceCancel(object? sender, RoutedEventArgs e) => Tile?.CancelReplace();
+
+    // Enter sends and Escape cancels, as in every inline field of the app.
+    private void OnReplaceKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            e.Handled = true;
+            _ = Tile?.Replace(CancellationToken.None);
+        }
+        else if (e.Key == Key.Escape)
+        {
+            e.Handled = true;
+            Tile?.CancelReplace();
         }
     }
 

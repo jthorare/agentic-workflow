@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Traits;
 
@@ -22,10 +24,11 @@ internal sealed class FileTraitStore(string overlayRoot) : ITraitStore
         {
             foreach (var file in Yaml(directory))
             {
-                var (trait, error) = TraitFileParser.Parse(Read(file), file);
+                var bytes = Read(file);
+                var (trait, error) = TraitFileParser.Parse(Encoding.UTF8.GetString(bytes).TrimStart('\uFEFF'), file);
                 if (trait is not null)
                 {
-                    byName[trait.Name] = trait;
+                    byName[trait.Name] = trait with { FileHash = Convert.ToHexStringLower(SHA256.HashData(bytes)) };
                 }
                 else
                 {
@@ -49,15 +52,16 @@ internal sealed class FileTraitStore(string overlayRoot) : ITraitStore
         }
     }
 
-    private static string Read(string file)
+    // The bytes, so the file's hash (part of a cached verdict's key) covers exactly what is on disk.
+    private static byte[] Read(string file)
     {
         try
         {
-            return File.ReadAllText(file);
+            return File.ReadAllBytes(file);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            return "";
+            return [];
         }
     }
 }

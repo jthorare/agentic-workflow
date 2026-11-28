@@ -41,7 +41,7 @@ public static class GatePriority
     public static IReadOnlyList<string> HookOverrides { get; } =
     [
         "CLAUDE_SETTINGS_FILE", "CLAUDE_HOOKS_DIR", "CLAUDE_DIR", "CODEX_HOOKS_FILE", "CODEX_HOME", "CURSOR_HOOKS_FILE", "AW_HOOKS_DIR",
-        "AW_HOOK_ADAPTER_FLAGS", "AW_META_CONFIG", "AW_SINDRI_HOME", "CLAUDE_LOCAL_BIN",
+        "AW_HOOK_ADAPTER_FLAGS", "AW_HOOK_CAPTURE_DIR", "AW_META_CONFIG", "AW_SINDRI_HOME", "CLAUDE_LOCAL_BIN",
     ];
 
     /// <summary>Everything an isolated suite run strips, as scripts/ci/bash-tests.sh --run-one does: <see cref="HookOverrides"/> and <see cref="Scrubbed"/>.</summary>

@@ -21,4 +21,15 @@ public sealed record Trait(
     string? Applicability = null,
     string? Guidance = null,
     string? Context = null,
-    IReadOnlyList<string>? Paths = null);
+    IReadOnlyList<string>? Paths = null)
+{
+    /// <summary>
+    /// A regular expression the excerpt's text must match before the trait is asked about it (a free filter in front of
+    /// the model call), or null to ask about every excerpt in <see cref="Paths"/>. An invalid expression is logged and
+    /// treated as absent.
+    /// </summary>
+    public string? Trigger { get; init; }
+
+    /// <summary>The SHA-256 of the trait file's bytes, lowercase hex, or empty when unknown; part of a cached verdict's key.</summary>
+    public string FileHash { get; init; } = "";
+}

@@ -100,7 +100,7 @@ public sealed class WholeMapViewModelTests
     }
 
     [Fact]
-    public void An_open_feature_draws_its_items_alone_with_the_way_back_and_back_restores_the_overview()
+    public async Task An_open_feature_draws_its_items_alone_with_the_way_back_and_back_restores_the_overview()
     {
         var map = new WholeMapViewModel(() => _utc);
         map.Show(WholeMapLayoutTests.Draft("areas-over-budget"));
@@ -108,9 +108,10 @@ public sealed class WholeMapViewModelTests
         var opened = WholeMapLayoutTests.Draft("area-open");
 
         map.ShowArea(opened);
+        await map.AreaLaidOut;
 
         Assert.Equal((true, "Tab groups", string.Empty), (map.IsAreaOpen, map.AreaTitle, map.ByAreaNote));
-        Assert.Equal((false, 6, 1), (map.ByArea, map.Geometry!.Nodes.Count, map.Geometry.Columns.Count));
+        Assert.Equal((false, 6, 0, true), (map.ByArea, map.Geometry!.Nodes.Count, map.Geometry.Columns.Count, map.Geometry.AreaBands is { Count: > 0 }));   // why: #3674 draws an opened area as its canvas (Entry, Core, Data), not as one column
         map.CloseArea();
         Assert.Equal((false, true), (map.IsAreaOpen, ReferenceEquals(overview, map.Geometry)));
         Assert.Equal(string.Empty, map.ByAreaNote);
@@ -156,8 +157,8 @@ public sealed class WholeMapViewModelTests
     }
 
     [Theory]
-    [InlineData(0.2, 0.25)]
-    [InlineData(0.4, 0.4)]
+    [InlineData(0.2, 0.5)]
+    [InlineData(0.4, 0.5)]
     [InlineData(3.0, 2.0)]
     public void The_first_open_fits_the_map_but_never_below_the_floor(double fit, double expected) =>
         Assert.Equal(expected, WholeMapViewModel.FirstOpenScale(fit));

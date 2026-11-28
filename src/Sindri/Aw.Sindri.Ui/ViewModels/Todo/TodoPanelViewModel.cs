@@ -81,7 +81,7 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
     public ObservableCollection<TodoGroupViewModel> Groups { get; } = [];
 
     /// <summary>True when more than five are open and the panel is collapsed.</summary>
-    public bool ShowsShowAll { get; private set => Set(ref field, value); }
+    public bool ShowsShowAll { get; private set { Set(ref field, value); RaiseSlots(); } }
 
     /// <summary>"Show all 11".</summary>
     public string ShowAllText { get; private set => Set(ref field, value); } = string.Empty;
@@ -240,7 +240,7 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
         (OverdueCount, ToSortOutCount) = (split.Overdue.Count, toSortOut);
         CountLine = Labels.TodoCountLine(open, split.Overdue.Count, toSortOut);
         (IsEmpty, EmptyText) = (open == 0, open == 0 ? Labels.TodoEmpty : string.Empty);
-        RaiseSlots();
+        TakeSlots(slots);
         (ShowsShowAll, ShowAllText) = (!IsExpanded && shown.Open.Count > CollapsedRows - slots, Labels.TodoShowAll(open));
         DoneToggleText = ShowsDone ? Labels.TodoHideDone : Labels.TodoShowDone;
         DoneToggleName = Labels.TodoShowDoneName(listed);

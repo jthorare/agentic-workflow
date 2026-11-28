@@ -110,6 +110,21 @@ check "a second flag is taken as the command (pinned as is): setsid or perl reje
 check "a second flag is taken as the command: echo never runs" "$(printf '%s\n' "$out" | grep -cx 'x')" "0"
 reset
 
+# --- through a link, on a system whose readlink has no -f (#4376) ---
+# heavy.sh:43 resolves its own folder with `readlink -f`. The stub dir goes on PATH in the call's env: AW_HEAVY_TEST_PATH only applies after that line.
+# The cwd is two levels down: a failed readlink makes the folder ".", and ../config/lib from $WORK itself would find the suite's config link.
+RL_REAL="$(command -v readlink)"; RL_STUB="$WORK/rl-stub"; LINKDIR="$WORK/linkdir"; LINKCWD="$WORK/nolink/cwd"
+mkdir -p "$RL_STUB" "$LINKDIR" "$LINKCWD"; ln -s "$HEAVY" "$LINKDIR/heavy"
+printf '#!/bin/sh\nfor a in "$@"; do [ "$a" = "-f" ] && { echo "readlink: illegal option -- f" >&2; echo "usage: readlink [-n] [file ...]" >&2; exit 1; }; done\nexec "%s" "$@"\n' "$RL_REAL" > "$RL_STUB/readlink"
+chmod +x "$RL_STUB/readlink"
+L() { local f rc; f="$(mktemp "$WORK/l.XXXXXX")"; (cd "$LINKCWD" && "$LINKDIR/heavy" "$@" > "$f" 2>&1); rc=$?; cat "$f"; return $rc; }
+out="$(L --light echo linked)"; rc=$?
+check "control: heavy through a link, readlink with -f: exit 0 (#4376)" "$rc" "0"
+out="$(PATH="$RL_STUB:$PATH" L --light echo linked)"; rc=$?
+check "heavy through a link finds its config when readlink has no -f: exit 0 (#4376)" "$rc" "0"
+lacks "heavy through a link, readlink without -f: no 'heavy-config.sh not found' (#4376)" "$out" "heavy-config.sh not found"
+reset
+
 # --- lock files while a job runs, and after ---
 child='echo "ppid=$PPID"; echo "mode=${AW_HEAVY_MODE-}"; echo "held=${AW_HEAVY_LOCK_HELD-}"; echo "slot=${AW_HEAVY_SLOT-unset}"; echo "cpus=${DOTNET_PROCESSOR_COUNT-}"; echo "nodereuse=${MSBUILDDISABLENODEREUSE-}"; echo "pgid=$(ps -o pgid= -p $$ | tr -d " ")/$$"; ls "$1"; for f in "$2"/owner "$3"/owner; do [ -f "$f" ] && echo "owner $(cat "$f")"; done; true'
 out="$(H --light bash -c "$child" _ "$LOCKS" "$SESSLOCK" "$LOCKS/heavy-job.lock" 2>&1)"

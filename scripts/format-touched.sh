@@ -21,9 +21,11 @@
 #
 # "The file is in the run" is proved structurally, before the run, because the output can't show it: the file sits under
 # the csproj's directory (SDK default globbing), is not under obj/ or bin/, and matches no `<Compile Remove="...">` in the
-# csproj or in a Directory.Build.props / .targets above it; when the csproj sets EnableDefaultCompileItems=false, a
+# csproj or in a Directory.Build.props / .targets above it; when EnableDefaultCompileItems ends up false (last setter wins:
+# props files outermost first, the csproj, then .targets files), a
 # `<Compile Include=>` must match it. What is read, and what is not:
 #   - A pattern is relative to the dir of the file that holds it (a props file's own dir, not the project's), as in MSBuild.
+#     `./` and `x/../` segments are folded; a pattern that climbs above the repo root matches nothing.
 #   - Globs follow MSBuild: `**/` matches zero or more dirs, `**` anything, `*` and `?` stay inside one dir; `\` is `/`.
 #   - `$(MSBuildProjectDirectory)` and `$(MSBuildThisFileDirectory)` at the start of a pattern are resolved. Any other `$(Var)`
 #     can't be read: the file is reported "not checked" rather than guessed.
@@ -109,17 +111,34 @@ item_patterns() {
 # 0 matches, 1 doesn't, 2 the pattern holds a $(Var) that isn't read. A pattern is relative to the dir of the file that holds
 # it; $(MSBuildProjectDirectory)/ is the project dir and $(MSBuildThisFileDirectory) the defining dir.
 pattern_matches() {
-  local pat="$1" base="$2" pdir="$3" file="$4" sub re full
+  local pat="$1" base="$2" pdir="$3" file="$4" re full
   case "$pat" in
     '$(MSBuildProjectDirectory)'*) base="$pdir"; pat="${pat#'$(MSBuildProjectDirectory)'}"; pat="${pat#/}" ;;
     '$(MSBuildThisFileDirectory)'*) pat="${pat#'$(MSBuildThisFileDirectory)'}"; pat="${pat#/}" ;;
   esac
   case "$pat" in *'$('*) return 2 ;; esac
-  pat="${pat#./}"
-  if [ "$base" = "." ]; then sub="$file"; else sub="${file#"$base"/}"; fi
-  re="$(glob_to_re "$pat")"
+  # Join base and pattern, then fold `./` and `x/..` segments so `../App/Gen/**` is read from the repo root. A pattern that
+  # climbs above the repo root can't name a repo file: no match. The full repo-relative file path is matched, not a path
+  # relative to base.
+  if [ "$base" = "." ]; then full="$pat"; else full="$base/$pat"; fi
+  local seg out=() n segs=()
+  IFS=/ read -r -a segs <<< "$full"
+  for seg in "${segs[@]}"; do
+    case "$seg" in
+      ''|.) ;;
+      ..)
+        n=${#out[@]}
+        if [ "$n" = 0 ]; then return 1; fi
+        unset "out[$((n - 1))]"
+        out=("${out[@]+"${out[@]}"}") ;;
+      *) out+=("$seg") ;;
+    esac
+  done
+  full=""
+  for seg in "${out[@]+"${out[@]}"}"; do full="${full:+$full/}$seg"; done
+  re="$(glob_to_re "$full")"
   full="^${re}\$"
-  [[ "$sub" =~ $full ]]
+  [[ "$file" =~ $full ]]
 }
 
 # Pass 2: csproj per file, and the "is it in the run" proof.
@@ -172,7 +191,20 @@ $pats
 EOF
     done
   fi
-  if [ -z "$reason" ] && tr '\n\r\t' '   ' < "$repo_root/$csproj" | grep -qE 'EnableDefaultCompileItems[^>]*>[[:space:]]*false'; then
+  # EnableDefaultCompileItems: last setter wins, in MSBuild evaluation order: Directory.Build.props files (outermost first),
+  # the csproj, then Directory.Build.targets files (outermost first; they are imported after the project body, and property
+  # values are all settled before the default Compile glob is evaluated). So .targets are read too, after the csproj.
+  # Conditions on the property are not read.
+  edci=""
+  ordered=()
+  for ((i = ${#defs[@]} - 1; i >= 1; i--)); do case "${defs[$i]}" in *.props) ordered+=("${defs[$i]}") ;; esac; done
+  ordered+=("$csproj")
+  for ((i = ${#defs[@]} - 1; i >= 1; i--)); do case "${defs[$i]}" in *.targets) ordered+=("${defs[$i]}") ;; esac; done
+  for df in "${ordered[@]}"; do
+    v="$(tr '\n\r\t' '   ' < "$repo_root/$df" | grep -oE 'EnableDefaultCompileItems[^>]*>[[:space:]]*[A-Za-z]+' | tail -n 1 | sed -E 's/.*>[[:space:]]*//' | tr 'A-Z' 'a-z')"
+    [ -n "$v" ] && edci="$v"
+  done
+  if [ -z "$reason" ] && [ "$edci" = false ]; then
     reason="EnableDefaultCompileItems is false and no <Compile Include> matches"
     incs="$(item_patterns "$repo_root/$csproj" Include)"
     while IFS= read -r pat; do

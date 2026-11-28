@@ -15,7 +15,7 @@ namespace Aw.Sindri.Features.RerunWorkflowRun;
 /// Re-runs an ended run from one step (Workflows page spec §7.3, P7): a new run of the source run's revision that takes the stored node runs of every step the chosen step does not feed,
 /// runs the chosen step and everything after it again, and carries the source run's id in its trigger. Refuses an unknown run (SND-GRAPH-101), a deleted workflow (SND-GRAPH-008),
 /// a step the revision lacks or a loop body step (SND-GRAPH-001), a run that has not ended (SND-GRAPH-125), a step before the chosen one that did not succeed (SND-GRAPH-126),
-/// an output the store cut at 64 KB (SND-GRAPH-108) and an input that is not a JSON object (SND-GRAPH-106).
+/// a step whose every parent was skipped on a branch nobody took (SND-GRAPH-127), an output the store cut at 64 KB (SND-GRAPH-108) and an input that is not a JSON object (SND-GRAPH-106).
 /// </summary>
 /// <param name="workflows">The workflows and their revisions.</param>
 /// <param name="runs">The source run and its node runs; the next occurrence comes from them.</param>
@@ -76,8 +76,8 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
         }
 
         var restored = RerunPlan.Restored(spec, from, rows.Value);
-        var refused = LoopRefusal(spec, from) ?? UpstreamRefusal(spec, from, restored);
-        return refused is { } error ? error : Split(record, spec, restored, rows.Value);
+        var refused = LoopRefusal(spec, from) ?? UpstreamRefusal(spec, from, restored) ?? BranchRefusal(spec, from, rows.Value);
+        return refused is { } error ? error : Split(record, spec, from, restored, rows.Value);
     }
 
     // why: a step inside a for_each body runs once per item; restoring the loop's own row and then running one body step alone would skip the loop. The owner re-runs from the for_each step.
@@ -103,15 +103,67 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
             : SindriErrors.GraphRerunUpstreamNotDone.With($"'{missing[0].Value}' comes before '{from.Value}' and did not succeed in that run; re-run from '{missing[0].Value}' instead");
     }
 
-    private static Result<Plan> Split(WorkflowRecord record, GraphSpec spec, IReadOnlyList<NodeId> restored, IReadOnlyList<NodeRun> rows)
+    // why: the walk opens the edge from a restored step into the chosen one, but a parent skipped on a dead branch has no output, so '{{p.*}}' in the chosen step would resolve empty. One parent that ran is enough.
+    private static Error? BranchRefusal(GraphSpec spec, NodeId from, IReadOnlyList<NodeRun> rows)
+    {
+        var parents = spec.Edges.Where(e => e.To == from).Select(static e => e.From).Distinct().ToList();
+        if (parents.Count == 0 || parents.Exists(p => rows.Any(r => r.NodeId == p && r.Status == NodeRunStatus.Succeeded)))
+        {
+            return null;
+        }
+
+        // why: the way out is the skipped step whose own parent ran: re-running from it opens that edge on purpose and runs the branch down to the chosen step (#4495)
+        var instead = FirstSkippedWithParentThatRan(spec, parents, rows);
+        return instead is { } step
+            ? SindriErrors.GraphRerunBranchNotTaken.With($"'{step.Value}' was skipped in that run, because the branch to it was not taken, so '{from.Value}' would run with nothing from it; re-run from '{step.Value}' instead, which runs that branch on purpose")
+            : SindriErrors.GraphRerunBranchNotTaken.With($"'{parents[0].Value}' was skipped in that run, because the branch to it was not taken, so '{from.Value}' would run with nothing from it; re-run from a step on the branch that ran");
+    }
+
+    // Climbs from the chosen step's parents through steps that did not succeed; the one step with a parent that succeeded is where to re-run from. Null when there is none or more than one.
+    private static NodeId? FirstSkippedWithParentThatRan(GraphSpec spec, IReadOnlyList<NodeId> parents, IReadOnlyList<NodeRun> rows)
+    {
+        var ran = rows.Where(static r => r.Status == NodeRunStatus.Succeeded).Select(static r => r.NodeId).ToHashSet();
+        var (seen, queue, found) = (new HashSet<NodeId>(), new Queue<NodeId>(parents), new List<NodeId>());
+        while (queue.Count > 0)
+        {
+            var node = queue.Dequeue();
+            if (ran.Contains(node) || !seen.Add(node))
+            {
+                continue;
+            }
+
+            var above = spec.Edges.Where(e => e.To == node).Select(static e => e.From).Distinct().ToList();
+            if (above.Exists(ran.Contains))
+            {
+                found.Add(node);
+            }
+            else
+            {
+                above.ForEach(queue.Enqueue);
+            }
+        }
+
+        return found.Count == 1 ? found[0] : null;
+    }
+
+    private static Result<Plan> Split(WorkflowRecord record, GraphSpec spec, NodeId from, IReadOnlyList<NodeId> restored, IReadOnlyList<NodeRun> rows)
     {
         var cut = rows.FirstOrDefault(r => restored.Contains(r.NodeId) && r.Truncated);
         if (cut is not null)
         {
-            return SindriErrors.GraphOutputTruncated.With($"the output of '{cut.NodeId.Value}' was cut at 64 KB in that run, so it can't be restored; re-run from '{cut.NodeId.Value}' instead");
+            return SindriErrors.GraphOutputTruncated.With(CutAdvice(spec, from, cut.NodeId));
         }
 
         return new Plan(record, spec, restored, [.. spec.Nodes.Select(static n => n.Id).Where(id => !restored.Contains(id))], [.. rows.Where(r => restored.Contains(r.NodeId))]);
+    }
+
+    // why: re-running from a cut step restores the chosen step's inputs only when the cut step comes before it; a cut step on a side branch can't be fixed that way, and the advice would run neither
+    private static string CutAdvice(GraphSpec spec, NodeId from, NodeId cut)
+    {
+        var head = $"the output of '{cut.Value}' was cut at 64 KB in that run, so it can't be restored; ";
+        return RerunPlan.Before(spec, from).Contains(cut)
+            ? head + $"re-run from '{cut.Value}' instead"
+            : head + $"'{cut.Value}' does not come before '{from.Value}', so re-running from '{cut.Value}' would not run '{from.Value}'";
     }
 
     private async ValueTask<Result<RerunWorkflowRunResponse>> Start(RerunWorkflowRunRequest request, WorkflowRun source, Plan plan, JsonObject? input, CancellationToken cancellationToken)
@@ -147,10 +199,11 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
 
     private static JsonObject Trigger(RerunWorkflowRunRequest request, WorkflowRun source, JsonObject? input)
     {
-        var original = Parse(source.Trigger);
+        var parsed = Parse(source.Trigger);
+        var original = First(parsed);
         var trigger = new JsonObject();
         // why: the source trigger's fields stay at the top, so '{{trigger.payload.repo}}' in a step that runs again reads what it read the first time.
-        foreach (var (key, value) in original ?? [])
+        foreach (var (key, value) in parsed ?? [])
         {
             trigger[key] = value?.DeepClone();
         }
@@ -163,6 +216,10 @@ internal sealed class RerunWorkflowRunService(IWorkflowStore workflows, IWorkflo
         trigger["input"] = input?.DeepClone();
         return trigger;
     }
+
+    // why: a re-run's trigger already holds the first run's trigger as 'original'; carrying the whole re-run trigger would nest one level deeper on every re-run of a re-run
+    private static JsonObject? First(JsonObject? source) =>
+        source is not null && string.Equals(source["kind"]?.ToString(), TriggerKind, StringComparison.Ordinal) && source["original"] is JsonObject first ? first : source;
 
     private static JsonObject? Parse(string text)
     {

@@ -122,6 +122,23 @@ public sealed class RerunWorkflowRunServiceTests
     }
 
     [Fact]
+    public async Task A_rerun_of_a_rerun_points_original_at_the_first_trigger_and_does_not_nest()
+    {
+        var rerun = "{\"kind\":\"rerun\",\"payload\":{\"repo\":\"api\"},\"of\":\"nightly-check@1:0\",\"fromNode\":\"a\",\"by\":\"owner\",\"input\":null,"
+            + "\"original\":{\"kind\":\"manual\",\"payload\":{\"repo\":\"api\"},\"by\":\"owner\"}}";
+        await EndedRun(sourceTrigger: rerun);
+
+        _ = await _service.Handle(new RerunWorkflowRunRequest(_source, "b", Input: null, "owner"), Token);
+
+        var trigger = JsonNode.Parse(Assert.Single(_starter.Requests).Trigger)!;
+        Assert.Equal("rerun", trigger["kind"]!.GetValue<string>());
+        Assert.Equal(_source.Value, trigger["of"]!.GetValue<string>());
+        Assert.Equal("manual", trigger["original"]!["kind"]!.GetValue<string>());
+        Assert.Null(trigger["original"]!["original"]);
+        Assert.Equal("api", trigger["payload"]!["repo"]!.GetValue<string>());
+    }
+
+    [Fact]
     public async Task A_rerun_never_moves_the_manual_run_counter()
     {
         await EndedRun();
@@ -230,6 +247,28 @@ public sealed class RerunWorkflowRunServiceTests
     }
 
     [Fact]
+    public async Task A_cut_step_that_is_not_before_the_chosen_one_does_not_advise_re_running_from_it()
+    {
+        await EndedRun(extra: [Row("d", item: 0, output: "{\"cut\":", truncated: true)], replaceItem0Of: "d");
+
+        var result = await _service.Handle(new RerunWorkflowRunRequest(_source, "b", Input: null, "owner"), Token);
+
+        Assert.Equal(SindriErrors.GraphOutputTruncated.Code, result.Error.Code);
+        Assert.Contains("'d' does not come before 'b'", result.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("re-run from 'd' instead", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_cut_step_before_the_chosen_one_advises_re_running_from_it()
+    {
+        await EndedRun(extra: [Row("a", item: 0, output: "{\"cut\":", truncated: true)], replaceItem0Of: "a");
+
+        var result = await _service.Handle(new RerunWorkflowRunRequest(_source, "b", Input: null, "owner"), Token);
+
+        Assert.Contains("re-run from 'a' instead", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_deleted_workflow_s_run_can_not_be_re_run()
     {
         await EndedRun();
@@ -282,11 +321,11 @@ public sealed class RerunWorkflowRunServiceTests
         new(_source, N(node), item, status, Input: "{\"cfg\":\"" + node + "\"}", output, truncated, Error: null, Usage: null);
 
     // A run of revision 1 that ended (or not), with one row per step: t, a, d succeeded; b and c per the arguments.
-    private async Task EndedRun(WorkflowRunStatus status = WorkflowRunStatus.Succeeded, string? failedNode = null, IReadOnlyList<NodeRun>? extra = null, string? replaceItem0Of = null)
+    private async Task EndedRun(WorkflowRunStatus status = WorkflowRunStatus.Succeeded, string? failedNode = null, IReadOnlyList<NodeRun>? extra = null, string? replaceItem0Of = null, string? sourceTrigger = null)
     {
         _ = (await _workflows.Create(_id, _slug, Spec(), "owner", Token)).Value;
         _ = (await _workflows.Activate(_id, 1, Token)).Value;
-        var trigger = "{\"kind\":\"manual\",\"payload\":{\"repo\":\"api\"},\"by\":\"owner\"}";
+        var trigger = sourceTrigger ?? "{\"kind\":\"manual\",\"payload\":{\"repo\":\"api\"},\"by\":\"owner\"}";
         var ended = status is WorkflowRunStatus.Running ? (DateTimeOffset?)null : _clock.GetUtcNow();
         _ = (await _runs.Insert(new WorkflowRun(_source, _id, 1, trigger, status, Outputs: null, Error: null, ItemId: null, _clock.GetUtcNow(), ended), Token)).Value;
         var rows = new List<NodeRun>

@@ -12,6 +12,7 @@ internal sealed partial class FakeSindriApi
     private int _signIns;
     private readonly List<AddConnectionBody> _addedConnections = [];
     private readonly List<string> _connectionCalls = [];
+    private readonly List<ReplaceConnectionKeyBody> _replacedKeys = [];
 
     /// <summary>The consent URL an oauth add or sign-in answers with.</summary>
     public string ConsentUrl { get; set; } = "https://provider.example.test/authorize?state=fake";
@@ -33,6 +34,21 @@ internal sealed partial class FakeSindriApi
 
     /// <summary>When set, RenameConnection throws it, as a dropped transport would.</summary>
     public Exception? RenameThrows { get; set; }
+
+    /// <summary>When set, the next ReplaceConnectionKey answers this error (once) and changes nothing, as a refused key does (the old key stays).</summary>
+    public Error? NextReplaceKeyError { get; set; }
+
+    /// <summary>When set, ReplaceConnectionKey waits for it after it logged the call, so a test can look at the tile while the key is checked.</summary>
+    public TaskCompletionSource? ReplaceKeyGate { get; set; }
+
+    /// <summary>When true, ReplaceConnectionKey answers that the key was stored unchecked (a cli connection or a preset with no key check).</summary>
+    public bool ReplaceKeyUnchecked { get; set; }
+
+    /// <summary>The reason ReplaceConnectionKey gives when <see cref="ReplaceKeyUnchecked"/> is set: the server's own sentence (a cli connection by default).</summary>
+    public string ReplaceKeyUncheckedReason { get; set; } = "a cli connection has no service to check the key against";
+
+    /// <summary>Every body ReplaceConnectionKey was given, in order (the key as sent, so a test can check it was sent once).</summary>
+    public IReadOnlyList<ReplaceConnectionKeyBody> ReplacedKeys { get { lock (_gate) { return [.. _replacedKeys]; } } }
 
     /// <summary>The outcome of TestConnection per name; a name not here passes with no tools.</summary>
     public Dictionary<string, ConnectionTested> ConnectionTests { get; } = new(StringComparer.Ordinal);
@@ -219,6 +235,44 @@ internal sealed partial class FakeSindriApi
             // the stored row stays as it is until the callback lands; only the text the caller sees says it is waiting (OAuthSignInFlow.Sign.Waiting)
             found = found with { StatusReason = "waiting for the browser sign-in" };
             return Task.FromResult<Result<ConnectionAdded>>(new ConnectionAdded(found, ConsentUrl));
+        }
+    }
+
+    public async Task<Result<ConnectionKeyReplaced>> ReplaceConnectionKey(Uri api, string name, ReplaceConnectionKeyBody body, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        lock (_gate)
+        {
+            _connectionCalls.Add("replace-key " + name);
+            _replacedKeys.Add(body);
+        }
+
+        if (ReplaceKeyGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        if (NotReceived<ConnectionKeyReplaced>(api) is { } unanswered)
+        {
+            return unanswered;
+        }
+
+        lock (_gate)
+        {
+            if (NextReplaceKeyError is { } refused)
+            {
+                NextReplaceKeyError = null;
+                return refused;
+            }
+
+            if (!_connections.TryGetValue(name, out var found))
+            {
+                return NoConnection(name);
+            }
+
+            found = found with { Status = "connected", StatusReason = null, HasSecret = true };
+            _connections[name] = found;
+            return new ConnectionKeyReplaced(found, Checked: !ReplaceKeyUnchecked, ReplaceKeyUnchecked ? ReplaceKeyUncheckedReason : null);
         }
     }
 

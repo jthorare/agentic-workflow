@@ -1,0 +1,31 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:wf="using:Aw.Sindri.Ui.ViewModels.Workflows"
+             xmlns:controls="using:Aw.Sindri.Ui.Views.Controls"
+             x:Class="Aw.Sindri.Ui.Views.Workflows.WorkflowFindingsList"
+             x:DataType="wf:WorkflowsPageViewModel">
+  <!-- The selected step's validation findings (#3803), in the server's words: a kind chip (glyph-free word, tone error or attention), what is wrong, how to fix it, and a fix button
+       for the codes the app can fix (GRAPH-PROMPT-001). Each finding is one named text for a screen reader. Placed under the graph and in the step sheet. -->
+  <ItemsControl x:Name="StepFindingsList" ItemsSource="{Binding StepFindings}">
+    <ItemsControl.ItemsPanel>
+      <ItemsPanelTemplate>
+        <StackPanel Spacing="{StaticResource Space.XS}" />
+      </ItemsPanelTemplate>
+    </ItemsControl.ItemsPanel>
+    <ItemsControl.ItemTemplate>
+      <DataTemplate x:DataType="wf:WorkflowFindingViewModel">
+        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto">
+          <controls:StateChipView Grid.RowSpan="3" VerticalAlignment="Top" Margin="0,0,8,0" Word="{Binding Word}" Tone="{Binding ToneWord}" />
+          <Border Name="StepFindingText" Grid.Column="1" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <TextBlock Classes="body" Text="{Binding Sentence}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+          <TextBlock Grid.Row="1" Grid.Column="1" Classes="caption subtle" Text="{Binding FixLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          <Expander Name="StepFindingDetails" Grid.Row="3" Grid.Column="1" Margin="0,4,0,0" HorizontalAlignment="Stretch" IsVisible="{Binding HasDetails}" Header="{Binding DetailsHeader}" AutomationProperties.Name="{Binding DetailsHeader}">
+            <SelectableTextBlock Classes="caption mono" Text="{Binding Details}" TextWrapping="Wrap" />
+          </Expander>
+          <Button Name="StepFindingFix" Grid.Row="2" Grid.Column="1" Margin="0,4,0,0" HorizontalAlignment="Left" IsVisible="{Binding HasFix}" Content="{Binding FixText}" Click="OnFix" AutomationProperties.Name="{Binding FixText}" />
+        </Grid>
+      </DataTemplate>
+    </ItemsControl.ItemTemplate>
+  </ItemsControl>
+</UserControl>

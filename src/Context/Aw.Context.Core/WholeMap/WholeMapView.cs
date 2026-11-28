@@ -58,6 +58,11 @@ public sealed record WholeMapView(
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<WholeMapEdge>? Edges { get; init; }
 
+    /// <summary>The page of an opened concept's member list (#3674), or null on any other answer; left out when null.</summary>
+    [JsonPropertyOrder(20)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public WholeMapConceptList? ConceptList { get; init; }
+
     /// <summary>The opened area, or null; left out when null.</summary>
     [JsonPropertyOrder(14)]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
