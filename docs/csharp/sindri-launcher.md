@@ -15,7 +15,7 @@ machine-wide, needs no profile approval, and never holds secrets. One JSON Schem
 {
   "schema": 1,
   "viewer": { "kind": "exec-template", "name": "kitty",
-              "argv": ["kitty", "--title", "{title}", "--directory", "{cwd}", "--", "{cmd...}"] },   // warp | exec-template | print
+              "argv": ["kitty", "--title", "{title}", "--directory", "{cwd}", "--", "{cmd...}"] },   // warp | default-terminal | exec-template | print
   "host": { "kind": "tmux" },                  // tmux (default) | none (attended opens only)
   "agents": {
     "aider": { "label": "Aider", "bin": "aider", "open": ["{bin}", "--message", "{seed}"],
@@ -144,9 +144,13 @@ so every lane survives a closed window.
   stops (exit 1) with an error that names both, before any session is created. Warp stays the Linux default for `--init-launcher`.
 - `aw-meta-launch --init-launcher` writes it on macOS when Warp is absent; `--viewer default-terminal` forces it.
 
-The bash launcher has this viewer now. The C# launcher does not read it yet (issue 4518), so the shared fixtures under
-`tests/fixtures/launcher/` carry no `default-terminal` row until it does; `scripts/tests/meta-launch-default-terminal.test.sh` covers the
-schema and the bash reader meanwhile.
+**Sindri (C#, #4518).** Sindri reads the same kind with the same contract, one window per session. On macOS it writes `sindri-<session>.command` into a new 0700 folder under the temp folder: `#!/bin/sh`, `rm -f -- "$0"`
+(the file deletes itself when the terminal runs it), `cd '<cwd>' || exit 1`, then `exec '<absolute program>' '<rest of the attach argv>'...` (the program is the login-PATH tmux when the attach argv starts with tmux, else the argv's own first word resolved on the login PATH), every word
+single-quoted. It runs `open <file>`, then removes the folder once it is empty or after `AW_META_COMMAND_GRACE` seconds (default 20), in the background.
+On Linux it runs `xdg-terminal-exec <attach argv>`, else `x-terminal-emulator -e <attach argv>`, in the request's `cwd`; with neither on the login PATH
+the open fails and the error names both. `open` and `xdg-terminal-exec` exit 0 at once, so an exit 0 with no tmux client is "unconfirmed", as for
+`exec-template`. `sindri launch init --viewer default-terminal` writes it, and detection picks it on macOS when Warp is absent.
+The shared fixtures under `tests/fixtures/launcher/` carry a `default-terminal` row (`viewer-default-terminal.json`), so both readers are checked against it.
 
 ## The team layout
 

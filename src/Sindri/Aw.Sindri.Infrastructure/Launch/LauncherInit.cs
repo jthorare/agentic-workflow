@@ -19,7 +19,7 @@ internal sealed class LauncherInit(LauncherInitParts parts) : ILaunchSetup
         var chosen = request.Viewer is { Length: > 0 } name ? Named(name) : await TerminalDetection.Detect(parts.Detection, cancellationToken).ConfigureAwait(false);
         if (chosen is null)
         {
-            return KernelErrors.Invalid.With($"'{request.Viewer}' is not a viewer (fix: print, warp or one of {string.Join(", ", parts.Detection.Templates.Select(static t => t.Id))})");
+            return KernelErrors.Invalid.With($"'{request.Viewer}' is not a viewer (fix: print, warp, default-terminal or one of {string.Join(", ", parts.Detection.Templates.Select(static t => t.Id))})");
         }
 
         var json = Render(chosen);
@@ -121,6 +121,7 @@ internal sealed class LauncherInit(LauncherInitParts parts) : ILaunchSetup
     {
         "print" => new DetectedTerminal("print", "print", Template: null, "--viewer"),
         "warp" => new DetectedTerminal("warp", "Warp", Template: null, "--viewer"),
+        "default-terminal" => new DetectedTerminal("default-terminal", "Default terminal", Template: null, "--viewer"),
         _ => parts.Detection.Templates.FirstOrDefault(t => string.Equals(t.Id, name, StringComparison.OrdinalIgnoreCase)) is { } template
             ? new DetectedTerminal("exec-template", template.Name, template, "--viewer")
             : null,

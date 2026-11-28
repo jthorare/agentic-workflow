@@ -15,7 +15,7 @@ internal static class LauncherConfigFile
 {
     internal static readonly System.Text.Json.JsonSerializerOptions Json = AwJson.CreateOptions(LauncherJsonContext.Default);
 
-    private static readonly string[] _viewerKinds = ["warp", "exec-template", "print"];
+    private static readonly string[] _viewerKinds = ["warp", "default-terminal", "exec-template", "print"];
     private static readonly string[] _hostKinds = ["tmux", "none", "t3"];
 
     /// <summary>The catalog and the sessions section from the built-ins and an optional user file.</summary>
@@ -70,7 +70,7 @@ internal static class LauncherConfigFile
 
         var template = v.Kind == "exec-template";
         return template != (v.Name is { Length: > 0 } && v.Argv is { Count: > 0 }) || (!template && (v.Name is not null || v.Argv is not null))
-            ? "viewer: exec-template needs name and argv; warp and print take neither"
+            ? "viewer: exec-template needs name and argv; warp, default-terminal and print take neither"
             : AgentSections.Argv(v.Argv, "viewer.argv");
     }
 

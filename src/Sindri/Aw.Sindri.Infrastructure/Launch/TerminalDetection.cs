@@ -3,7 +3,7 @@ namespace Aw.Sindri.Infrastructure.Launch;
 /// <summary>The detection <c lang="text">sindri launch init</c> runs, and the launcher runs in memory when there is no launcher.json (launcher spec §4).</summary>
 internal static class TerminalDetection
 {
-    /// <summary>No GUI session: print; else Warp when present; else the terminal <c lang="text">$TERM_PROGRAM</c> names in terminals.json; else <c lang="text">$TERMINAL</c>, then <c lang="text">x-terminal-emulator</c> (owner, 2026-10-17); else the first of terminals.json on the login PATH; else print.</summary>
+    /// <summary>No GUI session: print; else Warp when present; else on macOS the registered default terminal; else the terminal <c lang="text">$TERM_PROGRAM</c> names in terminals.json; else <c lang="text">$TERMINAL</c>, then <c lang="text">x-terminal-emulator</c> (owner, 2026-10-17); else the first of terminals.json on the login PATH; else print.</summary>
     /// <param name="inputs">The environment and probes.</param>
     /// <param name="cancellationToken">Cancels the PATH probes.</param>
     /// <returns>The choice and why.</returns>
@@ -18,6 +18,11 @@ internal static class TerminalDetection
         if (await inputs.WarpPresent(cancellationToken).ConfigureAwait(false))
         {
             return new DetectedTerminal("warp", "Warp", Template: null, "Warp is installed");
+        }
+
+        if (inputs.IsMac)
+        {
+            return new DetectedTerminal("default-terminal", "Default terminal", Template: null, "macOS opens .command files in the registered default terminal");
         }
 
         var named = inputs.GetEnv("TERM_PROGRAM");
