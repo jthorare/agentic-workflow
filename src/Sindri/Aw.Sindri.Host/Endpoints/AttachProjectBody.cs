@@ -14,6 +14,8 @@ namespace Aw.Sindri.Host.Endpoints;
 /// <param name="Notes">The free-form notes, or null.</param>
 /// <param name="Target">The target date, or null.</param>
 /// <param name="Note">Alias of <paramref name="Notes"/>; removed one release after notes ships (owner q158).</param>
+/// <param name="Branches">The typed branch and branch-prefix sources (#4499), or null.</param>
+/// <param name="Items">The typed work-item id sources (#4499), or null.</param>
 internal sealed record AttachProjectBody(
     string? Linear = null,
     string? Name = null,
@@ -21,12 +23,14 @@ internal sealed record AttachProjectBody(
     IReadOnlyList<string>? Links = null,
     string? Notes = null,
     DateOnly? Target = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Note = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Note = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<Core.Projects.Sources.BranchSource>? Branches = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? Items = null)
 {
     /// <summary>The request; SND-PROJECT-004 when 'notes' and 'note' disagree.</summary>
     /// <returns>The request, or the refusal.</returns>
     internal Result<AttachProjectRequest> ToRequest() =>
         ProjectDecisions.NotesAliasConflict(Notes, Note) is { } conflict
             ? conflict
-            : new AttachProjectRequest(Linear, Name, State, Links, Notes ?? Note, Target);
+            : new AttachProjectRequest(Linear, Name, State, Links, Notes ?? Note, Target, Branches, Items);
 }

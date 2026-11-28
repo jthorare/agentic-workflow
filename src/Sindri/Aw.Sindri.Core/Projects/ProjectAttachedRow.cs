@@ -16,6 +16,8 @@ namespace Aw.Sindri.Core.Projects;
 /// <param name="FinishedAt">When the event that set Done or Canceled was recorded; null while the state is anything else.</param>
 /// <param name="EditedAt">When the owner last changed it (a hand-made project's last activity).</param>
 /// <param name="Sequence">The ledger sequence that last changed the row.</param>
+/// <param name="Branches">The typed branch sources (the typed branch and branch-prefix sources (#4499), or null); a row stored before it reads as none.</param>
+/// <param name="Items">The typed work-item id sources (the typed work-item id sources (#4499), or null).</param>
 public sealed record ProjectAttachedRow(
     ProjectId Id,
     string? Linear,
@@ -28,4 +30,6 @@ public sealed record ProjectAttachedRow(
     DateTimeOffset AttachedAt,
     DateTimeOffset? FinishedAt,
     DateTimeOffset EditedAt,
-    long Sequence);
+    long Sequence,
+    IReadOnlyList<Sources.BranchSource>? Branches = null,
+    IReadOnlyList<string>? Items = null);

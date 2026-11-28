@@ -11,6 +11,8 @@ namespace Aw.Sindri.Core.Projects;
 /// <param name="ClearNotes">Drops the notes.</param>
 /// <param name="Target">A new target date, or null.</param>
 /// <param name="ClearTarget">Drops the target date.</param>
+/// <param name="Branches">The typed branch sources (the typed branch and branch-prefix sources (#4499), or null).</param>
+/// <param name="Items">The typed work-item id sources (the typed work-item id sources (#4499), or null).</param>
 public sealed record ProjectEdit(
     string? Name = null,
     ProjectState? State = null,
@@ -19,4 +21,6 @@ public sealed record ProjectEdit(
     string? Notes = null,
     bool ClearNotes = false,
     DateOnly? Target = null,
-    bool ClearTarget = false);
+    bool ClearTarget = false,
+    IReadOnlyList<Sources.BranchSource>? Branches = null,
+    IReadOnlyList<string>? Items = null);

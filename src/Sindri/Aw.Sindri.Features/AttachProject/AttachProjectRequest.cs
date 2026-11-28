@@ -11,5 +11,7 @@ namespace Aw.Sindri.Features.AttachProject;
 /// <param name="Links">The links (https, no query or fragment, at most 10), or null.</param>
 /// <param name="Notes">The free-form notes (at most 16,384 characters, line breaks allowed), or null.</param>
 /// <param name="Target">The target date, or null.</param>
-public sealed record AttachProjectRequest(string? Linear = null, string? Name = null, ProjectState? State = null, IReadOnlyList<string>? Links = null, string? Notes = null, DateOnly? Target = null)
+/// <param name="Branches">The typed branch and branch-prefix sources (#4499), or null.</param>
+/// <param name="Items">The typed work-item id sources (#4499), or null.</param>
+public sealed record AttachProjectRequest(string? Linear = null, string? Name = null, ProjectState? State = null, IReadOnlyList<string>? Links = null, string? Notes = null, DateOnly? Target = null, IReadOnlyList<Core.Projects.Sources.BranchSource>? Branches = null, IReadOnlyList<string>? Items = null)
     : ICommand<ProjectAccepted>;

@@ -139,27 +139,34 @@ public static class ProjectCards
 
     private static List<ProjectLink> OwnerLinks(ProjectAttachedRow row) => [.. row.Links.Select(static l => new ProjectLink(l, l))];
 
+    // #4499: the typed sources ride on the card when the owner set any; none is null, so a card without them serializes as before
+    private static ProjectCard Typed(ProjectCard card, ProjectAttachedRow row) => card with
+    {
+        Branches = row.Branches is { Count: > 0 } branches ? branches : null,
+        Items = row.Items is { Count: > 0 } items ? items : null,
+    };
+
     private static ProjectCard HandMade(ProjectAttachedRow row) =>
-        new(row.Id.Value, ProjectOrigin.HandMade, row.Name ?? string.Empty, Description: null, row.State, StateSetByOwner: row.State is not null, Health: null, Lead: null,
+        Typed(new(row.Id.Value, ProjectOrigin.HandMade, row.Name ?? string.Empty, Description: null, row.State, StateSetByOwner: row.State is not null, Health: null, Lead: null,
             row.Target, OpenIssues: null, Counting: false, OpenPrs: null, PrScope: null, row.EditedAt, row.FinishedAt, Repos: [],
-            OwnerLinks(row), row.Notes, Synced: true, row.Version);
+            OwnerLinks(row), row.Notes, Synced: true, row.Version), row);
 
     private static ProjectCard Unmatched(ProjectAttachedRow row, string linearKey, bool synced) =>
-        new(row.Id.Value, ProjectOrigin.Attached, row.Name ?? linearKey, Description: null, row.State, StateSetByOwner: row.State is not null, Health: null, Lead: null,
+        Typed(new(row.Id.Value, ProjectOrigin.Attached, row.Name ?? linearKey, Description: null, row.State, StateSetByOwner: row.State is not null, Health: null, Lead: null,
             row.Target, OpenIssues: null, Counting: false, OpenPrs: null, PrScope: null, LastActivity: null, row.FinishedAt, Repos: [],
-            OwnerLinks(row), row.Notes, synced, row.Version);
+            OwnerLinks(row), row.Notes, synced, row.Version), row);
 
     private static ProjectCard Merged(ProjectAttachedRow row, LinearProjectFact fact)
     {
         var linearState = StateOf(fact.StateRaw);
         var byOwner = row.State is not null;
         var linearFinished = LinearFinished(linearState, fact);
-        return new ProjectCard(
+        return Typed(new ProjectCard(
             row.Id.Value, ProjectOrigin.Attached, fact.Title, fact.Description, row.State ?? linearState, byOwner, MapHealth(fact.Health),
             fact.Lead is null ? null : new ProjectLead(fact.LeadIsOwner, fact.LeadIsOwner ? null : fact.Lead.Name),
             Date(fact.DueAt) ?? row.Target, fact.OpenIssues, fact.Counting, fact.OpenPrs, PrScope(fact), fact.LastActivity,
             byOwner ? row.FinishedAt ?? linearFinished : linearFinished ?? row.FinishedAt,
-            fact.Repos ?? [], LinearLinks(fact, OwnerLinks(row)), row.Notes, Synced: true, row.Version);
+            fact.Repos ?? [], LinearLinks(fact, OwnerLinks(row)), row.Notes, Synced: true, row.Version), row);
     }
 
     // why: the store holds only PRs the GitHub feed's window saw, so the count says which ones it is (spec §3)

@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Aw.Sindri.Core.Projects.Sources;
 using Aw.Sindri.Core.Projects.Truth;
 using Aw.Sindri.Core.Projects.Vocabulary;
 
@@ -49,4 +50,12 @@ public sealed record ProjectCard(
 {
     /// <summary>What Sindri's own PR, item and agent data says about the project (issue 3718); empty until read.</summary>
     public ProjectTruth Truth { get; init; } = ProjectTruth.Empty;
+
+    /// <summary>The typed branch and branch-prefix sources the owner set (#4499); null when none, so a card without them serializes as before.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<BranchSource>? Branches { get; init; }
+
+    /// <summary>The typed work-item id sources the owner set (#4499); null when none.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<string>? Items { get; init; }
 }
