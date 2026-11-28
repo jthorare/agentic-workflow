@@ -60,33 +60,55 @@ internal static partial class GitHubWire
 
     /// <summary>Reads the merge state of a single pull request.</summary>
     public static GitHubPullDetail ReadPull(JsonElement e, IReadOnlyList<string> paths)
-        => new(Flag(e, "merged"), Flag(e, "draft"), Date(e, "merged_at"), paths, RequestedLogins(e), e.TryGetProperty("head", out var head) && head.ValueKind == JsonValueKind.Object ? Text(head, "sha") : null);
+        => new(Flag(e, "merged"), Flag(e, "draft"), Date(e, "merged_at"), paths, RequestedLogins(e), e.TryGetProperty("head", out var head) && head.ValueKind == JsonValueKind.Object ? Text(head, "sha") : null, NullableFlag(e, "mergeable"));
 
-    /// <summary>Reduces a pull request's review list to each login's latest review: the one with the newest 'submitted_at' (the later entry on a tie), pending and dismissed reviews (GitHub voided the latter) and ones without a login or commit skipped. A later COMMENTED review replaces an earlier APPROVED one: spec §5.6 counts the latest review whatever its state. Ordered by login.</summary>
-    public static IReadOnlyList<(string Login, string Commit)> LatestReviews(IEnumerable<JsonElement> reviews)
+    /// <summary>Reduces a pull request's review list to each login's latest review: the one with the newest 'submitted_at' (the later entry on a tie), pending and dismissed reviews (GitHub voided the latter) and ones without a login or commit skipped. The commit is the newest review's whatever its state (spec §5.6). The state is the login's newest verdict (APPROVED or CHANGES_REQUESTED, by the same newest rule), so a later COMMENTED review doesn't clear a change request; it is COMMENTED only when the login gave no verdict. Ordered by login.</summary>
+    public static IReadOnlyList<(string Login, string Commit, string? State)> LatestReviewStates(IEnumerable<JsonElement> reviews)
     {
-        Dictionary<string, (string Commit, DateTimeOffset At)> latest = new(StringComparer.Ordinal);
-        foreach (var review in reviews)
+        Dictionary<string, (string Commit, DateTimeOffset At, string? State)> latest = new(StringComparer.Ordinal);
+        Dictionary<string, (DateTimeOffset At, string State)> verdicts = new(StringComparer.Ordinal);
+        foreach (var (login, commit, at, state) in Settled(reviews))
         {
-            if (review.ValueKind != JsonValueKind.Object || IsSkippedState(Text(review, "state"))
-                || Author(review) is not { Length: > 0 } login || Text(review, "commit_id") is not { Length: > 0 } commit)
-            {
-                continue;
-            }
-
-            var at = Date(review, "submitted_at") ?? DateTimeOffset.MinValue;
             if (!latest.TryGetValue(login, out var seen) || at >= seen.At)
             {
-                latest[login] = (commit, at);
+                latest[login] = (commit, at, state);
+            }
+
+            if (VerdictOf(state) is { } verdict && (!verdicts.TryGetValue(login, out var held) || at >= held.At))
+            {
+                verdicts[login] = (at, verdict);
             }
         }
 
-        return [.. latest.OrderBy(static kv => kv.Key, StringComparer.Ordinal).Select(static kv => (kv.Key, kv.Value.Commit))];
+        return [.. latest.OrderBy(static kv => kv.Key, StringComparer.Ordinal).Select(kv => (kv.Key, kv.Value.Commit, verdicts.TryGetValue(kv.Key, out var v) ? v.State : kv.Value.State))];
     }
+
+    // the reviews that count: an object with a login and a commit, not pending and not dismissed
+    private static IEnumerable<(string Login, string Commit, DateTimeOffset At, string? State)> Settled(IEnumerable<JsonElement> reviews)
+    {
+        foreach (var review in reviews)
+        {
+            if (review.ValueKind == JsonValueKind.Object && !IsSkippedState(Text(review, "state"))
+                && Author(review) is { Length: > 0 } login && Text(review, "commit_id") is { Length: > 0 } commit)
+            {
+                yield return (login, commit, Date(review, "submitted_at") ?? DateTimeOffset.MinValue, Text(review, "state"));
+            }
+        }
+    }
+
+    /// <summary>The same reduction as <see cref="LatestReviewStates"/> without each review's state.</summary>
+    /// <param name="reviews">The review list.</param>
+    /// <returns>Each login's latest review's commit, ordered by login.</returns>
+    public static IReadOnlyList<(string Login, string Commit)> LatestReviews(IEnumerable<JsonElement> reviews)
+        => [.. LatestReviewStates(reviews).Select(static r => (r.Login, r.Commit))];
 
     /// <summary>Reads 'ahead_by' from a compare reply, or null when it has none.</summary>
     public static int? AheadBy(JsonElement e)
         => e.ValueKind == JsonValueKind.Object && Long(e, "ahead_by") is { } n ? (int)Math.Clamp(n, 0, int.MaxValue) : null;
+
+    // a verdict is an approval or a change request; a COMMENTED review is neither and stands on GitHub beside an earlier verdict
+    private static string? VerdictOf(string? state)
+        => string.Equals(state, "APPROVED", StringComparison.OrdinalIgnoreCase) || string.Equals(state, "CHANGES_REQUESTED", StringComparison.OrdinalIgnoreCase) ? state : null;
 
     private static bool IsSkippedState(string? state)
         => string.Equals(state, "PENDING", StringComparison.OrdinalIgnoreCase) || string.Equals(state, "DISMISSED", StringComparison.OrdinalIgnoreCase);
@@ -96,6 +118,10 @@ internal static partial class GitHubWire
         => e.TryGetProperty("requested_reviewers", out var people) && people.ValueKind == JsonValueKind.Array
             ? [.. people.EnumerateArray().Select(static p => p.ValueKind == JsonValueKind.Object ? Text(p, "login") : null).OfType<string>().Where(static l => l.Length > 0)]
             : [];
+
+    // 'mergeable' is true, false (a conflict) or null while GitHub works it out: null stays unknown, never "can merge"
+    private static bool? NullableFlag(JsonElement e, string name)
+        => e.TryGetProperty(name, out var p) && p.ValueKind is JsonValueKind.True or JsonValueKind.False ? p.ValueKind == JsonValueKind.True : null;
 
     private static bool Flag(JsonElement e, string name)
         => e.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.True;

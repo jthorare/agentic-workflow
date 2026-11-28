@@ -175,4 +175,34 @@ public sealed class RunCompareTests
 
         Assert.Equal((true, false, 2), (page.IsRuns, page.IsCompare, page.Runs.SelectedCount));
     }
+
+    private static JsonObject Item(string node, int index, string status, string? error = null)
+    {
+        var row = Step(node, status, error: error);
+        row["itemIndex"] = index;
+        return row;
+    }
+
+    [Fact]
+    public async Task A_for_each_step_shows_a_row_per_item_and_marks_the_item_that_differs()
+    {
+        var a = Run(RunA, 2, "succeeded", "manual", TimeSpan.FromHours(2), 10, error: null, Manual("x"), Item("agent", 1, "succeeded"), Item("agent", 2, "succeeded"), Item("agent", 3, "succeeded"));
+        var b = Run(RunB, 1, "failed", "manual", TimeSpan.FromHours(3), 10, "boom", Manual("x"), Item("agent", 1, "succeeded"), Item("agent", 2, "succeeded"), Item("agent", 3, "failed", error: "boom"));
+
+        var page = await TwoRuns(a, b);
+
+        Assert.Equal(["start", "agent \u00b7 item 1", "agent \u00b7 item 2", "agent \u00b7 item 3"], page.Compare.Steps.Select(s => s.Name), StringComparer.Ordinal);
+        Assert.Equal(("differs in 1 of 4 steps", true), (page.Compare.SummaryText, page.Compare.Steps[3].Differs));
+    }
+
+    [Fact]
+    public async Task A_run_whose_end_reads_before_its_start_shows_a_duration_under_1_s()
+    {
+        var a = Run(RunA, 2, "failed", "cli", TimeSpan.FromHours(2), -3, "e", Manual("x"));
+        var b = Run(RunB, 1, "succeeded", "manual", TimeSpan.FromHours(3), 10, error: null, Manual("x"));
+
+        var page = await TwoRuns(a, b);
+
+        Assert.Equal("r2 \u00b7 <1 s \u00b7 From the CLI", page.Compare.A.Facts);
+    }
 }

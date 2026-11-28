@@ -21,7 +21,7 @@ public sealed class CreateWorkflowServiceTests : IDisposable
 
     public CreateWorkflowServiceTests()
     {
-        _service = new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log, _ci);
+        _service = new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log, _ci, new StartSession.OpenGate());
     }
 
     public void Dispose() => _rig.Dispose();
@@ -88,7 +88,7 @@ public sealed class CreateWorkflowServiceTests : IDisposable
     {
         _ = await _rig.Harness.HoldLease();
         var none = new FakeCiSourceLookup();
-        var service = new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log, none);
+        var service = new CreateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Harness.Ids, _rig.Log, none, new StartSession.OpenGate());
 
         var result = await service.Handle(new CreateWorkflowRequest(Slug, "weekday-check", Spec: null, "owner"), Token);
 

@@ -14,6 +14,7 @@ namespace Aw.Sindri.Core.Reviews;
 /// <param name="ReviewersRead">Whether Sindri has read this record's reviewers yet.</param>
 /// <param name="Claims">The refs of the PR's Covers: line.</param>
 /// <param name="Url">The PR's link on the forge, which the forge port takes; null when the record has none.</param>
+/// <param name="Mergeable">Whether GitHub says the PR can merge (false: a conflict); null when unknown (stored before it was kept, or GitHub had not worked it out yet), which reads as neither (#4333).</param>
 public sealed record ReviewPull(
     string Repo,
     int Number,
@@ -27,4 +28,5 @@ public sealed record ReviewPull(
     IReadOnlyList<ReviewedAt> Reviews,
     bool ReviewersRead,
     IReadOnlyList<ReviewClaim> Claims,
-    string? Url = null);
+    string? Url = null,
+    bool? Mergeable = null);

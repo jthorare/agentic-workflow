@@ -67,3 +67,7 @@ static Aw.Kernel.Telemetry.WithheldCounts.operator ==(Aw.Kernel.Telemetry.Withhe
 static readonly Aw.Kernel.Telemetry.TelemetryErrors.InvalidSetting -> Aw.Kernel.ErrorDefinition!
 Aw.Kernel.Telemetry.TelemetryOptions.TraceCappedCategories.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Kernel.Telemetry.TelemetryOptions.TraceCappedCategories.init -> void
+Aw.Kernel.Telemetry.TelemetryStart
+Aw.Kernel.Telemetry.TelemetryStart.Started.get -> bool
+Aw.Kernel.Telemetry.TelemetryStart.TelemetryStart() -> void
+static Aw.Kernel.Telemetry.KernelTelemetryServiceCollectionExtensions.AddDeferredKernelTelemetry(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Aw.Kernel.Telemetry.TelemetryOptions! options) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

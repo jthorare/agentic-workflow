@@ -2,6 +2,7 @@ using System.Net;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Host.Commands;
+using Aw.Sindri.Infrastructure.Control;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Commands;
 using Microsoft.Extensions.Time.Testing;
@@ -136,7 +137,15 @@ public sealed class CliTimeoutTests
         var answer = await client.Get<GetStatusResponse>("/sindri/status", ct);
 
         Assert.Equal("SND-API-002", answer.Error.Code);
-        Assert.Contains("couldn't connect to 127.0.0.1:7410 within 5 s", answer.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("couldn't connect to 127.0.0.1:7410 within 2 s", answer.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_shared_handler_connects_within_the_time_the_error_names()
+    {
+        using var handler = ControlPlaneHandler.Create();
+
+        Assert.Equal(CliTimeout.Connect, handler.ConnectTimeout);
     }
 
     [Fact(Timeout = 15_000), Trait("Lane", "integration")]

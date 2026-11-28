@@ -9,7 +9,8 @@
 # `tmux -L <team> attach -t =<team>-<lane>`. A team started before this change stays on tmux's default socket until it is relaunched.
 # launcher.json (scripts/launcher-lib.sh; docs/csharp/sindri-launcher.md) changes two things, and with no file nothing
 # changes: the viewer (warp, the layout above; exec-template, one window per lane running the file's argv; print, one
-# `tmux attach` line per lane) and, when team.json has no "agent", each lane's agent (meta.lanesAgent, meta.lanes.<lane>;
+# `tmux attach` line per lane; default-terminal, one window per lane in the user's registered terminal: macOS `open` on a
+# private .command file per lane, Linux xdg-terminal-exec, else x-terminal-emulator -e, else a refusal naming both) and, when team.json has no "agent", each lane's agent (meta.lanesAgent, meta.lanes.<lane>;
 # Claude Code by default). team.json "agent" sets every lane, including the meta lane, and wins over those two fields.
 # team.json routing.lanes.<lane> {agent?, model?} (aw-meta route --apply) then puts that lane on its routed agent and model,
 # and a lane routed that way is exempt from the one-agent rule below.
@@ -17,10 +18,13 @@
 # DEFAULT socket, where a team started before the switch still runs, and refuses (exit 1) if any exist: starting them again
 # would run a second claude on the same transcripts. The owner stops the old team, then relaunches; --allow-legacy skips the check (the meta session never passes it).
 #   meta-launch.sh [--team <name>] [--lanes a,b,...] [--no-open] [--dry-run] [--allow-legacy]
-#   meta-launch.sh --init-launcher [--viewer warp|print|<terminal id>] [--force] [--stdout]   write launcher.json for this box
+#   meta-launch.sh [--team <name>] [--lanes a,b,...] --print-layout   print the team layout (lane_shell, layout_build below) as JSON; starts and opens nothing
+#   meta-launch.sh --init-launcher [--viewer warp|print|default-terminal|<terminal id>] [--force] [--stdout]   write launcher.json for this box
 #   AW_META_CONFIG      team config (default $AW_STATE_DIR/meta/teams/<team>/team.json, or the legacy $AW_STATE_DIR/meta/team.json; `aw-meta team-init` writes it)
 #   AW_META_TEAM        the team to launch (same as --team); with one team on disk, or a legacy config, none is needed (scripts/meta-team-lib.sh)
 #   AW_LAUNCHER_CONFIG  the launcher file (default $AW_STATE_DIR/launcher.json); passed on to each lane's session
+#   AW_WARP_APP         the Warp app --init-launcher looks for on macOS (default /Applications/Warp.app; tests)
+#   AW_META_COMMAND_GRACE  seconds the default-terminal viewer waits on macOS for each lane's .command file to start (default 20), then removes its temp dir
 #   AW_WARP_LAUNCH_DIR  default ${XDG_DATA_HOME:-~/.local/share}/warp-terminal/launch_configurations (Linux),
 #                       ~/.warp/launch_configurations (macOS)
 #   AW_META_ALLOW_LEGACY=1  same as --allow-legacy
@@ -38,24 +42,29 @@ while [ -L "$self" ]; do
   case "$t" in /*) self="$t" ;; *) self="$d/$t" ;; esac
 done
 here="$(cd "$(dirname "$self")" && pwd)"
-only=""; team_sel="${AW_META_TEAM:-}"; open=1; dry=0; allow_legacy="${AW_META_ALLOW_LEGACY:-0}"; init=0; init_viewer=""; init_force=0; init_stdout=0
+only=""; team_sel="${AW_META_TEAM:-}"; open=1; dry=0; allow_legacy="${AW_META_ALLOW_LEGACY:-0}"; init=0; init_viewer=""; init_force=0; init_stdout=0; print_layout=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --team) team_sel="${2:?--team needs a name}"; shift 2 ;;
     --lanes) only="${2:?--lanes needs a list}"; shift 2 ;;
     --no-open) open=0; shift ;;
     --dry-run) dry=1; shift ;;
+    --print-layout) print_layout=1; shift ;;
     --allow-legacy) allow_legacy=1; shift ;;
     --init-launcher) init=1; shift ;;
     --viewer) init_viewer="${2:?--viewer needs a name}"; shift 2 ;;
     --force) init_force=1; shift ;;
     --stdout) init_stdout=1; shift ;;
-    *) echo "usage: meta-launch.sh [--team name] [--lanes a,b,...] [--no-open] [--dry-run] [--allow-legacy] | --init-launcher [--viewer name] [--force] [--stdout]" >&2; exit 2 ;;
+    *) echo "usage: meta-launch.sh [--team name] [--lanes a,b,...] [--no-open] [--dry-run] [--allow-legacy] [--print-layout] | --init-launcher [--viewer name] [--force] [--stdout]" >&2; exit 2 ;;
   esac
 done
 if [ "$init" = 0 ] && { [ -n "$init_viewer" ] || [ "$init_force" = 1 ] || [ "$init_stdout" = 1 ]; }; then
   echo "meta-launch: --viewer, --force and --stdout go with --init-launcher" >&2; exit 2
 fi
+if [ "$print_layout" = 1 ] && { [ "$dry" = 1 ] || [ "$init" = 1 ]; }; then
+  echo "meta-launch: --print-layout goes alone: it prints the layout and starts nothing (no --dry-run, no --init-launcher)" >&2; exit 2
+fi
+[ "$print_layout" = 1 ] && open=0   # nothing opens, so the default-terminal viewer's terminal check below does not apply
 command -v jq > /dev/null || { echo "meta-launch: jq is not installed" >&2; exit 1; }
 state_dir="${AW_STATE_DIR:-$HOME/.agentic-workflow}"
 # shellcheck source=launcher-lib.sh
@@ -77,14 +86,16 @@ init_launcher() {
   term_by_id() { jq -c --arg k "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')" '.terminals[] | select((.id | ascii_downcase) == $k or (.name | ascii_downcase) == $k)' "$LAUNCHER_TERMINALS"; }
   if [ -n "$init_viewer" ]; then
     case "$init_viewer" in
-      print|warp) kind="$init_viewer"; why="from --viewer" ;;
+      print|warp|default-terminal) kind="$init_viewer"; why="from --viewer" ;;
       *) row="$(term_by_id "$init_viewer")"
          [ -n "$row" ] || { echo "meta-launch: unknown --viewer '$init_viewer' (warp, print, or: $(jq -r '[.terminals[].id] | join(", ")' "$LAUNCHER_TERMINALS"))" >&2; return 2; }
          kind=exec-template; why="from --viewer" ;;
     esac
   elif [ "$(uname -s)" != Darwin ] && [ -z "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then kind=print; why="no GUI session"
-  elif command -v warp-terminal > /dev/null 2>&1 || [ "${TERM_PROGRAM:-}" = WarpTerminal ] || { [ "$(uname -s)" = Darwin ] && [ -d /Applications/Warp.app ]; }; then
+  elif command -v warp-terminal > /dev/null 2>&1 || [ "${TERM_PROGRAM:-}" = WarpTerminal ] || { [ "$(uname -s)" = Darwin ] && [ -d "${AW_WARP_APP:-/Applications/Warp.app}" ]; }; then
     kind=warp; why="Warp found"
+  elif [ "$(uname -s)" = Darwin ]; then
+    kind=default-terminal; why="macOS default terminal"   # whichever app is registered for .command files (Terminal, iTerm, Rex, ...)
   else
     tp="${TERM_PROGRAM:-}"
     if [ -n "$tp" ]; then
@@ -161,6 +172,31 @@ env_str=" -e $(shq "PATH=$PATH") -e $(shq "SHELL=$sh_bin") -e $(shq "AW_META_CAL
 # AW_META_LANE has to be in the session before the login profile runs (meta-lane.sh exports it too late for a guard like [ -z "$AW_META_LANE" ]).
 lane_env_str() { printf '%s -e AW_META_LANE=%s' "$env_str" "$1"; }
 lane_cmd() { printf 'exec env SHELL=%s %s -lc %s' "$(shq "$sh_bin")" "$(shq "$sh_bin")" "$(shq "$(shq "$here/meta-lane.sh") $team $1")"; }   # run by tmux through sh -c; fish takes -lc too
+# lane_shell <lane>: the shell line a pane runs (Warp): it attaches, or creates the session itself with the same command as step 1,
+# so a session that is missing when the terminal opens (a --lanes run, a lane that exited) still runs the lane instead of a plain
+# shell under its name. A session the pane creates gets remain-on-exit too, as in step 1.
+lane_shell() { printf 'tmux -L %s new -A -s %s -c %s -e AW_META_CONFIG=%s%s%s %s \\; set-option -w remain-on-exit on' "$team" "$team-$1" "$repo" "$config" "$(lane_env_str "$1")" "$lc_str" "$(shq "$(lane_cmd "$1")")"; }
+# The team layout (#4517): one document that says what the team looks like, whatever the terminal; each viewer kind has an
+# adapter below that turns it into that terminal's own layout or window calls ($defs/layout in schemas/launcher.schema.json,
+# docs/csharp/sindri-launcher.md "The team layout"). Lanes in order: every lane of the team config (the meta lane first), then a
+# --lanes lane the config does not name. arrangement first-left-rest-stacked: the first lane on the left, the others stacked on the
+# right; an adapter that can only open windows opens one per lane. open: the lane is in this run (--lanes). Per lane: attach, the
+# argv that attaches to a running session; join, the argv that attaches or creates a plain one; shell, lane_shell's line.
+layout_build() {
+  local l o
+  for l in "${A[@]}" "${L[@]}"; do
+    case ",${only:-$all}," in *",$l,"*) o=true ;; *) o=false ;; esac
+    jq -nc --arg lane "$l" --arg s "$team-$l" --arg sock "$team" --arg sh "$(lane_shell "$l")" --argjson o "$o" \
+      '{lane: $lane, session: $s, open: $o, attach: ["tmux", "-L", $sock, "attach", "-t", "=\($s)"],
+        join: ["tmux", "-L", $sock, "new", "-A", "-s", $s], shell: $sh}'
+  done | jq -sc --arg t "$team" --arg cwd "$repo" \
+    '{schema: 1, team: $t, socket: $t, cwd: $cwd, arrangement: "first-left-rest-stacked", lanes: (reduce .[] as $x ([]; if any(.[]; .lane == $x.lane) then . else . + [$x] end))}'
+}
+# layout_lanes open|all <jq filter>: the filter's value for each open lane (or every lane), as raw text
+layout_lanes() { jq -r --arg w "$1" ".lanes[] | select(\$w == \"all\" or .open) | $2" <<< "$LAYOUT"; }
+# layout_argv <lane> <field>: the lane's attach or join argv, NUL-separated
+layout_argv() { jq -j --arg l "$1" --arg f "$2" '.lanes[] | select(.lane == $l) | .[$f][] | ., "\u0000"' <<< "$LAYOUT"; }
+layout_attach_line() { jq -r --arg l "$1" '.lanes[] | select(.lane == $l) | .attach | join(" ")' <<< "$LAYOUT"; }
 agent_of() { launcher_lane_agent "$1" "$meta_lane"; }
 proc_of() { # lane: the process name a pane runs while the lane's agent is up
   local a pn; a="$(agent_of "$1")"; pn="$(launcher_agent_field "$a" processName)"
@@ -187,15 +223,29 @@ for l in "${A[@]}"; do
     exit 1
   fi
 done
+LAYOUT="$(layout_build)" || { echo "meta-launch: could not build the team layout" >&2; exit 1; }
+if [ "$print_layout" = 1 ]; then jq . <<< "$LAYOUT"; exit 0; fi
 if [ "$viewer" = exec-template ] && [ "$(jq -r '.viewer.argv | type' <<< "$LAUNCHER_DOC")" != array ]; then
   echo "meta-launch: SND-LAUNCH-011: viewer.argv is required for an exec-template viewer (in ${launcher_file:-launcher.json})" >&2; exit 1
 fi
 # viewer_argv <lane> <name>: the exec-template argv for one lane, NUL-separated (the attach command is {cmd...})
 viewer_argv() {
-  launcher_expand "$(jq -c .viewer.argv <<< "$LAUNCHER_DOC")" "$repo" "$team-$1" "$team-$1" "" "" "" "${tmux_t[@]}" attach -t "=$team-$1"
+  local w=() a
+  while IFS= read -r -d '' a; do w+=("$a"); done < <(layout_argv "$1" attach)
+  launcher_expand "$(jq -c .viewer.argv <<< "$LAUNCHER_DOC")" "$repo" "$team-$1" "$team-$1" "" "" "" "${w[@]}"
 }
 if [ "$viewer" = exec-template ]; then   # a refusal (an expansion starting with "-") stops the launch before any session exists
   for l in "${L[@]}"; do viewer_argv "$l" > /dev/null || exit 1; done
+fi
+# The default-terminal viewer on Linux needs a terminal launcher; with none, refuse before any session exists (--no-open never runs one).
+dt_linux=()
+if [ "$viewer" = default-terminal ] && [ "$(uname -s)" != Darwin ] && [ "$open" = 1 ]; then
+  if command -v xdg-terminal-exec > /dev/null 2>&1; then dt_linux=(xdg-terminal-exec)
+  elif command -v x-terminal-emulator > /dev/null 2>&1; then dt_linux=(x-terminal-emulator -e)
+  else
+    echo "meta-launch: viewer default-terminal: neither xdg-terminal-exec nor x-terminal-emulator is on PATH. Install one, pick another viewer (aw-meta-launch --init-launcher --viewer print --force), or attach by hand: tmux -L $team attach -t =$team-<lane>" >&2
+    exit 1
+  fi
 fi
 for l in "${L[@]}"; do
   a="$(agent_of "$l")"
@@ -259,8 +309,8 @@ if [ "$allow_legacy" != 1 ] && [ "$team" != default ]; then
   [ "$dry" = 1 ] && echo "[dry-run] legacy-socket check: $legacy_s has-session -t =$team-<lane> for each lane (refuses if any exists)"
   legacy_found=()
   # The Warp layout has a pane (tmux new -A) for every lane, so with that viewer every lane is checked; print and
-  # exec-template only attach to the lanes of this run.
-  if [ "$viewer" = exec-template ] || [ "$viewer" = print ]; then legacy_lanes=("${L[@]}"); else legacy_lanes=("${A[@]}"); fi
+  # exec-template and default-terminal only attach to the lanes of this run.
+  if [ "$viewer" = exec-template ] || [ "$viewer" = print ] || [ "$viewer" = default-terminal ]; then legacy_lanes=("${L[@]}"); else legacy_lanes=("${A[@]}"); fi
   for l in "${legacy_lanes[@]}"; do "${legacy_t[@]}" has-session -t "=$team-$l" 2> /dev/null && legacy_found+=("$team-$l"); done
   if [ "${#legacy_found[@]}" -gt 0 ]; then
     echo "meta-launch: team $team still runs on tmux's default socket (${legacy_found[*]}). Starting its lanes here would run each agent twice on the same transcripts." >&2
@@ -306,31 +356,31 @@ for l in "${L[@]}"; do
   remain_on_exit "$s"
 done
 
-# 2. Warp launch configuration: the first lane on the left, the others stacked on the right.
-# The pane attaches, or creates the session itself with the same command as step 1, so a session that is missing when
-# Warp opens (a --lanes run, a lane that exited) still runs the lane instead of a plain shell under its name.
-# A session the pane creates gets remain-on-exit too, as in step 1.
-attach() { printf 'tmux -L %s new -A -s %s -c %s -e AW_META_CONFIG=%s%s%s %s \\; set-option -w remain-on-exit on' "$team" "$team-$1" "$repo" "$config" "$(lane_env_str "$1")" "$lc_str" "$(shq "$(lane_cmd "$1")")"; }
-pane() { # indent lane
-  printf '%s- cwd: %s\n%s  commands:\n%s    - exec: %s\n' "$1" "$repo" "$1" "$1" "$(attach "$2")"
+# 2. The viewer: the adapter for viewer.kind turns the team layout into the terminal's own layout or windows.
+# Warp adapter: a launch configuration, the first lane on the left and the others stacked on the right, each pane running the
+# lane's shell line. It has a pane for every lane of the layout, so --lanes changes nothing in it.
+pane() { # indent shell-line
+  printf '%s- cwd: %s\n%s  commands:\n%s    - exec: %s\n' "$1" "$repo" "$1" "$1" "$2"
 }
 render() {
+  local shells=()
+  while IFS= read -r l; do shells+=("$l"); done < <(layout_lanes all .shell)
   echo "# Written by scripts/meta-launch.sh from $config; rerun it rather than editing."
   echo "name: $team team"
   echo "windows:"
   echo "  - tabs:"
   echo "      - title: $team"
   echo "        layout:"
-  if [ "${#A[@]}" = 1 ]; then
-    printf '          cwd: %s\n          commands:\n            - exec: %s\n' "$repo" "$(attach "${A[0]}")"
+  if [ "${#shells[@]}" = 1 ]; then
+    printf '          cwd: %s\n          commands:\n            - exec: %s\n' "$repo" "${shells[0]}"
     return
   fi
   echo "          split_direction: vertical"
   echo "          panes:"
-  pane "            " "${A[0]}"
+  pane "            " "${shells[0]}"
   echo "            - split_direction: horizontal"
   echo "              panes:"
-  for l in "${A[@]:1}"; do pane "                " "$l"; done
+  for l in "${shells[@]:1}"; do pane "                " "$l"; done
 }
 viewer_warp() {
   if [ "$dry" = 1 ]; then echo "[dry-run] would write $yaml:"; render; return 0; fi
@@ -353,26 +403,26 @@ viewer_warp() {
   fi
 }
 
-# The print viewer: nothing opens; one attach command per lane (the lanes this run covers).
+# Print adapter: nothing opens; the attach argv of each open lane, one line each.
 viewer_print() {
   [ "$dry" = 1 ] && echo "[dry-run] would print:"
-  for l in "${L[@]}"; do echo "${tmux_t[*]} attach -t =$team-$l"; done
-  return 0
+  layout_lanes open '.attach | join(" ")'
 }
 
-# The exec-template viewer: one window per lane running the file's argv, with {title} and {name} the session name, {cwd} the
-# repo and {cmd...} the attach command. The window is started detached; a terminal that is not installed never stops the
+# Exec-template adapter: one window per open lane running the file's argv, with {title} and {name} the session name, {cwd} the
+# repo and {cmd...} the lane's attach argv. The window is started detached; a terminal that is not installed never stops the
 # sessions (spec SL5): the attach command is printed instead.
 viewer_exec() {
-  local name argv l a
+  local name argv l a lanes=()
   name="$(jq -r '.viewer.name // .viewer.argv[0]' <<< "$LAUNCHER_DOC")"
-  for l in "${L[@]}"; do
+  while IFS= read -r l; do lanes+=("$l"); done < <(layout_lanes open .lane)
+  for l in "${lanes[@]}"; do
     argv=(); while IFS= read -r -d '' a; do argv+=("$a"); done < <(viewer_argv "$l")
     if [ "$dry" = 1 ]; then printf '[dry-run] viewer %s: ' "$name"; printf '%q ' "${argv[@]}"; echo; continue; fi
     [ "$open" = 1 ] || continue
     if ! command -v "${argv[0]}" > /dev/null 2>&1; then
       echo "meta-launch: viewer $name: ${argv[0]} not found; attach by hand:" >&2
-      echo "${tmux_t[*]} attach -t =$team-$l"
+      layout_attach_line "$l"
       continue
     fi
     ( "${argv[@]}" > /dev/null 2>&1 < /dev/null & )
@@ -381,8 +431,62 @@ viewer_exec() {
   return 0
 }
 
+# Default-terminal adapter: one window per open lane in the user's own terminal, running the lane's join argv (the host stays tmux,
+# so a closed window loses nothing); on macOS its tmux is written as the absolute path found now (a Terminal login shell may not
+# have the caller's PATH); on Linux the launcher passes the caller's environment on, so it is the bare word.
+# macOS: one executable .command file per lane in a private dir (mode 0700), opened with `open`; macOS hands it to whichever app is
+# registered for .command files, so no terminal is named here. `open` returns before the app reads the file, so the dir cannot go at
+# once. The file removes itself as its first line (an open file stays readable after unlink, so the shell still runs the rest), and the
+# launcher waits up to AW_META_COMMAND_GRACE seconds (default 20) for every file to be gone, then removes the dir: a file the terminal
+# never started cannot outlive the run. The traps also cover a launcher that is interrupted.
+# Linux: xdg-terminal-exec, else x-terminal-emulator -e (picked above, before any session exists).
+dt_dir=""
+dt_cleanup() {
+  if [ -n "$dt_dir" ] && [ -d "$dt_dir" ]; then rm -f "$dt_dir"/*.command; rmdir "$dt_dir" 2> /dev/null; fi
+  dt_dir=""; return 0
+}
+viewer_default_terminal() {
+  local l s w a line tmux_bin f n grace="${AW_META_COMMAND_GRACE:-20}" lanes=()
+  tmux_bin="$(command -v tmux)"
+  while IFS= read -r l; do lanes+=("$l"); done < <(layout_lanes open .lane)
+  if [ "$(uname -s)" = Darwin ]; then
+    [ "$dry" = 1 ] || [ "$open" = 1 ] || return 0
+    if [ "$dry" = 0 ]; then
+      dt_dir="$(mktemp -d "${TMPDIR:-/tmp}/aw-launch.XXXXXX")" || { echo "meta-launch: could not make a temp dir" >&2; return 1; }
+      trap 'dt_cleanup' EXIT; trap 'dt_cleanup; exit 1' HUP INT TERM
+      chmod 700 "$dt_dir"
+    fi
+    for l in "${lanes[@]}"; do
+      s="$team-$l"; w=(); while IFS= read -r -d '' a; do w+=("$a"); done < <(layout_argv "$l" join)
+      w[0]="$tmux_bin"; line=""; for a in "${w[@]}"; do line="$line $(shq "$a")"; done; line="${line# }"
+      if [ "$dry" = 1 ]; then echo "[dry-run] default-terminal: $s: open <private dir>/$s.command (cd $(shq "$repo") && exec $line)"; continue; fi
+      f="$dt_dir/$s.command"
+      ( umask 077
+        printf '#!/bin/sh\nrm -f -- "$0"\ncd %s || exit 1\nexec %s\n' "$(shq "$repo")" "$line" > "$f" )
+      chmod 700 "$f"
+      if open "$f"; then echo "viewer default-terminal: window for $s"
+      else echo "meta-launch: viewer default-terminal: open $f failed; attach by hand:" >&2; layout_attach_line "$l"; fi
+    done
+    [ "$dry" = 1 ] && return 0
+    n=$((grace * 10))
+    while [ "$n" -gt 0 ] && [ -n "$(ls -A "$dt_dir" 2> /dev/null)" ]; do sleep 0.1; n=$((n - 1)); done
+    dt_cleanup
+    return 0
+  fi
+  for l in "${lanes[@]}"; do
+    s="$team-$l"; w=(); while IFS= read -r -d '' a; do w+=("$a"); done < <(layout_argv "$l" join)
+    if [ "$dry" = 1 ]; then echo "[dry-run] default-terminal: $s: $(command -v xdg-terminal-exec > /dev/null 2>&1 && echo xdg-terminal-exec || echo 'x-terminal-emulator -e') ${w[*]}"; continue; fi
+    [ "$open" = 1 ] || continue
+    ( cd "$repo" && "${dt_linux[@]}" "${w[@]}" > /dev/null 2>&1 < /dev/null & )
+    echo "viewer default-terminal: window for $s"
+  done
+  return 0
+}
+
+# The adapter for each viewer kind; a kind with no adapter of its own gets Warp's (the reader refuses an unknown kind first).
 case "$viewer" in
   print) viewer_print ;;
   exec-template) viewer_exec ;;
+  default-terminal) viewer_default_terminal ;;
   *) viewer_warp ;;
 esac
