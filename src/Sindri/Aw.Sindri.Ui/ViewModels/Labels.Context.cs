@@ -102,16 +102,22 @@ internal static partial class Labels
     /// <returns>"'Pane' names several items. Pick one."</returns>
     internal static string ContextSeveralMatch(string asked) => $"'{asked}' names several items. Pick one.";
 
+    /// <summary>The line when a name is no item's name but "Did you mean" choices follow it.</summary>
+    /// <param name="asked">What was typed.</param>
+    /// <returns>"No item is named 'Invoice'."</returns>
+    internal static string ContextNoItemNamed(string asked) => $"No item is named '{asked}'.";
+
     /// <summary>A refusal of a search in the app's own words: the miss and the several-match codes are worded here, any other keeps the server's sentence without its command-line hint.</summary>
     /// <param name="code">The refusal's code.</param>
     /// <param name="message">The server's sentence.</param>
     /// <param name="asked">What was typed.</param>
+    /// <param name="hasChoices">Whether "Did you mean" choices are drawn under the line.</param>
     /// <returns>The words for the banner.</returns>
-    internal static string ContextRefusal(string code, string message, string asked)
+    internal static string ContextRefusal(string code, string message, string asked, bool hasChoices)
     {
         if (string.Equals(code, "SND-CONTEXT-003", StringComparison.Ordinal))
         {
-            return ContextNothingMatches(asked);
+            return hasChoices ? ContextNoItemNamed(asked) : ContextNothingMatches(asked);
         }
 
         if (string.Equals(code, "SND-CONTEXT-037", StringComparison.Ordinal))

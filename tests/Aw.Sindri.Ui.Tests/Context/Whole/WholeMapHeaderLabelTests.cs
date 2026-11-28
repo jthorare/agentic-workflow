@@ -11,7 +11,7 @@ using Aw.Sindri.Ui.Views.Context.Whole;
 namespace Aw.Sindri.Ui.Tests.Context.Whole;
 
 /// <summary>The whole map's area labels sit in the header strip (#1646): at any zoom, including the dot zoom's enlarged labels, none reaches below its column's header rule.</summary>
-[Lane(TestLane.Unit)]
+[Lane(TestLane.Integration)]
 public sealed class WholeMapHeaderLabelTests
 {
     private static Task<T> OnUi<T>(Func<T> body) =>

@@ -221,7 +221,7 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
-              <Button x:Name="ProfileSetupLink" Classes="row-title" IsVisible="{Binding IsProfileMissing}" Click="OnOpenSetup" Content="{Binding ProfileDetail}"
+              <Button x:Name="ProfileSetupLink" Classes="row-title accent-link" IsVisible="{Binding IsProfileMissing}" Click="OnOpenSetup" Content="{Binding ProfileDetail}"
                       AutomationProperties.Name="{Binding ProfileDetail}" />
             </StackPanel>
           </Border>
@@ -232,7 +232,11 @@
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Classes="section-title head-title" Text="{Binding ViewsCardName}" AutomationProperties.Name="{Binding ViewsCardName}" />
-                <TextBlock x:Name="ViewsWordText" Grid.Column="1" Classes="body-strong head-word" Text="{Binding ViewsWord}" AutomationProperties.Name="{Binding ViewsWord}" />
+                <!-- #4331: the word's mark, as the Control plane card's: the ok check for Up to date, the red ✕ for Stalled. -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+                  <icons:StateIcon x:Name="ViewsGlyph" Glyph="{Binding ViewsGlyph}" IsVisible="{Binding HasViewsGlyph}" VerticalAlignment="Center" />
+                  <TextBlock x:Name="ViewsWordText" Classes="body-strong head-word" Text="{Binding ViewsWord}" AutomationProperties.Name="{Binding ViewsWord}" />
+                </StackPanel>
               </Grid>
               <ItemsControl x:Name="ViewsRows" ItemsSource="{Binding ViewsRows}" AutomationProperties.Name="{Binding ViewsCardName}">
                 <ItemsControl.ItemTemplate>
@@ -256,7 +260,11 @@
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock x:Name="CodeIndexEyebrow" Classes="section-title head-title" Text="{Binding Heading}" AutomationProperties.Name="{Binding Heading}" />
-                <TextBlock x:Name="CodeIndexWord" Grid.Column="1" Classes="body-strong head-word" Text="{Binding Word}" AutomationProperties.Name="{Binding Word}" />
+                <!-- #4331: the word's mark, as the Context index card's: the ok check, or the attention mark for "needs a look". -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+                  <icons:StateIcon x:Name="CodeIndexGlyph" Glyph="{Binding Glyph}" IsVisible="{Binding HasGlyph}" VerticalAlignment="Center" />
+                  <TextBlock x:Name="CodeIndexWord" Classes="body-strong head-word" Text="{Binding Word}" AutomationProperties.Name="{Binding Word}" />
+                </StackPanel>
               </Grid>
               <ItemsControl x:Name="CodeIndexLines" ItemsSource="{Binding Lines}">
                 <ItemsControl.ItemsPanel>
@@ -291,7 +299,11 @@
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock x:Name="ContextIndexEyebrow" Classes="section-title head-title" Text="{Binding Heading}" AutomationProperties.Name="{Binding Heading}" />
-                <TextBlock x:Name="ContextIndexWord" Grid.Column="1" Classes="body-strong head-word" Text="{Binding Word}" AutomationProperties.Name="{Binding Word}" />
+                <!-- #4129: the word's mark, as the Control plane card's: the ok check, or the attention mark for "needs a look". -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+                  <icons:StateIcon x:Name="ContextIndexGlyph" Glyph="{Binding Glyph}" VerticalAlignment="Center" />
+                  <TextBlock x:Name="ContextIndexWord" Classes="body-strong head-word" Text="{Binding Word}" AutomationProperties.Name="{Binding Word}" />
+                </StackPanel>
               </Grid>
               <StackPanel x:Name="ContextIndexBacklog" Spacing="{StaticResource Space.XS}" IsVisible="{Binding HasBacklog}"
                           Margin="0,8">
@@ -303,8 +315,13 @@
               <ItemsControl x:Name="ContextIndexLines" ItemsSource="{Binding Lines}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="shell:ContextIndexLine">
+                    <!-- #4269: the label in its own column, so a line that wraps at a large text scale hangs past it and doesn't read as a new row. -->
                     <Border MinHeight="{StaticResource Row.Height.Data}">
-                      <TextBlock Classes="body" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
+                      <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
+                        <TextBlock Classes="body" Text="{Binding Label}" IsVisible="{Binding HasLabel}" Margin="0,0,4,0" VerticalAlignment="Top"
+                                   AutomationProperties.AccessibilityView="Raw" />
+                        <TextBlock Grid.Column="1" Classes="body" Text="{Binding Rest}" TextWrapping="Wrap" VerticalAlignment="Top" AutomationProperties.Name="{Binding Name}" />
+                      </Grid>
                     </Border>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -331,17 +348,20 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
+              <!-- #4316: while the owner turned session watching off, one plain line in place of the problems. -->
+              <TextBlock x:Name="AgentsWatchingOff" Classes="body subtle" TextWrapping="Wrap" IsVisible="{Binding IsAgentsWatchingOff}" Text="{Binding AgentsWatchingOffText}"
+                         AutomationProperties.Name="{Binding AgentsWatchingOffText}" />
               <!-- #4012: while the count is above 0, each problem's sentence and code, one wrapped line each, and a link to the Agents page. -->
               <ItemsControl x:Name="AgentsProblems" ItemsSource="{Binding AgentsProblemLines}" IsVisible="{Binding HasAgentsProblems}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="shell:AgentProblemLine">
                     <TextBlock Classes="body" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text}">
-                      <Run Text="{Binding Text}" /><Run Classes="subtle" Text=" · " /><Run Classes="subtle" Text="{Binding Code}" />
+                      <Run Text="{Binding Text}" /><Run Classes="subtle" Text=" · " /><Run Classes="subtle" Text="{Binding ShownCode}" />
                     </TextBlock>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
-              <Button x:Name="AgentsLink" Classes="row-title" IsVisible="{Binding HasAgentsProblems}" Click="OnOpenAgents" Content="{Binding AgentsLinkText}"
+              <Button x:Name="AgentsLink" Classes="row-title accent-link" IsVisible="{Binding HasAgentsProblems}" Click="OnOpenAgents" Content="{Binding AgentsLinkText}"
                       AutomationProperties.Name="{Binding AgentsLinkText}" />
             </StackPanel>
           </Border>
@@ -464,7 +484,7 @@
                     <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                       <Panel IsVisible="{Binding RunShown}"><ccontrols:CommandControl DataContext="{Binding Run}" /></Panel>
                       <Panel IsVisible="{Binding ToggleShown}"><ccontrols:CommandControl DataContext="{Binding Toggle}" /></Panel>
-                      <Button Classes="row-title" IsVisible="{Binding IsRunning}" Click="OnViewJob" Content="{Binding ViewJobText}"
+                      <Button Classes="row-title accent-link" IsVisible="{Binding IsRunning}" Click="OnViewJob" Content="{Binding ViewJobText}"
                               AutomationProperties.Name="{Binding ViewJobName}" />
                     </StackPanel>
                   </Grid>
@@ -479,7 +499,7 @@
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                       <Panel IsVisible="{Binding RunShown}"><ccontrols:CommandControl DataContext="{Binding Run}" /></Panel>
                       <Panel IsVisible="{Binding ToggleShown}"><ccontrols:CommandControl DataContext="{Binding Toggle}" /></Panel>
-                      <Button Classes="row-title" IsVisible="{Binding IsRunning}" Click="OnViewJob" Content="{Binding ViewJobText}"
+                      <Button Classes="row-title accent-link" IsVisible="{Binding IsRunning}" Click="OnViewJob" Content="{Binding ViewJobText}"
                               AutomationProperties.Name="{Binding ViewJobName}" />
                     </StackPanel>
                   </Grid>

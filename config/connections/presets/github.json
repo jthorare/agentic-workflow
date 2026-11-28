@@ -2,6 +2,7 @@
   "id": "github",
   "displayName": "GitHub",
   "kind": "oauth",
+  "auth": ["key", "oauth"],
   "authorizeUrl": "https://github.com/login/oauth/authorize",
   "tokenUrl": "https://github.com/login/oauth/access_token",
   "revokeUrl": null,

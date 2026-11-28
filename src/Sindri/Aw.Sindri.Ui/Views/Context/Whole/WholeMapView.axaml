@@ -23,6 +23,16 @@
         </ControlTemplate>
       </Setter>
     </Style>
+    <Style Selector="Button.tab">
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.tab:focus-visible, Button.tile:focus-visible">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+      <Setter Property="BorderThickness" Value="2" />
+    </Style>
+    <Style Selector="Button.tab.selected">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+    </Style>
     <Style Selector="RadioButton.segment:checked /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
     </Style>
@@ -65,6 +75,7 @@
       </Border>
       <TextBlock x:Name="WholeDrillEmpty" Classes="body" Text="{Binding DrillEmptyText}" IsVisible="{Binding ShowDrillEmpty}" TextWrapping="Wrap" AutomationProperties.Name="{Binding DrillEmptyText}" />
       <TextBlock x:Name="WholeSize" Classes="caption subtle" Text="{Binding SizeText}" AutomationProperties.Name="{Binding SizeText}" />
+      <TextBlock x:Name="WholeAreaBar" Classes="caption subtle" Text="{Binding AreaBarText}" IsVisible="{Binding ShowAreaBar}" AutomationProperties.Name="{Binding AreaBarText}" />
       <TextBlock x:Name="WholeNote" Classes="body" Text="{Binding ByAreaNote}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ByAreaNote}" />
       <TextBlock x:Name="WholeMoreTouched" Classes="caption" Text="{Binding MoreTouchedText}" IsVisible="{Binding HasMoreTouched}" AutomationProperties.Name="{Binding MoreTouchedText}" />
     </StackPanel>
@@ -74,6 +85,81 @@
       <ctl:ZoomBorder x:Name="WholeCanvas" AutomationProperties.Name="{Binding CanvasName}">
         <wv:WholeMapCanvas x:Name="WholeWorld" />
       </ctl:ZoomBorder>
+
+      <!-- An opened area's canvas with nodes below the screen (#3674): a pill at the foot says how many. -->
+      <Border x:Name="WholeMoreOutOfView" IsVisible="{Binding ShowMoreOutOfView}" IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,64" Padding="12,4"
+              Background="{DynamicResource Brush.Surface3}" CornerRadius="{StaticResource Radius.MD}">
+        <TextBlock x:Name="WholeMoreOutOfViewText" Classes="caption" Text="{Binding MoreOutOfViewText}" AutomationProperties.Name="{Binding MoreOutOfViewText}" />
+      </Border>
+
+      <!-- The whole repo above 60 nodes (#3674): one tile per area, largest first, with its name whole and its counts; no edges, no zoom. -->
+      <Border x:Name="WholeAreaTilesHost" IsVisible="{Binding ShowAreaTiles}" Background="{DynamicResource Brush.Surface1}" Padding="12">
+        <Grid RowDefinitions="Auto,*" RowSpacing="8">
+          <TextBlock x:Name="WholeAreaTilesHead" Classes="caption subtle" Text="{Binding AreaTilesHead}" AutomationProperties.Name="{Binding AreaTilesHead}" />
+          <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl x:Name="WholeAreaTiles" ItemsSource="{Binding AreaTiles}" AutomationProperties.Name="{x:Static vm:WholeMapViewModel.AreaTilesName}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <WrapPanel />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:AreaCard">
+                  <Button Classes="tile" Width="220" Margin="0,0,8,8" Padding="12,10" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" Click="OnAreaCard" AutomationProperties.Name="{Binding Name}">
+                    <StackPanel Spacing="4">
+                      <TextBlock Classes="body-strong" Text="{Binding Label}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                      <TextBlock Classes="caption subtle" Text="{Binding Counts}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                      <ProgressBar Minimum="0" Maximum="1" Value="{Binding Share}" Height="3" AutomationProperties.AccessibilityView="Raw" />
+                    </StackPanel>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Grid>
+      </Border>
+
+      <!-- An opened area with more nodes than the canvas draws (#3674): the ranked list, 50 a page, never edges. -->
+      <Border x:Name="WholeAreaListHost" IsVisible="{Binding ShowAreaList}" Background="{DynamicResource Brush.Surface1}" Padding="12">
+        <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
+          <ItemsControl x:Name="WholeConceptTabs" ItemsSource="{Binding ConceptTabs}" IsVisible="{Binding IsConceptList}" AutomationProperties.Name="{x:Static vm:WholeMapViewModel.ConceptTabsName}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" Spacing="4" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:ConceptTabItem">
+                <Button Classes="tab" Classes.selected="{Binding IsSelected}" Content="{Binding Text}" IsEnabled="{Binding CanChoose}" Click="OnConceptTab" AutomationProperties.Name="{Binding Text}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <StackPanel x:Name="WholeListFailed" Grid.Row="1" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsListFailed}">
+            <TextBlock Classes="body" Text="{Binding ListFailedText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding ListFailedText}" />
+            <Button x:Name="WholeListRetry" Content="{Binding RetryText}" Click="OnListRetry" AutomationProperties.Name="{Binding RetryText}" />
+          </StackPanel>
+          <TextBlock x:Name="WholeConceptEmpty" Grid.Row="1" Classes="body" Text="{x:Static vm:WholeMapViewModel.ConceptEmptyText}" IsVisible="{Binding ShowConceptEmpty}" AutomationProperties.Name="{x:Static vm:WholeMapViewModel.ConceptEmptyText}" />
+          <ListBox x:Name="WholeAreaList" Grid.Row="2" ItemsSource="{Binding Items}" AutomationProperties.Name="{x:Static vm:WholeMapViewModel.AreaListName}" Tapped="OnAreaListTapped">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:MapItemViewModel">
+                <TextBlock Classes="body" Text="{Binding Label}" TextTrimming="CharacterEllipsis" AutomationProperties.Name="{Binding Name}" />
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <ItemsControl x:Name="WholeListSkeleton" Grid.Row="2" ItemsSource="{Binding SkeletonRows}" IsVisible="{Binding ListLoading}" IsHitTestVisible="False" Background="{DynamicResource Brush.Surface1}" AutomationProperties.Name="{Binding ListLoadingText}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:Int32">
+                <Border Height="20" Margin="0,0,0,10" CornerRadius="{StaticResource Radius.SM}" Background="{DynamicResource Brush.Surface3}" Opacity="0.6" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasAreaPages}">
+            <Button x:Name="WholeAreaPrevious" Content="{x:Static vm:WholeMapViewModel.PreviousPageText}" IsEnabled="{Binding CanPreviousPage}" Click="OnAreaPrevious" />
+            <TextBlock x:Name="WholeAreaPageText" Classes="caption subtle" Text="{Binding AreaPageText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding AreaPageText}" />
+            <Button x:Name="WholeAreaNext" Content="{x:Static vm:WholeMapViewModel.NextPageText}" IsEnabled="{Binding CanNextPage}" Click="OnAreaNext" />
+          </StackPanel>
+        </Grid>
+      </Border>
 
       <!-- The Pages and actions section (pages spec §3.4, mockup section A): a concept's Why drill lists its pages on the right; the node panel opens over it. -->
       <Panel IsVisible="{Binding ShowPages}" HorizontalAlignment="Right">
@@ -154,15 +240,15 @@
         </Grid>
       </Border>
 
-      <Border x:Name="WholeMiniMapHost" Focusable="True" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="14" Width="180" Height="112"
+      <Border x:Name="WholeMiniMapHost" IsVisible="{Binding ShowStageTools}" Focusable="True" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="14" Width="180" Height="112"
               Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.SM}"
               KeyDown="OnMiniMapKey" AutomationProperties.Name="Mini-map: arrow keys move the view">
         <ctl:MiniMapControl x:Name="WholeMiniMap" />
       </Border>
 
-      <wv:WholeMapLegend x:Name="WholeLegend" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,150,14" />
+      <wv:WholeMapLegend x:Name="WholeLegend" IsVisible="{Binding ShowStageTools}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,150,14" />
 
-      <Border x:Name="WholeZoom" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,16,14" Height="28"
+      <Border x:Name="WholeZoom" IsVisible="{Binding ShowStageTools}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,16,14" Height="28"
               Background="{DynamicResource Brush.Surface3}" CornerRadius="{StaticResource Radius.SM}">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="2,0">
           <Button x:Name="WholeZoomOut" Click="OnZoomOut" Padding="6,4" Background="Transparent" BorderThickness="0"><icons:StateIcon Icon="Kind.Minus" Foreground="{DynamicResource Brush.InkMuted}" /></Button>

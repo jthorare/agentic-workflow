@@ -20,6 +20,8 @@ internal sealed partial class FakeSindriApi
     private readonly List<string> _activatedWorkflows = [];
     private readonly List<string> _pausedWorkflows = [];
     private readonly List<AppliedOps> _appliedOps = [];
+    private readonly List<string> _validatedWorkflows = [];
+    private readonly List<int?> _validatedRevisions = [];
     private readonly List<(string Slug, string Template)> _createdWorkflows = [];
 
     /// <summary>POST /sindri/workflows/{slug}/runs's answer: the started body by default (a refusal golden, such as workflows-slug-runs/not-active, to test a refusal).</summary>
@@ -237,8 +239,30 @@ internal sealed partial class FakeSindriApi
     /// <summary>The workflows Pause was sent for, in order.</summary>
     public IReadOnlyList<string> PausedWorkflows { get { lock (_gate) { return [.. _pausedWorkflows]; } } }
 
+    /// <summary>POST /sindri/workflows/validate's answer: no findings unless a test serves some (#3803).</summary>
+    public RouteAnswer ValidateWorkflowAnswer { get; set; } = RouteAnswer.SpecShaped("workflows-validate", "passed");
+
+    /// <summary>The workflows validate was sent for, in order.</summary>
+    public IReadOnlyList<string> ValidatedWorkflows { get { lock (_gate) { return [.. _validatedWorkflows]; } } }
+
+    /// <summary>The revision each validate asked for (null: the newest), in the order of <see cref="ValidatedWorkflows"/>.</summary>
+    public IReadOnlyList<int?> ValidatedRevisions { get { lock (_gate) { return [.. _validatedRevisions]; } } }
+
     /// <summary>The ops sent, in order.</summary>
     internal IReadOnlyList<AppliedOps> AppliedWorkflowOps { get { lock (_gate) { return [.. _appliedOps]; } } }
+
+    public async Task<Result<WorkflowValidated>> ValidateWorkflow(Uri api, string slug, int? revision, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _validatedWorkflows.Add(slug);
+            _validatedRevisions.Add(revision);
+        }
+
+        var answer = ValidateWorkflowAnswer;   // what was served when the call was made: a held call answers with it late
+        await HoldValidate(cancellationToken).ConfigureAwait(false);
+        return Answer<WorkflowValidated>(api, WorkflowRoutes.Validate(), answer);
+    }
 
     public Task<Result<WorkflowBlockList>> WorkflowBlocks(Uri api, CancellationToken cancellationToken) =>
         Task.FromResult(Answer<WorkflowBlockList>(api, WorkflowRoutes.Blocks(), WorkflowBlocksAnswer));

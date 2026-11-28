@@ -202,10 +202,9 @@ public sealed class CheckTraitsTests
             new SystemProcessRunner(Environment.GetEnvironmentVariable),
             new FileTraitStore(elsewhere.Path),
             new FileTraitFiles(elsewhere.Path),
-            new JevTraitJudge(harness.Jev, new FakeInputRedactor(), new InMemoryJudgeConfigStore()),
             harness.Log,
             new FileTraitCheckSessions(Path.Combine(elsewhere.Path, "sessions"), TimeProvider.System),
-            TimeProvider.System);
+            new TraitAnswers(new JevTraitJudge(harness.Jev, new FakeInputRedactor(), new InMemoryJudgeConfigStore()), harness.Cache, harness.Log, TimeProvider.System));
 
         var result = await service.Handle(A.CheckTraitsRequest().Stop().Build(), _ct);
 

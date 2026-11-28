@@ -62,6 +62,7 @@ public sealed class GoldenContractTests
         ["workflows-blocks"] = As<WorkflowBlockList>,   // GET /sindri/workflows/blocks: the editor's block form (#2258 PR 17 part 2b)
         ["workflows-slug-ops"] = As<WorkflowOpsApplied>,   // POST /workflows/{slug}/ops: ops-applied; ops-stale and ops-missing-fields are ProblemDetails
         ["workflows-slug-activate"] = As<WorkflowActivated>,   // POST /workflows/{slug}/activate: activated; not-found is a ProblemDetails
+        ["workflows-validate"] = As<WorkflowValidated>,   // POST /workflows/validate: the editor's findings (#3803); the API's nothing-to-check is a ProblemDetails
         ["context-whole"] = As<WholeMapView>,   // GET /context/map/whole (whole-map spec §2.1); the refusals (006, 030, 044, 045, 120, 200) are ProblemDetails
         ["context-filemap"] = As<FileMapView>,
         ["context-code"] = As<CodeView>,   // GET /sindri/context/code: the code lens' callers and callees (S-9)
@@ -140,6 +141,7 @@ public sealed class GoldenContractTests
         ["connections-id"] = As<ConnectionOne>,   // GET /sindri/connections/{name}; removed is DELETE's ConnectionRemoved (_readByScenario)
         ["connections-id-test"] = As<ConnectionTested>,   // POST /sindri/connections/{name}/test
         ["connections-id-rename"] = As<ConnectionRenamed>,   // POST /sindri/connections/{name}/rename (the Rename action)
+        ["connections-id-key"] = As<ConnectionKeyReplaced>,   // PUT /sindri/connections/{name}/key (replace a key connection's key, #4358)
         ["connections-id-signin"] = As<ConnectionAdded>,   // POST /sindri/connections/{name}/signin (the Sign in again action)
         ["home"] = As<HomeView>,   // GET /sindri/home: the Home page's first read (home spec §8, S0)
         ["home-rows-id"] = As<HomeRowOne>,   // GET /sindri/home/rows/{id}: the peek; unknown-row-404 is a ProblemDetails
@@ -198,10 +200,10 @@ public sealed class GoldenContractTests
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
         "todos-note-import",   // POST /todos/note/import (todo Ph3b): dry-run, imported and the stale 409; the app's Import and start syncing reads it with its own view once the card's golden contract lists it
-        "workflows-validate",   // #2258 PR 8b: validate is the CLI's; ops and activate are read above
         "home-rank-id",   // GET /sindri/home/rank/{id}: the explain data is the CLI's `home rank --explain` and the home_rank MCP tool; the row's why chip reads the rank inside the row
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
         "links-resolve",   // QUERY /sindri/links/resolve (messages spec §9.3, M1g): the conversation's link rows read it with their view (M1l)
+        "proposals", "proposals-id", "proposals-id-reject",   // issue 3787: the app has no proposals page yet; the CLI's `proposals` and `proposal show|reject` call these
         "messages-lists-id", "messages-status", "messages-conversations", "messages-conversations-id-messages", "messages-threads-id-id", "messages-search",   // messages spec §8.2 (M1s): M1f records these goldens; M1k and M1l move the ones the page reads to _read with their views
     };
 

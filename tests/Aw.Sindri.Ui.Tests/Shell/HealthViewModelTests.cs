@@ -10,12 +10,12 @@ using Microsoft.Extensions.Time.Testing;
 namespace Aw.Sindri.Ui.Tests.Shell;
 
 [Lane(TestLane.Unit)]
-public sealed class HealthViewModelTests : IDisposable
+public sealed class HealthViewModelTests : IAsyncDisposable
 {
     private readonly InMemoryEndpointRecords _records = new();
     private readonly FakeSindriApi _server = new();
     private readonly FakeTimeProvider _clock = new(A.Noon);
-    private readonly CancellationTokenSource _stop = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+    private readonly FollowLoop _follow = new();
     private readonly HealthViewModel _vm;
 
     public HealthViewModelTests()
@@ -24,17 +24,14 @@ public sealed class HealthViewModelTests : IDisposable
     }
 
     private readonly InlineUiContext _ui = new();
-    private Task _run = Task.CompletedTask;
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        _stop.Cancel();
-        Assert.True(_run.Wait(TimeSpan.FromSeconds(2), CancellationToken.None), "Run ended when cancelled");
-        _stop.Dispose();
+        await _follow.DisposeAsync();
         _ui.Dispose();
     }
 
-    private void Start() => _run = _vm.Run(_stop.Token);
+    private void Start() => _follow.Start(_vm.Run);
 
     // Yields first so a condition that is already true, or about to be, costs no real time; the 1 ms sleeps after that
     // keep the bound at about 2 s so a hang still fails.

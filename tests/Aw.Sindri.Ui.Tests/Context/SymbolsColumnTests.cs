@@ -30,8 +30,18 @@ public sealed class SymbolsColumnTests
     {
         var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false) with { Reason = "graph-off" });
 
-        Assert.Equal(("from 7c3e1a2", "only C# files get names: the code graph is off for this repo", false), (column.Caption, column.EmptyReason, column.Dimmed));
+        // #3862: the heading names a commit while the note says "off"; the sentence says the C# names are the index's, the rest wait on the graph.
+        Assert.Equal(("from 7c3e1a2", "C# names come from the index. Other languages need the code graph, which is off for this repo (index.graph.enabled in the profile).", "C# names come from the index. Other languages need the code graph, which is off for this repo (index.graph.enabled in the profile).", false), (column.Caption, column.EmptyReason, column.NoRowTip, column.Dimmed));
         Assert.Equal("—", column.Cell("src/tabs/TabManager.ts"));
+    }
+
+    // #3862: a graph layer that is down is not one the profile turned off; the words name the other fix.
+    [Fact]
+    public void An_ok_index_with_the_graph_down_and_no_rows_says_graphify_is_missing_or_failed()
+    {
+        var column = new SymbolsColumnViewModel(Served("ok", asOf: null, mismatch: false) with { Reason = "graph-unavailable" });
+
+        Assert.Equal(("from 7c3e1a2", "C# names come from the index. Other languages need the code graph, which did not build: graphify is missing or failed (sindri doctor says which).", "C# names come from the index. Other languages need the code graph, which did not build: graphify is missing or failed (sindri doctor says which)."), (column.Caption, column.EmptyReason, column.NoRowTip));
     }
 
     [Fact]
@@ -101,13 +111,13 @@ public sealed class SymbolsColumnTests
         var map = new FileMapViewModel(new ContextPorts(api, () => new Uri("http://127.0.0.1:1/"), clipboard, clock, new CatalogViewModel(clipboard, clock), _ => { }));
 
         await map.Load("src/tabs/", TestContext.Current.CancellationToken);
-        Assert.Equal("symbols", map.SymbolsHeading);
+        Assert.Equal("Symbols", map.SymbolsHeading);
 
         var body = GoldenFiles.Node("context-filemap", "src-tabs");
         body["symbols"] = System.Text.Json.Nodes.JsonNode.Parse("""{"state":"stale","reason":null,"items":[],"commit":"7c3e1a2","files":[]}""");
         api.FileMapAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, body.ToJsonString());
         await map.Load("src/tabs/", TestContext.Current.CancellationToken);
-        Assert.Equal("symbols · from 7c3e1a2, stale", map.SymbolsHeading);
+        Assert.Equal("Symbols · from 7c3e1a2, stale", map.SymbolsHeading);
     }
 
     [Fact]

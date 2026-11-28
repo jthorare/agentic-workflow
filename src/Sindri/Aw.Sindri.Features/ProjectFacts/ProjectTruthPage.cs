@@ -14,8 +14,9 @@ internal static class ProjectTruthPage
     /// <param name="profileRepos">The repos 'review.projects' names, by project key.</param>
     /// <param name="facts">The facts port; read once.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
+    /// <param name="now">The page's clock reading, for how long a red PR has been red; null leaves the age out.</param>
     /// <returns>The page with each card's <see cref="ProjectCard.Truth"/> set, plus <see cref="NoLogin"/> when PRs are in scope and no login is known; the page with one failing freshness row when the facts read failed.</returns>
-    internal static async ValueTask<ProjectsPage> Attach(ProjectsPage page, IReadOnlyDictionary<string, IReadOnlyList<string>> profileRepos, IProjectTruthFacts facts, CancellationToken cancellationToken)
+    internal static async ValueTask<ProjectsPage> Attach(ProjectsPage page, IReadOnlyDictionary<string, IReadOnlyList<string>> profileRepos, IProjectTruthFacts facts, CancellationToken cancellationToken, DateTimeOffset? now = null)
     {
         ArgumentNullException.ThrowIfNull(page);
         ArgumentNullException.ThrowIfNull(profileRepos);
@@ -37,7 +38,7 @@ internal static class ProjectTruthPage
             return page with { Freshness = [.. page.Freshness, new ProjectFreshnessRow("sindri", ProjectFreshnessState.Failing, line, At: null)] };
         }
 
-        ProjectCard With(ProjectCard card) => card with { Truth = ProjectTruths.Build(new ProjectTruthInputs(sources[card.Key], read.Value)) };
+        ProjectCard With(ProjectCard card) => card with { Truth = ProjectTruths.Build(new ProjectTruthInputs(sources[card.Key], read.Value, now)) };
         return page with { Projects = [.. page.Projects.Select(With)], Finished = [.. page.Finished.Select(With)], Hidden = [.. page.Hidden.Select(With)], Freshness = read.Value.Owner is null && read.Value.Pulls.Count > 0 ? [.. page.Freshness, NoLogin] : page.Freshness };
     }
 }

@@ -200,7 +200,7 @@ internal sealed partial class GitHubForge(GitHubApi api, ICredentialSource crede
         if (isStatus)
         {
             var state = json.Str("state");
-            return new CheckRun(json.Str("context"), App: null, state == "error" ? "failure" : state, sha);
+            return new CheckRun(json.Str("context"), App: null, state == "error" ? "failure" : state, sha, state == "pending" ? null : json.Time("updated_at"));   // #4506: a status's updated_at is when it settled; a pending one has not
         }
 
         var app = json.Str("app", "slug");
@@ -208,7 +208,8 @@ internal sealed partial class GitHubForge(GitHubApi api, ICredentialSource crede
             json.Str("name"),
             app.Length > 0 ? app : null,
             json.Str("status") != "completed" ? "pending" : json.Str("conclusion"),
-            json.Str("head_sha") is { Length: > 0 } head ? head : sha);
+            json.Str("head_sha") is { Length: > 0 } head ? head : sha,
+            json.Str("status") == "completed" ? json.Time("completed_at") : null);   // #4506: when the check finished
     }
 
     private static ChecksSummary Summarise(string sha, IReadOnlyList<CheckRun> runs)

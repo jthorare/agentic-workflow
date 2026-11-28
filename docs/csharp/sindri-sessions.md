@@ -78,12 +78,20 @@ never the socket name or kind: a lane socket (`tmux -L sindri-v4`) and another h
 are foreign, so they give no row. A foreign claude or codex process found through `/proc` gives no row either. Point the
 scratch home's tmux at its folder (`TMUX_TMPDIR=$AW_SINDRI_HOME/tmux`) for its sessions to count as own.
 
+The file is not under `AW_SINDRI_HOME`. Sindri reads `AW_LAUNCHER_CONFIG` when it is set, else `$AW_STATE_DIR/launcher.json`
+(default `~/.agentic-workflow/launcher.json`). A scratch home that sets only `AW_SINDRI_HOME` reads the box's real file and
+gets its scope, usually `all`. To get `own`, set `AW_LAUNCHER_CONFIG` to the scratch home's own file (as
+`scripts/sindri-ui-fixture.sh` does) or point `AW_STATE_DIR` at a scratch folder.
+
 Limits. The real launcher keeps its sockets in tmux's default folder today, so under `own` a session it launched there
 counts only through its launch record. The check reads this home's launch files once per pass, and an unreadable folder
-means no launched row. Paths are compared as text; a symlinked home folder is not resolved.
+means no launched row. Paths are compared as text; a symlinked home folder is not resolved. Under `own`, a session can be
+missing for one pass: an environment read that times out hides that session for the pass, and a Seatbelt launch (macOS)
+stays hidden until its first report.
 
-An unknown value fails closed. `"scope": "onw"`, or any value but `"all"` in a `sessions` section that is otherwise
-invalid, is read as `own` and shows a problem row (`SND-LAUNCH-011`, 'sessions.scope is 'all' or 'own''). A launcher.json
+An unknown value fails closed. `"scope": "onw"`, `"scope": null`, or any value but `"all"` in a `sessions` section that is
+otherwise invalid, is read as `own` and shows a problem row (`SND-LAUNCH-011`, 'sessions.scope is 'all' or 'own''). The
+launcher.json row then says sessions.scope is read as `own`. A launcher.json
 that is not valid JSON or has no `"schema": 1` still gives the defaults (`all`).
 
 The bash reader (`scripts/launcher-lib.sh`) refuses unknown keys, so CO-0 adds `sessions` to `x-aw-keys.root` and the
@@ -163,7 +171,9 @@ CO-2a (discovery): `Aw.Sindri.Core/Sessions/` (the records, the pure rules `Sess
 `FleetChangeRules.Diff`/`Restore`, `EnvironmentAllowlist`, the ports), `Aw.Sindri.Core/Launch/` and `Infrastructure/Launch/` (the minimal launcher reader and agent
 catalog, CA-0), `Infrastructure/Sessions/` (`ProcProcessTable`, `ClaudeSessionRecords`, `FleetStateFiles`, `TranscriptFiles`, `SessionSnapshotStore`),
 `Features/Sessions/` (the pass, `RecordFleetChanges`, `RestoreFleetHistory`) and `Host/Server/SessionCollectorHost`. Host detection landed in CO-2b (the previous section); the routes and the CLI are CO-3 (the section below). The event is `fleet.changed`; the codes are `SND-SESSION-001`
-(a source failed), `-002` (`unsupported-platform`, `proc-unreadable`, `disabled`) and `-003` (a test override) in `docs/csharp/sindri.md`. The snapshot over
+(a source failed), `-002` (`unsupported-platform`, `proc-unreadable`, `disabled`) and `-003` (a test override) in `docs/csharp/sindri.md`. A pass whose process-table read
+overruns its budget keeps the last list and its `observedAt`. From the third overrun in a row, the `collector` row (`SND-SESSION-001`) says how old that list is, or that
+there is no list yet (#4244). The Agents card and the Agents page show that row as served. The snapshot over
 `tests/fixtures/sessions/` is pinned by `tests/Aw.Sindri.Tests/Sessions/Golden/snapshot-discovery.json`. `LaunchId` (the launcher's, `Core/Launch/LaunchId.cs`, `LCH-` and 32 hex) is the
 typed id of `AW_SINDRI_LAUNCH`; a value of another shape is dropped.
 

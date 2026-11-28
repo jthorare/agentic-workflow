@@ -78,8 +78,11 @@ A human turn is a prompt a person typed. These are machine text, never human tur
   `session_meta.source` is `exec`. Scripts and Sindri start these as often as a person does. This is a choice; revisit
   it if the steering miner misses real prompts.
 
-Codex writes each prompt twice. The reader takes the `event_msg` `user_message` and skips the `response_item` user
-messages, which wrap the prompt in AGENTS.md and environment context.
+Older Codex rollouts write each prompt twice: an `event_msg` `user_message` and a `response_item` user message (which
+may wrap the prompt in AGENTS.md and environment context). Newer rollouts write only the `response_item`. The reader takes
+both kinds, per turn: a typed `response_item` user message is a prompt unless it repeats the open one (same text, no
+assistant output since), in either order, and then the `event_msg` is the turn's record. AGENTS.md, environment,
+compaction and other non-typed text, exec runs and subagent files stay excluded in both kinds.
 
 Cursor wraps the prompt in `<user_query>` blocks. The reader takes their text, or, with none, the text after the
 leading tag blocks.

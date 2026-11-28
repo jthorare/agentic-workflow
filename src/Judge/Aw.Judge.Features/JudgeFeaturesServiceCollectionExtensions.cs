@@ -163,6 +163,7 @@ public static partial class JudgeFeaturesServiceCollectionExtensions
             .AddScoped<ImageCheckScorer>()
             .AddScoped<IService<CheckImagesRequest, CheckImagesResponse>, CheckImagesService>();
         _ = services
+            .AddScoped<TraitAnswers>()
             .AddScoped<CheckTraitsService>()
             .AddScoped<IValidator<CheckTraitsRequest>, CheckTraitsValidator>()
             .AddScoped<IService<CheckTraitsRequest, CheckTraitsResponse>>(static sp =>

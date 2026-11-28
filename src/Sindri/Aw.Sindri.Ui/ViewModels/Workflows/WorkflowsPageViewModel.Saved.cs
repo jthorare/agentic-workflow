@@ -4,14 +4,15 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 internal sealed partial class WorkflowsPageViewModel
 {
     private int _savedWhileOff;   // the revision a save made on a workflow that is off; 0 until one did
+    private int _undoneRevision;   // the revision an undo wrote (0: none); the line says "Undone" only while that one is the newest shown, so a later edit brings back the plain line
 
     // the live revision is older than the newest one: an edit made a revision that is saved but not running
     private bool IsNotLive => IsRuns && Runs.Shown is { ActiveRevision: { } active } shown && active < shown.LatestRevision;
 
     /// <summary>The line under the header after a save: "Saved as revision 3. Not live yet." on a live workflow, "Saved as revision 3." on one that is off; empty otherwise.</summary>
     public string SavedLineText => IsNotLive
-        ? Labels.WfSavedNotLive(Runs.Shown!.LatestRevision)   // why: IsNotLive holds, so Shown is set
-        : IsRuns && _savedWhileOff > 0 && Runs.Shown is { ActiveRevision: null } ? Labels.WfSaved(_savedWhileOff) : string.Empty;
+        ? (_undoneRevision == Runs.Shown!.LatestRevision ? Labels.WfUndone(Runs.Shown.LatestRevision, notLive: true) : Labels.WfSavedNotLive(Runs.Shown.LatestRevision))   // why: IsNotLive holds, so Shown is set
+        : IsRuns && _savedWhileOff > 0 && Runs.Shown is { ActiveRevision: null } off ? (_undoneRevision == off.LatestRevision ? Labels.WfUndone(off.LatestRevision, notLive: false) : Labels.WfSaved(off.LatestRevision)) : string.Empty;   // off: a save was made here, and the line names the newest revision, whoever wrote it (a canvas edit too)
 
     /// <summary>True when the saved-revision line shows.</summary>
     public bool HasSavedLine => SavedLineText.Length > 0;
@@ -33,6 +34,7 @@ internal sealed partial class WorkflowsPageViewModel
     // a save on a workflow that is off is the one case the revisions alone can't tell: remember it for the line
     private void NoteSaved()
     {
+        _undoneRevision = 0;
         _savedWhileOff = Runs.Shown is { ActiveRevision: null } shown ? shown.LatestRevision : 0;
         NotifySaved();
     }
@@ -44,5 +46,7 @@ internal sealed partial class WorkflowsPageViewModel
         OnChanged(nameof(CanMakeLive));
         OnChanged(nameof(ShowActivateButton));
         OnChanged(nameof(MakeLiveText));
+        OnChanged(nameof(ShowRunRevisionOnce));
+        OnChanged(nameof(RunRevisionOnceText));
     }
 }

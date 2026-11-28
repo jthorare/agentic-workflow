@@ -28,4 +28,13 @@ public interface ITraitJudge
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The answers, or why there are none.</returns>
     public ValueTask<ProviderResult> Ask(BatchRequest request, IReadOnlyCollection<ProviderName>? allowed, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Whether a batch may go to Jev at all (config.json's 'providers.jev' and the allowlist, as <see cref="Ask(BatchRequest, IReadOnlyCollection{ProviderName}?, CancellationToken)"/> judges it).
+    /// A caller that reuses Jev's cached verdicts reuses them only when Jev is included, so excluding Jev still judges nothing.
+    /// </summary>
+    /// <param name="allowed">The --providers / AW_JUDGE_PROVIDERS allowlist, or null for every provider.</param>
+    /// <param name="cancellationToken">Cancels the config read.</param>
+    /// <returns>Whether Jev is in the chain.</returns>
+    public ValueTask<bool> Included(IReadOnlyCollection<ProviderName>? allowed, CancellationToken cancellationToken);
 }

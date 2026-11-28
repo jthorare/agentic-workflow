@@ -8,7 +8,7 @@ using Aw.Sindri.Features.TestConnection;
 namespace Aw.Sindri.Host.Catalog;
 
 /// <summary>
-/// Connection writes (connections PR 10a): add one (a browser sign-in or a key), sign one in again, test it, rename it (its label only; the secret moves with it), remove it and its secret. Desk class, and an agent session may run all
+/// Connection writes (connections PR 10a): add one (a browser sign-in or a key), sign one in again, give a key connection a new key (#4358), test it, rename it (its label only; the secret moves with it), remove it and its secret. Desk class, and an agent session may run all
 /// three (owner decision D2), the way the MCP connection_* tools do. The reads (list, show) are queries and have no row. The terminal forms hold no secret: a key or a
 /// client secret is named by the variable that holds it (--key-env, --client-secret-env), which the CLI reads from its own shell.
 /// </summary>
@@ -25,6 +25,9 @@ internal static class ConnectionRows
         new(ActionId.From("SignInConnection"), typeof(SignInConnectionRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/connections/{name}/signin", ShellRows.Form("sindri connection signin <name>"), "ready", SessionOk: true),
+        new(ActionId.From("ReplaceConnectionKey"), typeof(ReplaceConnectionKeyRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
+            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
+            "PUT", "/sindri/connections/{name}/key", ShellRows.Form("sindri connection set-key <name> --key-env <name>"), "ready", SessionOk: true),
         new(ActionId.From("RenameConnection"), typeof(RenameConnectionRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/connections/{name}/rename", ShellRows.Form("sindri connection rename <name> <label>"), "ready", SessionOk: true),

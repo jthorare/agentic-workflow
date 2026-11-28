@@ -15,7 +15,8 @@
 # invocation for the caller to run.
 #
 # list prints one line per entry (id, purpose, [catalog]), sorted by id, at most --max (default 50). search scores each entry by
-# the words found in its id, purpose and terms (a whole id or term counts more) and prints the best 10, ties by id. A catalog
+# the whole words found in its id, purpose and terms ("ci" does not match "decide"; a whole id or term counts more) and prints
+# the best 10, ties by id. show refuses a --set name the entry does not declare (exit 2, the message names the declared params). A catalog
 # with schema findings is skipped with a warning on stderr; validate names the file, the entry and the field of each finding.
 # Exit: 0 ok, 1 nothing matched, no such id, or validate findings, 2 usage, 3 neither catalog exists (the message names both).
 set -u
@@ -27,8 +28,12 @@ usage="usage: aw-commands list [--max N] [--json] | search <words...> [--json] |
 die() { echo "aw-commands: $*" >&2; exit 2; }
 
 self="${BASH_SOURCE[0]}"
-self="$(readlink -f "$self" 2> /dev/null || echo "$self")"
-self_dir="$(cd "$(dirname "$self")" && pwd)"
+# Resolve symlinks without readlink -f (macOS before 12.3 has none).
+while [ -L "$self" ]; do
+  d="$(cd "$(dirname "$self")" && pwd -P)"; t="$(readlink "$self")"
+  case "$t" in /*) self="$t" ;; *) self="$d/$t" ;; esac
+done
+self_dir="$(cd "$(dirname "$self")" && pwd -P)"
 if [ -n "${AW_COMMANDS_TOOLKIT:-}" ]; then
   toolkit="$AW_COMMANDS_TOOLKIT"
 elif [ -f "$self_dir/commands.json" ]; then
@@ -225,12 +230,14 @@ cmd_search() {
   all="$(entries)" || exit $?
   # shellcheck disable=SC2016
   hits="$(jq --argjson n "$MAX_HITS" '
-    ($ARGS.positional | map(ascii_downcase | select(length > 0))) as $words
+    def ws: [ascii_downcase | scan("[a-z0-9]+")];
+    ($ARGS.positional | map(ws) | add // [] | unique) as $words
     | [ .[] | . as $e
-        | ([$e.id, $e.purpose] + ($e.terms // []) | join(" ") | ascii_downcase) as $text
+        | ([$e.id, $e.purpose] + ($e.terms // []) | map(ws) | add) as $text
         | ([$e.id] + ($e.terms // []) | map(ascii_downcase)) as $whole
-        | ([$words[] | select(. as $w | $text | contains($w))] | length) as $found
-        | ([$words[] | select(. as $w | $whole | index($w))] | length) as $exact
+        | ([$e.id] + ($e.terms // []) | map(ws) | add) as $wholeWords
+        | ([$words[] | select(. as $w | $text | index($w))] | length) as $found
+        | ([$words[] | select(. as $w | ($whole | index($w)) or ($wholeWords | index($w)))] | length) as $exact
         | select($found > 0) | . + {score: ($found + 2 * $exact)} ]
     | sort_by(-.score, .id, .source) | .[:$n]' --args "${words[@]}" <<< "$all")"
   if [ "$(jq length <<< "$hits")" = 0 ]; then
@@ -254,6 +261,14 @@ cmd_show() {
   all="$(entries)" || exit $?
   e="$(jq -c --arg id "$id" 'map(select(.id == $id)) | .[0] // empty' <<< "$all")"
   [ -n "$e" ] || { echo "aw-commands: no entry $id; aw-commands search <words> finds one" >&2; return 1; }
+  local s n declared
+  for s in "${sets[@]+"${sets[@]}"}"; do
+    n="${s%%=*}"
+    if ! jq -e --arg n "$n" '(.params // []) | any(.name == $n)' <<< "$e" > /dev/null; then
+      declared="$(jq -r '(.params // []) | map(.name) | join(", ")' <<< "$e")"
+      die "--set $n: $id takes ${declared:-no params}"
+    fi
+  done
   # shellcheck disable=SC2016
   e="$(jq -c '
     ($ARGS.positional | map(capture("^(?<k>[^=]+)=(?<v>.*)$")) | map({(.k): .v}) | add // {}) as $set

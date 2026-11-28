@@ -134,11 +134,13 @@ internal static partial class WorkflowTools
     private static Tool RunTool { get; } = new()
     {
         Name = Run,
-        Description = "Start a run of a workflow's active revision by hand. It answers started, queued or skipped by the workflow's concurrency. A session that a run of this workflow launched can't start the workflow again (SND-GRAPH-109); that guard does nothing until graph runs launch agent sessions.",
+        Description = "Start a run of a workflow's active revision by hand. It answers started, queued or skipped by the workflow's concurrency. Give revision to run that saved revision once instead; the active revision stays, "
+            + "the workflow must be on, and the revision must exist (SND-GRAPH-008) and pass the activation checks. A session that a run of this workflow launched can't start the workflow again (SND-GRAPH-109); that guard does nothing until graph runs launch agent sessions.",
         InputSchema = ContextTools.Schema(new JsonObject
         {
             ["slug"] = ContextTools.Property("string", SlugText),
             ["payload"] = ContextTools.Property("object", "What the manual trigger hands on, a JSON object"),
+            ["revision"] = ContextTools.Property("integer", "A saved revision to run once instead of the active one (workflow_get shows the newest); the active revision does not change", minimum: 1),
         }, required: ["slug"]),
         Annotations = Write(),
     };
@@ -146,7 +148,7 @@ internal static partial class WorkflowTools
     private static Tool RerunTool { get; } = new()
     {
         Name = Rerun,
-        Description = "Re-run an ended run from one step: a new run of that run's revision. The steps before 'from' keep their stored output, 'from' and the steps after it run again. Refused while the run is in flight (SND-GRAPH-125), when an earlier step did not succeed (SND-GRAPH-126), or for a step inside a for_each body (re-run from the for_each step). Answers started, queued or skipped like workflow_run.",
+        Description = "Re-run an ended run from one step: a new run of that run's revision. The steps before 'from' keep their stored output, 'from' and the steps after it run again. Refused while the run is in flight (SND-GRAPH-125), when an earlier step did not succeed (SND-GRAPH-126), when every step before 'from' was skipped on a dead branch (SND-GRAPH-127), or for a step inside a for_each body (re-run from the for_each step). Answers started, queued or skipped like workflow_run.",
         InputSchema = ContextTools.Schema(new JsonObject
         {
             ["run"] = ContextTools.Property("string", "The ended run to start from, '<slug>@<revision>:<occurrence>'"),
