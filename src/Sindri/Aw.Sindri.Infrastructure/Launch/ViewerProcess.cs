@@ -19,7 +19,7 @@ internal static partial class ViewerProcess
     // its own file): sh redirects all three, then starts the program under setsid where the box has it (macOS has none, so there it only detaches the descriptors).
     private const string DetachScript = "err=$1; shift; exec </dev/null >/dev/null 2>\"$err\"; if command -v setsid >/dev/null 2>&1; then exec setsid \"$@\"; else exec \"$@\"; fi";
 
-    private static ProcessStartInfo Info(IReadOnlyList<string> argv, IReadOnlyDictionary<string, string>? environment, string? errorFile)
+    private static ProcessStartInfo Info(IReadOnlyList<string> argv, IReadOnlyDictionary<string, string>? environment, string? errorFile, string? workingDirectory)
     {
         var detached = errorFile is not null;
         var info = ChildEnvironment.Start(detached ? "/bin/sh" : argv[0]);
@@ -40,6 +40,11 @@ internal static partial class ViewerProcess
             info.ArgumentList.Add(argument);
         }
 
+        if (workingDirectory is not null)
+        {
+            info.WorkingDirectory = workingDirectory;
+        }
+
         _ = info.Environment.Remove("TMUX");   // a viewer must never reach the tmux of whoever started Sindri
         foreach (var (key, value) in environment ?? new Dictionary<string, string>(StringComparer.Ordinal))
         {
@@ -52,12 +57,13 @@ internal static partial class ViewerProcess
     /// <summary>Starts the program (argv[0]) with a clean TMUX; null when it can't be started (the message says why).</summary>
     /// <param name="argv">The program and its arguments, no shell.</param>
     /// <param name="environment">Extra environment, or null.</param>
+    /// <param name="workingDirectory">Where the child starts; this process's directory when null.</param>
     /// <param name="detached">True for a terminal window that may outlive Sindri: its own session, stdin and stdout on /dev/null; stderr stays piped for the window.</param>
     /// <returns>The child, or the reason it could not start.</returns>
-    internal static (Child? Child, string? Problem) Start(IReadOnlyList<string> argv, IReadOnlyDictionary<string, string>? environment, bool detached = false)
+    internal static (Child? Child, string? Problem) Start(IReadOnlyList<string> argv, IReadOnlyDictionary<string, string>? environment, bool detached = false, string? workingDirectory = null)
     {
         var errorFile = detached ? Path.GetTempFileName() : null;   // 0600, in the temp directory; deleted when the window's process ends
-        var info = Info(argv, environment, errorFile);
+        var info = Info(argv, environment, errorFile, workingDirectory);
         try
         {
             var process = Process.Start(info);
@@ -168,6 +174,10 @@ internal static partial class ViewerProcess
     /// <summary>Resolves a program through the login shell, with the name as a positional argument (never interpolated).</summary>
     internal static async ValueTask<bool> OnLoginPath(string program, CancellationToken cancellationToken) =>
         await Output("bash", ["-lc", "command -v -- \"$1\"", "_", program], cancellationToken).ConfigureAwait(false) is { Length: > 0 };
+
+    /// <summary>The path the login shell finds for a program, or null when it is missing.</summary>
+    internal static async ValueTask<string?> Resolve(string program, CancellationToken cancellationToken) =>
+        await Output("bash", ["-lc", "command -v -- \"$1\"", "_", program], cancellationToken).ConfigureAwait(false) is { Length: > 0 } path ? path : null;
 
     /// <summary>The stdout of a short query (5 s) that exited 0; null when it failed, wasn't found or ran over (a query that runs over is killed with its children).</summary>
     internal static ValueTask<string?> Output(string program, IReadOnlyList<string> arguments, CancellationToken cancellationToken) =>

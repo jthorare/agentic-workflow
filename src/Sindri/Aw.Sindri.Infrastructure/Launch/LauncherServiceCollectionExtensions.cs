@@ -209,6 +209,7 @@ internal static class LauncherServiceCollectionExtensions
         return section.Kind switch
         {
             "warp" when !OperatingSystem.IsWindows() => new WarpViewer(WarpOptions(environment), host, time, Redactor.Default),
+            "default-terminal" when !OperatingSystem.IsWindows() => new DefaultTerminalViewer(new DefaultTerminalOptions { GetEnv = environment }, host, time, Redactor.Default),
             "exec-template" => new ExecTemplateViewer(new ExecTemplateOptions(section.Name!, section.Argv!), host, time, Redactor.Default),   // why: a valid section has both
             _ => new PrintViewer(),
         };

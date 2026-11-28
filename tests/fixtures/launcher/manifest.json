@@ -20,6 +20,12 @@
       "note": "warp viewer"
     },
     {
+      "file": "viewer-default-terminal.json",
+      "schema": "valid",
+      "bash": "accept",
+      "note": "default-terminal viewer: no name, no argv"
+    },
+    {
       "file": "host-none.json",
       "schema": "valid",
       "bash": "accept",

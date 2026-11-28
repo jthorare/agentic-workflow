@@ -47,6 +47,7 @@ internal sealed class ConfiguredViewer(ReloadingAgentCatalog catalog, Func<Viewe
     private static string? LabelOf(string kind, string? name) => kind switch
     {
         "warp" => "Warp",
+        "default-terminal" => "Default terminal",
         "exec-template" => name,
         _ => null,
     };

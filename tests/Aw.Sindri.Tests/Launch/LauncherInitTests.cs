@@ -51,7 +51,7 @@ public sealed class LauncherInitTests : IDisposable
         var nothing = await TerminalDetection.Detect(Detection(_gui), CancellationToken.None);
 
         Expect.Equal("print", no_gui.Kind);
-        Expect.Equal("kitty", macNoDisplay.Template?.Id);   // macOS always has a GUI session
+        Expect.Equal("default-terminal", macNoDisplay.Kind);   // macOS always has a GUI session, and without Warp its registered default terminal opens .command files
         Expect.Equal("kitty", term.Template?.Id);
         Expect.Equal("warp", warp.Kind);
         Expect.Equal("kitty", first.Template?.Id);   // terminals.json order, not PATH order

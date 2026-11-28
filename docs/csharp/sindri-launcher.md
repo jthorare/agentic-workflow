@@ -15,7 +15,7 @@ machine-wide, needs no profile approval, and never holds secrets. One JSON Schem
 {
   "schema": 1,
   "viewer": { "kind": "exec-template", "name": "kitty",
-              "argv": ["kitty", "--title", "{title}", "--directory", "{cwd}", "--", "{cmd...}"] },   // warp | exec-template | print
+              "argv": ["kitty", "--title", "{title}", "--directory", "{cwd}", "--", "{cmd...}"] },   // warp | default-terminal | exec-template | print
   "host": { "kind": "tmux" },                  // tmux (default) | none (attended opens only)
   "agents": {
     "aider": { "label": "Aider", "bin": "aider", "open": ["{bin}", "--message", "{seed}"],
@@ -29,7 +29,7 @@ machine-wide, needs no profile approval, and never holds secrets. One JSON Schem
 | Key | Meaning |
 |---|---|
 | `schema` | The format version; this build reads `1`. Required |
-| `viewer` | What a human sees. `warp`, `print` (nothing opens; the attach command is printed) or `exec-template` (`name`, the UI label, and `argv`, both required) |
+| `viewer` | What a human sees. `warp`, `default-terminal` (no `name` or `argv`; opens the user's registered default terminal), `print` (nothing opens; the attach command is printed) or `exec-template` (`name`, the UI label, and `argv`, both required) |
 | `host` | Who owns the process: `tmux` (default), `none` (a GUI app that owns its own agent; attended opens only) or `t3` (a T3 Code thread; attended opens only, see "The t3 host"). Unattended Steps always use tmux |
 | `agents.<id>` | An added catalog entry (`label`, `bin`, `open`, `sessionId` required; `sessionIdPattern` required unless `sessionId` is `none`, and matched against the whole id, as if written `^(…)$`; `reportedId` required for `reported`), or, with `"override": true`, the named fields of a built-in one. Ids match `^[a-z][a-z0-9-]{1,31}$` |
 | `agents.<id>.model`, `.policy` | Decided (owner, 2026-10-16). Per-entry form names, like `mcp`, for an unattended Step's per-run model and policy file; see "Model and policy forms" below. Absent means `none` |
@@ -109,6 +109,16 @@ self-check (`-016`)**, start in the host, return. The launcher appends nothing: 
 sandbox summary rides on `StartedLaunch.Sandbox`. A launch whose confinement can't be built or proven never falls back to unconfined. Until
 SB-5a the product Host registers `UnavailableSandbox`, so every Step launch is `-014`; a `sindri open` session opens as today until SB-5b.
 The codes, kinds and reasons are in `docs/csharp/sindri-sandbox.md`.
+
+## Sindri (C#): `default-terminal` (#4518)
+
+`viewer.kind: "default-terminal"` takes no `name` and no `argv`. Sindri opens the user's registered default terminal and names none, with the same
+contract as `aw-meta-launch`. On macOS it writes `sindri-<session>.command` into a new 0700 folder under the temp folder: `#!/bin/sh`, `rm -f -- "$0"`
+(the file deletes itself when the terminal runs it), `cd '<cwd>' || exit 1`, then `exec '<absolute tmux>' '<rest of the attach argv>'...`, every word
+single-quoted. It runs `open <file>`, then removes the folder once it is empty or after `AW_META_COMMAND_GRACE` seconds (default 20), in the background.
+On Linux it runs `xdg-terminal-exec <attach argv>`, else `x-terminal-emulator -e <attach argv>`, in the request's `cwd`; with neither on the login PATH
+the open fails and the error names both. `open` and `xdg-terminal-exec` exit 0 at once, so an exit 0 with no tmux client is "unconfirmed", as for
+`exec-template`. `sindri launch init --viewer default-terminal` writes it, and detection picks it on macOS when Warp is absent.
 
 ## Worked examples for `exec-template`
 
