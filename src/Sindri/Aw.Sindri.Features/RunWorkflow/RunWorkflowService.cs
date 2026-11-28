@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
@@ -8,12 +9,15 @@ using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Graph.Schedule;
+using Aw.Sindri.Core.Graph.Validation;
 
 namespace Aw.Sindri.Features.RunWorkflow;
 
 /// <summary>
 /// Starts a run of a workflow's active revision by hand: refuses an unknown workflow (SND-GRAPH-008), one with no active revision (SND-GRAPH-105)
 /// and a payload that is not a JSON object (SND-GRAPH-106), and a loop (SND-GRAPH-109: the caller's session was launched by a run of this same workflow), then asks <see cref="IGraphRunStarter"/>, which starts, queues or skips by the workflow's concurrency.
+/// A request that names a saved revision (#3691) runs that one once instead, and the active revision stays: the workflow must still have an active revision, the named one must exist
+/// (SND-GRAPH-008) and pass the activation checks (their findings, SND-GRAPH-002, as activate refuses them). The run's id and row carry the revision it ran.
 /// </summary>
 /// <param name="workflows">The workflows and their revisions.</param>
 /// <param name="runs">The runs; the next occurrence comes from their manual runs and re-runs.</param>
@@ -21,7 +25,9 @@ namespace Aw.Sindri.Features.RunWorkflow;
 /// <param name="launches">Which run launched a session; the loop guard (SND-GRAPH-109) reads it.</param>
 /// <param name="callers">The caller; its launch is the session the guard looks up.</param>
 /// <param name="clock">The start time a schedule trigger's fields are read from on a hand start.</param>
-internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, IGraphLaunchRuns launches, ICallerContextAccessor callers, TimeProvider clock) : IService<RunWorkflowRequest, RunWorkflowResponse>
+/// <param name="checker">The activation checks a named revision must pass (#3691).</param>
+internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, IGraphLaunchRuns launches, ICallerContextAccessor callers, TimeProvider clock, IWorkflowChecker checker)
+    : IService<RunWorkflowRequest, RunWorkflowResponse>
 {
     private const string TriggerKind = WorkflowRunNumbers.Manual;
     private const int Page = 200;
@@ -59,7 +65,7 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
             return refused;
         }
 
-        var revision = await workflows.GetRevision(record.Id, active, cancellationToken).ConfigureAwait(false);
+        var revision = await Revision(record, request.Revision, active, cancellationToken).ConfigureAwait(false);
         if (revision.IsError)
         {
             return revision.Error;
@@ -67,6 +73,25 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
 
         var trigger = HandTrigger(revision.Value, payload.Value, request.By);
         return await Start(new Trigger(record, revision.Value, trigger.ToJsonString()), cancellationToken).ConfigureAwait(false);
+    }
+
+    // The active revision, or the saved one the request names (#3691): one the workflow has, checked as activate checks it. The active revision is not changed.
+    private async ValueTask<Result<WorkflowRevision>> Revision(WorkflowRecord record, int? asked, int active, CancellationToken cancellationToken)
+    {
+        if (asked is { } number && (number < 1 || number > record.LatestRevision))
+        {
+            return SindriErrors.GraphNotFound.With(string.Create(CultureInfo.InvariantCulture, $"workflow '{record.Slug.Value}' has no revision {number} (its newest is {record.LatestRevision})"));
+        }
+
+        var revision = await workflows.GetRevision(record.Id, asked ?? active, cancellationToken).ConfigureAwait(false);
+        if (revision.IsError || asked is null)
+        {
+            return revision;
+        }
+
+        var validator = await checker.Validator(cancellationToken).ConfigureAwait(false);
+        var result = validator.Validate(revision.Value.Spec, GraphMode.Activate);
+        return result.Passed ? revision : SindriErrors.GraphFindings.With(string.Join("; ", result.Blocking.Select(static f => f.ToString())));
     }
 
     private JsonObject HandTrigger(WorkflowRevision revision, JsonObject? payload, string by)

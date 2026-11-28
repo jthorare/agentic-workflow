@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Sindri.Core;
 using Aw.Sindri.Features.CancelWorkflowRun;
 using Aw.Sindri.Features.RunWorkflow;
@@ -6,21 +7,21 @@ using Aw.Sindri.Host.Endpoints;
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// 'sindri wf run &lt;slug&gt; [--payload JSON] [--json]' and 'sindri wf cancel &lt;run&gt; [--json]': clients of POST /sindri/workflows/{slug}/runs and
+/// 'sindri wf run &lt;slug&gt; [--revision &lt;n&gt;] [--payload JSON] [--json]' and 'sindri wf cancel &lt;run&gt; [--json]': clients of POST /sindri/workflows/{slug}/runs and
 /// POST /sindri/workflow-runs/{run}/cancel. Both start the control plane first, like the other workflow writes. Exit 0 ok, 1 not running, 2 refused or error.
 /// </summary>
 internal static class WfRunCommand
 {
-    private const string RunUsage = "usage: sindri wf run <slug> [--payload JSON] [--json]";
+    private const string RunUsage = "usage: sindri wf run <slug> [--revision <n>] [--payload JSON] [--json]";
     private const string CancelUsage = "usage: sindri wf cancel <run> [--json]";
 
     internal static async Task<int> Run(string[] args, RecipeDesk desk, Output output, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(args);
-        var (slug, payload, json, bad) = Parse(args);
+        var (slug, payload, revision, json, bad) = ParseRun(args);
         if (slug is null || bad is not null)
         {
-            return await output.Error(SindriErrors.InvalidInput.With((bad ?? "wf run needs a workflow slug") + $" ({RunUsage})")).ConfigureAwait(false);
+            return await output.Error(SindriErrors.InvalidInput.With($"{bad} ({RunUsage})")).ConfigureAwait(false);
         }
 
         if (await desk.EnsureRunning(ct).ConfigureAwait(false) is { } down)
@@ -28,7 +29,7 @@ internal static class WfRunCommand
             return await output.Error(down).ConfigureAwait(false);
         }
 
-        var started = await desk.Client.Post<RunWorkflowBody, RunWorkflowResponse>("/sindri/workflows/" + Uri.EscapeDataString(slug) + "/runs", new RunWorkflowBody(payload), ct).ConfigureAwait(false);
+        var started = await desk.Client.Post<RunWorkflowBody, RunWorkflowResponse>("/sindri/workflows/" + Uri.EscapeDataString(slug) + "/runs", new RunWorkflowBody(payload, revision), ct).ConfigureAwait(false);
         if (started.IsError)
         {
             return await output.Error(started.Error).ConfigureAwait(false);
@@ -67,6 +68,31 @@ internal static class WfRunCommand
         return json
             ? await output.Raw(cancelled.Value.Body, 0).ConfigureAwait(false)
             : await output.Text($"{cancelled.Value.Value.Run.Value} cancel requested\n", 0).ConfigureAwait(false);
+    }
+
+    private static (string? Slug, string? Payload, int? Revision, bool Json, string? Bad) ParseRun(string[] args)
+    {
+        var (rest, revision, badRevision) = Revision(args);
+        var (slug, payload, json, bad) = Parse(rest);
+        return (slug, payload, revision, json, badRevision ?? bad ?? (slug is null ? "wf run needs a workflow slug" : null));
+    }
+
+    // '--revision <n>' (#3691): a saved revision to run once instead of the active one. Whether the workflow has it is the server's to say (SND-GRAPH-008).
+    private static (string[] Remaining, int? Revision, string? Bad) Revision(string[] args)
+    {
+        var at = Array.IndexOf(args, "--revision");
+        if (at < 0)
+        {
+            return (args, null, null);
+        }
+
+        if (at + 1 >= args.Length || !int.TryParse(args[at + 1], NumberStyles.None, CultureInfo.InvariantCulture, out var number) || number < 1)
+        {
+            return (args, null, "'--revision' needs a revision number of 1 or more");
+        }
+
+        string[] rest = [.. args[..at], .. args[(at + 2)..]];
+        return (rest, number, null);
     }
 
     private static (string? Slug, string? Payload, bool Json, string? Bad) Parse(string[] args)

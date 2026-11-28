@@ -31,6 +31,14 @@ public sealed class WorkflowsUndoTests
     // The run_agent block has more fields than the prompt, so a test never counts on the first one.
     private static ConfigFieldViewModel Prompt(WorkflowsPageViewModel page) => page.Editor.Fields.Single(static f => string.Equals(f.Name, "prompt", StringComparison.Ordinal));
 
+    // What the save's own answer says: the revision it made (the golden's ops-applied names revision 2).
+    private static RouteAnswer AppliedAs(int revision)
+    {
+        var applied = Golden("workflows-slug-ops", "ops-applied");
+        applied["revision"] = revision;
+        return new RouteAnswer(HttpStatusCode.OK, applied.ToJsonString());
+    }
+
     private async Task<WorkflowsPageViewModel> SheetOnAgent()
     {
         _f.Server.WorkflowBlocksAnswer = RouteAnswer.Api("workflows-blocks", "listed");
@@ -40,6 +48,7 @@ public sealed class WorkflowsUndoTests
         Assert.True(page.Runs.Graph!.SelectNode("agent"));
         await page.OpenSettings(Token);
         ServeRevision(_f, 3);   // after the sheet read revision 2: the read after the save finds revision 3
+        _f.Server.ApplyWorkflowOpsAnswer = AppliedAs(3);   // and the save's own answer says it made revision 3
         return page;
     }
 
@@ -183,5 +192,20 @@ public sealed class WorkflowsUndoTests
         Assert.True(_saved[0].CanUndo());
         Assert.Null(await _saved[0].Undo());
         Assert.Equal(3, Assert.Single(_f.Server.ReplacedWorkflows).BaseRevision);
+    }
+
+    [Fact]
+    public async Task An_edit_that_lands_between_the_save_and_its_reload_turns_Undo_off_and_sends_nothing()
+    {
+        var page = await SheetOnAgent();
+        ServeRevision(_f, 4);   // an agent session saved revision 4 after the owner's save made 3 and before the reload read the workflow
+        Prompt(page).Text = "Look twice";
+
+        await page.Save(Token);
+
+        Assert.Equal(4, page.Editor.BaseRevision);   // the reload saw the agent's revision
+        Assert.False(_saved[0].CanUndo());
+        Assert.NotNull(await _saved[0].Undo());
+        Assert.Empty(_f.Server.ReplacedWorkflows);   // the agent's edit is not put back to the graph before the owner's save
     }
 }

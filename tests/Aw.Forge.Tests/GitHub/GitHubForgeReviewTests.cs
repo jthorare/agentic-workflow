@@ -129,6 +129,36 @@ public sealed class GitHubForgeReviewTests
     }
 
     [Fact]
+    public async Task Get_reads_when_a_check_run_completed_and_leaves_a_running_one_without_a_time()
+    {
+        const string runs = """{"check_runs":[{"name":"lint","status":"completed","conclusion":"failure","completed_at":"2026-11-24T09:00:00Z","head_sha":"abc123","app":{"slug":"github-actions"}},{"name":"e2e","status":"in_progress","conclusion":null,"completed_at":null,"head_sha":"abc123","app":{"slug":"circleci"}}]}""";
+        var http = StubGet()
+            .On(HttpMethod.Get, "/repos/acme/widgets/commits/abc123/status", HttpStatusCode.OK, """{"state":"pending","statuses":[]}""")
+            .On(HttpMethod.Get, "/repos/acme/widgets/commits/abc123/check-runs", HttpStatusCode.OK, runs);
+
+        var found = (await Build(http).GetPull(_pull, Ct)).Value.Checks.Runs;
+
+        Assert.Equal(
+            [new CheckRun("lint", "github-actions", "failure", Head, CompletedAt: new DateTimeOffset(year: 2026, month: 11, day: 24, hour: 9, minute: 0, second: 0, TimeSpan.Zero)), new CheckRun("e2e", "circleci", "pending", Head)],
+            found);
+    }
+
+    [Fact]
+    public async Task Get_reads_a_commit_statuss_updated_at_as_when_it_completed()
+    {
+        const string status = """{"state":"failure","statuses":[{"context":"ci/legacy","state":"error","updated_at":"2026-11-23T08:30:00Z"},{"context":"ci/none","state":"success"}]}""";
+        var http = StubGet()
+            .On(HttpMethod.Get, "/repos/acme/widgets/commits/abc123/status", HttpStatusCode.OK, status)
+            .On(HttpMethod.Get, "/repos/acme/widgets/commits/abc123/check-runs", HttpStatusCode.OK, """{"check_runs":[]}""");
+
+        var found = (await Build(http).GetPull(_pull, Ct)).Value.Checks.Runs;
+
+        Assert.Equal(
+            [new CheckRun("ci/legacy", App: null, "failure", Head, CompletedAt: new DateTimeOffset(year: 2026, month: 11, day: 23, hour: 8, minute: 30, second: 0, TimeSpan.Zero)), new CheckRun("ci/none", App: null, "success", Head)],
+            found);
+    }
+
+    [Fact]
     public async Task Get_reads_a_commit_status_as_a_run()
     {
         const string status = """{"state":"failure","statuses":[{"context":"ci/legacy","state":"error"},{"context":"ci/deploy","state":"success"},{"context":"ci/slow","state":"pending"}]}""";

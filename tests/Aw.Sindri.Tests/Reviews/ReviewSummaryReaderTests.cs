@@ -74,6 +74,31 @@ public sealed class ReviewSummaryReaderTests : IDisposable
     }
 
     [Fact]
+    public async Task A_failing_head_keeps_when_its_oldest_failing_check_completed_and_a_run_with_no_time_leaves_it_out()
+    {
+        var first = KnownInstants.Epoch.AddDays(-3);
+        var pull = Seed(1, Head,
+            new PullCheckRun("lint", "github-actions", "failure", Head, CompletedAt: first.AddDays(1)),
+            new PullCheckRun("ui-tests", "github-actions", "failure", Head, CompletedAt: first),
+            new PullCheckRun("unit", "github-actions", "failure", Head),
+            new PullCheckRun("docs", "github-actions", "success", Head, CompletedAt: first.AddDays(-5)));
+
+        var read = await _reader.Read([Pull(number: 1, url: pull.Link)], Strict(), Token);
+
+        Assert.Equal((ReviewCi.Fail, (DateTimeOffset?)first), (read[("acme/api", 1)].Ci, read[("acme/api", 1)].FailedAt));
+    }
+
+    [Fact]
+    public async Task A_failing_head_whose_runs_carry_no_time_has_no_failed_at()
+    {
+        var pull = Seed(1, Head, new PullCheckRun("ui-tests", "github-actions", "failure", Head));
+
+        var read = await _reader.Read([Pull(number: 1, url: pull.Link)], Strict(), Token);
+
+        Assert.Null(read[("acme/api", 1)].FailedAt);
+    }
+
+    [Fact]
     public async Task A_PR_the_forge_does_not_have_skips_only_itself()
     {
         var pull = Seed(1, Head, new PullCheckRun("ui-tests", "github-actions", "success", Head));

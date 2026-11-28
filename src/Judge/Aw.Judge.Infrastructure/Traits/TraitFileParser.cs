@@ -7,8 +7,9 @@ namespace Aw.Judge.Infrastructure.Traits;
 
 /// <summary>
 /// Reads one trait file. The format (version 1) follows crosshatch/traits, with the Markdown body moved into 'context',
-/// plus 'paths' (scopes a trait to files without a model call) and 'severity' (whether the Stop gate holds the agent
-/// back). Unknown keys, a wrong type or an empty text are refused, with the field's name.
+/// plus 'paths' (scopes a trait to files without a model call), 'trigger' (a regular expression an excerpt must match
+/// before the model is asked; kept as text here, so an invalid one never drops the trait) and 'severity' (whether the
+/// Stop gate holds the agent back). Unknown keys, a wrong type or an empty text are refused, with the field's name.
 /// </summary>
 internal static partial class TraitFileParser
 {
@@ -16,9 +17,9 @@ internal static partial class TraitFileParser
 
     private const int MaxNameLength = 80;
 
-    private static readonly string[] _known = ["version", "name", "subject", "requirement", "applicability", "purpose", "guidance", "context", "paths", "severity"];
+    private static readonly string[] _known = ["version", "name", "subject", "requirement", "applicability", "purpose", "guidance", "context", "paths", "severity", "trigger"];
     private static readonly string[] _required = ["subject", "requirement", "purpose"];
-    private static readonly string[] _optional = ["applicability", "guidance", "context"];
+    private static readonly string[] _optional = ["applicability", "guidance", "context", "trigger"];
     private static readonly string[] _severities = ["block", "warn"];
 
     [GeneratedRegex("^(?!trait-)[a-z0-9]+(?:-[a-z0-9]+)*$", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
@@ -48,7 +49,7 @@ internal static partial class TraitFileParser
         }
 
         var severity = string.Equals(Text(map, "severity"), "block", StringComparison.Ordinal) ? TraitSeverity.Block : TraitSeverity.Warn;
-        return (new Trait(name, Text(map, "subject") ?? "", Text(map, "requirement") ?? "", Text(map, "purpose") ?? "", severity, file, Text(map, "applicability"), Text(map, "guidance"), Text(map, "context"), Paths(map)), null);
+        return (new Trait(name, Text(map, "subject") ?? "", Text(map, "requirement") ?? "", Text(map, "purpose") ?? "", severity, file, Text(map, "applicability"), Text(map, "guidance"), Text(map, "context"), Paths(map)) { Trigger = Text(map, "trigger") }, null);
     }
 
     private static YamlMappingNode? Mapping(string source)
