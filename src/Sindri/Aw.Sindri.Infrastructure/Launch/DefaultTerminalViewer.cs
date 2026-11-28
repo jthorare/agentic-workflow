@@ -28,6 +28,11 @@ internal sealed partial class DefaultTerminalViewer(DefaultTerminalOptions optio
     public async ValueTask<ViewerOutcome> Open(ViewerRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        if (request.AttachArgv.Count == 0)
+        {
+            return ViewerProcess.Failed("nothing to attach: the attach command is empty");
+        }
+
         return options.IsMac ? await OpenMac(request, cancellationToken).ConfigureAwait(false) : await OpenLinux(request, cancellationToken).ConfigureAwait(false);
     }
 
