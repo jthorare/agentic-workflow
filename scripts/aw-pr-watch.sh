@@ -23,7 +23,7 @@ edits or says the PR is ready to merge.
 
   --repo OWNER/NAME  the repository
   --pr N             the pull request number
-  --interval S       seconds between polls (default 60; 0 polls back to back)
+  --interval S       seconds between polls (default 60; at least AW_PR_WATCH_MIN_INTERVAL, default 10)
   --deadline D       stop after D minutes (default 120), or D seconds when written Ns (90s)
   --once             poll once, print, exit 0
   --json             one JSON object per line: snapshot, change, unchanged, end
@@ -33,6 +33,7 @@ pass. A read that lost a page prints "incomplete". A restart on the same snapsho
 
 State: $AW_STATE_DIR/pr-watch/<owner>/<name>/<N>/ (default AW_STATE_DIR is ~/.agentic-workflow).
 AW_PR_WATCH_BACKOFF: base seconds between the 3 tries of a failed read (default 2: waits 2 s, then 4 s).
+AW_PR_WATCH_MIN_INTERVAL: the lowest --interval accepted (default 10; a smaller one is usage, exit 2).
 
 Exit codes:
   0    the PR merged or closed (the last line says which), or --once finished
@@ -78,11 +79,16 @@ for part in "$owner" "$name"; do
 done
 case "$pr" in "" | *[!0-9]* | 0) bad_usage "--pr must be a positive number, got: $pr" ;; esac
 case "$interval" in "" | *[!0-9]*) bad_usage "--interval must be whole seconds, got: $interval" ;; esac
+min_interval="${AW_PR_WATCH_MIN_INTERVAL:-10}"
+case "$min_interval" in "" | *[!0-9]*) min_interval=10 ;; esac
+interval=$((10#$interval)); min_interval=$((10#$min_interval))
+[ "$interval" -ge "$min_interval" ] || bad_usage "--interval must be at least $min_interval s, got: $interval"
 case "$deadline" in
   *s) deadline_s="${deadline%s}"; deadline_label="$deadline" ;;
   *) deadline_s="$deadline"; deadline_label="${deadline}m" ;;
 esac
 case "$deadline_s" in "" | *[!0-9]*) bad_usage "--deadline must be minutes or Ns, got: $deadline" ;; esac
+deadline_s=$((10#$deadline_s))
 case "$deadline" in *s) ;; *) deadline_s=$((deadline_s * 60)) ;; esac
 backoff="${AW_PR_WATCH_BACKOFF:-2}"
 case "$backoff" in "" | *[!0-9]*) backoff=2 ;; esac
@@ -143,6 +149,26 @@ lock_stale() {
 end_json() { [ "$json" = 1 ] && jq -cn --arg r "$1" --arg m "${2:-}" --arg at "$(date '+%Y-%m-%dT%H:%M:%S%z')" \
   '{type:"end", reason:$r, at:$at} + (if $m == "" then {} else {message:$m} end)'; return 0; }
 
+# reclaim_dead <dir>: free a stale lock. A pid-less one older than 60 s goes at once. For a dead pid, move the pid file
+# aside first (one mover wins, as in config/lib/locks.sh _lock_reclaim_dead) and remove the folder only when the moved
+# file still holds the dead pid; otherwise the lock changed hands, so the file goes back.
+reclaim_dead() {
+  local lk="$1" owner moved
+  owner="$(cat "$lk/pid" 2> /dev/null || true)"
+  if [ -z "$owner" ]; then
+    lock_stale "$lk" && { rm -rf "$lk"; return 0; }
+    return 1
+  fi
+  kill -0 "$owner" 2> /dev/null && return 1
+  moved="$lk/pid.reclaim.$$"
+  mv "$lk/pid" "$moved" 2> /dev/null || return 1
+  if [ "$(cat "$moved" 2> /dev/null || true)" != "$owner" ]; then
+    mv "$moved" "$lk/pid" 2> /dev/null || true
+    return 1
+  fi
+  rm -rf "$lk"
+}
+
 take_lock() {
   local lk="$dir/lock" rc holder tries=0
   while :; do
@@ -150,7 +176,7 @@ take_lock() {
     [ "$rc" = 0 ] && { lock="$lk"; return 0; }
     [ "$rc" = 2 ] && { echo "aw-pr-watch: could not make the lock $lk" >&2; exit 1; }
     tries=$((tries + 1))
-    if [ "$tries" -le 3 ] && lock_stale "$lk"; then rm -rf "$lk"; continue; fi
+    if [ "$tries" -le 3 ] && reclaim_dead "$lk"; then continue; fi
     holder="$(cat "$lk/pid" 2> /dev/null || true)"
     echo "aw-pr-watch: another watcher holds $label (pid ${holder:-unknown}, lock $lk)" >&2
     end_json lock_held "pid ${holder:-unknown}"
@@ -182,7 +208,8 @@ gh_read() {
     sleep_for $((backoff * try))
     try=$((try + 1))
   done
-  if [ -s "$out" ] && jq -e -s 'length > 0' "$out" > /dev/null 2>&1; then return 1; fi
+  # Partial only when a parsed document is not a GitHub error body (gh prints the HTTP error body on stdout).
+  if [ -s "$out" ] && jq -e -s 'any(.[]; type != "object" or (has("message") | not) or has("check_runs"))' "$out" > /dev/null 2>&1; then return 1; fi
   return 2
 }
 api_fail() {

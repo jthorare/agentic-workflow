@@ -9,6 +9,8 @@ internal static partial class Labels
     internal static string WfStartedBy(string? kind) => kind switch
     {
         "manual" => "Started by hand",
+        "cli" => "Started from the CLI",
+        "agent" => "Started by an agent",
         "schedule" => "Started on a schedule",
         "workflow_call" => "Started by another workflow",
         "connection_event" => "Started by an event from a connection",

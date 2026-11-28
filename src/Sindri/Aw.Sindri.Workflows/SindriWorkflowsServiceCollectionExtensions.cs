@@ -83,6 +83,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
              .. GraphBlockRegistry.MemoryBlocks(GraphFence.Memory(provider.GetRequiredService<IGraphMemoryPort>())),
              new CallToolBlock(GraphFence.Toolkits(provider.GetService<IRunningToolkits>() ?? NoToolkits.Instance), GraphFence.ConnectionTools(provider.GetRequiredService<IConnectionToolPort>())),   // 'call_tool' (PR 16b); with no toolkit runtime registered yet it reaches connections only
              .. GraphBlockRegistry.CodeBlocks(provider.GetRequiredService<ICodeRunPort>()),   // 'code' (PR 9c): C# in the sandboxed sindri-code-runner
+             .. GraphBlockRegistry.TranscriptBlocks(provider.GetRequiredService<IGraphTranscriptPort>(), provider.GetRequiredService<TimeProvider>()),   // 'transcript_turns' and 'transcript_batch' (issue 3787): read-only, so no fence
              .. GraphBlockRegistry.SkillBlocks(provider.GetRequiredService<ISkillCatalogPort>())]);   // 'skill_catalog' (issue 3787, piece 4): the toolkit's skills; read-only, so no fence
 
     // Engine P8 U3: LaunchAgentStep, WatchAgentStep, CloseAgentStep and what they use, and the worker's set of activity classes.

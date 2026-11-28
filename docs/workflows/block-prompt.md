@@ -28,7 +28,7 @@ A bad answer fails the node with the reason. The reason names the field.
 
 - Text that came from a connection is marked untrusted when the prompt is sent. Do not ask the model to obey it.
 - A `required` list must hold field names as text. A property `type` must be a type name, or a list of names.
-- Every model call counts against the run's token budget, the repair ask too. Once the run has used its budget, the step fails with `SND-GRAPH-134` before it asks ([token budget](spec.md#token-budget)).
+- Every model call counts against the run's token budget, the repair ask too. Once the run has used its budget, the step fails with `SND-GRAPH-135` before it asks ([token budget](spec.md#token-budget)).
 
 ## Example
 

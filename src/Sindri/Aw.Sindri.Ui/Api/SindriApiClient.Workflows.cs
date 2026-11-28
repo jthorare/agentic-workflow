@@ -41,6 +41,10 @@ internal sealed partial class SindriApiClient
         Call<WorkflowRunStarted>(api, HttpMethod.Post, WorkflowRoutes.Runs(slug), cancellationToken, new CallOptions(Content: AwJson.Serialize(new RunWorkflowBody(Payload: null), Json)));
 
     /// <inheritdoc />
+    public Task<Result<WorkflowRunStarted>> StartWorkflowRevisionRun(Uri api, string slug, int revision, CancellationToken cancellationToken) =>
+        Call<WorkflowRunStarted>(api, HttpMethod.Post, WorkflowRoutes.Runs(slug), cancellationToken, new CallOptions(Content: AwJson.Serialize(new RunRevisionBody(Payload: null, revision), Json)));
+
+    /// <inheritdoc />
     public Task<Result<WorkflowRunCancelled>> CancelWorkflowRun(Uri api, string runId, CancellationToken cancellationToken) =>
         Call<WorkflowRunCancelled>(api, HttpMethod.Post, WorkflowRoutes.Cancel(runId), cancellationToken);
 
@@ -78,10 +82,32 @@ internal sealed partial class SindriApiClient
     }
 
     /// <inheritdoc />
+    public async Task<Result<WorkflowOpsApplied>> ReplaceWorkflow(Uri api, string slug, int baseRevision, string specJson, CancellationToken cancellationToken)
+    {
+        JsonElement spec;
+        try
+        {
+            using var document = JsonDocument.Parse(specJson);
+            spec = document.RootElement.Clone();
+        }
+        catch (JsonException)
+        {
+            return SindriUiErrors.BadAnswer.With("the graph is not JSON");
+        }
+
+        var content = AwJson.Serialize(new ReplaceWorkflowBody(baseRevision, spec), Json);
+        return await Call<WorkflowOpsApplied>(api, HttpMethod.Put, WorkflowRoutes.One(slug), cancellationToken, new CallOptions(Content: content)).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public Task<Result<WorkflowActivated>> ActivateWorkflow(Uri api, string slug, CancellationToken cancellationToken) =>
         Call<WorkflowActivated>(api, HttpMethod.Post, WorkflowRoutes.Activate(slug), cancellationToken, new CallOptions(Content: AwJson.Serialize(new ActivateWorkflowBody(Revision: null), Json)));
 
     /// <inheritdoc />
     public Task<Result<WorkflowPaused>> PauseWorkflow(Uri api, string slug, CancellationToken cancellationToken) =>
         Call<WorkflowPaused>(api, HttpMethod.Post, WorkflowRoutes.Pause(slug), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<WorkflowValidated>> ValidateWorkflow(Uri api, string slug, int? revision, CancellationToken cancellationToken) =>
+        Call<WorkflowValidated>(api, HttpMethod.Post, WorkflowRoutes.Validate(), cancellationToken, new CallOptions(Content: AwJson.Serialize(new ValidateWorkflowBody(slug, revision, Spec: null), Json)));
 }

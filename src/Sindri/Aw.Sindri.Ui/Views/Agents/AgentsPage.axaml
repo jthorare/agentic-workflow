@@ -8,6 +8,17 @@
   <!-- The Agents page (collector spec CU-1, screens spec §4.5): the head with the served counts and the filters, the collector's problems, the
        sessions in their groups, the recently ended under a fold, and the footer. Every named line is a Border wrapper (a TextBlock's peer
        ignores AutomationProperties.Name) and its text is drawn only. -->
+  <!-- #4463: a problem row is the amber strip (agents spec §2), in the status chip's attention tokens; before, the class had no style and drew as plain ink. -->
+  <UserControl.Styles>
+    <Style Selector="Border.problem-line">
+      <Setter Property="Background" Value="{DynamicResource Brush.Status.Attention.Bg}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Attention.Border}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="Padding" Value="12,8" />
+    </Style>
+    <Style Selector="Border.problem-line TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Attention.Fg}" /></Style>
+  </UserControl.Styles>
   <Grid x:Name="AgentsSplit" ColumnDefinitions="*,0">
   <StackPanel x:Name="AgentsListColumn" ClipToBounds="True" Spacing="{StaticResource Size.PanelGap}">
     <Grid x:Name="AgentsHeader" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
@@ -44,7 +55,10 @@
       <ItemsControl.ItemTemplate>
         <DataTemplate x:DataType="x:String">
           <Border Classes="problem-line" Margin="0,0,0,4" AutomationProperties.Name="{Binding}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-            <TextBlock Classes="caption" Text="{Binding}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+              <icons:StateIcon Glyph="Warning" VerticalAlignment="Top" />
+              <TextBlock Grid.Column="1" Classes="caption" Text="{Binding}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            </Grid>
           </Border>
         </DataTemplate>
       </ItemsControl.ItemTemplate>

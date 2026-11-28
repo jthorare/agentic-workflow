@@ -79,14 +79,20 @@ internal sealed class ConnectionsText
     /// <summary><see cref="Labels.ConnectionMore"/>.</summary>
     public string More { get; } = Labels.ConnectionMore;
 
-    /// <summary>The label of a tile's client id field.</summary>
-    public string TileClientLabel { get; } = "Client id";
+    /// <summary>The label of a tile's client ID field.</summary>
+    public string TileClientLabel { get; } = "Client ID";
 
     /// <summary>The label of a tile's client secret field.</summary>
     public string TileSecretLabel { get; } = "Client secret";
 
     /// <summary><see cref="Labels.ConnectionKeyLabel"/> for a tile.</summary>
     public string TileTokenLabel { get; } = "Token";
+
+    /// <summary><see cref="Labels.TileUseOAuth"/>.</summary>
+    public string UseOAuth { get; } = Labels.TileUseOAuth;
+
+    /// <summary><see cref="Labels.TileUseToken"/>.</summary>
+    public string UseToken { get; } = Labels.TileUseToken;
 
     /// <summary><see cref="Labels.TileRename"/>.</summary>
     public string Rename { get; } = Labels.TileRename;
@@ -96,6 +102,15 @@ internal sealed class ConnectionsText
 
     /// <summary><see cref="Labels.TileRenameSave"/>.</summary>
     public string RenameSave { get; } = Labels.TileRenameSave;
+
+    /// <summary><see cref="Labels.TileReplaceToken"/>.</summary>
+    public string ReplaceToken { get; } = Labels.TileReplaceToken;
+
+    /// <summary><see cref="Labels.TileReplaceTokenLabel"/>.</summary>
+    public string ReplaceTokenLabel { get; } = Labels.TileReplaceTokenLabel;
+
+    /// <summary><see cref="Labels.TileReplaceSend"/>.</summary>
+    public string ReplaceSend { get; } = Labels.TileReplaceSend;
 
     /// <summary><see cref="Labels.TileReconnect"/>.</summary>
     public string Reconnect { get; } = Labels.TileReconnect;

@@ -65,7 +65,7 @@ internal sealed class ListWorkflowsService(IWorkflowStore workflows, IWorkflowRu
         return new WorkflowSummary(record.Slug, record.Name, record.ActiveRevision, record.LatestRevision, newest.CreatedBy, newest.CreatedAt)
         {
             Archived = record.ArchivedAt is null ? null : true,
-            Trigger = TriggerWords.Of(trigger),
+            Trigger = TriggerWords.Of(trigger, clock.LocalTimeZone, clock.GetUtcNow()),
             Paused = record.WasActivated && record.ActiveRevision is null,
             NextRunAt = WorkflowNextRun.Of(record, shown.Value.Spec, clock.GetUtcNow()),
             LastRun = recent.Value.Count == 0 ? null : new WorkflowLastRun(recent.Value[0].Id, strip[0].Status, recent.Value[0].StartedAt),

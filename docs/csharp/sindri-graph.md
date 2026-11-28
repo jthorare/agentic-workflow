@@ -76,21 +76,21 @@ A run is a row in `workflow_run` (ledger migration `0009_workflow_runs`; the num
 
 **The queue moves on.** When a run ends, and when a launch fails, `IGraphQueueAdvance.StartNextQueued` starts the oldest `queued` run of the workflow, once nothing else of it is in flight. `IWorkflowRunStore.PromoteOldestQueued` checks and promotes in one transaction, so two runs ending together start one queued run, not two. A queued run whose own launch fails is marked `failed` and the next one gets the turn. Queued runs are not in `view_workflow_runs` until they start.
 
-**By hand.** `sindri wf run <slug> [--payload JSON] [--json]` (`POST /sindri/workflows/{slug}/runs`) starts a run of the active revision with trigger `{"kind":"manual",...}`: it answers started, queued or skipped by the concurrency. `sindri wf cancel <run> [--json]` (`POST /sindri/workflow-runs/{run}/cancel`) asks a run in flight to stop (Temporal cancel); a queued run is cancelled in place and never starts. `sindri wf takeover <run> <node> [--item <index>] [--json]` (`POST /sindri/workflow-runs/{run}/nodes/{node}/takeover`) takes over the `run_agent` node the run waits on (its timeout pauses, only the human reports it) and `sindri wf handback ...` (`.../handback`) gives it back; both answer `{"run","node","itemIndex","agent"}` with `agent` `taken_over` or `waiting`, and both are open to a human and to an agent session alike. A node the run isn't waiting on is `SND-GRAPH-110`, a handback of a node nobody holds `SND-GRAPH-111`. Each takeover that changed the node and each handback appends a ledger event about the run's item (`workflow.node.taken-over`, `workflow.node.handed-back`: run, node, itemIndex, `by` the caller's actor; not public), which the item's timeline shows; a takeover of a node already held answers the same and appends nothing (#2497). `GET /sindri/workflow-runs/{run}` marks such a node row with `agent`: `waiting`, `taken_over` or null.
+**By hand.** `sindri wf run <slug> [--revision <n>] [--payload JSON] [--json]` (`POST /sindri/workflows/{slug}/runs`, body `{"payload","revision"}`, MCP `workflow_run`) starts a run of the active revision with trigger `{"kind":"manual",...}`: it answers started, queued or skipped by the concurrency. `revision` (#3691) runs that saved revision once instead, so a revision that is not live can be tried as a real run: the active revision does not change, the workflow must still have one (a paused or never-activated workflow is `SND-GRAPH-105`, as for a plain run), the revision must exist (`SND-GRAPH-008`, 404) and it must pass the activation checks (`SND-GRAPH-002` with the findings, as activate refuses them). The run's id (`<slug>@<revision>:<occurrence>`) and its row carry the revision it ran, and `GET /sindri/workflow-runs/{run}` returns it as `revision`. The engine already reads each run's spec by the row's revision, so nothing changed there. A session may run a revision as it may run the active one. `sindri wf cancel <run> [--json]` (`POST /sindri/workflow-runs/{run}/cancel`) asks a run in flight to stop (Temporal cancel); a queued run is cancelled in place and never starts. `sindri wf takeover <run> <node> [--item <index>] [--json]` (`POST /sindri/workflow-runs/{run}/nodes/{node}/takeover`) takes over the `run_agent` node the run waits on (its timeout pauses, only the human reports it) and `sindri wf handback ...` (`.../handback`) gives it back; both answer `{"run","node","itemIndex","agent"}` with `agent` `taken_over` or `waiting`, and both are open to a human and to an agent session alike. A node the run isn't waiting on is `SND-GRAPH-110`, a handback of a node nobody holds `SND-GRAPH-111`. Each takeover that changed the node and each handback appends a ledger event about the run's item (`workflow.node.taken-over`, `workflow.node.handed-back`: run, node, itemIndex, `by` the caller's actor; not public), which the item's timeline shows; a takeover of a node already held answers the same and appends nothing (#2497). `GET /sindri/workflow-runs/{run}` marks such a node row with `agent`: `waiting`, `taken_over` or null.
 
 **Codes.** `SND-GRAPH-100` the run id is used, `101` no such run, `102` a block could not finish, `103` a prompt answer does not fit its schema, `105` the workflow is not active, `106` a manual payload is not a JSON object, `107` the run already ended, `108` a referenced node output was cut at 64 KB, `109` a run of this workflow can't start the workflow again, `110` the run is not waiting on an agent at that node, `111` that agent node is not taken over, `134` a `prompt` or `run_agent` node did not start because the run's token budget was used up.
 
-**Token budget (#3805).** `GraphWorkflow` keeps the run's token total as workflow state built from activity results only: `GraphLoad` returns the spec with the profile's `workflow.budget.tokens` filled in when the spec sets no `budget` (through `IRunBudgetSource`), and each `GraphBlockOutcome.Tokens` adds to the total (a prompt's model calls through `BlockContext.CountTokens`, a `run_agent` node's measured session). A loop batch gets the budget and the total in `GraphIterationInput` and returns its part in `GraphIterationResult.Tokens`. Before a `prompt` or `run_agent` node starts, `GraphTokenBudget.Refuse` compares the total with the budget; at or over it the node fails `SND-GRAPH-134` without its block activity. The check adds no command, so a run with no budget replays the same history and needs no patch. Each node run keeps its tokens as `usage` (`{"tokens":N}`, `NodeRunUsage`), and the run read sums them.
+**Token budget (#3805).** `GraphWorkflow` keeps the run's token total as workflow state built from activity results only: `GraphLoad` returns the spec with the profile's `workflow.budget.tokens` filled in when the spec sets no `budget` (through `IRunBudgetSource`), and each `GraphBlockOutcome.Tokens` adds to the total (a prompt's model calls through `BlockContext.CountTokens`, a `run_agent` node's measured session). A loop batch gets the budget and the total in `GraphIterationInput` and returns its part in `GraphIterationResult.Tokens`. Before a `prompt` or `run_agent` node starts, `GraphTokenBudget.Refuse` compares the total with the budget; at or over it the node fails `SND-GRAPH-135` without its block activity. The check adds no command, so a run with no budget replays the same history and needs no patch. Each node run keeps its tokens as `usage` (`{"tokens":N}`, `NodeRunUsage`), and the run read sums them.
 
 ## Re-run from a step (Workflows page P7, #3204)
 
 A run that ended can start again from one of its steps. The steps before it keep their stored output, so nothing that already ran runs a second time.
 
-- **Route, CLI, tool.** `POST /sindri/workflow-runs/{run}/rerun` with `{"fromNode": "<node id>", "input": "<json object>"}`; `sindri wf rerun <run> --from <node> [--input JSON] [--json]`; MCP `workflow_rerun` (`run`, `from`, `input`). An agent session may run all three. The answer is `started`, `queued` or `skipped` like `wf run`, plus the source run, the steps restored and the steps that run again.
+- **Route, CLI, tool.** `POST /sindri/workflow-runs/{run}/rerun` with `{"fromNode": "<node id>", "input": {...}}` (`input` is a JSON object, as in the MCP tool; before, the route took it as a string holding JSON, #4205; a value that is not an object is `SND-GRAPH-106`); `sindri wf rerun <run> --from <node> [--input JSON] [--json]`; MCP `workflow_rerun` (`run`, `from`, `input`). An agent session may run all three. The answer is `started`, `queued` or `skipped` like `wf run`, plus the source run, the steps restored and the steps that run again.
 - **What happens.** `RerunWorkflowRunService` splits the graph with `RerunPlan.Restored`: the chosen step and every step reachable from it run again. Every other step is restored when the steps it reads from are restored and its rows say it is done: it succeeded, or it was skipped on a branch the restored steps did not take. The walk also writes `skipped` for every step still pending when a failure or a cancel ends the run; such a step runs again. A restored step's branch comes from its own stored row (`RerunPlan.Branches`): a condition's `result`, an ask_owner's `answeredBy` (`timeout` or answered), `out` for every other step. A branching step whose whole row does not say runs again. A restored branching step whose row was cut at 64 KB can't say its branch either, and running it again would ask an ask_owner's question a second time, so the re-run is refused with SND-GRAPH-108; re-run from that step instead. The walk's `GraphRestored` reads the branch the same way from the copied rows, so it never counts a branch as taken because the step after it has no row. A `for_each` is restored only with every body and collect row succeeded or skipped, and the walk then decides its body and collect with it; otherwise the whole loop runs again. A step after a step that runs again runs again too. The restored node runs (every item row of a repeated step) are copied to the new run, and `GraphRunStarter` stores them right after it admits the run, before the walk starts or the run leaves the queue. The walk's patched `GraphRestored` activity marks those steps decided and gives each the branches it took, so the steps that run again read their output as before.
-- **The new run.** It walks the source run's revision, not the active one. Its trigger has kind `rerun`, `of` (the source run id), `fromNode`, `by`, the source trigger's fields at the top level (so `{{trigger.payload.repo}}` still resolves) and the whole source trigger as `original`. Manual runs and re-runs share one run number count (`WorkflowRunNumbers.Next`: one more than the highest manual run or re-run of the workflow), so neither starts inside the other's numbers. Hashed connection and call runs start at 100,000,000, so they never hold a counted number. Only two starts at once can read the same number: on a used number the re-run tries the next, up to 50 times, and a manual run tries once more.
-- **Refusals.** `SND-GRAPH-101` no such run; `008` the workflow was deleted; `001` the revision has no such step, or the step sits inside a `for_each` body; `125` the run has not ended; `126` a step before the chosen one did not succeed (re-run from that step instead); `108` a step to restore had its output cut at 64 KB; `106` the input is not a JSON object.
-- **Re-running a skipped step.** Re-running from a step the source run skipped, on a branch it did not take, runs that step on purpose: the restored steps before it count as having taken their edges into it (`RerunPlan.WithChosen`, from the trigger's `fromNode`), because the owner asked for the step.
+- **The new run.** It walks the source run's revision, not the active one. Its trigger has kind `rerun`, `of` (the source run id), `fromNode`, `by`, the source trigger's fields at the top level (so `{{trigger.payload.repo}}` still resolves) and the first run's trigger as `original`: for a re-run of a re-run it is the source's own `original`, so it stays one level deep (`RerunWorkflowRunService.First`). Manual runs and re-runs share one run number count (`WorkflowRunNumbers.Next`: one more than the highest manual run or re-run of the workflow), so neither starts inside the other's numbers. Hashed connection and call runs start at 100,000,000, so they never hold a counted number. Only two starts at once can read the same number: on a used number the re-run tries the next, up to 50 times, and a manual run tries once more.
+- **Refusals.** `SND-GRAPH-101` no such run; `008` the workflow was deleted; `001` the revision has no such step, or the step sits inside a `for_each` body; `125` the run has not ended; `126` a step before the chosen one did not succeed (re-run from that step instead); `127` every step the chosen one reads from was skipped on a branch nobody took (see below); `108` a step to restore had its output cut at 64 KB (a cut step before the chosen one says to re-run from it; a cut step that is not before the chosen one says so, because re-running from it would not run the chosen step); `106` the input is not a JSON object.
+- **Re-running a skipped step.** Re-running from a step the source run skipped, on a branch it did not take, runs that step on purpose: the restored steps before it count as having taken their edges into it (`RerunPlan.WithChosen`, from the trigger's `fromNode`), because the owner asked for the step. That holds only while one parent of the chosen step ran. When every parent was skipped (graph: `c` says true to `a` and false to `p`, `p` -> `x`; `c` said true; re-run from `x`), `p` has no output and `{{p.*}}` would resolve empty, so the re-run is refused with `SND-GRAPH-127` (`RerunWorkflowRunService.BranchRefusal`). The refusal names the skipped parent to re-run from instead (`p`: it was skipped because the branch to it was not taken, and re-running from it runs that branch on purpose, since its own parent `c` ran). When the dead branch is nested (`p1` -> `p2` -> `x`, every one skipped), it names the first skipped ancestor whose parent ran (`p1`); when no single ancestor qualifies, the line stays generic: re-run from a step on the branch that ran.
 - **Known limits.** `input` is stored in the trigger and nothing in the engine reads it yet. A step inside a `for_each` body can't be the start: re-run from the `for_each` step. Restored steps write no `workflow.node.finished` events, so the Runs view's last-step field does not move for them. The mode of a test run is not carried over until the test-mode work (P4a) lands.
 
 ## The `run_agent` block (PR 7)
@@ -147,13 +147,107 @@ Four reads, each one slice (`Features/ListWorkflows`, `GetWorkflow`, `ListWorkfl
 | Read | Route | MCP tool | CLI |
 |---|---|---|---|
 | The workflows that are not archived, each with its trigger in words and `nextRunAt` | `GET /sindri/workflows` | `workflow_list` | `sindri wf list [--json]` |
-| One workflow: the revision it runs (the newest when off), the spec, the spec hash, who saved the newest revision, node positions, the next run time of an active schedule (`nextRunAt`) | `GET /sindri/workflows/{slug}` | `workflow_get` (`slug`) | `sindri wf show <slug> [--json]` |
-| A workflow's newest 50 runs, newest first, any status | `GET /sindri/workflows/{slug}/runs` | `workflow_runs` (`slug`) | `sindri wf runs <slug> [--json]` |
+| One workflow: the revision it runs (the newest when off), the spec, the spec hash, who saved the newest revision, node positions, the next run time of an active schedule (`nextRunAt`) | `GET /sindri/workflows/{slug}[?revision=N\|latest]` | `workflow_get` (`slug`, `revision`) | `sindri wf show <slug> [--revision <n\|latest>] [--json]` |
+| A workflow's runs, newest first, 50 a page, filtered by status and start time, paged by `before` | `GET /sindri/workflows/{slug}/runs[?status=&since=&until=&before=]` | `workflow_runs` (`slug`, `status`, `since`, `until`, `before`) | `sindri wf runs <slug> [--status S] [--since T] [--until T] [--before R] [--json]` |
 | One run with its trigger, outputs and node runs | `GET /sindri/workflow-runs/{run}` | `workflow_run_get` (`run`) | `sindri wf run-show <run> [--json]` |
+
+`revision` (#3303, #3693) reads a saved revision instead of the one the workflow runs: a whole number, or `latest` for the newest saved. The route, the MCP tool and the CLI build the same `GetWorkflowRequest`; the MCP tool takes the number as a JSON number or text. A number the workflow has no revision for is `SND-GRAPH-008` (404), any other value invalid input (`SND-CLI-003`, 400).
 
 `nextRunAt` is the soonest tick of the active revision's schedule trigger after now, computed by one Core helper (`Core/Graph/Schedule/WorkflowNextRun.cs`), so the list row and the single read always agree. It is null when the workflow is off, archived, run by hand or by an event, or when its schedule has no tick (#3756); `sindri wf show` prints a `next run` line only when it is set.
 
 An unknown slug is `SND-GRAPH-008` (404), an unknown run `SND-GRAPH-101`, a slug or run id of the wrong shape invalid input. "Who changed it last" is the `createdBy` of the newest revision (`owner` or `session:<id>`). Node payloads the store cut at its size limit come back as a string. `truncated: true` on the node run means its output was cut; a cut input alone leaves it false. Over MCP, names, descriptions, node titles and every string of a node config (prompts), failure text, trigger payloads, outputs and node inputs and outputs are fenced as untrusted. `IWorkflowRunStore.Recent` is the new store read behind the run list.
+
+### Filtering and paging the runs read (#4334)
+
+The runs read takes four optional values, the same on the route's query, the MCP arguments and the CLI flags. The store applies them in its SQL (`IWorkflowRunStore.Find`), before the page cap, so a filter reaches runs older than the newest 50.
+
+- `status`: comma-separated words, or the parameter repeated (`?status=failed&status=cancelled` reads like `failed,cancelled`). `running` keeps queued, running and waiting runs; `ended` and `succeeded` keep succeeded runs; `failed`, `cancelled`, `queued` and `waiting` keep that status.
+- `since` and `until`: ISO-8601 instants on the start time, `since` inclusive and `until` exclusive. A date alone is its midnight UTC. A `+` offset may be sent unencoded (`since=2026-11-25T10:00:00+01:00`): the query string turns it into a space, and a single space right before an `hh:mm` offset at the end is read as the `+`.
+- `before`: a run id. The page holds the runs after it in the list order. The answer's `next` is the last run of the page while `more` is true, so `before=<next>` reads the older page.
+
+A value the read can't parse is `SND-GRAPH-134` (400), and so is a `before` run of another workflow; an unknown `before` run is `SND-GRAPH-101`. `sindri wf runs` sends the flags unchecked and prints the next page's command under a page with `more`.
+
+### The fields the list row and the runs table read (#3683, #3756)
+
+The list row, the run list and the run read carry the fields below on top of the ones above. The MCP tools answer the same JSON as the routes. The MCP tools also fence `workflows[].trigger` and `runs[].result` as untrusted (`Host/Mcp/FencePlan.cs`): a cron with no words comes back as written, and a result line is error or output text an agent or a service wrote.
+
+**`GET /sindri/workflows`, `workflow_list`: each row** (`Features/ListWorkflows/WorkflowSummary.cs`).
+
+| Field | Type | What it holds | When it is empty |
+|---|---|---|---|
+| `trigger` | string | The trigger in words (`TriggerWords.Of`): `By hand`, `Every 20 min`, `Every day 7:00`, `Every weekday 7:00` (weekdays as `1-5` or `MON-FRI`), `N schedules` for a node with more than one cron, `On a schedule` for a schedule node with no cron. A cron it has no words for comes back as its text; any other trigger as its node type (`connection_event`, `workflow_call`). The trigger node is the first node no edge leads into, read from the active revision, else the newest | `""` when the graph has no trigger node |
+| `paused` | bool | True when the workflow was on once and is off now (`workflow.was_activated` set by an activate, kept by a pause). A workflow never turned on is off, not paused | Always present. A workflow that was off before migration 0023 reads `false` |
+| `nextRunAt` | timestamp or null | The soonest tick of the active schedule, the same value as `GET /sindri/workflows/{slug}` | Null when the workflow is off, archived, run by hand or by an event, or its schedule has no tick |
+| `lastRun` | object or null | The newest run of any status: `run` (the run id), `status`, `at` (when the store recorded the run) | Null when the workflow never ran |
+| `recent` | array | The newest 10 runs of any status, newest first: `run`, `status`, `startedAt`, `seconds` (null while the run has not ended) | `[]` when the workflow never ran |
+
+```json
+{
+  "workflows": [
+    {
+      "slug": "morning-check",
+      "trigger": "Every weekday 7:00",
+      "paused": false,
+      "nextRunAt": "2026-01-02T07:00:00.0000000Z",
+      "lastRun": { "run": "morning-check@1:2", "status": "running", "at": "2026-01-01T07:00:00.0000000Z" },
+      "recent": [
+        { "run": "morning-check@1:2", "status": "running", "startedAt": "2026-01-01T07:00:00.0000000Z", "seconds": null },
+        { "run": "morning-check@1:1", "status": "succeeded", "startedAt": "2025-12-31T07:00:00.0000000Z", "seconds": 42.5 }
+      ]
+    }
+  ]
+}
+```
+
+**`GET /sindri/workflows/{slug}`, `workflow_get`** (`Features/GetWorkflow/GetWorkflowResponse.cs`).
+
+| Field | Type | What it holds | When it is empty |
+|---|---|---|---|
+| `nextRunAt` | timestamp or null | The soonest tick of the active revision's schedule, whichever revision the read shows (`?revision=latest` or a number) | Null in the same cases as the list row |
+
+```json
+{ "slug": "morning-check", "revision": 1, "activeRevision": 1, "nextRunAt": "2026-01-01T07:00:00.0000000Z" }
+```
+
+**`GET /sindri/workflows/{slug}/runs`, `workflow_runs`: each run** (`Features/ListWorkflowRuns/WorkflowRunSummary.cs`).
+
+| Field | Type | What it holds | When it is empty |
+|---|---|---|---|
+| `trigger` | string | What started the run (`RunWords.TriggerWord`): `manual` (the app or HTTP), `cli` (`sindri wf run`, stored as `by: "human:cli"`), `agent` (a stored `manual` trigger by `session:<id>`) or `schedule`. Any other stored kind (`workflow_call`, `connection_event`) comes back as stored | `unknown` when the stored trigger has no `kind` |
+| `seconds` | number or null | `endedAt` minus `startedAt`, in seconds | Null while the run has not ended |
+| `result` | string or null | One line for the table (`RunWords.Result`): the first line of `error` for a failed or cancelled run, the outputs as compact JSON for a succeeded run, cut at 120 characters with a trailing `…` | Null for a queued, running or waiting run, a failed run with no error, or a succeeded run with no outputs |
+
+```json
+{
+  "slug": "morning-check",
+  "runs": [
+    { "id": "morning-check@1:3", "status": "running", "trigger": "agent", "seconds": null, "result": null },
+    { "id": "morning-check@1:2", "status": "failed", "trigger": "schedule", "seconds": 12.0, "result": "node 'agent' failed" },
+    { "id": "morning-check@1:1", "status": "succeeded", "trigger": "cli", "seconds": 42.5, "result": "{\"summary\":\"no drift\"}" }
+  ],
+  "more": false
+}
+```
+
+**`GET /sindri/workflow-runs/{run}`, `workflow_run_get`** (`Features/GetWorkflowRun/GetWorkflowRunResponse.cs`, `NodeRunView.cs`). The `trigger` object stays as it was.
+
+| Field | Type | What it holds | When it is empty |
+|---|---|---|---|
+| `triggerKind` | string | The same word as the run list's `trigger` | Always present |
+| `nodes[].seconds` | number or null | How long the node row ran: `ended_at` minus `started_at` of `workflow_node_run` (migration 0023). The store stamps `started_at` when it writes a `running` row and `ended_at` on the final write, with its own clock; a later write keeps the first `started_at` (`Core/Graph/Runs/NodeRunTimes.cs`) | Null while the node runs, for a row written before migration 0023, and for a row written once at its end (`skipped` rows, `collect` rows) |
+
+```json
+{
+  "id": "morning-check@1:1",
+  "status": "succeeded",
+  "trigger": { "kind": "manual", "by": "human:cli" },
+  "triggerKind": "cli",
+  "nodes": [
+    { "node": "start", "itemIndex": 0, "status": "succeeded", "seconds": null },
+    { "node": "agent", "itemIndex": 0, "status": "succeeded", "seconds": 41.8 }
+  ]
+}
+```
 
 ## Writing workflows (PR 8b)
 
@@ -170,7 +264,7 @@ Seven writes, each one slice (`Features/CreateWorkflow`, `ApplyWorkflowOps`, `Re
 | Archive (hidden, off for good; revisions and runs stay) | `DELETE /sindri/workflows/{slug}` | `workflow_delete` | `sindri wf delete <slug>` |
 | The block types, grouped as the picker shows them (Triggers, Data, AI, Logic, Outputs), with titles, config fields, outputs, branches and examples | `GET /sindri/workflows/blocks` | `workflow_blocks` | `sindri wf blocks` |
 | The workflow docs: rank a question, read a page (`--page block-schedule`) or list the pages | `GET /sindri/workflows/docs?question=&page=` | `workflow_docs` | `sindri wf docs [<words>] [--page <slug>]` |
-| Start / stop a run | `POST /sindri/workflows/{slug}/runs`, `POST /sindri/workflow-runs/{run}/cancel` | `workflow_run`, `workflow_cancel` | `sindri wf run`, `sindri wf cancel` |
+| Start / stop a run (`revision` runs a saved revision once, the active one stays) | `POST /sindri/workflows/{slug}/runs`, `POST /sindri/workflow-runs/{run}/cancel` | `workflow_run` (`slug`, `payload`, `revision`), `workflow_cancel` | `sindri wf run <slug> [--revision <n>]`, `sindri wf cancel` |
 
 **Docs and blocks.** The pages in `docs/workflows/*.md` are embedded in the binary (`IWorkflowDocs`) and searched by `WorkflowDocSearch`; `blocks` and `docs` are reserved, since the literal routes win over `/workflows/{slug}`. Each block says its picker `Group` and `Title` (`IGraphBlockType`; a block that says nothing is Logic, shown by its type), and the block list is read from the block definitions only. A config field that names a connection carries `services` in the list: the services whose connections fit it (`connection_event`'s `connection`: every service with pollable events, `github`, `linear`, `slack`, `google`), or `[]` for any connection (`call_tool`'s); other fields leave it out. The step sheet's connection picker reads it, so no service is hard-wired in the app (#3704).
 
@@ -189,12 +283,12 @@ The built-in service `workflow-poll` (`Features/PollConnections`, every 30 secon
 The built-in service `workflow-schedule` (`Features/WorkflowSchedule`, every minute) starts runs for `schedule` nodes.
 
 1. For each active workflow, take the `schedule` node of its active revision.
-2. Compute the latest cron tick after the latest of the revision's save time, the last schedule run's tick and the last handled tick, up to now (`CronExpression.LastTick`, in the node's timezone).
+2. Compute the latest cron tick after the latest of the revision's save time, the last schedule run's tick and the last marked tick, up to now (`CronExpression.LastTick`, in the node's timezone).
 3. Start one run through `IGraphRunStarter` with trigger `{"kind":"schedule","scheduledFor":"<tick>"}`. The starter decides start, queue or skip by the workflow's `concurrency`.
 
 - Three missed days fire one run, for the latest tick only.
 - **Occurrence** of a schedule run is the tick in whole minutes since the Unix epoch, so firing the same tick twice is SND-GRAPH-100 (one run row).
-- **Handled ticks.** The store keeps the last handled tick per workflow (`IWorkflowRunStore.MarkTick` / `LastTick`, table `workflow_schedule_tick` in the run tables' migration; it only moves forward). The service marks a tick when the starter started it, queued it **or skipped it** (a run was in flight), and when the tick already has a run (SND-GRAPH-100). A skipped tick is therefore done: it is not retried each minute and does not fire late when the run in flight ends; the next cron tick fires on its own. The newest schedule run's occurrence (`IWorkflowRunStore.LatestOccurrence`) stays a second floor.
+- **Marked ticks.** The store keeps the last marked tick per workflow (`IWorkflowRunStore.MarkTick` / `LastTick`, table `workflow_schedule_tick` in the run tables' migration; it only moves forward). The service marks a tick when the starter started it, queued it **or skipped it** (a run was in flight), and when the tick already has a run (SND-GRAPH-100). A skipped tick is therefore done: it is not retried each minute and does not fire late when the run in flight ends; the next cron tick fires on its own. The newest schedule run's occurrence (`IWorkflowRunStore.LatestOccurrence`) stays a second floor.
 - **A failed launch does not use up its tick.** When the starter returns any other error (the engine is down, say), the tick is not marked, the pass logs a warning, and the next pass tries the same tick again (as long as it is still the latest). A pass keeps going over the other workflows after one fails and returns the first error at the end.
 - **One schedule node.** A workflow has exactly one trigger (`GRAPH-TRIGGER-001`), so the service reads only the first `schedule` node (up to six crons inside it).
 - **Known gap:** nothing stores when a revision was activated, so the floor is `WorkflowRevision.CreatedAt`. A tick between saving and activating a revision can fire once on activation.

@@ -25,7 +25,7 @@ public sealed class NotifyBlock(INotifyPort notify) : IGraphBlock
     public BlockSchema Config { get; } = new([new("title", BlockFieldType.Text, Caption: "Title"), new("body", BlockFieldType.Text, Required: false, Caption: "Message")]);
 
     /// <inheritdoc />
-    public string Example => """{"title":"Drifted","body":"{{agent.summary}}"}""";
+    public string Example => """{"title":"Workflow update","body":"{{agent.summary}}"}""";
 
     /// <inheritdoc />
     public BlockOutputs OutputsFor(JsonObject config) => _outputs;

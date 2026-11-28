@@ -24,10 +24,10 @@ An unknown key anywhere in the document is refused.
 `budget.tokens` caps the tokens of one run. The run adds up the input and output tokens of each `prompt` node and the tokens of each `run_agent` session.
 
 1. Before a `prompt` or `run_agent` node starts, the run compares its total with the budget.
-2. When the total has reached the budget, the node fails with `SND-GRAPH-134` and the model is not asked. The node's `onFailure` applies as for any failure.
+2. When the total has reached the budget, the node fails with `SND-GRAPH-135` and the model is not asked. The node's `onFailure` applies as for any failure.
 3. A node that starts under the budget may finish over it.
 
-Example: with `"budget": {"tokens": 100}`, a first prompt that uses 120 tokens runs, and the next prompt fails with `SND-GRAPH-134`.
+Example: with `"budget": {"tokens": 100}`, a first prompt that uses 120 tokens runs, and the next prompt fails with `SND-GRAPH-135`.
 
 A spec without `budget` takes the profile's `workflow.budget.tokens`. With neither, a run has no cap. `budget.tokens` must be a whole number above 0, or `sindri wf validate` reports `GRAPH-BUDGET-001`. The run page shows "N / M tokens", and `GET /sindri/workflow-runs/{run}` answers `tokens: {used, budget}`.
 

@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Failures;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Launches;
@@ -34,10 +35,11 @@ internal sealed class GetWorkflowRunService(IWorkflowRunStore runs, IWorkflowSto
         var revision = await workflows.GetRevision(found.WorkflowId, found.Revision, cancellationToken).ConfigureAwait(false);
         var spec = revision.IsError ? null : revision.Value.Spec;
         var agentNodes = await AgentNodes(found, spec, nodes.Value, cancellationToken).ConfigureAwait(false);
+        var titles = StepTitles(spec, nodes.Value);
         var tokens = await Tokens(spec, nodes.Value, cancellationToken).ConfigureAwait(false);
         var slug = WorkflowSlug.From(found.Id.Value[..found.Id.Value.IndexOf('@', StringComparison.Ordinal)]);
-        return new GetWorkflowRunResponse(found.Id, slug, found.Revision, RunText.Of(found.Status), RunText.Json(found.Trigger), RunText.Json(found.Outputs), found.Error, found.ItemId, found.StartedAt, found.EndedAt,
-            [.. RunOrder.Of(spec, nodes.Value).Select(n => View(n, agentNodes))],
+        return new GetWorkflowRunResponse(found.Id, slug, found.Revision, RunText.Of(found.Status), RunText.Json(found.Trigger), RunOrder.Outputs(spec, RunText.Json(found.Outputs)), found.Error, found.ItemId, found.StartedAt, found.EndedAt,
+            [.. RunOrder.Of(spec, nodes.Value).Select(n => View(n, agentNodes, titles))],
             tokens)
         {
             TriggerKind = RunWords.TriggerWord(found.Trigger),
@@ -45,11 +47,20 @@ internal sealed class GetWorkflowRunService(IWorkflowRunStore runs, IWorkflowSto
     }
 
     // One node row as the run page shows it; Seconds is null while the row has not ended or when it was written before node times (#3683).
-    private static NodeRunView View(NodeRun n, AgentRows agentNodes) =>
-        new(n.NodeId, n.ItemIndex, RunText.Of(n.Status), RunText.Json(n.Input), RunText.Json(n.Output), n.Truncated, n.Error, agentNodes.Of(n), n.Raw)
+    private static NodeRunView View(NodeRun n, AgentRows agentNodes, Dictionary<NodeId, string> titles) =>
+        new(n.NodeId, n.ItemIndex, RunText.Of(n.Status), RunText.Json(n.Input), RunText.Json(n.Output), n.Truncated, n.Error, agentNodes.Of(n), n.Raw, Failure(n, titles))
         {
             Seconds = n.StartedAt is { } begun && n.EndedAt is { } end ? (end - begun).TotalSeconds : null,
         };
+
+    // why: the §6.1 sentence names a step by its title, never its node id (#3304); a row the revision can't name keeps only its raw error
+    private static StepFailure? Failure(NodeRun row, Dictionary<NodeId, string> titles) =>
+        row.Status == NodeRunStatus.Failed && row.Error is { } error && titles.TryGetValue(row.NodeId, out var title) ? StepFailures.Describe(title, error, row.Raw) : null;
+
+    // The title of each node of the revision the run walked, built only when a row failed: the node's own title, else its block kind in words ("run_agent" -> "Run agent").
+    // A revision the store can't give leaves no title, so the failed rows carry no sentence and the read still answers.
+    private static Dictionary<NodeId, string> StepTitles(GraphSpec? spec, IReadOnlyList<NodeRun> rows) =>
+        spec is null || !rows.Any(static r => r.Status == NodeRunStatus.Failed) ? [] : spec.Nodes.ToDictionary(static n => n.Id, StepTitle.Of);
 
     // #3805: what the run's node runs used, and the budget a run of this revision gets: the spec's, else the profile's as it is now (the walk read the profile once, when the run started)
     private async ValueTask<RunTokens> Tokens(GraphSpec? spec, IReadOnlyList<NodeRun> rows, CancellationToken cancellationToken)

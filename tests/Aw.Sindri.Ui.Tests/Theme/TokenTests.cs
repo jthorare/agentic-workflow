@@ -206,6 +206,18 @@ public sealed class TokenTests
         Assert.Equal(tracking, style.Elements().Single(e => Attr(e, "Property") == "LetterSpacing").Attribute("Value")?.Value);
     }
 
+    // Code reads as typed (#4087): each mono class's own style turns JetBrains Mono's ligatures off.
+    [Theory]
+    [InlineData("TextBlock.mono")]
+    [InlineData("SelectableTextBlock.mono")]
+    [InlineData("TextBlock.kbd")]
+    public void Each_mono_class_turns_ligatures_off(string selector)
+    {
+        var style = TypographyStyles().Single(s => Selects(s, selector));
+
+        Assert.Equal("-calt, -liga", style.Elements().Single(e => Attr(e, "Property") == "FontFeatures").Attribute("Value")?.Value);
+    }
+
     [Fact]
     public void The_chart_inset_is_Surface2_and_a_floating_layer_has_its_shadow()
     {

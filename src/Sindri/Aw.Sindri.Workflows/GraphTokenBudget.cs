@@ -7,7 +7,7 @@ using Aw.Sindri.Core.Graph.Runs;
 namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>
-/// A run's token budget (#3805): a 'prompt' or 'run_agent' node that would start once the run's total has reached the budget fails with SND-GRAPH-134 and never runs.
+/// A run's token budget (#3805): a 'prompt' or 'run_agent' node that would start once the run's total has reached the budget fails with SND-GRAPH-135 and never runs.
 /// A pure comparison, so the walk adds no command for it: a run with no budget, or under it, keeps the exact command sequence it had before.
 /// </summary>
 internal static class GraphTokenBudget

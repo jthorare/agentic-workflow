@@ -12,5 +12,7 @@ internal static class ConnectionRoutes
 
     internal static string Rename(string name) => $"{One(name)}/rename";
 
+    internal static string Key(string name) => $"{One(name)}/key";
+
     internal static string SignIn(string name) => $"{One(name)}/signin";
 }

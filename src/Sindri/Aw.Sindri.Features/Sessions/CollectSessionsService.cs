@@ -19,14 +19,17 @@ internal sealed partial class CollectSessionsService(SessionDiscovery discovery,
         if (!discovery.IsEnabled())
         {
             memory.History = new Dictionary<SessionRef, IReadOnlyList<SessionStateEntry>>();
+            memory.ListedAt = null;
+            memory.OverrunsInARow = 0;
             Publish([], [], [SessionProblems.Disabled], now);
             return new CollectSessionsResponse(memory.Pending, Good: false, Sessions: 0, Pruned: 0);
         }
 
         var found = await Discover(request.Budget, cancellationToken).ConfigureAwait(false);
+        memory.OverrunsInARow = found is null ? memory.OverrunsInARow + 1 : 0;
         if (found is null || !found.Good)
         {
-            KeepPrevious([.. found?.Problems ?? [SessionProblems.Overrun]], now);
+            KeepPrevious([.. found?.Problems ?? [OverrunRow(now)]], now);
             return new CollectSessionsResponse(memory.Pending, Good: false, Sessions: 0, Pruned: 0) { Overran = found is null };
         }
 
@@ -40,6 +43,7 @@ internal sealed partial class CollectSessionsService(SessionDiscovery discovery,
         memory.Previous = sessions.ToDictionary(static s => s.Ref);
         memory.Ended = ended;
         memory.History = StateHistoryRules.Next(memory.History, sessions);
+        memory.ListedAt = now;
         Publish(sessions, ended, found.Problems, now);
         return new CollectSessionsResponse(memory.Pending, Good: true, sessions.Count, discovery.Prune([.. sessions.Select(static s => s.Ref)], now));
     }
@@ -118,6 +122,10 @@ internal sealed partial class CollectSessionsService(SessionDiscovery discovery,
         var kept = memory.Previous.Values.Where(p => unknown.Contains((p.Pid, p.StartTicks))).ToList();
         return [.. sessions.Where(s => !unknown.Contains((s.Pid, s.StartTicks))).Concat(kept).OrderBy(static s => s.Ref.ToString(), StringComparer.Ordinal)];
     }
+
+    /// <summary>The overrun row; from the third overrun in a row it says how old the kept list is, since nothing else shows its age (#4244).</summary>
+    private SessionProblem OverrunRow(DateTimeOffset now) =>
+        memory.OverrunsInARow < SessionProblems.StaleAfter ? SessionProblems.Overrun : SessionProblems.Stale(memory.OverrunsInARow, now - memory.ListedAt);
 
     private void KeepPrevious(List<SessionProblem> problems, DateTimeOffset now)
     {

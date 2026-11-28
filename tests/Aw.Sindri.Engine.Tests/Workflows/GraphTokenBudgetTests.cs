@@ -7,7 +7,7 @@ namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>
 /// A run's token budget (#3805): the run sums the tokens its 'prompt' and 'run_agent' nodes report; a prompt or run_agent node that would start once the total has
-/// reached the budget fails with SND-GRAPH-134 and never asks the model. The spec's 'budget.tokens' wins over the profile's default; with neither there is no cap.
+/// reached the budget fails with SND-GRAPH-135 and never asks the model. The spec's 'budget.tokens' wins over the profile's default; with neither there is no cap.
 /// </summary>
 [Lane(TestLane.Integration)]
 public sealed class GraphTokenBudgetTests
@@ -44,12 +44,12 @@ public sealed class GraphTokenBudgetTests
         Assert.Equal(WorkflowRunStatus.Failed, run.Status);
         Assert.Equal(NodeRunStatus.Succeeded, nodes["first"].Status);
         Assert.Equal(NodeRunStatus.Failed, nodes["second"].Status);
-        Assert.StartsWith("SND-GRAPH-134: ", nodes["second"].Error, StringComparison.Ordinal);
+        Assert.StartsWith("SND-GRAPH-135: ", nodes["second"].Error, StringComparison.Ordinal);
         Assert.Contains("120", nodes["second"].Error, StringComparison.Ordinal);
         Assert.Contains("100", nodes["second"].Error, StringComparison.Ordinal);
         Assert.Equal(1, rig.Model.Calls);   // why: the refused node never reached the model
         Assert.Equal(NodeRunStatus.Skipped, nodes["after"].Status);
-        Assert.Contains("SND-GRAPH-134", run.Error, StringComparison.Ordinal);
+        Assert.Contains("SND-GRAPH-135", run.Error, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public sealed class GraphTokenBudgetTests
         var (run, nodes) = await RunToEnd(rig, TwoPrompts(budget: null));
 
         Assert.Equal(WorkflowRunStatus.Failed, run.Status);
-        Assert.StartsWith("SND-GRAPH-134: ", nodes["second"].Error, StringComparison.Ordinal);
+        Assert.StartsWith("SND-GRAPH-135: ", nodes["second"].Error, StringComparison.Ordinal);
         Assert.Equal(1, rig.Model.Calls);
     }
 
@@ -153,7 +153,7 @@ public sealed class GraphTokenBudgetTests
         Assert.Equal(NodeRunStatus.Succeeded, asks[1].Status);
         Assert.Equal(NodeRunStatus.Succeeded, asks[2].Status);   // why: it starts at 60 of 100
         Assert.Equal(NodeRunStatus.Failed, asks[3].Status);   // why: it would start at 120 of 100
-        Assert.StartsWith("SND-GRAPH-134: ", asks[3].Error, StringComparison.Ordinal);
+        Assert.StartsWith("SND-GRAPH-135: ", asks[3].Error, StringComparison.Ordinal);
         Assert.Equal(2, rig.Model.Calls);
         Assert.Equal(1, output["skipped"]!.GetValue<int>());
     }
@@ -173,7 +173,7 @@ public sealed class GraphTokenBudgetTests
         var (run, nodes) = await RunToEnd(rig, spec, trigger);
 
         Assert.Equal(WorkflowRunStatus.Failed, run.Status);
-        Assert.StartsWith("SND-GRAPH-134: ", nodes["last"].Error, StringComparison.Ordinal);   // why: the two items used 120 of 100
+        Assert.StartsWith("SND-GRAPH-135: ", nodes["last"].Error, StringComparison.Ordinal);   // why: the two items used 120 of 100
         Assert.Equal(2, rig.Model.Calls);
     }
 }

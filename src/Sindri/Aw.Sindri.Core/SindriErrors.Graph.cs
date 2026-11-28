@@ -70,8 +70,8 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-133: a prompt step's answer said couldNotAnswer: true, so the step fails with the model's reason instead of passing a default (#3224).</summary>
     public static readonly ErrorDefinition GraphPromptCouldNotAnswer = new("SND-GRAPH-133", ErrorKind.Invalid, "The model said it couldn't answer");
 
-    /// <summary>SND-GRAPH-134: the run's 'prompt' and 'run_agent' nodes have used its whole token budget, so the next such node does not start (#3805).</summary>
-    public static readonly ErrorDefinition GraphOverBudget = new("SND-GRAPH-134", ErrorKind.Invalid, "The run used its whole token budget");
+    /// <summary>SND-GRAPH-135: the run's 'prompt' and 'run_agent' nodes have used its whole token budget, so the next such node does not start (#3805).</summary>
+    public static readonly ErrorDefinition GraphOverBudget = new("SND-GRAPH-135", ErrorKind.Invalid, "The run used its whole token budget");
 
     /// <summary>SND-GRAPH-104: run controls (complete a Step, take over, hand back) are not available until the graph engine runs agents.</summary>
     public static readonly ErrorDefinition GraphRunControlsPending = new("SND-GRAPH-104", ErrorKind.Unavailable, "This run control returns with the graph engine's agent blocks");
@@ -114,9 +114,15 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-131: a node reads a field of a node that failed and continued (onFailure 'continue'); the reader fails instead of reading nothing.</summary>
     public static readonly ErrorDefinition GraphReferenceToContinuedFailure = new("SND-GRAPH-131", ErrorKind.Invalid, "A reference reads a node that failed and continued");
 
+    /// <summary>SND-GRAPH-134: a runs read's filter can't be read (an unknown status, a time that is not an ISO-8601 instant, 'since' after 'until', or a 'before' run of another workflow); #4334.</summary>
+    public static readonly ErrorDefinition GraphRunsFilterInvalid = new("SND-GRAPH-134", ErrorKind.Invalid, "That runs filter can't be read");
+
     /// <summary>SND-GRAPH-125: a re-run from a step needs a run that has ended; this one is still queued, running or waiting (Workflows page spec §7.3, P7).</summary>
     public static readonly ErrorDefinition GraphRerunNotEnded = new("SND-GRAPH-125", ErrorKind.Conflict, "That run has not ended, so it can't be re-run from a step");
 
     /// <summary>SND-GRAPH-126: a step before the chosen one has no succeeded output to restore (it failed, was cancelled or never ran), so a re-run from the chosen step would feed it nothing.</summary>
     public static readonly ErrorDefinition GraphRerunUpstreamNotDone = new("SND-GRAPH-126", ErrorKind.Conflict, "A step before the chosen one did not succeed");
+
+    /// <summary>SND-GRAPH-127: every step the chosen one reads from was skipped in the source run, because the branch that leads to it was not taken, so a re-run from the chosen step would run it on nothing.</summary>
+    public static readonly ErrorDefinition GraphRerunBranchNotTaken = new("SND-GRAPH-127", ErrorKind.Conflict, "Every step before the chosen one was skipped");
 }

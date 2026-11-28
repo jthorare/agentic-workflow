@@ -1,11 +1,11 @@
-using System.Text.Json;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflows;
+using Aw.Sindri.Ui.Platform;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
 /// <summary>One run with every node's status, input, output and error. Nodes keep the order they were served in, grouped by node id.</summary>
-internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
+internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider clock, IClipboard? clipboard = null) : ObservableObject
 {
     private int _reads;
     private Uri? _url;
@@ -13,9 +13,6 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
 
     /// <summary>The run's id.</summary>
     public string Id { get; private set => Set(ref field, value); } = string.Empty;
-
-    /// <summary>"Run morning-check@1:1".</summary>
-    public string TitleText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>The served status word; empty before the first answer.</summary>
     public string Status { get; private set => Set(ref field, value); } = string.Empty;
@@ -71,8 +68,14 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
     /// <summary>Why the run failed, as served; empty otherwise.</summary>
     public string ErrorText { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>True when the run has an error.</summary>
-    public bool HasError => ErrorText.Length > 0;
+    /// <summary>True when the run has an error that Sindri gave no sentence for (a run with one shows <see cref="Failure"/> and keeps the text under its Details).</summary>
+    public bool HasError => ErrorText.Length > 0 && Failure is null;
+
+    /// <summary>The failed step in words, or null.</summary>
+    public RunFailureViewModel? Failure { get; private set => Set(ref field, value); }
+
+    /// <summary>True when the failure has a sentence.</summary>
+    public bool HasFailure => Failure is not null;
 
     /// <summary>The run's outputs as indented JSON; empty while none.</summary>
     public string OutputsText { get; private set => Set(ref field, value); } = string.Empty;
@@ -122,16 +125,7 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
     {
         var read = ++_reads;
         _url = url;
-        if (!string.Equals(Id, runId, StringComparison.Ordinal))
-        {
-            if (!string.Equals(_toMarkSeen, runId, StringComparison.Ordinal))
-            {
-                _toMarkSeen = null;   // another run: the old open's mark is not wanted
-            }
-
-            Empty(runId);
-        }
-
+        SwitchTo(runId);
         IsReading = Groups.Count == 0;
         if (IsReading)
         {
@@ -147,13 +141,36 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
         IsReading = false;
         if (run.IsError)
         {
+            if (string.Equals(_startingId, runId, StringComparison.Ordinal))
+            {
+                ShowStarting(runId);   // the views row is not there yet: not a failure
+                return;
+            }
+
             (IsFailed, FailedText) = (true, Labels.WfRunFailed(run.Error));
             return;
         }
 
+        (_startingId, _timedOutId, DidNotStart) = (null, null, false);   // the run landed, late or not: it replaces the did-not-start page
         (IsFailed, FailedText) = (false, string.Empty);
         Show(run.Value);
         await MarkSeen(url, run.Value, cancellationToken).ConfigureAwait(true);
+    }
+
+    // A read of another run empties the page first; the old open's mark is not wanted then.
+    private void SwitchTo(string runId)
+    {
+        if (string.Equals(Id, runId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (!string.Equals(_toMarkSeen, runId, StringComparison.Ordinal))
+        {
+            _toMarkSeen = null;
+        }
+
+        Empty(runId);
     }
 
     // Another run: nothing of the old one stays.
@@ -165,7 +182,8 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
         (Status, Tone, NoticeText) = (string.Empty, ChipTone.Neutral, string.Empty);
         (ChipWord, ChipGlyph, ChipToneWord) = (string.Empty, string.Empty, "neutral");
         (IsFailed, FailedText) = (false, string.Empty);
-        (TitleText, TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (Labels.WfRunTitle(runId), string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+        (TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+        Failure = null;
         Changed();
     }
 
@@ -188,11 +206,10 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
     private void Show(WorkflowRunView run)
     {
         var (glyph, word) = Labels.WfChip(run.Status);
-        TitleText = Labels.WfRunTitle(run.Id);
         (ChipWord, ChipGlyph) = (word, glyph);
         (Status, Tone) = (run.Status, RunStatus.Tone(run.Status));
         ChipToneWord = RunStatus.ToneWord(run.Status);
-        TriggerText = Labels.WfStartedBy(KindOf(run.Trigger));
+        TriggerText = Labels.WfStartedBy(TriggerKindOf(run));
         RevisionText = Labels.WfRunRevision(run.Revision);
         TokensText = Labels.WfRunTokens(run.Tokens);
         var live = RunStatus.IsLive(run.Status);
@@ -200,8 +217,10 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
             ? Labels.JobWhen(running: true, clock.GetUtcNow() - run.StartedAt)
             : Labels.JobWhen(running: false, clock.GetUtcNow() - (run.EndedAt ?? run.StartedAt));
         ErrorText = run.Error ?? string.Empty;
+        Failure = FailureOf(run);
         OutputsText = WorkflowJson.Pretty(run.Outputs);
-        Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode))];
+        var types = NodeTypes(Shape);
+        Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode, (node, token) => EditStep?.Invoke(node, token) ?? Task.CompletedTask, types.GetValueOrDefault(g.Key, string.Empty)))];
         // No next-run time on purpose (#4188): this page shows a past run, so its Schedule card carries no "next ..." chip.
         Graph = Shape is { } shape && shape.Revision == run.Revision ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(shape, Statuses(run))) : null;
         Changed();
@@ -209,6 +228,9 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
 
     /// <summary>The run's graph with each node's status, or null when the run walked another revision than the one read (positions belong to a revision).</summary>
     public WorkflowGraphViewModel? Graph { get; private set => Set(ref field, value); }
+
+    /// <summary>What a failed step's Edit step button calls with the step's id: the page opens the workflow on it.</summary>
+    internal Func<string, CancellationToken, Task>? EditStep { get; set; }
 
     /// <summary>The workflow revision the page read, set before <see cref="Read"/>; null draws no graph.</summary>
     internal WorkflowView? Shape { get; set; }
@@ -221,30 +243,13 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
     /// <param name="text">The note; empty clears it.</param>
     internal void Note(string text) => NoticeText = text;
 
-    // a node run per item of a for_each: the last one served speaks for the node
-    private static Dictionary<string, string> Statuses(WorkflowRunView run)
-    {
-        var statuses = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var node in run.Nodes)
-        {
-            statuses[node.Node] = node.Status;
-        }
-
-        return statuses;
-    }
-
     private void Changed()
     {
         OnChanged(nameof(HasError));
+        OnChanged(nameof(HasFailure));
         OnChanged(nameof(HasOutputs));
         OnChanged(nameof(IsError));
         OnChanged(nameof(CanCancel));
         OnChanged(nameof(CanPressCancel));
     }
-
-    // The trigger is the stored object; its "kind" names it. One without a kind reads as "an unknown trigger" rather than failing the run.
-    private static string? KindOf(JsonElement? trigger) =>
-        trigger is { ValueKind: JsonValueKind.Object } t && t.TryGetProperty("kind", out var kind) && kind.ValueKind == JsonValueKind.String && kind.GetString() is { Length: > 0 } text
-            ? text
-            : null;
 }

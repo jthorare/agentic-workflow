@@ -42,6 +42,20 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
     /// <summary>The state in a word at the heading's right: "ok" or "needs a look"; empty with no lines.</summary>
     public string Word { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The mark beside <see cref="Word"/> (#4331): the ok check for "ok", the attention mark for "needs a look", none while building or queued and with no lines.</summary>
+    public StateGlyph Glyph
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(HasGlyph));
+        }
+    } = StateGlyph.None;
+
+    /// <summary>True when there is a mark to draw, so a card with none leaves no gap before its word.</summary>
+    public bool HasGlyph => Glyph != StateGlyph.None;
+
     // The newest read's number: an older read that answers late shows nothing over a newer one's.
     private int _reads;
 
@@ -64,6 +78,7 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         {
             Lines = [];
             Word = string.Empty;
+            Glyph = StateGlyph.None;
             ShowCommand(paused: false);
             Show(Labels.CodeIndexUnreadable);
             return;
@@ -74,6 +89,7 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
         var views = repos.Select(r => (Repo: r, Health: health.GetValueOrDefault(r.Repo))).ToList();
         Lines = [.. views.Select(v => new CodeIndexLine(Line(v.Repo, v.Health)))];
         Word = repos.Count == 0 ? string.Empty : WordOf(views);
+        Glyph = GlyphOf(Word);
         ShowCommand(views.Exists(static v => IsPaused(StateOf(v.Repo, v.Health), v.Health)));
         Show(repos.Count == 0 ? Labels.CodeIndexNone : string.Empty);
     }
@@ -106,6 +122,14 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
 
         return views.Exists(static v => Is(v, "queued")) ? Labels.CodeIndexQueued : Labels.CodeIndexOk;
     }
+
+    // ok draws the check and needs a look the attention mark; building, build queued and no word draw none.
+    private static StateGlyph GlyphOf(string word) => word switch
+    {
+        Labels.CodeIndexOk => StateGlyph.Ok,
+        Labels.CodeIndexNeedsLook => StateGlyph.Warning,
+        _ => StateGlyph.None,
+    };
 
     private static bool Is((CodeIndexRepoView Repo, CodeIndexHealthView? Health) view, string state) => string.Equals(StateOf(view.Repo, view.Health), state, StringComparison.Ordinal);
 
