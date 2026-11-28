@@ -1,6 +1,7 @@
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Templates;
 using Aw.Sindri.Core.Graph.Validation;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.CreateWorkflow;
@@ -31,6 +32,7 @@ public sealed class CreateWorkflowGateTests
             register: (services, h) => services
                 .AddSingleton<IWorkflowStore>(new InMemoryWorkflowStore(h.Clock))
                 .AddSingleton<IWorkflowChecker>(slow)
+                .AddSingleton<ICiSourceLookup>(new FakeCiSourceLookup())
                 .AddSingleton(new WorkflowChangeLog(h.Store, h.Held, h.Events, h.Callers))
                 .AddScoped<IValidator<CreateWorkflowRequest>, AcceptAllValidator<CreateWorkflowRequest>>()
                 .AddUngatedCommand<CreateWorkflowRequest, CreateWorkflowResponse, CreateWorkflowService>(),

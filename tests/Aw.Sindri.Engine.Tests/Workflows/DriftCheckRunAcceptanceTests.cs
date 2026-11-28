@@ -258,7 +258,7 @@ public sealed class DriftCheckRunAcceptanceTests
         }
     }
 
-    private sealed class OpenGate : Core.Commands.ICommandGate
+    private sealed class OpenGate : ICommandGate
     {
         public ValueTask<IDisposable?> Enter(CancellationToken cancellationToken) => ValueTask.FromResult<IDisposable?>(new Hold());
 
