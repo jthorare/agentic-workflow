@@ -67,6 +67,10 @@ public sealed partial class ContrastTests
         ("WireHi", "Surface1", 5.6, NonText),
         ("RingAnchor", "Canvas", 13.6, NonText),
         ("RingAnchor", "Surface1", 12.5, NonText),
+        // link text at rest on a card, a tile and a lifted card (#4429)
+        ("Link", "Surface1", 5.3, TextAa),
+        ("Link", "Surface2", 4.9, TextAa),
+        ("Link", "Surface3", 4.5, TextAa),
     ];
 
     public static TheoryData<string, string, double, double> Pairs
@@ -169,6 +173,25 @@ public sealed partial class ContrastTests
         Assert.Equal("{DynamicResource Brush.PrimaryHover}", border);
         var ratio = Wcag.Contrast(BrushColor("PrimaryHover"), BrushColor("Clickable.Pressed"));
         Assert.True(ratio >= NonText, string.Create(CultureInfo.InvariantCulture, $"a selected row's pressed border is {ratio:F2}:1 on the pressed fill, below {NonText}"));
+    }
+
+    // Link text at rest (#4429): Brush.Primary is 3.6 to 3.9:1 on a card, so the in-card links draw Brush.Link, which holds 4.5:1.
+    [Theory]
+    [InlineData("Views/Shell/ShellStyles.axaml", "Button.accent-link")]
+    [InlineData("Views/Todo/FromElsewhereLine.axaml", "Button.elsewhere-part.action-link TextBlock")]
+    public void In_card_link_text_rests_in_Brush_Link_with_4_5_to_1_on_cards(string file, string selector)
+    {
+        var foreground = XDocument.Load(Path.Combine(UiSource.Library, file)).Descendants()
+            .Where(e => string.Equals(e.Attribute("Selector")?.Value, selector, StringComparison.Ordinal))
+            .SelectMany(style => style.Elements())
+            .Single(e => string.Equals(e.Attribute("Property")?.Value, "Foreground", StringComparison.Ordinal)).Attribute("Value")?.Value;
+
+        Assert.Equal("{DynamicResource Brush.Link}", foreground);
+        foreach (var surface in new[] { "Surface1", "Surface2" })
+        {
+            var ratio = Wcag.Contrast(BrushColor("Link"), Background(surface));
+            Assert.True(ratio >= TextAa, string.Create(CultureInfo.InvariantCulture, $"Brush.Link on {surface} is {ratio:F2}:1, below {TextAa}"));
+        }
     }
 
     // Brush.Clickable.Pressed stays out on purpose: a press is momentary, and its 1.2:1 step over hover cannot also hold 4.5:1 for InkSubtle.

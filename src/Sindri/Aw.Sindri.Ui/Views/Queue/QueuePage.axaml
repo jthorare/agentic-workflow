@@ -97,7 +97,7 @@
         <StackPanel x:Name="QueueNothing" IsVisible="{Binding Queue.ShowsNothing}" Orientation="Horizontal" Spacing="{StaticResource Space.XS}" Margin="{StaticResource Space.MD.Thickness}">
           <TextBlock x:Name="QueueEmpty" Classes="body" Text="{Binding Queue.NothingText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Queue.NothingText}" />
           <Button x:Name="QueueCreateLink" Classes="clickable" Content="{Binding Queue.CreateLinkText}" Click="OnCreate" Background="Transparent" BorderThickness="0" Padding="0"
-                  Foreground="{DynamicResource Brush.Primary}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Queue.CreateLinkText}" />
+                  Foreground="{DynamicResource Brush.Link}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Queue.CreateLinkText}" />
         </StackPanel>
         <StackPanel x:Name="QueueNoMatch" IsVisible="{Binding Queue.ShowsNoMatch}" Spacing="8" Margin="16,12">
           <TextBlock Classes="body-strong" Text="{Binding Queue.NoMatchTitle}" AutomationProperties.Name="{Binding Queue.NoMatchTitle}" />

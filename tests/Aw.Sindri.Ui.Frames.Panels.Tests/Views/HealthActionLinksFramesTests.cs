@@ -16,7 +16,7 @@ using Aw.Sindri.Ui.Views.Shell;
 namespace Aw.Sindri.Ui.Frames.Panels.Tests.Views;
 
 /// <summary>
-/// The System page's in-card actions read as links (#4317): Set up, Open Agents and View job carry the accent-link class, rest in Brush.Primary (the colour Connect
+/// The System page's in-card actions read as links (#4317): Set up, Open Agents and View job carry the accent-link class, rest in Brush.Link (the colour Connect
 /// Linear uses) and turn Brush.PrimaryHover under the pointer. Before the fix they were row-title only and drew in plain body ink. Each frame is saved before the check.
 /// </summary>
 [Lane(TestLane.Integration)]
@@ -48,7 +48,7 @@ public sealed class HealthActionLinksFramesTests : FrameHost
     {
         var what = button.Name ?? button.Content as string ?? "a row-title button";
         Assert.True(button.Classes.Contains("accent-link"), $"{what} has no accent-link class");
-        Assert.Equal(TokenColor("Brush.Primary"), BrushColor(button.Foreground));
+        Assert.Equal(TokenColor("Brush.Link"), BrushColor(button.Foreground));
         Assert.True(button.Focusable && button.IsTabStop, $"{what} can't take keyboard focus");
     }
 

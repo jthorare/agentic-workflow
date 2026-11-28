@@ -26,6 +26,7 @@ public sealed class TokenTests
         ("InkTertiary", "#74787f"),
         ("Primary", "#5e6ad2"),
         ("PrimaryHover", "#828fff"),
+        ("Link", "#7480ee"),
         ("PrimaryHoverFill", "#535fc6"),
         ("PrimaryPressed", "#4c57be"),
         ("OnPrimary", "#ffffff"),

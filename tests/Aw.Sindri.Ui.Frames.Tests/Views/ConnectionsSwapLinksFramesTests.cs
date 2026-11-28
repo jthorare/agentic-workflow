@@ -11,7 +11,7 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
 /// <summary>
 /// The Connections tile's swap links read as links (#4317, seen in #4364's frames): "Use an OAuth app instead" and "Use a token instead" carry the accent-link
-/// class, rest in Brush.Primary (the colour Connect Linear uses) and turn Brush.PrimaryHover under the pointer. Before the fix they drew in muted body ink.
+/// class, rest in Brush.Link (the colour Connect Linear uses, #4429) and turn Brush.PrimaryHover under the pointer. Before the fix they drew in muted body ink.
 /// </summary>
 [Lane(TestLane.Integration)]
 [Collection(HeadlessWindows.Name)]
@@ -27,7 +27,7 @@ public sealed class ConnectionsSwapLinksFramesTests : FrameHost
     private static void AssertLink(Window window, Button button)
     {
         Assert.True(button.Classes.Contains("accent-link"), $"{button.Name} has no accent-link class");
-        Assert.Equal(TokenColor("Brush.Primary"), (button.Foreground as ISolidColorBrush)?.Color);
+        Assert.Equal(TokenColor("Brush.Link"), (button.Foreground as ISolidColorBrush)?.Color);
         ((IPseudoClasses)button.Classes).Set(":pointerover", value: true);
         Settle(window);
         var presenter = button.GetVisualDescendants().OfType<ContentPresenter>().First(p => string.Equals(p.Name, "PART_ContentPresenter", StringComparison.Ordinal));
