@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Infrastructure;
@@ -88,6 +89,32 @@ public sealed class LauncherInitTests : IDisposable
         Expect.Equal("exec-template", config.Viewer?.Kind);
         Expect.Equal("xterm", config.Viewer?.Name);
         Expect.True(config.Problem is null && !config.Unusable, config.Problem ?? string.Empty);
+    }
+
+    [Fact]
+    public async Task Init_with_viewer_default_terminal_writes_that_section_and_the_next_read_uses_it()
+    {
+        var report = await Setup(Detection(_gui, "xterm")).Init(new LaunchInitRequest("default-terminal", Force: false, ToStdout: false), CancellationToken.None);
+
+        Expect.True(report.IsSuccess, report.IsError ? report.Error.Message : string.Empty);
+        var config = Catalog().Current;
+        Expect.Equal("default-terminal", config.Viewer?.Kind);
+        Expect.True(config.Viewer?.Name is null && config.Viewer?.Argv is null && config.Problem is null && !config.Unusable);
+    }
+
+    [Fact]
+    public void A_default_terminal_viewer_loads_without_name_or_argv_and_refuses_either()
+    {
+        static Result<LauncherConfig> Read(string viewer) => LauncherConfigFile.Read(LauncherStartup.Builtins(), System.Text.Encoding.UTF8.GetBytes($$"""{ "schema": 1, "viewer": {{viewer}} }"""));
+
+        var bare = Read("""{ "kind": "default-terminal" }""");
+        var named = Read("""{ "kind": "default-terminal", "name": "Rex" }""");
+        var argv = Read("""{ "kind": "default-terminal", "argv": ["rex", "{cmd...}"] }""");
+
+        Expect.Equal("default-terminal", bare.Value.Viewer?.Kind);
+        Expect.True(named.IsError && argv.IsError);
+        Expect.Equal(SindriErrors.LauncherInvalid.Code, named.Error.Code);
+        Expect.Equal(SindriErrors.LauncherInvalid.Code, argv.Error.Code);
     }
 
     [Fact]
