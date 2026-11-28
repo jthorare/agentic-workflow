@@ -402,6 +402,105 @@ public sealed class CliProjectVerbsTests : IDisposable
 
     private static readonly AsOf _fine = new(7, 7, ProjectedAt: null, Rebuilding: false, Stalled: false);
 
+    private static readonly string[] _sourceFlags = ["--branch <owner/name:branch>", "--branch-prefix <owner/name:prefix>", "--item <id>", "--clear-branches", "--clear-items"];
+    private const string ItemA = "ITM-0123456789abcdef0123456789abcdef";
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Cli_project_add_sends_typed_branches_prefixes_and_items_in_the_body()
+    {
+        var api = new RoutedApi().On("/sindri/projects", HttpStatusCode.OK, Accepted(Id, 1, "Kitchen", 9));
+
+        var code = await Verbs(api).Run(["project", "add", "--name", "Kitchen", "--branch", "acme/api:feat/login", "--branch-prefix", "acme/api:feat/", "--item", ItemA], Token);
+
+        Assert.Equal(0, code);
+        Assert.Contains("\"branches\":[{\"repo\":\"acme/api\",\"name\":\"feat/login\",\"prefix\":false},{\"repo\":\"acme/api\",\"name\":\"feat/\",\"prefix\":true}]", api.Calls[^1].Body, StringComparison.Ordinal);
+        Assert.Contains($"\"items\":[\"{ItemA}\"]", api.Calls[^1].Body, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Cli_project_add_without_the_flags_sends_neither_list()
+    {
+        var api = new RoutedApi().On("/sindri/projects", HttpStatusCode.OK, Accepted(Id, 1, "Kitchen", 9));
+
+        _ = await Verbs(api).Run(["project", "add", "--name", "Kitchen"], Token);
+
+        Assert.DoesNotContain("\"branches\":[", api.Calls[^1].Body, StringComparison.Ordinal);   // a null list is "keep" (and none on attach); what matters is that no list is sent
+        Assert.DoesNotContain("\"items\":[", api.Calls[^1].Body, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Cli_project_edit_replaces_each_list_it_is_given_and_leaves_the_other_alone()
+    {
+        var api = new RoutedApi().On($"/sindri/projects/{Id}/change", HttpStatusCode.OK, Accepted(Id, 4, "Kitchen", 12));
+
+        var code = await Verbs(api).Run(["project", "edit", Id, "--version", "3", "--branch", "acme/api:fix/x"], Token);
+
+        Assert.Equal(0, code);
+        Assert.Contains("\"branches\":[{\"repo\":\"acme/api\",\"name\":\"fix/x\",\"prefix\":false}]", api.Calls[^1].Body, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"items\":[", api.Calls[^1].Body, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Cli_project_edit_clear_flags_send_empty_lists()
+    {
+        var api = new RoutedApi().On($"/sindri/projects/{Id}/change", HttpStatusCode.OK, Accepted(Id, 4, "Kitchen", 12));
+
+        var code = await Verbs(api).Run(["project", "edit", Id, "--version", "3", "--clear-branches", "--clear-items"], Token);
+
+        Assert.Equal(0, code);
+        Assert.Contains("\"branches\":[]", api.Calls[^1].Body, StringComparison.Ordinal);
+        Assert.Contains("\"items\":[]", api.Calls[^1].Body, StringComparison.Ordinal);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("--branch", "feat/login")]
+    [InlineData("--branch", "acme:feat/login")]
+    [InlineData("--branch", "acme/api:")]
+    [InlineData("--branch", ":feat/login")]
+    [InlineData("--branch-prefix", "acme/api")]
+    public async Task Cli_project_a_branch_that_is_not_repo_colon_name_is_a_usage_error(string flag, string value)
+    {
+        var api = new RoutedApi();
+
+        var code = await Verbs(api).Run(["project", "add", "--name", "K", flag, value], Token);
+
+        Assert.Equal(2, code);
+        Assert.Contains("owner/name:branch", _error.ToString(), StringComparison.Ordinal);
+        Assert.Empty(api.Calls);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Cli_project_clear_flags_are_edit_only_and_do_not_mix_with_their_list_flag()
+    {
+        var api = new RoutedApi();
+
+        Assert.Equal(2, await Verbs(api).Run(["project", "add", "--name", "K", "--clear-items"], Token));
+        Assert.Equal(2, await Verbs(api).Run(["project", "edit", Id, "--version", "1", "--item", ItemA, "--clear-items"], Token));
+        Assert.Empty(api.Calls);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Cli_project_show_prints_the_typed_sources()
+    {
+        var card = Card(Id, "Kitchen", version: 4) with
+        {
+            Branches = [new Core.Projects.Sources.BranchSource("acme/api", "feat/login", IsPrefix: false), new Core.Projects.Sources.BranchSource("acme/api", "feat/", IsPrefix: true)],
+            Items = [ItemA],
+        };
+        var api = new RoutedApi().On($"/sindri/projects/{Id}", HttpStatusCode.OK, Shown(card, hidden: false));
+
+        _ = await Verbs(api).Run(["project", "show", Id], Token);
+
+        var text = _out.ToString().ReplaceLineEndings("\n");
+        Assert.Contains("  branch: acme/api feat/login\n", text, StringComparison.Ordinal);
+        Assert.Contains("  branch prefix: acme/api feat/\n", text, StringComparison.Ordinal);
+        Assert.Contains($"  item: {ItemA}\n", text, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Usage_names_the_typed_source_flags() =>
+        Assert.All(_sourceFlags, flag => Assert.Contains(flag, Usage.Text, StringComparison.Ordinal));
+
     private static ProjectCard Card(string key, string name, ProjectState? state = ProjectState.Planned, int? issues = null, bool counting = false, DateTimeOffset? at = null, long version = 1, string? notes = null, IReadOnlyList<ProjectLink>? links = null) =>
         new(key, ProjectOrigin.HandMade, name, Description: null, state, StateSetByOwner: false, Health: null, Lead: null, Target: null, issues, counting, OpenPrs: null, PrScope: null, at, FinishedAt: null, [], links ?? [], notes, Synced: true, version);
 

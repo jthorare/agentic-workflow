@@ -80,6 +80,28 @@ public sealed class ProjectTypedSourcesTests
     }
 
     [Fact]
+    public void A_null_element_in_either_list_is_refused_not_a_crash()
+    {
+        RefusedOn("branches", Attach([Branch("feat/x"), null!]).Error);
+        RefusedOn("items", Attach(items: [Item, null!]).Error);
+    }
+
+    [Fact]
+    public void A_repo_given_in_two_cases_is_one_repo_and_a_branch_named_twice_is_stored_once()
+    {
+        var attached = Attach([Branch("feat/x", repo: "acme/api"), Branch("feat/x", repo: "Acme/API")]).Value;
+
+        Assert.Equal([Branch("feat/x", repo: "acme/api")], attached.Branches);
+    }
+
+    [Theory]
+    [InlineData("./api")]
+    [InlineData("acme/..")]
+    [InlineData("../api")]
+    [InlineData("acme/.")]
+    public void A_dot_or_dot_dot_as_owner_or_name_is_refused(string repo) => RefusedOn("branches", Attach([Branch("feat/x", repo: repo)]).Error);
+
+    [Fact]
     public void A_typed_branch_for_a_repo_with_no_github_link_is_accepted() =>
         Assert.True(Attach([Branch("feat/x", repo: "acme/other")], links: []).IsSuccess);
 
@@ -166,6 +188,17 @@ public sealed class ProjectTypedSourcesTests
         var truth = ProjectTruths.Build(Inputs(sources, pulls));
 
         Assert.Equal([1, 3], truth.OpenPrs.Select(static p => p.Number).Order());
+    }
+
+    [Fact]
+    public void A_prefix_matches_the_whole_name_or_a_slash_boundary_and_not_a_longer_word()
+    {
+        var sources = ProjectTruths.SourcesOf([], [], [], [Branch("feat", prefix: true), Branch("fix/", prefix: true)], typedItems: null);
+        ReviewPull[] pulls = [Pull(1, "feat"), Pull(2, "feat/x"), Pull(3, "feature-x"), Pull(4, "fix"), Pull(5, "fix/y"), Pull(6, "fixture")];
+
+        var truth = ProjectTruths.Build(Inputs(sources, pulls));
+
+        Assert.Equal([1, 2, 4, 5], truth.OpenPrs.Select(static p => p.Number).Order());
     }
 
     [Fact]

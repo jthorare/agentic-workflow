@@ -13,8 +13,8 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Links">The owner's links: https urls without a query or fragment, at most 10.</param>
 /// <param name="Target">The target date, or null.</param>
 /// <param name="Notes">The owner's free-form notes, at most 16,384 characters, or null. Events written before the notes field carry <paramref name="Note"/> instead.</param>
-/// <param name="Branches">The typed branch sources (the typed branch and branch-prefix sources (#4499), or null); null on events written before it, which read as none.</param>
-/// <param name="Items">The typed work-item id sources (the typed work-item id sources (#4499), or null).</param>
+/// <param name="Branches">The typed branch and branch-prefix sources (#4499), or null; null on events written before it, which read as none.</param>
+/// <param name="Items">The typed work-item id sources (#4499), or null.</param>
 /// <param name="Note">Read only: the one-line note older events carry (the field was renamed to notes, owner q158); never written, the projection reads 'Notes ?? Note'.</param>
 public sealed record ProjectAttached(
     CommandId CommandId,

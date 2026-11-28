@@ -2,6 +2,7 @@ using System.Globalization;
 using Aw.Kernel;
 using Aw.Kernel.Dates;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Projects.Sources;
 using Aw.Sindri.Core.Projects.Vocabulary;
 
 namespace Aw.Sindri.Host.Commands;
@@ -9,7 +10,7 @@ namespace Aw.Sindri.Host.Commands;
 /// <summary>Reads the arguments of the project write verbs ('project add', 'edit', 'remove', 'hide', 'unhide'; projects page spec §5.3) into one <see cref="Parsed"/>, or the usage error.</summary>
 internal static class ProjectVerbArguments
 {
-    internal const string Usage = "project add [--linear KEY] [--name T] [--link URL]... [--state S] [--notes T] [--target D] [--json] [--no-start] | project show <project> [--json] | projects [--all] [--json] | project edit <project> [--version N] [--name T] [--link URL]... [--state S | --clear-state] [--notes T | --clear-notes] [--target D | --clear-target] [--json] [--no-start] | project remove <project> [--version N] [--json] [--no-start] | project hide|unhide <project> [--version N] [--json] [--no-start]";
+    internal const string Usage = "project add [--linear KEY] [--name T] [--link URL]... [--branch R:B]... [--branch-prefix R:P]... [--item ID]... [--state S] [--notes T] [--target D] [--json] [--no-start] | project show <project> [--json] | projects [--all] [--json] | project edit <project> [--version N] [--name T] [--link URL]... [--branch R:B]... [--branch-prefix R:P]... [--clear-branches] [--item ID]... [--clear-items] [--state S | --clear-state] [--notes T | --clear-notes] [--target D | --clear-target] [--json] [--no-start] | project remove <project> [--version N] [--json] [--no-start] | project hide|unhide <project> [--version N] [--json] [--no-start]";
 
     internal static Result<Parsed> Parse(string[] args, DateOnly today)
     {
@@ -62,6 +63,8 @@ internal static class ProjectVerbArguments
             case "--clear-state" or "--clear-notes" or "--clear-note" or "--clear-target" when parsed.Verb == Verb.Edit:
                 Clear(parsed, flag);
                 return 0;
+            case var source when ProjectVerbSources.Takes(source, parsed.Verb == Verb.Edit, parsed.Verb == Verb.Add):
+                return ProjectVerbSources.Read(parsed, rest, i);
             case "--linear" or "--name" or "--link" or "--state" or "--notes" or "--note" or "--target" or "--version" when Takes(parsed.Verb, flag):
                 return i + 1 < rest.Length ? Valued(parsed, flag, rest[i + 1], today) : SindriErrors.InvalidInput.With($"{flag} needs a value: {Usage}");
             case var other when other.StartsWith("--", StringComparison.Ordinal):
@@ -170,6 +173,11 @@ internal static class ProjectVerbArguments
     /// <summary>Checks the plain words the verb took and keeps the project; the error, or null when they fit.</summary>
     private static Error? Shape(Parsed parsed, List<string> words)
     {
+        if (ProjectVerbSources.ClearsAndSets(parsed) is { } both)
+        {
+            return SindriErrors.InvalidInput.With($"{both}: give the new list or clear it, not both");
+        }
+
         if (parsed.Verb == Verb.Add)
         {
             return words.Count > 0 ? SindriErrors.InvalidInput.With($"'{words[0]}' isn't an argument of project add: {Usage}")
@@ -218,6 +226,14 @@ internal static class ProjectVerbArguments
         public string? Name { get; set; }
 
         public List<string> Links { get; } = [];
+
+        public List<BranchSource> Branches { get; } = [];
+
+        public List<string> Items { get; } = [];
+
+        public bool ClearBranches { get; set; }
+
+        public bool ClearItems { get; set; }
 
         public ProjectState? State { get; set; }
 

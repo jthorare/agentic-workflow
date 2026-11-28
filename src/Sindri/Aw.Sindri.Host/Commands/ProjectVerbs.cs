@@ -196,6 +196,8 @@ internal sealed class ProjectVerbs(ControlPlaneClient client, Output output, Fun
             _ = text.Append("  ").Append(link.Label).Append(": ").AppendLine(link.Url);
         }
 
+        ProjectVerbSources.Render(text, card);
+
         TruthLines(text, card.Truth);
 
         if (shown.Freshness.Count > 0)
@@ -247,7 +249,7 @@ internal sealed class ProjectVerbs(ControlPlaneClient client, Output output, Fun
         const string Root = "/sindri/projects";
         if (command.Verb == ProjectVerbArguments.Verb.Add)
         {
-            return await client.Post<AttachProjectRequest, ProjectAccepted>(Root, new AttachProjectRequest(command.Linear, command.Name, command.State, command.Links.Count == 0 ? null : command.Links, command.Notes, command.Target), ct).ConfigureAwait(false);
+            return await client.Post<AttachProjectRequest, ProjectAccepted>(Root, new AttachProjectRequest(command.Linear, command.Name, command.State, command.Links.Count == 0 ? null : command.Links, command.Notes, command.Target, ProjectVerbSources.Branches(command), ProjectVerbSources.Items(command)), ct).ConfigureAwait(false);
         }
 
         var version = await Version(command, ct).ConfigureAwait(false);
@@ -275,7 +277,7 @@ internal sealed class ProjectVerbs(ControlPlaneClient client, Output output, Fun
     }
 
     private static ChangeProjectBody ChangeBody(ProjectVerbArguments.Parsed command, long version) =>
-        new(version, command.Name, command.State, command.ClearState, command.Links.Count == 0 ? null : command.Links, command.Target, command.ClearTarget, command.Notes, command.ClearNotes);
+        new(version, command.Name, command.State, command.ClearState, command.Links.Count == 0 ? null : command.Links, command.Target, command.ClearTarget, command.Notes, command.ClearNotes, Branches: ProjectVerbSources.Branches(command), Items: ProjectVerbSources.Items(command));
 
     /// <summary>The version a write sends: the one typed, or the card's own, read now (as 'item close' does).</summary>
     private async Task<Result<long>> Version(ProjectVerbArguments.Parsed command, CancellationToken ct)

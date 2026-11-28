@@ -89,7 +89,7 @@ public sealed class ProjectTruthsTests
     [Fact]
     public void A_pr_counts_for_a_project_that_names_its_head_branch_or_a_prefix_of_it_in_that_repo_only()
     {
-        BranchSource[] named = [new("acme/api", "feat/login-form", IsPrefix: false), new("acme/api", "fix/crash", IsPrefix: true)];
+        BranchSource[] named = [new("acme/api", "feat/login-form", IsPrefix: false), new("acme/api", "fix/", IsPrefix: true)];
         ReviewPull[] pulls =
         [
             Pull(1) with { HeadRef = "feat/login-form" },

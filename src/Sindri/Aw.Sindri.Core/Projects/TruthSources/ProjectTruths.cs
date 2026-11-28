@@ -74,8 +74,15 @@ public static class ProjectTruths
     }
 
     // a PR counts for a project that names its head branch, or a prefix of it, in the PR's repo
+    // #4499: a prefix means the whole name or a '/' boundary after it, so "feat" and "feat/" both take "feat" and "feat/x" and neither takes "feature-x"
+    private static bool OnPrefix(string head, string prefix)
+    {
+        var stem = prefix.TrimEnd('/');
+        return string.Equals(head, stem, StringComparison.Ordinal) || head.StartsWith(stem + "/", StringComparison.Ordinal);
+    }
+
     private static bool OnNamedBranch(ProjectSources sources, ReviewPull pull) =>
-        pull.HeadRef is { } head && (sources.Branches ?? []).Any(b => string.Equals(b.Repo, pull.Repo, StringComparison.OrdinalIgnoreCase) && (b.IsPrefix ? head.StartsWith(b.Name, StringComparison.Ordinal) : string.Equals(head, b.Name, StringComparison.Ordinal)));
+        pull.HeadRef is { } head && (sources.Branches ?? []).Any(b => string.Equals(b.Repo, pull.Repo, StringComparison.OrdinalIgnoreCase) && (b.IsPrefix ? OnPrefix(head, b.Name) : string.Equals(head, b.Name, StringComparison.Ordinal)));
 
     /// <summary>The sources of <see cref="SourcesOf(IReadOnlyList{string}, IReadOnlyList{string}, IReadOnlyList{string})"/> plus the project's typed branches and work-item ids (#4499).</summary>
     /// <param name="linkUrls">The urls of the card's links.</param>
