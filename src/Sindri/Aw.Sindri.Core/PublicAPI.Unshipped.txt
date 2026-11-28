@@ -16003,7 +16003,7 @@ Aw.Sindri.Core.Reviews.ReviewPull.Author.init -> void
 Aw.Sindri.Core.Reviews.ReviewPull.Claims.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewClaim!>!
 Aw.Sindri.Core.Reviews.ReviewPull.Claims.init -> void
 Aw.Sindri.Core.Reviews.ReviewPull.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewPull!
-Aw.Sindri.Core.Reviews.ReviewPull.Deconstruct(out string! Repo, out int Number, out string! Title, out string! Author, out bool Draft, out System.DateTimeOffset OpenedAt, out System.DateTimeOffset UpdatedAt, out string? HeadSha, out System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewedAt!>! Reviews, out bool ReviewersRead, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewClaim!>! Claims, out string? Url, out bool? Mergeable) -> void
+Aw.Sindri.Core.Reviews.ReviewPull.Deconstruct(out string! Repo, out int Number, out string! Title, out string! Author, out bool Draft, out System.DateTimeOffset OpenedAt, out System.DateTimeOffset UpdatedAt, out string? HeadSha, out System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewedAt!>! Reviews, out bool ReviewersRead, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewClaim!>! Claims, out string? Url, out bool? Mergeable, out string? HeadRef) -> void
 Aw.Sindri.Core.Reviews.ReviewPull.Draft.get -> bool
 Aw.Sindri.Core.Reviews.ReviewPull.Draft.init -> void
 Aw.Sindri.Core.Reviews.ReviewPull.Equals(Aw.Sindri.Core.Reviews.ReviewPull? other) -> bool
@@ -16019,7 +16019,7 @@ Aw.Sindri.Core.Reviews.ReviewPull.RequestedReviewers.get -> System.Collections.G
 Aw.Sindri.Core.Reviews.ReviewPull.RequestedReviewers.init -> void
 Aw.Sindri.Core.Reviews.ReviewPull.ReviewersRead.get -> bool
 Aw.Sindri.Core.Reviews.ReviewPull.ReviewersRead.init -> void
-Aw.Sindri.Core.Reviews.ReviewPull.ReviewPull(string! Repo, int Number, string! Title, string! Author, bool Draft, System.DateTimeOffset OpenedAt, System.DateTimeOffset UpdatedAt, string? HeadSha, System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewedAt!>! Reviews, bool ReviewersRead, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewClaim!>! Claims, string? Url = null, bool? Mergeable = null) -> void
+Aw.Sindri.Core.Reviews.ReviewPull.ReviewPull(string! Repo, int Number, string! Title, string! Author, bool Draft, System.DateTimeOffset OpenedAt, System.DateTimeOffset UpdatedAt, string? HeadSha, System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewedAt!>! Reviews, bool ReviewersRead, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewClaim!>! Claims, string? Url = null, bool? Mergeable = null, string? HeadRef = null) -> void
 Aw.Sindri.Core.Reviews.ReviewPull.Reviews.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Reviews.ReviewedAt!>!
 Aw.Sindri.Core.Reviews.ReviewPull.Reviews.init -> void
 Aw.Sindri.Core.Reviews.ReviewPull.Title.get -> string!
@@ -16030,6 +16030,8 @@ Aw.Sindri.Core.Reviews.ReviewPull.Url.get -> string?
 Aw.Sindri.Core.Reviews.ReviewPull.Url.init -> void
 Aw.Sindri.Core.Reviews.ReviewPull.Mergeable.get -> bool?
 Aw.Sindri.Core.Reviews.ReviewPull.Mergeable.init -> void
+Aw.Sindri.Core.Reviews.ReviewPull.HeadRef.get -> string?
+Aw.Sindri.Core.Reviews.ReviewPull.HeadRef.init -> void
 override Aw.Sindri.Core.Reviews.ReviewPull.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Reviews.ReviewPull.GetHashCode() -> int
 override Aw.Sindri.Core.Reviews.ReviewPull.ToString() -> string!
@@ -24433,11 +24435,27 @@ Aw.Sindri.Core.Projects.Truth.ProjectTruth.Health.init -> void
 Aw.Sindri.Core.Projects.Truth.ProjectTruth.BlockedOnYou.get -> bool
 Aw.Sindri.Core.Projects.Truth.ProjectTruth.BlockedOnYou.init -> void
 static Aw.Sindri.Core.Projects.Truth.ProjectTruth.Empty.get -> Aw.Sindri.Core.Projects.Truth.ProjectTruth!
+Aw.Sindri.Core.Projects.TruthSources.BranchSource
+Aw.Sindri.Core.Projects.TruthSources.BranchSource.<Clone>$() -> Aw.Sindri.Core.Projects.TruthSources.BranchSource!
+Aw.Sindri.Core.Projects.TruthSources.BranchSource.BranchSource(string! Repo, string! Name, bool IsPrefix) -> void
+Aw.Sindri.Core.Projects.TruthSources.BranchSource.Deconstruct(out string! Repo, out string! Name, out bool IsPrefix) -> void
+Aw.Sindri.Core.Projects.TruthSources.BranchSource.Equals(Aw.Sindri.Core.Projects.TruthSources.BranchSource? other) -> bool
+Aw.Sindri.Core.Projects.TruthSources.BranchSource.IsPrefix.get -> bool
+Aw.Sindri.Core.Projects.TruthSources.BranchSource.IsPrefix.init -> void
+Aw.Sindri.Core.Projects.TruthSources.BranchSource.Name.get -> string!
+Aw.Sindri.Core.Projects.TruthSources.BranchSource.Name.init -> void
+Aw.Sindri.Core.Projects.TruthSources.BranchSource.Repo.get -> string!
+Aw.Sindri.Core.Projects.TruthSources.BranchSource.Repo.init -> void
+override Aw.Sindri.Core.Projects.TruthSources.BranchSource.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Projects.TruthSources.BranchSource.GetHashCode() -> int
+override Aw.Sindri.Core.Projects.TruthSources.BranchSource.ToString() -> string!
+static Aw.Sindri.Core.Projects.TruthSources.BranchSource.operator !=(Aw.Sindri.Core.Projects.TruthSources.BranchSource? left, Aw.Sindri.Core.Projects.TruthSources.BranchSource? right) -> bool
+static Aw.Sindri.Core.Projects.TruthSources.BranchSource.operator ==(Aw.Sindri.Core.Projects.TruthSources.BranchSource? left, Aw.Sindri.Core.Projects.TruthSources.BranchSource? right) -> bool
 Aw.Sindri.Core.Projects.TruthSources.ProjectSources
 Aw.Sindri.Core.Projects.TruthSources.ProjectSources.<Clone>$() -> Aw.Sindri.Core.Projects.TruthSources.ProjectSources!
-Aw.Sindri.Core.Projects.TruthSources.ProjectSources.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Repos, out System.Collections.Generic.IReadOnlyList<string!>! PullUrls) -> void
+Aw.Sindri.Core.Projects.TruthSources.ProjectSources.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Repos, out System.Collections.Generic.IReadOnlyList<string!>! PullUrls, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.BranchSource!>? Branches) -> void
 Aw.Sindri.Core.Projects.TruthSources.ProjectSources.Equals(Aw.Sindri.Core.Projects.TruthSources.ProjectSources? other) -> bool
-Aw.Sindri.Core.Projects.TruthSources.ProjectSources.ProjectSources(System.Collections.Generic.IReadOnlyList<string!>! Repos, System.Collections.Generic.IReadOnlyList<string!>! PullUrls) -> void
+Aw.Sindri.Core.Projects.TruthSources.ProjectSources.ProjectSources(System.Collections.Generic.IReadOnlyList<string!>! Repos, System.Collections.Generic.IReadOnlyList<string!>! PullUrls, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.BranchSource!>? Branches = null) -> void
 override Aw.Sindri.Core.Projects.TruthSources.ProjectSources.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Projects.TruthSources.ProjectSources.GetHashCode() -> int
 override Aw.Sindri.Core.Projects.TruthSources.ProjectSources.ToString() -> string!
@@ -24447,6 +24465,8 @@ Aw.Sindri.Core.Projects.TruthSources.ProjectSources.Repos.get -> System.Collecti
 Aw.Sindri.Core.Projects.TruthSources.ProjectSources.Repos.init -> void
 Aw.Sindri.Core.Projects.TruthSources.ProjectSources.PullUrls.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Projects.TruthSources.ProjectSources.PullUrls.init -> void
+Aw.Sindri.Core.Projects.TruthSources.ProjectSources.Branches.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.TruthSources.BranchSource!>?
+Aw.Sindri.Core.Projects.TruthSources.ProjectSources.Branches.init -> void
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthItem
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthItem.<Clone>$() -> Aw.Sindri.Core.Projects.TruthSources.ProjectTruthItem!
 Aw.Sindri.Core.Projects.TruthSources.ProjectTruthItem.Deconstruct(out string? Repo, out bool Done, out System.Collections.Generic.IReadOnlyList<string!>! LinkUrls) -> void

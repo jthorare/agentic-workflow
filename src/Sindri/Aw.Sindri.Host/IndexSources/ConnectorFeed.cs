@@ -76,7 +76,7 @@ internal sealed partial class ConnectorFeed(SourceId source, IConnector connecto
     }
 
     private static PullFacts? Pull(ConnectorPullFacts? facts) =>
-        facts is null ? null : new PullFacts(facts.RequestedReviewers, facts.HeadSha, [.. facts.Reviews.Select(static r => new ReviewedCommit(r.Login, r.Commit, r.NewCommits, r.State))], facts.Mergeable);
+        facts is null ? null : new PullFacts(facts.RequestedReviewers, facts.HeadSha, [.. facts.Reviews.Select(static r => new ReviewedCommit(r.Login, r.Commit, r.NewCommits, r.State))], facts.Mergeable, facts.HeadRef);
 
     // A pull request's Linear issue keys ("ENG-12") in its title and text, of the listed teams only, each once (projects page spec §4.5, source 2): the read side resolves the key through the
     // stored issue's identifier, as Linear's own GitHub integration matches.

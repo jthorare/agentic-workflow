@@ -24,7 +24,7 @@ internal static class ProjectTruthPage
         var cards = page.Projects.Concat(page.Finished).Concat(page.Hidden).ToList();
         var sources = cards.ToDictionary(static c => c.Key, c => ProjectTruths.SourcesOf([.. c.Links.Select(static l => l.Url)], c.Repos, profileRepos.GetValueOrDefault(c.Key) ?? []), StringComparer.Ordinal);
         var union = new ProjectSources(
-            [.. sources.Values.SelectMany(static s => s.Repos).Distinct(StringComparer.OrdinalIgnoreCase)],
+            [.. sources.Values.SelectMany(static s => s.Repos.Concat((s.Branches ?? []).Select(static b => b.Repo))).Distinct(StringComparer.OrdinalIgnoreCase)],   // why: a branch source reads its repo's PRs; each project then keeps only the PRs on its own branches
             [.. sources.Values.SelectMany(static s => s.PullUrls).Distinct(StringComparer.OrdinalIgnoreCase)]);
         if (union.Repos.Count == 0 && union.PullUrls.Count == 0)
         {

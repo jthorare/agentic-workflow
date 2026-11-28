@@ -35,7 +35,7 @@ internal static partial class GitHubRecords
             issue.UpdatedAt.UtcDateTime.ToString("O", CultureInfo.InvariantCulture),
             Links(repo, issue, body, comments, detail),
             repo,
-            detail is null ? null : new ConnectorPullFacts(detail.RequestedReviewers ?? [], detail.HeadSha, reviews, detail.Mergeable));
+            detail is null ? null : new ConnectorPullFacts(detail.RequestedReviewers ?? [], detail.HeadSha, reviews, detail.Mergeable, detail.HeadRef));
     }
 
     private static string State(GitHubIssue issue, GitHubPullDetail? detail)

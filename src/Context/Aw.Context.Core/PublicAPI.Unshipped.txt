@@ -11294,6 +11294,8 @@ Aw.Context.Core.Records.PullFacts.HeadSha.init -> void
 Aw.Context.Core.Records.PullFacts.Reviews.init -> void
 Aw.Context.Core.Records.PullFacts.Mergeable.get -> bool?
 Aw.Context.Core.Records.PullFacts.Mergeable.init -> void
+Aw.Context.Core.Records.PullFacts.HeadRef.get -> string?
+Aw.Context.Core.Records.PullFacts.HeadRef.init -> void
 override Aw.Context.Core.Records.PullFacts.ToString() -> string!
 static Aw.Context.Core.Records.PullFacts.operator !=(Aw.Context.Core.Records.PullFacts? left, Aw.Context.Core.Records.PullFacts? right) -> bool
 static Aw.Context.Core.Records.PullFacts.operator ==(Aw.Context.Core.Records.PullFacts? left, Aw.Context.Core.Records.PullFacts? right) -> bool
@@ -11301,7 +11303,7 @@ override Aw.Context.Core.Records.PullFacts.GetHashCode() -> int
 override Aw.Context.Core.Records.PullFacts.Equals(object? obj) -> bool
 Aw.Context.Core.Records.PullFacts.Equals(Aw.Context.Core.Records.PullFacts? other) -> bool
 Aw.Context.Core.Records.PullFacts.<Clone>$() -> Aw.Context.Core.Records.PullFacts!
-Aw.Context.Core.Records.PullFacts.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, out string? HeadSha, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.ReviewedCommit!>! Reviews, out bool? Mergeable) -> void
+Aw.Context.Core.Records.PullFacts.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, out string? HeadSha, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.ReviewedCommit!>! Reviews, out bool? Mergeable, out string? HeadRef) -> void
 Aw.Context.Core.Records.StoredRecord.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Sources.RecordKind Kind, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string! Title, out string? Url, out string? Author, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out string! TextHash, out string! Ruleset, out bool Blocked, out System.DateTimeOffset? RemovedAt, out System.DateTimeOffset SyncedAt, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out string? Health, out System.DateOnly? DueAt, out string? Description, out Aw.Context.Core.Records.PullFacts? Pull) -> void
 Aw.Context.Core.Records.StoredRecord.Pull.get -> Aw.Context.Core.Records.PullFacts?
 Aw.Context.Core.Records.StoredRecord.Pull.init -> void
@@ -11326,7 +11328,7 @@ Aw.Context.Core.Sync.RecordItem.Pull.get -> Aw.Context.Core.Records.PullFacts?
 Aw.Context.Core.Sync.RecordItem.Pull.init -> void
 Aw.Context.Core.Records.StoredRecord.StoredRecord(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Sources.RecordKind Kind, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string! Title, string? Url, string? Author, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, string! TextHash, string! Ruleset, bool Blocked, System.DateTimeOffset? RemovedAt, System.DateTimeOffset SyncedAt, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, string? Health = null, System.DateOnly? DueAt = null, string? Description = null, Aw.Context.Core.Records.PullFacts? Pull = null) -> void
 Aw.Context.Core.Records.ReviewedCommit.ReviewedCommit(string! Login, string! Commit, int? NewCommits, string? State = null) -> void
-Aw.Context.Core.Records.PullFacts.PullFacts(System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, string? HeadSha, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.ReviewedCommit!>! Reviews, bool? Mergeable = null) -> void
+Aw.Context.Core.Records.PullFacts.PullFacts(System.Collections.Generic.IReadOnlyList<string!>! RequestedReviewers, string? HeadSha, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.ReviewedCommit!>! Reviews, bool? Mergeable = null, string? HeadRef = null) -> void
 Aw.Context.Core.Linear.ILinearLookups
 Aw.Context.Core.Linear.ILinearLookups.Fetch(Aw.Context.Core.Linear.LinearSettings! settings, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearTeamLookups!>!>!>
 Aw.Context.Core.Linear.ILinearLookups.FetchWorkspaceUrlKey(Aw.Context.Core.Linear.LinearSettings! settings, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>

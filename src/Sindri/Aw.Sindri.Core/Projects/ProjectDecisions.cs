@@ -247,9 +247,14 @@ public static partial class ProjectDecisions
     {
         var trimmed = link?.Trim() ?? string.Empty;
         return !Uri.TryCreate(trimmed, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps || uri.Host.Length == 0 ? Invalid("links", $"'{trimmed}' isn't an https url")
-            : uri.Query.Length > 0 || uri.Fragment.Length > 0 ? Invalid("links", $"'{trimmed}' has a query or fragment (links are plain https urls)")
+            : (uri.Query.Length > 0 && !IsBranchSearch(uri)) || uri.Fragment.Length > 0 ? Invalid("links", $"'{trimmed}' has a query or fragment (links are plain https urls)")
             : null;
     }
+
+    // GitHub's own branch search, https://github.com/<owner>/<repo>/branches/all?query=<prefix>, is the one link that may carry a query: it names a branch prefix as a source (#4333)
+    private static bool IsBranchSearch(Uri uri) =>
+        string.Equals(uri.Host, "github.com", StringComparison.OrdinalIgnoreCase) && uri.AbsolutePath.Trim('/').Split('/') is [{ Length: > 0 }, { Length: > 0 }, "branches", "all"]
+        && uri.Query.StartsWith("?query=", StringComparison.Ordinal) && uri.Query.Length > "?query=".Length && !uri.Query.Contains('&', StringComparison.Ordinal);
 
     private static Error Invalid(string field, string why) => SindriErrors.ProjectInvalid.With($"{field}: {why}");
 
