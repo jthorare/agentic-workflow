@@ -170,6 +170,15 @@ public sealed partial class InMemoryWorkflowRunStore(TimeProvider clock) : IWork
     }
 
     /// <inheritdoc/>
+    public ValueTask<Result<int>> Count(WorkflowId workflow, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return Ok(_runs.Count(r => r.WorkflowId == workflow));
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Running(CancellationToken cancellationToken)
     {
         lock (_gate)

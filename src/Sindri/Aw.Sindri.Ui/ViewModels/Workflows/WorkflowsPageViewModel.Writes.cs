@@ -4,7 +4,7 @@ using Aw.Sindri.Ui.Api.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
-/// <summary>The Workflows page (<see cref="WorkflowsPageViewModel"/>, continued): its writes: Run now, Cancel run, Activate and Pause.</summary>
+/// <summary>The Workflows page (<see cref="WorkflowsPageViewModel"/>, continued): its writes: Run now, Cancel run, Activate and Pause (Delete is in WorkflowsPageViewModel.Delete.cs).</summary>
 internal sealed partial class WorkflowsPageViewModel
 {
     /// <summary>
@@ -166,7 +166,7 @@ internal sealed partial class WorkflowsPageViewModel
     }
 
     /// <summary>True while Activate's or Pause's call is on the way; a second press does nothing.</summary>
-    public bool IsChangingState { get; private set { Set(ref field, value); OnChanged(nameof(ActivateText)); OnChanged(nameof(PauseText)); NotifyStateButtons(); } }
+    public bool IsChangingState { get; private set { Set(ref field, value); OnChanged(nameof(ActivateText)); OnChanged(nameof(PauseText)); OnChanged(nameof(DeletePauseText)); NotifyStateButtons(); } }
 
     /// <summary>What the last Activate or Pause said (refused or unsure), in words; empty otherwise.</summary>
     public string StateNoticeText { get; private set { Set(ref field, value); OnChanged(nameof(HasStateNotice)); } } = string.Empty;
@@ -258,6 +258,7 @@ internal sealed partial class WorkflowsPageViewModel
     {
         OnChanged(nameof(CanActivate));
         OnChanged(nameof(CanPause));
+        OnChanged(nameof(CanDelete));
         NotifySaved();
     }
 
@@ -265,6 +266,7 @@ internal sealed partial class WorkflowsPageViewModel
     private void ForgetStateNote()
     {
         StateNoticeText = string.Empty;
+        ForgetDelete();
         _savedWhileOff = 0;
         NotifyStateButtons();
     }

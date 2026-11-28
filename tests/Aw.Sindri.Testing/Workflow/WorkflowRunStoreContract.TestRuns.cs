@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
@@ -138,5 +139,20 @@ public abstract partial class WorkflowRunStoreContract
         var page = (await store.Recent(_workflow, 0, 3, Token)).Value;
 
         Expect.Sequence([Run(3).Id, Run(2).Id, Run(1).Id], page.Select(static r => r.Id));
+    }
+
+    /// <summary>The count a delete reports holds every run of the workflow, live and test, in every status, and no other workflow's runs.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Count_holds_live_and_test_runs_of_the_workflow_only()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1, WorkflowRunStatus.Succeeded), Token)).Value;
+        _ = (await store.Insert(Run(2, WorkflowRunStatus.Failed), Token)).Value;
+        _ = (await store.Insert(TestRun(500, WorkflowRunStatus.Succeeded), Token)).Value;
+        _ = (await store.Insert(Run(3) with { WorkflowId = WorkflowId.From("WF-00000000000000000000000000000002"), Id = WorkflowRunId.Of(WorkflowSlug.From("another"), 1, 1) }, Token)).Value;
+
+        Expect.Equal(3, (await store.Count(_workflow, Token)).Value);
+        Expect.Equal(0, (await store.Count(WorkflowId.From("WF-00000000000000000000000000000009"), Token)).Value);
     }
 }

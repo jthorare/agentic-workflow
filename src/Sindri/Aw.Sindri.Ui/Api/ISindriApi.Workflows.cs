@@ -3,7 +3,7 @@ using Aw.Sindri.Ui.Api.Workflows;
 
 namespace Aw.Sindri.Ui.Api;
 
-/// <summary>The workflow reads (<see cref="ISindriApi"/>, continued; #2258 PR 8a): the list, one workflow, its runs and one run; the block list, and the writes: Run now, Cancel run (PR 17 part 2a), ops, Activate and Pause (part 2b), each sent once.</summary>
+/// <summary>The workflow reads (<see cref="ISindriApi"/>, continued; #2258 PR 8a): the list, one workflow, its runs and one run; the block list, and the writes: Run now, Cancel run (PR 17 part 2a), ops, Activate and Pause (part 2b), Delete (#3312), each sent once.</summary>
 internal partial interface ISindriApi
 {
     /// <summary>GET /sindri/workflows: every workflow by slug.</summary>
@@ -138,6 +138,13 @@ internal partial interface ISindriApi
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The newest revision, SND-GRAPH-008 for an unknown workflow, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowPaused>> PauseWorkflow(Uri api, string slug, CancellationToken cancellationToken);
+
+    /// <summary>DELETE /sindri/workflows/{slug}: archives an off workflow with no run going and deletes its resources (Workflows page spec §4.9). Sent once.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="slug">The workflow.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The runs kept, the bytes freed and what stayed; SND-GRAPH-114 (active), SND-GRAPH-115 (a run going), SND-GRAPH-008/011, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowArchived>> DeleteWorkflow(Uri api, string slug, CancellationToken cancellationToken);
 
     /// <summary>POST /sindri/workflows/validate: the checks Activate runs, on one revision of the workflow. A read: it writes nothing (#3803).</summary>
     /// <param name="api">The base URL.</param>

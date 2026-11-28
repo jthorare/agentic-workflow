@@ -1,4 +1,7 @@
 {
   "slug": "morning-check",
-  "archivedAt": "2026-01-01T00:00:00.0000000Z"
+  "archivedAt": "2026-01-01T00:00:00.0000000Z",
+  "runsKept": 0,
+  "bytesFreed": 0,
+  "resourcesStayed": []
 }

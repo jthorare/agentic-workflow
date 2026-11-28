@@ -250,6 +250,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         }
 
         _level = level;
+        ForgetDelete();   // the confirm was about the workflow on screen: leaving its level closes it
         CloseEditor();   // the sheet edits the workflow it was opened on: leaving the runs level ends it, so Save never writes to the wrong one
         OnChanged(nameof(IsList));
         OnChanged(nameof(ShowsHeaderNew));

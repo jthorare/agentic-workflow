@@ -65,6 +65,12 @@ public interface IWorkflowRunStore
     /// <returns>The runs; none when the workflow has none.</returns>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Recent(WorkflowId workflow, int offset, int limit, CancellationToken cancellationToken);
 
+    /// <summary>How many runs a workflow has in every status and mode, test runs included (a delete says how many it keeps, Workflows page spec §4.9).</summary>
+    /// <param name="workflow">The workflow.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The count; 0 when the workflow has none.</returns>
+    public ValueTask<Result<int>> Count(WorkflowId workflow, CancellationToken cancellationToken);
+
     /// <summary>A workflow's live runs that <paramref name="query"/> keeps (#4334), in the order of <see cref="Recent"/>, one page; the filter is part of the query, so the page cap never hides a match.</summary>
     /// <param name="workflow">The workflow.</param>
     /// <param name="query">The statuses, the start-time window and the cursor.</param>

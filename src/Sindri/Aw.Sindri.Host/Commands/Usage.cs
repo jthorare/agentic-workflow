@@ -157,7 +157,7 @@ internal static class Usage
         "       sindri wf validate --slug <slug> [--revision <n>] [--json]   check a stored workflow as if it were being activated (the file form above runs in process)",
         "       sindri wf activate <slug> [--revision <n>] [--json]   turn the workflow's triggers on at a revision (the newest by default) after the activation checks",
         "       sindri wf pause <slug> [--json]   turn the workflow's triggers off; revisions stay and runs in flight keep going",
-        "       sindri wf delete <slug> [--json]   archive the workflow: it leaves the list and turns off for good; revisions and runs stay readable",
+        "       sindri wf delete <slug> [--json]   delete a workflow that is off with no run going: it leaves the list for good, revisions and runs stay readable, its resources are deleted",
         "       sindri wf cancel <run> [--json]   ask a run in flight to stop (exit 0 ok, 1 not running, 2 refused)",
         "       sindri wf rerun <run> --from <node> [--input <json>] [--json]   start a new run of that run's revision: steps before <node> keep their stored output, <node> and the steps after it run again (exit 0 ok, 1 not running, 2 refused)",
         "       sindri wf takeover <run> <node> [--item <index>] [--json]   take the run_agent node the run waits on over: its timeout pauses and only you report it (exit 0 ok, 1 not running, 2 refused)",
