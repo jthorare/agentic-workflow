@@ -29,7 +29,7 @@ internal sealed class ReviewPageCache(IReviewPages pages, IReviewSummaries summa
     private async ValueTask<ReviewSummary> KeepFirstSeen(ReviewPullRef pull, ReviewSummary summary, CancellationToken cancellationToken)
     {
         var stored = await summaries.Read(pull, summary.Sha, cancellationToken).ConfigureAwait(false);
-        return stored.IsSuccess && stored.Value is { } before && before.Ci == summary.Ci ? summary with { At = before.At } : summary;
+        return stored.IsSuccess && stored.Value is { } before && before.Ci == summary.Ci ? summary with { At = before.At, FailedAt = summary.FailedAt ?? before.FailedAt } : summary;
     }
 
     internal async ValueTask<Result<ReviewPageModel>> Offline(ReviewPullRef pull, string? refusedCode, CancellationToken cancellationToken)
@@ -45,6 +45,7 @@ internal sealed class ReviewPageCache(IReviewPages pages, IReviewSummaries summa
     {
         var checks = page.Panels.FirstOrDefault(static p => string.Equals(p.Key, "requiredChecks", StringComparison.Ordinal)) is { Data: RequiredChecksData data } ? data.Checks : null;
         var ci = facts.Runs.Ok ? RequiredChecks.RollUp(facts.Runs.Value, facts.Pr.HeadSha) : ReviewCi.None;
-        return new ReviewSummary(facts.Pr.HeadSha, ci, checks?.Count(static c => c.Status is not ("pass" or "ticked")), clock.GetUtcNow());
+        var failedAt = ci == ReviewCi.Fail && facts.Runs.Ok ? RequiredChecks.OldestFailure(facts.Runs.Value, facts.Pr.HeadSha) : null;   // #4506: when the failing check completed
+        return new ReviewSummary(facts.Pr.HeadSha, ci, checks?.Count(static c => c.Status is not ("pass" or "ticked")), clock.GetUtcNow(), failedAt);
     }
 }

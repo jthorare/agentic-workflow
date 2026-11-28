@@ -39,6 +39,20 @@ public sealed class FileReviewSummariesTests : IDisposable
     }
 
     [Fact]
+    public async Task A_written_failed_at_reads_back_and_a_file_without_one_reads_as_none()
+    {
+        var failedAt = KnownInstants.Epoch.AddDays(-3);
+        _ = await _cache.Write(Pr, new ReviewSummary(Head, ReviewCi.Fail, 2, KnownInstants.Epoch, failedAt), Token);
+        var file = Path.Combine(_home.Path, "reviews", "cache", "acme", "api", "7", Old);
+        _ = Directory.CreateDirectory(file);
+        await File.WriteAllTextAsync(Path.Combine(file, "summary.json"), """{"sha":"__OLD__","ci":"fail","requiredOpen":1,"at":"2026-11-01T10:00:00+00:00"}""".Replace("__OLD__", Old, StringComparison.Ordinal), Token);
+
+        Assert.Equal(failedAt, (await _cache.Read(Pr, Head, Token)).Value?.FailedAt);
+        var older = (await _cache.Read(Pr, Old, Token)).Value;
+        Assert.Equal((ReviewCi.Fail, null), (older?.Ci, older?.FailedAt));
+    }
+
+    [Fact]
     public async Task The_newest_summary_is_the_one_with_the_latest_time_whatever_its_head()
     {
         _ = await _cache.Write(Pr, new ReviewSummary(Head, ReviewCi.Pass, 0, KnownInstants.Epoch.AddHours(-2)), Token);
