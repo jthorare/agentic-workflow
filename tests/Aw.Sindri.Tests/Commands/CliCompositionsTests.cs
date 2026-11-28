@@ -60,12 +60,39 @@ public sealed class CliCompositionsTests
     public void The_client_composition_validates_and_resolves_what_Dispatch_resolves()
     {
         using var provider = ComposeClient().BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
-        _ = provider.GetRequiredService<TelemetryRuntime>();   // so the container disposes it, as CommandTable does
         using var scope = provider.CreateScope();
 
-        Type[] dispatch = [typeof(JsonSerializerOptions), typeof(TimeProvider), typeof(IControlPlaneProbe), typeof(IControlPlaneLauncher), typeof(IHumanTokenStore), typeof(IApprovedProfile), typeof(IRepoLocator)];
+        Type[] dispatch = [typeof(JsonSerializerOptions), typeof(TimeProvider), typeof(IControlPlaneProbe), typeof(IControlPlaneLauncher), typeof(IHumanTokenStore), typeof(IApprovedProfile), typeof(IRepoLocator), typeof(HttpMessageHandler)];
 
         Assert.All(dispatch, t => Assert.NotNull(scope.ServiceProvider.GetRequiredService(t)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_client_composition_does_not_start_telemetry_for_what_Dispatch_resolves()
+    {
+        using var provider = ComposeClient().BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
+        using var scope = provider.CreateScope();
+        Type[] dispatch = [typeof(JsonSerializerOptions), typeof(TimeProvider), typeof(IControlPlaneProbe), typeof(IControlPlaneLauncher), typeof(IHumanTokenStore), typeof(IApprovedProfile), typeof(IRepoLocator), typeof(HttpMessageHandler)];
+
+        Assert.All(dispatch, t => Assert.NotNull(scope.ServiceProvider.GetRequiredService(t)));
+
+        Assert.False(provider.GetRequiredService<TelemetryStart>().Started);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_unknown_AW_LOG_LEVEL_still_starts_telemetry_in_the_client_composition_so_its_warning_prints()
+    {
+        using var provider = Composition.ComposeClient(new ServiceCollection(), static name => name == "AW_LOG_LEVEL" ? "loud" : Environment(name), new FakeTimeProvider()).BuildServiceProvider();
+
+        Assert.True(provider.GetRequiredService<TelemetryStart>().Started);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_full_composition_starts_telemetry_at_once()
+    {
+        using var provider = Composition.Compose(new ServiceCollection(), Environment, new FakeTimeProvider()).BuildServiceProvider();
+
+        Assert.True(provider.GetRequiredService<TelemetryStart>().Started);
     }
 
     [Fact, Trait("Lane", "unit")]

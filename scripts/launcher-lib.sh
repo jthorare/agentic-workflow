@@ -12,7 +12,7 @@
 # Public functions (all read the globals launcher_file, LAUNCHER_DOC, LAUNCHER_CAT that launcher_load sets):
 #   launcher_load <state_dir>       resolve and validate the file, build the merged catalog; 1 on a refusal
 #   launcher_validate <file>        print the first refusal, return 1; return 0 when the reader accepts the file
-#   launcher_viewer_kind            warp | exec-template | print (warp with no file)
+#   launcher_viewer_kind            warp | exec-template | print | default-terminal (warp with no file)
 #   launcher_apply_team_agent <team.json> <meta-lane>
 #                                   team.json "agent" sets every lane, including the meta lane, and replaces this
 #                                   launch's meta.lanesAgent and meta.lanes. Absent or null changes nothing. Returns 2
@@ -60,7 +60,7 @@ LAUNCHER_CHECKS='
                 else unknown($K.viewer; "viewer"),
                   (if (.kind | type) != "string" or (.kind as $k | $K.viewerKinds | any(. == $k) | not)
                      then "viewer.kind must be one of \($K.viewerKinds | join(", "))" else empty end),
-                  (if (.kind == "warp" or .kind == "print") and (has("name") or has("argv"))
+                  (if (.kind == "warp" or .kind == "print" or .kind == "default-terminal") and (has("name") or has("argv"))
                      then "viewer.kind \(.kind) takes no name or argv" else empty end),
                   (if has("name") and (.name | type) != "string" then "viewer.name must be a string" else empty end),
                   (if has("argv") then .argv | argv_errors("viewer.argv") else empty end)

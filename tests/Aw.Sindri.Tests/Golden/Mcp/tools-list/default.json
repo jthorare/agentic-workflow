@@ -1081,7 +1081,7 @@
   },
   {
     "name": "workflow_list",
-    "description": "The workflows that are not archived: slug, name, the revision triggers run (none when it is off), the newest revision and who saved it. Names are untrusted and fenced. Every top-level list is paged: limit (1 or more, default 100) keeps that many items and offset (0 or more, default 0) skips that many, each list on its own. page.more says another page follows in some list and page.lists gives each list's total; items are never cut inside, and the counts stay the full totals.",
+    "description": "The workflows that are not archived: slug, name, the revision triggers run (none when it is off), the newest revision, who saved it and its trigger in words. The name, who saved it and the trigger words are untrusted and fenced. Every top-level list is paged: limit (1 or more, default 100) keeps that many items and offset (0 or more, default 0) skips that many, each list on its own. page.more says another page follows in some list and page.lists gives each list's total; items are never cut inside, and the counts stay the full totals.",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
@@ -1107,7 +1107,7 @@
   },
   {
     "name": "workflow_get",
-    "description": "One workflow by slug: the revision it runs (the newest when it is off), its graph spec, who saved the newest revision, and where Sindri draws each node. Prompts and node configs in the spec are untrusted and fenced.",
+    "description": "One workflow by slug: the revision it runs (the newest when it is off), its graph spec, who saved the newest revision, and where Sindri draws each node. Give revision to read another saved revision instead: a number, or 'latest' for the newest saved; a number it has no revision for is SND-GRAPH-008. Prompts and node configs in the spec are untrusted and fenced.",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
@@ -1115,6 +1115,13 @@
         "slug": {
           "type": "string",
           "description": "The workflow's slug, such as morning-check (workflow_list names them)"
+        },
+        "revision": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "A saved revision to read instead of the one it runs: a number such as 2, or 'latest' for the newest saved. Left out, the revision it runs (the newest when it is off)."
         }
       },
       "required": [
@@ -1130,7 +1137,7 @@
   },
   {
     "name": "workflow_runs",
-    "description": "A workflow's runs, newest first, 50 a page: run id, revision, status, what started it and why it failed. Filter with status, since and until; when more is true, pass next as before for the older page. A filter value it can't read is SND-GRAPH-134. Failure text is untrusted and fenced. Every top-level list is paged: limit (1 or more, default 100) keeps that many items and offset (0 or more, default 0) skips that many, each list on its own. page.more says another page follows in some list and page.lists gives each list's total; items are never cut inside, and the counts stay the full totals.",
+    "description": "A workflow's runs, newest first, 50 a page: run id, revision, status, what started it, why it failed and a one-line result. Filter with status, since and until; when more is true, pass next as before for the older page. A filter value it can't read is SND-GRAPH-134. The failure text and the result are untrusted and fenced. Every top-level list is paged: limit (1 or more, default 100) keeps that many items and offset (0 or more, default 0) skips that many, each list on its own. page.more says another page follows in some list and page.lists gives each list's total; items are never cut inside, and the counts stay the full totals.",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
@@ -1404,7 +1411,7 @@
   },
   {
     "name": "workflow_run",
-    "description": "Start a run of a workflow's active revision by hand. It answers started, queued or skipped by the workflow's concurrency. A session that a run of this workflow launched can't start the workflow again (SND-GRAPH-109); that guard does nothing until graph runs launch agent sessions.",
+    "description": "Start a run of a workflow's active revision by hand. It answers started, queued or skipped by the workflow's concurrency. Give revision to run that saved revision once instead; the active revision stays, the workflow must be on, and the revision must exist (SND-GRAPH-008) and pass the activation checks. A session that a run of this workflow launched can't start the workflow again (SND-GRAPH-109); that guard does nothing until graph runs launch agent sessions.",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
@@ -1416,6 +1423,11 @@
         "payload": {
           "type": "object",
           "description": "What the manual trigger hands on, a JSON object"
+        },
+        "revision": {
+          "type": "integer",
+          "description": "A saved revision to run once instead of the active one (workflow_get shows the newest); the active revision does not change",
+          "minimum": 1
         }
       },
       "required": [

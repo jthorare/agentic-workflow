@@ -41,7 +41,7 @@ public sealed class RunWorkflowServiceTests
         _runs = new InMemoryWorkflowRunStore(_clock);
         _starter = new FakeStarter(_runs, _clock);
         _callers = new AsyncLocalCallerContextAccessor(_ids);
-        _service = new RunWorkflowService(_workflows, _runs, _starter, _launches, _callers, _clock);
+        _service = new RunWorkflowService(_workflows, _runs, _starter, _launches, _callers, _clock, new FixtureChecker());
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;

@@ -38,13 +38,16 @@ internal sealed class ChainHarness : IAsyncDisposable
     private readonly ServiceProvider _provider;
 
     public ChainHarness(Func<ILedgerStore, ILedgerStore>? ledger = null, IEndpointFile? endpoints = null, bool fixtureReadsViews = false,
-        IReadOnlyList<string>? grants = null, ProverLabel? prover = null, Func<IServiceProvider, IServeStop>? serveStop = null)
+        IReadOnlyList<string>? grants = null, ProverLabel? prover = null, Action<IServiceCollection, SliceHarness>? register = null, IReadOnlyList<CommandRow>? rows = null,
+        Func<IServiceProvider, IServeStop>? serveStop = null)
     {
         FixtureGrants = grants ?? [];
         Ledger = ledger?.Invoke(H.Store) ?? H.Store;
         Progress = new ProjectorProgress(H.Clock);
         var fixture = Authorization.Rows.Of(ActionClass.Desk, "FixtureCommand", typeof(FixtureCommand)) with { ReadsViews = fixtureReadsViews, ServiceGrants = FixtureGrants };
-        _provider = new ServiceCollection()
+        var services = new ServiceCollection();
+        register?.Invoke(services, H);
+        _provider = services
             .AddSingleton<TimeProvider>(H.Clock)
             .AddSingleton<IIdGenerator>(H.Ids)
             .AddSingleton(Ledger)
@@ -65,7 +68,7 @@ internal sealed class ChainHarness : IAsyncDisposable
             .AddSingleton<IChallenges>(H.Challenges)
             .AddSingleton<IContextEngine>(FakeContextEngine.Instance)
             .AddSingleton<IAgentCatalog>(new FixedAgentCatalog())
-            .AddSingleton<ICommandCatalog>(new InMemoryCommandCatalog([.. ShellRows.All, Restart, fixture]))
+            .AddSingleton<ICommandCatalog>(new InMemoryCommandCatalog([.. ShellRows.All, Restart, fixture, .. rows ?? []]))
             .AddSingleton(Latch)
             .AddSingleton<IProjectorStatus>(Progress)
             .AddSingleton<ILogger<AuditTrail>>(Log)

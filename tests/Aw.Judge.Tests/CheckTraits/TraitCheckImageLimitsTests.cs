@@ -52,14 +52,17 @@ public sealed class TraitCheckImageLimitsTests
         Assert.Empty(jev.Asked);
     }
 
-    private static CheckTraitsService Service(TempStateDirectory state, ITraitFiles files, FakeBatchClassifier jev) => new(
-        new SystemProcessRunner(Environment.GetEnvironmentVariable),
-        new FileTraitStore(Path.Combine(state.Path, "traits")),
-        files,
-        new JevTraitJudge(jev, new FakeInputRedactor(), new InMemoryJudgeConfigStore()),
-        new RecordingTraitLog(),
-        new FileTraitCheckSessions(Path.Combine(state.Path, "sessions"), TimeProvider.System),
-        new FakeTimeProvider());
+    private static CheckTraitsService Service(TempStateDirectory state, ITraitFiles files, FakeBatchClassifier jev)
+    {
+        var log = new RecordingTraitLog();
+        return new(
+            new SystemProcessRunner(Environment.GetEnvironmentVariable),
+            new FileTraitStore(Path.Combine(state.Path, "traits")),
+            files,
+            log,
+            new FileTraitCheckSessions(Path.Combine(state.Path, "sessions"), TimeProvider.System),
+            new TraitAnswers(new JevTraitJudge(jev, new FakeInputRedactor(), new InMemoryJudgeConfigStore()), new InMemoryTraitVerdictCache(), log, new FakeTimeProvider()));
+    }
 
     private static void Commit(TraitRepo repo)
     {
