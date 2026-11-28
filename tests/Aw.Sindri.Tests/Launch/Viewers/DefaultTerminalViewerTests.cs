@@ -24,7 +24,7 @@ public sealed class DefaultTerminalViewerTests : IDisposable
             {
                 IsMac = mac,
                 RunWith = "sh",
-                Resolve = (program, _) => ValueTask.FromResult<string?>(program == "tmux" ? "/opt/t m/tmux" : File.Exists(Out(program)) ? Out(program) : null),
+                Resolve = (program, _) => ValueTask.FromResult(program == "tmux" ? "/opt/t m/tmux" : File.Exists(Out(program)) ? Out(program) : null),
                 TempRoot = _f.Dir,
                 GetEnv = n => n == "DISPLAY" ? ":99" : n == "AW_META_COMMAND_GRACE" ? grace : null,
             },
@@ -75,7 +75,7 @@ public sealed class DefaultTerminalViewerTests : IDisposable
         Expect.True(File.Exists(file), "the terminal has not run it, so it is still there");
         _ = await _f.Drive(Wait(viewer.Settled()));
 
-        Expect.True(!Directory.Exists(Path.GetDirectoryName(file)!), "the folder goes with whatever is left");
+        Expect.True(!Directory.Exists(Path.GetDirectoryName(file)), "the folder goes with whatever is left");
         Expect.True(_f.Clock.GetUtcNow() - started <= TimeSpan.FromSeconds(3), "AW_META_COMMAND_GRACE (2 s here) sets the wait, not the 20 s default");
     }
 
@@ -90,7 +90,7 @@ public sealed class DefaultTerminalViewerTests : IDisposable
 
         _ = await _f.Drive(Wait(viewer.Settled()));
 
-        Expect.True(!Directory.Exists(Path.GetDirectoryName(file)!));
+        Expect.True(!Directory.Exists(Path.GetDirectoryName(file)));
     }
 
     [Fact(Timeout = 30_000)]
