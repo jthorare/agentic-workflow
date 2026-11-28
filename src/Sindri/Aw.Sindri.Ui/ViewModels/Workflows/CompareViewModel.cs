@@ -15,8 +15,8 @@ internal sealed class CompareViewModel
     {
         (A, B) = (new CompareRunHeadViewModel("A", a, clock), new CompareRunHeadViewModel("B", b, clock));
         var (left, right) = (First(a), First(b));
-        var names = left.Keys.Concat(right.Keys.Where(k => !left.ContainsKey(k))).ToList();   // the newer run's steps in its order, then the ones only the older one walked
-        Steps = [.. names.Select(n => new CompareStepViewModel(n, kinds.GetValueOrDefault(n, string.Empty), Cell(left, n), Cell(right, n)))];
+        var rows = left.Keys.Concat(right.Keys.Where(k => !left.ContainsKey(k))).ToList();   // the newer run's rows in its order, then the ones only the older one walked: one per step, and one per item of a for_each step
+        Steps = [.. rows.Select(r => new CompareStepViewModel(RowName(r), kinds.GetValueOrDefault(r.Node, string.Empty), Cell(left, r), Cell(right, r)))];
         var differing = Steps.Count(s => s.Differs);
         SummaryText = differing == 0 ? "the two runs match" : string.Create(CultureInfo.InvariantCulture, $"differs in {differing} of {Steps.Count} {(Steps.Count == 1 ? "step" : "steps")}");
         var running = new[] { ("A", a), ("B", b) }.Where(r => RunStatus.IsLive(r.Item2.Status)).Select(r => r.Item1).ToList();
@@ -34,7 +34,7 @@ internal sealed class CompareViewModel
     /// <summary>The older run's head.</summary>
     public CompareRunHeadViewModel B { get; }
 
-    /// <summary>The steps, in the order the newer run walked them, then the ones only the older one did.</summary>
+    /// <summary>The steps, in the order the newer run walked them, then the ones only the older one did; a for_each step has a row per item too.</summary>
     public IReadOnlyList<CompareStepViewModel> Steps { get; } = [];
 
     /// <summary>"differs in 3 of 3 steps" or "the two runs match".</summary>
@@ -46,16 +46,19 @@ internal sealed class CompareViewModel
     /// <summary>True when a run is still running.</summary>
     public bool HasRunningNote => RunningNote.Length > 0;
 
-    private static Dictionary<string, NodeRunView> First(WorkflowRunView run)
+    // A step's own row has item index 0; a for_each step also has one row per item, from 1.
+    private static string RowName((string Node, int Item) row) => row.Item > 0 ? string.Create(CultureInfo.InvariantCulture, $"{row.Node} \u00b7 item {row.Item}") : row.Node;
+
+    private static Dictionary<(string Node, int Item), NodeRunView> First(WorkflowRunView run)
     {
-        var steps = new Dictionary<string, NodeRunView>(StringComparer.Ordinal);
+        var rows = new Dictionary<(string Node, int Item), NodeRunView>();
         foreach (var node in run.Nodes)
         {
-            _ = steps.TryAdd(node.Node, node);
+            _ = rows.TryAdd((node.Node, node.ItemIndex), node);
         }
 
-        return steps;
+        return rows;
     }
 
-    private static CompareCellViewModel Cell(Dictionary<string, NodeRunView> steps, string name) => steps.TryGetValue(name, out var run) ? new CompareCellViewModel(run) : new CompareCellViewModel();
+    private static CompareCellViewModel Cell(Dictionary<(string Node, int Item), NodeRunView> rows, (string Node, int Item) row) => rows.TryGetValue(row, out var run) ? new CompareCellViewModel(run) : new CompareCellViewModel();
 }

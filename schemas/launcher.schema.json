@@ -20,7 +20,8 @@
     "viewerKinds": [
       "warp",
       "exec-template",
-      "print"
+      "print",
+      "default-terminal"
     ],
     "host": [
       "kind"
@@ -272,7 +273,8 @@
           "enum": [
             "warp",
             "exec-template",
-            "print"
+            "print",
+            "default-terminal"
           ]
         }
       },
@@ -289,6 +291,14 @@
           "properties": {
             "kind": {
               "const": "print"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "default-terminal"
             }
           },
           "additionalProperties": false
@@ -628,6 +638,98 @@
           "type": "string",
           "pattern": "^/.+",
           "description": "For a relocated Claude config (CLAUDE_CONFIG_DIR); default ~/.claude/sessions."
+        }
+      }
+    },
+    "layout": {
+      "description": "The team layout aw-meta-launch builds from the team config and hands to the viewer's adapter (`aw-meta-launch --print-layout` prints it; issue 4517, docs/csharp/sindri-launcher.md \"The team layout\"). Not a key of launcher.json: it is derived, never written by hand. One description for every terminal: the Warp adapter turns it into a launch configuration, the others into one window per lane or attach lines.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "team",
+        "socket",
+        "cwd",
+        "arrangement",
+        "lanes"
+      ],
+      "properties": {
+        "schema": {
+          "const": 1,
+          "description": "The layout format version."
+        },
+        "team": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "The team's name (team.json team)."
+        },
+        "socket": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "The team's tmux socket name (`tmux -L <socket>`); today always the team's name."
+        },
+        "cwd": {
+          "type": "string",
+          "pattern": "^/",
+          "description": "The repo every window or pane starts in (team.json repo)."
+        },
+        "arrangement": {
+          "enum": [
+            "first-left-rest-stacked"
+          ],
+          "description": "first-left-rest-stacked: the first lane on the left, the others stacked on the right. An adapter that can only open windows opens one per lane in lane order."
+        },
+        "lanes": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Every lane of the team config in order, the meta lane first, then a --lanes lane the config does not name.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "lane",
+              "session",
+              "open",
+              "attach",
+              "join",
+              "shell"
+            ],
+            "properties": {
+              "lane": {
+                "type": "string",
+                "pattern": "^[a-z0-9-]+$"
+              },
+              "session": {
+                "type": "string",
+                "pattern": "^[a-z0-9-]+$",
+                "description": "The lane's tmux session, <team>-<lane>."
+              },
+              "open": {
+                "type": "boolean",
+                "description": "The lane is in this run (all lanes, or the --lanes list): window adapters open only these; the Warp adapter has a pane for every lane."
+              },
+              "attach": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                },
+                "description": "Attaches to the running session: tmux -L <socket> attach -t =<session> (print, exec-template's {cmd...})."
+              },
+              "join": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                },
+                "description": "Attaches, or creates a plain session: tmux -L <socket> new -A -s <session> (default-terminal)."
+              },
+              "shell": {
+                "type": "string",
+                "description": "The shell line a pane runs (Warp): attaches, or creates the session running the lane's agent through scripts/meta-lane.sh, with remain-on-exit on."
+              }
+            }
+          }
         }
       }
     }

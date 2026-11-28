@@ -33,7 +33,7 @@ internal sealed partial class GitHubClient
             return new GitHubReviewRead([], until);
         }
 
-        var latest = GitHubWire.LatestReviews(listed.Value.Reviews);
+        var latest = GitHubWire.LatestReviewStates(listed.Value.Reviews);
         Dictionary<string, int?> ahead = new(StringComparer.Ordinal) { [head] = 0 };
         foreach (var commit in latest.Select(static r => r.Commit).Distinct(StringComparer.Ordinal).Where(c => !ahead.ContainsKey(c)))
         {
@@ -51,7 +51,7 @@ internal sealed partial class GitHubClient
             ahead[commit] = compare.Value.AheadBy;
         }
 
-        return new GitHubReviewRead([.. latest.Select(r => new ConnectorReview(r.Login, r.Commit, ahead[r.Commit]))], RateLimitedUntil: null);
+        return new GitHubReviewRead([.. latest.Select(r => new ConnectorReview(r.Login, r.Commit, ahead[r.Commit], r.State))], RateLimitedUntil: null);
     }
 
     // A commit GitHub no longer has (a force-push dropped it) answers 404: the count is unknown, not an error.

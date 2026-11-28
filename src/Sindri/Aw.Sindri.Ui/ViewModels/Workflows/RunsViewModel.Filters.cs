@@ -102,12 +102,16 @@ internal sealed partial class RunsViewModel
         Apply();
     }
 
+    // "Running" keeps every live run (waiting and queued too), as the strip above the table counts them; any other status keeps exactly itself.
+    private bool StatusKept(string status) =>
+        StatusFilter.Length == 0 || (string.Equals(StatusFilter, "running", StringComparison.Ordinal) ? RunStatus.IsLive(status) : string.Equals(status, StatusFilter, StringComparison.Ordinal));
+
     // The rows the filters keep, newest first as served; the count says how many of all.
     private void Apply()
     {
         var since = DateFilter switch { "24h" => TimeSpan.FromHours(24), "7d" => TimeSpan.FromDays(7), "30d" => TimeSpan.FromDays(30), _ => TimeSpan.Zero };
         var now = _clock.GetUtcNow();
-        var kept = _all.Where(r => (StatusFilter.Length == 0 || string.Equals(r.Status, StatusFilter, StringComparison.Ordinal)) && (since == TimeSpan.Zero || now - r.StartedAt <= since)).ToList();
+        var kept = _all.Where(r => StatusKept(r.Status) && (since == TimeSpan.Zero || now - r.StartedAt <= since)).ToList();
         var starting = _starting.Select(id => Rows.FirstOrDefault(r => string.Equals(r.Id, id, StringComparison.Ordinal) && string.Equals(r.Status, "starting", StringComparison.Ordinal)) ?? Placeholder(id));   // a Starting placeholder is not a served run: it stays above the served rows, whatever the filters say
         Patch.To(Rows, [.. starting, .. kept]);
         CountText = HasFilter ? Labels.WfRunsCountOf(kept.Count, _all.Count, _more) : Labels.WfRunsCount(_all.Count, _more);

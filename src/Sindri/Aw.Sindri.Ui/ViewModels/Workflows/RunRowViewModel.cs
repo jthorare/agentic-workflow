@@ -22,7 +22,7 @@ internal sealed class RunRowViewModel : ObservableObject
         var culture = System.Globalization.CultureInfo.InvariantCulture;
         StartedAt = row.StartedAt;
         TimeText = Labels.WfRunTime(row.StartedAt, clock);   // under a day the age, past it the day and time like WhenText (#3305)
-        TimeTip = local.ToString("ddd d MMM yyyy", culture) + " \u00b7 " + local.ToString("HH:mm:ss", culture) + "\n" + Labels.WfExactAge(now - row.StartedAt);
+        TimeTip = Labels.WfDayTime(local, seconds: true) + "\n" + Labels.WfExactAge(now - row.StartedAt);
         TriggerWords = Labels.WfRunTriggerWords(row.Trigger);
         RevisionShort = string.Create(culture, $"r{row.Revision}");
         var seconds = row.Seconds ?? (row.EndedAt is { } ended && !live ? (ended - row.StartedAt).TotalSeconds : (double?)null);

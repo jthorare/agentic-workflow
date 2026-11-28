@@ -22,7 +22,7 @@ internal sealed class RunBarViewModel
         var number = run.Run[(run.Run.LastIndexOf(':') + 1)..];
         var local = TimeZoneInfo.ConvertTime(run.StartedAt, clock.LocalTimeZone);
         var culture = System.Globalization.CultureInfo.InvariantCulture;
-        var detail = local.ToString("ddd d MMM yyyy", culture) + " \u00b7 " + local.ToString("HH:mm:ss", culture);
+        var detail = Labels.WfDayTime(local, seconds: true);
         if (run.Seconds is { } seconds)
         {
             detail += string.Create(culture, $" \u00b7 {Math.Round(seconds, MidpointRounding.AwayFromZero)} s");
