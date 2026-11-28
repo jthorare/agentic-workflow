@@ -7,4 +7,5 @@ namespace Aw.Connectors.Core.GitHub;
 /// <param name="Paths">The paths it changed, at most 300 (three pages of 100); a renamed file lists its new path.</param>
 /// <param name="RequestedReviewers">The logins whose review is still requested ('requested_reviewers'; a team request is not a login and is left out); null reads as none.</param>
 /// <param name="HeadSha">The head commit ('head.sha'), or null when the reply had none.</param>
-public sealed record GitHubPullDetail(bool Merged, bool Draft, DateTimeOffset? MergedAt, IReadOnlyList<string> Paths, IReadOnlyList<string>? RequestedReviewers = null, string? HeadSha = null);
+/// <param name="Mergeable">'mergeable': false when GitHub found a conflict, null while it has not worked it out (or on a reply without it).</param>
+public sealed record GitHubPullDetail(bool Merged, bool Draft, DateTimeOffset? MergedAt, IReadOnlyList<string> Paths, IReadOnlyList<string>? RequestedReviewers = null, string? HeadSha = null, bool? Mergeable = null);

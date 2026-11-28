@@ -23,6 +23,11 @@ public sealed class ProjectTruthsTests
     private static ReviewPull Pull(int number, string repo = Api, bool draft = false, string[]? requested = null, string sha = "abc", ReviewedAt[]? reviews = null) =>
         new(repo, number, $"PR {number.ToString(CultureInfo.InvariantCulture)}", "sam", draft, _now.AddDays(-5), _now.AddDays(-1), sha, requested ?? [], reviews ?? [], ReviewersRead: true, [], $"https://github.com/{repo}/pull/{number.ToString(CultureInfo.InvariantCulture)}");
 
+    // #4333: a PR the forge says cannot merge (Mergeable false) or that has a reviewer's latest review at CHANGES_REQUESTED; null is unknown and counts for neither
+    private static ReviewPull Conflicted(int number) => Pull(number) with { Mergeable = false };
+
+    private static ReviewPull Changes(int number) => Pull(number) with { Reviews = [new ReviewedAt("sam", "abc", NewCommits: 0, State: "CHANGES_REQUESTED")] };
+
     private static string Key(int number, string repo = Api) => $"{repo}#{number.ToString(CultureInfo.InvariantCulture)}";
 
     // every pull gets a passing summary of its head unless 'summaries' overrides it or 'unchecked' leaves it out
@@ -274,6 +279,40 @@ public sealed class ProjectTruthsTests
         var without = ProjectTruths.Build(Inputs(pulls: pulls, summaries: summaries));
 
         Assert.Equal("At risk: 3 of 9 PRs red", without.Health!.Reason);
+    }
+
+    [Fact]
+    public void Health_says_how_many_prs_have_conflicts_and_changes_requested_after_the_red_part_and_before_the_unchecked_tail()
+    {
+        ReviewPull[] pulls = [Pull(1), Pull(2), Conflicted(3), Conflicted(4), Changes(5), Pull(6), Pull(7), Pull(8), Pull(9)];
+        var summaries = new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = Red(_now.AddDays(-3)) };
+        var open = Inputs(pulls: pulls, summaries: summaries, now: _now);
+        var facts = open.Facts with { Summaries = open.Facts.Summaries.Where(static e => e.Key != Key(9)).ToDictionary(static e => e.Key, static e => e.Value, StringComparer.Ordinal) };
+
+        var truth = ProjectTruths.Build(open with { Facts = facts });
+
+        Assert.Equal((ProjectTruthLevel.AtRisk, "At risk: 1 of 9 PRs red for 3 d, 2 with conflicts, 1 changes requested, 1 not checked yet"), (truth.Health!.Level, truth.Health.Reason));
+    }
+
+    [Fact]
+    public void Health_without_a_red_pr_names_the_blocked_ones_and_a_pr_that_is_unknown_to_the_forge_counts_for_neither()
+    {
+        ReviewPull[] pulls = [Conflicted(1), Changes(2), Pull(3) with { Mergeable = null }, Pull(4) with { Reviews = [new ReviewedAt("sam", "abc", NewCommits: 0, State: null)] }, Pull(5), Pull(6), Pull(7), Pull(8), Pull(9)];
+
+        var truth = ProjectTruths.Build(Inputs(pulls: pulls));
+
+        Assert.Equal((ProjectTruthLevel.AtRisk, "At risk: 2 of 9 PRs blocked: 1 with conflicts, 1 changes requested"), (truth.Health!.Level, truth.Health.Reason));
+    }
+
+    [Fact]
+    public void Health_counts_a_pr_that_is_red_and_conflicted_once_and_a_draft_not_at_all()
+    {
+        ReviewPull[] pulls = [Conflicted(1), Pull(2), Pull(3) with { Draft = true, Mergeable = false }];
+        var summaries = new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = Red(_now.AddHours(-2)) };
+
+        var truth = ProjectTruths.Build(Inputs(pulls: pulls, summaries: summaries, now: _now));
+
+        Assert.Equal((ProjectTruthLevel.OffTrack, "Off track: 1 of 2 PRs red for 2 h, 1 with conflicts"), (truth.Health!.Level, truth.Health.Reason));
     }
 
     [Fact]

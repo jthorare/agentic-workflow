@@ -72,7 +72,7 @@ public sealed class PullGitHubReviewsTests : IDisposable
 
         var item = Assert.Single((await Service().Handle(Request(), Ct)).Value.Items);
 
-        Assert.Equal([new ConnectorReview("bob", "commitA", 2)], item.Pull!.Reviews);
+        Assert.Equal([new ConnectorReview("bob", "commitA", 2, "APPROVED")], item.Pull!.Reviews);
     }
 
     [Fact, Trait("Lane", "integration")]

@@ -31,7 +31,7 @@ public sealed class ChainRegistrationTests : IDisposable
             var commands = Registered(services, typeof(ICommand<>));
 
             Assert.NotEmpty(commands);
-            Assert.All(commands.Where(type => !IsStop(type) && !IsRestart(type) && !IsTestConnection(type) && !IsSignInConnection(type) && !IsStartSession(type)), type => Assert.Equal(
+            Assert.All(commands.Where(type => !IsStop(type) && !IsRestart(type) && !IsTestConnection(type) && !IsSignInConnection(type) && !IsStartSession(type) && !IsWorkflowWrite(type)), type => Assert.Equal(
                 [typeof(CommandGate<,>), typeof(AuditingService<,>), typeof(AuthorizingService<,>), typeof(ValidatingService<,>), typeof(AwaitingViews<,>), null],
                 Chain(scope.ServiceProvider.GetRequiredService(type))));
         }
@@ -111,6 +111,26 @@ public sealed class ChainRegistrationTests : IDisposable
                 Chain(scope.ServiceProvider.GetRequiredService(start)));
         }
     }
+
+    // A create, an edit and a replace validate the whole graph before they write, and the draft check compiles code nodes (4.3 s cold): they take the gate around the write only (#3571).
+    [Fact, Trait("Lane", "unit")]
+    public void The_workflow_writes_are_audited_and_authorized_but_do_not_hold_the_gate_while_they_check_the_graph()
+    {
+        var (services, scope) = Composed();
+        using (scope)
+        {
+            var writes = Registered(services, typeof(ICommand<>)).Where(IsWorkflowWrite).ToList();
+
+            Assert.Equal(3, writes.Count);
+            Assert.All(writes, type => Assert.Equal(
+                [typeof(AuditingService<,>), typeof(AuthorizingService<,>), typeof(ValidatingService<,>), typeof(AwaitingViews<,>), null],
+                Chain(scope.ServiceProvider.GetRequiredService(type))));
+        }
+    }
+
+    private static bool IsWorkflowWrite(Type service) => service.GenericTypeArguments[0] == typeof(Features.CreateWorkflow.CreateWorkflowRequest)
+        || service.GenericTypeArguments[0] == typeof(Features.ApplyWorkflowOps.ApplyWorkflowOpsRequest)
+        || service.GenericTypeArguments[0] == typeof(Features.ReplaceWorkflow.ReplaceWorkflowRequest);
 
     private static bool IsStartSession(Type service) => service.GenericTypeArguments[0] == typeof(Features.StartSession.StartSessionRequest);
 

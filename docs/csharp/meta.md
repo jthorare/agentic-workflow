@@ -488,9 +488,12 @@ SL-1). With no file the launcher is what it was apart from the team's own tmux s
 | `viewer.kind: warp` (the default with no file) | The multi-pane Warp layout, written to `AW_WARP_LAUNCH_DIR` and opened |
 | `viewer.kind: exec-template` | One window per lane (the lanes of this run, so `--lanes` opens only those) running `viewer.argv` with `{title}` and `{name}` = `<team>-<lane>`, `{cwd}` = the repo, `{cmd...}` = `tmux -L <team> attach -t =<team>-<lane>`; `--no-open` opens none, `--dry-run` prints each argv. A terminal that is not installed never stops the sessions: the attach command is printed |
 | `viewer.kind: print` | Prints `tmux -L <team> attach -t =<team>-<lane>` per lane |
+| `viewer.kind: default-terminal` | One window per lane (never splits) in the terminal you registered as your default; no `name` or `argv`. tmux stays the host (`tmux -L <team> new -A -s <team>-<lane>`), so a closed window loses no lane. **macOS:** one executable `.command` file per lane in a private temp dir (mode 0700), opened with `open`, so whichever app is registered for `.command` files runs it (Terminal, iTerm, Rex); no terminal is hard-coded. Each file removes itself as its first line, because `open` returns before the app reads it; the launcher waits up to `AW_META_COMMAND_GRACE` seconds (default 20) for the files to go, then removes the dir. **Linux:** `xdg-terminal-exec <attach argv>`, else `x-terminal-emulator -e <attach argv>`; with neither on `PATH` the launch stops with exit 1, before any session exists, and the error names both. `--no-open` opens nothing, `--dry-run` prints each window |
 | `host` | Checked, not used: lanes always run in tmux |
 | `meta.lanesAgent`, `meta.lanes.<lane>` | The catalog agent that runs the lane, when `team.json` has no `agent`. `lanesAgent` is the default for the lanes and never reaches the meta lane, which is Claude Code unless `meta.lanes.<metaLane>` names another agent. Every lane must resolve to the meta lane's agent (see "One agent per team" below). `team.json` `agent` replaces both fields for that team, including the meta lane. The catalog is `config/launcher/builtins.json` plus the file's `agents` |
 | `agents.<id>` | `open`/`resume` argv templates (`{bin}`, `{cwd}`, `{name}`, `{seed}`, `{sessionId}`), `processName` (the pane check that restarts a lane whose agent exited) and `transcripts` (the glob that decides resume) |
+
+Every viewer reads one team layout (lanes in order, the first one left, the attach command per lane over `tmux -L <team>`) through an adapter per `viewer.kind`; `aw-meta-launch --print-layout` prints it as JSON and starts nothing. The fields and the adapters are in `docs/csharp/sindri-launcher.md` "The team layout".
 
 **One agent per team.** Without `routing.lanes`, a team is all Claude Code or all Codex (or another single catalog agent): there is no mixed team and no
 meta-to-lane delivery across agents. A lane that `team.json` `routing.lanes` names is the exception: `aw-meta-launch` skips it in the check below
@@ -537,8 +540,8 @@ layout and every tmux command stay as they are with no file, `-L <team>` aside (
 same: a `sindri` run inside the lane is a session caller, whatever the agent. A shell left in the pane after the agent
 exits still carries them, so run the human's `sindri` approvals from another terminal.
 
-**Writing the file.** `aw-meta-launch --init-launcher [--viewer warp|print|<terminal id>] [--force] [--stdout]` detects the
-terminal (no GUI session: `print`; Warp installed: `warp`; `$TERM_PROGRAM` naming a terminal in
+**Writing the file.** `aw-meta-launch --init-launcher [--viewer warp|print|default-terminal|<terminal id>] [--force] [--stdout]` detects the
+terminal (no GUI session: `print`; Warp installed: `warp`; on macOS without Warp: `default-terminal` (`AW_WARP_APP` names the Warp app to look for, for tests); `$TERM_PROGRAM` naming a terminal in
 `config/launcher/terminals.json`; else the first of those on PATH; else `print`) and writes `launcher.json` (0600, never over
 an existing file without `--force`; exit 0 ok, 1 refused, 2 usage). The reader refuses unknown keys, unknown placeholders
 and wrong JSON types with `SND-LAUNCH-011` before any session is created; `sindri launch show` is the full check.

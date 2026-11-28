@@ -29,7 +29,7 @@ machine-wide, needs no profile approval, and never holds secrets. One JSON Schem
 | Key | Meaning |
 |---|---|
 | `schema` | The format version; this build reads `1`. Required |
-| `viewer` | What a human sees. `warp`, `print` (nothing opens; the attach command is printed) or `exec-template` (`name`, the UI label, and `argv`, both required) |
+| `viewer` | What a human sees. `warp`, `print` (nothing opens; the attach command is printed), `default-terminal` (one window per session in the terminal registered as the OS default; no `name` or `argv`; see "The default-terminal viewer") or `exec-template` (`name`, the UI label, and `argv`, both required) |
 | `host` | Who owns the process: `tmux` (default), `none` (a GUI app that owns its own agent; attended opens only) or `t3` (a T3 Code thread; attended opens only, see "The t3 host"). Unattended Steps always use tmux |
 | `agents.<id>` | An added catalog entry (`label`, `bin`, `open`, `sessionId` required; `sessionIdPattern` required unless `sessionId` is `none`, and matched against the whole id, as if written `^(…)$`; `reportedId` required for `reported`), or, with `"override": true`, the named fields of a built-in one. Ids match `^[a-z][a-z0-9-]{1,31}$` |
 | `agents.<id>.model`, `.policy` | Decided (owner, 2026-10-16). Per-entry form names, like `mcp`, for an unattended Step's per-run model and policy file; see "Model and policy forms" below. Absent means `none` |
@@ -128,6 +128,56 @@ is the file's argv and validates against the schema.
 GNOME Terminal and `kitty --single-instance` exit 0 through a server even when no window appears; the launcher's client
 check (spec §3), not the exit code, decides whether the outcome is `opened`. WezTerm's `start` has no title flag, so its
 template omits `{title}`.
+
+## The default-terminal viewer
+
+`{ "kind": "default-terminal" }` opens each session in whatever terminal the user registered as the default, so a terminal with no
+launch template (Rex, for one) works once it is registered. It takes no `name` or `argv`; the bash reader and the schema refuse both.
+It opens one window per lane and never a split: the OS APIs open windows. tmux stays the host (`tmux -L <team> new -A -s <session>`),
+so every lane survives a closed window.
+
+- **macOS.** `aw-meta-launch` writes one executable `.command` file per lane under a private temp dir (mode 0700): the file removes
+  itself, runs `cd <cwd>`, then `exec`s the attach command, each word shell-quoted. It opens the file with `open`, which hands it to
+  the app registered for `.command` files. `open` returns before the app reads the file, so the file deletes itself as its first line
+  and the launcher waits up to `AW_META_COMMAND_GRACE` seconds (default 20) before it removes the dir.
+- **Linux.** `xdg-terminal-exec <attach argv>` when it is on `PATH`, else `x-terminal-emulator -e <attach argv>`, else the launch
+  stops (exit 1) with an error that names both, before any session is created. Warp stays the Linux default for `--init-launcher`.
+- `aw-meta-launch --init-launcher` writes it on macOS when Warp is absent; `--viewer default-terminal` forces it.
+
+The bash launcher has this viewer now. The C# launcher does not read it yet (issue 4518), so the shared fixtures under
+`tests/fixtures/launcher/` carry no `default-terminal` row until it does; `scripts/tests/meta-launch-default-terminal.test.sh` covers the
+schema and the bash reader meanwhile.
+
+## The team layout
+
+`aw-meta-launch` builds one document that says what the team looks like, whatever the terminal, and hands it to the adapter of
+`viewer.kind`. Each adapter turns it into that terminal's own layout or window calls. `aw-meta-launch --print-layout` prints the
+document as JSON and starts nothing; `--lanes` changes its `open` flags. The shape is `$defs/layout` in
+`schemas/launcher.schema.json`. It is not a key of `launcher.json`: the team config decides it, so there is nothing to write by hand.
+
+| Field | What it holds |
+|---|---|
+| `team`, `socket` | The team's name and its tmux socket (`tmux -L <socket>`; today the same name) |
+| `cwd` | The repo every window or pane starts in |
+| `arrangement` | `first-left-rest-stacked`: the first lane on the left, the others stacked on the right |
+| `lanes[]` | Every lane of the team config in order (the meta lane first), then a `--lanes` lane the config doesn't name |
+| `lanes[].open` | The lane is in this run. Window adapters open only these; the Warp adapter has a pane for every lane |
+| `lanes[].attach` | `tmux -L <socket> attach -t =<session>`, as an argv |
+| `lanes[].join` | `tmux -L <socket> new -A -s <session>`: attaches, or creates a plain session |
+| `lanes[].shell` | The shell line a Warp pane runs: attaches, or creates the session running the lane's agent (`scripts/meta-lane.sh`) |
+
+The adapters, one per viewer kind:
+
+| `viewer.kind` | Adapter |
+|---|---|
+| `warp` | A launch configuration in the `arrangement`, each pane running its lane's `shell`. Its output is the golden in `scripts/tests/fixtures/meta-launch/` |
+| `exec-template` | One window per open lane, `{cmd...}` = the lane's `attach` |
+| `default-terminal` | One window per open lane running the lane's `join` (see "The default-terminal viewer") |
+| `print` | The `attach` line of each open lane |
+
+A terminal that can open a split layout by name gets an adapter of its own; until then it uses `exec-template` (one window per
+lane) or `print`. tmux stays the host, so a team opened one window per lane loses nothing.
+The C# launcher has no reader of the layout: a Sindri session opens one window from its own attach argv (issue 4518).
 
 ## Terminal process names
 
