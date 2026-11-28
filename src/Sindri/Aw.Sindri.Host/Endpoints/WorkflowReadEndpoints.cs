@@ -105,9 +105,9 @@ internal static class WorkflowReadEndpoints
             return fallback;
         }
 
-        return int.TryParse(text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var parsed) && parsed >= least
+        return int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed) && parsed >= least
             ? parsed
-            : SindriErrors.InvalidInput.With(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"'{text}' is not a {name} (a whole number {least} or more)"));
+            : SindriErrors.InvalidInput.With(string.Create(CultureInfo.InvariantCulture, $"'{text}' is not a {name} (a whole number {least} or more)"));
     }
 
     private static string? Text(IQueryCollection query, string name) => query.TryGetValue(name, out var values) && values.Count > 0 ? values[0] : null;
