@@ -91,7 +91,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
             return;
         }
 
-        (BaseRevision, Nodes, _edges, Groups) = (workflow.Value.LatestRevision, ReadNodes(workflow.Value.Spec), ReadEdges(workflow.Value.Spec), blocks.Value.Groups);
+        (BaseRevision, Nodes, _edges, Groups, SpecRead) = (workflow.Value.LatestRevision, ReadNodes(workflow.Value.Spec), ReadEdges(workflow.Value.Spec), blocks.Value.Groups, Kept(workflow.Value.Spec));
         (NeedsReload, ReloadPromptText, FailureText) = (false, string.Empty, string.Empty);
         Select(_selected ?? string.Empty);   // the form stays on its node, with what the new revision holds
     }
@@ -111,6 +111,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         }
 
         _selected = nodeId.Length == 0 ? null : nodeId;
+        ClearRefusal();   // a refusal belongs to the step it came from; a failed read stays
         Fields.Clear();
         var node = Nodes.FirstOrDefault(n => string.Equals(n.Id, nodeId, StringComparison.Ordinal));
         var block = node is null ? null : Groups.SelectMany(g => g.Blocks).FirstOrDefault(b => string.Equals(b.Type, node.Type, StringComparison.Ordinal));
@@ -118,9 +119,18 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         NodeIdLine = node is null ? string.Empty : Labels.WfEditorStepId(node.Id);
         foreach (var field in block?.Config ?? [])
         {
-            Fields.Add(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field)));   // why: a block was found, so node is not null
+            AddWatched(new ConfigFieldViewModel(field, EditorFieldText.Of(node!.Config, field), block!.Type, ExampleOf(block, field.Name)));   // why: a block was found, so node and block are not null
         }
+
+        AdvancedOpen = false;
+        OnChanged(nameof(HasAdvancedFields));
+        OnChanged(nameof(ShowsAdvanced));
     }
+
+    private static string ExampleOf(WorkflowBlock block, string field) =>
+        block.ExampleConfig is { ValueKind: JsonValueKind.Object } example && example.TryGetProperty(field, out var value) && value.ValueKind == JsonValueKind.String && string.Equals(field, "code", StringComparison.Ordinal)
+            ? value.GetString() ?? string.Empty
+            : string.Empty;
 
     private static string HeadingOf(EditorNode? node, WorkflowBlock? block)
     {
@@ -182,63 +192,6 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
         return blocked || ops.Count == 0 ? Task.CompletedTask : Send(ops, cancellationToken);
     }
 
-    /// <summary>Sends an add_node.</summary>
-    /// <param name="id">The new node's id.</param>
-    /// <param name="type">Its block type.</param>
-    /// <param name="title">Its title, or null for none.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>A task that completes when the answer is shown.</returns>
-    internal Task AddNode(string id, string type, string? title, CancellationToken cancellationToken)
-    {
-        var op = new JsonObject { ["op"] = "add_node", ["id"] = id, ["type"] = type };
-        if (title is not null)
-        {
-            op["title"] = title;
-        }
-
-        return Send(new JsonArray((JsonNode)op), cancellationToken);
-    }
-
-    /// <summary>Sends an add_node and, when a node is given, a connect from it to the new one, as one set of ops: both are saved or neither.</summary>
-    /// <param name="id">The new node's id.</param>
-    /// <param name="type">Its block type.</param>
-    /// <param name="after">The node the new one follows, or null for none.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>A task that completes when the answer is shown.</returns>
-    internal Task AddNodeAfter(string id, string type, string? after, CancellationToken cancellationToken)
-    {
-        var add = new JsonObject { ["op"] = "add_node", ["id"] = id, ["type"] = type };
-        var ops = after is null
-            ? new JsonArray((JsonNode)add)
-            : new JsonArray(add, new JsonObject { ["op"] = "connect", ["from"] = after, ["to"] = id });
-
-        return Send(ops, cancellationToken);
-    }
-
-    /// <summary>Sends a connect.</summary>
-    /// <param name="from">The node the edge leaves.</param>
-    /// <param name="to">The node it enters.</param>
-    /// <param name="output">The branch it leaves by, or null for the default.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>A task that completes when the answer is shown.</returns>
-    internal Task Connect(string from, string to, string? output, CancellationToken cancellationToken)
-    {
-        var op = new JsonObject { ["op"] = "connect", ["from"] = from, ["to"] = to };
-        if (output is not null)
-        {
-            op["output"] = output;
-        }
-
-        return Send(new JsonArray((JsonNode)op), cancellationToken);
-    }
-
-    /// <summary>Sends a remove_node.</summary>
-    /// <param name="id">The node.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>A task that completes when the answer is shown.</returns>
-    internal Task RemoveNode(string id, CancellationToken cancellationToken) =>
-        Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "remove_node", ["node"] = id }), cancellationToken);
-
     // One call, on the revision read, never retried. A saved edit reads the workflow again; a stale base asks for a reload and holds further edits.
     private async Task<bool> Send(JsonArray ops, CancellationToken cancellationToken)
     {
@@ -258,7 +211,7 @@ internal sealed partial class OpsEditor(ISindriApi api) : ObservableObject
                 return false;
             }
 
-            await Load(url, Slug, afterSave: true, cancellationToken).ConfigureAwait(true);
+            await ReloadAfterSave(applied.Value.Revision, url, cancellationToken).ConfigureAwait(true);
             return true;
         }
         finally

@@ -14,7 +14,7 @@ public sealed class ScheduleBlock : IGraphBlock
         ("0 7 * * 1-5", "Every weekday at 7:00", "every weekday at 7:00"),
         ("0 9 * * *", "Every day at 9:00", "every day at 9:00"),
         ("0 * * * *", "Every hour", "every hour"),
-        ("0 8 * * 1", "Mondays at 8:00", "on Mondays at 8:00"),
+        ("0 8 * * 1", "Every Monday at 8:00", "every Monday at 8:00"),
     ];
 
     // why: a fixed list of IANA ids, so the block listing is the same on every box (its API golden too); GetSystemTimeZones differs by OS and tzdata version
@@ -67,6 +67,18 @@ public sealed class ScheduleBlock : IGraphBlock
         var preset = Array.FindIndex(_presets, p => string.Equals(p.Cron, cron.Trim(), StringComparison.Ordinal));
         var runs = preset >= 0 ? _presets[preset].Runs : ScheduleWords.Of(cron);
         return new BlockSummary(runs is not null ? $"Runs {runs}, {zone}" : $"Runs on schedule {cron.Trim()}, {zone}");
+    }
+
+    /// <summary>The same line worded in <paramref name="local"/> (the zone the list and the next run use): "Runs Sun–Thu at 23:00" for 7:00 UTC weekdays in Pacific winter time. A cron of another shape, a zone this box cannot read, or two zones that agree keep <see cref="Summarize(JsonObject)"/>.</summary>
+    /// <param name="config">The node's config.</param>
+    /// <param name="local">The zone to word the time in.</param>
+    /// <param name="now">When the offsets are read.</param>
+    /// <returns>The line.</returns>
+    public BlockSummary Summarize(JsonObject config, TimeZoneInfo local, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentNullException.ThrowIfNull(local);
+        return Text(config["cron"]) is { } cron && ScheduleWords.Local(cron, Text(config["timezone"]), local, now) is { } words ? new BlockSummary($"Runs {words}") : Summarize(config);
     }
 
     /// <inheritdoc />

@@ -71,6 +71,20 @@ public sealed class WorkflowGoldenContractTests
     }
 
     [Fact]
+    public void A_failed_node_run_reads_its_failure_field_for_field()
+    {
+        var run = Read<WorkflowRunView>("workflow-runs-run", "failed");
+
+        var agent = run.Nodes.Single(n => n.Node == "agent");
+        var failure = agent.Failure;
+        Assert.NotNull(failure);
+        Assert.Equal(("SND-LAUNCH-003", "Check the repos", "Choose an agent", "sindri profile set workflow.agent.target <id>"), (failure.Code, failure.Step, failure.FixLabel, failure.FixCommand));
+        Assert.StartsWith("The agent for step Check the repos", failure.Sentence, StringComparison.Ordinal);
+        Assert.Equal((null, agent.Error), (failure.SecondaryLabel, failure.Detail));
+        Assert.Null(run.Nodes.Single(n => n.Node == "start").Failure);
+    }
+
+    [Fact]
     public void The_routes_escape_a_run_ids_at_sign_and_colon()
     {
         Assert.Equal(("/sindri/workflows", "/sindri/workflows/morning-check", "/sindri/workflows/morning-check/runs", "/sindri/workflow-runs/morning-check%401%3A1"),
@@ -122,7 +136,7 @@ public sealed class WorkflowGoldenContractTests
         var cron = read.Groups[0].Blocks.Single(b => b.Type == "schedule").Config.Single(f => f.Name == "cron");
         Assert.Equal(("Runs at", "0 7 * * 1-5", "Every weekday at 7:00"), (cron.Caption, cron.Presets![0].Value, cron.Presets[0].Label));
         Assert.Equal("Summarize {{search.facts}}", prompt.ExampleConfig!.Value.GetProperty("prompt").GetString());
-        Assert.Equal(["http", "memory_search", "skill_catalog", "call_tool", "workflow_result"], read.Groups[1].Blocks.Select(b => b.Type), StringComparer.Ordinal);
+        Assert.Equal(["http", "memory_search", "skill_catalog", "call_tool", "transcript_batch", "transcript_turns", "workflow_result"], read.Groups[1].Blocks.Select(b => b.Type), StringComparer.Ordinal);
         Assert.Equal(["code", "collect", "for_each", "memory_forget", "condition", "only_new", "memory_write", "run_workflow", "wait"], read.Groups[3].Blocks.Select(b => b.Type), StringComparer.Ordinal);
         Assert.Equal(["ask_owner", "create_item", "notify"], read.Groups[4].Blocks.Select(b => b.Type), StringComparer.Ordinal);
     }

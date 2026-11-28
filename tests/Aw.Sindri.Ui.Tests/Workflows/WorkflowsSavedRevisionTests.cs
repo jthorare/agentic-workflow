@@ -175,4 +175,82 @@ public sealed class WorkflowsSavedRevisionTests
 
         Assert.Equal((string.Empty, false, false), (page.SavedLineText, page.HasSavedLine, page.CanMakeLive));
     }
+
+    // What the ops route answers: the revision the edit made (the golden's ops-applied names revision 2).
+    private static RouteAnswer AppliedAs(int revision)
+    {
+        var applied = Golden("workflows-slug-ops", "ops-applied");
+        applied["revision"] = revision;
+        return new RouteAnswer(HttpStatusCode.OK, applied.ToJsonString());
+    }
+
+    // Saves the sheet's text, then undoes it: the undo writes one revision more (4), and the page reads it.
+    private async Task<WorkflowsPageViewModel> SavedThenUndone(int? active)
+    {
+        WorkflowStepSavedEventArgs? saved = null;
+        var page = await EditingNode(active);
+        page.StepSaved += (_, e) => saved = e;
+        page.Editor.Fields[0].Text = "Check twice";
+        Serve(active, latest: 3);
+        _f.Server.ApplyWorkflowOpsAnswer = AppliedAs(3);   // the save's own answer names the revision it made: Undo is offered on that one (#4398), not on whatever the reload reads
+        await page.Save(Token);
+        Serve(active, latest: 4);   // what the undo makes Sindri hold
+        Assert.Null(await saved!.Undo());
+        return page;
+    }
+
+    [Fact]
+    public async Task After_an_undo_on_a_workflow_that_is_off_the_line_says_undone_and_the_revision_the_undo_wrote()
+    {
+        var page = await SavedThenUndone(active: null);
+
+        Assert.Equal("Undone. Saved as revision 4.", page.SavedLineText);
+    }
+
+    [Fact]
+    public async Task After_an_undo_on_a_live_workflow_the_line_says_undone_and_not_live_yet()
+    {
+        var page = await SavedThenUndone(active: 1);
+
+        Assert.Equal("Undone. Saved as revision 4. Not live yet.", page.SavedLineText);
+    }
+
+    // A canvas Remove with the sheet shut: it writes revision 5, and the page reads it.
+    private async Task RemoveOnCanvas(WorkflowsPageViewModel page, int? active)
+    {
+        page.CloseSettings();
+        Serve(active, latest: 5);
+        page.GraphEdit.RequestRemove();
+        await page.GraphEdit.ConfirmRemove(Token);
+    }
+
+    [Fact]
+    public async Task On_a_workflow_that_is_off_a_canvas_edit_after_a_save_moves_the_line_to_the_edits_revision()
+    {
+        var page = await Saved(active: null);
+
+        await RemoveOnCanvas(page, active: null);
+
+        Assert.Equal("Saved as revision 5.", page.SavedLineText);
+    }
+
+    [Fact]
+    public async Task On_a_workflow_that_is_off_a_canvas_edit_after_an_undo_no_longer_says_undone()
+    {
+        var page = await SavedThenUndone(active: null);
+
+        await RemoveOnCanvas(page, active: null);
+
+        Assert.Equal("Saved as revision 5.", page.SavedLineText);
+    }
+
+    [Fact]
+    public async Task On_a_live_workflow_a_canvas_edit_after_an_undo_no_longer_says_undone()
+    {
+        var page = await SavedThenUndone(active: 1);
+
+        await RemoveOnCanvas(page, active: 1);
+
+        Assert.Equal("Saved as revision 5. Not live yet.", page.SavedLineText);
+    }
 }

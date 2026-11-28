@@ -1,4 +1,6 @@
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
+using Aw.Sindri.Core.Graph.Failures;
 using Aw.Sindri.Core.Graph.Ids;
 
 namespace Aw.Sindri.Features.GetWorkflowRun;
@@ -13,7 +15,9 @@ namespace Aw.Sindri.Features.GetWorkflowRun;
 /// <param name="Error">Why it failed, or null.</param>
 /// <param name="Agent">Null unless the row is a 'run_agent' node the run waits on; then 'waiting' (a takeover applies) or 'taken_over' (a handback applies).</param>
 /// <param name="Raw">The scrubbed model text of a failed prompt step, cut at 64 KB, or null (P3e, spec §6.2).</param>
-internal sealed record NodeRunView(NodeId Node, int ItemIndex, string Status, JsonNode? Input, JsonNode? Output, bool Truncated, string? Error, string? Agent = null, string? Raw = null)
+/// <param name="Failure">A failed row's §6.1 sentence and fix, the step named by its title (#3304, spec §7.3); left out when the row did not fail or its code has no sentence.</param>
+internal sealed record NodeRunView(NodeId Node, int ItemIndex, string Status, JsonNode? Input, JsonNode? Output, bool Truncated, string? Error, string? Agent = null, string? Raw = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] StepFailure? Failure = null)
 {
     /// <summary>How long the node ran in seconds; null while it has not ended or when the row has no times. Issue 3683.</summary>
     public double? Seconds { get; init; }

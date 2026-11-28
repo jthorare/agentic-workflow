@@ -37,6 +37,25 @@ internal sealed partial class WorkflowGraphViewModel
     /// <summary>How many times the cards were laid out: zoom buttons must never raise it, only open, a size change and a text-size change.</summary>
     internal int RelayoutCount { get; private set; }
 
+    // The edges of one source: those that wrap onto the next row each take their own lane and exit (true before false), and a labelled one gets its pill beside its own line (#4470).
+    private static void RouteFork(GraphFitResult fit, List<GraphEdgeViewModel> edges, double textScale)
+    {
+        var wrapped = edges.Where(e => fit.RowOf.TryGetValue(e.From, out var row) && fit.RowOf.TryGetValue(e.To, out var next) && next == row + 1)
+            .OrderBy(static e => string.Equals(e.Label, "false", StringComparison.Ordinal) ? 1 : 0).ToList();
+        foreach (var edge in edges.Except(wrapped))
+        {
+            edge.Route = GraphFit.Route(fit, edge.From, edge.To, edge.Start, edge.End);
+        }
+
+        for (var slot = 0; slot < wrapped.Count; slot++)
+        {
+            var edge = wrapped[slot];
+            edge.Start = GraphFit.Exit(edge.Start, slot, wrapped.Count, textScale);
+            edge.Route = GraphFit.Route(fit, edge, (slot, wrapped.Count), textScale);
+            edge.LabelAt = edge.Label is not null && edge.Route.Count > 0 ? GraphFit.LabelBeside(edge.Route, textScale) : null;
+        }
+    }
+
     /// <summary>Puts every card where <see cref="GraphFit"/> wraps it for this canvas; the served positions then only give the layer order. Edges and missing-branch words follow the cards.</summary>
     /// <param name="canvasWidth">The canvas clip's width in pixels.</param>
     /// <param name="canvasHeight">The canvas clip's height in pixels.</param>
@@ -59,12 +78,12 @@ internal sealed partial class WorkflowGraphViewModel
         }
 
         Edges = BuildEdges(_spec, [.. Nodes]);
-        foreach (var edge in Edges)
+        foreach (var fork in Edges.GroupBy(static e => e.From, StringComparer.Ordinal))
         {
-            edge.Route = GraphFit.Route(fit, edge.From, edge.To, edge.Start, edge.End);
+            RouteFork(fit, [.. fork], textScale);
         }
 
-        Ends = GraphEnds.Build([.. Nodes], Edges);
+        Ends = GraphEnds.Build([.. Nodes], Edges, SpecBranches(_spec));
         return fit.Zoom;
     }
 

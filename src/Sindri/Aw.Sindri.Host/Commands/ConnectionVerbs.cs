@@ -14,7 +14,7 @@ using Aw.Sindri.Host.Endpoints;
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// 'sindri connection add|list|show|test|rename|remove|signin [--client-id ID] [--key-env NAME] [--kind K] [--preset P]' (connections PR 10a): a client of the /sindri/connections routes.
+/// 'sindri connection add|list|show|test|rename|remove|signin|set-key [--client-id ID] [--key-env NAME] [--kind K] [--preset P]' (connections PR 10a): a client of the /sindri/connections routes.
 /// A session may run every verb (owner decision D2). 'add' for an oauth connection prints the consent URL as soon as it has it, then waits for the callback.
 /// </summary>
 /// <param name="client">The API client.</param>
@@ -55,6 +55,7 @@ internal sealed partial class ConnectionVerbs(ControlPlaneClient client, Output 
             "rename" => await Rename(command, ct).ConfigureAwait(false),
             "remove" => await Remove(command, ct).ConfigureAwait(false),
             "signin" => await SignIn(command, ct).ConfigureAwait(false),
+            "set-key" => await SetKey(command, ct).ConfigureAwait(false),
             _ => await Add(command, ct).ConfigureAwait(false),
         };
     }
@@ -78,7 +79,7 @@ internal sealed partial class ConnectionVerbs(ControlPlaneClient client, Output 
             _ = text.AppendLine(Line(view));
         }
 
-        return await _output.Text(answer.Value.Value.Connections.Count == 0 ? "No connections. Add one with: sindri connection add <service:label> --preset <preset> --client-id <id>\n" : text.ToString(), 0).ConfigureAwait(false);
+        return await _output.Text(answer.Value.Value.Connections.Count == 0 ? "No connections. Add one with: sindri connection add <service:label> --preset <preset> --key-env <NAME>\n" : text.ToString(), 0).ConfigureAwait(false);
     }
 
     private async Task<int> Show(Parsed command, CancellationToken ct)
@@ -121,6 +122,35 @@ internal sealed partial class ConnectionVerbs(ControlPlaneClient client, Output 
         return command.Json
             ? await _output.Raw(answer.Value.Body, 0).ConfigureAwait(false)
             : await _output.Text($"Renamed {renamed.PreviousName} to {renamed.Name}{(renamed.SecretMoved ? " (its stored secret moved with it)" : string.Empty)}.\n", 0).ConfigureAwait(false);
+    }
+
+    // The new key is read from THIS shell (--key-env names a variable, not the value) and travels in the loopback PUT; the old key stays until the service accepts the new one.
+    private async Task<int> SetKey(Parsed command, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(command.KeyEnv))
+        {
+            return await _output.Error(SindriErrors.InvalidInput.With("sindri connection set-key needs --key-env NAME (the environment variable that holds the new key)")).ConfigureAwait(false);
+        }
+
+        var key = ReadVariable(command.KeyEnv, "--key-env");
+        if (key.IsError)
+        {
+            return await _output.Error(key.Error).ConfigureAwait(false);
+        }
+
+        var answer = await _client.Put<ReplaceConnectionKeyBody, ReplaceConnectionKeyResponse>(Route(command.Name) + "/key", new ReplaceConnectionKeyBody(key.Value), ct).ConfigureAwait(false);
+        if (answer.IsError)
+        {
+            return await _output.Error(answer.Error).ConfigureAwait(false);
+        }
+
+        var replaced = answer.Value.Value;
+        var line = replaced.Checked
+            ? $"{replaced.Connection.Name}: the new key passed its check and replaced the old one ({replaced.Connection.Status}).\n"
+            : $"{replaced.Connection.Name}: replaced (not checked: {replaced.UncheckedReason}).\n";
+        return command.Json
+            ? await _output.Raw(answer.Value.Body, 0).ConfigureAwait(false)
+            : await _output.Text(line, 0).ConfigureAwait(false);
     }
 
     private async Task<int> Remove(Parsed command, CancellationToken ct)

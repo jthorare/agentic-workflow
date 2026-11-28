@@ -488,10 +488,12 @@ Aw.Forge.Core.Pulls.CheckRun
 Aw.Forge.Core.Pulls.CheckRun.<Clone>$() -> Aw.Forge.Core.Pulls.CheckRun!
 Aw.Forge.Core.Pulls.CheckRun.App.get -> string?
 Aw.Forge.Core.Pulls.CheckRun.App.init -> void
-Aw.Forge.Core.Pulls.CheckRun.CheckRun(string! Name, string? App, string! Conclusion, string! Sha) -> void
+Aw.Forge.Core.Pulls.CheckRun.CheckRun(string! Name, string? App, string! Conclusion, string! Sha, System.DateTimeOffset? CompletedAt = null) -> void
+Aw.Forge.Core.Pulls.CheckRun.CompletedAt.get -> System.DateTimeOffset?
+Aw.Forge.Core.Pulls.CheckRun.CompletedAt.init -> void
 Aw.Forge.Core.Pulls.CheckRun.Conclusion.get -> string!
 Aw.Forge.Core.Pulls.CheckRun.Conclusion.init -> void
-Aw.Forge.Core.Pulls.CheckRun.Deconstruct(out string! Name, out string? App, out string! Conclusion, out string! Sha) -> void
+Aw.Forge.Core.Pulls.CheckRun.Deconstruct(out string! Name, out string? App, out string! Conclusion, out string! Sha, out System.DateTimeOffset? CompletedAt) -> void
 Aw.Forge.Core.Pulls.CheckRun.Equals(Aw.Forge.Core.Pulls.CheckRun? other) -> bool
 Aw.Forge.Core.Pulls.CheckRun.Name.get -> string!
 Aw.Forge.Core.Pulls.CheckRun.Name.init -> void

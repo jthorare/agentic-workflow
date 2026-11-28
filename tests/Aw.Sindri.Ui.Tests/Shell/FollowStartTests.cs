@@ -9,30 +9,27 @@ namespace Aw.Sindri.Ui.Tests.Shell;
 // Where the event stream opens: a fresh connect and a new ledger start at the status's ledger head (#2778);
 // a dropped stream on the same process and epoch resumes from the cursor of the events it received.
 [Lane(TestLane.Unit)]
-public sealed class FollowStartTests : IDisposable
+public sealed class FollowStartTests : IAsyncDisposable
 {
     private readonly InMemoryEndpointRecords _records = new();
     private readonly FakeSindriApi _server = new();
     private readonly FakeTimeProvider _clock = new(A.Noon);
-    private readonly CancellationTokenSource _stop = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+    private readonly FollowLoop _follow = new();
     private readonly HealthViewModel _vm;
     private readonly InlineUiContext _ui = new();
-    private Task _run = Task.CompletedTask;
 
     public FollowStartTests()
     {
         _vm = new HealthViewModel(_records, _server, _clock, new FakeClipboard());
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        _stop.Cancel();
-        Assert.True(_run.Wait(TimeSpan.FromSeconds(2), CancellationToken.None), "Run ended when cancelled");
-        _stop.Dispose();
+        await _follow.DisposeAsync();
         _ui.Dispose();
     }
 
-    private void Start() => _run = _vm.Run(_stop.Token);
+    private void Start() => _follow.Start(_vm.Run);
 
     private static StatusView WithHead(StatusView status, long head) =>
         status with { Views = new AsOfView(Cursor: head, LedgerHead: head, ProjectedAt: A.Noon, Rebuilding: false, Stalled: false) };

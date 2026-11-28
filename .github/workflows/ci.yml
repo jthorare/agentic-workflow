@@ -234,8 +234,9 @@ jobs:
         # --report-xunit-ctrf-filename, or every project would write the same file.
         # Lane=heavy (real Docker, browsers, index builds) is left out: it runs only by hand, by a lane or the owner, never on
         # CI (owner, 2026-10-29; #1581). A test with no Lane trait still runs, so the lane cap below still finds it. Exit 8 is a project
-        # whose every test is heavy.
-        run: dotnet test --solution "$SLN" --no-build --configuration Release --results-directory TestResults --report-xunit-ctrf --filter-not-trait "Lane=heavy" --ignore-exit-code 8
+        # whose every test is heavy. tmp-leak-check fails the step when a test leaves an aw-* or tmp.* entry in $TMPDIR
+        # (#3262); it keeps dotnet test's own exit code when that fails.
+        run: bash scripts/ci/tmp-leak-check.sh -- dotnet test --solution "$SLN" --no-build --configuration Release --results-directory TestResults --report-xunit-ctrf --filter-not-trait "Lane=heavy" --ignore-exit-code 8
       - name: Per-test lane cap (LANE-TEST-001/002)
         if: steps.sln.outputs.run == 'true'
         # Each test's own time against its lane's budget (unit 10 s, integration 60 s), and exactly one

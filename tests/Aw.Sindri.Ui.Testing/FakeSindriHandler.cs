@@ -238,7 +238,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 _ = await server.MapStatus(uri, query["anchor"], cancellationToken);
                 return Answer(server.MapStatusAnswer);
             case "map/whole":
-                var whole = new WholeMapQuery(query["detail"], query["area"], [.. query.GetValues("locate") ?? []], query["mapVersion"], query["draft"] == "true", query["repo"], query["concept"], query["pagesInNoConcept"] == "true");
+                var whole = new WholeMapQuery(query["detail"], query["area"], [.. query.GetValues("locate") ?? []], query["mapVersion"], query["draft"] == "true", query["repo"], query["concept"], query["pagesInNoConcept"] == "true", int.TryParse(query["page"], out var page) ? page : 1, query["tab"]);
                 _ = await server.WholeMap(uri, whole, cancellationToken);
                 return Answer(server.WholeMapAnswer(whole));
             case "map/publish":
@@ -439,10 +439,13 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
         $$""","health":{"word":"{{h.Word}}","problems":[{{string.Join(',', h.Problems.Select(p => $$"""{"code":"{{p.Code}}","text":"{{p.Text}}","clause":{{Quoted(p.Clause)}}}"""))}}],"sentence":{{Quoted(h.Sentence)}}}""";
 
     // Absent before CO-3 (the spec-shaped status goldens carry none), so a null count is left out.
-    private static string Sessions(SessionCountsView? c) => c is null ? string.Empty : string.Create(CultureInfo.InvariantCulture, $",\"sessions\":{{\"live\":{c.Live},\"asking\":{c.Asking},\"problems\":{c.Problems}{Running(c.Running)}{ProblemRows(c.ProblemRows)}}}");
+    private static string Sessions(SessionCountsView? c) => c is null ? string.Empty : string.Create(CultureInfo.InvariantCulture, $",\"sessions\":{{\"live\":{c.Live},\"asking\":{c.Asking},\"problems\":{c.Problems}{Running(c.Running)}{ProblemRows(c.ProblemRows)}{Watching(c.Watching)}}}");
 
     // Absent on a Sindri that predates the running count, so a null one is left out.
     private static string Running(int? n) => n is { } v ? string.Create(CultureInfo.InvariantCulture, $",\"running\":{v}") : string.Empty;
+
+    // Whether session watching is on (#4316); absent on a Sindri that predates it, so a null is left out.
+    private static string Watching(string? watching) => watching is null ? string.Empty : $",\"watching\":{Quoted(watching)}";
 
     // The counted problems' rows (#4012); absent on a Sindri that predates them, so a null list is left out.
     private static string ProblemRows(IReadOnlyList<SessionProblemView>? rows) =>

@@ -8,7 +8,7 @@ namespace Aw.Sindri.Testing.Workflow;
 
 /// <summary>The in-memory <see cref="IWorkflowRunStore"/>. Passes <see cref="WorkflowRunStoreContract"/>.</summary>
 /// <param name="clock">The clock the end times come from.</param>
-public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunStore
+public sealed partial class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunStore
 {
     private readonly Lock _gate = new();
     private readonly List<WorkflowRun> _runs = [];

@@ -127,7 +127,7 @@ internal sealed partial class ReviewSummaryReader(IReviewSummaries cache, IPullR
             checks, [.. files.Files.Select(static f => f.Path)], view.HeadSha, runs, Body: null, new HashSet<string>(StringComparer.Ordinal),
             pull.Claims.Count > 0 ? [.. pull.Claims.Select(static c => c.Ref)] : null, reference => pull.Claims.Any(c => c.Resolved && string.Equals(c.Ref, reference, StringComparison.Ordinal)));
         var ci = view.Checks.Runs is null ? FromState(view.Checks.State) : RequiredChecks.RollUp(runs, view.HeadSha);
-        return new ReviewSummary(view.HeadSha, ci, checks.Count == 0 ? null : RequiredChecks.OpenCount(RequiredChecks.Evaluate(inputs)), clock.GetUtcNow());
+        return new ReviewSummary(view.HeadSha, ci, checks.Count == 0 ? null : RequiredChecks.OpenCount(RequiredChecks.Evaluate(inputs)), clock.GetUtcNow(), ci == ReviewCi.Fail ? RequiredChecks.OldestFailure(runs, view.HeadSha) : null);
     }
 
     private static ReviewCi FromState(PullChecksState state) => state switch

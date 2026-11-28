@@ -18,6 +18,14 @@ internal static class WorkflowRunSql
 
     // why: a delete says how many runs it keeps, so this counts every row of the workflow, test runs included (spec 2026-11-12 §4.9)
     internal const string CountAll = "SELECT COUNT(*) FROM workflow_run WHERE workflow_id = $workflow";
+    internal const string Occurrence = "CAST(substr(id, instr(id, ':') + 1) AS INTEGER)";
+
+    // why: the filtered runs read (#4334): every filter is in the query, a null parameter turns its filter off, so a filter reaches past the page cap; 'before' keeps the runs after that run in this order
+    internal const string Find = SelectRun + " WHERE workflow_id = $workflow AND mode = 'live'"
+        + " AND ($statuses IS NULL OR instr($statuses, ',' || status || ',') > 0)"
+        + " AND ($since IS NULL OR started_at >= $since) AND ($until IS NULL OR started_at < $until)"
+        + " AND ($beforeAt IS NULL OR started_at < $beforeAt OR (started_at = $beforeAt AND " + Occurrence + " < $beforeOccurrence))"
+        + " ORDER BY started_at DESC, " + Occurrence + " DESC LIMIT $limit OFFSET $offset";
 
     internal const string Running = SelectRun + " WHERE status = 'running' ORDER BY started_at, id";
     internal const string QueuedWorkflows = "SELECT DISTINCT workflow_id FROM workflow_run WHERE status = 'queued' ORDER BY workflow_id";

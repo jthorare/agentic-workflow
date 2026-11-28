@@ -7,7 +7,7 @@ internal static class RunStatus
     /// <param name="status">The served status.</param>
     /// <returns>True when the run is live.</returns>
     internal static bool IsLive(string status) =>
-        string.Equals(status, "running", StringComparison.Ordinal) || string.Equals(status, "waiting", StringComparison.Ordinal) || string.Equals(status, "queued", StringComparison.Ordinal);
+        string.Equals(status, "running", StringComparison.Ordinal) || string.Equals(status, "waiting", StringComparison.Ordinal) || string.Equals(status, "queued", StringComparison.Ordinal) || string.Equals(status, "starting", StringComparison.Ordinal);
 
     /// <summary>True while a cancel can be asked for: the run is running or waiting.</summary>
     /// <param name="status">The served status.</param>

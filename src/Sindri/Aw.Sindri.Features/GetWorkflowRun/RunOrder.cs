@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
@@ -28,6 +29,33 @@ internal static class RunOrder
             .ThenBy(p => rank.ContainsKey(p.Row.NodeId) ? p.Row.ItemIndex : 0)
             .ThenBy(static p => p.Stored)
             .Select(static p => p.Row)];
+    }
+
+    /// <summary>
+    /// The run's outputs with their keys in graph order. The run's end writes them keyed by node id from the rows as stored, so "What the run produced" read
+    /// "check, each, gather, measure" above a step list in walk order (#4086). A key the spec lacks keeps its place after the placed ones; anything but an object comes back as it is.
+    /// </summary>
+    /// <param name="spec">The revision the run walked, or null when the store can't give it.</param>
+    /// <param name="outputs">The outputs as read.</param>
+    /// <returns>The outputs to serve.</returns>
+    public static JsonNode? Outputs(GraphSpec? spec, JsonNode? outputs)
+    {
+        if (spec is null || outputs is not JsonObject stored)
+        {
+            return outputs;
+        }
+
+        var rank = Ranks(spec).ToDictionary(static p => p.Key.Value, static p => p.Value, StringComparer.Ordinal);
+        var keys = stored.Select(static p => p.Key).OrderBy(k => rank.TryGetValue(k, out var r) ? r : int.MaxValue).ToList();   // a stable sort: unplaced keys keep their stored order
+        var ordered = new JsonObject();
+        foreach (var key in keys)
+        {
+            var value = stored[key];
+            _ = stored.Remove(key);   // why: a JsonNode has one parent, so it leaves the stored object before it joins the ordered one
+            ordered[key] = value;
+        }
+
+        return ordered;
     }
 
     // why: the same rule as the walk (GraphWalkRules.Ready, first ready node in spec order), so the list reads like the run went. A cycle a valid spec can't have still ranks: its nodes follow in spec order.

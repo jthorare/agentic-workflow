@@ -75,6 +75,7 @@ public sealed class WholeMapFramesTests : FrameHost
 
         shell.Context.Whole.Areas.First(a => a.Key == ContextAnswers.OpenArea).Open();
         await Until(window, () => shell.Context.Whole.IsAreaOpen);
+        await shell.Context.Whole.AreaLaidOut;   // why: the area's layout lands from a background run after IsAreaOpen turns true
         Settle(window);
 
         Assert.Equal([("~", true), ("Tab groups", false)], shell.Context.Whole.Crumbs.Select(c => (c.Text, c.IsLink)));

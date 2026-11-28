@@ -114,6 +114,9 @@ if [ "$KIND" = auth-expired ]; then
   [ -n "$AF" ] && STAMP="$(rg_mtime "$AF")"
 fi
 
+ISTAMP=""
+[ "$KIND" = bad-args ] && [ "$RG_TOOL" = Bash ] && ISTAMP="$(rg_input_stamp "$RG_CWD" "$RG_CMD")"
+
 mkdir -p "$RG_DIR" 2> /dev/null && chmod 700 "$RG_DIR" 2> /dev/null || { rg_failopen retry-record state-dir; exit 0; }
 rg_update "$F" '
   (.problems[$h] // null) as $old
@@ -130,6 +133,7 @@ rg_update "$F" '
       retryAfter: (if $kind == "transient"
                    then ($now + ([30 * pow(2; $n - 1), 300] | min | floor)) | todate else "" end),
       authStamp: $stamp,
+      inputStamp: $istamp,
       errorHash: $eh,
       errorHashes: ((if $old != null and $old.kind == $kind then ($old.errorHashes // []) else [] end)
                     | if index([$eh]) then . else (. + [$eh])[-16:] end),
@@ -137,6 +141,6 @@ rg_update "$F" '
                        + (if $old != null and $old.kind == $kind and (($old.errorHashes // []) | index([$eh])) then 0 else 1 end))
     }
   | .counters.failures += 1' \
-  --arg h "$RG_HASH" --arg kind "$KIND" --arg res "$RES" --arg tool "$RG_TOOL" --arg exe "$RG_EXE" --arg stamp "$STAMP" --arg eh "$ERR_HASH" \
+  --arg h "$RG_HASH" --arg kind "$KIND" --arg res "$RES" --arg tool "$RG_TOOL" --arg exe "$RG_EXE" --arg stamp "$STAMP" --arg istamp "$ISTAMP" --arg eh "$ERR_HASH" \
   || rg_failopen retry-record state-write
 exit 0

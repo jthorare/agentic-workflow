@@ -9,6 +9,14 @@
   <!-- The Workflows page, read-only (#2258 PR 17 part 1), three levels in one place: the workflow list, one workflow's runs, one run's detail. Back goes up a level.
        Every status is a glyph and a word. Every named line is a Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
   <UserControl.Styles>
+    <Style Selector="TextBlock.state-ok"><Setter Property="Foreground" Value="{DynamicResource Brush.Success}" /></Style>
+    <Style Selector="TextBlock.state-paused"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
+    <Style Selector="Border.cmpline.differs"><Setter Property="Background" Value="{DynamicResource Brush.PrimarySoft}" /><Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" /><Setter Property="BorderThickness" Value="2,0,0,0" /></Style>
+    <Style Selector="TextBlock.compare-differs"><Setter Property="Foreground" Value="{DynamicResource Brush.PrimaryHover}" /></Style>
+    <Style Selector="Border.bar.ok"><Setter Property="Background" Value="{DynamicResource Brush.Success}" /></Style>
+    <Style Selector="Border.bar.failed"><Setter Property="Background" Value="{DynamicResource Brush.Error}" /></Style>
+    <Style Selector="Border.bar.hollow"><Setter Property="BorderThickness" Value="1" /><Setter Property="BorderBrush" Value="{DynamicResource Brush.InkSubtle}" /></Style>
+    <Style Selector="Border.bar.empty"><Setter Property="Background" Value="{DynamicResource Brush.HairlineStrong}" /></Style>
     <Style Selector="TextBlock.invalid"><Setter Property="Foreground" Value="{DynamicResource Brush.Error}" /></Style>
     <Style Selector="TextBox.invalid /template/ Border#PART_BorderElement"><Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" /></Style>
   </UserControl.Styles>
@@ -18,7 +26,7 @@
       <Grid x:Name="WorkflowsHeadRegion" ColumnDefinitions="Auto,Auto,*,Auto" VerticalAlignment="Center">
         <!-- The crumb and the slash are top-aligned and WorkflowsPage.AlignCrumb sets their top margin from the measured baselines: Avalonia has no baseline
              alignment, and 13 px text centred beside the 24 px title sits 4 px above its baseline (6 px at text scale 1.3), too far for the equal line box trick below. -->
-        <Button x:Name="WorkflowsBack" Classes="link" Content="{Binding CrumbText}" Click="OnBack" IsVisible="{Binding !IsList}" VerticalAlignment="Top" Margin="0,0,12,0" AutomationProperties.Name="{Binding CrumbText}" />
+        <Button x:Name="WorkflowsBack" Classes="link" Content="{Binding CrumbText}" Click="OnBack" IsVisible="{Binding !IsList}" VerticalAlignment="Top" Margin="0,0,12,0" AutomationProperties.Name="{Binding CrumbName}" />
         <TextBlock x:Name="WorkflowsCrumbSep" Grid.Column="1" Classes="caption subtle" Text="›" IsVisible="{Binding !IsList}" VerticalAlignment="Top" Margin="0,0,12,0" AutomationProperties.AccessibilityView="Raw" />
         <!-- The state sits right after the title, not at the far edge; the title column is a star, so the title trims to what the state leaves. -->
         <Grid Grid.Column="2" ColumnDefinitions="*,Auto" HorizontalAlignment="Left">
@@ -98,24 +106,65 @@
               <TextBlock x:Name="WorkflowsAgentCommand" Classes="caption mono" Text="{Binding AgentRouteCommand}" VerticalAlignment="Center" />
             </StackPanel>
           </StackPanel>
+          <!-- The column heads (frame wf-list): the same cell widths as a row's, so a dropped column leaves no gap. -->
+          <StackPanel x:Name="WorkflowColumns" Orientation="Horizontal" Spacing="16" Margin="16,0" Height="28" IsVisible="{Binding !IsReading}">
+            <TextBlock Width="24" />
+            <TextBlock Classes="caption subtle column-head" Text="Name" Width="{Binding Columns.Name}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle column-head" Text="Trigger" Width="{Binding Columns.Trigger}" IsVisible="{Binding Columns.ShowsTrigger}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle column-head" Text="Last run" Width="{Binding Columns.LastRun}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle column-head" Text="Next run" Width="{Binding Columns.NextRun}" IsVisible="{Binding Columns.ShowsNextRun}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle column-head" Text="Last 10 runs" Width="{Binding Columns.Strip}" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle column-head" Text="State" Width="72" VerticalAlignment="Center" />
+          </StackPanel>
           <ItemsControl x:Name="WorkflowRows" ItemsSource="{Binding Rows}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:WorkflowRowViewModel">
-                <Border Classes="item-row clickable" Focusable="True" KeyDown="OnWorkflowRowKey" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-                  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" MinHeight="{StaticResource Row.Height.Default}" Margin="0,8" VerticalAlignment="Center">
-                    <!-- The row is the one focus stop and draws the ring; the title is a click target only, so it draws none of its own (Enter or Space on the row opens it).
-                         Margin="-2,0": the shared row-title style pulls the button up 2 px for a ring this one never draws (QueueStyles.axaml:40-42), which put the title under 8 px from the row's top; keep the sideways -2 so the text lines up. -->
-                    <Button Classes="row-title" Focusable="False" Margin="-2,0" Click="OnOpenWorkflow" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
-                      <TextBlock Classes="body-strong" Text="{Binding NameText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-                    </Button>
-                    <controls:StateChipView Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Word="{Binding ChipWord}" Tone="{Binding ChipToneWord}" Glyph="{Binding ChipGlyph}" />
-                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
-                      <TextBlock Classes="caption subtle mono" Text="{Binding IdText}" IsVisible="{Binding HasIdText}" />
-                      <TextBlock Classes="caption subtle" Text="{Binding RevisionText}" IsVisible="{Binding HasRevisionText}" />
-                      <TextBlock Classes="caption subtle" Text="{Binding ChangedText}" TextTrimming="CharacterEllipsis" />
-                    </StackPanel>
+                <StackPanel>
+                  <Border Name="GroupRule" Height="1" Background="{DynamicResource Brush.Hairline}" IsVisible="{Binding HasGroupRule}" />
+                  <Grid ColumnDefinitions="*,Auto" Margin="16,12,16,4" IsVisible="{Binding HasGroupHeader}">
+                    <TextBlock Name="RowGroupHeader" Classes="caption subtle" Text="{Binding GroupHeader}" />
+                    <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding GroupHint}" HorizontalAlignment="Right" />
                   </Grid>
-                </Border>
+                  <Border Name="WorkflowRow" Classes="item-row clickable" Focusable="True" KeyDown="OnWorkflowRowKey" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                    <StackPanel Orientation="Horizontal" Spacing="16" Margin="16,0" MinHeight="{StaticResource Row.Height.Default}" VerticalAlignment="Center">
+                      <Panel Width="24" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+                        <TextBlock Text="{Binding LeadGlyph}" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.Error}" IsVisible="{Binding LeadIsError}" />
+                        <Border Name="RowPausedGlyph" IsVisible="{Binding LeadIsPaused}" AutomationProperties.Name="Paused" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                          <TextBlock Text="{Binding LeadGlyph}" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.Attention}" AutomationProperties.AccessibilityView="Raw" />
+                        </Border>
+                        <TextBlock Text="{Binding LeadGlyph}" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.Success}" IsVisible="{Binding LeadIsOk}" />
+                        <TextBlock Text="{Binding LeadGlyph}" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.InkSubtle}" IsVisible="{Binding LeadIsQuiet}" />
+                      </Panel>
+                      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Width="{Binding Columns.Name}" VerticalAlignment="Center">
+                        <!-- The title takes the star column and trims; a StackPanel would measure it at infinite width and draw it over Trigger (#4395). The row is the one focus stop and draws the ring; the title is a click target only (Enter or Space on the row opens it). -->
+                        <Button Classes="row-title" Focusable="False" Margin="-2,0" Click="OnOpenWorkflow" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
+                          <TextBlock Classes="body-strong" Text="{Binding NameText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                        </Button>
+                        <TextBlock Name="RowId" Grid.Column="1" Classes="caption subtle mono" Text="{Binding Slug}" IsVisible="{Binding ShowsId}" VerticalAlignment="Center" />
+                      </Grid>
+                      <TextBlock Classes="body muted" Text="{Binding TriggerText}" Width="{Binding Columns.Trigger}" IsVisible="{Binding Columns.ShowsTrigger}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                      <Panel Width="{Binding Columns.LastRun}" VerticalAlignment="Center">
+                        <controls:StateChipView Name="RowLastRun" HorizontalAlignment="Left" Word="{Binding LastRunText}" Tone="{Binding LastRunToneWord}" IsVisible="{Binding ShowsLastRun}" />
+                      </Panel>
+                      <TextBlock Classes="body muted" Text="{Binding NextRunText}" Width="{Binding Columns.NextRun}" IsVisible="{Binding Columns.ShowsNextRun}" VerticalAlignment="Center" />
+                      <ItemsControl Name="RowStrip" ItemsSource="{Binding StripShown}" Width="{Binding Columns.Strip}" Height="16" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Bottom" />
+                          </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="wf:RunBarViewModel">
+                            <!-- A failed run is the tall bar, a cancelled one hollow, an empty slot a dash: colour is never the only cue. The tooltip sits on the bar it describes. -->
+                            <Border Name="RunBar" Classes="bar" Classes.ok="{Binding IsOk}" Classes.failed="{Binding IsTall}" Classes.hollow="{Binding IsHollow}" Classes.empty="{Binding IsEmpty}"
+                                    Width="6" Height="{Binding BarHeight}" VerticalAlignment="Bottom" CornerRadius="1" ToolTip.Tip="{Binding TipText}" ToolTip.Placement="Top" />
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                      <TextBlock Name="RowState" Classes="caption subtle" Classes.state-ok="{Binding StateIsOk}" Classes.state-paused="{Binding IsPaused}" Text="{Binding StateText}" Width="72" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
@@ -130,7 +179,7 @@
            its baseline lands within a pixel of the title's and the buttons' text, at any text scale. -->
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock x:Name="RunsHead" Classes="caption subtle" LineHeight="{DynamicResource Type.BodyStrong.LineHeight}" Text="{Binding Runs.Head}" VerticalAlignment="Center" />
-        <Button x:Name="RunNow" VerticalAlignment="Center" Content="{Binding Runs.RunNowText}" Click="OnRunNow" IsEnabled="{Binding Runs.CanPressRunNow}" AutomationProperties.Name="{Binding Runs.RunNowText}" />
+        <Button x:Name="RunNow" VerticalAlignment="Center" IsVisible="{Binding Runs.ShowsRunNow}" Content="{Binding Runs.RunNowText}" Click="OnRunNow" IsEnabled="{Binding Runs.CanPressRunNow}" AutomationProperties.Name="{Binding Runs.RunNowText}" />
         <Button x:Name="WorkflowEdit" VerticalAlignment="Center" IsVisible="{Binding ShowsEdit}" Content="{Binding EditText}" Click="OnEdit" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding EditText}" />
         <Button x:Name="WorkflowActivate" VerticalAlignment="Center" IsVisible="{Binding ShowActivateButton}" Content="{Binding ActivateText}" Click="OnActivate" AutomationProperties.AutomationId="WorkflowActivate" AutomationProperties.Name="{Binding ActivateText}" />
         <Button x:Name="WorkflowPause" VerticalAlignment="Center" IsVisible="{Binding CanPause}" Content="{Binding PauseText}" Click="OnPause" AutomationProperties.AutomationId="WorkflowPause" AutomationProperties.Name="{Binding PauseText}" />
@@ -172,6 +221,8 @@
           <TextBlock Classes="caption" Text="{Binding SavedLineText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
         <Button x:Name="WorkflowMakeLive" VerticalAlignment="Center" IsVisible="{Binding CanMakeLive}" Content="{Binding MakeLiveText}" Click="OnMakeLive" AutomationProperties.AutomationId="WorkflowMakeLive" AutomationProperties.Name="{Binding MakeLiveText}" />
+        <!-- #3691: one real run of the saved revision; the live one stays. Refusals show in RunsNoticeName, as Run now's do. -->
+        <Button x:Name="WorkflowRunRevisionOnce" VerticalAlignment="Center" IsVisible="{Binding ShowRunRevisionOnce}" IsEnabled="{Binding Runs.CanPressRunNow}" Content="{Binding RunRevisionOnceText}" Click="OnRunRevisionOnce" AutomationProperties.AutomationId="WorkflowRunRevisionOnce" AutomationProperties.Name="{Binding RunRevisionOnceText}" />
       </StackPanel>
       <wv:WorkflowEditorSheet x:Name="WorkflowEditor" IsVisible="{Binding IsSettingsOpen}" />
       <TextBlock x:Name="RunsDetail" Classes="caption subtle" Text="{Binding Runs.DetailText}" TextWrapping="Wrap" />
@@ -181,6 +232,21 @@
           <wv:GraphEditBar x:Name="RunsEdit" DataContext="{Binding GraphEdit}" />
           <Button x:Name="WorkflowEditDone" Grid.Column="1" VerticalAlignment="Top" Content="{Binding DoneText}" Click="OnDone" AutomationProperties.Name="{Binding DoneText}" />
         </Grid>
+        <!-- How many things the server's validation found (#3803); each step's own show as a mark on its card. -->
+        <Border x:Name="FindingsHead" IsVisible="{Binding Findings.HasFindings}" AutomationProperties.Name="{Binding Findings.HeaderText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption" Text="{Binding Findings.HeaderText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <!-- A check that could not answer says so, as a failure (its own class: the amber callout would win), and Retry asks again (#4380). -->
+        <Border x:Name="FindingsFailed" Classes="findings-failed" IsVisible="{Binding Findings.HasFailed}" AutomationProperties.Name="{Binding Findings.FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+          <StackPanel Orientation="Horizontal" Spacing="12">
+            <TextBlock Classes="body" Text="{Binding Findings.FailedText}" VerticalAlignment="Center" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            <Button x:Name="FindingsRetry" Classes="copy" Click="OnRetryFindings" IsVisible="{Binding Findings.HasFailed}" AutomationProperties.Name="{Binding Findings.RetryText}">
+              <TextBlock Classes="caption" Text="{Binding Findings.RetryText}" AutomationProperties.AccessibilityView="Raw" />
+            </Button>
+          </StackPanel>
+        </Border>
+        <!-- The findings about the whole workflow, which no step's card carries (#4380). -->
+        <wv:WorkflowLevelFindingsList x:Name="WorkflowLevelFindings" IsVisible="{Binding Findings.HasWholeWorkflow}" />
         <Border x:Name="RunsStagePanel" Classes="panel" Height="320">
           <wv:GraphStage x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" TextScale="{Binding TextScale}" />
         </Border>
@@ -191,6 +257,8 @@
           </Border>
           <Button x:Name="StepSettings" VerticalAlignment="Center" IsVisible="{Binding CanOpenSettings}" Content="{Binding StepSettingsText}" Click="OnStepSettings" AutomationProperties.Name="{Binding StepSettingsText}" />
         </StackPanel>
+        <!-- The selected step's findings while the sheet is shut; the sheet lists them itself (#3803). -->
+        <wv:WorkflowFindingsList x:Name="StepFindingsUnderGraph" IsVisible="{Binding ShowsStepFindingsUnderGraph}" />
         <Border x:Name="RunsUnplacedName" IsVisible="{Binding Runs.Graph.HasUnplaced}" AutomationProperties.Name="{Binding Runs.Graph.UnplacedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption subtle" Text="{Binding Runs.Graph.UnplacedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
@@ -209,22 +277,56 @@
           <Border x:Name="RunsEmptyName" Margin="16,8" IsVisible="{Binding Runs.IsEmpty}" AutomationProperties.Name="{Binding Runs.EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="caption quiet" Text="{Binding Runs.EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
+          <!-- The runs table (frame wf-runs): filters and the count, then Time, Trigger, Revision, Duration and Result. The run id is not shown (#3360). -->
+          <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto" Margin="16,8" ColumnSpacing="8" IsVisible="{Binding Runs.ShowsRunTable}">
+            <TextBlock Classes="caption subtle" Text="Status" VerticalAlignment="Center" />
+            <ComboBox x:Name="RunsStatusFilter" Grid.Column="1" ItemsSource="{Binding Runs.StatusChoices}" SelectedItem="{Binding Runs.SelectedStatus, Mode=TwoWay}" AutomationProperties.Name="Status">
+              <ComboBox.ItemTemplate><DataTemplate x:DataType="wf:RunFilterChoice"><TextBlock Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate>
+            </ComboBox>
+            <TextBlock Grid.Column="2" Classes="caption subtle" Text="Date" VerticalAlignment="Center" />
+            <ComboBox x:Name="RunsDateFilter" Grid.Column="3" ItemsSource="{Binding Runs.DateChoices}" SelectedItem="{Binding Runs.SelectedDate, Mode=TwoWay}" AutomationProperties.Name="Date">
+              <ComboBox.ItemTemplate><DataTemplate x:DataType="wf:RunFilterChoice"><TextBlock Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate>
+            </ComboBox>
+            <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8">
+              <TextBlock x:Name="RunsCompareHint" Classes="caption subtle" Text="{Binding Runs.CompareHint}" IsVisible="{Binding Runs.HasCompareHint}" VerticalAlignment="Center" />
+              <Button x:Name="RunsClearFilters" Content="Clear filters" Click="OnClearRunFilters" IsVisible="{Binding Runs.HasFilter}" AutomationProperties.Name="Clear filters" />
+            </StackPanel>
+            <TextBlock x:Name="RunsCount" Grid.Column="5" Classes="caption subtle" Text="{Binding Runs.CountText}" VerticalAlignment="Center" />
+            <Button x:Name="RunsCompare" Grid.Column="6" Content="{Binding Runs.CompareText}" Click="OnCompare" IsVisible="{Binding Runs.CanCompare}" AutomationProperties.Name="{Binding Runs.CompareText}" />
+          </Grid>
+          <Border x:Name="RunsNoMatchName" Margin="16,8" IsVisible="{Binding Runs.HasNoMatch}" AutomationProperties.Name="{Binding Runs.NoMatchText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <TextBlock Classes="caption quiet" Text="{Binding Runs.NoMatchText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+          <Grid ColumnDefinitions="24,136,168,64,80,*" ColumnSpacing="16" Margin="16,0" Height="28" IsVisible="{Binding Runs.ShowsRunTable}">
+            <TextBlock Grid.Column="1" Classes="caption subtle run-column-head" Text="Time" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="2" Classes="caption subtle run-column-head" Text="Trigger" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="3" Classes="caption subtle run-column-head" Text="Revision" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="4" Classes="caption subtle run-column-head" Text="Duration" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="5" Classes="caption subtle run-column-head" Text="Result" VerticalAlignment="Center" />
+          </Grid>
           <ItemsControl x:Name="RunRows" ItemsSource="{Binding Runs.Rows}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:RunRowViewModel">
-                <Border Classes="item-row clickable" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-                  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" MinHeight="{StaticResource Row.Height.Default}" Margin="0,8" VerticalAlignment="Center">
-                    <!-- The same vertical padding and title margin as a workflow list row (#2700): the shared row-title style's -2 would otherwise pull the title up out of the row's padding. -->
-                    <Button Classes="row-title" Margin="-2,0" Click="OnOpenRun" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
-                      <TextBlock Classes="body-strong mono" Text="{Binding Id}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                <Border Name="RunRow" Classes="item-row clickable" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                  <Grid ColumnDefinitions="24,136,168,64,80,*" ColumnSpacing="16" Margin="16,0" MinHeight="{StaticResource Row.Height.Default}">
+                    <CheckBox Name="RunTick" IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" MinWidth="0" AutomationProperties.Name="Select this run to compare" />
+                    <!-- The time opens the run; the tip gives the date and time on one line and the exact age on the next, and stays inside the column. -->
+                    <Button Grid.Column="1" Classes="row-title" Margin="-2,0" Click="OnOpenRun" HorizontalAlignment="Left" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding TimeTip}" ToolTip.Placement="Bottom">
+                      <TextBlock Name="RunTime" Classes="body-strong" Text="{Binding TimeText}" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
-                    <controls:StateChipView Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Word="{Binding ChipWord}" Tone="{Binding ChipToneWord}" Glyph="{Binding ChipGlyph}" />
-                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
-                      <TextBlock Classes="caption subtle" Text="{Binding TriggerText}" />
-                      <TextBlock Classes="caption subtle" Text="{Binding RevisionText}" />
-                      <TextBlock Classes="caption subtle" Text="{Binding WhenText}" />
+                    <TextBlock Grid.Column="2" Name="RunTrigger" Classes="body muted" IsVisible="{Binding IsShownStatus}" Text="{Binding TriggerWords}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="3" Name="RunRevision" Classes="body muted" IsVisible="{Binding IsShownStatus}" Text="{Binding RevisionShort}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="4" Name="RunDuration" Classes="body muted" IsVisible="{Binding IsShownStatus}" Text="{Binding DurationText}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" IsVisible="{Binding IsShownStatus}">
+                      <TextBlock Name="RunErrorGlyph" Text="{Binding ChipGlyph}" Foreground="{DynamicResource Brush.Error}" IsVisible="{Binding IsError}" AutomationProperties.AccessibilityView="Raw" />
+                      <TextBlock Name="RunGlyph" Text="{Binding ChipGlyph}" Foreground="{DynamicResource Brush.InkSubtle}" IsVisible="{Binding !IsError}" AutomationProperties.AccessibilityView="Raw" />
+                      <TextBlock Name="RunResult" Classes="caption muted" Text="{Binding ResultText}" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
-                    <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Classes="caption" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                    <StackPanel Grid.Column="2" Grid.ColumnSpan="4" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" IsVisible="{Binding DidNotStart}" AutomationProperties.AccessibilityView="Raw">
+                      <TextBlock Classes="caption" Text="{Binding DidNotStartText}" AutomationProperties.AutomationId="RunDidNotStart" VerticalAlignment="Center" />
+                      <TextBlock Classes="caption subtle" Text="{Binding DidNotStartHint}" VerticalAlignment="Center" />
+                      <Button Content="{Binding RetryText}" Click="OnRetryStart" AutomationProperties.AutomationId="RunStartRetry" AutomationProperties.Name="{Binding RetryText}" />
+                    </StackPanel>
                   </Grid>
                 </Border>
               </DataTemplate>
@@ -234,10 +336,109 @@
       </Border>
     </StackPanel>
 
+    <!-- Level 4: two runs side by side, step by step (frame wf-compare). Esc goes back to the runs. -->
+    <StackPanel x:Name="WorkflowCompareLevel" Spacing="{StaticResource Size.PanelGap}" IsVisible="{Binding IsCompare}">
+      <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+        <TextBlock Classes="body-strong" Text="Compare 2" />
+        <TextBlock x:Name="CompareSummary" Classes="caption subtle" Text="{Binding Compare.SummaryText}" VerticalAlignment="Center" />
+        <TextBlock Classes="caption subtle" Text="Esc back to runs" VerticalAlignment="Center" />
+      </StackPanel>
+      <TextBlock Classes="caption" Text="{Binding Compare.RunningNote}" IsVisible="{Binding Compare.HasRunningNote}" TextWrapping="Wrap" />
+      <Grid ColumnDefinitions="168,*,*" ColumnSpacing="16">
+        <Border Grid.Column="1" Classes="panel" Padding="12,10">
+          <StackPanel Spacing="2">
+            <TextBlock Classes="body-strong compare-run-title" Text="{Binding Compare.A.Title}" />
+            <TextBlock Classes="caption subtle" Text="{Binding Compare.A.Facts}" />
+            <StackPanel Orientation="Horizontal" Spacing="8"><controls:StateChipView Word="{Binding Compare.A.ChipWord}" Tone="{Binding Compare.A.ToneWord}" Glyph="{Binding Compare.A.ChipGlyph}" /><TextBlock Classes="caption muted" Text="{Binding Compare.A.Result}" VerticalAlignment="Center" /></StackPanel>
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="2" Classes="panel" Padding="12,10">
+          <StackPanel Spacing="2">
+            <TextBlock Classes="body-strong compare-run-title" Text="{Binding Compare.B.Title}" />
+            <TextBlock Classes="caption subtle" Text="{Binding Compare.B.Facts}" />
+            <StackPanel Orientation="Horizontal" Spacing="8"><controls:StateChipView Word="{Binding Compare.B.ChipWord}" Tone="{Binding Compare.B.ToneWord}" Glyph="{Binding Compare.B.ChipGlyph}" /><TextBlock Classes="caption muted" Text="{Binding Compare.B.Result}" VerticalAlignment="Center" /></StackPanel>
+          </StackPanel>
+        </Border>
+      </Grid>
+      <ItemsControl x:Name="CompareSteps" ItemsSource="{Binding Compare.Steps}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="wf:CompareStepViewModel">
+            <Grid ColumnDefinitions="168,*,*" ColumnSpacing="16" Margin="0,0,0,12">
+              <StackPanel Margin="0,10,0,0">
+                <TextBlock Name="CompareStepName" Classes="body-strong" Text="{Binding Name}" />
+                <TextBlock Classes="caption subtle" Text="{Binding Kind}" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" DataContext="{Binding}">
+                <Border Classes="panel" Margin="0,0,0,4">
+                        <StackPanel>
+                          <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,6" IsVisible="{Binding A.HasStatus}">
+                            <controls:StateChipView Word="{Binding A.StatusWord}" Tone="{Binding A.ToneWord}" Glyph="{Binding A.StatusGlyph}" />
+                            <TextBlock Classes="caption subtle" Text="{Binding A.DurationText}" VerticalAlignment="Center" />
+                          </StackPanel>
+                          <TextBlock Classes="caption subtle" Text="{Binding A.BodyLabel}" Margin="12,4,12,0" IsVisible="{Binding A.HasLines}" />
+                          <ItemsControl ItemsSource="{Binding A.Lines}" IsVisible="{Binding A.HasLines}">
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate x:DataType="wf:CompareLineViewModel">
+                                <Border Classes="cmpline" Classes.differs="{Binding Differs}" Padding="12,0">
+                                  <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Classes="caption mono" Text="{Binding Text}" />
+                                    <TextBlock Grid.Column="1" Classes="caption compare-differs" Text="&#9670; differs" IsVisible="{Binding Differs}" />
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                          <Border Classes="cmpline" Classes.differs="{Binding A.MessageDiffers}" Padding="12,6" IsVisible="{Binding A.HasMessage}">
+                            <Grid ColumnDefinitions="*,Auto">
+                              <TextBlock Classes="caption" Text="{Binding A.Message}" TextWrapping="Wrap" />
+                              <TextBlock Grid.Column="1" Classes="caption compare-differs" Text="&#9670; differs" IsVisible="{Binding A.MessageDiffers}" />
+                            </Grid>
+                          </Border>
+                        </StackPanel>
+                      </Border>
+              </StackPanel>
+              <StackPanel Grid.Column="2">
+                <Border Classes="panel" Margin="0,0,0,4">
+                        <StackPanel>
+                          <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,6" IsVisible="{Binding B.HasStatus}">
+                            <controls:StateChipView Word="{Binding B.StatusWord}" Tone="{Binding B.ToneWord}" Glyph="{Binding B.StatusGlyph}" />
+                            <TextBlock Classes="caption subtle" Text="{Binding B.DurationText}" VerticalAlignment="Center" />
+                          </StackPanel>
+                          <TextBlock Classes="caption subtle" Text="{Binding B.BodyLabel}" Margin="12,4,12,0" IsVisible="{Binding B.HasLines}" />
+                          <ItemsControl ItemsSource="{Binding B.Lines}" IsVisible="{Binding B.HasLines}">
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate x:DataType="wf:CompareLineViewModel">
+                                <Border Classes="cmpline" Classes.differs="{Binding Differs}" Padding="12,0">
+                                  <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Classes="caption mono" Text="{Binding Text}" />
+                                    <TextBlock Grid.Column="1" Classes="caption compare-differs" Text="&#9670; differs" IsVisible="{Binding Differs}" />
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                          <Border Classes="cmpline" Classes.differs="{Binding B.MessageDiffers}" Padding="12,6" IsVisible="{Binding B.HasMessage}">
+                            <Grid ColumnDefinitions="*,Auto">
+                              <TextBlock Classes="caption" Text="{Binding B.Message}" TextWrapping="Wrap" />
+                              <TextBlock Grid.Column="1" Classes="caption compare-differs" Text="&#9670; differs" IsVisible="{Binding B.MessageDiffers}" />
+                            </Grid>
+                          </Border>
+                        </StackPanel>
+                      </Border>
+              </StackPanel>
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+
     <!-- Level 3: one run, every node with its input, output and error. -->
     <StackPanel x:Name="WorkflowRunLevel" Spacing="{StaticResource Size.PanelGap}" IsVisible="{Binding IsRun}">
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <controls:StateChipView x:Name="RunChipName" Word="{Binding Run.ChipWord}" Tone="{Binding Run.ChipToneWord}" Glyph="{Binding Run.ChipGlyph}" />
+        <controls:StateChipView x:Name="RunChipName" Word="{Binding Run.ChipWord}" Tone="{Binding Run.ChipToneWord}" Glyph="{Binding Run.ChipGlyph}" IsVisible="{Binding !Run.DidNotStart}" />
+        <TextBlock Classes="caption" Text="{Binding Run.DidNotStartText}" IsVisible="{Binding Run.DidNotStart}" VerticalAlignment="Center" AutomationProperties.AutomationId="RunPageDidNotStart" />
+        <TextBlock Classes="caption subtle" Text="{Binding Run.DidNotStartHint}" IsVisible="{Binding Run.DidNotStart}" VerticalAlignment="Center" />
+        <Button Content="{Binding Run.StartRetryText}" Click="OnRetryStartRunPage" IsVisible="{Binding Run.DidNotStart}" AutomationProperties.AutomationId="RunPageStartRetry" AutomationProperties.Name="{Binding Run.StartRetryText}" />
         <Button x:Name="RunCancel" Content="{Binding Run.CancelText}" Click="OnCancelRun" IsVisible="{Binding Run.CanCancel}" IsEnabled="{Binding Run.CanPressCancel}" AutomationProperties.Name="{Binding Run.CancelText}" />
       </StackPanel>
       <Border x:Name="RunNoticeName" IsVisible="{Binding Run.HasNotice}" AutomationProperties.Name="{Binding Run.NoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
@@ -257,6 +458,21 @@
         </Border>
         <Button x:Name="RunRetry" Content="{Binding Run.RetryText}" Click="OnRetryRun" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Run.RetryText}" />
       </StackPanel>
+      <Border x:Name="RunFailureName" Classes="run-failure" IsVisible="{Binding Run.HasFailure}" AutomationProperties.Name="{Binding Run.Failure.Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="body-strong" Text="{Binding Run.Failure.HeadingText}" AutomationProperties.AccessibilityView="Raw" />
+          <SelectableTextBlock Classes="body" Text="{Binding Run.Failure.SentenceText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          <Button x:Name="RunFailureFix" Classes="copy" Click="OnCopyRunFix" HorizontalAlignment="Left" IsVisible="{Binding Run.Failure.HasCopyFix, FallbackValue=False}" AutomationProperties.Name="{Binding Run.Failure.Fix.Announcement}">
+            <TextBlock Classes="caption" Text="{Binding Run.Failure.Fix.Label}" AutomationProperties.AccessibilityView="Raw" />
+          </Button>
+          <Button x:Name="RunFailureOpen" Classes="copy" Click="OnOpenFailedStep" HorizontalAlignment="Left" IsVisible="{Binding Run.Failure.HasOpenFix, FallbackValue=False}" AutomationProperties.Name="{Binding Run.Failure.OpenText}">
+            <TextBlock Classes="caption" Text="{Binding Run.Failure.OpenText}" AutomationProperties.AccessibilityView="Raw" />
+          </Button>
+          <Expander x:Name="RunFailureDetails" Header="{Binding Run.Failure.DetailsHeading}" AutomationProperties.Name="{Binding Run.Failure.DetailsHeading}">
+            <SelectableTextBlock Classes="caption mono" Text="{Binding Run.Failure.DetailText}" TextWrapping="Wrap" />
+          </Expander>
+        </StackPanel>
+      </Border>
       <Border x:Name="RunErrorName" IsVisible="{Binding Run.HasError}" AutomationProperties.Name="{Binding Run.ErrorText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <SelectableTextBlock Classes="caption" Text="{Binding Run.ErrorText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
@@ -287,11 +503,18 @@
                           <StackPanel Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
                             <TextBlock Classes="body-strong" Text="{Binding TitleText}" IsVisible="{Binding HasTitle}" />
                             <controls:StateChipView Word="{Binding ChipWord}" Tone="{Binding ChipToneWord}" Glyph="{Binding ChipGlyph}" />
+                            <TextBlock Name="StepDuration" Classes="caption subtle" Text="{Binding DurationText}" IsVisible="{Binding DurationText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" VerticalAlignment="Center" />
                           </StackPanel>
                           <Button HorizontalAlignment="Left" Content="{Binding TakeOverText}" Click="OnTakeOverNode" IsVisible="{Binding CanTakeOver}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding TakeOverText}" />
                           <Button HorizontalAlignment="Left" Content="{Binding HandBackText}" Click="OnHandBackNode" IsVisible="{Binding CanHandBack}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding HandBackText}" />
                           <TextBlock Classes="caption" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" />
+                          <Button x:Name="EditFailedStep" HorizontalAlignment="Left" Content="{Binding EditStepText}" Click="OnEditFailedStep" IsVisible="{Binding CanEditStep}" AutomationProperties.Name="{Binding EditStepText}" />
                           <TextBlock Classes="caption subtle" Text="{Binding TruncatedText}" IsVisible="{Binding IsTruncated}" TextWrapping="Wrap" />
+                          <StackPanel Name="NotificationSent" Spacing="2" IsVisible="{Binding IsNotification}">
+                            <TextBlock Classes="body-strong" Text="{Binding SentTitle}" TextWrapping="Wrap" />
+                            <TextBlock Classes="body" Text="{Binding SentBody}" IsVisible="{Binding HasSentBody}" TextWrapping="Wrap" />
+                            <TextBlock Classes="caption subtle" Text="{Binding SentTarget}" />
+                          </StackPanel>
                           <StackPanel Spacing="2" IsVisible="{Binding HasCode}">
                             <TextBlock Classes="caption subtle" Text="{Binding CodeHeading}" />
                             <SelectableTextBlock Classes="mono" Text="{Binding CodeText}" TextWrapping="Wrap" />

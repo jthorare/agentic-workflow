@@ -132,6 +132,20 @@ internal sealed partial class HealthViewModel
     /// <summary>The Views card's state: Up to date, Rebuilding or Stalled.</summary>
     public string ViewsWord { get; private set => Set(ref field, value); } = Labels.ViewsUnknown;
 
+    /// <summary>The mark beside <see cref="ViewsWord"/> (#4331): the ok check for Up to date, the red ✕ for Stalled (the headline is red then), none while rebuilding or not read.</summary>
+    public StateGlyph ViewsGlyph
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(HasViewsGlyph));
+        }
+    } = StateGlyph.None;
+
+    /// <summary>True when the Views card has a mark to draw, so a card with none leaves no gap before its word.</summary>
+    public bool HasViewsGlyph => ViewsGlyph != StateGlyph.None;
+
     /// <summary>The Views card's rows: read up to, updated.</summary>
     public IReadOnlyList<HealthCell> ViewsRows { get; private set => Set(ref field, value); } = [];
 

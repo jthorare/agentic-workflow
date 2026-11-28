@@ -39,12 +39,13 @@ public sealed class AddStepEveryKindTests
         await page.GraphEdit.AddStep(block, Token);
         var example = block.ExampleConfig is { } raw ? JsonNode.Parse(raw.GetRawText()) as JsonObject ?? [] : [];
         var expected = new JsonObject();
+        var oneOfFirst = FirstOfEachGroup(block.OneOf);   // a wait needs one of Wait for / Wait until (#4359): the first of each group is typed
         foreach (var field in page.Editor.Fields)
         {
             Assert.Equal(field.IsBoolean && field.IsRequired ? "false" : string.Empty, field.Text);   // #4272: no example goes in as a value
             var named = Roots(field.Placeholder).Where(static r => !ExampleReferences.ScopeRoots.Contains(r)).ToList();
             Assert.True(named.Count == 0, $"'{type}': the hint of '{field.Name}' names " + string.Join(", ", named));
-            if (field.IsRequired)
+            if (field.IsRequired || oneOfFirst.Contains(field.Name))
             {
                 expected[field.Name] = TypeRequired(field, example);
             }
@@ -57,6 +58,10 @@ public sealed class AddStepEveryKindTests
         Assert.Equal(type, sent["type"]!.GetValue<string>());
         Assert.True(JsonNode.DeepEquals(expected, sent["config"] ?? new JsonObject()), $"'{type}': sent {sent["config"]} but expected {expected}");
     }
+
+    // The first field name of each "exactly one of" group; empty for a block with none.
+    private static HashSet<string> FirstOfEachGroup(IReadOnlyList<IReadOnlyList<string>>? oneOf) =>
+        oneOf?.Select(static g => g[0]).ToHashSet(StringComparer.Ordinal) ?? [];
 
     // Types a required field's hint when it names no step (the example value is then what Save sends), else Typed; a required check box keeps its "false".
     private static JsonNode? TypeRequired(ConfigFieldViewModel field, JsonObject example)

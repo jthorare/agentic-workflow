@@ -16,6 +16,17 @@ public sealed class TraitFileParserTests
         Assert.Equal(new Trait("no-todo", "s", "r", "p", TraitSeverity.Warn, "/r/.agents/traits/no-todo.yaml", "a", "g", "c", ["src/**", "lib/*.ts"]), trait, new TraitComparer());
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void A_trigger_is_read_as_given()
+    {
+        const string text = "version: 1\nname: x\nsubject: s\nrequirement: r\npurpose: p\nseverity: block\ntrigger: '\\bacquire\\('\n";
+
+        var (trait, error) = TraitFileParser.Parse(text, "/r/x.yaml");
+
+        Assert.Null(error);
+        Assert.Equal("\\bacquire\\(", trait!.Trigger);
+    }
+
     [Theory, Trait("Lane", "unit")]
     [InlineData("version: 2\nname: x\nsubject: s\nrequirement: r\npurpose: p\nseverity: block\n", "version: must be 1")]
     [InlineData("version: 1\nname: X\nsubject: s\nrequirement: r\npurpose: p\nseverity: block\n", "name: invalid")]
@@ -25,6 +36,7 @@ public sealed class TraitFileParserTests
     [InlineData("version: 1\nname: x\nsubject: s\nrequirement: r\npurpose: p\nseverity: block\nextra: 1\n", "trait: unrecognized key extra")]
     [InlineData("version: 1\nname: x\nsubject: s\nrequirement: r\npurpose: p\nseverity: block\npaths: []\n", "paths: must be a non-empty list")]
     [InlineData("version: 1\nname: x\nsubject: s\nrequirement: r\npurpose: p\nseverity: block\npaths: ['a/{b']\n", "paths: unclosed { in glob")]
+    [InlineData("version: 1\nname: x\nsubject: s\nrequirement: r\npurpose: p\nseverity: block\ntrigger: [a]\n", "trigger: must be text")]
     [InlineData("- just\n- a list\n", "trait: expected a mapping")]
     [InlineData("name: [unclosed\n", "invalid YAML")]
     public void A_bad_trait_file_is_refused_with_the_field(string text, string expectedStart)

@@ -26,9 +26,9 @@ internal static class WorkflowReadScenarios
         ("workflows", "list-empty"), ("workflows", "list-two"), ("workflows", "list-include-archived"),
         ("workflows-slug", "found"), ("workflows-slug", "found-schedule"), ("workflows-slug", "not-found"),
         ("workflows-slug", "found-latest"), ("workflows-slug", "revision-not-found"), ("workflows-slug", "revision-invalid"),
-        ("workflows-slug-runs", "list-empty"), ("workflows-slug-runs", "list-three"),
+        ("workflows-slug-runs", "list-empty"), ("workflows-slug-runs", "list-three"), ("workflows-slug-runs", "list-filtered"), ("workflows-slug-runs", "filter-invalid"),
         ("workflow-runs-run", "running"), ("workflow-runs-run", "finished"), ("workflow-runs-run", "not-found"),
-        ("workflow-runs-run", "agent-waiting"), ("workflow-runs-run", "agent-taken-over"),
+        ("workflow-runs-run", "agent-waiting"), ("workflow-runs-run", "agent-taken-over"), ("workflow-runs-run", "failed"),
     ];
 
     /// <summary>Whether this class owns the scenario.</summary>
@@ -64,13 +64,8 @@ internal static class WorkflowReadScenarios
                 return await SlugRead(host, scenario, human, ct);
             case ("workflows-slug", "not-found"):
                 return await Ask(host, Get("/sindri/workflows/nope", human));
-            case ("workflows-slug-runs", "list-empty"):
-                await Create(host, _morning, _morningSlug, "Morning check", activate: true, ct);
-                return await Ask(host, Get($"/sindri/workflows/{_morningSlug.Value}/runs", human));
-            case ("workflows-slug-runs", "list-three"):
-                await Create(host, _morning, _morningSlug, "Morning check", activate: true, ct);
-                await ThreeRuns(host, ct);
-                return await Ask(host, Get($"/sindri/workflows/{_morningSlug.Value}/runs", human));
+            case ("workflows-slug-runs", _):
+                return await RunsRead(host, scenario, human, ct);
             default:
                 return await RunRead(host, scenario, human, ct);
         }
@@ -104,8 +99,28 @@ internal static class WorkflowReadScenarios
         return await Ask(host, Get($"/sindri/workflows/{_morningSlug.Value}{query}", human));
     }
 
+    // GET /sindri/workflows/{slug}/runs on the Morning check workflow: no runs, three runs, the #4334 filtered read and a filter value it can't read.
+    private static async Task<string> RunsRead(GoldenHost host, string scenario, (string Name, string Value)[] human, CancellationToken ct)
+    {
+        await Create(host, _morning, _morningSlug, "Morning check", activate: true, ct);
+        switch (scenario)
+        {
+            case "list-three":
+                await ThreeRuns(host, ct);
+                return await Ask(host, Get($"/sindri/workflows/{_morningSlug.Value}/runs", human));
+            case "list-filtered":
+                // #4334: the failed and cancelled runs that started at or after 00:02; run 1 (succeeded), run 3 (running) and run 5 (failed, before the window) are left out
+                await FiveRuns(host, ct);
+                return await Ask(host, Get($"/sindri/workflows/{_morningSlug.Value}/runs?status=failed,cancelled&since=2026-01-01T00:02:00Z", human));
+            case "filter-invalid":
+                return await Ask(host, Get($"/sindri/workflows/{_morningSlug.Value}/runs?status=done", human));
+            default:
+                return await Ask(host, Get($"/sindri/workflows/{_morningSlug.Value}/runs", human));
+        }
+    }
+
     // GET /sindri/workflow-runs/{run}: the running run (its run_agent node 'agent' runs, so its row says 'waiting'), the same once the human took the node over ('taken_over': the held marker of its launch is set, as the workflow sets it),
-    // the finished run, and an unknown one.
+    // the finished run, a failed one, and an unknown one.
     private static async Task<string> RunRead(GoldenHost host, string scenario, (string Name, string Value)[] human, CancellationToken ct)
     {
         if (string.Equals(scenario, "not-found", StringComparison.Ordinal))
@@ -117,6 +132,10 @@ internal static class WorkflowReadScenarios
         if (string.Equals(scenario, "finished", StringComparison.Ordinal))
         {
             await FinishedRun(host, ct);
+        }
+        else if (string.Equals(scenario, "failed", StringComparison.Ordinal))
+        {
+            await FailedRun(host, ct);
         }
         else
         {
@@ -169,6 +188,15 @@ internal static class WorkflowReadScenarios
         _ = (await runs.Insert(Run(host, 3, WorkflowRunStatus.Running, "manual", error: null), ct)).Value;
     }
 
+    // ThreeRuns, then run 4 cancelled at 00:04 and run 5 failed with its start set back to 00:00:30, before the filtered golden's window.
+    private static async Task FiveRuns(GoldenHost host, CancellationToken ct)
+    {
+        await ThreeRuns(host, ct);
+        var runs = host.App.Services.GetRequiredService<IWorkflowRunStore>();
+        _ = (await runs.Insert(Run(host, 4, WorkflowRunStatus.Cancelled, "manual", "cancelled by owner"), ct)).Value;
+        _ = (await runs.Insert(Run(host, 5, WorkflowRunStatus.Failed, "schedule", "node 'agent' timed out") with { StartedAt = host.Now().AddSeconds(30) }, ct)).Value;
+    }
+
     private static async Task RunningRun(GoldenHost host, CancellationToken ct)
     {
         var runs = host.App.Services.GetRequiredService<IWorkflowRunStore>();
@@ -184,6 +212,17 @@ internal static class WorkflowReadScenarios
         var id = WorkflowRunId.Of(_morningSlug, 1, 1);
         _ = (await runs.RecordNodeRun(new NodeRun(id, NodeId.From("agent"), 0, NodeRunStatus.Succeeded, Input: "{\"prompt\":\"Look for drift\"}", Output: "{\"text\":\"no drift\"}", Truncated: false, Error: null, Usage: null), ct)).Value;
         _ = (await runs.SetStatus(id, WorkflowRunStatus.Succeeded, "{\"summary\":\"no drift\"}", error: null, ct)).Value;
+    }
+
+    // the agent node failed on a §6.1 code: its row carries the failure (#3304), the sentence naming the step by its title, the fix's command and the engine's text
+    private static async Task FailedRun(GoldenHost host, CancellationToken ct)
+    {
+        await RunningRun(host, ct);
+        var runs = host.App.Services.GetRequiredService<IWorkflowRunStore>();
+        var id = WorkflowRunId.Of(_morningSlug, 1, 1);
+        const string Error = "SND-LAUNCH-003: the agent target 'claude-code' is not installed";
+        _ = (await runs.RecordNodeRun(new NodeRun(id, NodeId.From("agent"), 0, NodeRunStatus.Failed, Input: "{\"prompt\":\"Look for drift\"}", Output: null, Truncated: false, Error, Usage: null), ct)).Value;
+        _ = (await runs.SetStatus(id, WorkflowRunStatus.Failed, outputs: null, error: "node 'agent' failed: " + Error, ct)).Value;
     }
 
     private static async Task<string> Ask(GoldenHost host, HttpRequestMessage request) => (await host.Http.Ask(request)).Body;

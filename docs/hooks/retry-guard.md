@@ -52,6 +52,7 @@ file 0600. A session id must match `^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`, or the 
 | `firstAt`, `lastAt` | string | UTC times of the first and the latest recorded failure. |
 | `retryAfter` | string | `transient` only: the earliest time a retry is not "too soon", or `""`. The wait doubles from 30 s per failure, up to 300 s. |
 | `authStamp` | string | `auth-expired` only: the mtime (epoch seconds) of the provider's auth file when the failure was recorded, or `""` when no auth file is known for the host. For `github.com` the file is `${GH_CONFIG_DIR:-~/.config/gh}/hosts.yml`. |
+| `inputStamp` | string | `bad-args` on `Bash` only: the sorted `<path> <mtime>;` list of the existing files the command names (first 8 words) and of the build files in its folder (`Makefile`, `makefile`, `GNUmakefile`, `package.json`, `Cargo.toml`, `go.mod`, `pyproject.toml`, `setup.py`, `CMakeLists.txt`, `build.gradle`, `pom.xml`, `*.csproj`, `*.sln`), or `""`. The gate clears the row when the list differs now; an empty one keeps the row. |
 | `errorHash` | string | sha256 (hex) of the last failure's error text, as the classifier read it (the first 8 KiB). The text itself is never stored. |
 | `errorHashes` | array | The distinct `errorHash` values this call has failed with, oldest first, at most the last 16. Bookkeeping for `distinctErrors`. |
 | `distinctErrors` | integer | How many different error texts this call has failed with. 1 with `failures` > 1 means the same failure again; it rising with `failures` means each try got new output, such as a poll seeing new state. Past 16 distinct texts an evicted one that comes back counts again. |
@@ -83,7 +84,9 @@ All integers, starting at 0.
 
 `sha256` (hex, lowercase) of the tool name, one newline, then `jq -S -c .tool_input` of the payload. For `Bash`, a trailing
 `# aw-retry: <reason>` comment is removed from `tool_input.command` first, so an override hashes the same as the call it
-repeats. Any changed argument gives a new hash. The hooks store the hash, never the input or the tool output.
+repeats. A `# aw-retry:` comment may be followed by white space or a newline. For `Bash`, `description` is dropped, and so is
+`working_directory` when it equals the payload's `cwd`; Agent and Task keep their `description`. Any other changed argument
+gives a new hash. The hooks store the hash, never the input or the tool output.
 
 ## What the gate does
 
@@ -91,7 +94,7 @@ repeats. Any changed argument gives a new hash. The hooks store the hash, never 
 |---|---|---|
 | `missing-exe` | `command not found`, `Exit code 127` | Deny while `command -v <exe>` still fails. Once it succeeds, clear the problem. |
 | `auth-expired` | `HTTP 401`, `401 Unauthorized`, `status 401` (a bare 401, such as "line 401", does not count), `bad credentials`, `token expired`, `gh auth login`, `authentication required`, `not logged in` | Deny once while the auth file's mtime is unchanged and less than 10 min have passed. After that, advise. A changed mtime clears the problem. |
-| `bad-args` | `unknown flag`, `unknown option`, `unknown command`, `invalid option`, `unrecognized option`, `usage:`, `invalid argument` | Bash: deny. Other tools: advise only. |
+| `bad-args` | `unknown flag`, `unknown option`, `unknown command`, `invalid option`, `unrecognized option`, `usage:`, `invalid argument` | Bash: deny, until a file the command names or a build file in its folder changes (`inputStamp`), which clears the row. Other tools: advise only. |
 | `missing-path` | `No such file or directory` with a path in the text, or `File does not exist` from a tool with a `file_path` or `path` argument | Deny while the path still does not exist. Once it exists, clear the problem. |
 | `transient` | `timed out`, `timeout`, `could not resolve host`, `temporary failure in name resolution`, `connection reset`, `connection refused`, `HTTP 5xx`, `rate limit` | Never deny. Advise "wait N s" while `retryAfter` is in the future. |
 | `unknown` | anything else | Never deny. Advise from the 3rd identical failure on. |
@@ -157,6 +160,6 @@ Advice exits 0 with `{"hookSpecificOutput":{"hookEventName":"PreToolUse","additi
 |---|---|---|
 | Claude Code | `PostToolUseFailure` (`error`, `is_interrupt`); `PostToolUse` clears | every tool (`PreToolUse .*`) |
 | Codex (unverified: no captured payload) | `PostToolUse` whose shell `tool_response` says `Exit code: N` or `Process exited with code N`, or has an `exit_code`, with N not 0. The adapter keeps the event `PostToolUse` (other hooks see no change) and adds `aw_tool_failed: true` and `error` (the result text, 8 KiB at most) | every tool the Codex adapter maps |
-| Cursor | `postToolUseFailure` (`error_message`, `is_interrupt`); `postToolUse` clears | `preToolUse` and `beforeShellExecution`. Post-tool output is advice only (`additional_context`) |
+| Cursor | `postToolUseFailure` (`error_message`, `is_interrupt`); `postToolUse` clears | `preToolUse` and `beforeShellExecution`. Post-tool output is advice only (`additional_context`) | The adapter writes `session_id` and `hook_event_name` as the first two keys, so the hooks' first-match reads take the real ones.
 
 The adapters README holds the full table (`config/hooks/adapters/README.md`).

@@ -192,13 +192,13 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
             attempt);
 
         internal static Sign Of(McpAdd add, DateTimeOffset created, SignInTry attempt) => add.Existing is { } kept
-            ? new(Waiting(kept), ClientSecret: null, attempt, Replaces: true)
+            ? new(Waiting(kept) with { Config = new Dictionary<string, string>(kept.Config, StringComparer.Ordinal) { [ConnectionAuth.Key] = ConnectionAuth.SignIn } }, ClientSecret: null, attempt, Replaces: true)   // #4482: a sign-in again marks an old row too
             : new(
             new Connection(
                 add.Name,
                 ConnectionKind.Mcp,
                 Preset: null,
-                new Dictionary<string, string>(StringComparer.Ordinal) { ["serverUrl"] = add.Server.ToString() },
+                new Dictionary<string, string>(StringComparer.Ordinal) { ["serverUrl"] = add.Server.ToString(), [ConnectionAuth.Key] = ConnectionAuth.SignIn },
                 SecretPointer: null,
                 ConnectionStatus.NeedsSignIn,
                 StatusReason: "waiting for the browser sign-in",

@@ -5,12 +5,19 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <summary>One config field of the selected node's form: its name, its type in words, the text being edited, and the line under it when the text can't be sent.</summary>
 internal sealed class ConfigFieldViewModel : ObservableObject
 {
-    internal ConfigFieldViewModel(WorkflowBlockField field, string text)
+    private static readonly string[] _codeAdvanced = ["repo", "branch", "timeout", "memoryMb"];
+
+    internal ConfigFieldViewModel(WorkflowBlockField field, string text, string blockType = "", string example = "")
     {
+        var isCodeBlock = string.Equals(blockType, "code", StringComparison.Ordinal);
+        IsCode = isCodeBlock && string.Equals(field.Name, "code", StringComparison.Ordinal);
+        InAdvanced = isCodeBlock && _codeAdvanced.Contains(field.Name, StringComparer.Ordinal);
+        Example = example;
         Name = field.Name;
         Type = field.Type;
         IsRequired = field.Required;
-        Caption = Labels.WfFieldCaption(field.Caption.Length > 0 ? field.Caption : field.Name, field.Required);
+        Label = field.Caption.Length > 0 ? field.Caption : field.Name;
+        Caption = Labels.WfFieldCaption(Label, field.Required);
         IsClosedList = field.Choices is { Count: > 0 };
         Presets = (IsClosedList ? field.Choices : field.Presets) ?? [];
         HidesRawText = !IsClosedList && Presets.Any(p => !string.Equals(p.Label, p.Value, StringComparison.Ordinal));
@@ -57,6 +64,24 @@ internal sealed class ConfigFieldViewModel : ObservableObject
         }
     }
 
+    /// <summary>True for the Code step's program: a monospace multi-line box.</summary>
+    public bool IsCode { get; }
+
+    /// <summary>The block's example for this field, shown under it; empty when it has none.</summary>
+    public string Example { get; }
+
+    /// <summary>True when there is an example under the field.</summary>
+    public bool HasExample => Example.Length > 0;
+
+    /// <summary>True when the field sits in the closed Advanced group.</summary>
+    public bool InAdvanced { get; }
+
+    /// <summary>True when the field is drawn: it is not in the Advanced group, or the group is open.</summary>
+    public bool IsShown => !InAdvanced || GroupOpen;
+
+    /// <summary>True when the Advanced group this field may sit in is open; the editor sets it.</summary>
+    public bool GroupOpen { get; internal set { Set(ref field, value); OnChanged(nameof(IsShown)); OnChanged(nameof(IsRawVisible)); } }
+
     /// <summary>The config key.</summary>
     public string Name { get; }
 
@@ -88,7 +113,10 @@ internal sealed class ConfigFieldViewModel : ObservableObject
     public bool IsBoolean => string.Equals(Type, "boolean", StringComparison.Ordinal);
 
     /// <summary>True for a field edited with several lines (a text list or an object).</summary>
-    public bool IsMultiline => string.Equals(Type, "text list", StringComparison.Ordinal) || string.Equals(Type, "object", StringComparison.Ordinal);
+    public bool IsMultiline => IsCode || string.Equals(Type, "text list", StringComparison.Ordinal) || string.Equals(Type, "object", StringComparison.Ordinal);
+
+    /// <summary>True for a multi-line field that is not the code box: it keeps the small proportional box.</summary>
+    public bool IsPlainLines => IsMultiline && !IsCode;
 
     /// <summary>True for a field edited with one line (text and number).</summary>
     public bool IsSingleLine => !IsBoolean && !IsMultiline;
@@ -101,4 +129,17 @@ internal sealed class ConfigFieldViewModel : ObservableObject
 
     /// <summary>True when there is a line under the field.</summary>
     public bool HasError => ErrorText.Length > 0;
+
+    /// <summary>The caption without "(required)": what a line about the field names it by.</summary>
+    internal string Label { get; }
+
+    /// <summary>The line that says why a step's Save is off ("Fill in Title to save."), on its first empty required field of a new step, or on the first field of an "exactly one of" group that has none or two; empty otherwise (#4330, #4359).</summary>
+    public string NeedText { get; private set { Set(ref field, value); OnChanged(nameof(HasNeed)); } } = string.Empty;
+
+    /// <summary>True when the field shows <see cref="NeedText"/>.</summary>
+    public bool HasNeed => NeedText.Length > 0;
+
+    /// <summary>Shows or clears the "why Save is off" line.</summary>
+    /// <param name="line">The words to show, or empty to clear the line.</param>
+    internal void MarkNeeded(string line) => NeedText = line;
 }

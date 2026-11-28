@@ -171,6 +171,30 @@ public sealed class TodoPanelTests
         Assert.Equal(6, _f.Panel().CollapsedSlots);   // before the first read the panel is loading: full height
     }
 
+    [Theory]
+    [InlineData(1, 1, 5)]
+    [InlineData(3, 3, 3)]
+    [InlineData(5, 5, 1)]
+    [InlineData(7, 6, 0)]   // Show all takes the sixth slot
+    public async Task The_body_takes_the_slots_its_rows_fill_and_the_spare_slots_keep_six(int todos, int body, int spare)
+    {
+        _f.ServeTodos([.. Enumerable.Range(1, todos).Select(i => Open(string.Create(CultureInfo.InvariantCulture, $"td_{i}"), "a todo"))]);
+        var panel = await _f.Read(Token);
+
+        Assert.Equal((6, body, spare), (panel.CollapsedSlots, panel.BodySlots, panel.SpareSlots));   // #2908: the line under the last todo; D13: one height
+    }
+
+    [Fact]
+    public async Task Loading_takes_all_six_body_slots_and_an_empty_list_one_with_no_spare()
+    {
+        var loading = _f.Panel();
+        Assert.Equal((6, 0), (loading.BodySlots, loading.SpareSlots));
+
+        _f.ServeTodos();
+        var empty = await _f.Read(Token);
+        Assert.Equal((1, 1, 0), (empty.CollapsedSlots, empty.BodySlots, empty.SpareSlots));   // #2548: an empty list collapses to one line
+    }
+
     [Fact]
     public async Task A_list_with_open_todos_is_not_empty()
     {

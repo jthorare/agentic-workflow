@@ -208,6 +208,8 @@ classify() {
   code="$(printf '%s' "$json" | jq -r '.hookSpecificOutput.reasonCode // .reasonCode // empty' 2>/dev/null)"
   if [ "$rc" -eq 2 ]; then printf 'deny\t%s\n' "$code"; return; fi
   if [ "$rc" -ne 0 ]; then printf 'abstain\t%s\n' "$code"; return; fi
+  # Cursor's followup_message counts as deny on every event. Only stop and subagentStop send one (the hook asks the
+  # agent to continue), so today it can only mean a block. A hook that sends it on another event needs its own rule here.
   verdict="$(printf '%s' "${json:-null}" | jq -r '
     if . == null then "none"
     elif (.hookSpecificOutput.permissionDecision // "") == "deny" or (.decision // "") == "block"
