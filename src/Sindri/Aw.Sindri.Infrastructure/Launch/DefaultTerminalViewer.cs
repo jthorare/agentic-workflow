@@ -19,7 +19,7 @@ internal sealed partial class DefaultTerminalViewer(DefaultTerminalOptions optio
     private const string Xdg = "xdg-terminal-exec";
     private const string XTerminal = "x-terminal-emulator";
     private static readonly TimeSpan _step = TimeSpan.FromMilliseconds(100);
-    private readonly ConcurrentBag<Task> _cleanups = [];
+    private readonly ConcurrentDictionary<Task, byte> _cleanups = [];
 
     /// <inheritdoc/>
     public string Kind => "default-terminal";
@@ -31,8 +31,8 @@ internal sealed partial class DefaultTerminalViewer(DefaultTerminalOptions optio
         return options.IsMac ? await OpenMac(request, cancellationToken).ConfigureAwait(false) : await OpenLinux(request, cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>Completes when every '.command' folder this viewer made is gone (tests move the fake clock past the grace).</summary>
-    internal Task Settled() => Task.WhenAll(_cleanups);
+    /// <summary>Completes when every '.command' folder this viewer is still cleaning is gone (tests move the fake clock past the grace).</summary>
+    internal Task Settled() => Task.WhenAll(_cleanups.Keys);
 
     /// <inheritdoc/>
     public async ValueTask<TerminalFacts> Probe(CancellationToken cancellationToken)
@@ -58,11 +58,11 @@ internal sealed partial class DefaultTerminalViewer(DefaultTerminalOptions optio
             return ViewerProcess.Failed("open was not found on the PATH");
         }
 
-        var tmux = await Find("tmux", cancellationToken).ConfigureAwait(false) ?? request.AttachArgv[0];   // a Terminal login shell may lack the caller's PATH
+        var program = await ExecProgram(request.AttachArgv[0], cancellationToken).ConfigureAwait(false);
         var folder = Path.Combine(options.TempRoot ?? Path.GetTempPath(), "aw-term-" + Guid.NewGuid().ToString("N"));
         try
         {
-            var file = WriteCommandFile(folder, request, tmux);
+            var file = WriteCommandFile(folder, request, program);
             return await Show(request, Program(open, file), cancellationToken).ConfigureAwait(false);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -71,7 +71,9 @@ internal sealed partial class DefaultTerminalViewer(DefaultTerminalOptions optio
         }
         finally
         {
-            _cleanups.Add(Task.Run(() => CleanUp(folder), CancellationToken.None));
+            var cleanup = Task.Run(() => CleanUp(folder), CancellationToken.None);
+            _cleanups[cleanup] = 0;
+            _ = cleanup.ContinueWith(done => _cleanups.TryRemove(done, out _), CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);   // only pending cleanups stay in the list
         }
     }
 
@@ -85,6 +87,17 @@ internal sealed partial class DefaultTerminalViewer(DefaultTerminalOptions optio
         return await Find(XTerminal, cancellationToken).ConfigureAwait(false) is { } fallback
             ? await Show(request, Program(fallback, ["-e", .. request.AttachArgv]), cancellationToken).ConfigureAwait(false)
             : ViewerProcess.Failed($"no terminal to open: neither {Xdg} nor {XTerminal} is on the PATH (fix: install one, or set viewer.kind in launcher.json)");
+    }
+
+    /// <summary>What the file execs: the tmux host's 'tmux' as the login shell resolves it (a Terminal login shell may lack the caller's PATH); any other host's own program (host none, t3), resolved the same way unless it is a path already.</summary>
+    private async ValueTask<string> ExecProgram(string head, CancellationToken cancellationToken)
+    {
+        if (string.Equals(Path.GetFileName(head), "tmux", StringComparison.Ordinal))
+        {
+            return await Find("tmux", cancellationToken).ConfigureAwait(false) ?? head;
+        }
+
+        return Path.IsPathRooted(head) ? head : await Find(head, cancellationToken).ConfigureAwait(false) ?? head;
     }
 
     private ValueTask<string?> Find(string program, CancellationToken cancellationToken) =>
@@ -110,7 +123,7 @@ internal sealed partial class DefaultTerminalViewer(DefaultTerminalOptions optio
         }
     }
 
-    private static string WriteCommandFile(string folder, ViewerRequest request, string tmux)
+    private static string WriteCommandFile(string folder, ViewerRequest request, string program)
     {
         _ = Directory.CreateDirectory(folder, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
         var path = Path.Combine(folder, $"sindri-{request.Host.Name}.command");
@@ -123,7 +136,7 @@ internal sealed partial class DefaultTerminalViewer(DefaultTerminalOptions optio
         });
         using var writer = new StreamWriter(stream);
         var attach = string.Join(' ', request.AttachArgv.Skip(1).Select(Quote));
-        writer.Write($"#!/bin/sh\nrm -f -- \"$0\"\ncd {Quote(cwd)} || exit 1\nexec {Quote(tmux)} {attach}\n");
+        writer.Write($"#!/bin/sh\nrm -f -- \"$0\"\ncd {Quote(cwd)} || exit 1\nexec {Quote(program)} {attach}\n");
         return path;
     }
 
