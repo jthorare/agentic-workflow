@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-GRAPH-114",
+  "status": 409,
+  "detail": "'morning-check' is active; pause it first, then delete it",
+  "traceId": "<trace>"
+}

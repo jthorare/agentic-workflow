@@ -103,7 +103,7 @@ public sealed class CliWorkflowWritesTests : IDisposable
     {
         var activate = new Api(HttpStatusCode.OK, Body(new ActivateWorkflowResponse(_slug, 2, "abc")));
         var pause = new Api(HttpStatusCode.OK, Body(new PauseWorkflowResponse(_slug, 2)));
-        var delete = new Api(HttpStatusCode.OK, Body(new DeleteWorkflowResponse(_slug, DateTimeOffset.UnixEpoch)));
+        var delete = new Api(HttpStatusCode.OK, Body(new DeleteWorkflowResponse(_slug, DateTimeOffset.UnixEpoch, RunsKept: 0, BytesFreed: 0, ResourcesStayed: [])));
 
         _ = await Verbs(_up, activate).Activate(["drift-check", "--revision", "2"], Token);
         _ = await Verbs(_up, pause).Pause(["drift-check"], Token);
@@ -113,7 +113,33 @@ public sealed class CliWorkflowWritesTests : IDisposable
         Assert.Contains("\"revision\":2", activate.Sent, StringComparison.Ordinal);
         Assert.Equal(("POST", "/sindri/workflows/drift-check/pause"), (pause.Method, pause.Path));
         Assert.Equal(("DELETE", "/sindri/workflows/drift-check"), (delete.Method, delete.Path));
-        Assert.Equal("drift-check is on at revision 2\ndrift-check is off\ndrift-check is archived\n", _out.ToString().ReplaceLineEndings("\n"));
+        Assert.Equal("drift-check is on at revision 2\ndrift-check is off\nDeleted drift-check. 0 runs kept, 0.0 MB freed\n", _out.ToString().ReplaceLineEndings("\n"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Wf_delete_prints_the_runs_kept_the_bytes_freed_and_what_stayed()
+    {
+        var all = new Api(HttpStatusCode.OK, Body(new DeleteWorkflowResponse(_slug, DateTimeOffset.UnixEpoch, RunsKept: 12, BytesFreed: 1_200_000, ResourcesStayed: [])));
+        var stayed = new Api(HttpStatusCode.OK, Body(new DeleteWorkflowResponse(_slug, DateTimeOffset.UnixEpoch, RunsKept: 1, BytesFreed: 0, ResourcesStayed: ["node:drift-check/a"])));
+
+        var codes = (await Verbs(_up, all).Delete(["drift-check"], Token), await Verbs(_up, stayed).Delete(["drift-check"], Token));
+
+        Assert.Equal((0, 0), codes);
+        Assert.Equal(
+            "Deleted drift-check. 12 runs kept, 1.2 MB freed\n"
+            + "Deleted drift-check. 1 run kept, 0.0 MB freed. These resources stayed: node:drift-check/a; run 'sindri resources purge <owner>' to try again\n",
+            _out.ToString().ReplaceLineEndings("\n"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Wf_delete_of_an_active_workflow_prints_the_servers_114_and_exits_2()
+    {
+        var api = new Api(HttpStatusCode.Conflict, "{\"type\":\"about:blank\",\"title\":\"SND-GRAPH-114\",\"status\":409,\"detail\":\"'drift-check' is active; pause it first, then delete it\"}");
+
+        var code = await Verbs(_up, api).Delete(["drift-check"], Token);
+
+        Assert.Equal(2, code);
+        Assert.Contains("SND-GRAPH-114", _error.ToString(), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

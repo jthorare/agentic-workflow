@@ -161,7 +161,7 @@ public sealed class GoldenContractTests
         [("connections", "added-oauth")] = As<ConnectionAdded>,
         [("connections-id", "removed")] = As<ConnectionRemoved>,
         [("memories", "created")] = As<MemoryCreated>,
-        [("workflows-slug", "archived")] = As<WorkflowArchived>,   // DELETE /workflows/{slug}'s answer; the folder's found is GET's WorkflowView and archive-not-found, replace-stale and not-found are ProblemDetails
+        [("workflows-slug", "archived")] = As<WorkflowArchived>,   // DELETE /workflows/{slug}'s answer; the folder's found is GET's WorkflowView and archive-not-found, archive-active (SND-GRAPH-114), archive-in-flight (SND-GRAPH-115), replace-stale and not-found are ProblemDetails
         [("workflows-slug-runs", "started")] = As<WorkflowRunStarted>,   // POST /workflows/{slug}/runs' answers (Run now); the folder's list-* are GET's WorkflowRunList and its refusals are ProblemDetails
         [("workflows-slug-runs", "queued")] = As<WorkflowRunStarted>,
         [("workflows-slug-runs", "skipped")] = As<WorkflowRunStarted>,

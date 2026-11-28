@@ -61,6 +61,12 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-111: nobody holds the 'run_agent' node, so there is nothing to hand back.</summary>
     public static readonly ErrorDefinition GraphNodeNotTakenOver = new("SND-GRAPH-111", ErrorKind.Conflict, "That agent node is not taken over");
 
+    /// <summary>SND-GRAPH-114: the workflow is active, so a delete is refused; pause it first (Workflows page spec §4.9).</summary>
+    public static readonly ErrorDefinition GraphDeleteActive = new("SND-GRAPH-114", ErrorKind.Conflict, "This workflow is active; pause it first, then delete it");
+
+    /// <summary>SND-GRAPH-115: a run of the workflow, live or test, is queued, running or waiting, so a delete is refused; the message names the oldest such run (Workflows page spec §4.9).</summary>
+    public static readonly ErrorDefinition GraphDeleteRunInFlight = new("SND-GRAPH-115", ErrorKind.Conflict, "A run of this workflow is still going; delete it after the run ends or cancel the run");
+
     /// <summary>SND-GRAPH-103: a prompt node's answer did not fit its 'output' schema.</summary>
     public static readonly ErrorDefinition GraphPromptAnswer = new("SND-GRAPH-103", ErrorKind.Invalid, "The model's answer does not fit the prompt's output schema");
 

@@ -166,7 +166,7 @@ internal static partial class WorkflowTools
         }
 
         var answer = await services.GetRequiredService<IService<DeleteWorkflowRequest, DeleteWorkflowResponse>>().Handle(new DeleteWorkflowRequest(slug.Value, By(services)), ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, static gone => gone.Slug.Value + " is archived");
+        return McpResults.From(services, answer, static gone => gone.Sentence());
     }
 
     private static async ValueTask<CallToolResult> CallRun(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
