@@ -245,10 +245,10 @@ check "second: the holder's lock is untouched" "$(cat "$LOCK/pid" 2> /dev/null)"
 # goes in while only the sleep runs: the `wait` builtin then returns at once and the trap fires.
 in_sleep() {
   local _
-  for _ in $(seq 1 100); do ps -A -o ppid= -o comm= | awk -v p="$1" '$1 == p && $2 == "sleep" { f = 1 } END { exit !f }' && return 0; sleep 0.05; done
+  for _ in $(seq 1 100); do ps -A -o ppid= -o comm= | awk -v p="$1" '$1 == p && $2 ~ /(^|\/)sleep$/ { f = 1 } END { exit !f }' && return 0; sleep 0.05; done
   return 1
 }
-in_sleep "$bgpid"
+in_sleep "$bgpid" || echo "note: the INT watcher was not seen in its sleep"
 kill -INT "$bgpid"
 rc=0; wait "$bgpid" || rc=$?
 bgpid=""
@@ -259,7 +259,7 @@ check "INT: the lock is released" "$([ -e "$LOCK" ] && echo held || echo gone)" 
 bash "$SCRIPT" --repo acme/app --pr 7 --interval 5 --deadline 20s > "$WORK/bg.out" 2>&1 &
 bgpid=$!
 for _ in $(seq 1 50); do [ -s "$LOCK/pid" ] && break; sleep 0.1; done
-in_sleep "$bgpid"
+in_sleep "$bgpid" || echo "note: the TERM watcher was not seen in its sleep"
 kill -TERM "$bgpid"
 rc=0; wait "$bgpid" || rc=$?
 bgpid=""
