@@ -63,6 +63,23 @@ public sealed class DefaultTerminalViewerTests : IDisposable
     }
 
     [Fact(Timeout = 30_000)]
+    public async Task Mac_execs_the_agents_own_resolved_program_when_the_host_is_not_tmux()
+    {
+        await _f.StartSession();
+        _ = _f.Script("open", $"printf '%s\\n' \"$@\" > '{Out("open.args")}'");
+        _ = _f.Script("claude", "exit 0");
+        var request = _f.Request() with { AttachArgv = ["claude", "--x"] };
+        var viewer = Viewer(mac: true);
+
+        _ = await _f.Drive(viewer.Open(request, TestContext.Current.CancellationToken));
+
+        var content = await File.ReadAllTextAsync(await OpenedFile("open.args"), TestContext.Current.CancellationToken);
+        Expect.True(content.EndsWith($"exec {Q(Out("claude"))} '--x'\n", StringComparison.Ordinal), content);
+        Expect.True(!content.Contains("tmux", StringComparison.Ordinal), "a host that is not tmux never gets tmux");
+        _ = await _f.Drive(Wait(viewer.Settled()));
+    }
+
+    [Fact(Timeout = 30_000)]
     public async Task Mac_removes_the_folder_after_the_grace_even_when_the_file_never_ran()
     {
         await _f.StartSession();
