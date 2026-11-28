@@ -9,7 +9,7 @@ namespace Aw.Sindri.Infrastructure.Launch;
 /// <summary>
 /// The 'default-terminal' viewer (#4518): opens whatever terminal the user registered as their default, naming none; the same contract as
 /// the bash viewer (scripts/meta-launch.sh viewer_default_terminal). macOS: one executable '.command' file in a private 0700 folder
-/// (<c lang="text">rm -f -- "$0"</c>, <c lang="text">cd &lt;cwd&gt; || exit 1</c>, <c lang="text">exec &lt;absolute tmux&gt; &lt;rest of the attach argv&gt;</c>, every word shell-quoted), handed to 'open'. The file removes itself when run; the
+/// (<c lang="text">rm -f -- "$0"</c>, <c lang="text">cd &lt;cwd&gt; || exit 1</c>, <c lang="text">exec &lt;absolute program&gt; &lt;rest of the attach argv&gt;</c> (the login-PATH tmux for a tmux host, else argv[0] resolved on the login PATH), every word shell-quoted), handed to 'open'. The file removes itself when run; the
 /// folder goes once it is empty or after AW_META_COMMAND_GRACE seconds (default 20), in the background so the outcome is not held.
 /// Linux: 'xdg-terminal-exec', else 'x-terminal-emulator -e', else a refusal naming both. An exit 0 with no tmux client is unconfirmed, as for exec-template.
 /// </summary>
