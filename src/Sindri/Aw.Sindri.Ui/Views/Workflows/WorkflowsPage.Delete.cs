@@ -71,7 +71,10 @@ internal sealed partial class WorkflowsPage
         if (DataContext is WorkflowsPageViewModel page)
         {
             page.CancelDelete();
-            _ = WorkflowMore.Focus(NavigationMethod.Tab);
+            if (!page.IsConfirmingDelete)
+            {
+                _ = WorkflowMore.Focus(NavigationMethod.Tab);
+            }
         }
     }
 #pragma warning restore MA0155

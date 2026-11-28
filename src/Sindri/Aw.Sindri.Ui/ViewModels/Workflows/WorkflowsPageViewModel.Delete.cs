@@ -13,6 +13,8 @@ internal sealed partial class WorkflowsPageViewModel
 {
     private const string DeleteActiveCode = "SND-GRAPH-114";
     private const string DeleteInFlightCode = "SND-GRAPH-115";
+    private const string DeleteNotFoundCode = "SND-GRAPH-008";
+    private const string DeleteArchivedCode = "SND-GRAPH-011";
 
     private enum DeleteForm
     {
@@ -108,6 +110,11 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>Closes the confirm (Cancel, Esc). Nothing is deleted.</summary>
     internal void CancelDelete()
     {
+        if (IsDeleting)
+        {
+            return;   // the delete is on the way: its answer closes the confirm
+        }
+
         DeleteNoteText = string.Empty;
         SetDeleteForm(DeleteForm.Closed);
     }
@@ -131,17 +138,17 @@ internal sealed partial class WorkflowsPageViewModel
         try
         {
             var deleted = await Api.DeleteWorkflow(url, slug, cancellationToken).ConfigureAwait(true);
-            if (!string.Equals(Runs.Slug, slug, StringComparison.Ordinal) || !IsConfirmingDelete)
-            {
-                return;   // the page moved on meanwhile: this answer's confirm is gone
-            }
-
             if (deleted.IsError)
             {
-                await DeleteRefused(url, deleted.Error, cancellationToken).ConfigureAwait(true);
+                if (string.Equals(Runs.Slug, slug, StringComparison.Ordinal) && IsConfirmingDelete)   // a refusal is said only where its confirm still is
+                {
+                    await DeleteRefused(url, deleted.Error, cancellationToken).ConfigureAwait(true);
+                }
+
                 return;
             }
 
+            // a success always lands: the workflow is gone whatever the page shows now, so the confirm closes, the list is read again and the notice is set
             var gone = deleted.Value;
             SetDeleteForm(DeleteForm.Closed);
             SetLevel(Level.List);
@@ -186,13 +193,21 @@ internal sealed partial class WorkflowsPageViewModel
         return OpenRun(run, cancellationToken);
     }
 
-    // 114: the workflow is active after all (the list was stale), so the list is read again and the Pause form shows; 115: the run form, naming the run;
+    // 008 or 011: the workflow is already gone, so the list is read again; 114: the workflow is active after all (the list was stale), so the list is read again and the Pause form shows; 115: the run form, naming the run;
     // anything else is said in the confirm, and no answer from Sindri reads the list again (the delete may have applied).
     private async Task DeleteRefused(Uri url, Error error, CancellationToken cancellationToken)
     {
         if (string.Equals(error.Code, DeleteActiveCode, StringComparison.Ordinal))
         {
             SetDeleteForm(DeleteForm.Active);
+            await ReadList(url, cancellationToken).ConfigureAwait(true);
+            return;
+        }
+
+        if (string.Equals(error.Code, DeleteNotFoundCode, StringComparison.Ordinal) || string.Equals(error.Code, DeleteArchivedCode, StringComparison.Ordinal))
+        {
+            SetDeleteForm(DeleteForm.Closed);   // already gone (deleted from the CLI or another window): the list says so
+            SetLevel(Level.List);
             await ReadList(url, cancellationToken).ConfigureAwait(true);
             return;
         }

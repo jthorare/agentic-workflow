@@ -201,7 +201,7 @@
             <TextBlock Classes="caption invalid" Text="{Binding DeleteNoteText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
           <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button x:Name="WorkflowDeleteCancel" Classes="command-control" Content="{Binding DeleteCancelText}" Click="OnDeleteCancel" AutomationProperties.Name="{Binding DeleteCancelText}" />
+            <Button x:Name="WorkflowDeleteCancel" Classes="command-control" Content="{Binding DeleteCancelText}" IsEnabled="{Binding !IsDeleting}" Click="OnDeleteCancel" AutomationProperties.Name="{Binding DeleteCancelText}" />
             <Button x:Name="WorkflowDeleteYes" Classes="command-control destructive" IsVisible="{Binding IsDeleteOffForm}" IsEnabled="{Binding CanConfirmDelete}" Content="{Binding DeleteYesText}" Click="OnDeleteYes" AutomationProperties.Name="{Binding DeleteYesText}" />
             <Button x:Name="WorkflowDeletePause" Classes="command-control primary" IsVisible="{Binding IsDeleteActiveForm}" Content="{Binding DeletePauseText}" Click="OnDeletePause" AutomationProperties.Name="{Binding DeletePauseText}" />
             <Button x:Name="WorkflowDeleteOpenRun" Classes="command-control primary" IsVisible="{Binding IsDeleteInFlightForm}" Content="{Binding DeleteOpenRunText}" Click="OnDeleteOpenRun" AutomationProperties.Name="{Binding DeleteOpenRunText}" />

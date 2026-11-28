@@ -163,6 +163,21 @@ public sealed class WorkflowsDeleteTests
         Assert.Equal(reads + 1, _f.Server.WorkflowsCalls);
     }
 
+    [Fact]
+    public async Task Cancel_does_nothing_while_the_delete_is_on_the_way()
+    {
+        var page = await OpenedOff();
+        _f.Server.DeleteWorkflowGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        page.RequestDelete();
+
+        var sent = page.ConfirmDelete(Token);
+        page.CancelDelete();
+
+        Assert.True(page.IsConfirmingDelete);
+        _f.Server.DeleteWorkflowGate.SetResult();
+        await sent;
+    }
+
     [Theory]
     [InlineData("SND-GRAPH-008")]
     [InlineData("SND-GRAPH-011")]
@@ -203,18 +218,20 @@ public sealed class WorkflowsDeleteTests
         var page = await OpenedOff();
         _f.Server.DeleteWorkflowAnswer = RouteAnswer.Problem("workflows-slug", "archive-active");
         page.RequestDelete();
+        ServeState(active: 1);   // the re-read shows what the 114 says: the workflow is active
 
         await page.ConfirmDelete(Token);
 
         Assert.Equal((true, true), (page.IsConfirmingDelete, page.IsDeleteActiveForm));
         Assert.False(page.IsList);
+        Assert.True(page.CanPause);
     }
 
     [Fact]
     public async Task Another_refusal_is_said_in_words_and_the_confirm_stays()
     {
         var page = await OpenedOff();
-        _f.Server.DeleteWorkflowAnswer = RouteAnswer.Problem("workflows-slug", "archive-not-found");
+        _f.Server.DeleteWorkflowAnswer = RouteAnswer.Refused();
         page.RequestDelete();
 
         await page.ConfirmDelete(Token);
