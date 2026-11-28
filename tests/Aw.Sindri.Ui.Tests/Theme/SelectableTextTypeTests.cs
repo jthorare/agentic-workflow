@@ -11,7 +11,7 @@ namespace Aw.Sindri.Ui.Tests.Theme;
 /// A type class on a SelectableTextBlock renders like the same class on a TextBlock (#3785). An Avalonia type selector matches the
 /// exact style key, so a TextBlock-only style never reaches a SelectableTextBlock. Caption has its own test (CaptionSelectableTextTests).
 /// </summary>
-[Lane(TestLane.Unit)]
+[Lane(TestLane.Integration)]
 public sealed class SelectableTextTypeTests
 {
     [Theory]

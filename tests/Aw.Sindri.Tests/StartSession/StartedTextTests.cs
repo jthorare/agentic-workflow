@@ -1,3 +1,4 @@
+using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Features.StartSession;
@@ -6,6 +7,7 @@ using Aw.Sindri.Host.Commands;
 namespace Aw.Sindri.Tests.StartSession;
 
 /// <summary>#3918: 'sindri agents start' prints the attach line as Core's TmuxAttachLine builds it: every part shell-quoted when it needs it, the session as an exact match, '=&lt;session&gt;'.</summary>
+[Lane(TestLane.Unit)]
 public sealed class StartedTextTests
 {
     [Fact]

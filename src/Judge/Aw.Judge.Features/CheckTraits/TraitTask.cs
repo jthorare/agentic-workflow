@@ -13,4 +13,7 @@ internal sealed record TraitTask(DiffSource Source, IReadOnlyList<Trait> Batch)
 
     /// <summary>The top-level directory of the repo the excerpt's file is in; the source's path is relative to it.</summary>
     public string Root { get; init; } = "";
+
+    /// <summary>The source's hash (<see cref="TraitVerdictKeys.SourceHash"/>), or empty before the verdict cache has looked; logged as the first 16 characters.</summary>
+    public string Hash { get; init; } = "";
 }

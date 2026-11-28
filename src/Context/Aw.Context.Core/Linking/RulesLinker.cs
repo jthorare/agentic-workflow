@@ -234,7 +234,7 @@ public static partial class RulesLinker
         return map;
     }
 
-    private static string Words(string text) => " " + string.Join(' ', Word.Matches(text).Select(m => m.Value.ToLowerInvariant())) + " ";
+    private static string Words(string text) => " " + string.Join(' ', LowerWords(text)) + " ";
 
     private static Dictionary<string, SortedSet<string>> Phrases(GraphSnapshot graph)
     {
@@ -242,7 +242,7 @@ public static partial class RulesLinker
 
         void Offer(string candidate, string target)
         {
-            var words = Word.Matches(candidate).Select(m => m.Value.ToLowerInvariant()).ToList();
+            var words = LowerWords(candidate).ToList();
             if (words.Count < 2 || string.Concat(words).Length < 4 || words.TrueForAll(_commonWords.Contains))
             {
                 return;

@@ -10,7 +10,7 @@ namespace Aw.Sindri.Ui.Tests.Theme;
 /// code step's body on the run page showed arrows where the code had two characters. Every mono style (the run page's Code, Input, Output and
 /// "What the run produced" blocks are SelectableTextBlock.mono) turns both features off.
 /// </summary>
-[Lane(TestLane.Unit)]
+[Lane(TestLane.Integration)]
 public sealed class MonoLigatureTests
 {
     [Theory]
