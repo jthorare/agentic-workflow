@@ -176,8 +176,8 @@ The adapters, one per viewer kind:
 | `print` | The `attach` line of each open lane |
 
 A terminal that can open a split layout by name gets an adapter of its own; until then it uses `exec-template` (one window per
-lane) or `print`. tmux stays the host, so a team opened one window per lane loses nothing. The C# launcher (issue 4518) reads the
-same shape.
+lane) or `print`. tmux stays the host, so a team opened one window per lane loses nothing.
+The C# launcher has no reader of the layout: a Sindri session opens one window from its own attach argv (issue 4518).
 
 ## Terminal process names
 
