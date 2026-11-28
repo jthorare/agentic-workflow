@@ -52,6 +52,25 @@ public sealed class RunsShowOlderTests
     private void ServeNewest(bool more, params (int Occurrence, string Status)[] runs) => _f.Server.WorkflowRunsAnswers[Slug] = Runs(more, runs);
 
     [Fact]
+    public async Task Back_from_a_run_page_re_reads_the_runs_and_keeps_the_pages_shown_so_far()
+    {
+        ServeNewest(more: true, (5, "running"), (4, "succeeded"), (3, "failed"));
+        _f.Server.WorkflowRunsPageAnswer = (_, offset) => offset == 3 ? Runs(more: false, (2, "succeeded"), (1, "succeeded")) : null;
+        var page = await _f.Shown(Token);
+        await page.OpenWorkflow(Slug, Token);
+        await page.Runs.ShowMore(Url, Token);
+        var run = Slug + "@1:5";
+        _f.Server.WorkflowRunAnswers[run] = RouteAnswer.Api("workflow-runs-run", "running");
+        await page.OpenRun(run, Token);
+        ServeNewest(more: true, (6, "running"), (5, "succeeded"), (4, "succeeded"));   // a run came in while the run page was open
+
+        page.Back();   // #4504: Back reads the runs again
+
+        Assert.Equal(["6", "5", "4", "3", "2", "1"], Ids(page.Runs));   // the newest page moved, and the older pages stay under it
+        Assert.False(page.Runs.HasMore);
+    }
+
+    [Fact]
     public async Task Older_runs_on_the_server_offer_Show_older_runs()
     {
         ServeNewest(more: true, (5, "running"), (4, "succeeded"), (3, "failed"));

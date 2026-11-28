@@ -234,6 +234,11 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     internal void Back()
     {
         SetLevel(_level is Level.Run or Level.Compare ? Level.Runs : Level.List);
+        if (_level == Level.Runs && _url is { } runsUrl)
+        {
+            _ = Runs.Read(runsUrl, Runs.Slug, Runs.Title, CancellationToken.None);   // a run that ended while its page was open finished on that page only: the table's row catches up (#4504)
+        }
+
         if (_listBehind && _url is { } url)
         {
             // An event came while one run was open: the rows (and the buttons they decide) catch up. The read is not awaited, so until it
