@@ -88,11 +88,11 @@ internal sealed class ContextReviewFacts(IApprovedProfile approvals, ICallerCont
         var (head, requested, reviews) = Reviewers(record.Pull);
         return new ReviewPull(
             repo, number, record.Title, record.Author ?? string.Empty, record.State == RecordState.Draft, record.CreatedAt ?? record.SyncedAt, record.UpdatedAt ?? record.CreatedAt ?? record.SyncedAt,
-            head, requested, reviews, ReviewersRead: record.Pull is not null, Claims: [], record.Url);
+            head, requested, reviews, ReviewersRead: record.Pull is not null, Claims: [], record.Url, record.Pull?.Mergeable);
     }
 
     private static (string? Head, IReadOnlyList<string> Requested, IReadOnlyList<ReviewedAt> Reviews) Reviewers(PullFacts? facts) =>
-        facts is null ? (null, [], []) : (facts.HeadSha, facts.RequestedReviewers, [.. facts.Reviews.Select(static r => new ReviewedAt(r.Login, r.Commit, r.NewCommits))]);
+        facts is null ? (null, [], []) : (facts.HeadSha, facts.RequestedReviewers, [.. facts.Reviews.Select(static r => new ReviewedAt(r.Login, r.Commit, r.NewCommits, r.State))]);
 
     private static bool TryKey(string key, out string repo, out int number)
     {

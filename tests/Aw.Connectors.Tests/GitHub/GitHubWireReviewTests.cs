@@ -51,6 +51,66 @@ public sealed class GitHubWireReviewTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_later_comment_keeps_the_reviewers_change_request_and_moves_the_reviewed_commit()
+    {
+        var latest = GitHubWire.LatestReviewStates(
+        [
+            Review("bob", "CHANGES_REQUESTED", "c1", "2026-11-01T10:00:00Z"),
+            Review("bob", "COMMENTED", "c2", "2026-11-01T10:05:00Z"),
+        ]);
+
+        Assert.Equal([("bob", "c2", (string?)"CHANGES_REQUESTED")], latest);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_approval_after_a_change_request_clears_it_even_with_a_comment_after()
+    {
+        var latest = GitHubWire.LatestReviewStates(
+        [
+            Review("ada", "CHANGES_REQUESTED", "c1", "2026-11-01T10:00:00Z"),
+            Review("ada", "APPROVED", "c2", "2026-11-01T11:00:00Z"),
+            Review("ada", "COMMENTED", "c3", "2026-11-01T12:00:00Z"),
+        ]);
+
+        Assert.Equal([("ada", "c3", (string?)"APPROVED")], latest);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_reviewer_who_only_commented_keeps_commented()
+    {
+        var latest = GitHubWire.LatestReviewStates(
+        [
+            Review("cy", "COMMENTED", "c1", "2026-11-01T10:00:00Z"),
+            Review("cy", "COMMENTED", "c2", "2026-11-01T11:00:00Z"),
+        ]);
+
+        Assert.Equal([("cy", "c2", (string?)"COMMENTED")], latest);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_latest_review_keeps_its_state_so_changes_requested_is_seen_until_a_later_review_replaces_it()
+    {
+        var latest = GitHubWire.LatestReviewStates(
+        [
+            Review("bob", "CHANGES_REQUESTED", "c1", "2026-11-01T10:00:00Z"),
+            Review("ada", "APPROVED", "c2", "2026-11-01T11:00:00Z"),
+            Review("ada", "CHANGES_REQUESTED", "c3", "2026-11-02T11:00:00Z"),
+            Review("cy", "CHANGES_REQUESTED", "c1", "2026-11-01T09:00:00Z"),
+            Review("cy", "APPROVED", "c3", "2026-11-03T09:00:00Z"),
+        ]);
+
+        Assert.Equal([("ada", "c3", "CHANGES_REQUESTED"), ("bob", "c1", "CHANGES_REQUESTED"), ("cy", "c3", "APPROVED")], latest);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("""{"merged":false,"mergeable":false}""", false)]
+    [InlineData("""{"merged":false,"mergeable":true}""", true)]
+    [InlineData("""{"merged":false,"mergeable":null}""", null)]
+    [InlineData("""{"merged":false}""", null)]
+    public void The_pull_request_reply_says_whether_it_can_merge_and_a_missing_answer_stays_unknown(string reply, bool? mergeable)
+        => Assert.Equal(mergeable, GitHubWire.ReadPull(Json(reply), []).Mergeable);
+
+    [Fact, Trait("Lane", "unit")]
     public void A_pending_review_is_skipped_so_the_one_before_it_counts()
     {
         var latest = GitHubWire.LatestReviews(
