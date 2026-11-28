@@ -14,7 +14,8 @@ namespace Aw.Sindri.Infrastructure.Control;
 /// <param name="endpoints">Reads the endpoint record.</param>
 /// <param name="options">The JSON options for the ping.</param>
 /// <param name="answer">The cap on the whole ping call; null means <see cref="Answer"/>.</param>
-internal sealed class HttpControlPlaneProbe(IEndpointFile endpoints, JsonSerializerOptions options, TimeSpan? answer = null) : IControlPlaneProbe, IDisposable
+/// <param name="handler">A handler the caller shares with its other requests (the CLI client container's one handler); the probe never disposes it. Null: its own handler.</param>
+internal sealed class HttpControlPlaneProbe(IEndpointFile endpoints, JsonSerializerOptions options, TimeSpan? answer = null, HttpMessageHandler? handler = null) : IControlPlaneProbe, IDisposable
 {
     /// <summary>How long the probe waits to connect to the recorded port.</summary>
     internal static readonly TimeSpan Connect = TimeSpan.FromSeconds(2);
@@ -22,7 +23,7 @@ internal sealed class HttpControlPlaneProbe(IEndpointFile endpoints, JsonSeriali
     /// <summary>How long the probe waits for the whole ping, answer included: well above a cold first request on a loaded box.</summary>
     internal static readonly TimeSpan Answer = TimeSpan.FromSeconds(15);
 
-    private readonly HttpClient _http = new(new SocketsHttpHandler { UseProxy = false, ConnectTimeout = Connect }) { Timeout = answer ?? Answer };
+    private readonly HttpClient _http = handler is null ? new(new SocketsHttpHandler { UseProxy = false, ConnectTimeout = Connect }) { Timeout = answer ?? Answer } : new(handler, disposeHandler: false) { Timeout = answer ?? Answer };
 
     public void Dispose() => _http.Dispose();
 

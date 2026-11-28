@@ -88,7 +88,7 @@ internal static class Composition
         => services
             .AddSingleton(clock)
             .AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
-            .AddKernelTelemetry(TelemetryOptions.FromEnvironment("sindri", environment, clock))   // the same runtime as Compose's, so an unknown AW_LOG_LEVEL warns the same way
+            .AddDeferredKernelTelemetry(TelemetryOptions.FromEnvironment("sindri", environment, clock))   // a client verb neither logs nor starts a span, so nothing starts until needed (#3727); an unknown AW_LOG_LEVEL still warns at once, as Compose's does
             .AddSindriClientInfrastructure(environment);
 
     /// <summary>
