@@ -230,7 +230,7 @@ hasnt "restart, new head: not unchanged" "$out" "unchanged since"
 rm -rf "$AW_STATE_DIR"
 scen second
 pull 1 open false; checks 1 0; reviews 1
-perl -e '$SIG{INT}="DEFAULT"; exec @ARGV' bash "$SCRIPT" --repo acme/app --pr 7 --interval 1 --deadline 20s > "$WORK/bg.out" 2>&1 &
+perl -e '$SIG{INT}="DEFAULT"; exec @ARGV' bash "$SCRIPT" --repo acme/app --pr 7 --interval 5 --deadline 20s > "$WORK/bg.out" 2>&1 &
 bgpid=$!
 for _ in $(seq 1 50); do [ -s "$LOCK/pid" ] && break; sleep 0.1; done
 check "second: the first watcher holds the lock with its pid" "$(cat "$LOCK/pid" 2> /dev/null)" "$bgpid"
@@ -240,6 +240,15 @@ has "second: names the holder's pid" "$out" "pid $bgpid"
 check "second: the holder's lock is untouched" "$(cat "$LOCK/pid" 2> /dev/null)" "$bgpid"
 
 # --- 10. INT releases the lock, exit 130 ------------------------------------------------------------------------------
+# in_sleep <pid>: wait (5 s at most) until the watcher sits in its sleep between polls. bash 5.2 can drop a trapped INT or
+# TERM that lands while it waits on a foreground child or a $(...) (about 1 in 25 kills mid-poll, #4498), so the signal
+# goes in while only the sleep runs: the `wait` builtin then returns at once and the trap fires.
+in_sleep() {
+  local _
+  for _ in $(seq 1 100); do ps -A -o ppid= -o comm= | awk -v p="$1" '$1 == p && $2 ~ /(^|\/)sleep$/ { f = 1 } END { exit !f }' && return 0; sleep 0.05; done
+  return 1
+}
+in_sleep "$bgpid" || echo "note: the INT watcher was not seen in its sleep"
 kill -INT "$bgpid"
 rc=0; wait "$bgpid" || rc=$?
 bgpid=""
@@ -247,9 +256,10 @@ check "INT: exit 130" "$rc" "130"
 check "INT: the lock is released" "$([ -e "$LOCK" ] && echo held || echo gone)" "gone"
 
 # --- 11. TERM releases the lock, exit 143 -----------------------------------------------------------------------------
-bash "$SCRIPT" --repo acme/app --pr 7 --interval 1 --deadline 20s > "$WORK/bg.out" 2>&1 &
+bash "$SCRIPT" --repo acme/app --pr 7 --interval 5 --deadline 20s > "$WORK/bg.out" 2>&1 &
 bgpid=$!
 for _ in $(seq 1 50); do [ -s "$LOCK/pid" ] && break; sleep 0.1; done
+in_sleep "$bgpid" || echo "note: the TERM watcher was not seen in its sleep"
 kill -TERM "$bgpid"
 rc=0; wait "$bgpid" || rc=$?
 bgpid=""
