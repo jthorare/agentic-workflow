@@ -122,6 +122,16 @@ public sealed class RunsTableTests
     }
 
     [Fact]
+    public async Task The_running_filter_keeps_waiting_and_queued_runs_like_the_strip_does()
+    {
+        var page = await Open(Run(4, "running", TimeSpan.FromMinutes(1)), Run(3, "waiting", TimeSpan.FromMinutes(2)), Run(2, "queued", TimeSpan.FromMinutes(3)), Run(1, "succeeded", TimeSpan.FromHours(1)));
+
+        page.Runs.SetStatusFilter("running");
+
+        Assert.Equal(["morning-check@2:4", "morning-check@2:3", "morning-check@2:2"], page.Runs.Rows.Select(r => r.Id), StringComparer.Ordinal);
+    }
+
+    [Fact]
     public async Task A_run_that_took_under_a_second_reads_under_1_s_not_0_s()
     {
         var page = await Open(Run(1, "succeeded", TimeSpan.FromMinutes(5), seconds: 0.4));

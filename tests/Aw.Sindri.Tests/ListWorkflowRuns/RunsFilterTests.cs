@@ -44,6 +44,28 @@ public sealed class RunsFilterTests
     }
 
     [Fact]
+    public void A_plus_offset_sent_raw_in_a_query_string_arrives_as_a_space_and_is_read_as_the_plus()
+    {
+        var filter = RunsFilter.Parse(status: null, since: "2026-11-25T10:00:00.5 02:30", until: "2026-11-25T10:00:00 01:00", before: null);
+
+        Assert.Equal(new DateTimeOffset(2026, 11, 25, 7, 30, 0, 500, TimeSpan.Zero), filter.Value.Since);
+        Assert.Equal(new DateTimeOffset(2026, 11, 25, 9, 0, 0, TimeSpan.Zero), filter.Value.Until);
+    }
+
+    [Theory]
+    [InlineData("2026-11-25 10:00")]
+    [InlineData("2026-11-25T10:00:00 Z")]
+    [InlineData("2026-11-25T10:00:00 1:00")]
+    [InlineData(" 2026-11-25T10:00:00 01:00")]
+    [InlineData("2026-11-25T10:00:00  01:00")]
+    public void A_space_anywhere_else_is_still_refused(string since)
+    {
+        var filter = RunsFilter.Parse(status: null, since, until: null, before: null);
+
+        Assert.Equal(SindriErrors.GraphRunsFilterInvalid.Code, filter.Error.Code);
+    }
+
+    [Fact]
     public void Before_is_a_run_id()
     {
         var filter = RunsFilter.Parse(status: null, since: null, until: null, before: "morning-check@1:12");

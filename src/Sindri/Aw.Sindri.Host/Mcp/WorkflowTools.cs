@@ -134,11 +134,13 @@ internal static partial class WorkflowTools
     private static Tool RunTool { get; } = new()
     {
         Name = Run,
-        Description = "Start a run of a workflow's active revision by hand. It answers started, queued or skipped by the workflow's concurrency. A session that a run of this workflow launched can't start the workflow again (SND-GRAPH-109); that guard does nothing until graph runs launch agent sessions.",
+        Description = "Start a run of a workflow's active revision by hand. It answers started, queued or skipped by the workflow's concurrency. Give revision to run that saved revision once instead; the active revision stays, "
+            + "the workflow must be on, and the revision must exist (SND-GRAPH-008) and pass the activation checks. A session that a run of this workflow launched can't start the workflow again (SND-GRAPH-109); that guard does nothing until graph runs launch agent sessions.",
         InputSchema = ContextTools.Schema(new JsonObject
         {
             ["slug"] = ContextTools.Property("string", SlugText),
             ["payload"] = ContextTools.Property("object", "What the manual trigger hands on, a JSON object"),
+            ["revision"] = ContextTools.Property("integer", "A saved revision to run once instead of the active one (workflow_get shows the newest); the active revision does not change", minimum: 1),
         }, required: ["slug"]),
         Annotations = Write(),
     };

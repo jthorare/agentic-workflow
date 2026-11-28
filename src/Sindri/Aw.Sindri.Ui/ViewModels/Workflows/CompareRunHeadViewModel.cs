@@ -15,11 +15,11 @@ internal sealed class CompareRunHeadViewModel
     internal CompareRunHeadViewModel(string letter, WorkflowRunView run, TimeProvider clock)
     {
         var local = TimeZoneInfo.ConvertTime(run.StartedAt, clock.LocalTimeZone);
-        Title = $"Run {letter} \u00b7 " + local.ToString("ddd d MMM yyyy", CultureInfo.InvariantCulture) + " \u00b7 " + local.ToString("HH:mm", CultureInfo.InvariantCulture);
+        Title = $"Run {letter} \u00b7 " + Labels.WfDayTime(local);
         var parts = new List<string> { string.Create(CultureInfo.InvariantCulture, $"r{run.Revision}") };
         if (run.EndedAt is { } ended)
         {
-            parts.Add(Labels.WfDuration((ended - run.StartedAt).TotalSeconds));
+            parts.Add(Labels.WfDuration(Math.Max(0, (ended - run.StartedAt).TotalSeconds)));   // a clock that stepped back never reads "-3 s"
         }
 
         parts.Add(Labels.WfRunTriggerWords(run.TriggerKind is { Length: > 0 } served ? served : KindOf(run.Trigger)));   // a CLI start is stored as manual: the served word tells it apart (#3683)

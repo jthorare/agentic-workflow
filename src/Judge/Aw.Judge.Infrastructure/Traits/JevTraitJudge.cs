@@ -17,11 +17,20 @@ internal sealed class JevTraitJudge(IBatchClassifier classifier, IInputRedactor 
         Ask(new BatchRequest(state, questions, budget), allowed, cancellationToken);
 
     /// <inheritdoc />
+    public async ValueTask<bool> Included(IReadOnlyCollection<ProviderName>? allowed, CancellationToken cancellationToken) =>
+        JevInclusion.Of(await Providers(cancellationToken).ConfigureAwait(false), allowed);
+
+    /// <inheritdoc />
     public async ValueTask<ProviderResult> Ask(BatchRequest request, IReadOnlyCollection<ProviderName>? allowed, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var reading = ConfigReading.From(await config.Load(cancellationToken).ConfigureAwait(false));
-        var providers = reading.IsSuccess ? reading.Value.Config.Providers : null;
+        var providers = await Providers(cancellationToken).ConfigureAwait(false);
         return await classifier.Classify(request with { State = redactor.Redact(request.State) }, providers, allowed, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<ProvidersConfig?> Providers(CancellationToken cancellationToken)
+    {
+        var reading = ConfigReading.From(await config.Load(cancellationToken).ConfigureAwait(false));
+        return reading.IsSuccess ? reading.Value.Config.Providers : null;
     }
 }

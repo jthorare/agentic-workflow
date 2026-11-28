@@ -52,7 +52,7 @@ public static partial class RulesLinker
 
     // The words of a text as the alias rule reads them: letter and digit runs, lower-case, a plural 's' dropped, small words left out.
     internal static List<string> Significant(string text) =>
-        [.. Word.Matches(text).Select(m => AnchorMatch.Significant(m.Value.ToLowerInvariant())).OfType<string>()];
+        [.. LowerWords(text).Select(AnchorMatch.Significant).OfType<string>()];
 
     // An alias that normalises to nothing never matches; one word is enough.
     private static bool Contains(List<string> words, List<string> alias)

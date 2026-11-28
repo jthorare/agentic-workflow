@@ -6,7 +6,7 @@ using Aw.Kernel.Testing;
 namespace Aw.Sindri.Ui.Tests.Theme;
 
 /// <summary>Six failed-open and error lines are SelectableTextBlocks with the class "caption" (#3785). A type selector matches the exact type, so a TextBlock-only caption rule leaves them at body size: the caption style must reach a SelectableTextBlock too.</summary>
-[Lane(TestLane.Unit)]
+[Lane(TestLane.Integration)]
 public sealed class CaptionSelectableTextTests
 {
     [Fact]

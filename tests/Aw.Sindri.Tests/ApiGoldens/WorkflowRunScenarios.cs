@@ -33,7 +33,7 @@ internal static class WorkflowRunScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("workflows-slug-runs", "unknown-workflow"), ("workflows-slug-runs", "bad-slug"), ("workflows-slug-runs", "not-active"), ("workflows-slug-runs", "bad-payload"), ("workflows-slug-runs", "empty-body"),
+        ("workflows-slug-runs", "unknown-workflow"), ("workflows-slug-runs", "bad-slug"), ("workflows-slug-runs", "not-active"), ("workflows-slug-runs", "bad-payload"), ("workflows-slug-runs", "empty-body"), ("workflows-slug-runs", "revision-not-found"),
         ("workflow-runs-run-cancel", "not-found"), ("workflow-runs-run-cancel", "bad-id"), ("workflow-runs-run-cancel", "already-ended"), ("workflow-runs-run-cancel", "cancelled"),
         (AnswerSlug, "not-found"), (AnswerSlug, "bad-id"), (AnswerSlug, "already-ended"), (AnswerSlug, "answered"),
         (TakeOverSlug, "taken-over"), (TakeOverSlug, "not-waiting"), (TakeOverSlug, "bad-id"), (TakeOverSlug, "not-found"), (TakeOverSlug, "already-ended"), (TakeOverSlug, "temporal-down"),
@@ -126,6 +126,10 @@ internal static class WorkflowRunScenarios
             case "bad-payload":
                 await Create(host, activate: true, ct);
                 return await Ask(host, Post($"/sindri/workflows/{_slug.Value}/runs", "{\"payload\":\"[1, 2]\"}", human));
+            case "revision-not-found":
+                // why: a revision named to run once (#3691) must be one the workflow has; the refusal needs no Temporal
+                await Create(host, activate: true, ct);
+                return await Ask(host, Post($"/sindri/workflows/{_slug.Value}/runs", "{\"revision\":4}", human));
             default:
                 return await Ask(host, Post("/sindri/workflows/nope/runs", json: null, human));
         }

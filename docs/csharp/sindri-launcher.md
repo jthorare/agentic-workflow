@@ -29,7 +29,7 @@ machine-wide, needs no profile approval, and never holds secrets. One JSON Schem
 | Key | Meaning |
 |---|---|
 | `schema` | The format version; this build reads `1`. Required |
-| `viewer` | What a human sees. `warp`, `print` (nothing opens; the attach command is printed) or `exec-template` (`name`, the UI label, and `argv`, both required) |
+| `viewer` | What a human sees. `warp`, `print` (nothing opens; the attach command is printed), `default-terminal` (one window per session in the terminal registered as the OS default; no `name` or `argv`; see "The default-terminal viewer") or `exec-template` (`name`, the UI label, and `argv`, both required) |
 | `host` | Who owns the process: `tmux` (default), `none` (a GUI app that owns its own agent; attended opens only) or `t3` (a T3 Code thread; attended opens only, see "The t3 host"). Unattended Steps always use tmux |
 | `agents.<id>` | An added catalog entry (`label`, `bin`, `open`, `sessionId` required; `sessionIdPattern` required unless `sessionId` is `none`, and matched against the whole id, as if written `^(…)$`; `reportedId` required for `reported`), or, with `"override": true`, the named fields of a built-in one. Ids match `^[a-z][a-z0-9-]{1,31}$` |
 | `agents.<id>.model`, `.policy` | Decided (owner, 2026-10-16). Per-entry form names, like `mcp`, for an unattended Step's per-run model and policy file; see "Model and policy forms" below. Absent means `none` |
@@ -128,6 +128,25 @@ is the file's argv and validates against the schema.
 GNOME Terminal and `kitty --single-instance` exit 0 through a server even when no window appears; the launcher's client
 check (spec §3), not the exit code, decides whether the outcome is `opened`. WezTerm's `start` has no title flag, so its
 template omits `{title}`.
+
+## The default-terminal viewer
+
+`{ "kind": "default-terminal" }` opens each session in whatever terminal the user registered as the default, so a terminal with no
+launch template (Rex, for one) works once it is registered. It takes no `name` or `argv`; the bash reader and the schema refuse both.
+It opens one window per lane and never a split: the OS APIs open windows. tmux stays the host (`tmux -L <team> new -A -s <session>`),
+so every lane survives a closed window.
+
+- **macOS.** `aw-meta-launch` writes one executable `.command` file per lane under a private temp dir (mode 0700): the file removes
+  itself, runs `cd <cwd>`, then `exec`s the attach command, each word shell-quoted. It opens the file with `open`, which hands it to
+  the app registered for `.command` files. `open` returns before the app reads the file, so the file deletes itself as its first line
+  and the launcher waits up to `AW_META_COMMAND_GRACE` seconds (default 20) before it removes the dir.
+- **Linux.** `xdg-terminal-exec <attach argv>` when it is on `PATH`, else `x-terminal-emulator -e <attach argv>`, else the launch
+  stops (exit 1) with an error that names both, before any session is created. Warp stays the Linux default for `--init-launcher`.
+- `aw-meta-launch --init-launcher` writes it on macOS when Warp is absent; `--viewer default-terminal` forces it.
+
+The bash launcher has this viewer now. The C# launcher does not read it yet (issue 4518), so the shared fixtures under
+`tests/fixtures/launcher/` carry no `default-terminal` row until it does; `scripts/tests/meta-launch-default-terminal.test.sh` covers the
+schema and the bash reader meanwhile.
 
 ## Terminal process names
 

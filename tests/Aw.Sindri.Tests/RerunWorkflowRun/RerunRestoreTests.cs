@@ -145,6 +145,23 @@ public sealed class RerunRestoreTests
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.GraphRerunBranchNotTaken.Code, result.Error.Code);
         Assert.Contains("'p'", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("re-run from 'p' instead", result.Error.Message, StringComparison.Ordinal);   // the skipped parent, not "a step on the branch that ran" (a re-run from a never reaches x) (#4495)
+        Assert.DoesNotContain("on the branch that ran", result.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(_started);
+    }
+
+    [Fact]
+    public async Task In_a_nested_dead_branch_the_refusal_names_the_first_skipped_step_whose_parent_ran()
+    {
+        // t -> c, c -(true)-> a, c -(false)-> p1 -> p2 -> x: c said true, so p1, p2 and x were skipped; p1 is the one to re-run from, its parent c ran
+        await Source(Nested(), WorkflowRunStatus.Succeeded, ("t", 0, NodeRunStatus.Succeeded), ("c", 0, NodeRunStatus.Succeeded), ("a", 0, NodeRunStatus.Succeeded),
+            ("p1", 0, NodeRunStatus.Skipped), ("p2", 0, NodeRunStatus.Skipped), ("x", 0, NodeRunStatus.Skipped));
+
+        var result = await _service.Handle(new RerunWorkflowRunRequest(_source, "x", Input: null, "owner"), Token);
+
+        Assert.Equal(SindriErrors.GraphRerunBranchNotTaken.Code, result.Error.Code);
+        Assert.Contains("'p1' was skipped", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("re-run from 'p1' instead", result.Error.Message, StringComparison.Ordinal);
         Assert.Empty(_started);
     }
 
@@ -185,6 +202,9 @@ public sealed class RerunRestoreTests
 
     private static GraphSpec Fork() => Spec([Node("t", "manual"), Node("c", "condition"), Node("a"), Node("p"), Node("x")],
         [Edge("t", "c"), Edge("c", "a", "true"), Edge("c", "p", "false"), Edge("p", "x")]);
+
+    private static GraphSpec Nested() => Spec([Node("t", "manual"), Node("c", "condition"), Node("a"), Node("p1"), Node("p2"), Node("x")],
+        [Edge("t", "c"), Edge("c", "a", "true"), Edge("c", "p1", "false"), Edge("p1", "p2"), Edge("p2", "x")]);
 
     private static GraphSpec Join() => Spec([Node("t", "manual"), Node("c", "condition"), Node("a"), Node("p"), Node("y")],
         [Edge("t", "c"), Edge("c", "a", "true"), Edge("c", "p", "false"), Edge("a", "y"), Edge("p", "y")]);
