@@ -104,13 +104,13 @@
           </StackPanel>
           <!-- The column heads (frame wf-list): the same cell widths as a row's, so a dropped column leaves no gap. -->
           <StackPanel x:Name="WorkflowColumns" Orientation="Horizontal" Spacing="16" Margin="16,0" Height="28" IsVisible="{Binding !IsReading}">
-            <TextBlock Width="24" />
+            <TextBlock Width="{StaticResource Wf.Col.Lead}" />
             <TextBlock Classes="caption subtle column-head" Text="Name" Width="{Binding Columns.Name}" VerticalAlignment="Center" />
             <TextBlock Classes="caption subtle column-head" Text="Trigger" Width="{Binding Columns.Trigger}" IsVisible="{Binding Columns.ShowsTrigger}" VerticalAlignment="Center" />
             <TextBlock Classes="caption subtle column-head" Text="Last run" Width="{Binding Columns.LastRun}" VerticalAlignment="Center" />
             <TextBlock Classes="caption subtle column-head" Text="Next run" Width="{Binding Columns.NextRun}" IsVisible="{Binding Columns.ShowsNextRun}" VerticalAlignment="Center" />
             <TextBlock Classes="caption subtle column-head" Text="Last 10 runs" Width="{Binding Columns.Strip}" VerticalAlignment="Center" />
-            <TextBlock Classes="caption subtle column-head" Text="State" Width="72" VerticalAlignment="Center" />
+            <TextBlock Classes="caption subtle column-head" Text="State" Width="{StaticResource Wf.Col.State}" VerticalAlignment="Center" />
           </StackPanel>
           <ItemsControl x:Name="WorkflowRows" ItemsSource="{Binding Rows}">
             <ItemsControl.ItemTemplate>
@@ -123,7 +123,7 @@
                   </Grid>
                   <Border Name="WorkflowRow" Classes="item-row clickable" Focusable="True" KeyDown="OnWorkflowRowKey" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
                     <StackPanel Orientation="Horizontal" Spacing="16" Margin="16,0" MinHeight="{StaticResource Row.Height.Default}" VerticalAlignment="Center">
-                      <Panel Width="24" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+                      <Panel Width="{StaticResource Wf.Col.Lead}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
                         <TextBlock Text="{Binding LeadGlyph}" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.Error}" IsVisible="{Binding LeadIsError}" />
                         <Border Name="RowPausedGlyph" IsVisible="{Binding LeadIsPaused}" AutomationProperties.Name="Paused" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                           <TextBlock Text="{Binding LeadGlyph}" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.Attention}" AutomationProperties.AccessibilityView="Raw" />
@@ -268,7 +268,15 @@
           <Border x:Name="RunsNoMatchName" Margin="16,8" IsVisible="{Binding Runs.HasNoMatch}" AutomationProperties.Name="{Binding Runs.NoMatchText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="caption quiet" Text="{Binding Runs.NoMatchText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
-          <Grid ColumnDefinitions="24,136,168,64,80,*" ColumnSpacing="16" Margin="16,0" Height="28" IsVisible="{Binding Runs.ShowsRunTable}">
+          <Grid ColumnSpacing="16" Margin="16,0" Height="28" IsVisible="{Binding Runs.ShowsRunTable}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="{StaticResource Wf.Run.Col.Tick}" />
+              <ColumnDefinition Width="{StaticResource Wf.Run.Col.Time}" />
+              <ColumnDefinition Width="{StaticResource Wf.Run.Col.Trigger}" />
+              <ColumnDefinition Width="{StaticResource Wf.Run.Col.Revision}" />
+              <ColumnDefinition Width="{StaticResource Wf.Run.Col.Duration}" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="1" Classes="caption subtle run-column-head" Text="Time" VerticalAlignment="Center" />
             <TextBlock Grid.Column="2" Classes="caption subtle run-column-head" Text="Trigger" VerticalAlignment="Center" />
             <TextBlock Grid.Column="3" Classes="caption subtle run-column-head" Text="Revision" VerticalAlignment="Center" />
@@ -279,7 +287,15 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:RunRowViewModel">
                 <Border Name="RunRow" Classes="item-row clickable" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-                  <Grid ColumnDefinitions="24,136,168,64,80,*" ColumnSpacing="16" Margin="16,0" MinHeight="{StaticResource Row.Height.Default}">
+                  <Grid ColumnSpacing="16" Margin="16,0" MinHeight="{StaticResource Row.Height.Default}">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="{StaticResource Wf.Run.Col.Tick}" />
+                      <ColumnDefinition Width="{StaticResource Wf.Run.Col.Time}" />
+                      <ColumnDefinition Width="{StaticResource Wf.Run.Col.Trigger}" />
+                      <ColumnDefinition Width="{StaticResource Wf.Run.Col.Revision}" />
+                      <ColumnDefinition Width="{StaticResource Wf.Run.Col.Duration}" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
                     <CheckBox Name="RunTick" IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" MinWidth="0" AutomationProperties.Name="Select this run to compare" />
                     <!-- The time opens the run; the tip gives the date and time on one line and the exact age on the next, and stays inside the column. -->
                     <Button Grid.Column="1" Classes="row-title" Margin="-2,0" Click="OnOpenRun" HorizontalAlignment="Left" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding TimeTip}" ToolTip.Placement="Bottom">
@@ -315,7 +331,12 @@
         <TextBlock Classes="caption subtle" Text="Esc back to runs" VerticalAlignment="Center" />
       </StackPanel>
       <TextBlock Classes="caption" Text="{Binding Compare.RunningNote}" IsVisible="{Binding Compare.HasRunningNote}" TextWrapping="Wrap" />
-      <Grid ColumnDefinitions="168,*,*" ColumnSpacing="16">
+      <Grid ColumnSpacing="16">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="{StaticResource Wf.Compare.Col.Step}" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
         <Border Grid.Column="1" Classes="panel" Padding="12,10">
           <StackPanel Spacing="2">
             <TextBlock Classes="body-strong compare-run-title" Text="{Binding Compare.A.Title}" />
@@ -334,69 +355,18 @@
       <ItemsControl x:Name="CompareSteps" ItemsSource="{Binding Compare.Steps}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="wf:CompareStepViewModel">
-            <Grid ColumnDefinitions="168,*,*" ColumnSpacing="16" Margin="0,0,0,12">
+            <Grid ColumnSpacing="16" Margin="0,0,0,12">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{StaticResource Wf.Compare.Col.Step}" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
               <StackPanel Margin="0,10,0,0">
                 <TextBlock Name="CompareStepName" Classes="body-strong" Text="{Binding Name}" />
                 <TextBlock Classes="caption subtle" Text="{Binding Kind}" />
               </StackPanel>
-              <StackPanel Grid.Column="1" DataContext="{Binding}">
-                <Border Classes="panel" Margin="0,0,0,4">
-                        <StackPanel>
-                          <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,6" IsVisible="{Binding A.HasStatus}">
-                            <controls:StateChipView Word="{Binding A.StatusWord}" Tone="{Binding A.ToneWord}" Glyph="{Binding A.StatusGlyph}" />
-                            <TextBlock Classes="caption subtle" Text="{Binding A.DurationText}" VerticalAlignment="Center" />
-                          </StackPanel>
-                          <TextBlock Classes="caption subtle" Text="{Binding A.BodyLabel}" Margin="12,4,12,0" IsVisible="{Binding A.HasLines}" />
-                          <ItemsControl ItemsSource="{Binding A.Lines}" IsVisible="{Binding A.HasLines}">
-                            <ItemsControl.ItemTemplate>
-                              <DataTemplate x:DataType="wf:CompareLineViewModel">
-                                <Border Classes="cmpline" Classes.differs="{Binding Differs}" Padding="12,0">
-                                  <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Classes="caption mono" Text="{Binding Text}" />
-                                    <TextBlock Grid.Column="1" Classes="caption compare-differs" Text="&#9670; differs" IsVisible="{Binding Differs}" />
-                                  </Grid>
-                                </Border>
-                              </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                          </ItemsControl>
-                          <Border Classes="cmpline" Classes.differs="{Binding A.MessageDiffers}" Padding="12,6" IsVisible="{Binding A.HasMessage}">
-                            <Grid ColumnDefinitions="*,Auto">
-                              <TextBlock Classes="caption" Text="{Binding A.Message}" TextWrapping="Wrap" />
-                              <TextBlock Grid.Column="1" Classes="caption compare-differs" Text="&#9670; differs" IsVisible="{Binding A.MessageDiffers}" />
-                            </Grid>
-                          </Border>
-                        </StackPanel>
-                      </Border>
-              </StackPanel>
-              <StackPanel Grid.Column="2">
-                <Border Classes="panel" Margin="0,0,0,4">
-                        <StackPanel>
-                          <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,6" IsVisible="{Binding B.HasStatus}">
-                            <controls:StateChipView Word="{Binding B.StatusWord}" Tone="{Binding B.ToneWord}" Glyph="{Binding B.StatusGlyph}" />
-                            <TextBlock Classes="caption subtle" Text="{Binding B.DurationText}" VerticalAlignment="Center" />
-                          </StackPanel>
-                          <TextBlock Classes="caption subtle" Text="{Binding B.BodyLabel}" Margin="12,4,12,0" IsVisible="{Binding B.HasLines}" />
-                          <ItemsControl ItemsSource="{Binding B.Lines}" IsVisible="{Binding B.HasLines}">
-                            <ItemsControl.ItemTemplate>
-                              <DataTemplate x:DataType="wf:CompareLineViewModel">
-                                <Border Classes="cmpline" Classes.differs="{Binding Differs}" Padding="12,0">
-                                  <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Classes="caption mono" Text="{Binding Text}" />
-                                    <TextBlock Grid.Column="1" Classes="caption compare-differs" Text="&#9670; differs" IsVisible="{Binding Differs}" />
-                                  </Grid>
-                                </Border>
-                              </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                          </ItemsControl>
-                          <Border Classes="cmpline" Classes.differs="{Binding B.MessageDiffers}" Padding="12,6" IsVisible="{Binding B.HasMessage}">
-                            <Grid ColumnDefinitions="*,Auto">
-                              <TextBlock Classes="caption" Text="{Binding B.Message}" TextWrapping="Wrap" />
-                              <TextBlock Grid.Column="1" Classes="caption compare-differs" Text="&#9670; differs" IsVisible="{Binding B.MessageDiffers}" />
-                            </Grid>
-                          </Border>
-                        </StackPanel>
-                      </Border>
-              </StackPanel>
+              <wv:CompareCell Grid.Column="1" DataContext="{Binding A}" />
+              <wv:CompareCell Grid.Column="2" DataContext="{Binding B}" />
             </Grid>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
