@@ -41,9 +41,9 @@ internal static class WorkflowReadEndpoints
             var parsed = Show(slug, revision);
             return parsed.IsError ? ((Result<GetWorkflowResponse>)parsed.Error).ToHttpResult() : (await service.Handle(parsed.Value, ct).ConfigureAwait(false)).ToHttpResult();
         });
-        _ = group.MapGet("/workflows/{slug}/runs", static async (string slug, string? status, string? since, string? until, string? before, IService<ListWorkflowRunsRequest, ListWorkflowRunsResponse> service, CancellationToken ct) =>
+        _ = group.MapGet("/workflows/{slug}/runs", static async (string slug, string[]? status, string? since, string? until, string? before, IService<ListWorkflowRunsRequest, ListWorkflowRunsResponse> service, CancellationToken ct) =>
         {
-            var parsed = Runs(slug, status, since, until, before);
+            var parsed = Runs(slug, status is { Length: > 0 } ? string.Join(',', status) : null, since, until, before);   // #4466: a repeated ?status= adds to the list, like a comma list
             return parsed.IsError ? ((Result<ListWorkflowRunsResponse>)parsed.Error).ToHttpResult() : (await service.Handle(parsed.Value, ct).ConfigureAwait(false)).ToHttpResult();
         });
         _ = group.MapGet("/workflow-runs/{run}", static async (string run, IService<GetWorkflowRunRequest, GetWorkflowRunResponse> service, CancellationToken ct) =>

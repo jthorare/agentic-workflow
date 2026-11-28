@@ -9,14 +9,14 @@ using Aw.Sindri.Features.RunWorkflow;
 
 namespace Aw.Sindri.Host.Catalog;
 
-/// <summary>The graph run commands (issue 2258, PR 6): starting a run of a workflow's active revision by hand and cancelling a run (an agent session may run both: Part 1, every verb for agents), and taking over and handing back the 'run_agent' node a run waits on (#2472). Desk class, open to agent sessions too.</summary>
+/// <summary>The graph run commands (issue 2258, PR 6): starting a run of a workflow's active revision (or one saved revision once, #3691) by hand and cancelling a run (an agent session may run both: Part 1, every verb for agents), and taking over and handing back the 'run_agent' node a run waits on (#2472). Desk class, open to agent sessions too.</summary>
 internal static class WorkflowRunRows
 {
     internal static IReadOnlyList<CommandRow> All { get; } =
     [
         new(ActionId.From("RunWorkflow"), typeof(RunWorkflowRequest), Variant: null, ActionClass.Desk, ServiceGrants: ["setup"],   // first-run spec decision 19: the setup service runs hello-sindri once
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
-            "POST", "/sindri/workflows/{slug}/runs", ShellRows.Form("sindri wf run <slug> [--payload <json>]"), "ready", SessionOk: true),
+            "POST", "/sindri/workflows/{slug}/runs", ShellRows.Form("sindri wf run <slug> [--revision <n>] [--payload <json>]"), "ready", SessionOk: true),
         new(ActionId.From("CancelWorkflowRun"), typeof(CancelWorkflowRunRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/workflow-runs/{run}/cancel", ShellRows.Form("sindri wf cancel <run>"), "ready", SessionOk: true),

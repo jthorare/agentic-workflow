@@ -33,9 +33,10 @@ internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFil
         var (home, repos) = await _repos.For(request, cancellationToken).ConfigureAwait(false);
         List<TraitTask> tasks = [];
         var skipped = new Dictionary<string, string>(StringComparer.Ordinal);
+        var triggers = new TraitTriggers(log);
         foreach (var repo in repos)
         {
-            var (repoTasks, repoSkipped) = await PlanRepo(request, repo, cancellationToken).ConfigureAwait(false);
+            var (repoTasks, repoSkipped) = await PlanRepo(request, repo, triggers, cancellationToken).ConfigureAwait(false);
             tasks.AddRange(repoTasks.Select(task => task with { Root = repo.Root }));
             foreach (var (path, reason) in repoSkipped)
             {
@@ -43,11 +44,12 @@ internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFil
             }
         }
 
+        triggers.LogSkipped(request.Mode);
         return tasks.Count == 0 && skipped.Count == 0 ? null : new TraitPlan(home, tasks) { Skipped = skipped };
     }
 
     // One repo's tasks and its image files left out; none when the repo is passed over.
-    private async ValueTask<(List<TraitTask> Tasks, Dictionary<string, string> Skipped)> PlanRepo(CheckTraitsRequest request, RepoFiles repo, CancellationToken cancellationToken)
+    private async ValueTask<(List<TraitTask> Tasks, Dictionary<string, string> Skipped)> PlanRepo(CheckTraitsRequest request, RepoFiles repo, TraitTriggers triggers, CancellationToken cancellationToken)
     {
         var root = repo.Root;
         var (active, edited) = await Judged(request, repo, cancellationToken).ConfigureAwait(false);
@@ -59,7 +61,7 @@ internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFil
         var diffs = request.Mode == TraitCheckMode.Scan
             ? await Scanned(root, request.Paths ?? [], active, cancellationToken).ConfigureAwait(false)
             : await NotGenerated(root, TraitDiff.Parse(await Changed(root, request, edited, cancellationToken).ConfigureAwait(false)), cancellationToken).ConfigureAwait(false);
-        var (tasks, skipped) = await WithImages(root, edited, active, Tasks(root, diffs, active), cancellationToken).ConfigureAwait(false);
+        var (tasks, skipped) = await WithImages(root, edited, active, Tasks(root, diffs, active, triggers), cancellationToken).ConfigureAwait(false);
         if (tasks.Count == 0 && skipped.Count == 0)
         {
             _repos.Skipped(request, ("repo", root), "no-change-in-scope");
@@ -177,8 +179,9 @@ internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFil
         return [.. loaded.Traits.Where(trait => only.Count == 0 || only.Contains(trait.Name, StringComparer.Ordinal))];
     }
 
-    // Per file, the excerpts (a file's hunks sized for a request) against the traits that apply to the file.
-    private List<TraitTask> Tasks(string root, IReadOnlyList<FileDiff> diffs, List<Trait> active)
+    // Per file, the excerpts (a file's hunks sized for a request), each against the traits that apply to the file and
+    // whose trigger the excerpt matches (TraitTriggers): a trait skipped by its trigger costs no model call.
+    private List<TraitTask> Tasks(string root, IReadOnlyList<FileDiff> diffs, List<Trait> active, TraitTriggers triggers)
     {
         List<TraitTask> tasks = [];
         foreach (var file in diffs)
@@ -186,10 +189,13 @@ internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFil
             var head = files.ReadText(Path.Combine(root, file.Path)) ?? "";
             var ignored = TraitDiff.Ignored(head.Length > 4096 ? head[..4096] : head);
             var applicable = active.Where(trait => TraitGlob.InScope(trait.Paths, file.Path) && !ignored.Contains(trait.Name)).ToList();
-            if (applicable.Count > 0)
+            foreach (var source in applicable.Count > 0 ? TraitDiff.Chunk(file, MaxSourceChars) : [])
             {
-                var batches = TraitQuestions.Batches(applicable);
-                tasks.AddRange(TraitDiff.Chunk(file, MaxSourceChars).SelectMany(source => batches.Select(batch => new TraitTask(source, batch))));
+                List<Trait> triggered = [.. applicable.Where(trait => triggers.Applies(trait, source))];
+                if (triggered.Count > 0)
+                {
+                    tasks.AddRange(TraitQuestions.Batches(triggered).Select(batch => new TraitTask(source, batch)));
+                }
             }
         }
 

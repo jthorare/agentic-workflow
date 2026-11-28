@@ -118,6 +118,30 @@ public sealed class ProjectTruthsTests
         Assert.Equal((ProjectPrState.CiRed, (DateTimeOffset?)at), (pr.State, pr.DecidedAt));
     }
 
+    // #4506: the age is the failing check's own completed time when the CI read carried one, else when Sindri first saw the head red
+    [Fact]
+    public void A_red_prs_age_comes_from_when_its_failing_check_completed_not_from_when_sindri_first_saw_it()
+    {
+        var summary = new ReviewSummary("abc", ReviewCi.Fail, RequiredOpen: null, _now.AddHours(-1), FailedAt: _now.AddDays(-3));
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1)], summaries: new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = summary }, now: _now));
+
+        var pr = truth.OpenPrs.Single();
+
+        Assert.Equal((ProjectPrState.CiRed, (DateTimeOffset?)_now.AddDays(-3)), (pr.State, pr.DecidedAt));
+        Assert.Equal("At risk: 1 of 1 PR red for 3 d", truth.Health!.Reason.Replace("Off track", "At risk", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_red_prs_age_reads_from_when_it_was_first_seen_when_no_failing_check_carried_a_time()
+    {
+        var summary = new ReviewSummary("abc", ReviewCi.Fail, RequiredOpen: null, _now.AddHours(-1), FailedAt: null);
+
+        var truth = ProjectTruths.Build(Inputs(pulls: [Pull(1)], summaries: new Dictionary<string, ReviewSummary>(StringComparer.Ordinal) { [Key(1)] = summary }, now: _now));
+
+        Assert.Equal((DateTimeOffset?)_now.AddHours(-1), truth.OpenPrs.Single().DecidedAt);
+        Assert.EndsWith("red for 1 h", truth.Health!.Reason, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void A_summary_of_an_older_head_is_not_a_check_of_this_head_so_the_pr_is_unknown()
     {

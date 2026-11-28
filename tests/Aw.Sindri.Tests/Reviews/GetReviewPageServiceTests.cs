@@ -24,6 +24,7 @@ public sealed class GetReviewPageServiceTests : IDisposable
     private readonly FakePullRequests _forge = new(["github.com"]) { SelfLogin = "sindri-agent" };
     private readonly FakeReviewPageStore _store = new FakeReviewPageStore().Syncing("acme/api");
     private readonly FileReviewSummaries _summaries;
+    private readonly FakePull _pull;
     private readonly GetReviewPageService _service;
 
     public GetReviewPageServiceTests()
@@ -31,7 +32,7 @@ public sealed class GetReviewPageServiceTests : IDisposable
         var home = new FakeSindriHome(_home.Path);
         _summaries = new FileReviewSummaries(home);
         _service = new GetReviewPageService(_h.Profiles, _store, new ReviewPageReader(_forge), new ReviewPageFactsReader(_forge, new FakeReviewEvidence(), new Status(), _h.Clock), new ReviewPageCache(new FileReviewPages(home, _h.Clock), _summaries, new Status(), _h.Clock), new FakeGitHubAccount());
-        var pull = _forge.Add(new PullRepo("github.com", "acme", "api"), 2071, "feat/x", Head);
+        var pull = _pull = _forge.Add(new PullRepo("github.com", "acme", "api"), 2071, "feat/x", Head);
         pull.Title = "Add retry budget";
         pull.Author = "sam-dev";
         _forge.SeedFiles(pull.Link, [new PullFile("src/A.cs", PreviousPath: null, PullFileStatus.Modified, Additions: 1, Deletions: 0, "@@ -1 +1 @@\n-a\n+b")], new Dictionary<string, string>(StringComparer.Ordinal));
@@ -107,6 +108,35 @@ public sealed class GetReviewPageServiceTests : IDisposable
         Assert.Equal(Head, cached?.Page.Pr.Head.Sha);
         var summary = (await _summaries.Read(new ReviewPullRef("acme", "api", 2071), Head, Token)).Value;
         Assert.Equal(ReviewCi.Fail, summary?.Ci);
+    }
+
+    [Fact]
+    public async Task A_later_page_read_of_the_same_red_head_keeps_when_that_head_was_first_seen_red()
+    {
+        await Approve();
+        _ = (await Read()).Value;
+        _h.Clock.Advance(TimeSpan.FromDays(3));
+
+        _ = (await Read()).Value;
+
+        var summary = (await _summaries.Read(new ReviewPullRef("acme", "api", 2071), Head, Token)).Value;
+        Assert.Equal((ReviewCi.Fail, KnownInstants.Epoch), (summary?.Ci, summary?.At));
+    }
+
+    [Fact]
+    public async Task The_stored_summary_keeps_when_the_failing_check_completed_and_a_later_read_with_no_time_keeps_it()
+    {
+        var completed = KnownInstants.Epoch.AddDays(-2);
+        _pull.Checks = new PullChecks(PullChecksState.Failing, Head, ["ui"], Passed: 0, Pending: 0, Runs: [new PullCheckRun("ui", "actions", "failure", Head, CompletedAt: completed)]);
+        await Approve();
+        _ = (await Read()).Value;
+        _h.Clock.Advance(TimeSpan.FromDays(3));
+        _pull.Checks = new PullChecks(PullChecksState.Failing, Head, ["ui"], Passed: 0, Pending: 0, Runs: [new PullCheckRun("ui", "actions", "failure", Head)]);
+
+        _ = (await Read()).Value;
+
+        var summary = (await _summaries.Read(new ReviewPullRef("acme", "api", 2071), Head, Token)).Value;
+        Assert.Equal((KnownInstants.Epoch, (DateTimeOffset?)completed), (summary?.At, summary?.FailedAt));
     }
 
     [Fact]

@@ -6,7 +6,7 @@ using Aw.Kernel.Testing;
 namespace Aw.Sindri.Ui.Tests.Context.Whole;
 
 /// <summary>The failed-open lines are SelectableTextBlocks with the classes "caption error" (#3714). The error style must reach them: a type selector matches the exact type, so a TextBlock-only rule leaves the text in the body colour.</summary>
-[Lane(TestLane.Unit)]
+[Lane(TestLane.Integration)]
 public sealed class FailedOpenLineColourTests
 {
     [Fact]

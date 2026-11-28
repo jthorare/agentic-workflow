@@ -99,7 +99,7 @@ public static class ProjectTruths
         var (state, decidedAt, waitingOn) = (pull.Draft, summary?.Ci, waiting.Count) switch
         {
             (true, _, _) => (ProjectPrState.Draft, (DateTimeOffset?)null, (string?)null),
-            (_, ReviewCi.Fail, _) => (ProjectPrState.CiRed, summary?.At, null),
+            (_, ReviewCi.Fail, _) => (ProjectPrState.CiRed, RedSince(summary), null),
             (_, _, > 0) => (ProjectPrState.Waiting, null, string.Join(", ", waiting)),
             (_, ReviewCi.Pass, _) => (ProjectPrState.Ready, null, null),
             _ => (ProjectPrState.Unknown, null, null),
@@ -107,6 +107,9 @@ public static class ProjectTruths
         var waitsOnYou = !pull.Draft && !string.IsNullOrWhiteSpace(owner) && pull.RequestedReviewers.Contains(owner, StringComparer.OrdinalIgnoreCase);
         return (new ProjectTruthPr(url, pull.Repo, pull.Number, pull.Title, state, decidedAt, waitingOn, waitsOnYou), summary?.Ci is ReviewCi.Pass or ReviewCi.Fail);
     }
+
+    // #4506: when the head went red: the failing check's own completed time when the CI read carried one, else when Sindri first saw the head red
+    private static DateTimeOffset? RedSince(ReviewSummary? summary) => summary?.FailedAt ?? summary?.At;
 
     // " for 3 d": how long the oldest red PR has been red, from its CI summary's time and the page's clock; empty without a clock or a red PR with a time
     private static string RedFor(List<ProjectTruthPr> open, DateTimeOffset? now)

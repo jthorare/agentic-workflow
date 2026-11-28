@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Aw.Context.Core;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Graph.Ids;
@@ -39,7 +40,7 @@ internal static class WorkflowReadTools
     private static Tool ListTool { get; } = new()
     {
         Name = List,
-        Description = "The workflows that are not archived: slug, name, the revision triggers run (none when it is off), the newest revision and who saved it. Names are untrusted and fenced." + ContextTools.PageSentence,
+        Description = "The workflows that are not archived: slug, name, the revision triggers run (none when it is off), the newest revision, who saved it and its trigger in words. The name, who saved it and the trigger words are untrusted and fenced." + ContextTools.PageSentence,
         InputSchema = ContextTools.Schema(ContextTools.PageProperties()),
         Annotations = ReadOnly,
     };
@@ -47,15 +48,16 @@ internal static class WorkflowReadTools
     private static Tool GetTool { get; } = new()
     {
         Name = Get,
-        Description = "One workflow by slug: the revision it runs (the newest when it is off), its graph spec, who saved the newest revision, and where Sindri draws each node. Prompts and node configs in the spec are untrusted and fenced.",
-        InputSchema = ContextTools.Schema(new JsonObject { ["slug"] = ContextTools.Property("string", SlugText) }, required: ["slug"]),
+        Description = "One workflow by slug: the revision it runs (the newest when it is off), its graph spec, who saved the newest revision, and where Sindri draws each node. "
+            + "Give revision to read another saved revision instead: a number, or 'latest' for the newest saved; a number it has no revision for is SND-GRAPH-008. Prompts and node configs in the spec are untrusted and fenced.",
+        InputSchema = ContextTools.Schema(new JsonObject { ["slug"] = ContextTools.Property("string", SlugText), ["revision"] = RevisionProperty() }, required: ["slug"]),
         Annotations = ReadOnly,
     };
 
     private static Tool RunsTool { get; } = new()
     {
         Name = Runs,
-        Description = "A workflow's runs, newest first, 50 a page: run id, revision, status, what started it and why it failed. Filter with status, since and until; when more is true, pass next as before for the older page. A filter value it can't read is SND-GRAPH-134. Failure text is untrusted and fenced." + ContextTools.PageSentence,
+        Description = "A workflow's runs, newest first, 50 a page: run id, revision, status, what started it, why it failed and a one-line result. Filter with status, since and until; when more is true, pass next as before for the older page. A filter value it can't read is SND-GRAPH-134. The failure text and the result are untrusted and fenced." + ContextTools.PageSentence,
         InputSchema = ContextTools.Schema(WithSlug(), required: ["slug"]),
         Annotations = ReadOnly,
     };
@@ -115,16 +117,68 @@ internal static class WorkflowReadTools
 
     private static async ValueTask<CallToolResult> CallGet(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
-        var slug = McpArguments.Only(Get, arguments, ["slug"]) is { } refused ? refused : Slug(Get, arguments);
-        if (slug.IsError)
+        var request = GetRequest(arguments);
+        if (request.IsError)
         {
-            return McpResults.Failure(services, slug.Error);
+            return McpResults.Failure(services, request.Error);
         }
 
-        var answer = await services.GetRequiredService<IService<GetWorkflowRequest, GetWorkflowResponse>>().Handle(new GetWorkflowRequest(slug.Value), ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, static got => string.Create(CultureInfo.InvariantCulture,
-            $"{got.Slug.Value} · r{got.Revision}{(got.ActiveRevision is null ? " (off)" : " (active)")} of {got.LatestRevision} · {(got.Spec["nodes"] is JsonArray nodes ? nodes.Count : 0)} nodes · newest saved by {got.ChangedBy}\n{Fenced}"), FencePlan.WorkflowGet);
+        var answer = await services.GetRequiredService<IService<GetWorkflowRequest, GetWorkflowResponse>>().Handle(request.Value, ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, GetSummary, FencePlan.WorkflowGet);
     }
+
+    // The slug and the optional revision, bound by the same rules as GET /sindri/workflows/{slug}?revision= (#3693): a number or 'latest', anything else the route's invalid input.
+    private static Result<GetWorkflowRequest> GetRequest(IDictionary<string, JsonElement>? arguments)
+    {
+        if (McpArguments.Only(Get, arguments, ["slug", "revision"]) is { } refused)
+        {
+            return refused;
+        }
+
+        var slug = McpArguments.RequiredString(Get, arguments, "slug", "morning-check");
+        if (slug.IsError)
+        {
+            return slug.Error;
+        }
+
+        var revision = RevisionText(arguments);
+        return revision.IsError ? revision.Error : WorkflowReadEndpoints.Show(slug.Value, revision.Value);
+    }
+
+    // why: a number is passed on as its JSON text, so 2.5 or -1 meet the route's own refusal instead of a rounding here
+    private static Result<string?> RevisionText(IDictionary<string, JsonElement>? arguments)
+    {
+        if (arguments is null || !arguments.TryGetValue("revision", out var raw) || raw.ValueKind == JsonValueKind.Null)
+        {
+            return (string?)null;
+        }
+
+        return raw.ValueKind switch
+        {
+            JsonValueKind.Number => raw.GetRawText(),
+            JsonValueKind.String => raw.GetString(),
+            JsonValueKind.Undefined or JsonValueKind.Object or JsonValueKind.Array or JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null or _ =>
+                ContextErrors.McpArgumentsInvalid.With($"'revision' must be a whole number or 'latest' (fix: call {Get} with {{\"slug\": \"morning-check\", \"revision\": 2}})"),
+        };
+    }
+
+    private static string GetSummary(GetWorkflowResponse got)
+    {
+        var state = got.ActiveRevision switch
+        {
+            null => " (off)",
+            { } active when active == got.Revision => " (active)",
+            { } active => string.Create(CultureInfo.InvariantCulture, $" (active is r{active})"),
+        };
+        return string.Create(CultureInfo.InvariantCulture,
+            $"{got.Slug.Value} · r{got.Revision}{state} of {got.LatestRevision} · {(got.Spec["nodes"] is JsonArray nodes ? nodes.Count : 0)} nodes · newest saved by {got.ChangedBy}\n{Fenced}");
+    }
+
+    private static JsonObject RevisionProperty() => new()
+    {
+        ["type"] = new JsonArray(JsonValue.Create("integer"), JsonValue.Create("string")),
+        ["description"] = "A saved revision to read instead of the one it runs: a number such as 2, or 'latest' for the newest saved. Left out, the revision it runs (the newest when it is off).",
+    };
 
     private static async ValueTask<CallToolResult> CallRuns(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
