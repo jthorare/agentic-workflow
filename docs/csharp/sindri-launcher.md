@@ -148,6 +148,37 @@ The bash launcher has this viewer now. The C# launcher does not read it yet (iss
 `tests/fixtures/launcher/` carry no `default-terminal` row until it does; `scripts/tests/meta-launch-default-terminal.test.sh` covers the
 schema and the bash reader meanwhile.
 
+## The team layout
+
+`aw-meta-launch` builds one document that says what the team looks like, whatever the terminal, and hands it to the adapter of
+`viewer.kind`. Each adapter turns it into that terminal's own layout or window calls. `aw-meta-launch --print-layout` prints the
+document as JSON and starts nothing; `--lanes` changes its `open` flags. The shape is `$defs/layout` in
+`schemas/launcher.schema.json`. It is not a key of `launcher.json`: the team config decides it, so there is nothing to write by hand.
+
+| Field | What it holds |
+|---|---|
+| `team`, `socket` | The team's name and its tmux socket (`tmux -L <socket>`; today the same name) |
+| `cwd` | The repo every window or pane starts in |
+| `arrangement` | `first-left-rest-stacked`: the first lane on the left, the others stacked on the right |
+| `lanes[]` | Every lane of the team config in order (the meta lane first), then a `--lanes` lane the config doesn't name |
+| `lanes[].open` | The lane is in this run. Window adapters open only these; the Warp adapter has a pane for every lane |
+| `lanes[].attach` | `tmux -L <socket> attach -t =<session>`, as an argv |
+| `lanes[].join` | `tmux -L <socket> new -A -s <session>`: attaches, or creates a plain session |
+| `lanes[].shell` | The shell line a Warp pane runs: attaches, or creates the session running the lane's agent (`scripts/meta-lane.sh`) |
+
+The adapters, one per viewer kind:
+
+| `viewer.kind` | Adapter |
+|---|---|
+| `warp` | A launch configuration in the `arrangement`, each pane running its lane's `shell`. Its output is the golden in `scripts/tests/fixtures/meta-launch/` |
+| `exec-template` | One window per open lane, `{cmd...}` = the lane's `attach` |
+| `default-terminal` | One window per open lane running the lane's `join` (see "The default-terminal viewer") |
+| `print` | The `attach` line of each open lane |
+
+A terminal that can open a split layout by name gets an adapter of its own; until then it uses `exec-template` (one window per
+lane) or `print`. tmux stays the host, so a team opened one window per lane loses nothing.
+The C# launcher has no reader of the layout: a Sindri session opens one window from its own attach argv (issue 4518).
+
 ## Terminal process names
 
 Each `config/launcher/terminals.json` row also carries `processNames`: the names its terminal runs as (`wezterm-gui`,
