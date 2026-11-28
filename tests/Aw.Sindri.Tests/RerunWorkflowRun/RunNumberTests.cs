@@ -8,6 +8,7 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Features.RerunWorkflowRun;
 using Aw.Sindri.Features.RunWorkflow;
 using Aw.Sindri.Testing.Workflow;
+using Aw.Sindri.Tests.RunWorkflow;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.RerunWorkflowRun;
@@ -33,7 +34,7 @@ public sealed class RunNumberTests
         _workflows = new InMemoryWorkflowStore(_clock);
         _runs = new InMemoryWorkflowRunStore(_clock);
         var starter = new Starter(_runs, _clock);
-        _run = new RunWorkflowService(_workflows, _runs, starter, new NoLaunches(), new AsyncLocalCallerContextAccessor(new SequentialIdGenerator()), _clock);
+        _run = new RunWorkflowService(_workflows, _runs, starter, new NoLaunches(), new AsyncLocalCallerContextAccessor(new SequentialIdGenerator()), _clock, new FixtureChecker());
         _rerun = new RerunWorkflowRunService(_workflows, _runs, starter);
     }
 

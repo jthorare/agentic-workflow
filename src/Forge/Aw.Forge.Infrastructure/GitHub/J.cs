@@ -24,6 +24,10 @@ internal static class J
     internal static bool? NullableFlag(this JsonElement element, string name) =>
         element.At(name) is { } v ? v.ValueKind == JsonValueKind.True : null;
 
+    // an ISO-8601 time the forge sent as a string ('2026-11-24T09:00:00Z'); null when absent, null or not a time
+    internal static DateTimeOffset? Time(this JsonElement element, string name) =>
+        element.At(name) is { ValueKind: JsonValueKind.String } v && DateTimeOffset.TryParse(v.GetString(), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out var at) ? at.ToUniversalTime() : null;
+
     internal static long Long(this JsonElement element, string name) =>
         element.At(name) is { ValueKind: JsonValueKind.Number } v && v.TryGetInt64(out var n) ? n : 0;
 

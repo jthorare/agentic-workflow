@@ -9,7 +9,8 @@
 # `tmux -L <team> attach -t =<team>-<lane>`. A team started before this change stays on tmux's default socket until it is relaunched.
 # launcher.json (scripts/launcher-lib.sh; docs/csharp/sindri-launcher.md) changes two things, and with no file nothing
 # changes: the viewer (warp, the layout above; exec-template, one window per lane running the file's argv; print, one
-# `tmux attach` line per lane) and, when team.json has no "agent", each lane's agent (meta.lanesAgent, meta.lanes.<lane>;
+# `tmux attach` line per lane; default-terminal, one window per lane in the user's registered terminal: macOS `open` on a
+# private .command file per lane, Linux xdg-terminal-exec, else x-terminal-emulator -e, else a refusal naming both) and, when team.json has no "agent", each lane's agent (meta.lanesAgent, meta.lanes.<lane>;
 # Claude Code by default). team.json "agent" sets every lane, including the meta lane, and wins over those two fields.
 # team.json routing.lanes.<lane> {agent?, model?} (aw-meta route --apply) then puts that lane on its routed agent and model,
 # and a lane routed that way is exempt from the one-agent rule below.
@@ -17,10 +18,12 @@
 # DEFAULT socket, where a team started before the switch still runs, and refuses (exit 1) if any exist: starting them again
 # would run a second claude on the same transcripts. The owner stops the old team, then relaunches; --allow-legacy skips the check (the meta session never passes it).
 #   meta-launch.sh [--team <name>] [--lanes a,b,...] [--no-open] [--dry-run] [--allow-legacy]
-#   meta-launch.sh --init-launcher [--viewer warp|print|<terminal id>] [--force] [--stdout]   write launcher.json for this box
+#   meta-launch.sh --init-launcher [--viewer warp|print|default-terminal|<terminal id>] [--force] [--stdout]   write launcher.json for this box
 #   AW_META_CONFIG      team config (default $AW_STATE_DIR/meta/teams/<team>/team.json, or the legacy $AW_STATE_DIR/meta/team.json; `aw-meta team-init` writes it)
 #   AW_META_TEAM        the team to launch (same as --team); with one team on disk, or a legacy config, none is needed (scripts/meta-team-lib.sh)
 #   AW_LAUNCHER_CONFIG  the launcher file (default $AW_STATE_DIR/launcher.json); passed on to each lane's session
+#   AW_WARP_APP         the Warp app --init-launcher looks for on macOS (default /Applications/Warp.app; tests)
+#   AW_META_COMMAND_GRACE  seconds the default-terminal viewer waits on macOS for each lane's .command file to start (default 20), then removes its temp dir
 #   AW_WARP_LAUNCH_DIR  default ${XDG_DATA_HOME:-~/.local/share}/warp-terminal/launch_configurations (Linux),
 #                       ~/.warp/launch_configurations (macOS)
 #   AW_META_ALLOW_LEGACY=1  same as --allow-legacy
@@ -77,14 +80,16 @@ init_launcher() {
   term_by_id() { jq -c --arg k "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')" '.terminals[] | select((.id | ascii_downcase) == $k or (.name | ascii_downcase) == $k)' "$LAUNCHER_TERMINALS"; }
   if [ -n "$init_viewer" ]; then
     case "$init_viewer" in
-      print|warp) kind="$init_viewer"; why="from --viewer" ;;
+      print|warp|default-terminal) kind="$init_viewer"; why="from --viewer" ;;
       *) row="$(term_by_id "$init_viewer")"
          [ -n "$row" ] || { echo "meta-launch: unknown --viewer '$init_viewer' (warp, print, or: $(jq -r '[.terminals[].id] | join(", ")' "$LAUNCHER_TERMINALS"))" >&2; return 2; }
          kind=exec-template; why="from --viewer" ;;
     esac
   elif [ "$(uname -s)" != Darwin ] && [ -z "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then kind=print; why="no GUI session"
-  elif command -v warp-terminal > /dev/null 2>&1 || [ "${TERM_PROGRAM:-}" = WarpTerminal ] || { [ "$(uname -s)" = Darwin ] && [ -d /Applications/Warp.app ]; }; then
+  elif command -v warp-terminal > /dev/null 2>&1 || [ "${TERM_PROGRAM:-}" = WarpTerminal ] || { [ "$(uname -s)" = Darwin ] && [ -d "${AW_WARP_APP:-/Applications/Warp.app}" ]; }; then
     kind=warp; why="Warp found"
+  elif [ "$(uname -s)" = Darwin ]; then
+    kind=default-terminal; why="macOS default terminal"   # whichever app is registered for .command files (Terminal, iTerm, Rex, ...)
   else
     tp="${TERM_PROGRAM:-}"
     if [ -n "$tp" ]; then
@@ -197,6 +202,16 @@ viewer_argv() {
 if [ "$viewer" = exec-template ]; then   # a refusal (an expansion starting with "-") stops the launch before any session exists
   for l in "${L[@]}"; do viewer_argv "$l" > /dev/null || exit 1; done
 fi
+# The default-terminal viewer on Linux needs a terminal launcher; with none, refuse before any session exists (--no-open never runs one).
+dt_linux=()
+if [ "$viewer" = default-terminal ] && [ "$(uname -s)" != Darwin ] && [ "$open" = 1 ]; then
+  if command -v xdg-terminal-exec > /dev/null 2>&1; then dt_linux=(xdg-terminal-exec)
+  elif command -v x-terminal-emulator > /dev/null 2>&1; then dt_linux=(x-terminal-emulator -e)
+  else
+    echo "meta-launch: viewer default-terminal: neither xdg-terminal-exec nor x-terminal-emulator is on PATH. Install one, pick another viewer (aw-meta-launch --init-launcher --viewer print --force), or attach by hand: tmux -L $team attach -t =$team-<lane>" >&2
+    exit 1
+  fi
+fi
 for l in "${L[@]}"; do
   a="$(agent_of "$l")"
   [ "$a" = claude-code ] && continue
@@ -259,8 +274,8 @@ if [ "$allow_legacy" != 1 ] && [ "$team" != default ]; then
   [ "$dry" = 1 ] && echo "[dry-run] legacy-socket check: $legacy_s has-session -t =$team-<lane> for each lane (refuses if any exists)"
   legacy_found=()
   # The Warp layout has a pane (tmux new -A) for every lane, so with that viewer every lane is checked; print and
-  # exec-template only attach to the lanes of this run.
-  if [ "$viewer" = exec-template ] || [ "$viewer" = print ]; then legacy_lanes=("${L[@]}"); else legacy_lanes=("${A[@]}"); fi
+  # exec-template and default-terminal only attach to the lanes of this run.
+  if [ "$viewer" = exec-template ] || [ "$viewer" = print ] || [ "$viewer" = default-terminal ]; then legacy_lanes=("${L[@]}"); else legacy_lanes=("${A[@]}"); fi
   for l in "${legacy_lanes[@]}"; do "${legacy_t[@]}" has-session -t "=$team-$l" 2> /dev/null && legacy_found+=("$team-$l"); done
   if [ "${#legacy_found[@]}" -gt 0 ]; then
     echo "meta-launch: team $team still runs on tmux's default socket (${legacy_found[*]}). Starting its lanes here would run each agent twice on the same transcripts." >&2
@@ -381,8 +396,58 @@ viewer_exec() {
   return 0
 }
 
+# The default-terminal viewer: one window per lane in the user's own terminal, attached to the lane's tmux session (the host
+# stays tmux, so a closed window loses nothing). The attach argv is `tmux -L <team> new -A -s <team>-<lane>`, as the Warp pane runs it;
+# on macOS tmux is written as the absolute path found now (a Terminal login shell may not have the caller's PATH); on Linux the launcher passes the caller's environment on, so it is the bare word.
+# macOS: one executable .command file per lane in a private dir (mode 0700), opened with `open`; macOS hands it to whichever app is
+# registered for .command files, so no terminal is named here. `open` returns before the app reads the file, so the dir cannot go at
+# once. The file removes itself as its first line (an open file stays readable after unlink, so the shell still runs the rest), and the
+# launcher waits up to AW_META_COMMAND_GRACE seconds (default 20) for every file to be gone, then removes the dir: a file the terminal
+# never started cannot outlive the run. The traps also cover a launcher that is interrupted.
+# Linux: xdg-terminal-exec, else x-terminal-emulator -e (picked above, before any session exists).
+dt_dir=""
+dt_cleanup() {
+  if [ -n "$dt_dir" ] && [ -d "$dt_dir" ]; then rm -f "$dt_dir"/*.command; rmdir "$dt_dir" 2> /dev/null; fi
+  dt_dir=""; return 0
+}
+viewer_default_terminal() {
+  local l s tmux_bin f n grace="${AW_META_COMMAND_GRACE:-20}"
+  tmux_bin="$(command -v tmux)"
+  if [ "$(uname -s)" = Darwin ]; then
+    if [ "$dry" = 1 ]; then
+      for l in "${L[@]}"; do echo "[dry-run] default-terminal: $team-$l: open <private dir>/$team-$l.command (cd $(shq "$repo") && exec $(shq "$tmux_bin") -L $team new -A -s $team-$l)"; done
+      return 0
+    fi
+    [ "$open" = 1 ] || return 0
+    dt_dir="$(mktemp -d "${TMPDIR:-/tmp}/aw-launch.XXXXXX")" || { echo "meta-launch: could not make a temp dir" >&2; return 1; }
+    trap 'dt_cleanup' EXIT; trap 'dt_cleanup; exit 1' HUP INT TERM
+    chmod 700 "$dt_dir"
+    for l in "${L[@]}"; do
+      s="$team-$l"; f="$dt_dir/$s.command"
+      ( umask 077
+        printf '#!/bin/sh\nrm -f -- "$0"\ncd %s || exit 1\nexec %s -L %s new -A -s %s\n' "$(shq "$repo")" "$(shq "$tmux_bin")" "$(shq "$team")" "$(shq "$s")" > "$f" )
+      chmod 700 "$f"
+      if open "$f"; then echo "viewer default-terminal: window for $s"
+      else echo "meta-launch: viewer default-terminal: open $f failed; attach by hand:" >&2; echo "${tmux_t[*]} attach -t =$s"; fi
+    done
+    n=$((grace * 10))
+    while [ "$n" -gt 0 ] && [ -n "$(ls -A "$dt_dir" 2> /dev/null)" ]; do sleep 0.1; n=$((n - 1)); done
+    dt_cleanup
+    return 0
+  fi
+  for l in "${L[@]}"; do
+    s="$team-$l"
+    if [ "$dry" = 1 ]; then echo "[dry-run] default-terminal: $s: $(command -v xdg-terminal-exec > /dev/null 2>&1 && echo xdg-terminal-exec || echo 'x-terminal-emulator -e') tmux -L $team new -A -s $s"; continue; fi
+    [ "$open" = 1 ] || continue
+    ( cd "$repo" && "${dt_linux[@]}" tmux -L "$team" new -A -s "$s" > /dev/null 2>&1 < /dev/null & )
+    echo "viewer default-terminal: window for $s"
+  done
+  return 0
+}
+
 case "$viewer" in
   print) viewer_print ;;
   exec-template) viewer_exec ;;
+  default-terminal) viewer_default_terminal ;;
   *) viewer_warp ;;
 esac

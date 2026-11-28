@@ -11,7 +11,7 @@ public static class TraitCheckServiceCollectionExtensions
     /// Adds the trait files ('&lt;repo&gt;/.agents/traits' and the overlay '$AW_STATE_DIR/traits/&lt;repo-name&gt;', else
     /// '~/.agentic-workflow/traits'), the repo's text files read from the process's working directory, and the trait-check
     /// log ('trait-check/log.jsonl' in the judge's state directory) with the repos each session edited files in
-    /// ('trait-check/sessions/&lt;sid&gt;'). Called by AddJudgeInfrastructure.
+    /// ('trait-check/sessions/&lt;sid&gt;') and the verdict cache ('trait-check/verdicts.sqlite': 7 days, 100,000 verdicts). Called by AddJudgeInfrastructure.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="environment">Reads an environment variable.</param>
@@ -27,6 +27,11 @@ public static class TraitCheckServiceCollectionExtensions
             .AddSingleton<ITraitFiles>(sp => new FileTraitFiles(Environment.CurrentDirectory, sp.GetRequiredService<IImageReader>()))
             .AddScoped<ITraitJudge, JevTraitJudge>()
             .AddSingleton<ITraitCheckLog>(sp => new FileTraitCheckLog(Path.Combine(sp.GetRequiredService<JudgeSettings>().StateDirectory, "trait-check"), sp.GetRequiredService<TimeProvider>()))
+            .AddSingleton<ITraitVerdictCache>(sp => new SqliteTraitVerdictCache(
+                Path.Combine(sp.GetRequiredService<JudgeSettings>().StateDirectory, "trait-check", SqliteTraitVerdictCache.FileName),
+                sp.GetRequiredService<TimeProvider>(),
+                SqliteTraitVerdictCache.DefaultKeep,
+                SqliteTraitVerdictCache.DefaultMaxEntries))
             .AddSingleton<ITraitCheckSessions>(sp => new FileTraitCheckSessions(Path.Combine(sp.GetRequiredService<JudgeSettings>().StateDirectory, "trait-check", "sessions"), sp.GetRequiredService<TimeProvider>()));
     }
 }

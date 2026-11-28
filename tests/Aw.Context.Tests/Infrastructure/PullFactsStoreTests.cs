@@ -45,6 +45,32 @@ public sealed class PullFactsStoreTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task Mergeable_and_a_reviews_state_round_trip_through_the_store()
+    {
+        var pr = Pr(new PullFacts(["bob"], "headC", [new ReviewedCommit("bob", "c2", 1, "CHANGES_REQUESTED")], Mergeable: false));
+        _ = await _world.Store.Commit(RecordSamples.Batch(RecordSamples.Github, 1, RecordSamples.Write(pr, "words")), Ct);
+
+        var read = (await _world.Store.Get(pr.Key, Ct)).Value!.Pull!;
+
+        Assert.False(read.Mergeable);
+        Assert.Equal([new ReviewedCommit("bob", "c2", 1, "CHANGES_REQUESTED")], read.Reviews);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_row_stored_before_4333_has_no_mergeable_and_no_state_and_reads_both_as_unknown()
+    {
+        var pr = Pr(_facts);
+        _ = await _world.Store.Commit(RecordSamples.Batch(RecordSamples.Github, 1, RecordSamples.Write(pr, "words")), Ct);
+        _world.Sql($"UPDATE source_record SET pull_facts = '{{\"requestedReviewers\":[\"bob\"],\"headSha\":\"headC\",\"reviews\":[{{\"login\":\"ada\",\"commit\":\"commitA\",\"newCommits\":2}}]}}' WHERE key = '{pr.Key.Value}'");
+
+        var read = (await _world.Store.Get(pr.Key, Ct)).Value!.Pull!;
+
+        Assert.Null(read.Mergeable);
+        Assert.Equal([new ReviewedCommit("ada", "commitA", 2)], read.Reviews);
+        Assert.Null(read.Reviews[0].State);
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task A_record_without_facts_reads_back_none()
     {
         var pr = Pr(pull: null);

@@ -18,7 +18,7 @@ public sealed class ReplaceWorkflowServiceTests : IDisposable
 
     public ReplaceWorkflowServiceTests()
     {
-        _service = new ReplaceWorkflowService(_rig.Workflows, _rig.Checker, _rig.Log);
+        _service = new ReplaceWorkflowService(_rig.Workflows, _rig.Checker, _rig.Log, new StartSession.OpenGate());
     }
 
     public void Dispose() => _rig.Dispose();

@@ -117,6 +117,57 @@ public sealed class CliWorkflowReadsTests : IDisposable
         Assert.Contains("usage: sindri wf show <slug>", _error.ToString(), StringComparison.Ordinal);
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("2", "?revision=2")]
+    [InlineData("latest", "?revision=latest")]
+    public async Task Wf_show_revision_asks_the_route_for_that_revision(string revision, string query)
+    {
+        var api = new Api(HttpStatusCode.OK, Body(Shown()));
+
+        var code = await Verbs(_up, api).Show(["morning-check", "--revision", revision, "--json"], Token);
+
+        Assert.Equal((0, "/sindri/workflows/morning-check", query), (code, api.Path, api.Query));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Wf_show_without_revision_sends_no_query()
+    {
+        var api = new Api(HttpStatusCode.OK, Body(Shown()));
+
+        var code = await Verbs(_up, api).Show(["morning-check"], Token);
+
+        Assert.Equal((0, string.Empty), (code, api.Query));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Wf_show_revision_needs_a_value()
+    {
+        var api = new Api(HttpStatusCode.OK, "{}");
+
+        var code = await Verbs(_up, api).Show(["morning-check", "--revision"], Token);
+
+        Assert.Equal((2, 0), (code, api.Calls));
+        Assert.Contains("--revision <n|latest>", _error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Wf_show_passes_the_servers_refusal_of_an_unknown_revision_through()
+    {
+        var api = new Api(HttpStatusCode.NotFound, "{\"type\":\"about:blank\",\"title\":\"SND-GRAPH-008\",\"status\":404,\"detail\":\"workflow 'morning-check' has no revision 9 (its newest is 2)\"}");
+
+        var code = await Verbs(_up, api).Show(["morning-check", "--revision", "9"], Token);
+
+        Assert.Equal(2, code);
+        Assert.StartsWith("SND-GRAPH-008 ", _error.ToString(), StringComparison.Ordinal);
+    }
+
+    private static GetWorkflowResponse Shown()
+    {
+        var spec = new GraphSpec(1, "Morning check", Description: null, Concurrency: null, Resources: null, Nodes: [new GraphNode(NodeId.From("start"), "manual", Title: null, [])], Edges: []);
+        return new GetWorkflowResponse(WorkflowId.From("WF-00000000000000000000000000000001"), _slug, "Morning check", Revision: 2, ActiveRevision: 1, LatestRevision: 2, ArchivedAt: null,
+            "owner", "session:s1", _at, "abc123", JsonNode.Parse(GraphJson.Write(spec))!, []);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task Wf_runs_prints_a_line_per_run_and_the_empty_sentence_for_none()
     {
@@ -187,10 +238,13 @@ public sealed class CliWorkflowReadsTests : IDisposable
 
         public string? Path { get; private set; }
 
+        public string? Query { get; private set; }
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Calls++;
             Path = request.RequestUri?.AbsolutePath;
+            Query = request.RequestUri?.Query;
             return Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, (int)status >= 400 ? "application/problem+json" : "application/json") });
         }
     }

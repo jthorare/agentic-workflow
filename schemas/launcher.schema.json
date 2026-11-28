@@ -20,7 +20,8 @@
     "viewerKinds": [
       "warp",
       "exec-template",
-      "print"
+      "print",
+      "default-terminal"
     ],
     "host": [
       "kind"
@@ -272,7 +273,8 @@
           "enum": [
             "warp",
             "exec-template",
-            "print"
+            "print",
+            "default-terminal"
           ]
         }
       },
@@ -289,6 +291,14 @@
           "properties": {
             "kind": {
               "const": "print"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "default-terminal"
             }
           },
           "additionalProperties": false
