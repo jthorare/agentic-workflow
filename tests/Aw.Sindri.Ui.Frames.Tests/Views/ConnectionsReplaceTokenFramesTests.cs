@@ -38,7 +38,7 @@ public sealed class ConnectionsReplaceTokenFramesTests : FrameHost
 
         var link = Assert.Single(In<Button>(window, github, "ServiceTileReplaceToken"));
         Assert.True(link.Classes.Contains("accent-link"), "the link has no accent-link class");
-        Assert.Equal(TokenColor("Brush.Primary"), (link.Foreground as ISolidColorBrush)?.Color);
+        Assert.Equal(TokenColor("Brush.Link"), (link.Foreground as ISolidColorBrush)?.Color);
         Assert.Empty(In<Button>(window, linear, "ServiceTileReplaceToken"));
         FrameFile.Save(window, "connections-replace-link-1440");
     });

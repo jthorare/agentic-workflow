@@ -744,6 +744,7 @@ the UI phase that follows its route.
 | `ink-subtle #8a8f98` on canvas / surface-1 / surface-2 | 6.4 / 5.9 / 5.6 | Meta, ages, eyebrows, `kbd` (AA for all sizes) |
 | `ink-tertiary #62666d` on canvas / surface-1 | 3.6 / 3.3 | **Disabled text only** (exempt); never for information |
 | `primary #5e6ad2` as text on canvas | 4.44 | **Fails AA for text**: not used as text. Links and selected labels use `primary-hover #828fff` (7.3 on canvas) |
+| `link #7480ee` as text on surface-1 / surface-2 / surface-3 | 5.3 / 4.9 / 4.5 | In-card link text at rest (#4429); `primary` is 3.6 to 3.9 there |
 | white on `primary #5e6ad2` | 4.70 | Primary button labels (13 px / 500): AA |
 | white on `#828fff` (DESIGN.md's `button-primary-hover`) | 2.87 | **Fails AA.** The app's hover darkens instead: white on `#535fc6` 5.5, pressed `#4c57be` 6.2 |
 | error `#eb5757` on canvas / surface-1 | 6.0 / 5.5 | Error text and the ✕ glyph (with a word) |
@@ -885,6 +886,7 @@ later `ThemeVariant` dictionary with the same keys.
 | ink-tertiary | `#62666d` | `InkTertiary` | Disabled text only |
 | primary | `#5e6ad2` | `Primary` | Primary button, brand mark, selected nav indicator |
 | primary-hover | `#828fff` | `PrimaryHover` | Links, selected labels, **focus ring** (§11.1). Not a button fill (2.87:1 with white) |
+| — (derived, #4429) | `#7480ee` | `Link` | In-card link text at rest (5.3 on surface-1, 4.9 on surface-2, 4.5 on surface-3); hover is `PrimaryHover` |
 | — (derived, §11.1) | `#535fc6` | `PrimaryHoverFill` | Primary button hover (white 5.5:1) |
 | primary-focus | `#5e69d1` | — (not used) | DESIGN.md's focus tint; the app's focus ring uses `PrimaryHover` instead (§11.1) |
 | — (derived, §11.1) | `#4c57be` | `PrimaryPressed` | Primary button pressed (white 6.2:1) |

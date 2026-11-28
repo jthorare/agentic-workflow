@@ -41,7 +41,7 @@
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="0" />
       <Setter Property="Padding" Value="0" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Primary}" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Link}" />
     </Style>
     <Style Selector="Button.panel-action:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.panel-action:pressed /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="Transparent" />

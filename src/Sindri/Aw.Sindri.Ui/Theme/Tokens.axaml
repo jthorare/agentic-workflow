@@ -49,6 +49,10 @@
   <Color x:Key="Color.Primary">#5e6ad2</Color>
   <SolidColorBrush x:Key="Brush.Primary" Color="{StaticResource Color.Primary}" />
   <!-- primary-hover: links, selected labels, the focus ring (§11.1). Never a button fill -->
+  <!-- Link text at rest (#4429): Brush.Primary is 3.6 to 3.9:1 on a card; this holds 5.3 on Surface1, 4.9 on Surface2, 4.5 on Surface3. Hover stays PrimaryHover. -->
+  <Color x:Key="Color.Link">#7480ee</Color>
+  <SolidColorBrush x:Key="Brush.Link" Color="{StaticResource Color.Link}" />
+
   <Color x:Key="Color.PrimaryHover">#828fff</Color>
   <SolidColorBrush x:Key="Brush.PrimaryHover" Color="{StaticResource Color.PrimaryHover}" />
   <!-- derived (§11.1): the primary button's hover fill (white 5.5:1) -->
