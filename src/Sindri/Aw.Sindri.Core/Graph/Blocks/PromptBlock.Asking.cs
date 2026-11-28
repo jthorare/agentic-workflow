@@ -54,6 +54,7 @@ public sealed partial class PromptBlock
             return answered.Error;
         }
 
+        context.CountTokens(answered.Value.Tokens);   // why: every call counts against the run's token budget (#3805), a repair ask and a failed answer too
         var (text, exitCode) = (answered.Value.Text, answered.Value.ExitCode);
         if (exitCode == 0)
         {

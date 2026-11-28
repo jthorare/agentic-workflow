@@ -18,9 +18,10 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="queue">Starts the next queued run when one ends.</param>
 /// <param name="mirror">Appends the events to the ledger.</param>
 /// <param name="itemRepair">Repairs the item links of a run that ended (issue 2588); null does nothing.</param>
-internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore workflows, IGraphQueueAdvance queue, GraphMirror mirror, GraphRunItemRepair? itemRepair = null)
+/// <param name="budgets">The token budget of a run whose spec sets none (#3805); null sets no cap.</param>
+internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore workflows, IGraphQueueAdvance queue, GraphMirror mirror, GraphRunItemRepair? itemRepair = null, IRunBudgetSource? budgets = null)
 {
-    /// <summary>Reads the spec of the revision the run walks.</summary>
+    /// <summary>Reads the spec of the revision the run walks, with the profile's token budget filled in when the spec sets none.</summary>
     /// <param name="run">The run.</param>
     /// <returns>The spec.</returns>
     [Activity("GraphLoad")]
@@ -28,7 +29,9 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
     {
         var cancel = ActivityExecutionContext.Current.CancellationToken;
         var row = GraphFailures.Value(await runs.Get(run, cancel).ConfigureAwait(false));
-        return GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
+        var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
+        // why: the default is read here, in an activity, so its value is recorded in the run's history once and a replay or a later profile edit can't move the budget (#3805)
+        return spec.Budget is null && budgets is not null && await budgets.DefaultTokens(cancel).ConfigureAwait(false) is { } tokens ? spec with { Budget = new GraphBudget(tokens) } : spec;
     }
 
     /// <summary>The steps a re-run from a step (spec §7.3) took from its source run: the nodes that already have a succeeded or skipped row when the walk starts, and for a succeeded one the branch its row says it took (RerunPlan.Branches). Empty for every other run.</summary>

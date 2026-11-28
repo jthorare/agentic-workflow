@@ -66,4 +66,8 @@ public sealed record WorkflowSettings(
     /// <summary>Which workflow editor the app opens (Workflows page spec decision 14): 'sheet' or 'steps'. Null means 'sheet'. Any other value is a profile error.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Editor { get; init; }
+
+    /// <summary>The 'budget:' section (#3805): the token budget of a run whose workflow spec sets none (<see cref="RunBudgetSettings"/>).</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public RunBudgetSettings? Budget { get; init; }
 }

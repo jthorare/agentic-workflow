@@ -33,4 +33,11 @@ public sealed record BlockContext(WorkflowRunId RunId, NodeId Node, JsonObject C
     /// <summary>Leaves the model's text for the node run's raw.</summary>
     /// <param name="text">The text the model answered.</param>
     public void LeaveRaw(string text) => Raw = text;
+
+    /// <summary>Gets the tokens the block's model calls used so far (#3805); the engine adds them to the run's total, which a token budget caps.</summary>
+    public long Tokens { get; private set; }
+
+    /// <summary>Adds the tokens one model call used.</summary>
+    /// <param name="tokens">The call's input and output tokens together; a negative count adds nothing.</param>
+    public void CountTokens(long tokens) => Tokens += Math.Max(0, tokens);
 }

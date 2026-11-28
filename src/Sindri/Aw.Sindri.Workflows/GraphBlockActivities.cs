@@ -97,10 +97,11 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
 
         if (result.IsError)
         {
-            return FailedBlock(config, result.Error, context.FailureOutput, context.Raw);
+            return FailedBlock(config, result.Error, context.FailureOutput, context.Raw) with { Tokens = context.Tokens };
         }
 
-        return SucceededBlock(config, result.Value, test) with { Fenced = test && GraphTestWalk.Parks(graphNode.Type) };   // why: Commit waits for the run's end (CommitRunAsync): a later node can still fail the run
+        // why: Commit waits for the run's end (CommitRunAsync): a later node can still fail the run. Tokens are what the block's model calls used (#3805)
+        return SucceededBlock(config, result.Value, test) with { Fenced = test && GraphTestWalk.Parks(graphNode.Type), Tokens = context.Tokens };
     }
 
     // why: the block's own text (an http body, a model answer) can hold a secret; it is scrubbed BEFORE Fit cuts it, so a secret the cut would split is gone first (#3225, #3196)

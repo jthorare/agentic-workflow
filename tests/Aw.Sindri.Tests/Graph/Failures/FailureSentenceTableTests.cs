@@ -156,6 +156,16 @@ public sealed class FailureSentenceTableTests
     }
 
     [Fact]
+    public void SND_GRAPH_134_says_the_step_did_not_start_because_the_run_used_its_token_budget()
+    {
+        var row = Row("SND-GRAPH-135");
+
+        Assert.Equal("Summarize didn't start: the run used its whole token budget.", FailureSentences.Say(row.Code, With(("step", "Summarize"))));
+        Assert.Equal("Raise the budget", row.FixLabel);
+        Assert.Contains("budget.tokens", row.FixCommand, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void SND_GRAPH_107_says_the_run_already_ended_and_has_no_fix()
     {
         var row = Row("SND-GRAPH-107");

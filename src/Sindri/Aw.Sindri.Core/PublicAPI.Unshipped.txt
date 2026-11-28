@@ -23937,6 +23937,44 @@ static Aw.Sindri.Core.Graph.Blocks.GraphFence.Calls(Aw.Sindri.Core.Graph.Blocks.
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.ConnectionTools(Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort! live) -> Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort!
 static Aw.Sindri.Core.Graph.Blocks.GraphFence.Toolkits(Aw.Sindri.Core.Toolkits.IRunningToolkits! live) -> Aw.Sindri.Core.Toolkits.IRunningToolkits!
 static Aw.Sindri.Core.Connections.ConnectionName.ParseUnreserved(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Connections.ConnectionName>!
+Aw.Sindri.Core.Graph.GraphBudget
+Aw.Sindri.Core.Graph.GraphBudget.<Clone>$() -> Aw.Sindri.Core.Graph.GraphBudget!
+Aw.Sindri.Core.Graph.GraphBudget.Deconstruct(out long? Tokens) -> void
+Aw.Sindri.Core.Graph.GraphBudget.Equals(Aw.Sindri.Core.Graph.GraphBudget? other) -> bool
+Aw.Sindri.Core.Graph.GraphBudget.GraphBudget(long? Tokens = null) -> void
+Aw.Sindri.Core.Graph.GraphBudget.Tokens.get -> long?
+Aw.Sindri.Core.Graph.GraphBudget.Tokens.init -> void
+override Aw.Sindri.Core.Graph.GraphBudget.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.GraphBudget.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.GraphBudget.ToString() -> string!
+static Aw.Sindri.Core.Graph.GraphBudget.operator !=(Aw.Sindri.Core.Graph.GraphBudget? left, Aw.Sindri.Core.Graph.GraphBudget? right) -> bool
+static Aw.Sindri.Core.Graph.GraphBudget.operator ==(Aw.Sindri.Core.Graph.GraphBudget? left, Aw.Sindri.Core.Graph.GraphBudget? right) -> bool
+Aw.Sindri.Core.Graph.GraphSpec.Budget.get -> Aw.Sindri.Core.Graph.GraphBudget?
+Aw.Sindri.Core.Graph.GraphSpec.Budget.init -> void
+Aw.Sindri.Core.Graph.Blocks.ModelAnswer.Tokens.get -> long
+Aw.Sindri.Core.Graph.Blocks.ModelAnswer.Tokens.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Tokens.get -> long
+Aw.Sindri.Core.Graph.Blocks.BlockContext.CountTokens(long tokens) -> void
+Aw.Sindri.Core.Graph.Runs.NodeRunUsage
+static Aw.Sindri.Core.Graph.Runs.NodeRunUsage.Of(long tokens) -> string?
+static Aw.Sindri.Core.Graph.Runs.NodeRunUsage.Tokens(string? usage) -> long
+Aw.Sindri.Core.Graph.Runs.IRunBudgetSource
+Aw.Sindri.Core.Graph.Runs.IRunBudgetSource.DefaultTokens(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<long?>
+Aw.Sindri.Core.Profile.RunBudgetSettings
+Aw.Sindri.Core.Profile.RunBudgetSettings.<Clone>$() -> Aw.Sindri.Core.Profile.RunBudgetSettings!
+Aw.Sindri.Core.Profile.RunBudgetSettings.Deconstruct(out long? Tokens) -> void
+Aw.Sindri.Core.Profile.RunBudgetSettings.Equals(Aw.Sindri.Core.Profile.RunBudgetSettings? other) -> bool
+Aw.Sindri.Core.Profile.RunBudgetSettings.RunBudgetSettings(long? Tokens = null) -> void
+Aw.Sindri.Core.Profile.RunBudgetSettings.Tokens.get -> long?
+Aw.Sindri.Core.Profile.RunBudgetSettings.Tokens.init -> void
+override Aw.Sindri.Core.Profile.RunBudgetSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.RunBudgetSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.RunBudgetSettings.ToString() -> string!
+static Aw.Sindri.Core.Profile.RunBudgetSettings.operator !=(Aw.Sindri.Core.Profile.RunBudgetSettings? left, Aw.Sindri.Core.Profile.RunBudgetSettings? right) -> bool
+static Aw.Sindri.Core.Profile.RunBudgetSettings.operator ==(Aw.Sindri.Core.Profile.RunBudgetSettings? left, Aw.Sindri.Core.Profile.RunBudgetSettings? right) -> bool
+Aw.Sindri.Core.Profile.WorkflowSettings.Budget.get -> Aw.Sindri.Core.Profile.RunBudgetSettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.Budget.init -> void
+static readonly Aw.Sindri.Core.SindriErrors.GraphOverBudget -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Graph.Failures.StepFailure
 Aw.Sindri.Core.Graph.Failures.StepFailure.<Clone>$() -> Aw.Sindri.Core.Graph.Failures.StepFailure!
 Aw.Sindri.Core.Graph.Failures.StepFailure.Code.get -> string!

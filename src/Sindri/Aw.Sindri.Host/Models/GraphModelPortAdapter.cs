@@ -2,6 +2,7 @@ using Aw.Context.Core.Models;
 using Aw.Context.Core.Trust;
 using Aw.Kernel;
 using Aw.Sindri.Core.Graph.Blocks;
+using BlockAnswer = Aw.Sindri.Core.Graph.Blocks.ModelAnswer;
 
 namespace Aw.Sindri.Host.Models;
 
@@ -22,8 +23,15 @@ internal sealed class GraphModelPortAdapter(IModelPort models) : IGraphModelPort
 
     public async ValueTask<Result<string>> Ask(string prompt, CancellationToken cancellationToken)
     {
+        var answer = await Answer(prompt, cancellationToken).ConfigureAwait(false);
+        return answer.IsError ? answer.Error : answer.Value.Text;
+    }
+
+    // why: the run's token budget (#3805) counts what the call used, so the answer keeps the port's input and output tokens together
+    public async ValueTask<Result<BlockAnswer>> Answer(string prompt, CancellationToken cancellationToken)
+    {
         ArgumentNullException.ThrowIfNull(prompt);
         var answer = await models.Ask(new ModelRequest(ModelPurpose.WorkflowPrompt, prompt, MaxTokens, _budget), cancellationToken).ConfigureAwait(false);
-        return answer.IsError ? answer.Error : answer.Value.Text;
+        return answer.IsError ? answer.Error : new BlockAnswer(answer.Value.Text) { Tokens = (long)answer.Value.InputTokens + answer.Value.OutputTokens };
     }
 }

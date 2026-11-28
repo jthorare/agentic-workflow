@@ -79,6 +79,7 @@ not in the profile: they live in `launcher.json` (`docs/csharp/sindri-launcher.m
 | `callDepth` | integer, 1 to 10 | no | `3` | How many calls deep one workflow may start another through `run_workflow` (see `workflow.callDepth` below) |
 | `editor` | `sheet` or `steps` | no | `sheet` | Which workflow editor the app opens (Workflows page spec decision 14; `workflow.editor`, below) |
 | `forEach` | object (`maxItems`, `batchSize`) | no | none | The item cap (a node may only lower it) and the default batch size of the `for_each` workflow block (`workflow.forEach`, below) |
+| `budget` | object (`tokens`) | no | none | The token budget of a workflow run whose spec sets no `budget` (`workflow.budget.tokens`, below) |
 
 ### `workflow.agent` model keys
 
@@ -130,6 +131,7 @@ Line spec Appendix D and LN-WF9. Every key is optional and applies on save. A pr
 | `workflow.poll.catchUpPages` | int | no | `20`, `1` to `100` | The most provider calls a catch-up makes for one connection and event before it stops, records `catchup.capped` and keeps the cursor where it stopped. A catch-up runs once after the control plane starts and again after the machine wakes (`docs/workflows/blocks/poll.md`). Outside 1 to 100 is refused when you save it |
 | `workflow.http.hosts` | string[] | no | none (every request refused) | The hosts a workflow `http` node may send to: bare lower-case DNS names such as `api.example.com`, at most 50, none twice. No scheme, port or path, no IP address, no `localhost`; a bad entry is refused when you save it (`workflow.http.hosts[i]`). Requests are https only and unauthenticated until connections exist; a redirect to another host is never followed. A change needs a re-approval (it is in the profile diff) |
 | `workflow.callDepth` | integer, 1 to 10 | no | `3` | The deepest `run_workflow` chain: a top-level run is depth 0, the run it calls is 1. A call that would pass this is `SND-GRAPH-120`. A run can't start its own workflow or the one that called it (`SND-GRAPH-121`) whatever this says |
+| `workflow.budget.tokens` | integer, above 0 | no | none (no cap) | The most tokens one workflow run's `prompt` and `run_agent` nodes may use when the workflow's spec sets no `budget.tokens` (#3805). A node that would start at or over it fails with `SND-GRAPH-135`. The spec's own budget wins. 0 or less is refused when you save it. A change needs a re-approval (it is in the profile diff) |
 | `workflow.editor` | `sheet` or `steps` | no | `sheet` | Which workflow editor the app opens. Any other value is a profile error that names both. `sindri profile set workflow.editor steps` sets it; `GET /sindri/profile` serves it as `workflowEditor` (null when unset) |
 | `workflow.docs.globs` | string[] | no | `docs/**`, `*.md` | The paths docs sync may write (BD5): repo-relative globs with `/` separators and no `..`, as `index.denyPaths` takes them |
 

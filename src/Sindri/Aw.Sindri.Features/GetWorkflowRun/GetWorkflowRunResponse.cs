@@ -16,6 +16,7 @@ namespace Aw.Sindri.Features.GetWorkflowRun;
 /// <param name="StartedAt">When it was recorded.</param>
 /// <param name="EndedAt">When it ended, or null while it has not.</param>
 /// <param name="Nodes">The node runs, by node id then item index.</param>
+/// <param name="Tokens">The tokens the run used and its budget (#3805).</param>
 internal sealed record GetWorkflowRunResponse(
     WorkflowRunId Id,
     WorkflowSlug Slug,
@@ -27,7 +28,8 @@ internal sealed record GetWorkflowRunResponse(
     ItemId? ItemId,
     DateTimeOffset StartedAt,
     DateTimeOffset? EndedAt,
-    IReadOnlyList<NodeRunView> Nodes)
+    IReadOnlyList<NodeRunView> Nodes,
+    RunTokens Tokens)
 {
     /// <summary>The trigger kind: 'manual', 'schedule', 'cli' or 'agent' (same words as the run list). Issue 3683.</summary>
     public string TriggerKind { get; init; } = "";

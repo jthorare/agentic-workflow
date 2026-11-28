@@ -12,11 +12,24 @@ You never send positions. Sindri lays the graph out itself.
 | `description` | no | What the workflow is for. |
 | `concurrency` | no | How runs overlap: `one-per-workflow` (the default), `queue` or `unlimited`. See the concurrency page. |
 | `resources` | no | A named `database`, and a default `sandbox` size (`memory`, `wall`) for agent blocks. |
+| `budget` | no | `{ "tokens": N }`: the most tokens one run's `prompt` and `run_agent` nodes may use. See "Token budget" below. |
 | `result` | no | The id of the node whose output is the run's result, what `run_workflow` and `workflow_result` read. With no `result`, the result holds every node no edge leaves. See "The run's result". |
 | `nodes` | yes | The blocks the workflow uses. |
 | `edges` | no | The wires between nodes. |
 
 An unknown key anywhere in the document is refused.
+
+## Token budget
+
+`budget.tokens` caps the tokens of one run. The run adds up the input and output tokens of each `prompt` node and the tokens of each `run_agent` session.
+
+1. Before a `prompt` or `run_agent` node starts, the run compares its total with the budget.
+2. When the total has reached the budget, the node fails with `SND-GRAPH-135` and the model is not asked. The node's `onFailure` applies as for any failure.
+3. A node that starts under the budget may finish over it.
+
+Example: with `"budget": {"tokens": 100}`, a first prompt that uses 120 tokens runs, and the next prompt fails with `SND-GRAPH-135`.
+
+A spec without `budget` takes the profile's `workflow.budget.tokens`. With neither, a run has no cap. `budget.tokens` must be a whole number above 0, or `sindri wf validate` reports `GRAPH-BUDGET-001`. The run page shows "N / M tokens", and `GET /sindri/workflow-runs/{run}` answers `tokens: {used, budget}`.
 
 ## Nodes
 

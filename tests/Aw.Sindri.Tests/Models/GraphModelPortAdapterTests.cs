@@ -34,4 +34,18 @@ public sealed class GraphModelPortAdapterTests
 
         Assert.Equal(SindriErrors.NotRunning.Code, answer.Error.Code);
     }
+
+    [Fact]
+    public async Task An_answer_reports_the_input_and_output_tokens_together()
+    {
+        const string Prompt = "did the contract drift?";
+        const string Reply = "{\"drifted\":false}";
+        var port = new FakeModelPort { Answer = Reply };
+        var expected = ((Prompt.Length + 3L) / 4) + ((Reply.Length + 3L) / 4);   // why: the fake counts a token per four characters of the prompt and of the reply
+
+        var answer = await new GraphModelPortAdapter(port).Answer(Prompt, Token);
+
+        Assert.Equal(Reply, answer.Value.Text);
+        Assert.Equal(expected, answer.Value.Tokens);
+    }
 }

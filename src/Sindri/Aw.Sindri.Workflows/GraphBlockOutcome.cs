@@ -11,4 +11,5 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="Raw">The scrubbed raw model text a failed prompt step left through BlockContext.LeaveRaw, or null.</param>
 /// <param name="Fenced">True when a test run already decided what a 'wait' or 'ask_owner' node does, so the walk parks on nothing.</param>
 /// <param name="Truncated">True when <see cref="StoredJson.Fit"/> cut the output; a cut input never sets it (#3896). The node row keeps the flag the store would have set.</param>
-internal sealed record GraphBlockOutcome(NodeRunStatus Status, string? Input, string? Output, IReadOnlyList<string> Taken, string? Error, string? Raw = null, bool Truncated = false, bool Fenced = false);
+/// <param name="Tokens">The tokens the node used (a prompt's model calls, a run_agent's session), which the run's token budget counts (#3805); 0 in a history written before it.</param>
+internal sealed record GraphBlockOutcome(NodeRunStatus Status, string? Input, string? Output, IReadOnlyList<string> Taken, string? Error, string? Raw = null, bool Truncated = false, bool Fenced = false, long Tokens = 0);

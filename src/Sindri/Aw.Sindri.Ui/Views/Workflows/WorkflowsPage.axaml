@@ -389,6 +389,7 @@
         <TextBlock Classes="caption subtle" Text="{Binding Run.TriggerText}" />
         <TextBlock Classes="caption subtle" Text="{Binding Run.RevisionText}" />
         <TextBlock Classes="caption subtle" Text="{Binding Run.WhenText}" />
+        <TextBlock Classes="caption subtle" Text="{Binding Run.TokensText}" IsVisible="{Binding Run.HasTokens}" />
       </StackPanel>
       <Border x:Name="RunReadingName" IsVisible="{Binding Run.IsReading}" AutomationProperties.Name="{Binding Run.ReadingText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption quiet" Text="{Binding Run.ReadingText}" AutomationProperties.AccessibilityView="Raw" />

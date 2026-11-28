@@ -54,6 +54,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
         return services
             .AddSingleton<GraphMirror>()
             .AddSingleton<IForEachLimitSource, ProfileForEachLimits>()
+            .AddSingleton<IRunBudgetSource, ProfileRunBudget>()   // a run's token budget when its spec sets none: the profile's 'workflow.budget.tokens' (#3805)
             .AddSingleton<IGraphCallPort, GraphWorkflowCaller>()   // 'run_workflow' starts the other workflow's active revision (agent-first PR 9)
             .AddSingleton<IGraphResultPort, GraphRunResults>()   // 'workflow_result' reads a finished run (agent-first PR 9)
             .AddSingleton(static provider => FencedRegistry(provider))   // every write port is wrapped by its test version: it records instead of writing only while a test run's block runs (GraphFence)

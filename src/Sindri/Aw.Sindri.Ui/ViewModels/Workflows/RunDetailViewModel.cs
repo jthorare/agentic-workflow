@@ -59,6 +59,12 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
     /// <summary>"Started 4m ago" while it is live, "Ended 5m ago" after.</summary>
     public string WhenText { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>"1,200 / 5,000 tokens", "1,200 tokens" with no budget, or empty when the run used none and has no budget (#3805).</summary>
+    public string TokensText { get; private set { Set(ref field, value); OnChanged(nameof(HasTokens)); } } = string.Empty;
+
+    /// <summary>True when the header shows the run's tokens.</summary>
+    public bool HasTokens => TokensText.Length > 0;
+
     /// <summary>Why the run failed, as served; empty otherwise.</summary>
     public string ErrorText { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -205,6 +211,7 @@ internal sealed partial class RunDetailViewModel(ISindriApi api, TimeProvider cl
         ChipToneWord = RunStatus.ToneWord(run.Status);
         TriggerText = Labels.WfStartedBy(TriggerKindOf(run));
         RevisionText = Labels.WfRunRevision(run.Revision);
+        TokensText = Labels.WfRunTokens(run.Tokens);
         var live = RunStatus.IsLive(run.Status);
         WhenText = live
             ? Labels.JobWhen(running: true, clock.GetUtcNow() - run.StartedAt)

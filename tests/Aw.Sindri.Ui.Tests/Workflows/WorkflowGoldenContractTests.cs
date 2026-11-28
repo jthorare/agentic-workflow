@@ -58,6 +58,7 @@ public sealed class WorkflowGoldenContractTests
         Assert.Equal("Look for drift", run.Nodes[1].Input!.Value.GetProperty("prompt").GetString());
         Assert.Equal("no drift", run.Nodes[1].Output!.Value.GetProperty("text").GetString());
         Assert.Null(run.Nodes[0].Input);
+        Assert.Equal(new WorkflowRunTokens(Used: 0, Budget: null), run.Tokens);
     }
 
     [Fact]

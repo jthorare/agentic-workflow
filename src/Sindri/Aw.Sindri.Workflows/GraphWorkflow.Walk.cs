@@ -41,6 +41,7 @@ internal sealed partial class GraphWorkflow
     private async Task<GraphWorkflowResult> Walk(GraphSpec spec)
     {
         _pending = [.. spec.Nodes.Where(n => !_decided.Contains(n.Id))];
+        _budget = spec.Budget?.Tokens;
         // why: a ready node on a branch nobody took is recorded 'skipped' before a live one runs, so a dead branch shows skipped while its sibling parks (a wait or ask_owner can hold the walk for hours).
         // The patch keeps a run started on the old walk order replaying it: its history has the live node's activity next.
         var deadFirst = Workflow.Patched("graph-walk-dead-first");
@@ -131,11 +132,12 @@ internal sealed partial class GraphWorkflow
     {
         _current = node;
         await Record(Row(node, NodeRunStatus.Running), _write).ConfigureAwait(true);
-        var outcome = await Park(node, await RunBlock(spec, node).ConfigureAwait(true)).ConfigureAwait(true);   // a wait or ask_owner node sleeps here, still running
+        var outcome = await Park(node, OverBudget(node) ?? await RunBlock(spec, node).ConfigureAwait(true)).ConfigureAwait(true);   // a wait or ask_owner node sleeps here, still running
+        _tokens += outcome.Tokens;
 
         // why: once the block has answered, the node's result is decided; clearing _current first and writing detached means a cancel now cannot overwrite 'succeeded' with 'cancelled'
         _current = null;
-        await Record(new NodeRun(_run, node.Id, 0, outcome.Status, outcome.Input, outcome.Output, outcome.Truncated, outcome.Error, Usage: null, Raw: outcome.Raw), _detached).ConfigureAwait(true);
+        await Record(new NodeRun(_run, node.Id, 0, outcome.Status, outcome.Input, outcome.Output, outcome.Truncated, outcome.Error, NodeRunUsage.Of(outcome.Tokens), outcome.Raw), _detached).ConfigureAwait(true);
         return outcome;
     }
 
